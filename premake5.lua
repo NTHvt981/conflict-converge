@@ -12,38 +12,45 @@ workspace "ConflictConverge"
 project "raylib-static"
     kind "StaticLib"
     cppdialect "C++20"
-    
-    -- Source files from raylib source in deps/
+
+    -- raylib's platform-specific and third-party sources under platforms/ and
+    -- external/ are #included directly by the top-level .c files (rcore.c,
+    -- raudio.c, rglfw.c, ...) and must not be compiled as separate translation
+    -- units, so only the top-level src/*.c files are picked up here.
     files {
-        "deps/raylib/src/**.c",
+        "deps/raylib/src/*.c",
         "deps/raylib/src/**.h",
         "deps/raylib/src/**.inl"
     }
-    
+
+    -- Select the desktop (GLFW) platform backend
+    defines { "PLATFORM_DESKTOP" }
+
     -- Include directories for raylib's own dependencies
     includedirs {
-        "deps/raylib/include",
+        "deps/raylib/src",
+        "deps/raylib/src/external/glfw/include",
         "deps/glm/glm"
     }
-    
-    -- Link with glm
-    links { "glm" }
 
 -- Project to build raygui as static library from deps/
 project "raygui-static"
     kind "StaticLib"
     cppdialect "C++20"
     
-    -- Source files from raygui source in deps/
+    -- raygui is a header-only library (single raygui.h), so the actual
+    -- implementation translation unit lives in src/thirdparty and defines
+    -- RAYGUI_IMPLEMENTATION before including it.
     files {
-        "deps/raygui/src/**.c",
+        "src/thirdparty/raygui_impl.c",
         "deps/raygui/src/**.h",
         "deps/raygui/src/**.inl"
     }
-    
+
     -- Include directories for raygui's dependencies (raylib and glm)
     includedirs {
-        "deps/raylib/include",
+        "deps/raygui/src",
+        "deps/raylib/src",
         "deps/glm/glm"
     }
 
@@ -68,10 +75,15 @@ project "conflict-converge"
         "src/game"
     }
     
-    -- Link with raylib and raygui static libraries
+    -- Link with raylib and raygui static libraries, plus the Windows system
+    -- libraries raylib's desktop (GLFW) backend needs
     links {
         "raylib-static",
-        "raygui-static"
+        "raygui-static",
+        "opengl32",
+        "gdi32",
+        "winmm",
+        "shell32"
     }
 
 -- Test project
@@ -98,8 +110,13 @@ project "conflict-converge-test"
         "src/game/public"
     }
     
-    -- Link with raylib and raygui static libraries
+    -- Link with raylib and raygui static libraries, plus the Windows system
+    -- libraries raylib's desktop (GLFW) backend needs
     links {
         "raylib-static",
-        "raygui-static"
+        "raygui-static",
+        "opengl32",
+        "gdi32",
+        "winmm",
+        "shell32"
     }
