@@ -1,3 +1,5 @@
 prj/
 build/
 deps/
+.opencode/
+AGENTS.md
