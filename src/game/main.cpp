@@ -6,6 +6,7 @@
 #include "GameCamera.h" // M2 Goal 3: manual WASD panning camera
 #include "Registry.h"  // M2 Goal 4: unit registry (selection + orders)
 #include "Selection.h" // M2 Goal 4: mouse selection helpers
+#include "Shortcuts.h" // M2 Goal 5: keyboard shortcut registry
 #include "TileMap.h"   // M2 Goal 1: passable/blocked tile grid
 #include "Unit.h"      // M2 Goal 2/4: snapped units with move orders
 #include <iostream>
@@ -45,6 +46,21 @@ int main(void)
 	spawnDemo(UnitType::LightTank, 4, 2);
 	spawnDemo(UnitType::Artillery, 3, 5);
 
+	// M2 Goal 5 shortcuts: Esc deselects, Space halts selected units.
+	ShortcutRegistry shortcuts;
+	shortcuts.Bind(KEY_ESCAPE, [&] { DeselectAll(registry); });
+	shortcuts.Bind(KEY_SPACE, [&] {
+		registry.Each<Unit>([&](Entity, Unit &unit) {
+			if (unit.isSelected)
+			{
+				unit.hasMoveOrder = false;
+				unit.velocity = { 0.0f, 0.0f };
+				unit.state = UnitState::Idle;
+				SnapUnitToTile(unit);
+			}
+		});
+	});
+
 	// M1 Goal 4 proof-of-integration: a raygui button counting clicks.
 	// Full HUD/minimap/menu UI lands in M6.
 	int buttonClicks = 0;
@@ -53,6 +69,7 @@ int main(void)
 	while (!WindowShouldClose())
 	{
 		camera.UpdateWASD(kCameraSpeed, GetFrameTime());
+		shortcuts.PollAndFire();
 
 		// M2 Goal 4 mouse inputs: left-click selects, right-click orders.
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))

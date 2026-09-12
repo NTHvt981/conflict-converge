@@ -82,7 +82,7 @@
 - [x] Unit snapping to tile grid
 - [x] Manual camera panning with WASD keys
 - [x] Mouse selection and command inputs
-- [ ] Keyboard shortcut support
+- [x] Keyboard shortcut support
 - [ ] Basic input handling framework
 
 ### Implementation Steps
