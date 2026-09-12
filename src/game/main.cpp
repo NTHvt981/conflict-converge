@@ -14,6 +14,7 @@
 #include "Building.h" // M5 Goal 2: demo base/placement on the tile grid
 #include "Nodes.h" // M5 Goal 3: demo resource nodes + harvester
 #include "Production.h" // M5 Goal 6: demo factory production queue
+#include "Minimap.h" // M6 Goal 1: unit-position minimap (periodic refresh)
 #include <iostream>
 #include <vector>
 #include <format>
@@ -31,6 +32,11 @@ int main(void)
 	camera.view.rotation = 0.0f;
 	camera.view.zoom = 1.0f;
 	constexpr float kCameraSpeed = 400.0f; // pixels per second
+
+	// M6 Goal 1: minimap texture (bottom-right, 4:3 like the 20x15 map).
+	Minimap minimap;
+	minimap.Init({ static_cast<float>(screenWidth) - 170.0f, static_cast<float>(screenHeight) - 130.0f,
+	               160.0f, 120.0f });
 	// Unit speed now comes from M3 base stats (Unit::speed, ApplyBaseStats).
 
 	// M3 Goal 6 demo world: units spawn through the factory (costs deducted
@@ -145,6 +151,37 @@ int main(void)
 		nodes.Update(dt);
 		nodes.GatherTick(registry, resources, dt);
 		queue.Update(factory, 0, rallyPos, dt);
+		// M6 Goal 1: periodic minimap refresh (terrain blocks + unit dots).
+		if (minimap.PollRefresh(dt))
+		{
+			BeginTextureMode(minimap.target);
+			ClearBackground(Color{ 20, 60, 20, 255 }); // dark grass base
+			for (int y = 0; y < map.Height(); ++y)
+			{
+				for (int x = 0; x < map.Width(); ++x)
+				{
+					const TerrainType terrain = map.Get({ x, y });
+					if (terrain == TerrainType::Grass)
+					{
+						continue;
+					}
+					const Vector2 corner = minimap.WorldToMinimap(cc::ToRaylib(cc::TileToWorld(x, y)),
+					                                             map.Width(), map.Height());
+					const Color tint = terrain == TerrainType::Water ? DARKBLUE : DARKGRAY;
+					DrawRectangleV({ corner.x - minimap.screenRect.x, corner.y - minimap.screenRect.y },
+					               { 8.0f, 8.0f }, tint);
+				}
+			}
+			registry.Each<Unit>([&](Entity, const Unit &unit) {
+				const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
+				const Vector2 dot =
+					minimap.WorldToMinimap(center, map.Width(), map.Height());
+				DrawRectangle(static_cast<int>(dot.x - minimap.screenRect.x) - 1,
+				              static_cast<int>(dot.y - minimap.screenRect.y) - 1, 3, 3,
+				              unit.teamID == 0 ? SKYBLUE : RED);
+			});
+			EndTextureMode();
+		}
 
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
@@ -226,6 +263,15 @@ int main(void)
 		});
 		EndMode2D();
 
+		// M6 Goal 1: minimap blit (texture is Y-flipped) + viewport box.
+		DrawTextureRec(minimap.target.texture,
+		               { 0.0f, 0.0f, minimap.screenRect.width, -minimap.screenRect.height },
+		               { minimap.screenRect.x, minimap.screenRect.y }, WHITE);
+		DrawRectangleLinesEx(
+			minimap.ViewportRect(camera.view, screenWidth, screenHeight, map.Width(), map.Height()),
+			1.0f, WHITE);
+		DrawRectangleLinesEx(minimap.screenRect, 1.0f, DARKGRAY);
+
 		// M5 HUD preview (proper raygui panels in M6): stockpiles + queue.
 		DrawText(TextFormat("Iron: %ld  Oil: %ld", resources.iron, resources.oil), 620, 20, 20,
 		         DARKGRAY);
@@ -250,6 +296,7 @@ int main(void)
 		EndDrawing();
 	}
 
+	minimap.Unload();
 	CloseWindow();
 	return 0;
 }

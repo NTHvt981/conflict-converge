@@ -254,7 +254,7 @@
 
 ### Goals
 - [ ] Implement raygui-based UI framework
-- [ ] Create minimap (unit positions only, periodic refresh)
+- [x] Create minimap (unit positions only, periodic refresh)
 - [ ] Display resource counters (iron/oil)
 - [ ] Unit selection highlighting
 - [ ] Keyboard shortcut overlays
