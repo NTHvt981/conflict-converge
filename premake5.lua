@@ -30,7 +30,7 @@ project "raylib-static"
     includedirs {
         "deps/raylib/src",
         "deps/raylib/src/external/glfw/include",
-        "deps/glm/glm"
+        "deps/glm"
     }
 
 -- Project to build raygui as static library from deps/
@@ -51,7 +51,7 @@ project "raygui-static"
     includedirs {
         "deps/raygui/src",
         "deps/raylib/src",
-        "deps/glm/glm"
+        "deps/glm"
     }
 
 -- Main game project
@@ -70,7 +70,7 @@ project "conflict-converge"
     includedirs {
         "deps/raylib/src",
         "deps/raygui/src",
-        "deps/glm/glm",
+        "deps/glm",
         "..",
         "src/game",
         "src/game/public",
@@ -107,7 +107,7 @@ project "conflict-converge-test"
     includedirs {
         "deps/raylib/src",
         "deps/raygui/src",
-        "deps/glm/glm",
+        "deps/glm",
         "..",
         "src/game/public"
     }

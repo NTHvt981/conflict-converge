@@ -29,11 +29,11 @@
 ### Goals
 - [x] Set up premake5 build system with msbuild integration
 - [x] Configure project structure (src/game, tests)
-- [] Integrate glm for math operations
-- [] Implement raygui for UI framework
-- [] Set up event dispatcher architecture
-- [] Create ECS-lite component-based architecture
-- [] Configure debug/release profiles with assertions
+- [x] Integrate glm for math operations
+- [x] Implement raygui for UI framework
+- [ ] Set up event dispatcher architecture
+- [ ] Create ECS-lite component-based architecture
+- [ ] Configure debug/release profiles with assertions
 
 ### Implementation Steps
 1. **Premake5 Setup**
