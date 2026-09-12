@@ -50,3 +50,19 @@ void ResourceSystem::TickIncome(float ironPerSecond, float oilPerSecond, float d
     ironCarry_ -= static_cast<float>(ironWhole);
     oilCarry_ -= static_cast<float>(oilWhole);
 }
+
+float ResourceSystem::IronCarry() const
+{
+    return ironCarry_;
+}
+
+float ResourceSystem::OilCarry() const
+{
+    return oilCarry_;
+}
+
+void ResourceSystem::SetCarry(float ironCarry, float oilCarry)
+{
+    ironCarry_ = ironCarry;
+    oilCarry_ = oilCarry;
+}

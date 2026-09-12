@@ -14,6 +14,7 @@
 #include "Building.h" // M5 Goal 2: demo base/placement on the tile grid
 #include "Nodes.h" // M5 Goal 3: demo resource nodes + harvester
 #include "Production.h" // M5 Goal 6: demo factory production queue
+#include "SaveGame.h" // M7 Goal 1: F5 quicksave / F9 quickload
 #include "Minimap.h" // M6 Goal 1: unit-position minimap (periodic refresh)
 #include "Hud.h" // M6 Goal 2: raygui resource + selection panels
 #include "Menu.h" // M6 Goal 3: pause / outcome / settings menu flow
@@ -86,6 +87,12 @@ int main(void)
 	bool showHints = true; // M6 Goal 4: F1 toggles the shortcut overlay
 	input.shortcuts.Bind(KEY_F1, [&] { showHints = !showHints; });
 	input.shortcuts.Bind(KEY_P, [&] { menu.TogglePause(); });
+	input.shortcuts.Bind(KEY_F5, [&] {
+		SaveWorld({ &registry, &resources, &map, &camera, &nodes }, "data/quicksave.ccsv");
+	});
+	input.shortcuts.Bind(KEY_F9, [&] {
+		LoadWorld({ &registry, &resources, &map, &camera, &nodes }, "data/quicksave.ccsv");
+	});
 	input.shortcuts.Bind(KEY_ESCAPE, [&] { DeselectAll(registry); });
 	input.shortcuts.Bind(KEY_SPACE, [&] {
 		registry.Each<Unit>([&](Entity, Unit &unit) {

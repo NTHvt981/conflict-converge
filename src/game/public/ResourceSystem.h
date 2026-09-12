@@ -17,6 +17,11 @@ public:
     // carrying fractions forward; never caps (design: income has no maximum).
     void TickIncome(float ironPerSecond, float oilPerSecond, float dt);
 
+    // Save/load support: fractional income banks (not visible in balances).
+    float IronCarry() const;
+    float OilCarry() const;
+    void SetCarry(float ironCarry, float oilCarry);
+
 private:
     float ironCarry_ = 0.0f;
     float oilCarry_ = 0.0f;

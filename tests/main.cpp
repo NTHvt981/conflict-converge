@@ -23,6 +23,7 @@ void RunTargetingTests();
 void RunStateMachineTests();
 void RunFormationTests();
 void RunFactoryTests();
+void RunSaveGameTests();
 void RunIncomeTests();
 void RunBuildingTests();
 void RunNodesTests();
@@ -57,6 +58,7 @@ int main()
     RunStateMachineTests();
     RunFormationTests();
     RunFactoryTests();
+    RunSaveGameTests();
     RunIncomeTests();
     RunBuildingTests();
     RunNodesTests();

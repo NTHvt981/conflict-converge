@@ -49,6 +49,14 @@ public:
     // Read-only iteration (rendering, HUD).
     void Each(const std::function<void(const ResourceNode &)> &fn) const;
 
+    // Save/load support: restore a node verbatim (no placement validation;
+    // the loader has already validated the map) and round-trip gather carry.
+    void RestoreNode(ResourceKind kind, cc::IVec2 tile, float amount, float maxAmount,
+                     float respawnDelay, float respawnTimer);
+    float IronCarry() const;
+    float OilCarry() const;
+    void SetCarry(float ironCarry, float oilCarry);
+
 private:
     std::vector<ResourceNode> nodes_;
     float ironCarry_ = 0.0f; // fractional gather banked across ticks

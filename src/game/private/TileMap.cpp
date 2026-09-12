@@ -53,6 +53,15 @@ void TileMap::Clear(TerrainType fill)
     std::fill(tiles_.begin(), tiles_.end(), fill);
 }
 
+void TileMap::Resize(int widthTiles, int heightTiles)
+{
+    CC_ASSERT(widthTiles > 0 && heightTiles > 0);
+    width_ = widthTiles;
+    height_ = heightTiles;
+    tiles_.assign(static_cast<std::size_t>(widthTiles) * static_cast<std::size_t>(heightTiles),
+                  TerrainType::Grass);
+}
+
 int TileMap::Index(cc::IVec2 tile) const
 {
     return tile.y * width_ + tile.x;

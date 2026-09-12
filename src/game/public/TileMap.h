@@ -38,6 +38,9 @@ public:
 
     void Clear(TerrainType fill = TerrainType::Grass);
 
+    // Resize to new dimensions, clearing to Grass (save/load support).
+    void Resize(int widthTiles, int heightTiles);
+
 private:
     int Index(cc::IVec2 tile) const;
 

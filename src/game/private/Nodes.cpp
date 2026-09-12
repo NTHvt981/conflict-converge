@@ -122,3 +122,32 @@ void ResourceNodes::Each(const std::function<void(const ResourceNode &)> &fn) co
         fn(node);
     }
 }
+
+void ResourceNodes::RestoreNode(ResourceKind kind, cc::IVec2 tile, float amount, float maxAmount,
+                                float respawnDelay, float respawnTimer)
+{
+    ResourceNode node;
+    node.kind = kind;
+    node.tile = tile;
+    node.amount = amount;
+    node.maxAmount = maxAmount;
+    node.respawnDelay = respawnDelay;
+    node.respawnTimer = respawnTimer;
+    nodes_.push_back(node);
+}
+
+float ResourceNodes::IronCarry() const
+{
+    return ironCarry_;
+}
+
+float ResourceNodes::OilCarry() const
+{
+    return oilCarry_;
+}
+
+void ResourceNodes::SetCarry(float ironCarry, float oilCarry)
+{
+    ironCarry_ = ironCarry;
+    oilCarry_ = oilCarry;
+}

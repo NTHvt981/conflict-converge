@@ -69,6 +69,8 @@ std::vector<std::string> ShortcutHintLines()
         "Space Halt",
         "P Pause",
         "F1 Hints",
+        "F5 Save",
+        "F9 Load",
     };
 }
 
