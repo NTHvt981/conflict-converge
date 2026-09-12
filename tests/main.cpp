@@ -38,6 +38,7 @@ void RunAttackPhaseTests();
 void RunCrushTests();
 void RunFeedbackTests();
 void RunIntegrationTests();
+void RunPerfTests();
 
 int main()
 {
@@ -74,6 +75,7 @@ int main()
     RunCrushTests();
     RunFeedbackTests();
     RunIntegrationTests();
+    RunPerfTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);

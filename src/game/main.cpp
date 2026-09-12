@@ -313,6 +313,9 @@ int main(void)
 			DrawRectangle(620, 68, static_cast<int>(150.0f * queue.HeadProgress()), 12, DARKGREEN);
 		}
 
+		// M7 Goal 3: live frame-rate readout (60 FPS target validation).
+		DrawFPS(620, 88);
+
 		// M6 Goal 4: shortcut overlay, bottom-left, toggled with F1.
 		if (showHints)
 		{
