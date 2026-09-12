@@ -6,13 +6,58 @@
 #include "Pathfinder.h" // M3 Goal 5: chase orders route around blocked tiles.
 #include "Targeting.h"  // M3 Goal 5: acquire/validate targets, range checks.
 #include "TileMap.h"   // M2 Goal 4: movement stops at blocked tiles.
+#include "Building.h"  // M13: repair targets include structures.
+#include "UnitStats.h" // M13: max-health lookup for repair validation.
 
 // Stub: unit behavior, AI, and factory arrive in M3.
+
+#include "UnitStats.h" // M13: max-health lookup for repair validation.
 
 void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
 {
     unit.moveTarget = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldTarget)));
     unit.hasMoveOrder = true;
+    // A plain move replaces fancier orders (attack-move, repair).
+    unit.attackMove = false;
+    unit.hasRepairOrder = false;
+    unit.repairTarget = kInvalidEntity;
+}
+
+void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
+{
+    unit.attackMove = false;
+    unit.hasRepairOrder = false;
+    unit.repairTarget = kInvalidEntity;
+    IssuePathOrder(unit, map, worldTarget); // A* (or straight fallback)
+    unit.attackMove = true;
+    unit.attackMoveDest = unit.moveTarget;
+}
+
+void SetStance(Unit &unit, Stance stance)
+{
+    unit.stance = stance;
+    if (stance != Stance::Patrol)
+    {
+        unit.hasPatrol = false;
+    }
+    if (stance == Stance::Hold)
+    {
+        // Stand down immediately; firing in range resumes below.
+        unit.target = kInvalidEntity;
+    }
+}
+
+void IssuePatrolOrder(Unit &unit, const TileMap &map, Vector2 pointA, Vector2 pointB)
+{
+    unit.stance = Stance::Patrol;
+    unit.hasPatrol = true;
+    unit.patrolA = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(pointA)));
+    unit.patrolB = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(pointB)));
+    unit.patrolToB = true;
+    unit.attackMove = false;
+    unit.hasRepairOrder = false;
+    unit.repairTarget = kInvalidEntity;
+    IssuePathOrder(unit, map, unit.patrolB);
 }
 
 namespace
@@ -59,12 +104,110 @@ void StopMoving(Unit &unit)
 
 } // namespace
 
+void IssueRepairOrder(Unit &engineer, Entity target)
+{
+    if (engineer.type != UnitType::Engineer)
+    {
+        return;
+    }
+    StopMoving(engineer);
+    engineer.attackMove = false;
+    engineer.hasRepairOrder = true;
+    engineer.repairTarget = target;
+}
+
 // M9: a set target standing on a tile the unit's team cannot see is dropped —
 // except for Artillery, which blind-fires into shroud at no penalty (Q78).
 bool LostToFog(const Unit &unit, const Unit &target, const FogOfWar *fog)
 {
     return fog != nullptr && unit.type != UnitType::Artillery &&
            !fog->IsVisible(unit.teamID, cc::WorldToTile(cc::ToGlm(target.position)));
+}
+
+// M13: repair tuning. Channel rate is HP/sec; cost is time only (Q83).
+constexpr float kRepairRange = 128.0f;
+constexpr float kRepairRate = 15.0f;
+
+// Only mechanical units take wrenches; infantry flesh is left alone.
+bool IsRepairableUnit(const Unit &unit)
+{
+    return unit.type == UnitType::IFV || unit.type == UnitType::Artillery ||
+           unit.type == UnitType::LightTank || unit.type == UnitType::HeavyTank;
+}
+
+// Validate a repair order and report where to work. False (order dies) for
+// non-Engineers, dead/foreign/healthy targets, flesh units, and wrecked
+// (non-Operational) buildings.
+bool RepairAim(const Registry &registry, const Unit &engineer, Entity target, Vector2 &outPos)
+{
+    if (engineer.type != UnitType::Engineer)
+    {
+        return false;
+    }
+    if (const Unit *u = registry.Get<Unit>(target))
+    {
+        if (u->health <= 0.0f || u->teamID != engineer.teamID || !IsRepairableUnit(*u))
+        {
+            return false;
+        }
+        if (u->health >= BaseStats(u->type).health)
+        {
+            return false;
+        }
+        outPos = u->position;
+        return true;
+    }
+    if (const Building *b = registry.Get<Building>(target))
+    {
+        if (b->state != BuildingState::Operational || b->teamID != engineer.teamID)
+        {
+            return false;
+        }
+        if (b->health >= b->maxHealth)
+        {
+            return false;
+        }
+        const Vector2 corner = cc::ToRaylib(cc::TileToWorld(b->tileX, b->tileY));
+        const cc::IVec2 size = Footprint(b->type);
+        outPos = { corner.x + static_cast<float>(size.x) * cc::TILE_SIZE / 2.0f,
+                   corner.y + static_cast<float>(size.y) * cc::TILE_SIZE / 2.0f };
+        return true;
+    }
+    return false;
+}
+
+// Approach tile for repair work: the aim tile itself when walkable (units),
+// else the nearest passable ring (building footprints are blocked, so the
+// engineer parks beside the structure instead of pushing into it).
+cc::IVec2 RepairApproachTile(const TileMap &map, cc::IVec2 aimTile)
+{
+    if (!map.InBounds(aimTile))
+    {
+        return aimTile;
+    }
+    if (!map.IsBlocked(aimTile))
+    {
+        return aimTile;
+    }
+    for (int ring = 1; ring <= 3; ++ring)
+    {
+        for (int dy = -ring; dy <= ring; ++dy)
+        {
+            for (int dx = -ring; dx <= ring; ++dx)
+            {
+                if (dx * dx + dy * dy > ring * ring)
+                {
+                    continue;
+                }
+                const cc::IVec2 tile{ aimTile.x + dx, aimTile.y + dy };
+                if (map.InBounds(tile) && !map.IsBlocked(tile))
+                {
+                    return tile;
+                }
+            }
+        }
+    }
+    return aimTile;
 }
 
 void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSeconds,
@@ -93,11 +236,84 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
         }
     }
 
+    // M13: repair orders behave like move orders with a job at the end.
+    // Approach out-of-range targets (re-path on tile change, chase-style),
+    // channel HP inside 96px, drop the order when there is nothing to fix.
+    if (unit->hasRepairOrder)
+    {
+        Vector2 aim = {};
+        if (!RepairAim(registry, *unit, unit->repairTarget, aim))
+        {
+            unit->hasRepairOrder = false;
+            unit->repairTarget = kInvalidEntity;
+        }
+        else if (glm::distance(cc::ToGlm(unit->position), cc::ToGlm(aim)) > kRepairRange)
+        {
+            const cc::IVec2 goalTile = RepairApproachTile(map, cc::WorldToTile(cc::ToGlm(aim)));
+            if (!unit->hasPath || !(cc::WorldToTile(cc::ToGlm(unit->moveTarget)) == goalTile))
+            {
+                IssuePathOrder(*unit, map, cc::ToRaylib(cc::TileToWorld(goalTile.x, goalTile.y)));
+            }
+            UpdateUnitMovement(*unit, map, unit->speed, dtSeconds);
+            unit->state = UnitState::Moving;
+            return;
+        }
+        else
+        {
+            const float step = kRepairRate * dtSeconds;
+            if (Unit *patient = registry.Get<Unit>(unit->repairTarget))
+            {
+                const float max = BaseStats(patient->type).health;
+                patient->health = patient->health + step >= max ? max : patient->health + step;
+            }
+            else if (Building *site = registry.Get<Building>(unit->repairTarget))
+            {
+                site->health =
+                    site->health + step >= site->maxHealth ? site->maxHealth : site->health + step;
+            }
+            unit->state = UnitState::Idle;
+            unit->velocity = { 0.0f, 0.0f };
+            return;
+        }
+    }
+
     // Explicit player orders win over acquiring NEW targets — but a unit
     // already engaging (chase path with a set target) stops to fire the
     // moment its target enters range instead of walking past it.
     if (unit->hasMoveOrder || unit->hasPath)
     {
+        // M13: attack-move scans on the march. Contact -> engage in place
+        // (orders intact); contact lost -> resume the recorded destination.
+        if (unit->attackMove)
+        {
+            unit->target = AcquireTarget(registry, self, fog);
+            if (unit->target != kInvalidEntity)
+            {
+                Unit *target = registry.Get<Unit>(unit->target);
+                if (target != nullptr && target->health > 0.0f &&
+                    !LostToFog(*unit, *target, fog))
+                {
+                    if (InAttackRange(*unit, *target))
+                    {
+                        unit->state = UnitState::Attacking;
+                        unit->velocity = { 0.0f, 0.0f };
+                        UpdateAttack(*unit, *target, dtSeconds);
+                        return;
+                    }
+                    IssuePathOrder(*unit, map, target->position); // detour
+                    UpdateUnitMovement(*unit, map, unit->speed, dtSeconds);
+                    unit->state = UnitState::Moving;
+                    return;
+                }
+                unit->target = kInvalidEntity;
+            }
+            const cc::IVec2 destTile = cc::WorldToTile(cc::ToGlm(unit->attackMoveDest));
+            if (!unit->hasMoveOrder || !unit->hasPath ||
+                !(cc::WorldToTile(cc::ToGlm(unit->moveTarget)) == destTile))
+            {
+                IssuePathOrder(*unit, map, unit->attackMoveDest); // (re)march
+            }
+        }
         if (unit->target != kInvalidEntity)
         {
             Unit *target = registry.Get<Unit>(unit->target);
@@ -132,9 +348,28 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
     if (unit->target == kInvalidEntity)
     {
         unit->target = AcquireTarget(registry, self, fog);
+        if (unit->target != kInvalidEntity && unit->stance == Stance::Hold)
+        {
+            // Hold: stand still, firing only at what is already in range.
+            const Unit *sighting = registry.Get<Unit>(unit->target);
+            if (sighting == nullptr || !InAttackRange(*unit, *sighting))
+            {
+                unit->target = kInvalidEntity;
+            }
+        }
     }
     if (unit->target == kInvalidEntity)
     {
+        // M13: patrol loops its legs while idle with no combat to answer.
+        if (unit->stance == Stance::Patrol && unit->hasPatrol && !unit->hasMoveOrder &&
+            !unit->hasPath)
+        {
+            const Vector2 leg = unit->patrolToB ? unit->patrolB : unit->patrolA;
+            unit->patrolToB = !unit->patrolToB;
+            IssuePathOrder(*unit, map, leg);
+            unit->state = UnitState::Moving;
+            return;
+        }
         unit->state = UnitState::Idle;
         unit->velocity = { 0.0f, 0.0f };
         return;
@@ -146,6 +381,14 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
         unit->state = UnitState::Attacking;
         unit->velocity = { 0.0f, 0.0f };
         UpdateAttack(*unit, *registry.Get<Unit>(unit->target), dtSeconds);
+        return;
+    }
+    if (unit->stance == Stance::Hold)
+    {
+        // Out of range and holding: stand down instead of chasing.
+        unit->target = kInvalidEntity;
+        unit->state = UnitState::Idle;
+        unit->velocity = { 0.0f, 0.0f };
         return;
     }
 

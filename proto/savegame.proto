@@ -80,6 +80,8 @@ message Building
     int32 team = 3;
     int32 tile_x = 4;
     int32 tile_y = 5;
+    float health = 6;     // M13 structural HP
+    float max_health = 7;
 }
 
 message ResourceNode

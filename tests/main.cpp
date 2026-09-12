@@ -45,6 +45,7 @@ void RunFogCombatTests();
 void RunMapFileTests();
 void RunAudioTests();
 void RunArtTests();
+void RunOrdersTests();
 
 int main()
 {
@@ -88,6 +89,7 @@ int main()
     RunMapFileTests();
     RunAudioTests();
     RunArtTests();
+    RunOrdersTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);

@@ -60,6 +60,16 @@ enum class AttackPhase
     Recover
 };
 
+// M13: combat stances. Guard is the legacy behavior (acquire + chase);
+// Hold stands still but fires at in-range enemies; Patrol loops waypoints
+// when no combat interrupts.
+enum class Stance
+{
+    Hold,
+    Guard,
+    Patrol
+};
+
 struct Unit
 {
     float health = 100.0f;
@@ -94,6 +104,20 @@ struct Unit
     std::vector<cc::IVec2> path;
     std::size_t pathNext = 0;
     bool hasPath = false;
+    // M13: attack-move (engage on contact, resume path after). moveTarget
+    // carries the march goal while attackMoveDest remembers it across
+    // chase detours; the driver re-issues when the two diverge.
+    bool attackMove = false;
+    Vector2 attackMoveDest = {};
+    // M13: stance + patrol route (looping waypoint pair while idle).
+    Stance stance = Stance::Guard;
+    bool hasPatrol = false;
+    Vector2 patrolA = {};
+    Vector2 patrolB = {};
+    bool patrolToB = true;
+    // M13: Engineer repair order (channeled, time cost only — Q83).
+    bool hasRepairOrder = false;
+    Entity repairTarget = kInvalidEntity;
 };
 
 // M2 Goal 2: snap a unit's world position to its tile's top-left corner
@@ -107,6 +131,22 @@ inline void SnapUnitToTile(Unit &unit)
 // M2 Goal 4: right-click command input. Stores a tile-snapped destination;
 // UpdateUnitMovement (called per frame) walks the unit there.
 void IssueMoveOrder(Unit &unit, Vector2 worldTarget);
+
+// M13: attack-move order. Like a move order, but the driver engages enemies
+// on contact and resumes the march when the target is lost.
+void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget);
+
+// M13: stance switch. Leaving Patrol drops the route; orders are untouched.
+void SetStance(Unit &unit, Stance stance);
+
+// M13: patrol route between two world points (snapped). The driver loops
+// the legs while idle with no combat to answer.
+void IssuePatrolOrder(Unit &unit, const TileMap &map, Vector2 pointA, Vector2 pointB);
+
+// M13: Engineer repair order on a same-team mechanical unit or Operational
+// building. Heals over time while in range; costs time, not resources (Q83).
+// No-op unless the issuer is an Engineer.
+void IssueRepairOrder(Unit &engineer, Entity target);
 
 // Advance one frame toward the pending order; stops snapped on arrival or
 // at the first blocked tile (TileMap::IsBlocked, out-of-bounds included).

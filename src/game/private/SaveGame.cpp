@@ -239,6 +239,15 @@ bool Decode(const std::string &payload, SavedWorld &out)
         b.teamID = in.team();
         b.tileX = in.tile_x();
         b.tileY = in.tile_y();
+        // M13: legacy saves predate building HP (zeros on the wire) — heal
+        // those to full rather than loading rubble.
+        const float full = BuildingMaxHealth(b.type);
+        b.maxHealth = in.max_health() > 0.0f ? in.max_health() : full;
+        b.health = in.health() > 0.0f ? in.health() : full;
+        if (b.health > b.maxHealth)
+        {
+            b.health = b.maxHealth;
+        }
         out.buildings.push_back(b);
     }
 
@@ -332,6 +341,8 @@ bool SaveWorld(const WorldState &world, const std::string &path)
         out->set_team(b.teamID);
         out->set_tile_x(b.tileX);
         out->set_tile_y(b.tileY);
+        out->set_health(b.health);
+        out->set_max_health(b.maxHealth);
     });
     world.nodes->Each([&](const ResourceNode &node) {
         cc::save::ResourceNode *out = msg.add_nodes();

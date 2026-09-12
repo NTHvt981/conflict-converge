@@ -1562,6 +1562,8 @@ class Building final :
     kTeamFieldNumber = 3,
     kTileXFieldNumber = 4,
     kTileYFieldNumber = 5,
+    kHealthFieldNumber = 6,
+    kMaxHealthFieldNumber = 7,
   };
   // int32 type = 1;
   void clear_type();
@@ -1608,6 +1610,24 @@ class Building final :
   void _internal_set_tile_y(int32_t value);
   public:
 
+  // float health = 6;
+  void clear_health();
+  float health() const;
+  void set_health(float value);
+  private:
+  float _internal_health() const;
+  void _internal_set_health(float value);
+  public:
+
+  // float max_health = 7;
+  void clear_max_health();
+  float max_health() const;
+  void set_max_health(float value);
+  private:
+  float _internal_max_health() const;
+  void _internal_set_max_health(float value);
+  public:
+
   // @@protoc_insertion_point(class_scope:cc.save.Building)
  private:
   class _Internal;
@@ -1621,6 +1641,8 @@ class Building final :
     int32_t team_;
     int32_t tile_x_;
     int32_t tile_y_;
+    float health_;
+    float max_health_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -3678,6 +3700,46 @@ inline void Building::_internal_set_tile_y(int32_t value) {
 inline void Building::set_tile_y(int32_t value) {
   _internal_set_tile_y(value);
   // @@protoc_insertion_point(field_set:cc.save.Building.tile_y)
+}
+
+// float health = 6;
+inline void Building::clear_health() {
+  _impl_.health_ = 0;
+}
+inline float Building::_internal_health() const {
+  return _impl_.health_;
+}
+inline float Building::health() const {
+  // @@protoc_insertion_point(field_get:cc.save.Building.health)
+  return _internal_health();
+}
+inline void Building::_internal_set_health(float value) {
+  
+  _impl_.health_ = value;
+}
+inline void Building::set_health(float value) {
+  _internal_set_health(value);
+  // @@protoc_insertion_point(field_set:cc.save.Building.health)
+}
+
+// float max_health = 7;
+inline void Building::clear_max_health() {
+  _impl_.max_health_ = 0;
+}
+inline float Building::_internal_max_health() const {
+  return _impl_.max_health_;
+}
+inline float Building::max_health() const {
+  // @@protoc_insertion_point(field_get:cc.save.Building.max_health)
+  return _internal_max_health();
+}
+inline void Building::_internal_set_max_health(float value) {
+  
+  _impl_.max_health_ = value;
+}
+inline void Building::set_max_health(float value) {
+  _internal_set_max_health(value);
+  // @@protoc_insertion_point(field_set:cc.save.Building.max_health)
 }
 
 // -------------------------------------------------------------------

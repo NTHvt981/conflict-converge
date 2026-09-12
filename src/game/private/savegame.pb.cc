@@ -143,6 +143,8 @@ PROTOBUF_CONSTEXPR Building::Building(
   , /*decltype(_impl_.team_)*/0
   , /*decltype(_impl_.tile_x_)*/0
   , /*decltype(_impl_.tile_y_)*/0
+  , /*decltype(_impl_.health_)*/0
+  , /*decltype(_impl_.max_health_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct BuildingDefaultTypeInternal {
   PROTOBUF_CONSTEXPR BuildingDefaultTypeInternal()
@@ -303,6 +305,8 @@ const uint32_t TableStruct_savegame_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   PROTOBUF_FIELD_OFFSET(::cc::save::Building, _impl_.team_),
   PROTOBUF_FIELD_OFFSET(::cc::save::Building, _impl_.tile_x_),
   PROTOBUF_FIELD_OFFSET(::cc::save::Building, _impl_.tile_y_),
+  PROTOBUF_FIELD_OFFSET(::cc::save::Building, _impl_.health_),
+  PROTOBUF_FIELD_OFFSET(::cc::save::Building, _impl_.max_health_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::cc::save::ResourceNode, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -349,9 +353,9 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 36, -1, -1, sizeof(::cc::save::TileMap)},
   { 45, -1, -1, sizeof(::cc::save::Unit)},
   { 77, -1, -1, sizeof(::cc::save::Building)},
-  { 88, -1, -1, sizeof(::cc::save::ResourceNode)},
-  { 100, -1, -1, sizeof(::cc::save::SaveGame)},
-  { 117, -1, -1, sizeof(::cc::save::TeamFog)},
+  { 90, -1, -1, sizeof(::cc::save::ResourceNode)},
+  { 102, -1, -1, sizeof(::cc::save::SaveGame)},
+  { 119, -1, -1, sizeof(::cc::save::TeamFog)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -390,26 +394,27 @@ const char descriptor_table_protodef_savegame_2eproto[] PROTOBUF_SECTION_VARIABL
   " \001(\005\022\"\n\013move_target\030\026 \001(\0132\r.cc.save.Vec2"
   "\022\026\n\016has_move_order\030\027 \001(\010\022\034\n\004path\030\030 \003(\0132\016"
   ".cc.save.IVec2\022\021\n\tpath_next\030\031 \001(\r\022\020\n\010has"
-  "_path\030\032 \001(\010\"U\n\010Building\022\014\n\004type\030\001 \001(\005\022\r\n"
+  "_path\030\032 \001(\010\"y\n\010Building\022\014\n\004type\030\001 \001(\005\022\r\n"
   "\005state\030\002 \001(\005\022\014\n\004team\030\003 \001(\005\022\016\n\006tile_x\030\004 \001"
-  "(\005\022\016\n\006tile_y\030\005 \001(\005\"\214\001\n\014ResourceNode\022\014\n\004k"
-  "ind\030\001 \001(\005\022\034\n\004tile\030\002 \001(\0132\016.cc.save.IVec2\022"
-  "\016\n\006amount\030\003 \001(\002\022\022\n\nmax_amount\030\004 \001(\002\022\025\n\rr"
-  "espawn_delay\030\005 \001(\002\022\025\n\rrespawn_timer\030\006 \001("
-  "\002\"\330\002\n\010SaveGame\022\024\n\014save_version\030\001 \001(\r\022%\n\t"
-  "resources\030\002 \001(\0132\022.cc.save.Resources\022\037\n\006c"
-  "amera\030\003 \001(\0132\017.cc.save.Camera\022\035\n\003map\030\004 \001("
-  "\0132\020.cc.save.TileMap\022\034\n\005units\030\005 \003(\0132\r.cc."
-  "save.Unit\022$\n\tbuildings\030\006 \003(\0132\021.cc.save.B"
-  "uilding\022$\n\005nodes\030\007 \003(\0132\025.cc.save.Resourc"
-  "eNode\022\027\n\017node_iron_carry\030\010 \001(\002\022\026\n\016node_o"
-  "il_carry\030\t \001(\002\022\020\n\010explored\030\n \001(\014\022\"\n\010team"
-  "_fog\030\013 \003(\0132\020.cc.save.TeamFog\")\n\007TeamFog\022"
-  "\014\n\004team\030\001 \001(\005\022\020\n\010explored\030\002 \001(\014b\006proto3"
+  "(\005\022\016\n\006tile_y\030\005 \001(\005\022\016\n\006health\030\006 \001(\002\022\022\n\nma"
+  "x_health\030\007 \001(\002\"\214\001\n\014ResourceNode\022\014\n\004kind\030"
+  "\001 \001(\005\022\034\n\004tile\030\002 \001(\0132\016.cc.save.IVec2\022\016\n\006a"
+  "mount\030\003 \001(\002\022\022\n\nmax_amount\030\004 \001(\002\022\025\n\rrespa"
+  "wn_delay\030\005 \001(\002\022\025\n\rrespawn_timer\030\006 \001(\002\"\330\002"
+  "\n\010SaveGame\022\024\n\014save_version\030\001 \001(\r\022%\n\treso"
+  "urces\030\002 \001(\0132\022.cc.save.Resources\022\037\n\006camer"
+  "a\030\003 \001(\0132\017.cc.save.Camera\022\035\n\003map\030\004 \001(\0132\020."
+  "cc.save.TileMap\022\034\n\005units\030\005 \003(\0132\r.cc.save"
+  ".Unit\022$\n\tbuildings\030\006 \003(\0132\021.cc.save.Build"
+  "ing\022$\n\005nodes\030\007 \003(\0132\025.cc.save.ResourceNod"
+  "e\022\027\n\017node_iron_carry\030\010 \001(\002\022\026\n\016node_oil_c"
+  "arry\030\t \001(\002\022\020\n\010explored\030\n \001(\014\022\"\n\010team_fog"
+  "\030\013 \003(\0132\020.cc.save.TeamFog\")\n\007TeamFog\022\014\n\004t"
+  "eam\030\001 \001(\005\022\020\n\010explored\030\002 \001(\014b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_savegame_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_savegame_2eproto = {
-    false, false, 1519, descriptor_table_protodef_savegame_2eproto,
+    false, false, 1555, descriptor_table_protodef_savegame_2eproto,
     "savegame.proto",
     &descriptor_table_savegame_2eproto_once, nullptr, 0, 10,
     schemas, file_default_instances, TableStruct_savegame_2eproto::offsets,
@@ -2711,12 +2716,14 @@ Building::Building(const Building& from)
     , decltype(_impl_.team_){}
     , decltype(_impl_.tile_x_){}
     , decltype(_impl_.tile_y_){}
+    , decltype(_impl_.health_){}
+    , decltype(_impl_.max_health_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   ::memcpy(&_impl_.type_, &from._impl_.type_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.tile_y_) -
-    reinterpret_cast<char*>(&_impl_.type_)) + sizeof(_impl_.tile_y_));
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.max_health_) -
+    reinterpret_cast<char*>(&_impl_.type_)) + sizeof(_impl_.max_health_));
   // @@protoc_insertion_point(copy_constructor:cc.save.Building)
 }
 
@@ -2730,6 +2737,8 @@ inline void Building::SharedCtor(
     , decltype(_impl_.team_){0}
     , decltype(_impl_.tile_x_){0}
     , decltype(_impl_.tile_y_){0}
+    , decltype(_impl_.health_){0}
+    , decltype(_impl_.max_health_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -2758,8 +2767,8 @@ void Building::Clear() {
   (void) cached_has_bits;
 
   ::memset(&_impl_.type_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.tile_y_) -
-      reinterpret_cast<char*>(&_impl_.type_)) + sizeof(_impl_.tile_y_));
+      reinterpret_cast<char*>(&_impl_.max_health_) -
+      reinterpret_cast<char*>(&_impl_.type_)) + sizeof(_impl_.max_health_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -2806,6 +2815,22 @@ const char* Building::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx)
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 40)) {
           _impl_.tile_y_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // float health = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 53)) {
+          _impl_.health_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
+          goto handle_unusual;
+        continue;
+      // float max_health = 7;
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 61)) {
+          _impl_.max_health_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
         } else
           goto handle_unusual;
         continue;
@@ -2868,6 +2893,26 @@ uint8_t* Building::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteInt32ToArray(5, this->_internal_tile_y(), target);
   }
 
+  // float health = 6;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_health = this->_internal_health();
+  uint32_t raw_health;
+  memcpy(&raw_health, &tmp_health, sizeof(tmp_health));
+  if (raw_health != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(6, this->_internal_health(), target);
+  }
+
+  // float max_health = 7;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_max_health = this->_internal_max_health();
+  uint32_t raw_max_health;
+  memcpy(&raw_max_health, &tmp_max_health, sizeof(tmp_max_health));
+  if (raw_max_health != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(7, this->_internal_max_health(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -2909,6 +2954,24 @@ size_t Building::ByteSizeLong() const {
     total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_tile_y());
   }
 
+  // float health = 6;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_health = this->_internal_health();
+  uint32_t raw_health;
+  memcpy(&raw_health, &tmp_health, sizeof(tmp_health));
+  if (raw_health != 0) {
+    total_size += 1 + 4;
+  }
+
+  // float max_health = 7;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_max_health = this->_internal_max_health();
+  uint32_t raw_max_health;
+  memcpy(&raw_max_health, &tmp_max_health, sizeof(tmp_max_health));
+  if (raw_max_health != 0) {
+    total_size += 1 + 4;
+  }
+
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
@@ -2942,6 +3005,20 @@ void Building::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTO
   if (from._internal_tile_y() != 0) {
     _this->_internal_set_tile_y(from._internal_tile_y());
   }
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_health = from._internal_health();
+  uint32_t raw_health;
+  memcpy(&raw_health, &tmp_health, sizeof(tmp_health));
+  if (raw_health != 0) {
+    _this->_internal_set_health(from._internal_health());
+  }
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_max_health = from._internal_max_health();
+  uint32_t raw_max_health;
+  memcpy(&raw_max_health, &tmp_max_health, sizeof(tmp_max_health));
+  if (raw_max_health != 0) {
+    _this->_internal_set_max_health(from._internal_max_health());
+  }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -2960,8 +3037,8 @@ void Building::InternalSwap(Building* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(Building, _impl_.tile_y_)
-      + sizeof(Building::_impl_.tile_y_)
+      PROTOBUF_FIELD_OFFSET(Building, _impl_.max_health_)
+      + sizeof(Building::_impl_.max_health_)
       - PROTOBUF_FIELD_OFFSET(Building, _impl_.type_)>(
           reinterpret_cast<char*>(&_impl_.type_),
           reinterpret_cast<char*>(&other->_impl_.type_));

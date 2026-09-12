@@ -20,6 +20,20 @@ cc::IVec2 Footprint(BuildingType type)
     return { 1, 1 };
 }
 
+float BuildingMaxHealth(BuildingType type)
+{
+    switch (type)
+    {
+    case BuildingType::Base:
+        return 600.0f;
+    case BuildingType::ResourceDepot:
+        return 250.0f;
+    case BuildingType::Factory:
+        return 500.0f;
+    }
+    return 250.0f;
+}
+
 namespace
 {
 
@@ -69,6 +83,8 @@ Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int te
     building.teamID = teamID;
     building.tileX = tileX;
     building.tileY = tileY;
+    building.health = BuildingMaxHealth(type);
+    building.maxHealth = building.health;
 
     const Entity id = registry.Create();
     registry.Add(id, building);

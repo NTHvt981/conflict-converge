@@ -184,6 +184,9 @@ int main(void)
 				unit.path.clear();
 				unit.pathNext = 0;
 				unit.target = kInvalidEntity; // M3 Goal 5: halt drops combat too
+				unit.attackMove = false; // M13: halt drops attack-move + repair too
+				unit.hasRepairOrder = false;
+				unit.repairTarget = kInvalidEntity;
 				unit.phase = AttackPhase::Ready; // M4 Goal 3: halt cancels the telegraph
 				unit.velocity = { 0.0f, 0.0f };
 				unit.state = UnitState::Idle;
