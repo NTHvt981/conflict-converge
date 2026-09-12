@@ -64,9 +64,10 @@ namespace
 {
 
 // M4 Goal 3: strike phasing. Ready + cooled + armed -> WindUp; WindUp expiry
-// lands the hit via ResolveAttack and enters Recover; Recover ends when the
+// lands the hit via landHit and enters Recover; Recover ends when the
 // cooldown hits zero. Called only while in range of a valid target.
-void UpdateAttack(Unit &attacker, Unit &target, float dtSeconds)
+// M13: templated on the landing blow so structures share the machine.
+template <typename LandHit> void UpdateAttackPhases(Unit &attacker, float dtSeconds, LandHit landHit)
 {
     if (attacker.phase == AttackPhase::Ready)
     {
@@ -82,7 +83,7 @@ void UpdateAttack(Unit &attacker, Unit &target, float dtSeconds)
         attacker.phaseTime -= dtSeconds;
         if (attacker.phaseTime <= 0.0f)
         {
-            ResolveAttack(attacker, target);
+            landHit();
             attacker.phase = AttackPhase::Recover;
         }
         return;
@@ -91,6 +92,11 @@ void UpdateAttack(Unit &attacker, Unit &target, float dtSeconds)
     {
         attacker.phase = AttackPhase::Ready;
     }
+}
+
+void UpdateAttack(Unit &attacker, Unit &target, float dtSeconds)
+{
+    UpdateAttackPhases(attacker, dtSeconds, [&] { ResolveAttack(attacker, target); });
 }
 
 void StopMoving(Unit &unit)
@@ -167,10 +173,7 @@ bool RepairAim(const Registry &registry, const Unit &engineer, Entity target, Ve
         {
             return false;
         }
-        const Vector2 corner = cc::ToRaylib(cc::TileToWorld(b->tileX, b->tileY));
-        const cc::IVec2 size = Footprint(b->type);
-        outPos = { corner.x + static_cast<float>(size.x) * cc::TILE_SIZE / 2.0f,
-                   corner.y + static_cast<float>(size.y) * cc::TILE_SIZE / 2.0f };
+        outPos = BuildingCenter(*b);
         return true;
     }
     return false;
@@ -210,7 +213,94 @@ cc::IVec2 RepairApproachTile(const TileMap &map, cc::IVec2 aimTile)
     return aimTile;
 }
 
-void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSeconds,
+// M13: polymorphic targets (units and structures share Entity IDs).
+// ValidateTarget: living hostile unit or Operational hostile building,
+// visible unless the seeker blind-fires (fog null or artillery).
+bool ValidateTarget(Registry &registry, const Unit &seeker, Entity id, const FogOfWar *fog)
+{
+    const bool seesThroughFog =
+        (fog == nullptr) || seeker.type == UnitType::Artillery;
+    if (Unit *target = registry.Get<Unit>(id))
+    {
+        if (target->health <= 0.0f || target->teamID == seeker.teamID ||
+            LostToFog(seeker, *target, fog))
+        {
+            return false;
+        }
+        return true;
+    }
+    if (Building *building = registry.Get<Building>(id))
+    {
+        if (building->state != BuildingState::Operational || building->teamID == seeker.teamID)
+        {
+            return false;
+        }
+        return seesThroughFog ||
+               fog->IsVisible(seeker.teamID,
+                              cc::WorldToTile(cc::ToGlm(BuildingCenter(*building))));
+    }
+    return false;
+}
+
+// Aim point for either kind: unit position or structure center.
+Vector2 TargetPosition(Registry &registry, Entity id)
+{
+    if (Unit *target = registry.Get<Unit>(id))
+    {
+        return target->position;
+    }
+    if (Building *building = registry.Get<Building>(id))
+    {
+        return BuildingCenter(*building);
+    }
+    return { 0.0f, 0.0f };
+}
+
+// Fire when a validated target is in range (phase machine + demolish at
+// zero HP). Sets Attacking state. True only when a shot cycle ran —
+// out-of-range or invalid targets return false for the caller to chase.
+bool EngageTarget(Unit &attacker, Registry &registry, TileMap &map, Entity id,
+                  const FogOfWar *fog, float dtSeconds)
+{
+    if (!ValidateTarget(registry, attacker, id, fog))
+    {
+        return false;
+    }
+    if (Unit *target = registry.Get<Unit>(id))
+    {
+        if (!InAttackRange(attacker, *target))
+        {
+            return false;
+        }
+        attacker.state = UnitState::Attacking;
+        attacker.velocity = { 0.0f, 0.0f };
+        UpdateAttack(attacker, *target, dtSeconds);
+        return true;
+    }
+    if (Building *building = registry.Get<Building>(id))
+    {
+        const Vector2 center = BuildingCenter(*building);
+        if (glm::distance(cc::ToGlm(attacker.position), cc::ToGlm(center)) >
+            static_cast<float>(attacker.attackRange))
+        {
+            return false;
+        }
+        attacker.state = UnitState::Attacking;
+        attacker.velocity = { 0.0f, 0.0f };
+        UpdateAttackPhases(attacker, dtSeconds, [&] {
+            ResolveBuildingAttack(attacker, *building);
+            if (building->health <= 0.0f)
+            {
+                // Safe mid-iteration: structures live in their own pool.
+                DemolishBuilding(registry, map, id);
+            }
+        });
+        return true;
+    }
+    return false;
+}
+
+void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
                 const FogOfWar *fog)
 {
     Unit *unit = registry.Get<Unit>(self);
@@ -284,29 +374,27 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
     {
         // M13: attack-move scans on the march. Contact -> engage in place
         // (orders intact); contact lost -> resume the recorded destination.
+        // Structures are contact too: marches raze production on the way.
         if (unit->attackMove)
         {
             unit->target = AcquireTarget(registry, self, fog);
-            if (unit->target != kInvalidEntity)
+            if (unit->target == kInvalidEntity)
             {
-                Unit *target = registry.Get<Unit>(unit->target);
-                if (target != nullptr && target->health > 0.0f &&
-                    !LostToFog(*unit, *target, fog))
-                {
-                    if (InAttackRange(*unit, *target))
-                    {
-                        unit->state = UnitState::Attacking;
-                        unit->velocity = { 0.0f, 0.0f };
-                        UpdateAttack(*unit, *target, dtSeconds);
-                        return;
-                    }
-                    IssuePathOrder(*unit, map, target->position); // detour
-                    UpdateUnitMovement(*unit, map, unit->speed, dtSeconds);
-                    unit->state = UnitState::Moving;
-                    return;
-                }
-                unit->target = kInvalidEntity;
+                unit->target = AcquireBuildingTarget(registry, self, fog);
             }
+            if (unit->target != kInvalidEntity &&
+                ValidateTarget(registry, *unit, unit->target, fog))
+            {
+                if (EngageTarget(*unit, registry, map, unit->target, fog, dtSeconds))
+                {
+                    return; // orders intact: the march resumes after the kill
+                }
+                IssuePathOrder(*unit, map, TargetPosition(registry, unit->target)); // detour
+                UpdateUnitMovement(*unit, map, unit->speed, dtSeconds);
+                unit->state = UnitState::Moving;
+                return;
+            }
+            unit->target = kInvalidEntity;
             const cc::IVec2 destTile = cc::WorldToTile(cc::ToGlm(unit->attackMoveDest));
             if (!unit->hasMoveOrder || !unit->hasPath ||
                 !(cc::WorldToTile(cc::ToGlm(unit->moveTarget)) == destTile))
@@ -316,17 +404,13 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
         }
         if (unit->target != kInvalidEntity)
         {
-            Unit *target = registry.Get<Unit>(unit->target);
-            if (target == nullptr || target->health <= 0.0f || target->teamID == unit->teamID ||
-                LostToFog(*unit, *target, fog))
+            if (!ValidateTarget(registry, *unit, unit->target, fog))
             {
                 unit->target = kInvalidEntity;
             }
-            else if (InAttackRange(*unit, *target))
+            else if (EngageTarget(*unit, registry, map, unit->target, fog, dtSeconds))
             {
                 StopMoving(*unit);
-                unit->state = UnitState::Attacking;
-                UpdateAttack(*unit, *target, dtSeconds);
                 return;
             }
         }
@@ -334,16 +418,11 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
         return;
     }
 
-    // Drop stale targets (destroyed, already dead, no longer hostile, or
-    // hidden by fog for non-artillery).
-    if (unit->target != kInvalidEntity)
+    // Drop stale targets of either kind (destroyed, dead/wrecked, friendly,
+    // or fog-hidden for non-artillery).
+    if (unit->target != kInvalidEntity && !ValidateTarget(registry, *unit, unit->target, fog))
     {
-        const Unit *target = registry.Get<Unit>(unit->target);
-        if (target == nullptr || target->health <= 0.0f || target->teamID == unit->teamID ||
-            LostToFog(*unit, *target, fog))
-        {
-            unit->target = kInvalidEntity;
-        }
+        unit->target = kInvalidEntity;
     }
     if (unit->target == kInvalidEntity)
     {
@@ -357,6 +436,11 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
                 unit->target = kInvalidEntity;
             }
         }
+    }
+    if (unit->target == kInvalidEntity && unit->stance != Stance::Hold)
+    {
+        // No troops to fight: raze nearby hostile structures instead.
+        unit->target = AcquireBuildingTarget(registry, self, fog);
     }
     if (unit->target == kInvalidEntity)
     {
@@ -375,12 +459,8 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
         return;
     }
 
-    const Unit *target = registry.Get<Unit>(unit->target);
-    if (InAttackRange(*unit, *target))
+    if (EngageTarget(*unit, registry, map, unit->target, fog, dtSeconds))
     {
-        unit->state = UnitState::Attacking;
-        unit->velocity = { 0.0f, 0.0f };
-        UpdateAttack(*unit, *registry.Get<Unit>(unit->target), dtSeconds);
         return;
     }
     if (unit->stance == Stance::Hold)
@@ -394,10 +474,11 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
 
     // Chase: re-path only when the target entered a new tile, then walk.
     // An unreachable target degrades to an M2 straight-line bump (IssuePathOrder fallback).
-    const cc::IVec2 targetTile = cc::WorldToTile(cc::ToGlm(target->position));
+    const Vector2 aimPos = TargetPosition(registry, unit->target);
+    const cc::IVec2 targetTile = cc::WorldToTile(cc::ToGlm(aimPos));
     if (!unit->hasPath || !(cc::WorldToTile(cc::ToGlm(unit->moveTarget)) == targetTile))
     {
-        IssuePathOrder(*unit, map, target->position);
+        IssuePathOrder(*unit, map, aimPos);
     }
     UpdateUnitMovement(*unit, map, unit->speed, dtSeconds);
 }

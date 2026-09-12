@@ -52,7 +52,8 @@ void ResourceNodes::Update(float dt)
     }
 }
 
-void ResourceNodes::GatherTick(const Registry &registry, ResourceSystem &resources, float dt)
+void ResourceNodes::GatherTick(const Registry &registry, ResourceSystem &resources, float dt,
+                                 int teamID)
 {
     if (dt <= 0.0f)
     {
@@ -62,6 +63,10 @@ void ResourceNodes::GatherTick(const Registry &registry, ResourceSystem &resourc
         if (unit.type != UnitType::Engineer || unit.health <= 0.0f)
         {
             return; // only living Engineers work nodes
+        }
+        if (teamID >= 0 && unit.teamID != teamID)
+        {
+            return; // this crew works another ledger (M8 fair-rules harvest)
         }
         const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
         for (ResourceNode &node : nodes_)

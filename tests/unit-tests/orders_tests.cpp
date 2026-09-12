@@ -2,7 +2,12 @@
 
 #include "test_harness.h"
 
+#include "AICommander.h" // factory-gate test
 #include "Building.h" // PlaceBuilding, BuildingMaxHealth
+#include "Event.h"    // commander event routing
+#include "FogOfWar.h" // structure acquisition under fog
+#include "Nodes.h"    // ResourceNodes for the commander fixture
+#include "Targeting.h" // AcquireBuildingTarget
 #include "TileMap.h"
 #include "Unit.h"
 #include "UnitStats.h" // ApplyBaseStats, BaseStats max-health
@@ -34,7 +39,7 @@ Entity AddUnit(Registry &registry, const Unit &unit)
     return id;
 }
 
-void StepUnits(Registry &registry, const TileMap &map, int frames)
+void StepUnits(Registry &registry, TileMap &map, int frames)
 {
     for (int i = 0; i < frames; ++i)
     {
@@ -265,16 +270,85 @@ void RunOrdersTests()
         const Entity baseId =
             PlaceBuilding(registry, map, BuildingType::Base, 0, 5, 5);
         CC_CHECK(baseId != kInvalidEntity);
-        CC_CHECK(registry.Get<Building>(baseId)->health == 600.0f);
-        CC_CHECK(BuildingMaxHealth(BuildingType::ResourceDepot) == 250.0f);
-        CC_CHECK(BuildingMaxHealth(BuildingType::Factory) == 500.0f);
+        CC_CHECK(registry.Get<Building>(baseId)->health == 400.0f);
+        CC_CHECK(BuildingMaxHealth(BuildingType::ResourceDepot) == 200.0f);
+        CC_CHECK(BuildingMaxHealth(BuildingType::Factory) == 350.0f);
         registry.Get<Building>(baseId)->health = 100.0f; // battle damage (simulated)
         const Entity engId = AddUnit(registry, Soldier(0, UnitType::Engineer, 5, 4));
         Unit *eng = registry.Get<Unit>(engId);
         eng->speed = 64.0f;
         IssueRepairOrder(*eng, baseId);
         StepUnits(registry, map, 3600);
-        CC_CHECK(registry.Get<Building>(baseId)->health == 600.0f);
+        CC_CHECK(registry.Get<Building>(baseId)->health == 400.0f);
         CC_CHECK(!registry.Get<Unit>(engId)->hasRepairOrder);
+    }
+
+    // --- structures are acquired like targets (nearest, hostile, standing) ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        const Entity seekerId = AddUnit(registry, Soldier(0, UnitType::LightTank, 2, 2));
+        Unit *seeker = registry.Get<Unit>(seekerId);
+        seeker->sightRange = 512.0f;
+        const Entity farBase =
+            PlaceBuilding(registry, map, BuildingType::Base, 1, 7, 2);
+        const Entity nearDepot =
+            PlaceBuilding(registry, map, BuildingType::ResourceDepot, 1, 5, 2);
+        const Entity ownFactory =
+            PlaceBuilding(registry, map, BuildingType::Factory, 0, 2, 5);
+        CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) == nearDepot);
+        // Own structures are never targets.
+        CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) != ownFactory);
+        // Wrecks drop out: demolish the depot, the base becomes the target.
+        DemolishBuilding(registry, map, nearDepot);
+        CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) == farBase);
+        // Fog hides structures from everyone but artillery (Q78).
+        FogOfWar fog;
+        fog.Resize(20, 15); // nothing recomputed: team 0 sees nothing
+        CC_CHECK(AcquireBuildingTarget(registry, seekerId, &fog) == kInvalidEntity);
+        seeker->type = UnitType::Artillery;
+        CC_CHECK(AcquireBuildingTarget(registry, seekerId, &fog) == farBase);
+    }
+
+    // --- driver razes structures: depot falls, tiles free up ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        const Entity depotId =
+            PlaceBuilding(registry, map, BuildingType::ResourceDepot, 1, 5, 2);
+        const Entity raiderId = AddUnit(registry, Soldier(0, UnitType::LightTank, 3, 2));
+        Unit *raider = registry.Get<Unit>(raiderId);
+        raider->sightRange = 512.0f;
+        StepUnits(registry, map, 3600);
+        CC_CHECK(registry.Get<Building>(depotId) == nullptr); // demolished at zero HP
+        CC_CHECK(map.Get({ 5, 2 }) == TerrainType::Grass);     // footprint restored
+        CC_CHECK(registry.Get<Unit>(raiderId)->target == kInvalidEntity);
+    }
+
+    // --- production dies with the factory; the queue stalls ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        ResourceNodes nodes;
+        EventDispatcher events;
+        AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 10, 10 }, { 2, 2 });
+        ai.SetupBase();
+        CC_CHECK(ai.HasFactory());
+        Entity factoryId = kInvalidEntity;
+        registry.Each<Building>([&](Entity id, const Building &b) {
+            if (b.teamID == 1 && b.type == BuildingType::Factory)
+            {
+                factoryId = id;
+            }
+        });
+        CC_CHECK(factoryId != kInvalidEntity);
+        CC_CHECK(DemolishBuilding(registry, map, factoryId));
+        CC_CHECK(!ai.HasFactory());
+        for (int i = 0; i < 300; ++i)
+        {
+            ai.Update(1.0f / 60.0f);
+        }
+        // Guard stands alone: no queue completions without a factory.
+        CC_CHECK(ai.CombatUnitCount() == 1);
     }
 }

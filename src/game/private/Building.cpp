@@ -22,16 +22,18 @@ cc::IVec2 Footprint(BuildingType type)
 
 float BuildingMaxHealth(BuildingType type)
 {
+    // M13 pacing tune: demolition must end games faster than production
+    // replaces (soak evidence). A LightTank levels a Base in ~20s now.
     switch (type)
     {
     case BuildingType::Base:
-        return 600.0f;
+        return 400.0f;
     case BuildingType::ResourceDepot:
-        return 250.0f;
+        return 200.0f;
     case BuildingType::Factory:
-        return 500.0f;
+        return 350.0f;
     }
-    return 250.0f;
+    return 200.0f;
 }
 
 namespace

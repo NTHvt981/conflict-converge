@@ -23,7 +23,7 @@ Entity AddPhaser(Registry &registry, UnitType type, int team, float x, float y)
     return id;
 }
 
-void StepPhasers(Registry &registry, const TileMap &map, float dt, int frames)
+void StepPhasers(Registry &registry, TileMap &map, float dt, int frames)
 {
     for (int i = 0; i < frames; ++i)
     {

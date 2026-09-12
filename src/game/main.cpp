@@ -50,6 +50,7 @@ int main(void)
 	int lastDepletedCount = 0;
 	float attackSfxTimer = 0.0f;
 	MenuState lastOutcomeState = MenuState::Playing;
+	bool hasFactory = false; // M13: recomputed per frame, gates queue + panel
 
 	GameCamera camera;
 	camera.view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
@@ -395,8 +396,21 @@ int main(void)
 			// (dt is declared up at the death sweep so the M11 polls above share it.)
 			UpdateBaseIncome(registry, resources, dt, 0);
 			nodes.Update(dt);
-			nodes.GatherTick(registry, resources, dt);
-			queue.Update(factory, 0, rallyPos, dt);
+			nodes.GatherTick(registry, resources, dt, 0); // team 0 crew only (AI gathers its own)
+			// M13: production dies with the structure — compute here for the
+			// queue gate, reuse for the factory panel below.
+			hasFactory = false;
+			registry.Each<Building>([&](Entity, const Building &building) {
+				if (building.teamID == 0 && building.type == BuildingType::Factory &&
+				    building.state == BuildingState::Operational)
+				{
+					hasFactory = true;
+				}
+			});
+			if (hasFactory)
+			{
+				queue.Update(factory, 0, rallyPos, dt);
+			}
 		ai.Update(dt); // M8: enemy build order, waves, scouting, retreat
 			// M6 Goal 1: periodic minimap refresh (terrain blocks + unit dots).
 			if (minimap.PollRefresh(dt))
@@ -628,8 +642,8 @@ int main(void)
 		DrawSelectionPanel(registry);
 		DrawSaveSlots();
 		// M13: factory panel (build buttons, queue, cancel); rally hint
-		// while placing the rally point.
-		bool hasFactory = false;
+		// while placing the rally point. Recomputed here (not just the sim
+		// gate above) so the panel stays correct while paused.
 		registry.Each<Building>([&](Entity, const Building &building) {
 			if (building.teamID == 0 && building.type == BuildingType::Factory &&
 			    building.state == BuildingState::Operational)

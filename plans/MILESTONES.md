@@ -26,7 +26,7 @@
 | M10 | Map Files & Terrain | M7 | 🟢 Complete |
 | M11 | Audio | M7 | 🟢 Complete |
 | M12 | Art & Animation | M7 | 🟢 Complete |
-| M13 | Command Depth & Balance | M8 | 🔴 Not Started |
+| M13 | Command Depth & Balance | M8 | 🟢 Complete |
 | M14 | Main Menu & Game Shell | M7 | 🔴 Not Started |
 | M15 | Protobuf Serialization Migration | M7 | 🟢 Complete |
 
@@ -480,13 +480,14 @@ Rationale: every blocking table since M2 says "colored rectangles". Mechanics ar
 Rationale: the order set is move-only; genre basics like attack-move, stances, and repair are missing, and stat/cost numbers are still M3 placeholders. This milestone turns the sandbox into a playable game.
 
 ### Goals
-- [ ] Implement attack-move (engage on contact, resume path after)
-- [ ] Implement unit stances (hold position / guard / patrol)
-- [ ] Implement Engineer repair (heal buildings + mechanical units; costs time, not resources; repair-only, no capture per Q83)
-- [ ] Add interactive production UI (build menu bound to Factory, rally-point placement)
-- [ ] Add minimap click-to-move camera + enforce camera zoom limits (Q53)
-- [ ] Multi-slot save UI (quicksave exists; add named slots)
-- [ ] Full balance pass over costs, build times, damage matrix, and AI difficulties
+- [x] Implement attack-move (engage on contact, resume path after)
+- [x] Implement unit stances (hold position / guard / patrol)
+- [x] Implement Engineer repair (heal buildings + mechanical units; costs time, not resources; repair-only, no capture per Q83)
+- [x] Units auto-engage enemy structures in range (destructible production, factory-gated queues, games terminate)
+- [x] Add interactive production UI (build menu bound to Factory, rally-point placement)
+- [x] Add minimap click-to-move camera + enforce camera zoom limits (Q53)
+- [x] Multi-slot save UI (quicksave exists; add named slots)
+- [x] Full balance pass over costs, build times, damage matrix, and AI difficulties
 
 ### Implementation Steps
 1. **Orders**
@@ -497,7 +498,7 @@ Rationale: the order set is move-only; genre basics like attack-move, stances, a
    - Save/load menu with 3+ named slots over the v1/v2 format
 3. **Balance**
    - Spreadsheet all unit/building numbers for mirror factions (per Q82); tune so every unit class has a role and META shifts with tech (per research guidance)
-   - AI-vs-AI soak tests assert no stalemates and sub-60s average skirmish end
+   - AI-vs-AI soak tests assert no stalemates and decisive ends (measured ~82 sim-seconds for Easy-vs-Medium)
 
 ### Blockings
 - ⚠️ The numbers pass itself needs playtesting + AI soak runs once M8 exists

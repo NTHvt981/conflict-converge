@@ -161,6 +161,7 @@ void RunSaveGameTests()
     dst.registry.Each<Building>([&](Entity, const Building &b) {
         bases += (b.type == BuildingType::Base) ? 1 : 0;
         factories += (b.type == BuildingType::Factory) ? 1 : 0;
+        CC_CHECK(b.health > 0.0f && b.health <= b.maxHealth); // M13 HP roundtrips
     });
     CC_CHECK(bases == 1 && factories == 1);
 

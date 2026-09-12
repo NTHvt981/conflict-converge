@@ -5,6 +5,8 @@
 #include "Registry.h" // Entity, Registry::Each for area queries
 #include "Unit.h" // DamageType, ArmorType, Unit (no cycle: Unit.h never includes Combat.h)
 
+struct Building; // fwd-decl (Combat.cpp includes Building.h)
+
 // M4 Goal 1: damage resolution. Attackers deal typed damage (DamageType),
 // defenders resist by armor (ArmorType); the matrix scales raw attackPower
 // into effective damage. Anti-crush (M4G4), phases (M4G3), and hit feedback
@@ -28,6 +30,11 @@ enum class AttackContext
 // Seconds a victim flashes after taking a hit (M4G5 overlay + number).
 inline constexpr float kHitFlashDuration = 0.25f;
 float ResolveAttack(Unit &attacker, Unit &defender, AttackContext context = AttackContext::Direct);
+
+// M13: structural damage. Raw attackPower, no armor matrix (structures are
+// untyped): wrecks production so games terminate. Restarts the cooldown and
+// returns effective damage like ResolveAttack. The driver demolishes at zero.
+float ResolveBuildingAttack(Unit &attacker, Building &building);
 
 // M4 Goal 4: anti-crush rule. Vehicle hulls (IFV/Artillery/Light/HeavyTank)
 // cannot crush foot units (Infantry/AntiArmor/Engineer) — the overrun deals

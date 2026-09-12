@@ -91,6 +91,19 @@ int AICommander::WavesLaunched() const
     return wavesLaunched_;
 }
 
+bool AICommander::HasFactory() const
+{
+    bool found = false;
+    registry_.Each<Building>([&](Entity, const Building &building) {
+        if (building.teamID == teamID_ && building.type == BuildingType::Factory &&
+            building.state == BuildingState::Operational)
+        {
+            found = true;
+        }
+    });
+    return found;
+}
+
 bool AICommander::HasScouted() const
 {
     return scouted_;
@@ -140,8 +153,13 @@ void AICommander::Update(float dt)
         return;
     }
     UpdateBaseIncome(registry_, resources_, dt, teamID_);
-    queue_.Update(factory_, teamID_,
-                  cc::ToRaylib(cc::TileToWorld(rallyTile_.x, rallyTile_.y)), dt);
+    nodes_.GatherTick(registry_, resources_, dt, teamID_); // own crew, own ledger
+    if (HasFactory())
+    {
+        // M13: production dies with the structure — razed AI stays down.
+        queue_.Update(factory_, teamID_,
+                      cc::ToRaylib(cc::TileToWorld(rallyTile_.x, rallyTile_.y)), dt);
+    }
     MaintainHarvesters();
     MaintainProduction();
     timeSinceLaunch_ += dt;
@@ -250,8 +268,21 @@ void AICommander::MaybeLaunchWave()
     {
         return;
     }
-    formation::IssueFormationMove(registry_, army, map_,
-                                  cc::ToRaylib(cc::TileToWorld(lastSeenEnemy_.x, lastSeenEnemy_.y)));
+    // M13: waves attack-move (not plain-move): marchers engage defenders on
+    // contact instead of walking past them, then resume the advance. Plain
+    // formation orders produced walk-through stalemates (measured in soak).
+    const std::vector<cc::IVec2> offsets = formation::FormationOffsets(army.size());
+    for (std::size_t i = 0; i < army.size(); ++i)
+    {
+        Unit *unit = registry_.Get<Unit>(army[i]);
+        if (unit == nullptr)
+        {
+            continue;
+        }
+        const cc::IVec2 slot = lastSeenEnemy_ + offsets[i];
+        IssueAttackMoveOrder(*unit, map_,
+                             cc::ToRaylib(cc::TileToWorld(slot.x, slot.y)));
+    }
     ++wavesLaunched_;
     timeSinceLaunch_ = 0.0f;
 }

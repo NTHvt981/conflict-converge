@@ -60,6 +60,8 @@ public:
     int WavesLaunched() const;
     bool HasScouted() const;
     cc::IVec2 LastSeenEnemy() const;
+    // M13: production requires a standing Factory (razed AI stays down).
+    bool HasFactory() const;
 
 private:
     void MaintainHarvesters();

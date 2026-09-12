@@ -1,5 +1,7 @@
 #include "Combat.h"
 
+#include "Building.h" // M13: structural damage targets
+
 float Effectiveness(DamageType dealt, ArmorType armor)
 {
     // Rows: attacker damage type. Columns: defender armor.
@@ -40,6 +42,14 @@ bool IsCrushNegated(UnitType attackerType, UnitType defenderType)
     const bool footDefender = defenderType == UnitType::Infantry ||
                               defenderType == UnitType::AntiArmorInfantry || defenderType == UnitType::Engineer;
     return vehicleAttacker && footDefender;
+}
+
+float ResolveBuildingAttack(Unit &attacker, Building &building)
+{
+    const float effective = static_cast<float>(attacker.attackPower);
+    building.health -= effective;
+    attacker.cooldown = attacker.cooldownTime;
+    return effective;
 }
 
 // M4 Goal 2: the body fills the center 32x32 of the unit's 64x64 tile.

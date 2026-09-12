@@ -42,7 +42,8 @@ public:
     void Update(float dt);
     // Engineers standing on live nodes transfer to resources (whole units
     // banked, fractions carried). Non-Engineers and the dead never gather.
-    void GatherTick(const Registry &registry, ResourceSystem &resources, float dt);
+    // teamID filters whose Engineers work (-1 = every team, legacy default).
+    void GatherTick(const Registry &registry, ResourceSystem &resources, float dt, int teamID = -1);
 
     std::size_t Count() const;
     const ResourceNode *FindAt(cc::IVec2 tile) const;

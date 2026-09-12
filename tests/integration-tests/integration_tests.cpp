@@ -6,6 +6,7 @@
 
 #include "Building.h"
 #include "Event.h"
+#include "AICommander.h" // M13 soak: difficulty ladder decides games
 #include "FogOfWar.h" // WorldState carries fog memory
 #include "GameCamera.h" // WorldState carries the camera
 #include "MathUtils.h"
@@ -174,5 +175,68 @@ void RunIntegrationTests()
         });
         std::error_code ec;
         std::filesystem::remove(path, ec);
+    }
+
+    // --- M13 balance soak: Easy vs Medium ends decisively, no stalemate ---
+    // Compact arena (16x12): contact in seconds, so tactics decide — not march time.
+    {
+        Registry registry;
+        TileMap map(16, 12);
+        ResourceNodes nodes;
+        nodes.SpawnNode(map, ResourceKind::Iron, { 3, 10 }, 300.0f, 10.0f);
+        nodes.SpawnNode(map, ResourceKind::Oil, { 3, 8 }, 200.0f, 10.0f);
+        nodes.SpawnNode(map, ResourceKind::Iron, { 12, 1 }, 300.0f, 10.0f);
+        nodes.SpawnNode(map, ResourceKind::Oil, { 12, 3 }, 200.0f, 10.0f);
+        EventDispatcher events;
+        AICommander easy(registry, map, nodes, events, 0, AIDifficulty::Easy, { 2, 9 }, { 13, 2 });
+        AICommander medium(registry, map, nodes, events, 1, AIDifficulty::Medium, { 13, 2 },
+                           { 2, 9 });
+        easy.SetupBase();
+        medium.SetupBase();
+        int frames = 0;
+        int kills0 = 0, kills1 = 0;
+        constexpr int kCap = 10800; // 3 sim-minutes; tightened after measuring
+        while (CountTeam(registry, 0) > 0 && CountTeam(registry, 1) > 0 && frames < kCap)
+        {
+            easy.Update(kDt);
+            medium.Update(kDt);
+            nodes.Update(kDt);
+            registry.Each<Unit>([&](Entity id, Unit &unit) {
+                UpdateUnit(id, registry, map, kDt);
+            });
+            std::vector<Entity> dead;
+            registry.Each<Unit>([&](Entity id, const Unit &unit) {
+                if (unit.health <= 0.0f)
+                {
+                    dead.push_back(id);
+                }
+            });
+            for (Entity id : dead)
+            {
+                if (const Unit *corpse = registry.Get<Unit>(id))
+                {
+                    if (corpse->teamID == 0)
+                    {
+                        ++kills0;
+                    }
+                    else
+                    {
+                        ++kills1;
+                    }
+                }
+                registry.Destroy(id);
+            }
+            ++frames;
+            if (frames % 1200 == 0)
+            {
+                std::printf("soak t=%ds t0=%d t1=%d kills=%d/%d waves=%d/%d\n", frames / 60,
+                            CountTeam(registry, 0), CountTeam(registry, 1), kills0, kills1,
+                            easy.WavesLaunched(), medium.WavesLaunched());
+            }
+        }
+        std::printf("soak: Easy-vs-Medium decided in %d frames\n", frames);
+        CC_CHECK(frames < kCap); // terminated: no stalemate
+        CC_CHECK(CountTeam(registry, 1) > 0); // Medium wins the ladder
+        CC_CHECK(CountTeam(registry, 0) == 0);
     }
 }

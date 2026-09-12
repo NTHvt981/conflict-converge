@@ -160,5 +160,5 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
 // factory destroys and announces them).
 // M9: pass fog to gate acquisition + chase validation on visibility
 // (nullptr = ungated legacy behavior, keeps old call sites working).
-void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSeconds,
+void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
                 const FogOfWar *fog = nullptr);

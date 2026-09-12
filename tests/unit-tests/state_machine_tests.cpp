@@ -24,7 +24,7 @@ Entity AddSoldier(Registry &registry, UnitType type, int team, float x, float y)
     return id;
 }
 
-void StepAll(Registry &registry, const TileMap &map, float dt, int frames)
+void StepAll(Registry &registry, TileMap &map, float dt, int frames)
 {
     for (int i = 0; i < frames; ++i)
     {
