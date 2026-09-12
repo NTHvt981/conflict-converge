@@ -22,3 +22,32 @@ float ResolveAttack(Unit &attacker, Unit &defender)
     attacker.cooldown = attacker.cooldownTime;
     return effective;
 }
+
+// M4 Goal 2: the body fills the center 32x32 of the unit's 64x64 tile.
+Rectangle HitboxOf(const Unit &unit)
+{
+    return { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };
+}
+
+bool HitboxesOverlap(const Unit &a, const Unit &b)
+{
+    return CheckCollisionRecs(HitboxOf(a), HitboxOf(b));
+}
+
+void QueryUnitsInRect(Registry &registry, Rectangle area, int teamID, std::vector<Entity> &out)
+{
+    registry.Each<Unit>([&](Entity id, const Unit &unit) {
+        if (unit.health <= 0.0f)
+        {
+            return; // corpses awaiting factory teardown don't collide
+        }
+        if (teamID >= 0 && unit.teamID != teamID)
+        {
+            return;
+        }
+        if (CheckCollisionRecs(HitboxOf(unit), area))
+        {
+            out.push_back(id);
+        }
+    });
+}
