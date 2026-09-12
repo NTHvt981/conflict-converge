@@ -18,6 +18,7 @@
 #include "Minimap.h" // M6 Goal 1: unit-position minimap (periodic refresh)
 #include "Hud.h" // M6 Goal 2: raygui resource + selection panels
 #include "Menu.h" // M6 Goal 3: pause / outcome / settings menu flow
+#include "AICommander.h" // M8: enemy commander (build order, waves, scouting)
 #include <iostream>
 #include <vector>
 #include <format>
@@ -63,7 +64,6 @@ int main(void)
 	spawnDemo(UnitType::Infantry, 2, 2, 0);
 	spawnDemo(UnitType::LightTank, 4, 2, 0);
 	spawnDemo(UnitType::Artillery, 3, 5, 0);
-	spawnDemo(UnitType::LightTank, 6, 2, 1); // M3 Goal 5: hostile, in sight of the infantry
 
 	// M5 demo economy: home base + factory + depot, two field nodes with a
 	// harvester Engineer parked on the iron, and a factory queue building
@@ -79,6 +79,12 @@ int main(void)
 	queue.Enqueue(resources, UnitType::Infantry);
 	queue.Enqueue(resources, UnitType::LightTank);
 	const Vector2 rallyPos = cc::ToRaylib(cc::TileToWorld(13, 11));
+
+	// M8: enemy commander owns team 1 under fair rules (own funds, own
+	// buildings, same order/spend APIs). Its starting guard keeps team 1
+	// fielded from frame one so the outcome check never fires instantly.
+	AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 16, 9 }, { 1, 10 });
+	ai.SetupBase();
 
 	// M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
 	// deselects, Space halts selected units, P pauses (M6 Goal 3),
@@ -172,6 +178,7 @@ int main(void)
 			nodes.Update(dt);
 			nodes.GatherTick(registry, resources, dt);
 			queue.Update(factory, 0, rallyPos, dt);
+		ai.Update(dt); // M8: enemy build order, waves, scouting, retreat
 			// M6 Goal 1: periodic minimap refresh (terrain blocks + unit dots).
 			if (minimap.PollRefresh(dt))
 			{
@@ -315,6 +322,8 @@ int main(void)
 
 		// M7 Goal 3: live frame-rate readout (60 FPS target validation).
 		DrawFPS(620, 88);
+		// M8: enemy commander status (demo plays Medium).
+		DrawText(TextFormat("Enemy: Medium  Waves: %d", ai.WavesLaunched()), 620, 108, 16, GRAY);
 
 		// M6 Goal 4: shortcut overlay, bottom-left, toggled with F1.
 		if (showHints)
