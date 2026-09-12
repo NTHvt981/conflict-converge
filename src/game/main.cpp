@@ -37,17 +37,19 @@ int main(void)
 	map.Set({ 6, 3 }, TerrainType::Water);
 	map.Set({ 7, 3 }, TerrainType::Water);
 	map.Set({ 6, 4 }, TerrainType::Water);
-	auto spawnDemo = [&](UnitType type, int tileX, int tileY) {
+	auto spawnDemo = [&](UnitType type, int tileX, int tileY, int team) {
 		Unit unit;
 		unit.type = type;
 		ApplyBaseStats(unit); // M3 Goal 2: real speed/sight/combat stats
+		unit.teamID = team;
 		unit.position = cc::ToRaylib(cc::TileToWorld(tileX, tileY));
 		SnapUnitToTile(unit);
 		registry.Add(registry.Create(), unit);
 	};
-	spawnDemo(UnitType::Infantry, 2, 2);
-	spawnDemo(UnitType::LightTank, 4, 2);
-	spawnDemo(UnitType::Artillery, 3, 5);
+	spawnDemo(UnitType::Infantry, 2, 2, 0);
+	spawnDemo(UnitType::LightTank, 4, 2, 0);
+	spawnDemo(UnitType::Artillery, 3, 5, 0);
+	spawnDemo(UnitType::LightTank, 6, 2, 1); // M3 Goal 5: hostile, in sight of the infantry
 
 	// M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
 	// deselects, Space halts selected units.
@@ -58,6 +60,10 @@ int main(void)
 			if (unit.isSelected)
 			{
 				unit.hasMoveOrder = false;
+				unit.hasPath = false;
+				unit.path.clear();
+				unit.pathNext = 0;
+				unit.target = kInvalidEntity; // M3 Goal 5: halt drops combat too
 				unit.velocity = { 0.0f, 0.0f };
 				unit.state = UnitState::Idle;
 				SnapUnitToTile(unit);
@@ -98,8 +104,8 @@ int main(void)
 				IssuePathOrder(*ordered, map, input.MouseWorld(camera));
 			}
 		}
-		registry.Each<Unit>([&](Entity, Unit &unit) {
-			UpdateUnitMovement(unit, map, unit.speed, GetFrameTime());
+		registry.Each<Unit>([&](Entity id, Unit &unit) {
+			UpdateUnit(id, registry, map, GetFrameTime()); // M3 Goal 5: AI driver
 		});
 
 		BeginDrawing();
@@ -124,13 +130,23 @@ int main(void)
 			}
 		}
 
-		// Units as 32x32 placeholder rects, red-ringed when selected.
+		// Units as 32x32 placeholder rects: red-ringed when selected,
+		// orange-bodied when Attacking with a tracer to the target (M3G5).
 		registry.Each<Unit>([&](Entity, Unit &unit) {
 			const Rectangle body = { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };
-			DrawRectangleRec(body, BLUE);
+			const Vector2 center = { body.x + 16.0f, body.y + 16.0f };
+			DrawRectangleRec(body, unit.state == UnitState::Attacking ? ORANGE : BLUE);
 			if (unit.isSelected)
 			{
 				DrawRectangleLinesEx(body, 3.0f, RED);
+			}
+			if (unit.state == UnitState::Attacking)
+			{
+				if (const Unit *target = registry.Get<Unit>(unit.target))
+				{
+					const Vector2 targetCenter = { target->position.x + 32.0f, target->position.y + 32.0f };
+					DrawLineV(center, targetCenter, RED);
+				}
 			}
 			if (unit.hasMoveOrder)
 			{

@@ -1,6 +1,8 @@
 #include "Unit.h"
 
 #include "MathUtils.h" // glm integration check: game TU exercises cc::Vec2 conversions.
+#include "Pathfinder.h" // M3 Goal 5: chase orders route around blocked tiles.
+#include "Targeting.h"  // M3 Goal 5: acquire/validate targets, range checks.
 #include "TileMap.h"   // M2 Goal 4: movement stops at blocked tiles.
 
 // Stub: unit behavior, AI, and factory arrive in M3.
@@ -9,6 +11,114 @@ void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
 {
     unit.moveTarget = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldTarget)));
     unit.hasMoveOrder = true;
+}
+
+namespace
+{
+
+// Fire raw attackPower and restart the cooldown (M4 routes through the matrix).
+void FireAt(Unit &attacker, Unit &target)
+{
+    target.health -= static_cast<float>(attacker.attackPower);
+    attacker.cooldown = attacker.cooldownTime;
+}
+
+void StopMoving(Unit &unit)
+{
+    unit.hasMoveOrder = false;
+    unit.hasPath = false;
+    unit.path.clear();
+    unit.pathNext = 0;
+    unit.velocity = { 0.0f, 0.0f };
+}
+
+} // namespace
+
+void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSeconds)
+{
+    Unit *unit = registry.Get<Unit>(self);
+    if (unit == nullptr || unit->health <= 0.0f)
+    {
+        return; // missing, or dead awaiting factory teardown (M3G6)
+    }
+
+    if (unit->cooldown > 0.0f)
+    {
+        unit->cooldown -= dtSeconds;
+        if (unit->cooldown < 0.0f)
+        {
+            unit->cooldown = 0.0f;
+        }
+    }
+
+    // Explicit player orders win over acquiring NEW targets — but a unit
+    // already engaging (chase path with a set target) stops to fire the
+    // moment its target enters range instead of walking past it.
+    if (unit->hasMoveOrder || unit->hasPath)
+    {
+        if (unit->target != kInvalidEntity)
+        {
+            Unit *target = registry.Get<Unit>(unit->target);
+            if (target == nullptr || target->health <= 0.0f || target->teamID == unit->teamID)
+            {
+                unit->target = kInvalidEntity;
+            }
+            else if (InAttackRange(*unit, *target))
+            {
+                StopMoving(*unit);
+                unit->state = UnitState::Attacking;
+                if (unit->cooldown <= 0.0f && unit->attackPower > 0)
+                {
+                    FireAt(*unit, *target);
+                }
+                return;
+            }
+        }
+        UpdateUnitMovement(*unit, map, unit->speed, dtSeconds);
+        return;
+    }
+
+    // Drop stale targets (destroyed, already dead, or no longer hostile).
+    if (unit->target != kInvalidEntity)
+    {
+        const Unit *target = registry.Get<Unit>(unit->target);
+        if (target == nullptr || target->health <= 0.0f || target->teamID == unit->teamID)
+        {
+            unit->target = kInvalidEntity;
+        }
+    }
+    if (unit->target == kInvalidEntity)
+    {
+        unit->target = AcquireTarget(registry, self);
+    }
+    if (unit->target == kInvalidEntity)
+    {
+        unit->state = UnitState::Idle;
+        unit->velocity = { 0.0f, 0.0f };
+        return;
+    }
+
+    const Unit *target = registry.Get<Unit>(unit->target);
+    if (InAttackRange(*unit, *target))
+    {
+        unit->state = UnitState::Attacking;
+        unit->velocity = { 0.0f, 0.0f };
+        if (unit->cooldown <= 0.0f && unit->attackPower > 0)
+        {
+            // M3 fires raw power; M4 routes this through the damage matrix.
+            FireAt(*unit, *registry.Get<Unit>(unit->target));
+        }
+        return;
+    }
+
+    // Chase: re-path only when the target entered a new tile, then walk.
+    // An unreachable target degrades to an M2 straight-line bump (IssuePathOrder fallback).
+    const cc::IVec2 targetTile = cc::WorldToTile(cc::ToGlm(target->position));
+    if (!unit->hasPath || !(cc::WorldToTile(cc::ToGlm(unit->moveTarget)) == targetTile))
+    {
+        IssuePathOrder(*unit, map, target->position);
+    }
+    UpdateUnitMovement(*unit, map, unit->speed, dtSeconds);
 }
 
 namespace

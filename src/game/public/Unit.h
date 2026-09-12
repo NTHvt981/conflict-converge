@@ -95,3 +95,11 @@ void IssueMoveOrder(Unit &unit, Vector2 worldTarget);
 // Advance one frame toward the pending order; stops snapped on arrival or
 // at the first blocked tile (TileMap::IsBlocked, out-of-bounds included).
 void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec, float dtSeconds);
+
+// M3 Goal 5: per-frame AI driver — Idle -> Moving -> Attacking with attack
+// cooldowns. Priority: explicit player orders (hasMoveOrder/hasPath) beat AI
+// engagement; otherwise the unit acquires (M3G4), chases out-of-range
+// targets via path orders, and fires raw attackPower on cooldown when in
+// range (M4 will route damage through the type matrix). Dead or missing
+// units are skipped (the M3G6 factory destroys and announces them).
+void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSeconds);
