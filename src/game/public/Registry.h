@@ -34,6 +34,11 @@ public:
     template <typename T> const T *Get(Entity entity) const;
     template <typename T> void Remove(Entity entity);
 
+    // Visit every component of type T: fn(Entity, T&) (or const T&).
+    // M2 Goal 4: selection, orders, and movement update all iterate units.
+    template <typename T, typename Fn> void Each(Fn fn);
+    template <typename T, typename Fn> void Each(Fn fn) const;
+
     // Drop all entities and components (teardown / test isolation).
     void Clear();
 
@@ -128,5 +133,31 @@ template <typename T> void Registry::Remove(Entity entity)
     if (it != pools_.end())
     {
         static_cast<Pool<T> *>(it->second.get())->data.erase(entity);
+    }
+}
+
+template <typename T, typename Fn> void Registry::Each(Fn fn)
+{
+    auto it = pools_.find(std::type_index(typeid(T)));
+    if (it == pools_.end())
+    {
+        return;
+    }
+    for (auto &pair : static_cast<Pool<T> *>(it->second.get())->data)
+    {
+        fn(pair.first, pair.second);
+    }
+}
+
+template <typename T, typename Fn> void Registry::Each(Fn fn) const
+{
+    auto it = pools_.find(std::type_index(typeid(T)));
+    if (it == pools_.end())
+    {
+        return;
+    }
+    for (const auto &pair : static_cast<const Pool<T> *>(it->second.get())->data)
+    {
+        fn(pair.first, pair.second);
     }
 }

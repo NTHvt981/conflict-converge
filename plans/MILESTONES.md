@@ -81,7 +81,7 @@
 - [x] Implement tile-based movement system (64x64 tiles)
 - [x] Unit snapping to tile grid
 - [x] Manual camera panning with WASD keys
-- [ ] Mouse selection and command inputs
+- [x] Mouse selection and command inputs
 - [ ] Keyboard shortcut support
 - [ ] Basic input handling framework
 
