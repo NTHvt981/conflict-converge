@@ -251,7 +251,7 @@
     Answer: Use single-threaded for now
 
 57. What event categories are essential for the MVP? (unit events, resource events, game state events, UI events)
-   Answer: Unanswered
+   Answer: All four — unit (spawn/destroy/damage), resource (changed/depleted), game-state (match start/pause/game-over/victory), and UI (menu actions, production ordered). All ride the existing single-threaded dispatcher as new EventType entries; M14's menu needs game-state + UI events.
 
 ### Data Structures
 58. For the ECS-lite architecture - should entities be stored in a flat array with component bitsets or use separate arrays per component type?
@@ -316,6 +316,50 @@
 ### Resource Loading
 73. Should tile maps and other resources be loaded from data/ folder at runtime or embedded in the binary?
     Answer: They should be loaded from data/ folder at runtime
+
+---
+
+## New Questions (M8–M14)
+
+### Enemy AI (M8)
+74. Should the AI play fair (same rules/fog as the player) or get handicaps? Research warns resource-cheating feels cheap — recommend fair rules + smarter build orders, with handicaps only on Easy (slower timers) if at all.
+    Answer: Choose recommendation
+75. What should trigger AI attack waves — fixed timers, army-size thresholds, or scouting intel (attack when it sees weakness)?
+    Answer: only army-size thresholds should trigger AI attack waves for now
+
+### Fog of War (M9)
+76. When units leave an area, should it re-shroud to black or stay dimly visible with a frozen snapshot (StarCraft-style)? Recommend frozen snapshot — cheaper and standard.
+    Answer: Choose recommendation
+77. Should terrain block vision (forests/hills as blockers), or is sight pure radius? Pure radius is far simpler; blockers need a LOS pass.
+    Answer: Use sight pure radius
+78. Can artillery blind-fire into shrouded tiles? If yes, at what accuracy penalty?
+    Answer: artillery should be able to blind-fire into shrouded tiles with no penalty
+
+### Maps (M10)
+79. For the `.map` text format: what legend characters for terrain/markers, and which 2 maps should ship first (size, choke points, starting positions)?
+    Answer: Legend — `.` grass, `~` water (impassable), `T` forest (passable, cost 1.0 for now), `^` rock/mountain (impassable wall tile), `I`/`O` iron/oil node, `1`/`2` player/AI base spawn (must be grass), `B` pre-placed building tile (optional). Avoid `#` (looks like a comment) and lowercase (case bugs). Header — 5 lines: format comment, `name=`, `author=`, `width=`, `height=` (loader rejects grid/header mismatch). Ship 2 mirror-symmetric 24x18 maps: (1) Crossroads — player NW vs AI SE, vertical river with exactly 2 bridge crossings, home iron each + contested center oil; (2) Twin Basins — central lake, corner bases, one land-bridge route + one open route, teaches scouting and raiding. Spawns on grass, nodes ground-reachable, symmetric node distances.
+
+### Audio (M11)
+80. Music: generate a looped track (e.g., via tool) or commission/compose one? And what SFX list is mandatory for v1 beyond the baseline (select/order/attack/explosion/place/deplete/win/lose)?
+    Answer: generate a looped track (e.g., via tool), just have baseline for now
+
+### Art & Balance (M12–M13)
+81. Art ownership: hand-made pixel art, AI-generated sprites, or commissioned? This decides the M12 pipeline and licensing.
+    Answer: AI-generated pixel art
+82. Balance target: mirror factions (same 7 units both sides, pure execution game) or asymmetric sides later? Recommend mirror for now — asymmetric doubles balance work.
+    Answer: mirror for now
+83. Should Engineer repair cost resources over time, and can Engineers capture enemy buildings (C&C-style)? Capture is a big mechanic — recommend repair-only for v1.
+    Answer: repair only, repair should cost time but not resources
+
+### Main Menu (M14)
+85. Skirmish setup scope: map + difficulty only, or also starting resources, team count, and win condition (annihilation vs timed)? Recommend map + difficulty for v1 — the rest multiplies test surface.
+    Answer: Recommend map + difficulty for v1
+86. Settings persistence: separate settings file vs appended to the save format? Recommend a small standalone file so settings survive without a save.
+    Answer: Use a small standalone file
+
+### Plan Deviation Note
+84. Q48 chose Protocol Buffers for serialization, but M7 shipped a custom versioned binary format (`CCSV` v1, now v2 with fog sets) for zero-dependency builds. Migrate to protobuf later, or ratify the custom format as final?
+    Answer: Migrate to Protocol Buffers now
 
 ---
 
