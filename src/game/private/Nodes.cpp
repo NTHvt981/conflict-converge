@@ -114,3 +114,11 @@ const ResourceNode *ResourceNodes::FindAt(cc::IVec2 tile) const
     }
     return nullptr;
 }
+
+void ResourceNodes::Each(const std::function<void(const ResourceNode &)> &fn) const
+{
+    for (const ResourceNode &node : nodes_)
+    {
+        fn(node);
+    }
+}

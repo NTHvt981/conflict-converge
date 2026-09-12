@@ -11,6 +11,9 @@
 #include "Unit.h"      // M2 Goal 2/4: snapped units with move orders
 #include "UnitFactory.h" // M3 Goal 6: cost-validated demo spawns + death sweep
 #include "Pathfinder.h" // M3 Goal 3: right-click orders route around blocks
+#include "Building.h" // M5 Goal 2: demo base/placement on the tile grid
+#include "Nodes.h" // M5 Goal 3: demo resource nodes + harvester
+#include "Production.h" // M5 Goal 6: demo factory production queue
 #include <iostream>
 #include <vector>
 #include <format>
@@ -50,6 +53,21 @@ int main(void)
 	spawnDemo(UnitType::LightTank, 4, 2, 0);
 	spawnDemo(UnitType::Artillery, 3, 5, 0);
 	spawnDemo(UnitType::LightTank, 6, 2, 1); // M3 Goal 5: hostile, in sight of the infantry
+
+	// M5 demo economy: home base + factory + depot, two field nodes with a
+	// harvester Engineer parked on the iron, and a factory queue building
+	// reinforcements at the rally point. Costs come out of starting funds.
+	PlaceBuilding(registry, map, BuildingType::Base, 0, 1, 10);
+	PlaceBuilding(registry, map, BuildingType::ResourceDepot, 0, 5, 10);
+	PlaceBuilding(registry, map, BuildingType::Factory, 0, 10, 10);
+	ResourceNodes nodes;
+	nodes.SpawnNode(map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
+	nodes.SpawnNode(map, ResourceKind::Oil, { 15, 12 }, 150.0f, 10.0f);
+	spawnDemo(UnitType::Engineer, 15, 3, 0); // harvester: idles on the iron node
+	ProductionQueue queue;
+	queue.Enqueue(resources, UnitType::Infantry);
+	queue.Enqueue(resources, UnitType::LightTank);
+	const Vector2 rallyPos = cc::ToRaylib(cc::TileToWorld(13, 11));
 
 	// M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
 	// deselects, Space halts selected units.
@@ -121,6 +139,12 @@ int main(void)
 		{
 			factory.DestroyUnit(id);
 		}
+		// M5 economy tick: base trickle, node respawn, harvest, production.
+		const float dt = GetFrameTime();
+		UpdateBaseIncome(registry, resources, dt, 0);
+		nodes.Update(dt);
+		nodes.GatherTick(registry, resources, dt);
+		queue.Update(factory, 0, rallyPos, dt);
 
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
@@ -143,6 +167,32 @@ int main(void)
 				DrawRectangleLinesEx({ corner.x, corner.y, cc::TILE_SIZE, cc::TILE_SIZE }, 1.0f, LIGHTGRAY);
 			}
 		}
+
+		// M5: buildings as footprint rects with a type letter, nodes as
+		// kind-colored discs with remaining amounts.
+		registry.Each<Building>([&](Entity, const Building &building) {
+			const cc::IVec2 size = Footprint(building.type);
+			const Vector2 corner = cc::ToRaylib(cc::TileToWorld(building.tileX, building.tileY));
+			const float w = static_cast<float>(size.x) * cc::TILE_SIZE;
+			const float h = static_cast<float>(size.y) * cc::TILE_SIZE;
+			const Color tint =
+				building.type == BuildingType::Base ? DARKGRAY : building.type == BuildingType::Factory ? BROWN : GRAY;
+			DrawRectangleV(corner, { w, h }, tint);
+			const char *label =
+				building.type == BuildingType::Base ? "B" : building.type == BuildingType::Factory ? "F" : "D";
+			DrawText(label, static_cast<int>(corner.x) + 6, static_cast<int>(corner.y) + 4, 24, WHITE);
+		});
+		for (int i = 0; i < static_cast<int>(nodes.Count()); ++i)
+		{
+		}
+		nodes.Each([&](const ResourceNode &node) {
+			const Vector2 corner = cc::ToRaylib(cc::TileToWorld(node.tile.x, node.tile.y));
+			const Vector2 center = { corner.x + cc::TILE_SIZE / 2.0f,
+				                     corner.y + cc::TILE_SIZE / 2.0f };
+			DrawCircleV(center, 14.0f, node.kind == ResourceKind::Iron ? GOLD : LIME);
+			DrawText(TextFormat("%.0f", node.amount), static_cast<int>(center.x) - 12,
+			         static_cast<int>(center.y) - 8, 12, DARKGRAY);
+		});
 
 		// Units as 32x32 placeholder rects: red-ringed when selected,
 		// orange-bodied when Attacking with a tracer to the target (M3G5),
@@ -175,6 +225,16 @@ int main(void)
 			}
 		});
 		EndMode2D();
+
+		// M5 HUD preview (proper raygui panels in M6): stockpiles + queue.
+		DrawText(TextFormat("Iron: %ld  Oil: %ld", resources.iron, resources.oil), 620, 20, 20,
+		         DARKGRAY);
+		if (!queue.Empty())
+		{
+			DrawText("Producing...", 620, 48, 16, GRAY);
+			DrawRectangle(620, 68, 150, 12, LIGHTGRAY);
+			DrawRectangle(620, 68, static_cast<int>(150.0f * queue.HeadProgress()), 12, DARKGREEN);
+		}
 
 		if (GuiButton(Rectangle{ 20, 20, 140, 30 }, "Click me"))
 		{

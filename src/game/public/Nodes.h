@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <vector>
 
 #include "MathUtils.h" // cc::IVec2
@@ -45,6 +46,8 @@ public:
 
     std::size_t Count() const;
     const ResourceNode *FindAt(cc::IVec2 tile) const;
+    // Read-only iteration (rendering, HUD).
+    void Each(const std::function<void(const ResourceNode &)> &fn) const;
 
 private:
     std::vector<ResourceNode> nodes_;

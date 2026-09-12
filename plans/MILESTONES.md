@@ -18,7 +18,7 @@
 | M2 | Core Movement System | M1 | 🟢 Complete |
 | M3 | Unit System | M2 | 🟢 Complete |
 | M4 | Combat System | M3 | 🟢 Complete |
-| M5 | Resource & Economy | M4 | 🔴 Not Started |
+| M5 | Resource & Economy | M4 | 🟢 Complete |
 | M6 | UI & Minimap | M5 | 🔴 Not Started |
 | M7 | Save/Load & Integration Tests | M6 | 🔴 Not Started |
 
@@ -217,8 +217,8 @@
 - [x] Implement iron and oil resource system (no cap)
 - [x] Create base building mechanics
 - [x] Implement resource node gathering (Company of Heroes style)
-- [ ] Base income generation
-- [ ] Building placement on tile grid
+- [x] Base income generation
+- [x] Building placement on tile grid
 - [x] Unit production queue
 
 ### Implementation Steps
