@@ -16,6 +16,7 @@ void RunSelectionTests();
 void RunMovementTests();
 void RunShortcutTests();
 void RunInputManagerTests();
+void RunUnitAttributeTests();
 
 int main()
 {
@@ -30,6 +31,7 @@ int main()
     RunMovementTests();
     RunShortcutTests();
     RunInputManagerTests();
+    RunUnitAttributeTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);

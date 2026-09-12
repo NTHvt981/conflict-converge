@@ -3,6 +3,7 @@
 #include "raylib.h" // Vector2
 
 #include "MathUtils.h" // cc:: tile-grid snapping (M2 Goal 2)
+#include "Registry.h" // Entity / kInvalidEntity for Unit::target
 
 class TileMap; // movement queries blocked tiles; included in Unit.cpp
 
@@ -49,15 +50,20 @@ struct Unit
 {
     float health = 100.0f;
     ArmorType armorType = ArmorType::STEEL;
+    DamageType damageType = DamageType::KINETIC; // dealt by this unit (M4 matrix)
     int attackPower = 0;
-    int attackRange = 0;
-    float cooldown = 0.0f;
+    int attackRange = 0; // pixels (circle/radius check, M3G4/M4)
+    float cooldown = 0.0f; // live attack timer: seconds until next strike (M3G5)
+    float cooldownTime = 0.0f; // seconds between attacks (reset value)
+    float speed = 0.0f; // pixels per second (M3G2 stat table)
+    float sightRange = 0.0f; // pixels: targeting acquisition radius (M3G4)
     Vector2 position = {}; // snapped to 64x64 grid (M2)
     Vector2 velocity = {};
     bool isSelected = false;
     int teamID = 0;
     UnitType type = UnitType::Infantry;
     UnitState state = UnitState::Idle;
+    Entity target = kInvalidEntity; // acquired enemy (M3G4); needs Registry.h
     // M2 Goal 4: single pending move order (tile-snapped destination).
     // A full command queue arrives with M3 AI; M2 moves straight toward
     // the target and stops at the first blocked tile.
