@@ -19,6 +19,7 @@ void RunInputManagerTests();
 void RunUnitAttributeTests();
 void RunUnitStatsTests();
 void RunPathfindTests();
+void RunTargetingTests();
 
 int main()
 {
@@ -36,6 +37,7 @@ int main()
     RunUnitAttributeTests();
     RunUnitStatsTests();
     RunPathfindTests();
+    RunTargetingTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);
