@@ -26,6 +26,7 @@ void RunFactoryTests();
 void RunCombatTests();
 void RunHitboxTests();
 void RunAttackPhaseTests();
+void RunCrushTests();
 
 int main()
 {
@@ -50,6 +51,7 @@ int main()
     RunCombatTests();
     RunHitboxTests();
     RunAttackPhaseTests();
+    RunCrushTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);

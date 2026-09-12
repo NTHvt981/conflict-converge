@@ -14,13 +14,27 @@ float Effectiveness(DamageType dealt, ArmorType armor)
     return kMatrix[static_cast<int>(dealt)][static_cast<int>(armor)];
 }
 
-float ResolveAttack(Unit &attacker, Unit &defender)
+float ResolveAttack(Unit &attacker, Unit &defender, AttackContext context)
 {
+    if (context == AttackContext::Crush && IsCrushNegated(attacker.type, defender.type))
+    {
+        attacker.cooldown = attacker.cooldownTime; // the attempt still cycles
+        return 0.0f;
+    }
     const float effective = static_cast<float>(attacker.attackPower) *
                             Effectiveness(attacker.damageType, defender.armorType);
     defender.health -= effective;
     attacker.cooldown = attacker.cooldownTime;
     return effective;
+}
+
+bool IsCrushNegated(UnitType attackerType, UnitType defenderType)
+{
+    const bool vehicleAttacker = attackerType == UnitType::IFV || attackerType == UnitType::Artillery ||
+                                 attackerType == UnitType::LightTank || attackerType == UnitType::HeavyTank;
+    const bool footDefender = defenderType == UnitType::Infantry ||
+                              defenderType == UnitType::AntiArmorInfantry || defenderType == UnitType::Engineer;
+    return vehicleAttacker && footDefender;
 }
 
 // M4 Goal 2: the body fills the center 32x32 of the unit's 64x64 tile.

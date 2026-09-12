@@ -15,8 +15,20 @@
 float Effectiveness(DamageType dealt, ArmorType armor);
 
 // Apply scaled damage to the defender and restart the attacker's cooldown.
-// Returns the effective damage dealt.
-float ResolveAttack(Unit &attacker, Unit &defender);
+// Returns the effective damage dealt. Crush hits (contact/overrun, as
+// opposed to Direct fire) are negated against crush-protected foot units.
+enum class AttackContext
+{
+    Direct, // ranged/melee fire: full matrix damage
+    Crush   // vehicle contact: negated vs foot (M4G4), matrix otherwise
+};
+float ResolveAttack(Unit &attacker, Unit &defender, AttackContext context = AttackContext::Direct);
+
+// M4 Goal 4: anti-crush rule. Vehicle hulls (IFV/Artillery/Light/HeavyTank)
+// cannot crush foot units (Infantry/AntiArmor/Engineer) — the overrun deals
+// no damage. Vehicle-vs-vehicle rams and foot-vs-anything crushes still use
+// the matrix.
+bool IsCrushNegated(UnitType attackerType, UnitType defenderType);
 
 // M4 Goal 2: 2D hitbox system. Every unit body is a 32x32 rect centered in
 // its 64x64 tile (matches the placeholder art in main.cpp; real sprites in
