@@ -109,11 +109,14 @@ project "conflict-converge-test"
     -- Depend on conflict-converge project (build order dependency)
     dependson { "conflict-converge" }
     
-    -- Source files from tests/ folder
+    -- Source files from tests/ folder, plus the game implementation TUs under
+    -- test (the game entry point src/game/main.cpp is excluded: this project
+    -- provides its own main in tests/main.cpp).
     files {
         "tests/**.cpp",
         "tests/**.h",
-        "tests/**.inl"
+        "tests/**.inl",
+        "src/game/private/**.cpp"
     }
     
     -- Include directories

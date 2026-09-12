@@ -117,8 +117,8 @@ template <typename T> const T *Registry::Get(Entity entity) const
     {
         return nullptr;
     }
-    auto it = pool.find(entity);
-    return it == pool.end() ? nullptr : &it->second;
+    auto it = pool->find(entity);
+    return it == pool->end() ? nullptr : &it->second;
 }
 
 template <typename T> void Registry::Remove(Entity entity)
