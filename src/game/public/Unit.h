@@ -9,6 +9,7 @@
 #include "Registry.h" // Entity / kInvalidEntity for Unit::target
 
 class TileMap; // movement queries blocked tiles; included in Unit.cpp
+class FogOfWar;  // M9 visibility gate for acquisition; included in Unit.cpp
 
 // Forward-declared API shapes for M3 (Unit System) and M4 (Combat System).
 // See plans/MILESTONES.md M3 Unit struct + unit types, M4 damage/armor types.
@@ -117,4 +118,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
 // targets via path orders, and fires through the M4 damage matrix on
 // cooldown when in range. Dead or missing units are skipped (the M3G6
 // factory destroys and announces them).
-void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSeconds);
+// M9: pass fog to gate acquisition + chase validation on visibility
+// (nullptr = ungated legacy behavior, keeps old call sites working).
+void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSeconds,
+                const FogOfWar *fog = nullptr);

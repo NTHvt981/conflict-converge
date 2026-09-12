@@ -18,6 +18,7 @@
 #include "Minimap.h" // M6 Goal 1: unit-position minimap (periodic refresh)
 #include "Hud.h" // M6 Goal 2: raygui resource + selection panels
 #include "Menu.h" // M6 Goal 3: pause / outcome / settings menu flow
+#include "FogOfWar.h" // M9: per-team visibility (shroud, targeting gate)
 #include "AICommander.h" // M8: enemy commander (build order, waves, scouting)
 #include <iostream>
 #include <vector>
@@ -55,6 +56,8 @@ int main(void)
 	EventDispatcher events;
 	UnitFactory factory(registry, resources, events);
 	TileMap map(20, 15);
+	FogOfWar fog; // M9: recomputed every Playing frame, carried by WorldState
+	fog.Resize(20, 15);
 	map.Set({ 6, 3 }, TerrainType::Water);
 	map.Set({ 7, 3 }, TerrainType::Water);
 	map.Set({ 6, 4 }, TerrainType::Water);
@@ -94,10 +97,10 @@ int main(void)
 	input.shortcuts.Bind(KEY_F1, [&] { showHints = !showHints; });
 	input.shortcuts.Bind(KEY_P, [&] { menu.TogglePause(); });
 	input.shortcuts.Bind(KEY_F5, [&] {
-		SaveWorld({ &registry, &resources, &map, &camera, &nodes }, "data/quicksave.ccpb");
+		SaveWorld({ &registry, &resources, &map, &camera, &nodes, &fog }, "data/quicksave.ccpb");
 	});
 	input.shortcuts.Bind(KEY_F9, [&] {
-		LoadWorld({ &registry, &resources, &map, &camera, &nodes }, "data/quicksave.ccpb");
+		LoadWorld({ &registry, &resources, &map, &camera, &nodes, &fog }, "data/quicksave.ccpb");
 	});
 	input.shortcuts.Bind(KEY_ESCAPE, [&] { DeselectAll(registry); });
 	input.shortcuts.Bind(KEY_SPACE, [&] {
@@ -156,8 +159,10 @@ int main(void)
 					IssuePathOrder(*ordered, map, input.MouseWorld(camera));
 				}
 			}
+			// M9: rebuild visibility from current positions before anyone acquires.
+			fog.Recompute(registry);
 			registry.Each<Unit>([&](Entity id, Unit &unit) {
-				UpdateUnit(id, registry, map, GetFrameTime()); // M3 Goal 5: AI driver
+				UpdateUnit(id, registry, map, GetFrameTime(), &fog); // M3G5 driver (+M9 fog gate)
 			});
 			// M3 Goal 6: collect the fallen, then destroy through the factory so
 			// UnitDestroyed is announced (destroying inside Each would invalidate it).
@@ -201,6 +206,12 @@ int main(void)
 					}
 				}
 				registry.Each<Unit>([&](Entity, const Unit &unit) {
+					// M9: enemies only appear when a team-0 unit sees their tile.
+					if (unit.teamID != 0 &&
+					    !fog.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit.position))))
+					{
+						return;
+					}
 					const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
 					const Vector2 dot =
 						minimap.WorldToMinimap(center, map.Width(), map.Height());
@@ -239,6 +250,12 @@ int main(void)
 		// M5: buildings as footprint rects with a type letter, nodes as
 		// kind-colored discs with remaining amounts.
 		registry.Each<Building>([&](Entity, const Building &building) {
+			// M9: enemy structures hide until a team-0 unit sees a footprint tile.
+			if (building.teamID != 0 &&
+			    !fog.IsVisible(0, cc::IVec2{ building.tileX, building.tileY }))
+			{
+				return;
+			}
 			const cc::IVec2 size = Footprint(building.type);
 			const Vector2 corner = cc::ToRaylib(cc::TileToWorld(building.tileX, building.tileY));
 			const float w = static_cast<float>(size.x) * cc::TILE_SIZE;
@@ -251,6 +268,11 @@ int main(void)
 			DrawText(label, static_cast<int>(corner.x) + 6, static_cast<int>(corner.y) + 4, 24, WHITE);
 		});
 		nodes.Each([&](const ResourceNode &node) {
+			// M9: static features join the frozen snapshot once explored.
+			if (!fog.IsExplored(0, node.tile))
+			{
+				return;
+			}
 			const Vector2 corner = cc::ToRaylib(cc::TileToWorld(node.tile.x, node.tile.y));
 			const Vector2 center = { corner.x + cc::TILE_SIZE / 2.0f,
 				                     corner.y + cc::TILE_SIZE / 2.0f };
@@ -264,6 +286,12 @@ int main(void)
 		// white-flashed with a damage number while hitFlashTime runs (M4G5).
 		// Selected units also get a health bar (M6 Goal 4).
 		registry.Each<Unit>([&](Entity, Unit &unit) {
+			// M9: enemies render only on tiles team 0 currently sees.
+			if (unit.teamID != 0 &&
+			    !fog.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit.position))))
+			{
+				return;
+			}
 			const Rectangle body = { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };
 			const Vector2 center = { body.x + 16.0f, body.y + 16.0f };
 			DrawRectangleRec(body, unit.state == UnitState::Attacking ? ORANGE : BLUE);
@@ -295,6 +323,23 @@ int main(void)
 				DrawCircleV(cc::ToRaylib(cc::ToGlm(unit.moveTarget) + cc::Vec2(32.0f, 32.0f)), 5.0f, GREEN);
 			}
 		});
+		// M9 shroud, drawn over the world: unexplored tiles go opaque black,
+		// explored-but-unseen tiles get a dim veil (frozen snapshot, Q76).
+		for (int y = 0; y < map.Height(); ++y)
+		{
+			for (int x = 0; x < map.Width(); ++x)
+			{
+				const cc::IVec2 tile{ x, y };
+				if (fog.IsVisible(0, tile))
+				{
+					continue;
+				}
+				const Vector2 corner = cc::ToRaylib(cc::TileToWorld(x, y));
+				const Color veil =
+					fog.IsExplored(0, tile) ? Fade(BLACK, 0.45f) : BLACK;
+				DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, veil);
+			}
+		}
 		EndMode2D();
 
 		// M6 Goal 1: minimap blit (texture is Y-flipped) + viewport box.

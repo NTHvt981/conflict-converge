@@ -7,6 +7,7 @@ class ResourceSystem;
 class TileMap;
 class GameCamera;
 class ResourceNodes;
+class FogOfWar;
 
 // M7: versioned binary save/load. M15 migrated the payload to protobuf
 // (proto/savegame.proto, checked-in generated code in ../private/):
@@ -24,6 +25,7 @@ struct WorldState
     TileMap *map = nullptr;
     GameCamera *camera = nullptr;
     ResourceNodes *nodes = nullptr;
+    FogOfWar *fog = nullptr; // M9: per-team explored memory (saved via team_fog)
 };
 
 // Every WorldState pointer must be non-null. Save returns false on I/O

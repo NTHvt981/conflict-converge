@@ -1,6 +1,7 @@
 #include "Unit.h"
 
 #include "Combat.h"     // M4 Goal 1: FireAt routes through the damage matrix.
+#include "FogOfWar.h"   // M9: gate acquisition + chase validation on visibility.
 #include "MathUtils.h" // glm integration check: game TU exercises cc::Vec2 conversions.
 #include "Pathfinder.h" // M3 Goal 5: chase orders route around blocked tiles.
 #include "Targeting.h"  // M3 Goal 5: acquire/validate targets, range checks.
@@ -58,7 +59,16 @@ void StopMoving(Unit &unit)
 
 } // namespace
 
-void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSeconds)
+// M9: a set target standing on a tile the unit's team cannot see is dropped —
+// except for Artillery, which blind-fires into shroud at no penalty (Q78).
+bool LostToFog(const Unit &unit, const Unit &target, const FogOfWar *fog)
+{
+    return fog != nullptr && unit.type != UnitType::Artillery &&
+           !fog->IsVisible(unit.teamID, cc::WorldToTile(cc::ToGlm(target.position)));
+}
+
+void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSeconds,
+                const FogOfWar *fog)
 {
     Unit *unit = registry.Get<Unit>(self);
     if (unit == nullptr || unit->health <= 0.0f)
@@ -91,7 +101,8 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
         if (unit->target != kInvalidEntity)
         {
             Unit *target = registry.Get<Unit>(unit->target);
-            if (target == nullptr || target->health <= 0.0f || target->teamID == unit->teamID)
+            if (target == nullptr || target->health <= 0.0f || target->teamID == unit->teamID ||
+                LostToFog(*unit, *target, fog))
             {
                 unit->target = kInvalidEntity;
             }
@@ -107,18 +118,20 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
         return;
     }
 
-    // Drop stale targets (destroyed, already dead, or no longer hostile).
+    // Drop stale targets (destroyed, already dead, no longer hostile, or
+    // hidden by fog for non-artillery).
     if (unit->target != kInvalidEntity)
     {
         const Unit *target = registry.Get<Unit>(unit->target);
-        if (target == nullptr || target->health <= 0.0f || target->teamID == unit->teamID)
+        if (target == nullptr || target->health <= 0.0f || target->teamID == unit->teamID ||
+            LostToFog(*unit, *target, fog))
         {
             unit->target = kInvalidEntity;
         }
     }
     if (unit->target == kInvalidEntity)
     {
-        unit->target = AcquireTarget(registry, self);
+        unit->target = AcquireTarget(registry, self, fog);
     }
     if (unit->target == kInvalidEntity)
     {

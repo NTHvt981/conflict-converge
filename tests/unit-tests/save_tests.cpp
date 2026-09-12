@@ -3,6 +3,7 @@
 #include "test_harness.h"
 
 #include "Building.h"
+#include "FogOfWar.h" // fixture carries fog memory for the team_fog roundtrip
 #include "GameCamera.h"
 #include "Nodes.h"
 #include "Registry.h"
@@ -27,10 +28,16 @@ struct Fixture
     TileMap map{ 20, 15 };
     GameCamera camera;
     ResourceNodes nodes;
+    FogOfWar fog;
+
+    Fixture()
+    {
+        fog.Resize(20, 15);
+    }
 
     WorldState State()
     {
-        return { &registry, &resources, &map, &camera, &nodes };
+        return { &registry, &resources, &map, &camera, &nodes, &fog };
     }
 };
 
@@ -71,6 +78,7 @@ void RunSaveGameTests()
     scout.isSelected = true;
     scout.health = 73.5f;
     scout.cooldown = 0.2f;
+    scout.sightRange = 128.0f; // deterministic reveal for the team_fog roundtrip
     scout.lastDamageTaken = 12.0f;
     scout.hitFlashTime = 0.1f;
     const Entity scoutId = src.registry.Create();
@@ -94,6 +102,7 @@ void RunSaveGameTests()
     src.registry.Add(hunterId, hunter);
 
     const std::string path = ScratchPath();
+    src.fog.Recompute(src.registry); // bank explored memory for team_fog
     CC_CHECK(SaveWorld(src.State(), path));
 
     // --- load into a differently-shaped world (tests Resize + Clear) ---
@@ -115,6 +124,8 @@ void RunSaveGameTests()
     CC_CHECK(dst.map.Get({ 6, 3 }) == TerrainType::Water);
     CC_CHECK(dst.map.Get({ 1, 10 }) == TerrainType::Building);
     CC_CHECK(dst.map.Get({ 0, 0 }) == TerrainType::Grass);
+    CC_CHECK(dst.fog.IsExplored(0, { 2, 2 })); // team_fog survived the trip
+    CC_CHECK(!dst.fog.IsExplored(0, { 19, 14 }));
 
     CC_CHECK(dst.registry.EntityCount() == 4); // 2 units + 2 buildings, junk cleared
     CC_CHECK(dst.nodes.Count() == 2);

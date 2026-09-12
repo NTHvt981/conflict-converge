@@ -176,6 +176,7 @@ PROTOBUF_CONSTEXPR SaveGame::SaveGame(
     /*decltype(_impl_.units_)*/{}
   , /*decltype(_impl_.buildings_)*/{}
   , /*decltype(_impl_.nodes_)*/{}
+  , /*decltype(_impl_.team_fog_)*/{}
   , /*decltype(_impl_.explored_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.resources_)*/nullptr
   , /*decltype(_impl_.camera_)*/nullptr
@@ -193,9 +194,23 @@ struct SaveGameDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 SaveGameDefaultTypeInternal _SaveGame_default_instance_;
+PROTOBUF_CONSTEXPR TeamFog::TeamFog(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.explored_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.team_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct TeamFogDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR TeamFogDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~TeamFogDefaultTypeInternal() {}
+  union {
+    TeamFog _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 TeamFogDefaultTypeInternal _TeamFog_default_instance_;
 }  // namespace save
 }  // namespace cc
-static ::_pb::Metadata file_level_metadata_savegame_2eproto[9];
+static ::_pb::Metadata file_level_metadata_savegame_2eproto[10];
 static constexpr ::_pb::EnumDescriptor const** file_level_enum_descriptors_savegame_2eproto = nullptr;
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_savegame_2eproto = nullptr;
 
@@ -316,6 +331,15 @@ const uint32_t TableStruct_savegame_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   PROTOBUF_FIELD_OFFSET(::cc::save::SaveGame, _impl_.node_iron_carry_),
   PROTOBUF_FIELD_OFFSET(::cc::save::SaveGame, _impl_.node_oil_carry_),
   PROTOBUF_FIELD_OFFSET(::cc::save::SaveGame, _impl_.explored_),
+  PROTOBUF_FIELD_OFFSET(::cc::save::SaveGame, _impl_.team_fog_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::cc::save::TeamFog, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::cc::save::TeamFog, _impl_.team_),
+  PROTOBUF_FIELD_OFFSET(::cc::save::TeamFog, _impl_.explored_),
 };
 static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, -1, sizeof(::cc::save::Vec2)},
@@ -327,6 +351,7 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 77, -1, -1, sizeof(::cc::save::Building)},
   { 88, -1, -1, sizeof(::cc::save::ResourceNode)},
   { 100, -1, -1, sizeof(::cc::save::SaveGame)},
+  { 117, -1, -1, sizeof(::cc::save::TeamFog)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -339,6 +364,7 @@ static const ::_pb::Message* const file_default_instances[] = {
   &::cc::save::_Building_default_instance_._instance,
   &::cc::save::_ResourceNode_default_instance_._instance,
   &::cc::save::_SaveGame_default_instance_._instance,
+  &::cc::save::_TeamFog_default_instance_._instance,
 };
 
 const char descriptor_table_protodef_savegame_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
@@ -370,20 +396,22 @@ const char descriptor_table_protodef_savegame_2eproto[] PROTOBUF_SECTION_VARIABL
   "ind\030\001 \001(\005\022\034\n\004tile\030\002 \001(\0132\016.cc.save.IVec2\022"
   "\016\n\006amount\030\003 \001(\002\022\022\n\nmax_amount\030\004 \001(\002\022\025\n\rr"
   "espawn_delay\030\005 \001(\002\022\025\n\rrespawn_timer\030\006 \001("
-  "\002\"\264\002\n\010SaveGame\022\024\n\014save_version\030\001 \001(\r\022%\n\t"
+  "\002\"\330\002\n\010SaveGame\022\024\n\014save_version\030\001 \001(\r\022%\n\t"
   "resources\030\002 \001(\0132\022.cc.save.Resources\022\037\n\006c"
   "amera\030\003 \001(\0132\017.cc.save.Camera\022\035\n\003map\030\004 \001("
   "\0132\020.cc.save.TileMap\022\034\n\005units\030\005 \003(\0132\r.cc."
   "save.Unit\022$\n\tbuildings\030\006 \003(\0132\021.cc.save.B"
   "uilding\022$\n\005nodes\030\007 \003(\0132\025.cc.save.Resourc"
   "eNode\022\027\n\017node_iron_carry\030\010 \001(\002\022\026\n\016node_o"
-  "il_carry\030\t \001(\002\022\020\n\010explored\030\n \001(\014b\006proto3"
+  "il_carry\030\t \001(\002\022\020\n\010explored\030\n \001(\014\022\"\n\010team"
+  "_fog\030\013 \003(\0132\020.cc.save.TeamFog\")\n\007TeamFog\022"
+  "\014\n\004team\030\001 \001(\005\022\020\n\010explored\030\002 \001(\014b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_savegame_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_savegame_2eproto = {
-    false, false, 1440, descriptor_table_protodef_savegame_2eproto,
+    false, false, 1519, descriptor_table_protodef_savegame_2eproto,
     "savegame.proto",
-    &descriptor_table_savegame_2eproto_once, nullptr, 0, 9,
+    &descriptor_table_savegame_2eproto_once, nullptr, 0, 10,
     schemas, file_default_instances, TableStruct_savegame_2eproto::offsets,
     file_level_metadata_savegame_2eproto, file_level_enum_descriptors_savegame_2eproto,
     file_level_service_descriptors_savegame_2eproto,
@@ -3351,6 +3379,7 @@ SaveGame::SaveGame(const SaveGame& from)
       decltype(_impl_.units_){from._impl_.units_}
     , decltype(_impl_.buildings_){from._impl_.buildings_}
     , decltype(_impl_.nodes_){from._impl_.nodes_}
+    , decltype(_impl_.team_fog_){from._impl_.team_fog_}
     , decltype(_impl_.explored_){}
     , decltype(_impl_.resources_){nullptr}
     , decltype(_impl_.camera_){nullptr}
@@ -3392,6 +3421,7 @@ inline void SaveGame::SharedCtor(
       decltype(_impl_.units_){arena}
     , decltype(_impl_.buildings_){arena}
     , decltype(_impl_.nodes_){arena}
+    , decltype(_impl_.team_fog_){arena}
     , decltype(_impl_.explored_){}
     , decltype(_impl_.resources_){nullptr}
     , decltype(_impl_.camera_){nullptr}
@@ -3421,6 +3451,7 @@ inline void SaveGame::SharedDtor() {
   _impl_.units_.~RepeatedPtrField();
   _impl_.buildings_.~RepeatedPtrField();
   _impl_.nodes_.~RepeatedPtrField();
+  _impl_.team_fog_.~RepeatedPtrField();
   _impl_.explored_.Destroy();
   if (this != internal_default_instance()) delete _impl_.resources_;
   if (this != internal_default_instance()) delete _impl_.camera_;
@@ -3440,6 +3471,7 @@ void SaveGame::Clear() {
   _impl_.units_.Clear();
   _impl_.buildings_.Clear();
   _impl_.nodes_.Clear();
+  _impl_.team_fog_.Clear();
   _impl_.explored_.ClearToEmpty();
   if (GetArenaForAllocation() == nullptr && _impl_.resources_ != nullptr) {
     delete _impl_.resources_;
@@ -3561,6 +3593,19 @@ const char* SaveGame::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx)
         } else
           goto handle_unusual;
         continue;
+      // repeated .cc.save.TeamFog team_fog = 11;
+      case 11:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 90)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_team_fog(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<90>(ptr));
+        } else
+          goto handle_unusual;
+        continue;
       default:
         goto handle_unusual;
     }  // switch
@@ -3667,6 +3712,14 @@ uint8_t* SaveGame::_InternalSerialize(
         10, this->_internal_explored(), target);
   }
 
+  // repeated .cc.save.TeamFog team_fog = 11;
+  for (unsigned i = 0,
+      n = static_cast<unsigned>(this->_internal_team_fog_size()); i < n; i++) {
+    const auto& repfield = this->_internal_team_fog(i);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+        InternalWriteMessage(11, repfield, repfield.GetCachedSize(), target, stream);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -3700,6 +3753,13 @@ size_t SaveGame::ByteSizeLong() const {
   // repeated .cc.save.ResourceNode nodes = 7;
   total_size += 1UL * this->_internal_nodes_size();
   for (const auto& msg : this->_impl_.nodes_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
+  }
+
+  // repeated .cc.save.TeamFog team_fog = 11;
+  total_size += 1UL * this->_internal_team_fog_size();
+  for (const auto& msg : this->_impl_.team_fog_) {
     total_size +=
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
@@ -3776,6 +3836,7 @@ void SaveGame::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTO
   _this->_impl_.units_.MergeFrom(from._impl_.units_);
   _this->_impl_.buildings_.MergeFrom(from._impl_.buildings_);
   _this->_impl_.nodes_.MergeFrom(from._impl_.nodes_);
+  _this->_impl_.team_fog_.MergeFrom(from._impl_.team_fog_);
   if (!from._internal_explored().empty()) {
     _this->_internal_set_explored(from._internal_explored());
   }
@@ -3830,6 +3891,7 @@ void SaveGame::InternalSwap(SaveGame* other) {
   _impl_.units_.InternalSwap(&other->_impl_.units_);
   _impl_.buildings_.InternalSwap(&other->_impl_.buildings_);
   _impl_.nodes_.InternalSwap(&other->_impl_.nodes_);
+  _impl_.team_fog_.InternalSwap(&other->_impl_.team_fog_);
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &_impl_.explored_, lhs_arena,
       &other->_impl_.explored_, rhs_arena
@@ -3846,6 +3908,231 @@ void SaveGame::InternalSwap(SaveGame* other) {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_savegame_2eproto_getter, &descriptor_table_savegame_2eproto_once,
       file_level_metadata_savegame_2eproto[8]);
+}
+
+// ===================================================================
+
+class TeamFog::_Internal {
+ public:
+};
+
+TeamFog::TeamFog(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:cc.save.TeamFog)
+}
+TeamFog::TeamFog(const TeamFog& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  TeamFog* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.explored_){}
+    , decltype(_impl_.team_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.explored_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.explored_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_explored().empty()) {
+    _this->_impl_.explored_.Set(from._internal_explored(), 
+      _this->GetArenaForAllocation());
+  }
+  _this->_impl_.team_ = from._impl_.team_;
+  // @@protoc_insertion_point(copy_constructor:cc.save.TeamFog)
+}
+
+inline void TeamFog::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.explored_){}
+    , decltype(_impl_.team_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+  _impl_.explored_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.explored_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+}
+
+TeamFog::~TeamFog() {
+  // @@protoc_insertion_point(destructor:cc.save.TeamFog)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void TeamFog::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.explored_.Destroy();
+}
+
+void TeamFog::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void TeamFog::Clear() {
+// @@protoc_insertion_point(message_clear_start:cc.save.TeamFog)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.explored_.ClearToEmpty();
+  _impl_.team_ = 0;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* TeamFog::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // int32 team = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.team_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // bytes explored = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_explored();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* TeamFog::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:cc.save.TeamFog)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int32 team = 1;
+  if (this->_internal_team() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_team(), target);
+  }
+
+  // bytes explored = 2;
+  if (!this->_internal_explored().empty()) {
+    target = stream->WriteBytesMaybeAliased(
+        2, this->_internal_explored(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:cc.save.TeamFog)
+  return target;
+}
+
+size_t TeamFog::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:cc.save.TeamFog)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // bytes explored = 2;
+  if (!this->_internal_explored().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+        this->_internal_explored());
+  }
+
+  // int32 team = 1;
+  if (this->_internal_team() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_team());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData TeamFog::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    TeamFog::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*TeamFog::GetClassData() const { return &_class_data_; }
+
+
+void TeamFog::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<TeamFog*>(&to_msg);
+  auto& from = static_cast<const TeamFog&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:cc.save.TeamFog)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (!from._internal_explored().empty()) {
+    _this->_internal_set_explored(from._internal_explored());
+  }
+  if (from._internal_team() != 0) {
+    _this->_internal_set_team(from._internal_team());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void TeamFog::CopyFrom(const TeamFog& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:cc.save.TeamFog)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool TeamFog::IsInitialized() const {
+  return true;
+}
+
+void TeamFog::InternalSwap(TeamFog* other) {
+  using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.explored_, lhs_arena,
+      &other->_impl_.explored_, rhs_arena
+  );
+  swap(_impl_.team_, other->_impl_.team_);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata TeamFog::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_savegame_2eproto_getter, &descriptor_table_savegame_2eproto_once,
+      file_level_metadata_savegame_2eproto[9]);
 }
 
 // @@protoc_insertion_point(namespace_scope)
@@ -3887,6 +4174,10 @@ Arena::CreateMaybeMessage< ::cc::save::ResourceNode >(Arena* arena) {
 template<> PROTOBUF_NOINLINE ::cc::save::SaveGame*
 Arena::CreateMaybeMessage< ::cc::save::SaveGame >(Arena* arena) {
   return Arena::CreateMessageInternal< ::cc::save::SaveGame >(arena);
+}
+template<> PROTOBUF_NOINLINE ::cc::save::TeamFog*
+Arena::CreateMaybeMessage< ::cc::save::TeamFog >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::cc::save::TeamFog >(arena);
 }
 PROTOBUF_NAMESPACE_CLOSE
 

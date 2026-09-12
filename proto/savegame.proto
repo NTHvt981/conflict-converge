@@ -103,5 +103,13 @@ message SaveGame
     repeated ResourceNode nodes = 7;
     float node_iron_carry = 8;
     float node_oil_carry = 9;
-    bytes explored = 10; // M9 fog visibility sets (empty until then)
+    bytes explored = 10; // legacy: superseded by team_fog, never written
+    repeated TeamFog team_fog = 11; // M9: per-team explored sets
+}
+
+// M9: one team's frozen explored memory, row-major bytes, map w*h long.
+message TeamFog
+{
+    int32 team = 1;
+    bytes explored = 2;
 }

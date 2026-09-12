@@ -11,6 +11,7 @@
 
 #include "Building.h"
 #include "CcAssert.h"
+#include "FogOfWar.h" // M9: per-team explored sets via team_fog
 #include "GameCamera.h"
 #include "Nodes.h"
 #include "Registry.h"
@@ -28,6 +29,7 @@ constexpr std::int32_t kMaxUnits = 100000;
 constexpr std::int32_t kMaxBuildings = 100000;
 constexpr std::int32_t kMaxNodes = 100000;
 constexpr std::uint32_t kMaxPathNodes = 100000;
+constexpr std::int32_t kMaxFogTeams = 16;
 
 void FillVec2(cc::save::Vec2 *out, Vector2 v)
 {
@@ -98,6 +100,7 @@ struct SavedWorld
     std::vector<ResourceNode> nodes;
     float nodeIronCarry = 0.0f;
     float nodeOilCarry = 0.0f;
+    std::vector<std::pair<int, std::string>> teamFog; // (teamID, explored bytes)
 };
 
 bool InRange(std::int64_t value)
@@ -261,7 +264,16 @@ bool Decode(const std::string &payload, SavedWorld &out)
     }
     out.nodeIronCarry = msg.node_iron_carry();
     out.nodeOilCarry = msg.node_oil_carry();
-    // msg.explored() is reserved for M9 fog; accepted at any size here.
+    // msg.explored() is the legacy M15 field: superseded, never read.
+    if (msg.team_fog_size() > kMaxFogTeams)
+    {
+        return false;
+    }
+    out.teamFog.clear();
+    for (const cc::save::TeamFog &in : msg.team_fog())
+    {
+        out.teamFog.push_back({ in.team(), in.explored() });
+    }
     return true;
 }
 
@@ -270,7 +282,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
 bool SaveWorld(const WorldState &world, const std::string &path)
 {
     if (world.registry == nullptr || world.resources == nullptr || world.map == nullptr ||
-        world.camera == nullptr || world.nodes == nullptr)
+        world.camera == nullptr || world.nodes == nullptr || world.fog == nullptr)
     {
         return false;
     }
@@ -333,6 +345,13 @@ bool SaveWorld(const WorldState &world, const std::string &path)
     });
     msg.set_node_iron_carry(world.nodes->IronCarry());
     msg.set_node_oil_carry(world.nodes->OilCarry());
+    for (int teamID : world.fog->Teams())
+    {
+        cc::save::TeamFog *out = msg.add_team_fog();
+        out->set_team(teamID);
+        const std::vector<std::uint8_t> bytes = world.fog->ExploredBytes(teamID);
+        out->set_explored(bytes.data(), bytes.size());
+    }
 
     std::string payload;
     if (!msg.SerializeToString(&payload))
@@ -352,7 +371,7 @@ bool SaveWorld(const WorldState &world, const std::string &path)
 bool LoadWorld(const WorldState &world, const std::string &path)
 {
     if (world.registry == nullptr || world.resources == nullptr || world.map == nullptr ||
-        world.camera == nullptr || world.nodes == nullptr)
+        world.camera == nullptr || world.nodes == nullptr || world.fog == nullptr)
     {
         return false;
     }
@@ -427,5 +446,14 @@ bool LoadWorld(const WorldState &world, const std::string &path)
                                  node.respawnTimer);
     }
     world.nodes->SetCarry(saved.nodeIronCarry, saved.nodeOilCarry);
+    // Fog memory follows the map: resize first, then restore each team's
+    // explored set (size mismatches are ignored inside SetExplored).
+    world.fog->Resize(saved.mapWidth, saved.mapHeight);
+    for (const auto &entry : saved.teamFog)
+    {
+        world.fog->SetExplored(entry.first,
+                               reinterpret_cast<const std::uint8_t *>(entry.second.data()),
+                               entry.second.size());
+    }
     return true;
 }

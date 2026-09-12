@@ -6,6 +6,7 @@
 
 #include "Building.h"
 #include "Event.h"
+#include "FogOfWar.h" // WorldState carries fog memory
 #include "GameCamera.h" // WorldState carries the camera
 #include "MathUtils.h"
 #include "Nodes.h"
@@ -143,12 +144,14 @@ void RunIntegrationTests()
         TileMap map(20, 15);
         GameCamera camera;
         ResourceNodes nodes;
+        FogOfWar fog;
+        fog.Resize(20, 15);
         DeployFaceoff(registry, factory, UnitType::LightTank);
         SimulateCombatFrames(registry, map, factory, 60);
 
         const std::string path =
             (std::filesystem::temp_directory_path() / "cc_integration_midfight.ccpb").string();
-        WorldState src{ &registry, &resources, &map, &camera, &nodes };
+        WorldState src{ &registry, &resources, &map, &camera, &nodes, &fog };
         CC_CHECK(SaveWorld(src, path));
 
         Registry registry2;
@@ -156,7 +159,9 @@ void RunIntegrationTests()
         TileMap map2(4, 4);
         GameCamera camera2;
         ResourceNodes nodes2;
-        WorldState dst{ &registry2, &resources2, &map2, &camera2, &nodes2 };
+        FogOfWar fog2;
+        fog2.Resize(4, 4);
+        WorldState dst{ &registry2, &resources2, &map2, &camera2, &nodes2, &fog2 };
         CC_CHECK(LoadWorld(dst, path));
         CC_CHECK(registry2.EntityCount() == registry.EntityCount());
 

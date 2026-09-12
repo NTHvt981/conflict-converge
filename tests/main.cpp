@@ -40,6 +40,8 @@ void RunFeedbackTests();
 void RunIntegrationTests();
 void RunPerfTests();
 void RunAICommanderTests();
+void RunFogTests();
+void RunFogCombatTests();
 
 int main()
 {
@@ -78,6 +80,8 @@ int main()
     RunIntegrationTests();
     RunPerfTests();
     RunAICommanderTests();
+    RunFogTests();
+    RunFogCombatTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);

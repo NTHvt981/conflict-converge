@@ -64,6 +64,9 @@ extern ResourcesDefaultTypeInternal _Resources_default_instance_;
 class SaveGame;
 struct SaveGameDefaultTypeInternal;
 extern SaveGameDefaultTypeInternal _SaveGame_default_instance_;
+class TeamFog;
+struct TeamFogDefaultTypeInternal;
+extern TeamFogDefaultTypeInternal _TeamFog_default_instance_;
 class TileMap;
 struct TileMapDefaultTypeInternal;
 extern TileMapDefaultTypeInternal _TileMap_default_instance_;
@@ -82,6 +85,7 @@ template<> ::cc::save::IVec2* Arena::CreateMaybeMessage<::cc::save::IVec2>(Arena
 template<> ::cc::save::ResourceNode* Arena::CreateMaybeMessage<::cc::save::ResourceNode>(Arena*);
 template<> ::cc::save::Resources* Arena::CreateMaybeMessage<::cc::save::Resources>(Arena*);
 template<> ::cc::save::SaveGame* Arena::CreateMaybeMessage<::cc::save::SaveGame>(Arena*);
+template<> ::cc::save::TeamFog* Arena::CreateMaybeMessage<::cc::save::TeamFog>(Arena*);
 template<> ::cc::save::TileMap* Arena::CreateMaybeMessage<::cc::save::TileMap>(Arena*);
 template<> ::cc::save::Unit* Arena::CreateMaybeMessage<::cc::save::Unit>(Arena*);
 template<> ::cc::save::Vec2* Arena::CreateMaybeMessage<::cc::save::Vec2>(Arena*);
@@ -1960,6 +1964,7 @@ class SaveGame final :
     kUnitsFieldNumber = 5,
     kBuildingsFieldNumber = 6,
     kNodesFieldNumber = 7,
+    kTeamFogFieldNumber = 11,
     kExploredFieldNumber = 10,
     kResourcesFieldNumber = 2,
     kCameraFieldNumber = 3,
@@ -2021,6 +2026,24 @@ class SaveGame final :
   ::cc::save::ResourceNode* add_nodes();
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::cc::save::ResourceNode >&
       nodes() const;
+
+  // repeated .cc.save.TeamFog team_fog = 11;
+  int team_fog_size() const;
+  private:
+  int _internal_team_fog_size() const;
+  public:
+  void clear_team_fog();
+  ::cc::save::TeamFog* mutable_team_fog(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::cc::save::TeamFog >*
+      mutable_team_fog();
+  private:
+  const ::cc::save::TeamFog& _internal_team_fog(int index) const;
+  ::cc::save::TeamFog* _internal_add_team_fog();
+  public:
+  const ::cc::save::TeamFog& team_fog(int index) const;
+  ::cc::save::TeamFog* add_team_fog();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::cc::save::TeamFog >&
+      team_fog() const;
 
   // bytes explored = 10;
   void clear_explored();
@@ -2128,6 +2151,7 @@ class SaveGame final :
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::cc::save::Unit > units_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::cc::save::Building > buildings_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::cc::save::ResourceNode > nodes_;
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::cc::save::TeamFog > team_fog_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr explored_;
     ::cc::save::Resources* resources_;
     ::cc::save::Camera* camera_;
@@ -2135,6 +2159,170 @@ class SaveGame final :
     uint32_t save_version_;
     float node_iron_carry_;
     float node_oil_carry_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_savegame_2eproto;
+};
+// -------------------------------------------------------------------
+
+class TeamFog final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:cc.save.TeamFog) */ {
+ public:
+  inline TeamFog() : TeamFog(nullptr) {}
+  ~TeamFog() override;
+  explicit PROTOBUF_CONSTEXPR TeamFog(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  TeamFog(const TeamFog& from);
+  TeamFog(TeamFog&& from) noexcept
+    : TeamFog() {
+    *this = ::std::move(from);
+  }
+
+  inline TeamFog& operator=(const TeamFog& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline TeamFog& operator=(TeamFog&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const TeamFog& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const TeamFog* internal_default_instance() {
+    return reinterpret_cast<const TeamFog*>(
+               &_TeamFog_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    9;
+
+  friend void swap(TeamFog& a, TeamFog& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(TeamFog* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(TeamFog* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  TeamFog* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<TeamFog>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const TeamFog& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const TeamFog& from) {
+    TeamFog::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(TeamFog* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "cc.save.TeamFog";
+  }
+  protected:
+  explicit TeamFog(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kExploredFieldNumber = 2,
+    kTeamFieldNumber = 1,
+  };
+  // bytes explored = 2;
+  void clear_explored();
+  const std::string& explored() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_explored(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_explored();
+  PROTOBUF_NODISCARD std::string* release_explored();
+  void set_allocated_explored(std::string* explored);
+  private:
+  const std::string& _internal_explored() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_explored(const std::string& value);
+  std::string* _internal_mutable_explored();
+  public:
+
+  // int32 team = 1;
+  void clear_team();
+  int32_t team() const;
+  void set_team(int32_t value);
+  private:
+  int32_t _internal_team() const;
+  void _internal_set_team(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:cc.save.TeamFog)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr explored_;
+    int32_t team_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -4190,9 +4378,125 @@ inline void SaveGame::set_allocated_explored(std::string* explored) {
   // @@protoc_insertion_point(field_set_allocated:cc.save.SaveGame.explored)
 }
 
+// repeated .cc.save.TeamFog team_fog = 11;
+inline int SaveGame::_internal_team_fog_size() const {
+  return _impl_.team_fog_.size();
+}
+inline int SaveGame::team_fog_size() const {
+  return _internal_team_fog_size();
+}
+inline void SaveGame::clear_team_fog() {
+  _impl_.team_fog_.Clear();
+}
+inline ::cc::save::TeamFog* SaveGame::mutable_team_fog(int index) {
+  // @@protoc_insertion_point(field_mutable:cc.save.SaveGame.team_fog)
+  return _impl_.team_fog_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::cc::save::TeamFog >*
+SaveGame::mutable_team_fog() {
+  // @@protoc_insertion_point(field_mutable_list:cc.save.SaveGame.team_fog)
+  return &_impl_.team_fog_;
+}
+inline const ::cc::save::TeamFog& SaveGame::_internal_team_fog(int index) const {
+  return _impl_.team_fog_.Get(index);
+}
+inline const ::cc::save::TeamFog& SaveGame::team_fog(int index) const {
+  // @@protoc_insertion_point(field_get:cc.save.SaveGame.team_fog)
+  return _internal_team_fog(index);
+}
+inline ::cc::save::TeamFog* SaveGame::_internal_add_team_fog() {
+  return _impl_.team_fog_.Add();
+}
+inline ::cc::save::TeamFog* SaveGame::add_team_fog() {
+  ::cc::save::TeamFog* _add = _internal_add_team_fog();
+  // @@protoc_insertion_point(field_add:cc.save.SaveGame.team_fog)
+  return _add;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::cc::save::TeamFog >&
+SaveGame::team_fog() const {
+  // @@protoc_insertion_point(field_list:cc.save.SaveGame.team_fog)
+  return _impl_.team_fog_;
+}
+
+// -------------------------------------------------------------------
+
+// TeamFog
+
+// int32 team = 1;
+inline void TeamFog::clear_team() {
+  _impl_.team_ = 0;
+}
+inline int32_t TeamFog::_internal_team() const {
+  return _impl_.team_;
+}
+inline int32_t TeamFog::team() const {
+  // @@protoc_insertion_point(field_get:cc.save.TeamFog.team)
+  return _internal_team();
+}
+inline void TeamFog::_internal_set_team(int32_t value) {
+  
+  _impl_.team_ = value;
+}
+inline void TeamFog::set_team(int32_t value) {
+  _internal_set_team(value);
+  // @@protoc_insertion_point(field_set:cc.save.TeamFog.team)
+}
+
+// bytes explored = 2;
+inline void TeamFog::clear_explored() {
+  _impl_.explored_.ClearToEmpty();
+}
+inline const std::string& TeamFog::explored() const {
+  // @@protoc_insertion_point(field_get:cc.save.TeamFog.explored)
+  return _internal_explored();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void TeamFog::set_explored(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.explored_.SetBytes(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:cc.save.TeamFog.explored)
+}
+inline std::string* TeamFog::mutable_explored() {
+  std::string* _s = _internal_mutable_explored();
+  // @@protoc_insertion_point(field_mutable:cc.save.TeamFog.explored)
+  return _s;
+}
+inline const std::string& TeamFog::_internal_explored() const {
+  return _impl_.explored_.Get();
+}
+inline void TeamFog::_internal_set_explored(const std::string& value) {
+  
+  _impl_.explored_.Set(value, GetArenaForAllocation());
+}
+inline std::string* TeamFog::_internal_mutable_explored() {
+  
+  return _impl_.explored_.Mutable(GetArenaForAllocation());
+}
+inline std::string* TeamFog::release_explored() {
+  // @@protoc_insertion_point(field_release:cc.save.TeamFog.explored)
+  return _impl_.explored_.Release();
+}
+inline void TeamFog::set_allocated_explored(std::string* explored) {
+  if (explored != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.explored_.SetAllocated(explored, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.explored_.IsDefault()) {
+    _impl_.explored_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:cc.save.TeamFog.explored)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

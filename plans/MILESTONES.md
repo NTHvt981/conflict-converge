@@ -22,7 +22,7 @@
 | M6 | UI & Minimap | M5 | 🟢 Complete |
 | M7 | Save/Load & Integration Tests | M6 | 🟢 Complete |
 | M8 | Enemy AI Commander | M7 | 🟢 Complete |
-| M9 | Fog of War & Recon | M8 | 🔴 Not Started |
+| M9 | Fog of War & Recon | M8 | 🟢 Complete |
 | M10 | Map Files & Terrain | M7 | 🔴 Not Started |
 | M11 | Audio | M7 | 🔴 Not Started |
 | M12 | Art & Animation | M7 | 🔴 Not Started |
@@ -373,11 +373,11 @@ Rationale: every system so far serves a skirmish against a scripted demo enemy. 
 Rationale: sight ranges exist (M3) but all units see everything — no scouting value, no ambushes, contrary to the Dune 2000 reference (Q5). Fog makes recon units and map control meaningful.
 
 ### Goals
-- [ ] Implement per-team visibility grid over the TileMap (pure sight radius, no LOS blockers per Q77)
-- [ ] Distinguish unexplored (black) vs explored-but-unseen (dimmed, frozen StarCraft-style snapshot per Q76)
-- [ ] Hide enemy units/buildings outside vision in world view and minimap
-- [ ] Gate targeting: units cannot acquire targets they cannot see (artillery may blind-fire into shroud at no penalty per Q78)
-- [ ] Give scout-role units/API a sight advantage (fast units, cheap cost)
+- [x] Implement per-team visibility grid over the TileMap (pure sight radius, no LOS blockers per Q77)
+- [x] Distinguish unexplored (black) vs explored-but-unseen (dimmed, frozen StarCraft-style snapshot per Q76)
+- [x] Hide enemy units/buildings outside vision in world view and minimap
+- [x] Gate targeting: units cannot acquire targets they cannot see (artillery may blind-fire into shroud at no penalty per Q78)
+- [x] Give scout-role units/API a sight advantage (fast units, cheap cost)
 
 ### Implementation Steps
 1. **Visibility System**
