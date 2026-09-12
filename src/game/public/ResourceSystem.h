@@ -12,4 +12,12 @@ public:
     void AddIron(long amount);
     void AddOil(long amount);
     bool TrySpend(long ironCost, long oilCost);
+
+    // M5 Goal 1/4: base income generation. Banks whole units per tick,
+    // carrying fractions forward; never caps (design: income has no maximum).
+    void TickIncome(float ironPerSecond, float oilPerSecond, float dt);
+
+private:
+    float ironCarry_ = 0.0f;
+    float oilCarry_ = 0.0f;
 };

@@ -26,3 +26,27 @@ bool ResourceSystem::TrySpend(long ironCost, long oilCost)
     oil -= oilCost;
     return true;
 }
+
+void ResourceSystem::TickIncome(float ironPerSecond, float oilPerSecond, float dt)
+{
+    if (dt <= 0.0f)
+    {
+        return;
+    }
+    if (ironPerSecond < 0.0f)
+    {
+        ironPerSecond = 0.0f; // income never drains; spending goes through TrySpend
+    }
+    if (oilPerSecond < 0.0f)
+    {
+        oilPerSecond = 0.0f;
+    }
+    ironCarry_ += ironPerSecond * dt;
+    oilCarry_ += oilPerSecond * dt;
+    const long ironWhole = static_cast<long>(ironCarry_);
+    const long oilWhole = static_cast<long>(oilCarry_);
+    iron += ironWhole;
+    oil += oilWhole;
+    ironCarry_ -= static_cast<float>(ironWhole);
+    oilCarry_ -= static_cast<float>(oilWhole);
+}

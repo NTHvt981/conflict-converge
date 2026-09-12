@@ -214,7 +214,7 @@
 ## Milestone M5: Resource & Economy
 
 ### Goals
-- [ ] Implement iron and oil resource system (no cap)
+- [x] Implement iron and oil resource system (no cap)
 - [ ] Create base building mechanics
 - [ ] Implement resource node gathering (Company of Heroes style)
 - [ ] Base income generation
