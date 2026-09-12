@@ -32,7 +32,7 @@
 - [x] Integrate glm for math operations
 - [x] Implement raygui for UI framework
 - [x] Set up event dispatcher architecture
-- [ ] Create ECS-lite component-based architecture
+- [x] Create ECS-lite component-based architecture
 - [ ] Configure debug/release profiles with assertions
 
 ### Implementation Steps
