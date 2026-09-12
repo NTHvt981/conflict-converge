@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "Registry.h"      // SelectedUnit lookup
 #include "ResourceSystem.h" // stockpile counters
@@ -12,6 +13,9 @@
 const char *UnitTypeName(UnitType type);
 std::string FormatResources(const ResourceSystem &resources);
 std::string SelectionSummary(const Unit &unit);
+// M6 Goal 4: selection visuals + shortcut overlay builders.
+float UnitHealthFraction(const Unit &unit); // hp / max, clamped to [0, 1]
+std::vector<std::string> ShortcutHintLines();
 
 // Screen-space panels (call after EndMode2D).
 void DrawResourcePanel(const ResourceSystem &resources);

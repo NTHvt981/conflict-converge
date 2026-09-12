@@ -19,7 +19,7 @@
 | M3 | Unit System | M2 | 🟢 Complete |
 | M4 | Combat System | M3 | 🟢 Complete |
 | M5 | Resource & Economy | M4 | 🟢 Complete |
-| M6 | UI & Minimap | M5 | 🔴 Not Started |
+| M6 | UI & Minimap | M5 | 🟢 Complete |
 | M7 | Save/Load & Integration Tests | M6 | 🔴 Not Started |
 
 ---
@@ -256,8 +256,8 @@
 - [x] Implement raygui-based UI framework
 - [x] Create minimap (unit positions only, periodic refresh)
 - [x] Display resource counters (iron/oil)
-- [ ] Unit selection highlighting
-- [ ] Keyboard shortcut overlays
+- [x] Unit selection highlighting
+- [x] Keyboard shortcut overlays
 - [x] Game menu system
 
 ### Implementation Steps

@@ -44,6 +44,34 @@ std::string SelectionSummary(const Unit &unit)
     return buf;
 }
 
+float UnitHealthFraction(const Unit &unit)
+{
+    const float maxHealth = BaseStats(unit.type).health;
+    if (maxHealth <= 0.0f)
+    {
+        return 0.0f;
+    }
+    const float fraction = unit.health / maxHealth;
+    if (fraction <= 0.0f)
+    {
+        return 0.0f;
+    }
+    return fraction >= 1.0f ? 1.0f : fraction;
+}
+
+std::vector<std::string> ShortcutHintLines()
+{
+    return {
+        "WASD Camera",
+        "Left Select",
+        "Right Order",
+        "Esc Deselect",
+        "Space Halt",
+        "P Pause",
+        "F1 Hints",
+    };
+}
+
 void DrawResourcePanel(const ResourceSystem &resources)
 {
     GuiPanel({ 8.0f, 8.0f, 220.0f, 56.0f }, "Stockpile");

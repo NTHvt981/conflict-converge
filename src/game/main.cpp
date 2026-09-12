@@ -80,8 +80,11 @@ int main(void)
 	const Vector2 rallyPos = cc::ToRaylib(cc::TileToWorld(13, 11));
 
 	// M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
-	// deselects, Space halts selected units, P pauses (M6 Goal 3).
+	// deselects, Space halts selected units, P pauses (M6 Goal 3),
+	// F1 toggles the shortcut overlay (M6 Goal 4).
 	InputManager input;
+	bool showHints = true; // M6 Goal 4: F1 toggles the shortcut overlay
+	input.shortcuts.Bind(KEY_F1, [&] { showHints = !showHints; });
 	input.shortcuts.Bind(KEY_P, [&] { menu.TogglePause(); });
 	input.shortcuts.Bind(KEY_ESCAPE, [&] { DeselectAll(registry); });
 	input.shortcuts.Bind(KEY_SPACE, [&] {
@@ -245,6 +248,7 @@ int main(void)
 		// Units as 32x32 placeholder rects: red-ringed when selected,
 		// orange-bodied when Attacking with a tracer to the target (M3G5),
 		// white-flashed with a damage number while hitFlashTime runs (M4G5).
+		// Selected units also get a health bar (M6 Goal 4).
 		registry.Each<Unit>([&](Entity, Unit &unit) {
 			const Rectangle body = { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };
 			const Vector2 center = { body.x + 16.0f, body.y + 16.0f };
@@ -252,6 +256,11 @@ int main(void)
 			if (unit.isSelected)
 			{
 				DrawRectangleLinesEx(body, 3.0f, RED);
+				const float fraction = UnitHealthFraction(unit);
+				DrawRectangle(static_cast<int>(body.x), static_cast<int>(body.y) - 8,
+				              static_cast<int>(body.width), 5, Fade(RED, 0.6f));
+				DrawRectangle(static_cast<int>(body.x), static_cast<int>(body.y) - 8,
+				              static_cast<int>(body.width * fraction), 5, GREEN);
 			}
 			if (unit.hitFlashTime > 0.0f)
 			{
@@ -295,6 +304,16 @@ int main(void)
 			DrawText("Producing...", 620, 48, 16, GRAY);
 			DrawRectangle(620, 68, 150, 12, LIGHTGRAY);
 			DrawRectangle(620, 68, static_cast<int>(150.0f * queue.HeadProgress()), 12, DARKGREEN);
+		}
+
+		// M6 Goal 4: shortcut overlay, bottom-left, toggled with F1.
+		if (showHints)
+		{
+			const std::vector<std::string> hints = ShortcutHintLines();
+			for (std::size_t i = 0; i < hints.size(); ++i)
+			{
+				DrawText(hints[i].c_str(), 8, 250 + static_cast<int>(i) * 18, 14, Fade(DARKGRAY, 0.8f));
+			}
 		}
 
 		if (GuiButton(Rectangle{ 20, 20, 140, 30 }, "Click me"))
