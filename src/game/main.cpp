@@ -19,12 +19,14 @@
 #include "Hud.h" // M6 Goal 2: raygui resource + selection panels
 #include "Menu.h" // M6 Goal 3: pause / outcome / settings menu flow
 #include "FogOfWar.h" // M9: per-team visibility (shroud, targeting gate)
+#include "Art.h" // M12: sprite renderer + particle pool (rectangle fallback)
 #include "Audio.h" // M11: synthesized SFX + looped music (data/audio/*.wav)
 #include "MapFile.h" // M10: demo loads Crossroads from data/
 #include "AICommander.h" // M8: enemy commander (build order, waves, scouting)
 #include <iostream>
 #include <vector>
 #include <format>
+#include <cmath> // M12: muzzle direction normalization
 
 int main(void)
 {
@@ -38,6 +40,10 @@ int main(void)
 	InitAudioDevice();
 	Audio audio;
 	audio.Init(IsAudioDeviceReady());
+	// M12: sprite + particle renderer. Missing files fall back to the
+	// rectangle placeholders the tests exercise headless.
+	Art art;
+	art.Init(true);
 	// Poll state for edge-triggered sounds (placed/depleted counts, attack
 	// rate limit, outcome transitions).
 	int lastBuildingCount = 0;
@@ -245,6 +251,13 @@ int main(void)
 			});
 			for (Entity id : dead)
 			{
+				if (const Unit *corpse = registry.Get<Unit>(id))
+				{
+					// M12: death burst at the corpse before teardown.
+					art.ParticlesPool().SpawnBurst(
+						{ corpse->position.x + 32.0f, corpse->position.y + 32.0f }, ORANGE, 24,
+						120.0f, 0.6f);
+				}
 				factory.DestroyUnit(id);
 			}
 			// M11: edge-triggered battle sounds (one explosion per wipe, not per corpse).
@@ -252,6 +265,30 @@ int main(void)
 			{
 				audio.Play(SfxId::Explosion);
 			}
+			// M12: impact sparks on fresh hits + muzzle sparks while telegraphing.
+			registry.Each<Unit>([&](Entity, const Unit &unit) {
+				const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
+				if (unit.hitFlashTime > 0.20f)
+				{
+					art.ParticlesPool().SpawnBurst(center, YELLOW, 6, 90.0f, 0.25f);
+				}
+				if (unit.phase == AttackPhase::WindUp)
+				{
+					if (const Unit *target = registry.Get<Unit>(unit.target))
+					{
+						const Vector2 dir = { target->position.x - unit.position.x,
+							                  target->position.y - unit.position.y };
+						const float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+						if (len > 1.0f)
+						{
+							art.ParticlesPool().SpawnBurst(
+								{ center.x + dir.x / len * 20.0f, center.y + dir.y / len * 20.0f },
+								ORANGE, 2, 40.0f, 0.15f);
+						}
+					}
+				}
+			});
+			art.ParticlesPool().Update(dt);
 			attackSfxTimer -= dt;
 			bool windingUp = false;
 			registry.Each<Unit>([&](Entity, const Unit &unit) {
@@ -400,14 +437,21 @@ int main(void)
 			}
 			const cc::IVec2 size = Footprint(building.type);
 			const Vector2 corner = cc::ToRaylib(cc::TileToWorld(building.tileX, building.tileY));
-			const float w = static_cast<float>(size.x) * cc::TILE_SIZE;
-			const float h = static_cast<float>(size.y) * cc::TILE_SIZE;
-			const Color tint =
-				building.type == BuildingType::Base ? DARKGRAY : building.type == BuildingType::Factory ? BROWN : GRAY;
-			DrawRectangleV(corner, { w, h }, tint);
-			const char *label =
-				building.type == BuildingType::Base ? "B" : building.type == BuildingType::Factory ? "F" : "D";
-			DrawText(label, static_cast<int>(corner.x) + 6, static_cast<int>(corner.y) + 4, 24, WHITE);
+			if (art.UseRectangles())
+			{
+				const float w = static_cast<float>(size.x) * cc::TILE_SIZE;
+				const float h = static_cast<float>(size.y) * cc::TILE_SIZE;
+				const Color tint =
+					building.type == BuildingType::Base ? DARKGRAY : building.type == BuildingType::Factory ? BROWN : GRAY;
+				DrawRectangleV(corner, { w, h }, tint);
+				const char *label =
+					building.type == BuildingType::Base ? "B" : building.type == BuildingType::Factory ? "F" : "D";
+				DrawText(label, static_cast<int>(corner.x) + 6, static_cast<int>(corner.y) + 4, 24, WHITE);
+			}
+			else
+			{
+				art.DrawBuilding(building.type, building.teamID, building.tileX, building.tileY);
+			}
 		});
 		nodes.Each([&](const ResourceNode &node) {
 			// M9: static features join the frozen snapshot once explored.
@@ -418,13 +462,20 @@ int main(void)
 			const Vector2 corner = cc::ToRaylib(cc::TileToWorld(node.tile.x, node.tile.y));
 			const Vector2 center = { corner.x + cc::TILE_SIZE / 2.0f,
 				                     corner.y + cc::TILE_SIZE / 2.0f };
-			DrawCircleV(center, 14.0f, node.kind == ResourceKind::Iron ? GOLD : LIME);
+			if (art.UseRectangles())
+			{
+				DrawCircleV(center, 14.0f, node.kind == ResourceKind::Iron ? GOLD : LIME);
+			}
+			else
+			{
+				art.DrawNode(node.kind, center);
+			}
 			DrawText(TextFormat("%.0f", node.amount), static_cast<int>(center.x) - 12,
 			         static_cast<int>(center.y) - 8, 12, DARKGRAY);
 		});
 
-		// Units as 32x32 placeholder rects: red-ringed when selected,
-		// orange-bodied when Attacking with a tracer to the target (M3G5),
+		// Units as sprites (M12) or 32x32 placeholder rects (fallback/tests):
+		// red-ringed when selected, tracer to the target when Attacking (M3G5),
 		// white-flashed with a damage number while hitFlashTime runs (M4G5).
 		// Selected units also get a health bar (M6 Goal 4).
 		registry.Each<Unit>([&](Entity, Unit &unit) {
@@ -436,7 +487,14 @@ int main(void)
 			}
 			const Rectangle body = { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };
 			const Vector2 center = { body.x + 16.0f, body.y + 16.0f };
-			DrawRectangleRec(body, unit.state == UnitState::Attacking ? ORANGE : BLUE);
+			if (art.UseRectangles())
+			{
+				DrawRectangleRec(body, unit.state == UnitState::Attacking ? ORANGE : BLUE);
+			}
+			else
+			{
+				art.DrawUnit(unit.type, unit.teamID, FrameForPhase(unit.phase), unit.position);
+			}
 			if (unit.isSelected)
 			{
 				DrawRectangleLinesEx(body, 3.0f, RED);
@@ -465,6 +523,9 @@ int main(void)
 				DrawCircleV(cc::ToRaylib(cc::ToGlm(unit.moveTarget) + cc::Vec2(32.0f, 32.0f)), 5.0f, GREEN);
 			}
 		});
+		// M12: particles in world space, under the shroud so hidden battles
+		// stay hidden.
+		art.ParticlesPool().Draw();
 		// M9 shroud, drawn over the world: unexplored tiles go opaque black,
 		// explored-but-unseen tiles get a dim veil (frozen snapshot, Q76).
 		for (int y = 0; y < map.Height(); ++y)
@@ -498,7 +559,7 @@ int main(void)
 		}
 
 		// M6 Goal 2: raygui HUD (proper panels replace the M5 text counters).
-		DrawResourcePanel(resources);
+		DrawResourcePanel(resources, &art);
 		DrawSelectionPanel(registry);
 		if (!queue.Empty())
 		{
@@ -584,6 +645,7 @@ int main(void)
 	}
 
 	minimap.Unload();
+	art.Shutdown(); // M12: unload sprite textures
 	audio.Shutdown(); // M11: unload sounds + music stream
 	CloseAudioDevice();
 	CloseWindow();

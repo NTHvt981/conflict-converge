@@ -2,6 +2,7 @@
 
 #include <cstdio>
 
+#include "Art.h"        // M12 resource icons (optional, may be fallback)
 #include "raygui.h"   // panels/labels
 #include "Selection.h" // SelectedUnit
 #include "UnitStats.h" // max-health lookup for the summary
@@ -74,9 +75,20 @@ std::vector<std::string> ShortcutHintLines()
     };
 }
 
-void DrawResourcePanel(const ResourceSystem &resources)
+void DrawResourcePanel(const ResourceSystem &resources, const Art *art)
 {
     GuiPanel({ 8.0f, 8.0f, 220.0f, 56.0f }, "Stockpile");
+    if (art != nullptr && !art->UseRectangles())
+    {
+        art->DrawIcon(ResourceKind::Iron, { 20.0f, 34.0f });
+        art->DrawIcon(ResourceKind::Oil, { 118.0f, 34.0f });
+        char buf[64];
+        std::snprintf(buf, sizeof(buf), "%ld", resources.iron);
+        GuiLabel({ 40.0f, 32.0f, 76.0f, 20.0f }, buf);
+        std::snprintf(buf, sizeof(buf), "%ld", resources.oil);
+        GuiLabel({ 138.0f, 32.0f, 76.0f, 20.0f }, buf);
+        return;
+    }
     GuiLabel({ 20.0f, 32.0f, 200.0f, 20.0f }, FormatResources(resources).c_str());
 }
 

@@ -25,7 +25,7 @@
 | M9 | Fog of War & Recon | M8 | 🟢 Complete |
 | M10 | Map Files & Terrain | M7 | 🟢 Complete |
 | M11 | Audio | M7 | 🟢 Complete |
-| M12 | Art & Animation | M7 | 🔴 Not Started |
+| M12 | Art & Animation | M7 | 🟢 Complete |
 | M13 | Command Depth & Balance | M8 | 🔴 Not Started |
 | M14 | Main Menu & Game Shell | M7 | 🔴 Not Started |
 | M15 | Protobuf Serialization Migration | M7 | 🟢 Complete |
@@ -454,11 +454,11 @@ Rationale: Q22 pointed at rfxgen for SFX and it is already in `libs_deps.json`, 
 Rationale: every blocking table since M2 says "colored rectangles". Mechanics are done; the game still looks like a prototype.
 
 ### Goals
-- [ ] Create 32x32 spritesheets for all 7 unit types (idle + attack frames minimum)
-- [ ] Create building sprites (Base/Depot/Factory), node icons (iron/oil), UI icons
-- [ ] Implement sprite animation (attack windup ↔ Hit timing from M4 phases)
-- [ ] Add muzzle-flash / explosion particles on ResolveAttack hits
-- [ ] Keep rectangle fallback behind a flag for headless tests
+- [x] Create 32x32 spritesheets for all 7 unit types (idle + attack frames minimum)
+- [x] Create building sprites (Base/Depot/Factory), node icons (iron/oil), UI icons
+- [x] Implement sprite animation (attack windup ↔ Hit timing from M4 phases)
+- [x] Add muzzle-flash / explosion particles on ResolveAttack hits
+- [x] Keep rectangle fallback behind a flag for headless tests
 
 ### Implementation Steps
 1. **Pipeline**
