@@ -72,7 +72,9 @@ project "conflict-converge"
         "deps/raygui/src",
         "deps/glm/glm",
         "..",
-        "src/game"
+        "src/game",
+        "src/game/public",
+        "src/game/private"
     }
     
     -- Link with raylib and raygui static libraries, plus the Windows system

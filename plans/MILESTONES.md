@@ -14,8 +14,8 @@
 
 | Milestone | Name | Dependencies | Status |
 |-----------|------|--------------|--------|
-| M1 | Foundation & Setup | None | ✅ Complete |
-| M2 | Core Movement System | M1 | 🟡 In Progress |
+| M1 | Foundation & Setup | None | 🟡 In Progress |
+| M2 | Core Movement System | M1 | 🔴 Not Started |
 | M3 | Unit System | M2 | 🔴 Not Started |
 | M4 | Combat System | M3 | 🔴 Not Started |
 | M5 | Resource & Economy | M4 | 🔴 Not Started |
@@ -29,11 +29,11 @@
 ### Goals
 - [x] Set up premake5 build system with msbuild integration
 - [x] Configure project structure (src/game, tests)
-- [x] Integrate glm for math operations
-- [x] Implement raygui for UI framework
-- [x] Set up event dispatcher architecture
-- [x] Create ECS-lite component-based architecture
-- [x] Configure debug/release profiles with assertions
+- [] Integrate glm for math operations
+- [] Implement raygui for UI framework
+- [] Set up event dispatcher architecture
+- [] Create ECS-lite component-based architecture
+- [] Configure debug/release profiles with assertions
 
 ### Implementation Steps
 1. **Premake5 Setup**
