@@ -6,7 +6,7 @@
 #include "GameCamera.h" // M2 Goal 3: manual WASD panning camera
 #include "Registry.h"  // M2 Goal 4: unit registry (selection + orders)
 #include "Selection.h" // M2 Goal 4: mouse selection helpers
-#include "Shortcuts.h" // M2 Goal 5: keyboard shortcut registry
+#include "InputManager.h" // M2 Goal 6: per-frame input pump (WASD, mouse, shortcuts)
 #include "TileMap.h"   // M2 Goal 1: passable/blocked tile grid
 #include "Unit.h"      // M2 Goal 2/4: snapped units with move orders
 #include <iostream>
@@ -46,10 +46,11 @@ int main(void)
 	spawnDemo(UnitType::LightTank, 4, 2);
 	spawnDemo(UnitType::Artillery, 3, 5);
 
-	// M2 Goal 5 shortcuts: Esc deselects, Space halts selected units.
-	ShortcutRegistry shortcuts;
-	shortcuts.Bind(KEY_ESCAPE, [&] { DeselectAll(registry); });
-	shortcuts.Bind(KEY_SPACE, [&] {
+	// M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
+	// deselects, Space halts selected units.
+	InputManager input;
+	input.shortcuts.Bind(KEY_ESCAPE, [&] { DeselectAll(registry); });
+	input.shortcuts.Bind(KEY_SPACE, [&] {
 		registry.Each<Unit>([&](Entity, Unit &unit) {
 			if (unit.isSelected)
 			{
@@ -68,13 +69,13 @@ int main(void)
 
 	while (!WindowShouldClose())
 	{
-		camera.UpdateWASD(kCameraSpeed, GetFrameTime());
-		shortcuts.PollAndFire();
+		// M2 Goal 6: single input pump (WASD + shortcuts + mouse snapshot).
+		input.Update(camera, kCameraSpeed, GetFrameTime());
 
 		// M2 Goal 4 mouse inputs: left-click selects, right-click orders.
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+		if (input.LeftPressed())
 		{
-			const Vector2 world = camera.ScreenToWorld(GetMousePosition());
+			const Vector2 world = input.MouseWorld(camera);
 			const Entity hit = PickUnitAt(registry, world);
 			if (hit != kInvalidEntity)
 			{
@@ -85,12 +86,12 @@ int main(void)
 				DeselectAll(registry);
 			}
 		}
-		if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
+		if (input.RightPressed())
 		{
 			const Entity selected = SelectedUnit(registry);
 			if (Unit *ordered = registry.Get<Unit>(selected))
 			{
-				IssueMoveOrder(*ordered, camera.ScreenToWorld(GetMousePosition()));
+				IssueMoveOrder(*ordered, input.MouseWorld(camera));
 			}
 		}
 		registry.Each<Unit>([&](Entity, Unit &unit) {

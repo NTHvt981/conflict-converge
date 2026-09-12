@@ -15,7 +15,7 @@
 | Milestone | Name | Dependencies | Status |
 |-----------|------|--------------|--------|
 | M1 | Foundation & Setup | None | 🟢 Complete |
-| M2 | Core Movement System | M1 | 🔴 Not Started |
+| M2 | Core Movement System | M1 | 🟢 Complete |
 | M3 | Unit System | M2 | 🔴 Not Started |
 | M4 | Combat System | M3 | 🔴 Not Started |
 | M5 | Resource & Economy | M4 | 🔴 Not Started |
@@ -83,7 +83,7 @@
 - [x] Manual camera panning with WASD keys
 - [x] Mouse selection and command inputs
 - [x] Keyboard shortcut support
-- [ ] Basic input handling framework
+- [x] Basic input handling framework
 
 ### Implementation Steps
 1. **Tile Map System**
