@@ -216,7 +216,7 @@
 ### Goals
 - [x] Implement iron and oil resource system (no cap)
 - [x] Create base building mechanics
-- [ ] Implement resource node gathering (Company of Heroes style)
+- [x] Implement resource node gathering (Company of Heroes style)
 - [ ] Base income generation
 - [ ] Building placement on tile grid
 - [ ] Unit production queue
