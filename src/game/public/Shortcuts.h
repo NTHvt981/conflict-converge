@@ -15,11 +15,16 @@ public:
 
     // Bind (or rebind) a key to an action.
     void Bind(int raylibKey, Action action);
+    // Bind a Shift+key chord (M13 save-slot loading). Plain Bind never
+    // requires shift.
+    void BindChord(int raylibKey, Action action);
     void Unbind(int raylibKey);
     bool Has(int raylibKey) const;
 
     // Invoke the action bound to raylibKey; false when unbound.
     bool Fire(int raylibKey) const;
+    // Headless chord path: fires only when a shift-chord is bound.
+    bool FireChord(int raylibKey) const;
 
     // Fire each binding whose key was pressed this frame.
     void PollAndFire() const;
@@ -27,5 +32,10 @@ public:
     void Clear();
 
 private:
-    std::unordered_map<int, Action> bindings_;
+    struct Binding
+    {
+        Action action;
+        bool requireShift = false;
+    };
+    std::unordered_map<int, Binding> bindings_;
 };

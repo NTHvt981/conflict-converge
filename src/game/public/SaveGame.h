@@ -33,3 +33,7 @@ struct WorldState
 // I/O errors, bad magic, unsupported versions, or truncated/garbage data.
 bool SaveWorld(const WorldState &world, const std::string &path);
 bool LoadWorld(const WorldState &world, const std::string &path);
+
+// M13: named save slots (1..3, clamped) under data/. The F5 quicksave path
+// stays separate.
+std::string SaveSlotPath(int slot);

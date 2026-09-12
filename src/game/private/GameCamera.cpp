@@ -34,3 +34,31 @@ Vector2 GameCamera::ScreenToWorld(Vector2 screenPos) const
 {
     return GetScreenToWorld2D(screenPos, view);
 }
+
+void GameCamera::AdjustZoom(float wheelSteps)
+{
+    if (wheelSteps == 0.0f)
+    {
+        return;
+    }
+    float zoom = view.zoom <= 0.0f ? 1.0f : view.zoom;
+    while (wheelSteps >= 1.0f)
+    {
+        zoom *= 1.125f;
+        wheelSteps -= 1.0f;
+    }
+    while (wheelSteps <= -1.0f)
+    {
+        zoom /= 1.125f;
+        wheelSteps += 1.0f;
+    }
+    if (zoom < 0.5f)
+    {
+        zoom = 0.5f;
+    }
+    if (zoom > 2.0f)
+    {
+        zoom = 2.0f;
+    }
+    view.zoom = zoom;
+}

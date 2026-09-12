@@ -6,6 +6,7 @@
 #include "Registry.h"      // SelectedUnit lookup
 #include "ResourceSystem.h" // stockpile counters
 #include "Unit.h"          // selection summary
+#include "Production.h"    // ProductionQueue for the factory panel
 
 class Art; // fwd-decl (Hud.cpp includes Art.h for icons)
 
@@ -23,4 +24,16 @@ std::vector<std::string> ShortcutHintLines();
 // M12: optional art draws 16px resource icons; nullptr keeps text-only
 // (headless tests, rectangle fallback).
 void DrawResourcePanel(const ResourceSystem &resources, const Art *art = nullptr);
+// M13: factory production UI. Display order for the 7 buildable types
+// (pure, tested); the panel below is immediate-mode raygui owned by main.
+std::vector<UnitType> ProductionMenuOrder();
+// Factory panel with per-type cost buttons (unaffordable disabled), queue
+// count + progress, and a cancel-top button. hasFactory=false shows a
+// "Need Factory" stub. Returns the clicked type, or kNoProductionClick.
+// Call after EndMode2D.
+constexpr int kNoProductionClick = -1;
+int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool hasFactory);
+// M13: named-slot readout (filled/empty via file existence). Pure layout,
+// raygui calls; slot files live at SaveSlotPath().
+void DrawSaveSlots();
 void DrawSelectionPanel(Registry &registry); // non-const: SelectedUnit queries selection

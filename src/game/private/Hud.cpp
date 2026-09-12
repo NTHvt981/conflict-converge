@@ -1,10 +1,13 @@
 #include "Hud.h"
 
 #include <cstdio>
+#include <filesystem>
 
 #include "Art.h"        // M12 resource icons (optional, may be fallback)
 #include "raygui.h"   // panels/labels
+#include "SaveGame.h" // M13 slot paths
 #include "Selection.h" // SelectedUnit
+#include "UnitFactory.h" // M13 CostOf for the build menu
 #include "UnitStats.h" // max-health lookup for the summary
 
 const char *UnitTypeName(UnitType type)
@@ -72,6 +75,14 @@ std::vector<std::string> ShortcutHintLines()
         "F1 Hints",
         "F5 Save",
         "F9 Load",
+        "A AttackMove",
+        "H Hold",
+        "G Guard",
+        "V Patrol",
+        "R Rally",
+        "Wheel Zoom",
+        "F6-8 SaveSlot",
+        "Shift+F6-8 Load",
     };
 }
 
@@ -105,4 +116,73 @@ void DrawSelectionPanel(Registry &registry)
         text = summary.c_str();
     }
     GuiLabel({ 262.0f, 410.0f, 280.0f, 20.0f }, text);
+}
+
+std::vector<UnitType> ProductionMenuOrder()
+{
+    return { UnitType::Infantry,          UnitType::AntiArmorInfantry, UnitType::Engineer,
+             UnitType::IFV,               UnitType::Artillery,         UnitType::LightTank,
+             UnitType::HeavyTank };
+}
+
+int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool hasFactory)
+{
+    GuiPanel({ 618.0f, 128.0f, 174.0f, 188.0f }, "Factory");
+    if (!hasFactory)
+    {
+        GuiLabel({ 630.0f, 150.0f, 150.0f, 20.0f }, "Need Factory");
+        return kNoProductionClick;
+    }
+    int clicked = kNoProductionClick;
+    const std::vector<UnitType> order = ProductionMenuOrder();
+    for (std::size_t i = 0; i < order.size(); ++i)
+    {
+        const UnitCost cost = CostOf(order[i]);
+        char label[48];
+        std::snprintf(label, sizeof(label), "%s %ld/%ld", UnitTypeName(order[i]), cost.iron,
+                      cost.oil);
+        const float y = 150.0f + static_cast<float>(i) * 18.0f;
+        const bool affordable = resources.iron >= cost.iron && resources.oil >= cost.oil;
+        if (!affordable)
+        {
+            GuiDisable();
+        }
+        if (GuiButton({ 630.0f, y, 150.0f, 16.0f }, label))
+        {
+            clicked = static_cast<int>(i);
+        }
+        if (!affordable)
+        {
+            GuiEnable();
+        }
+    }
+    char queueLine[48];
+    std::snprintf(queueLine, sizeof(queueLine), "Queue: %d", static_cast<int>(queue.Size()));
+    GuiLabel({ 630.0f, 278.0f, 80.0f, 16.0f }, queueLine);
+    if (GuiButton({ 712.0f, 278.0f, 68.0f, 16.0f }, "Cancel"))
+    {
+        queue.CancelTop(resources);
+    }
+    if (clicked != kNoProductionClick)
+    {
+        queue.Enqueue(resources, order[static_cast<std::size_t>(clicked)]);
+    }
+    return clicked;
+}
+
+void DrawSaveSlots()
+{
+    GuiPanel({ 300.0f, 8.0f, 200.0f, 40.0f }, "Slots");
+    char line[96];
+    char marks[3][8];
+    for (int i = 0; i < 3; ++i)
+    {
+        std::error_code ec;
+        const bool filled =
+            std::filesystem::exists(SaveSlotPath(i + 1), ec) && !ec;
+        std::snprintf(marks[i], sizeof(marks[i]), "%d%s", i + 1, filled ? "+" : "-");
+    }
+    std::snprintf(line, sizeof(line), "%s %s %s  (F6-8 save, S+F6-8 load)", marks[0], marks[1],
+                  marks[2]);
+    GuiLabel({ 312.0f, 26.0f, 180.0f, 16.0f }, line);
 }

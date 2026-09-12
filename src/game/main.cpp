@@ -148,8 +148,9 @@ int main(void)
 	ProductionQueue queue;
 	queue.Enqueue(resources, UnitType::Infantry);
 	queue.Enqueue(resources, UnitType::LightTank);
-	const Vector2 rallyPos =
-		cc::ToRaylib(cc::TileToWorld(playerHome.x + 4, playerHome.y));
+	// M13: rally point moves by click (R toggles rally mode below).
+	Vector2 rallyPos = cc::ToRaylib(cc::TileToWorld(playerHome.x + 4, playerHome.y));
+	bool settingRally = false;
 
 	// M8: enemy commander owns team 1 under fair rules (own funds, own
 	// buildings, same order/spend APIs). Its starting guard keeps team 1
@@ -160,6 +161,9 @@ int main(void)
 	// M11: production/spawn confirmations. Subscribed after setup so the
 	// boot-time spawns don't chatter.
 	events.Subscribe(EventType::UnitSpawned, [&](const Event &) { audio.Play(SfxId::Confirm); });
+
+	// M13: shared snapshot for the save-slot bindings below.
+	WorldState worldState{ &registry, &resources, &map, &camera, &nodes, &fog };
 
 	// M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
 	// deselects, Space halts selected units, P pauses (M6 Goal 3),
@@ -174,6 +178,47 @@ int main(void)
 	input.shortcuts.Bind(KEY_F9, [&] {
 		LoadWorld({ &registry, &resources, &map, &camera, &nodes, &fog }, "data/quicksave.ccpb");
 	});
+	// M13: named save slots (F6-8 store, Shift+F6-8 recall).
+	input.shortcuts.Bind(KEY_F6, [&] { SaveWorld(worldState, SaveSlotPath(1)); });
+	input.shortcuts.Bind(KEY_F7, [&] { SaveWorld(worldState, SaveSlotPath(2)); });
+	input.shortcuts.Bind(KEY_F8, [&] { SaveWorld(worldState, SaveSlotPath(3)); });
+	input.shortcuts.BindChord(KEY_F6, [&] { LoadWorld(worldState, SaveSlotPath(1)); });
+	input.shortcuts.BindChord(KEY_F7, [&] { LoadWorld(worldState, SaveSlotPath(2)); });
+	input.shortcuts.BindChord(KEY_F8, [&] { LoadWorld(worldState, SaveSlotPath(3)); });
+	// M13: order keys act on the current selection. A attack-moves to the
+	// cursor, H/G switch stances, V patrols cursor-and-back, R toggles
+	// rally-point placement.
+	input.shortcuts.Bind(KEY_A, [&] {
+		const Entity selected = SelectedUnit(registry);
+		if (Unit *ordered = registry.Get<Unit>(selected))
+		{
+			IssueAttackMoveOrder(*ordered, map, input.MouseWorld(camera));
+			audio.Play(SfxId::Confirm);
+		}
+	});
+	input.shortcuts.Bind(KEY_H, [&] {
+		const Entity selected = SelectedUnit(registry);
+		if (Unit *unit = registry.Get<Unit>(selected))
+		{
+			SetStance(*unit, Stance::Hold);
+		}
+	});
+	input.shortcuts.Bind(KEY_G, [&] {
+		const Entity selected = SelectedUnit(registry);
+		if (Unit *unit = registry.Get<Unit>(selected))
+		{
+			SetStance(*unit, Stance::Guard);
+		}
+	});
+	input.shortcuts.Bind(KEY_V, [&] {
+		const Entity selected = SelectedUnit(registry);
+		if (Unit *ordered = registry.Get<Unit>(selected))
+		{
+			IssuePatrolOrder(*ordered, map, ordered->position, input.MouseWorld(camera));
+			audio.Play(SfxId::Confirm);
+		}
+	});
+	input.shortcuts.Bind(KEY_R, [&] { settingRally = !settingRally; });
 	input.shortcuts.Bind(KEY_ESCAPE, [&] { DeselectAll(registry); });
 	input.shortcuts.Bind(KEY_SPACE, [&] {
 		registry.Each<Unit>([&](Entity, Unit &unit) {
@@ -205,6 +250,8 @@ int main(void)
 		// M2 Goal 6: single input pump (always runs: P must unpause too).
 		// Camera speed is a live menu setting (M6 Goal 3).
 		input.Update(camera, menu.settings.cameraSpeed, GetFrameTime());
+		// M13: scroll-wheel zoom (clamped in GameCamera) runs even paused.
+		camera.AdjustZoom(input.WheelDelta());
 
 		// M6 Goal 3: orders, AI, economy, and minimap only advance while
 		// Playing; rendering below always runs so menus overlay a live frame.
@@ -213,18 +260,33 @@ int main(void)
 
 			// M2 Goal 4 mouse inputs: left-click selects, right-click orders.
 			// M3 Goal 3: orders pathfind around water/buildings via IssuePathOrder.
+			// M13 routes minimap clicks to the camera and rally-mode clicks
+			// to the factory rally point before unit selection.
 			if (input.LeftPressed())
 			{
-				const Vector2 world = input.MouseWorld(camera);
-				const Entity hit = PickUnitAt(registry, world);
-				if (hit != kInvalidEntity)
+				if (minimap.Contains(input.MouseScreen()))
 				{
-					SelectOnly(registry, hit);
-					audio.Play(SfxId::Select); // M11: selection blip
+					camera.view.target =
+						minimap.MinimapToWorld(input.MouseScreen(), map.Width(), map.Height());
+				}
+				else if (settingRally)
+				{
+					rallyPos = input.MouseWorld(camera);
+					settingRally = false;
 				}
 				else
 				{
-					DeselectAll(registry);
+					const Vector2 world = input.MouseWorld(camera);
+					const Entity hit = PickUnitAt(registry, world);
+					if (hit != kInvalidEntity)
+					{
+						SelectOnly(registry, hit);
+						audio.Play(SfxId::Select); // M11: selection blip
+					}
+					else
+					{
+						DeselectAll(registry);
+					}
 				}
 			}
 			if (input.RightPressed())
@@ -564,6 +626,22 @@ int main(void)
 		// M6 Goal 2: raygui HUD (proper panels replace the M5 text counters).
 		DrawResourcePanel(resources, &art);
 		DrawSelectionPanel(registry);
+		DrawSaveSlots();
+		// M13: factory panel (build buttons, queue, cancel); rally hint
+		// while placing the rally point.
+		bool hasFactory = false;
+		registry.Each<Building>([&](Entity, const Building &building) {
+			if (building.teamID == 0 && building.type == BuildingType::Factory &&
+			    building.state == BuildingState::Operational)
+			{
+				hasFactory = true;
+			}
+		});
+		DrawProductionPanel(resources, queue, hasFactory);
+		if (settingRally)
+		{
+			DrawText("Rally: left-click to place (R cancels)", 250, 364, 16, DARKGREEN);
+		}
 		if (!queue.Empty())
 		{
 			DrawText("Producing...", 620, 48, 16, GRAY);

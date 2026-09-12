@@ -468,3 +468,16 @@ bool LoadWorld(const WorldState &world, const std::string &path)
     }
     return true;
 }
+
+std::string SaveSlotPath(int slot)
+{
+    if (slot < 1)
+    {
+        slot = 1;
+    }
+    if (slot > 3)
+    {
+        slot = 3;
+    }
+    return "data/slot" + std::to_string(slot) + ".ccpb";
+}

@@ -26,11 +26,14 @@ public:
     void PollLive();
 
     // Snapshot from explicit values (tests, scripted input).
-    void Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool rightPressed);
+    void Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool rightPressed, float wheelDelta = 0.0f,
+                  bool shiftDown = false);
 
     Vector2 MouseScreen() const;
     bool LeftPressed() const;
     bool RightPressed() const;
+    float WheelDelta() const; // mouse wheel steps this frame (M13 zoom)
+    bool ShiftDown() const;   // either shift key held (M13 slot load/save combos)
 
     // Snapshot mouse position under the given camera view.
     Vector2 MouseWorld(const GameCamera &camera) const;
@@ -39,4 +42,6 @@ private:
     Vector2 mouseScreen_ = {};
     bool leftPressed_ = false;
     bool rightPressed_ = false;
+    float wheelDelta_ = 0.0f;
+    bool shiftDown_ = false;
 };

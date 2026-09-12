@@ -43,6 +43,36 @@ Vector2 Minimap::WorldToMinimap(Vector2 world, int mapW, int mapH) const
     return { screenRect.x + world.x * scaleX, screenRect.y + world.y * scaleY };
 }
 
+Vector2 Minimap::MinimapToWorld(Vector2 minimapPx, int mapW, int mapH) const
+{
+    if (mapW <= 0 || mapH <= 0 || screenRect.width <= 0.0f || screenRect.height <= 0.0f)
+    {
+        return { 0.0f, 0.0f };
+    }
+    const float worldX =
+        (minimapPx.x - screenRect.x) / screenRect.width * static_cast<float>(mapW) * cc::TILE_SIZE;
+    const float worldY = (minimapPx.y - screenRect.y) / screenRect.height *
+                         static_cast<float>(mapH) * cc::TILE_SIZE;
+    const float maxX = static_cast<float>(mapW) * cc::TILE_SIZE;
+    const float maxY = static_cast<float>(mapH) * cc::TILE_SIZE;
+    Vector2 clamped = { worldX < 0.0f ? 0.0f : worldX, worldY < 0.0f ? 0.0f : worldY };
+    if (clamped.x > maxX)
+    {
+        clamped.x = maxX;
+    }
+    if (clamped.y > maxY)
+    {
+        clamped.y = maxY;
+    }
+    return clamped;
+}
+
+bool Minimap::Contains(Vector2 screenPx) const
+{
+    return screenPx.x >= screenRect.x && screenPx.x <= screenRect.x + screenRect.width &&
+           screenPx.y >= screenRect.y && screenPx.y <= screenRect.y + screenRect.height;
+}
+
 Rectangle Minimap::ViewportRect(const Camera2D &view, int screenW, int screenH, int mapW, int mapH) const
 {
     // Visible world corners: screen origin and far corner through the camera.

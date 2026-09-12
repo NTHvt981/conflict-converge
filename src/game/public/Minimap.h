@@ -28,6 +28,14 @@ struct Minimap
     // World position -> pixel inside screenRect for a map of mapW x mapH tiles.
     Vector2 WorldToMinimap(Vector2 world, int mapW, int mapH) const;
 
+    // M13: minimap pixel -> world position (click-to-move camera). Inverse
+    // of WorldToMinimap; clamps into the map bounds. Degenerate maps
+    // (non-positive dims) yield the origin.
+    Vector2 MinimapToWorld(Vector2 minimapPx, int mapW, int mapH) const;
+
+    // Point-in-box test for click routing (edges inclusive).
+    bool Contains(Vector2 screenPx) const;
+
     // Camera view frustum expressed in minimap pixels (for the viewport box).
     Rectangle ViewportRect(const Camera2D &view, int screenW, int screenH, int mapW, int mapH) const;
 };

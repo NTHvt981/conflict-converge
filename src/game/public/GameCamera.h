@@ -19,6 +19,11 @@ public:
     // Key-free pan by a raw screen-space delta (tests, scripted moves).
     void Pan(Vector2 delta);
 
+    // M13: scroll-wheel zoom with limits (Q53). Each wheel step scales by
+    // 1.125x, clamped to [kMinZoom, kMaxZoom]; zoom anchors on the view
+    // target (raylib handles the offset math in ScreenToWorld).
+    void AdjustZoom(float wheelSteps);
+
     // Screen pixel -> world position under the current view (pure math,
     // safe headless for tests).
     Vector2 ScreenToWorld(Vector2 screenPos) const;
