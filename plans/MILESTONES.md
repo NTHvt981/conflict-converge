@@ -21,13 +21,14 @@
 | M5 | Resource & Economy | M4 | 🟢 Complete |
 | M6 | UI & Minimap | M5 | 🟢 Complete |
 | M7 | Save/Load & Integration Tests | M6 | 🟢 Complete |
-| M8 | Enemy AI Commander | M7 | 🔴 Not Started |
+| M8 | Enemy AI Commander | M7 | 🟢 Complete |
 | M9 | Fog of War & Recon | M8 | 🔴 Not Started |
 | M10 | Map Files & Terrain | M7 | 🔴 Not Started |
 | M11 | Audio | M7 | 🔴 Not Started |
 | M12 | Art & Animation | M7 | 🔴 Not Started |
 | M13 | Command Depth & Balance | M8 | 🔴 Not Started |
 | M14 | Main Menu & Game Shell | M7 | 🔴 Not Started |
+| M15 | Protobuf Serialization Migration | M7 | 🔴 Not Started |
 
 ---
 
@@ -340,11 +341,11 @@
 Rationale: every system so far serves a skirmish against a scripted demo enemy. A real RTS needs an AI opponent that builds, expands, and attacks (Q52 already committed to Easy/Medium/Hard difficulties).
 
 ### Goals
-- [ ] Implement AI build-order logic (base → harvesters → factory → army)
-- [ ] Implement timed attack waves with rally + launch logic
-- [ ] Add basic scouting (periodic scout unit toward player base)
-- [ ] Implement Easy / Medium / Hard difficulty levels
-- [ ] AI plays by the same economy rules as the player (no free resources on Medium)
+- [x] Implement AI build-order logic (base → harvesters → factory → army)
+- [x] Implement army-size-threshold attack waves with rally + launch logic (per Q75)
+- [x] Add basic scouting (periodic scout unit toward player base)
+- [x] Implement Easy / Medium / Hard difficulty levels
+- [x] AI plays by the same economy rules and fog as the player (per Q74: fair rules + smarter build orders; handicaps only on Easy via slower timers, never free resources)
 
 ### Implementation Steps
 1. **AI Commander**
@@ -355,9 +356,9 @@ Rationale: every system so far serves a skirmish against a scripted demo enemy. 
    - Form squads with IssueFormationMove to a rally tile, then order the attack
    - Send a cheap fast unit toward the player base on a timer; remember last-seen position
 3. **Difficulties**
-   - Easy: slow build order, small waves, no retreat, attacks nearest target only
+   - Easy: slow build order, small threshold-triggered waves, no retreat, attacks nearest target only
    - Medium: full build order, mixed-composition waves, re-targets via AcquireTarget
-   - Hard: faster timers, counter-composition picks, retreats losing fights
+   - Hard: lower wave thresholds, counter-composition picks, retreats losing fights
 4. **Tests**
    - Headless skirmish: AI vs AI for N frames, assert both economies grow and a wave launches
    - Difficulty unit tests: wave size/timers scale monotonically Easy → Hard
@@ -372,10 +373,10 @@ Rationale: every system so far serves a skirmish against a scripted demo enemy. 
 Rationale: sight ranges exist (M3) but all units see everything — no scouting value, no ambushes, contrary to the Dune 2000 reference (Q5). Fog makes recon units and map control meaningful.
 
 ### Goals
-- [ ] Implement per-team visibility grid over the TileMap
-- [ ] Distinguish unexplored (black) vs explored-but-unseen (dimmed, frozen snapshot)
+- [ ] Implement per-team visibility grid over the TileMap (pure sight radius, no LOS blockers per Q77)
+- [ ] Distinguish unexplored (black) vs explored-but-unseen (dimmed, frozen StarCraft-style snapshot per Q76)
 - [ ] Hide enemy units/buildings outside vision in world view and minimap
-- [ ] Gate targeting: units cannot acquire targets they cannot see
+- [ ] Gate targeting: units cannot acquire targets they cannot see (artillery may blind-fire into shroud at no penalty per Q78)
 - [ ] Give scout-role units/API a sight advantage (fast units, cheap cost)
 
 ### Implementation Steps
@@ -385,13 +386,13 @@ Rationale: sight ranges exist (M3) but all units see everything — no scouting 
 2. **Integration**
    - Minimap shows only visible enemies; viewport box unchanged
    - AcquireTarget skips unseen enemies; UpdateUnit cannot chase unseen targets
-   - Save/load includes explored sets (version bump to v2)
+   - Save/load includes explored sets (in whichever format is current — see M15; no separate v2 of the custom binary)
 3. **Tests**
    - Visibility unit tests: unit reveals radius, obstacle behavior per design answer, explored persists after leaving
-   - Integration: blind AI fails to engage a hidden force, scout reveals it
+   - Integration: blind AI fails to engage a hidden force, scout reveals it; artillery blind-fire lands at full damage
 
 ### Blockings
-- ⚠️ Open design questions (re-shroud? vision blockers? blind artillery?) — see Q_AND_A 75–77
+- None identified (fog rules settled: Q76 frozen snapshot, Q77 pure radius, Q78 penalty-free blind fire)
 
 ---
 
@@ -419,7 +420,7 @@ Rationale: maps are hardcoded in main.cpp, yet Q46/Q54/Q73 already decided text-
    - Roundtrip: save-game on loaded map reloads identically
 
 ### Blockings
-- ⚠️ Tile legend characters need sign-off — see Q_AND_A 78
+- None identified (format + legend settled in Q79)
 
 ---
 
@@ -429,7 +430,7 @@ Rationale: Q22 pointed at rfxgen for SFX and it is already in `libs_deps.json`, 
 
 ### Goals
 - [ ] Integrate rfxgen-generated SFX (select, order confirm, attack, explosion, building placed, node depleted, victory/defeat)
-- [ ] Add background music loop with volume control
+- [ ] Add generated-loop background music with volume control (per Q80; baseline SFX set only for v1)
 - [ ] Add volume/mute settings to the pause menu (persist in save file or settings file)
 - [ ] Audio must not block the main thread on load/play
 
@@ -438,13 +439,13 @@ Rationale: Q22 pointed at rfxgen for SFX and it is already in `libs_deps.json`, 
    - Generate `.wav` set with rfxgen, load via raylib audio at startup
    - Hook UnitSpawned/UnitDestroyed/ResourceChanged events to sounds
 2. **Music + Settings**
-   - Stream a looped track; MenuSettings gains master/music/sfx volumes + mute
+   - Stream a tool-generated looped track; MenuSettings gains master/music/sfx volumes + mute
 3. **Tests**
    - Headless-safe: audio init guarded so test binary runs without a device
    - Settings roundtrip through save/load
 
 ### Blockings
-- ⚠️ Music source undecided (generated loop vs composed track) — see Q_AND_A 79
+- None identified (Q80: generated loop, baseline SFX)
 
 ---
 
@@ -461,7 +462,7 @@ Rationale: every blocking table since M2 says "colored rectangles". Mechanics ar
 
 ### Implementation Steps
 1. **Pipeline**
-   - Decide spritesheet layout + authoring tool, load via raylib textures
+   - Generate AI-pixel-art sheets (per Q81; check output licensing), load via raylib textures
    - Unit renderer maps UnitType + AttackPhase → frame
 2. **Effects**
    - Particle burst on damage (count scales with effective damage), flash on node deplete
@@ -470,7 +471,7 @@ Rationale: every blocking table since M2 says "colored rectangles". Mechanics ar
    - Perf re-run: textures must not regress the 200-unit budget
 
 ### Blockings
-- ⚠️ Art ownership undecided (hand-made vs generated vs commissioned) — see Q_AND_A 80
+- None identified (Q81: AI-generated pixel art; verify licensing before shipping)
 
 ---
 
@@ -481,7 +482,7 @@ Rationale: the order set is move-only; genre basics like attack-move, stances, a
 ### Goals
 - [ ] Implement attack-move (engage on contact, resume path after)
 - [ ] Implement unit stances (hold position / guard / patrol)
-- [ ] Implement Engineer repair (heal buildings + mechanical units for resources)
+- [ ] Implement Engineer repair (heal buildings + mechanical units; costs time, not resources; repair-only, no capture per Q83)
 - [ ] Add interactive production UI (build menu bound to Factory, rally-point placement)
 - [ ] Add minimap click-to-move camera + enforce camera zoom limits (Q53)
 - [ ] Multi-slot save UI (quicksave exists; add named slots)
@@ -490,16 +491,16 @@ Rationale: the order set is move-only; genre basics like attack-move, stances, a
 ### Implementation Steps
 1. **Orders**
    - Extend Unit state driver with attack-move path + stance field; patrol as looping waypoint pair
-   - Repair as a channeled action consuming iron over time
+   - Repair as a channeled action costing time only (no resource drain, no building capture)
 2. **UI**
    - Factory build panel (raygui): queue display, cancel, rally set by click
    - Save/load menu with 3+ named slots over the v1/v2 format
 3. **Balance**
-   - Spreadsheet all unit/building numbers; tune so every unit class has a role and META shifts with tech (per research guidance)
+   - Spreadsheet all unit/building numbers for mirror factions (per Q82); tune so every unit class has a role and META shifts with tech (per research guidance)
    - AI-vs-AI soak tests assert no stalemates and sub-60s average skirmish end
 
 ### Blockings
-- ⚠️ Balance targets need sign-off (mirror factions vs asymmetric later?) — see Q_AND_A 81–83
+- ⚠️ The numbers pass itself needs playtesting + AI soak runs once M8 exists
 
 ---
 
@@ -509,7 +510,7 @@ Rationale: there is no main menu — the game boots straight into the demo skirm
 
 ### Goals
 - [ ] Boot to a title screen (not directly into battle); Start Skirmish / Load Game / Settings / Quit
-- [ ] Skirmish setup screen: map select (lists `data/*.map`), difficulty select (Easy/Medium/Hard), player color/faction display
+- [ ] Skirmish setup screen: map select (lists `data/*.map`), difficulty select (Easy/Medium/Hard), player color/faction display (map + difficulty only for v1 per Q85)
 - [ ] Settings screen: camera speed, minimap toggle, volumes + mute (shared with pause menu)
 - [ ] Load-game entry listing available save slots; Quit exits cleanly
 - [ ] Menu navigation fully testable headless (state machine without raygui calls)
@@ -522,14 +523,41 @@ Rationale: there is no main menu — the game boots straight into the demo skirm
    - Enumerate maps from `data/`; show author/dimensions from the M10 header
    - Difficulty picker stores the choice for the M8 AICommander; gray out options whose milestones are missing
 3. **Settings + Slots**
-   - Unify pause-menu and main-menu settings on one MenuSettings struct, persisted to disk
+   - Unify pause-menu and main-menu settings on one MenuSettings struct, persisted to a small standalone settings file (per Q86, so settings survive without a save)
    - Load screen reuses the M13 slot UI; empty slots shown disabled
+   - Extend EventType with the Q57 categories: game-state (match start/pause/game-over/victory) + UI (menu actions, production ordered) alongside unit/resource events
 4. **Tests**
    - Menu-flow unit tests: boot state, setup validation (no map = Start disabled), settings roundtrip
    - Integration: headless Start with map + difficulty builds a simulating world
 
 ### Blockings
-- ⚠️ Skirmish option scope (map + difficulty only, or also starting resources/team count?) — see Q_AND_A 85–86
+- None identified (Q85: map + difficulty for v1; Q86: standalone settings file)
+
+---
+
+## Milestone M15: Protobuf Serialization Migration
+
+Rationale: Q48 chose Protocol Buffers but M7 shipped a custom `CCSV` binary for zero-dependency builds; Q84 decided to migrate now. Do this before M9 so fog explored-sets land directly in the final format instead of a throwaway v2.
+
+### Goals
+- [ ] Add protobuf dependency via `libs_deps.json` + bootstrap (pinned version, Windows static link)
+- [ ] Define `.proto` schema covering the full WorldState (resources + carry, camera, map + terrain, units incl. targets/orders/paths/phases/flash, buildings, nodes + carry, explored sets, settings)
+- [ ] Replace SaveWorld/LoadWorld internals with protobuf encode/decode, keeping the two-phase load + target-index remap semantics
+- [ ] Migrate the quicksave slot; document that old `CCSV` files are not loadable (no back-compat shim)
+- [ ] Keep the test binary headless-safe (no device, no network)
+
+### Implementation Steps
+1. **Schema + Build**
+   - Write `proto/savegame.proto`, generate C++ via protoc in premake (checked-in generated code or generate step — decide during implementation)
+   - Link protobuf into game + test projects
+2. **Swap + Verify**
+   - Reimplement serialization over the schema; keep `SaveWorld`/`LoadWorld` signatures and failure semantics (untouched world on error)
+   - Update save_tests + mid-combat roundtrip to the new bytes; perf-note encode/decode time in the 200-unit test
+3. **Tests**
+   - Schema unit tests: required-field validation, corrupt-buffer rejection, version/unknown-field tolerance
+
+### Blockings
+- ⚠️ protoc codegen approach (checked-in generated code vs generate step) to decide during implementation
 
 ---
 
@@ -537,17 +565,15 @@ Rationale: there is no main menu — the game boots straight into the demo skirm
 
 | Blocking | Required For | Resolution Needed |
 |----------|---------------|-------------------|
-| 32x32 placeholder sprites | M12 | Decide art ownership (Q_AND_A 80), then produce unit/building/node sheets |
-| Unit balance numbers | M13 | Spreadsheet pass + AI soak tests (Q_AND_A 81–83) |
-| Tile map format | M10 | Legend sign-off (Q_AND_A 78), then loader |
-| UI icons | M12 | Bundle with art milestone |
-| Music source | M11 | Generated loop vs composed track (Q_AND_A 79) |
-| Fog rules | M9 | Re-shroud, vision blockers, blind fire (Q_AND_A 75–77) |
+| AI-generated sprite sheets | M12 | Generate unit/building/node sheets (verify licensing before shipping) |
+| Unit balance numbers | M13 | Spreadsheet pass + AI soak tests once M8 exists |
+| AI difficulty tuning | M8 | Playtesting after implementation |
+| protoc codegen approach | M15 | Decide checked-in code vs generate step during implementation |
 
 ---
 
 ## Next Steps
 
-1. **Immediate**: Answer the M8–M14 open questions in `plans/Q_AND_A.md` (74–86)
-2. **Short-term**: Begin M8 (Enemy AI Commander) — first milestone needing an opponent
-3. **Content**: M10 (maps) and M12 (art) are parallelizable once format/pipeline questions are settled
+1. **Immediate**: Begin M8 (Enemy AI Commander) — first milestone needing an opponent
+2. **Ordering**: Do M15 (protobuf) before M9 so fog explored-sets land in the final format, not a throwaway binary v2
+3. **Content**: M10 (maps) and M12 (art) are parallelizable now that format (Q79) and pipeline (Q81) are settled
