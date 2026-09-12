@@ -26,6 +26,9 @@ public:
     // Validate funds via TrySpend, then create + stat + snap + announce.
     // Returns kInvalidEntity (spending nothing) when funds are short.
     Entity Spawn(UnitType type, int teamID, Vector2 worldPos);
+    // Create + stat + snap + announce WITHOUT charging (for the M5 production
+    // queue, which collects payment at Enqueue time). Never fails.
+    Entity SpawnPrepaid(UnitType type, int teamID, Vector2 worldPos);
     // Announce destruction, then remove. No-op (no event) for dead/missing IDs.
     void DestroyUnit(Entity entity);
 

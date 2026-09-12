@@ -26,6 +26,7 @@ void RunFactoryTests();
 void RunIncomeTests();
 void RunBuildingTests();
 void RunNodesTests();
+void RunProductionTests();
 void RunCombatTests();
 void RunHitboxTests();
 void RunAttackPhaseTests();
@@ -55,6 +56,7 @@ int main()
     RunIncomeTests();
     RunBuildingTests();
     RunNodesTests();
+    RunProductionTests();
     RunCombatTests();
     RunHitboxTests();
     RunAttackPhaseTests();

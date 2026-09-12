@@ -219,7 +219,7 @@
 - [x] Implement resource node gathering (Company of Heroes style)
 - [ ] Base income generation
 - [ ] Building placement on tile grid
-- [ ] Unit production queue
+- [x] Unit production queue
 
 ### Implementation Steps
 1. **Resource Manager**

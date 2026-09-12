@@ -39,6 +39,11 @@ Entity UnitFactory::Spawn(UnitType type, int teamID, Vector2 worldPos)
     {
         return kInvalidEntity;
     }
+    return SpawnPrepaid(type, teamID, worldPos);
+}
+
+Entity UnitFactory::SpawnPrepaid(UnitType type, int teamID, Vector2 worldPos)
+{
     Unit unit;
     unit.type = type;
     ApplyBaseStats(unit);
