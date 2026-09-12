@@ -30,10 +30,12 @@
 
 int main(void)
 {
-	const int screenWidth = 800;
-	const int screenHeight = 450;
+	const int kInitialWidth = 1200;
+	const int kInitialHeight = 675;
 
-	InitWindow(screenWidth, screenHeight, "raylib basic window");
+	SetConfigFlags(FLAG_WINDOW_RESIZABLE); // M13: user-resizable window
+	InitWindow(kInitialWidth, kInitialHeight, "raylib basic window");
+	SetWindowMinSize(800, 450); // HUD layout assumes at least this
 	SetTargetFPS(60);
 
 	// M11: audio device + asset load. The test binary never inits (headless).
@@ -53,7 +55,7 @@ int main(void)
 	bool hasFactory = false; // M13: recomputed per frame, gates queue + panel
 
 	GameCamera camera;
-	camera.view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
+	camera.view.offset = { kInitialWidth / 2.0f, kInitialHeight / 2.0f };
 	camera.view.rotation = 0.0f;
 	camera.view.zoom = 1.0f;
 	// M6 Goal 3: menu flow (pause/outcome/settings); camera speed is a
@@ -62,7 +64,7 @@ int main(void)
 
 	// M6 Goal 1: minimap texture (bottom-right, 4:3 like the 20x15 map).
 	Minimap minimap;
-	minimap.Init({ static_cast<float>(screenWidth) - 170.0f, static_cast<float>(screenHeight) - 130.0f,
+	minimap.Init({ static_cast<float>(kInitialWidth) - 170.0f, static_cast<float>(kInitialHeight) - 130.0f,
 	               160.0f, 120.0f });
 	// Unit speed now comes from M3 base stats (Unit::speed, ApplyBaseStats).
 
@@ -253,6 +255,13 @@ int main(void)
 		input.Update(camera, menu.settings.cameraSpeed, GetFrameTime());
 		// M13: scroll-wheel zoom (clamped in GameCamera) runs even paused.
 		camera.AdjustZoom(input.WheelDelta());
+		// M13: resizable window — refresh live dims, keep the camera centered
+		// and the minimap docked bottom-right (texture size is fixed).
+		const int screenWidth = GetScreenWidth();
+		const int screenHeight = GetScreenHeight();
+		camera.view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
+		minimap.screenRect.x = static_cast<float>(screenWidth) - minimap.screenRect.width - 10.0f;
+		minimap.screenRect.y = static_cast<float>(screenHeight) - minimap.screenRect.height - 10.0f;
 
 		// M6 Goal 3: orders, AI, economy, and minimap only advance while
 		// Playing; rendering below always runs so menus overlay a live frame.
