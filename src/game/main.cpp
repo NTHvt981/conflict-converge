@@ -19,6 +19,7 @@
 #include "Hud.h" // M6 Goal 2: raygui resource + selection panels
 #include "Menu.h" // M6 Goal 3: pause / outcome / settings menu flow
 #include "FogOfWar.h" // M9: per-team visibility (shroud, targeting gate)
+#include "Audio.h" // M11: synthesized SFX + looped music (data/audio/*.wav)
 #include "MapFile.h" // M10: demo loads Crossroads from data/
 #include "AICommander.h" // M8: enemy commander (build order, waves, scouting)
 #include <iostream>
@@ -32,6 +33,17 @@ int main(void)
 
 	InitWindow(screenWidth, screenHeight, "raylib basic window");
 	SetTargetFPS(60);
+
+	// M11: audio device + asset load. The test binary never inits (headless).
+	InitAudioDevice();
+	Audio audio;
+	audio.Init(IsAudioDeviceReady());
+	// Poll state for edge-triggered sounds (placed/depleted counts, attack
+	// rate limit, outcome transitions).
+	int lastBuildingCount = 0;
+	int lastDepletedCount = 0;
+	float attackSfxTimer = 0.0f;
+	MenuState lastOutcomeState = MenuState::Playing;
 
 	GameCamera camera;
 	camera.view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
@@ -139,6 +151,10 @@ int main(void)
 	AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Medium, aiHome, playerHome);
 	ai.SetupBase();
 
+	// M11: production/spawn confirmations. Subscribed after setup so the
+	// boot-time spawns don't chatter.
+	events.Subscribe(EventType::UnitSpawned, [&](const Event &) { audio.Play(SfxId::Confirm); });
+
 	// M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
 	// deselects, Space halts selected units, P pauses (M6 Goal 3),
 	// F1 toggles the shortcut overlay (M6 Goal 4).
@@ -195,6 +211,7 @@ int main(void)
 				if (hit != kInvalidEntity)
 				{
 					SelectOnly(registry, hit);
+					audio.Play(SfxId::Select); // M11: selection blip
 				}
 				else
 				{
@@ -207,6 +224,7 @@ int main(void)
 				if (Unit *ordered = registry.Get<Unit>(selected))
 				{
 					IssuePathOrder(*ordered, map, input.MouseWorld(camera));
+					audio.Play(SfxId::Confirm); // M11: order acknowledged
 				}
 			}
 			// M9: rebuild visibility from current positions before anyone acquires.
@@ -216,6 +234,8 @@ int main(void)
 			});
 			// M3 Goal 6: collect the fallen, then destroy through the factory so
 			// UnitDestroyed is announced (destroying inside Each would invalidate it).
+			// dt is shared by the M11 polls below and the economy tick further down.
+			const float dt = GetFrameTime();
 			std::vector<Entity> dead;
 			registry.Each<Unit>([&](Entity id, const Unit &unit) {
 				if (unit.health <= 0.0f)
@@ -227,8 +247,50 @@ int main(void)
 			{
 				factory.DestroyUnit(id);
 			}
+			// M11: edge-triggered battle sounds (one explosion per wipe, not per corpse).
+			if (!dead.empty())
+			{
+				audio.Play(SfxId::Explosion);
+			}
+			attackSfxTimer -= dt;
+			bool windingUp = false;
+			registry.Each<Unit>([&](Entity, const Unit &unit) {
+				if (unit.phase == AttackPhase::WindUp)
+				{
+					windingUp = true;
+				}
+			});
+			if (windingUp && attackSfxTimer <= 0.0f)
+			{
+				audio.Play(SfxId::Attack);
+				attackSfxTimer = 0.12f;
+			}
+			int buildingCount = 0;
+			registry.Each<Building>([&](Entity, const Building &building) {
+				if (building.state == BuildingState::Operational)
+				{
+					++buildingCount;
+				}
+			});
+			if (buildingCount > lastBuildingCount)
+			{
+				audio.Play(SfxId::Place);
+			}
+			lastBuildingCount = buildingCount;
+			int depletedCount = 0;
+			nodes.Each([&](const ResourceNode &node) {
+				if (node.IsDepleted())
+				{
+					++depletedCount;
+				}
+			});
+			if (depletedCount > lastDepletedCount)
+			{
+				audio.Play(SfxId::Deplete);
+			}
+			lastDepletedCount = depletedCount;
 			// M5 economy tick: base trickle, node respawn, harvest, production.
-			const float dt = GetFrameTime();
+			// (dt is declared up at the death sweep so the M11 polls above share it.)
 			UpdateBaseIncome(registry, resources, dt, 0);
 			nodes.Update(dt);
 			nodes.GatherTick(registry, resources, dt);
@@ -276,7 +338,25 @@ int main(void)
 			}
 			// M6 Goal 3: decide terminal states from the living rosters.
 			menu.ShowOutcome(TeamHasUnits(registry, 0), TeamHasUnits(registry, 1));
+			// M11: fanfare on the transition frame only.
+			if (menu.state != lastOutcomeState)
+			{
+				if (menu.state == MenuState::Victory)
+				{
+					audio.Play(SfxId::Victory);
+				}
+				else if (menu.state == MenuState::GameOver)
+				{
+					audio.Play(SfxId::Defeat);
+				}
+				lastOutcomeState = menu.state;
+			}
 		}
+
+		// M11: volumes follow the pause-menu sliders live; the loop streams on.
+		audio.ApplySettings(menu.settings.masterVolume, menu.settings.musicVolume,
+		                    menu.settings.sfxVolume, menu.settings.mute);
+		audio.UpdateMusic();
 
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
@@ -457,19 +537,30 @@ int main(void)
 		if (menu.state == MenuState::Paused)
 		{
 			DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));
-			if (GuiWindowBox(Rectangle{ 250, 90, 300, 270 }, "Paused"))
+			if (GuiWindowBox(Rectangle{ 250, 40, 300, 360 }, "Paused"))
 			{
 				menu.state = MenuState::Playing;
 			}
-			if (GuiButton(Rectangle{ 270, 135, 260, 30 }, "Resume"))
+			if (GuiButton(Rectangle{ 270, 85, 260, 30 }, "Resume"))
 			{
 				menu.state = MenuState::Playing;
 			}
-			GuiLabel(Rectangle{ 270, 172, 260, 20 }, "Camera speed");
-			GuiSlider(Rectangle{ 270, 195, 260, 20 }, "100", "800", &menu.settings.cameraSpeed,
+			GuiLabel(Rectangle{ 270, 122, 260, 20 }, "Camera speed");
+			GuiSlider(Rectangle{ 270, 145, 260, 20 }, "100", "800", &menu.settings.cameraSpeed,
 			          100.0f, 800.0f);
-			GuiCheckBox(Rectangle{ 270, 222, 20, 20 }, "Minimap", &menu.settings.showMinimap);
-			if (GuiButton(Rectangle{ 270, 315, 260, 30 }, "Quit to desktop"))
+			GuiCheckBox(Rectangle{ 270, 170, 20, 20 }, "Minimap", &menu.settings.showMinimap);
+			// M11: volumes (0..1) + mute; file persistence arrives with M14.
+			GuiLabel(Rectangle{ 270, 195, 260, 20 }, "Master volume");
+			GuiSlider(Rectangle{ 270, 218, 260, 20 }, "0", "1", &menu.settings.masterVolume,
+			          0.0f, 1.0f);
+			GuiLabel(Rectangle{ 270, 243, 260, 20 }, "Music volume");
+			GuiSlider(Rectangle{ 270, 266, 260, 20 }, "0", "1", &menu.settings.musicVolume,
+			          0.0f, 1.0f);
+			GuiLabel(Rectangle{ 270, 291, 260, 20 }, "SFX volume");
+			GuiSlider(Rectangle{ 270, 314, 260, 20 }, "0", "1", &menu.settings.sfxVolume,
+			          0.0f, 1.0f);
+			GuiCheckBox(Rectangle{ 270, 340, 20, 20 }, "Mute", &menu.settings.mute);
+			if (GuiButton(Rectangle{ 270, 365, 260, 30 }, "Quit to desktop"))
 			{
 				menu.quitRequested = true;
 			}
@@ -493,6 +584,8 @@ int main(void)
 	}
 
 	minimap.Unload();
+	audio.Shutdown(); // M11: unload sounds + music stream
+	CloseAudioDevice();
 	CloseWindow();
 	return 0;
 }

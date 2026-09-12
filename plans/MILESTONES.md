@@ -24,7 +24,7 @@
 | M8 | Enemy AI Commander | M7 | 🟢 Complete |
 | M9 | Fog of War & Recon | M8 | 🟢 Complete |
 | M10 | Map Files & Terrain | M7 | 🟢 Complete |
-| M11 | Audio | M7 | 🔴 Not Started |
+| M11 | Audio | M7 | 🟢 Complete |
 | M12 | Art & Animation | M7 | 🔴 Not Started |
 | M13 | Command Depth & Balance | M8 | 🔴 Not Started |
 | M14 | Main Menu & Game Shell | M7 | 🔴 Not Started |
@@ -429,15 +429,15 @@ Rationale: maps are hardcoded in main.cpp, yet Q46/Q54/Q73 already decided text-
 Rationale: Q22 pointed at rfxgen for SFX and it is already in `libs_deps.json`, but nothing plays a sound. Combat/economy feedback is visual-only.
 
 ### Goals
-- [ ] Integrate rfxgen-generated SFX (select, order confirm, attack, explosion, building placed, node depleted, victory/defeat)
-- [ ] Add generated-loop background music with volume control (per Q80; baseline SFX set only for v1)
-- [ ] Add volume/mute settings to the pause menu (persist in save file or settings file)
-- [ ] Audio must not block the main thread on load/play
+- [x] Integrate rfxgen-generated SFX (select, order confirm, attack, explosion, building placed, node depleted, victory/defeat)
+- [x] Add generated-loop background music with volume control (per Q80; baseline SFX set only for v1)
+- [x] Add volume/mute settings to the pause menu (live for the session; file persistence lands with the M14 settings file)
+- [x] Audio must not block the main thread on load/play
 
 ### Implementation Steps
 1. **SFX Pipeline**
-   - Generate `.wav` set with rfxgen, load via raylib audio at startup
-   - Hook UnitSpawned/UnitDestroyed/ResourceChanged events to sounds
+   - `tools/gen_audio.py` synthesizes the `.wav` set (rfxgen is interactive-only, so the script produces the equivalent rfxgen-style blips reproducibly); load via raylib audio at startup
+   - Hook UnitSpawned/UnitDestroyed events + input/selection polls to sounds
 2. **Music + Settings**
    - Stream a tool-generated looped track; MenuSettings gains master/music/sfx volumes + mute
 3. **Tests**

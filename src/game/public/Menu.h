@@ -19,6 +19,12 @@ struct MenuSettings
 {
     float cameraSpeed = 400.0f;
     bool showMinimap = true;
+    // M11: audio volumes (0..1) + mute. File persistence arrives with the
+    // M14 settings file; until then they live for the session.
+    float masterVolume = 1.0f;
+    float musicVolume = 0.8f;
+    float sfxVolume = 1.0f;
+    bool mute = false;
 };
 
 struct MenuFlow
