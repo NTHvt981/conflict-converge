@@ -10,6 +10,7 @@ void RunEventTests();
 void RunRegistryTests();
 void RunCcAssertTests();
 void RunTileMapTests();
+void RunUnitSnapTests();
 
 int main()
 {
@@ -18,6 +19,7 @@ int main()
     RunRegistryTests();
     RunCcAssertTests();
     RunTileMapTests();
+    RunUnitSnapTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);
