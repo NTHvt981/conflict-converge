@@ -16,6 +16,7 @@
 #include "Production.h" // M5 Goal 6: demo factory production queue
 #include "Minimap.h" // M6 Goal 1: unit-position minimap (periodic refresh)
 #include "Hud.h" // M6 Goal 2: raygui resource + selection panels
+#include "Menu.h" // M6 Goal 3: pause / outcome / settings menu flow
 #include <iostream>
 #include <vector>
 #include <format>
@@ -32,7 +33,9 @@ int main(void)
 	camera.view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
 	camera.view.rotation = 0.0f;
 	camera.view.zoom = 1.0f;
-	constexpr float kCameraSpeed = 400.0f; // pixels per second
+	// M6 Goal 3: menu flow (pause/outcome/settings); camera speed is a
+	// live setting, not a constant, so the settings slider can tune it.
+	MenuFlow menu;
 
 	// M6 Goal 1: minimap texture (bottom-right, 4:3 like the 20x15 map).
 	Minimap minimap;
@@ -77,8 +80,9 @@ int main(void)
 	const Vector2 rallyPos = cc::ToRaylib(cc::TileToWorld(13, 11));
 
 	// M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
-	// deselects, Space halts selected units.
+	// deselects, Space halts selected units, P pauses (M6 Goal 3).
 	InputManager input;
+	input.shortcuts.Bind(KEY_P, [&] { menu.TogglePause(); });
 	input.shortcuts.Bind(KEY_ESCAPE, [&] { DeselectAll(registry); });
 	input.shortcuts.Bind(KEY_SPACE, [&] {
 		registry.Each<Unit>([&](Entity, Unit &unit) {
@@ -102,86 +106,95 @@ int main(void)
 	int buttonClicks = 0;
 	bool showInfoBox = true;
 
-	while (!WindowShouldClose())
+	while (!WindowShouldClose() && !menu.quitRequested)
 	{
-		// M2 Goal 6: single input pump (WASD + shortcuts + mouse snapshot).
-		input.Update(camera, kCameraSpeed, GetFrameTime());
+		// M2 Goal 6: single input pump (always runs: P must unpause too).
+		// Camera speed is a live menu setting (M6 Goal 3).
+		input.Update(camera, menu.settings.cameraSpeed, GetFrameTime());
 
-		// M2 Goal 4 mouse inputs: left-click selects, right-click orders.
-	// M3 Goal 3: orders pathfind around water/buildings via IssuePathOrder.
-		if (input.LeftPressed())
+		// M6 Goal 3: orders, AI, economy, and minimap only advance while
+		// Playing; rendering below always runs so menus overlay a live frame.
+		if (menu.state == MenuState::Playing)
 		{
-			const Vector2 world = input.MouseWorld(camera);
-			const Entity hit = PickUnitAt(registry, world);
-			if (hit != kInvalidEntity)
+
+			// M2 Goal 4 mouse inputs: left-click selects, right-click orders.
+			// M3 Goal 3: orders pathfind around water/buildings via IssuePathOrder.
+			if (input.LeftPressed())
 			{
-				SelectOnly(registry, hit);
-			}
-			else
-			{
-				DeselectAll(registry);
-			}
-		}
-		if (input.RightPressed())
-		{
-			const Entity selected = SelectedUnit(registry);
-			if (Unit *ordered = registry.Get<Unit>(selected))
-			{
-				IssuePathOrder(*ordered, map, input.MouseWorld(camera));
-			}
-		}
-		registry.Each<Unit>([&](Entity id, Unit &unit) {
-			UpdateUnit(id, registry, map, GetFrameTime()); // M3 Goal 5: AI driver
-		});
-		// M3 Goal 6: collect the fallen, then destroy through the factory so
-		// UnitDestroyed is announced (destroying inside Each would invalidate it).
-		std::vector<Entity> dead;
-		registry.Each<Unit>([&](Entity id, const Unit &unit) {
-			if (unit.health <= 0.0f)
-			{
-				dead.push_back(id);
-			}
-		});
-		for (Entity id : dead)
-		{
-			factory.DestroyUnit(id);
-		}
-		// M5 economy tick: base trickle, node respawn, harvest, production.
-		const float dt = GetFrameTime();
-		UpdateBaseIncome(registry, resources, dt, 0);
-		nodes.Update(dt);
-		nodes.GatherTick(registry, resources, dt);
-		queue.Update(factory, 0, rallyPos, dt);
-		// M6 Goal 1: periodic minimap refresh (terrain blocks + unit dots).
-		if (minimap.PollRefresh(dt))
-		{
-			BeginTextureMode(minimap.target);
-			ClearBackground(Color{ 20, 60, 20, 255 }); // dark grass base
-			for (int y = 0; y < map.Height(); ++y)
-			{
-				for (int x = 0; x < map.Width(); ++x)
+				const Vector2 world = input.MouseWorld(camera);
+				const Entity hit = PickUnitAt(registry, world);
+				if (hit != kInvalidEntity)
 				{
-					const TerrainType terrain = map.Get({ x, y });
-					if (terrain == TerrainType::Grass)
-					{
-						continue;
-					}
-					const Vector2 corner = minimap.WorldToMinimap(cc::ToRaylib(cc::TileToWorld(x, y)),
-					                                             map.Width(), map.Height());
-					const Color tint = terrain == TerrainType::Water ? DARKBLUE : DARKGRAY;
-					DrawRectangleV({ corner.x - minimap.screenRect.x, corner.y - minimap.screenRect.y },
-					               { 8.0f, 8.0f }, tint);
+					SelectOnly(registry, hit);
+				}
+				else
+				{
+					DeselectAll(registry);
 				}
 			}
-			registry.Each<Unit>([&](Entity, const Unit &unit) {
-				const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
-				const Vector2 dot =
-					minimap.WorldToMinimap(center, map.Width(), map.Height());
-				DrawRectangle(static_cast<int>(dot.x - minimap.screenRect.x) - 1,
-				              static_cast<int>(dot.y - minimap.screenRect.y) - 1, 3, 3,
-				              unit.teamID == 0 ? SKYBLUE : RED);
+			if (input.RightPressed())
+			{
+				const Entity selected = SelectedUnit(registry);
+				if (Unit *ordered = registry.Get<Unit>(selected))
+				{
+					IssuePathOrder(*ordered, map, input.MouseWorld(camera));
+				}
+			}
+			registry.Each<Unit>([&](Entity id, Unit &unit) {
+				UpdateUnit(id, registry, map, GetFrameTime()); // M3 Goal 5: AI driver
 			});
-			EndTextureMode();
+			// M3 Goal 6: collect the fallen, then destroy through the factory so
+			// UnitDestroyed is announced (destroying inside Each would invalidate it).
+			std::vector<Entity> dead;
+			registry.Each<Unit>([&](Entity id, const Unit &unit) {
+				if (unit.health <= 0.0f)
+				{
+					dead.push_back(id);
+				}
+			});
+			for (Entity id : dead)
+			{
+				factory.DestroyUnit(id);
+			}
+			// M5 economy tick: base trickle, node respawn, harvest, production.
+			const float dt = GetFrameTime();
+			UpdateBaseIncome(registry, resources, dt, 0);
+			nodes.Update(dt);
+			nodes.GatherTick(registry, resources, dt);
+			queue.Update(factory, 0, rallyPos, dt);
+			// M6 Goal 1: periodic minimap refresh (terrain blocks + unit dots).
+			if (minimap.PollRefresh(dt))
+			{
+				BeginTextureMode(minimap.target);
+				ClearBackground(Color{ 20, 60, 20, 255 }); // dark grass base
+				for (int y = 0; y < map.Height(); ++y)
+				{
+					for (int x = 0; x < map.Width(); ++x)
+					{
+						const TerrainType terrain = map.Get({ x, y });
+						if (terrain == TerrainType::Grass)
+						{
+							continue;
+						}
+						const Vector2 corner = minimap.WorldToMinimap(cc::ToRaylib(cc::TileToWorld(x, y)),
+						                                             map.Width(), map.Height());
+						const Color tint = terrain == TerrainType::Water ? DARKBLUE : DARKGRAY;
+						DrawRectangleV({ corner.x - minimap.screenRect.x, corner.y - minimap.screenRect.y },
+						               { 8.0f, 8.0f }, tint);
+					}
+				}
+				registry.Each<Unit>([&](Entity, const Unit &unit) {
+					const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
+					const Vector2 dot =
+						minimap.WorldToMinimap(center, map.Width(), map.Height());
+					DrawRectangle(static_cast<int>(dot.x - minimap.screenRect.x) - 1,
+					              static_cast<int>(dot.y - minimap.screenRect.y) - 1, 3, 3,
+					              unit.teamID == 0 ? SKYBLUE : RED);
+				});
+				EndTextureMode();
+			}
+			// M6 Goal 3: decide terminal states from the living rosters.
+			menu.ShowOutcome(TeamHasUnits(registry, 0), TeamHasUnits(registry, 1));
 		}
 
 		BeginDrawing();
@@ -220,9 +233,6 @@ int main(void)
 				building.type == BuildingType::Base ? "B" : building.type == BuildingType::Factory ? "F" : "D";
 			DrawText(label, static_cast<int>(corner.x) + 6, static_cast<int>(corner.y) + 4, 24, WHITE);
 		});
-		for (int i = 0; i < static_cast<int>(nodes.Count()); ++i)
-		{
-		}
 		nodes.Each([&](const ResourceNode &node) {
 			const Vector2 corner = cc::ToRaylib(cc::TileToWorld(node.tile.x, node.tile.y));
 			const Vector2 center = { corner.x + cc::TILE_SIZE / 2.0f,
@@ -265,13 +275,17 @@ int main(void)
 		EndMode2D();
 
 		// M6 Goal 1: minimap blit (texture is Y-flipped) + viewport box.
-		DrawTextureRec(minimap.target.texture,
-		               { 0.0f, 0.0f, minimap.screenRect.width, -minimap.screenRect.height },
-		               { minimap.screenRect.x, minimap.screenRect.y }, WHITE);
-		DrawRectangleLinesEx(
-			minimap.ViewportRect(camera.view, screenWidth, screenHeight, map.Width(), map.Height()),
-			1.0f, WHITE);
-		DrawRectangleLinesEx(minimap.screenRect, 1.0f, DARKGRAY);
+		// Hidden from the settings panel (M6 Goal 3).
+		if (menu.settings.showMinimap)
+		{
+			DrawTextureRec(minimap.target.texture,
+			               { 0.0f, 0.0f, minimap.screenRect.width, -minimap.screenRect.height },
+			               { minimap.screenRect.x, minimap.screenRect.y }, WHITE);
+			DrawRectangleLinesEx(
+				minimap.ViewportRect(camera.view, screenWidth, screenHeight, map.Width(), map.Height()),
+				1.0f, WHITE);
+			DrawRectangleLinesEx(minimap.screenRect, 1.0f, DARKGRAY);
+		}
 
 		// M6 Goal 2: raygui HUD (proper panels replace the M5 text counters).
 		DrawResourcePanel(resources);
@@ -293,6 +307,42 @@ int main(void)
 		{
 			showInfoBox = !GuiWindowBox(Rectangle{ 20, 100, 260, 100 }, "raygui works");
 			GuiLabel(Rectangle{ 40, 140, 220, 20 }, "UI framework integrated (M1).");
+		}
+		// M6 Goal 3: menu overlays sit on top of the frame.
+		if (menu.state == MenuState::Paused)
+		{
+			DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));
+			if (GuiWindowBox(Rectangle{ 250, 90, 300, 270 }, "Paused"))
+			{
+				menu.state = MenuState::Playing;
+			}
+			if (GuiButton(Rectangle{ 270, 135, 260, 30 }, "Resume"))
+			{
+				menu.state = MenuState::Playing;
+			}
+			GuiLabel(Rectangle{ 270, 172, 260, 20 }, "Camera speed");
+			GuiSlider(Rectangle{ 270, 195, 260, 20 }, "100", "800", &menu.settings.cameraSpeed,
+			          100.0f, 800.0f);
+			GuiCheckBox(Rectangle{ 270, 222, 20, 20 }, "Minimap", &menu.settings.showMinimap);
+			if (GuiButton(Rectangle{ 270, 315, 260, 30 }, "Quit to desktop"))
+			{
+				menu.quitRequested = true;
+			}
+		}
+		else if (menu.state == MenuState::GameOver || menu.state == MenuState::Victory)
+		{
+			DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.6f));
+			const bool won = menu.state == MenuState::Victory;
+			if (GuiWindowBox(Rectangle{ 250, 150, 300, 150 }, won ? "Victory!" : "Defeat"))
+			{
+				menu.quitRequested = true;
+			}
+			GuiLabel(Rectangle{ 270, 195, 260, 20 },
+			         won ? "Enemy force destroyed." : "Your force was destroyed.");
+			if (GuiButton(Rectangle{ 270, 250, 260, 30 }, "Quit to desktop"))
+			{
+				menu.quitRequested = true;
+			}
 		}
 		EndDrawing();
 	}

@@ -258,7 +258,7 @@
 - [x] Display resource counters (iron/oil)
 - [ ] Unit selection highlighting
 - [ ] Keyboard shortcut overlays
-- [ ] Game menu system
+- [x] Game menu system
 
 ### Implementation Steps
 1. **UI Framework Setup**
