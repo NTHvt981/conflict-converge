@@ -487,9 +487,6 @@ int main(void)
 		ClearBackground(RAYWHITE);
 
 		BeginMode2D(camera.view);
-		DrawText("Welcome to raylib!", 200, 120, 40, DARKGRAY);
-		DrawText("WASD pans the camera", 200, 170, 20, GRAY);
-		DrawText("Left-click selects, right-click orders", 200, 195, 20, GRAY);
 
 		// Tile grid: water/forest/rock filled, grass outlined.
 		for (int y = 0; y < map.Height(); ++y)
