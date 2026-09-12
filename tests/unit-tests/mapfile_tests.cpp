@@ -111,6 +111,17 @@ void RunMapFileTests()
     CC_CHECK(TerrainCost(TerrainType::Forest) == 1.0f); // uniform per Q55
     CC_CHECK(TerrainCost(TerrainType::Water) == 1.0f);
 
+    // --- NearestFreeTile: walkable spawn points around footprints ---
+    TileMap freeMap(8, 8);
+    CC_CHECK(NearestFreeTile(freeMap, 3, 3) == cc::IVec2(3, 3)); // open ground
+    freeMap.Set({ 3, 3 }, TerrainType::Building);
+    const cc::IVec2 near = NearestFreeTile(freeMap, 3, 3);
+    CC_CHECK(!(near == cc::IVec2(3, 3)));
+    CC_CHECK(!freeMap.IsBlocked(near)); // some adjacent grass tile
+    TileMap solid(4, 4);
+    solid.Clear(TerrainType::Water);
+    CC_CHECK(NearestFreeTile(solid, 1, 1) == cc::IVec2(1, 1)); // nowhere: fallback
+
     // --- valid parse: every legend character lands correctly ---
     const std::string good = TempMap("cc_map_good.map");
     WriteFile(good, kValidMap);

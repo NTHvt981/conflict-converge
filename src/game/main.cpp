@@ -116,15 +116,17 @@ int main(void)
 	}
 	fog.Resize(map.Width(), map.Height());
 	auto spawnDemo = [&](UnitType type, int tileX, int tileY, int team) {
-		factory.Spawn(type, team, cc::ToRaylib(cc::TileToWorld(tileX, tileY)));
+		// Spawn on walkable ground: the marker itself may sit inside the
+		// freshly placed base footprint (trapped units otherwise).
+		const cc::IVec2 free = NearestFreeTile(map, tileX, tileY);
+		factory.Spawn(type, team, cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
 	};
-	spawnDemo(UnitType::Infantry, playerHome.x, playerHome.y, 0);
-	spawnDemo(UnitType::LightTank, playerHome.x + 2, playerHome.y, 0);
-	spawnDemo(UnitType::Artillery, playerHome.x + 1, playerHome.y + 3, 0);
 
 	// M5 demo economy: home base + factory + depot around the player marker,
 	// a harvester Engineer parked on the first iron node, and a factory queue
 	// building reinforcements at the rally point. Costs come out of funds.
+	// NOTE: the base goes down BEFORE units spawn, so NearestFreeTile routes
+	// around the footprint instead of trapping units inside it.
 	auto placeDemoBase = [&](int team, cc::IVec2 anchor) {
 		PlaceBuilding(registry, map, BuildingType::Base, team, anchor.x, anchor.y);
 		const cc::IVec2 depotSpots[] = { { 2, 0 }, { 0, 2 }, { -1, 0 } };
@@ -147,6 +149,9 @@ int main(void)
 		}
 	};
 	placeDemoBase(0, playerHome);
+	spawnDemo(UnitType::Infantry, playerHome.x, playerHome.y, 0);
+	spawnDemo(UnitType::LightTank, playerHome.x + 2, playerHome.y, 0);
+	spawnDemo(UnitType::Artillery, playerHome.x + 1, playerHome.y + 3, 0);
 	spawnDemo(UnitType::Engineer, harvestTile.x, harvestTile.y, 0); // harvester on iron
 	ProductionQueue queue;
 	queue.Enqueue(resources, UnitType::Infantry);

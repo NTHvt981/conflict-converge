@@ -49,3 +49,8 @@ bool ParseMapFile(const std::string &path, MapData &out);
 // caller (demo places bases/units relative to them). False only on
 // dimension overflow.
 bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes);
+
+// Nearest walkable tile to (tileX, tileY) within a small spiral (units must
+// never spawn inside fresh Building footprints). Falls back to the requested
+// tile when nothing walkable is near.
+cc::IVec2 NearestFreeTile(const TileMap &map, int tileX, int tileY);

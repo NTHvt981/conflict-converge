@@ -153,3 +153,27 @@ bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes)
     }
     return true;
 }
+
+cc::IVec2 NearestFreeTile(const TileMap &map, int tileX, int tileY)
+{
+    const cc::IVec2 want{ tileX, tileY };
+    if (map.InBounds(want) && !map.IsBlocked(want))
+    {
+        return want;
+    }
+    for (int ring = 1; ring <= 5; ++ring)
+    {
+        for (int dy = -ring; dy <= ring; ++dy)
+        {
+            for (int dx = -ring; dx <= ring; ++dx)
+            {
+                const cc::IVec2 tile{ tileX + dx, tileY + dy };
+                if (map.InBounds(tile) && !map.IsBlocked(tile))
+                {
+                    return tile;
+                }
+            }
+        }
+    }
+    return want;
+}

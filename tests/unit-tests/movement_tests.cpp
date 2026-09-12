@@ -54,4 +54,20 @@ void RunMovementTests()
     CC_CHECK(walker.state == UnitState::Idle);
     CC_CHECK(walker.position.x == 0.0f); // never entered tile (1,0)
     CC_CHECK(walker.position.y == 0.0f);
+
+    // --- unit spawned inside a building footprint walks out, not stuck ---
+    TileMap footprint(8, 8);
+    footprint.Set({ 0, 0 }, TerrainType::Building);
+    Unit trapped;
+    trapped.position = { 0.0f, 0.0f };
+    IssueMoveOrder(trapped, { 320.0f, 0.0f });
+    UpdateUnitMovement(trapped, footprint, 64.0f, 1.0f);
+    CC_CHECK(trapped.hasMoveOrder); // order survives the escape step
+    CC_CHECK(trapped.position.x > 0.0f); // stepped out of tile (0,0)
+    // Full escape: keep walking until the order resolves off the footprint.
+    for (int i = 0; i < 30 && (trapped.hasMoveOrder || trapped.hasPath); ++i)
+    {
+        UpdateUnitMovement(trapped, footprint, 64.0f, 1.0f);
+    }
+    CC_CHECK(!footprint.IsBlocked(cc::WorldToTile(cc::ToGlm(trapped.position))));
 }

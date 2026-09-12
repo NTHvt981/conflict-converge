@@ -505,7 +505,13 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
     }
 
     const cc::Vec2 next = pos + diff / dist * step;
-    if (map.IsBlocked(cc::WorldToTile(next)))
+    const cc::IVec2 from = cc::WorldToTile(pos);
+    const cc::IVec2 to = cc::WorldToTile(next);
+    // Blocked only when stepping INTO a blocked tile from open ground. A
+    // unit caught on a blocked tile (spawned inside a fresh footprint) may
+    // always step out — otherwise the first step cancels the order and the
+    // unit is trapped forever.
+    if (map.IsBlocked(to) && to != from)
     {
         return StepResult::Blocked;
     }
