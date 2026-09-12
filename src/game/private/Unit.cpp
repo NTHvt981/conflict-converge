@@ -1,5 +1,6 @@
 #include "Unit.h"
 
+#include "Combat.h"     // M4 Goal 1: FireAt routes through the damage matrix.
 #include "MathUtils.h" // glm integration check: game TU exercises cc::Vec2 conversions.
 #include "Pathfinder.h" // M3 Goal 5: chase orders route around blocked tiles.
 #include "Targeting.h"  // M3 Goal 5: acquire/validate targets, range checks.
@@ -16,11 +17,10 @@ void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
 namespace
 {
 
-// Fire raw attackPower and restart the cooldown (M4 routes through the matrix).
+// Fire through the M4 damage matrix and restart the cooldown.
 void FireAt(Unit &attacker, Unit &target)
 {
-    target.health -= static_cast<float>(attacker.attackPower);
-    attacker.cooldown = attacker.cooldownTime;
+    ResolveAttack(attacker, target);
 }
 
 void StopMoving(Unit &unit)
@@ -105,7 +105,6 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
         unit->velocity = { 0.0f, 0.0f };
         if (unit->cooldown <= 0.0f && unit->attackPower > 0)
         {
-            // M3 fires raw power; M4 routes this through the damage matrix.
             FireAt(*unit, *registry.Get<Unit>(unit->target));
         }
         return;

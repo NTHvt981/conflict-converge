@@ -4,6 +4,7 @@
 
 #include "Unit.h"
 
+#include "Combat.h"    // expected damage via Effectiveness (M4 matrix)
 #include "Targeting.h" // InAttackRange sanity in chase expectations
 #include "TileMap.h"   // UpdateUnit needs the full map type (Unit.h fwd-declares)
 #include "UnitStats.h" // ApplyBaseStats for real power/range/cooldowns
@@ -58,7 +59,10 @@ void RunStateMachineTests()
         const Unit *unit = registry.Get<Unit>(attacker);
         CC_CHECK(unit->target == victim);
         CC_CHECK(unit->state == UnitState::Attacking);
-        CC_CHECK(registry.Get<Unit>(victim)->health == 100.0f - 10.0f); // raw power (M4 refines)
+        // M4: damage is matrix-scaled, not raw power.
+        const float expected = 100.0f - 10.0f * Effectiveness(DamageType::KINETIC,
+                                                             registry.Get<Unit>(victim)->armorType);
+        CC_CHECK(registry.Get<Unit>(victim)->health == expected);
         CC_CHECK(unit->cooldown > 0.0f);
 
         // Cooldown gates the next shot: one frame later, no further damage.
