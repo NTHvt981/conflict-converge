@@ -78,7 +78,7 @@
 ## Milestone M2: Core Movement System
 
 ### Goals
-- [ ] Implement tile-based movement system (64x64 tiles)
+- [x] Implement tile-based movement system (64x64 tiles)
 - [ ] Unit snapping to tile grid
 - [ ] Manual camera panning with WASD keys
 - [ ] Mouse selection and command inputs

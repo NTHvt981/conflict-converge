@@ -9,6 +9,7 @@ void RunMathUtilsTests();
 void RunEventTests();
 void RunRegistryTests();
 void RunCcAssertTests();
+void RunTileMapTests();
 
 int main()
 {
@@ -16,6 +17,7 @@ int main()
     RunEventTests();
     RunRegistryTests();
     RunCcAssertTests();
+    RunTileMapTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);
