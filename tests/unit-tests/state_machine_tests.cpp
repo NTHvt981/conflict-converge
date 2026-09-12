@@ -59,19 +59,24 @@ void RunStateMachineTests()
         const Unit *unit = registry.Get<Unit>(attacker);
         CC_CHECK(unit->target == victim);
         CC_CHECK(unit->state == UnitState::Attacking);
-        // M4: damage is matrix-scaled, not raw power.
+        CC_CHECK(unit->phase == AttackPhase::WindUp); // M4: telegraph first, no instant hit
+        CC_CHECK(registry.Get<Unit>(victim)->health == 100.0f);
+
+        // Windup (0.15s) completes: the hit lands matrix-scaled, cooldown restarts.
+        StepAll(registry, map, kDt, 11);
         const float expected = 100.0f - 10.0f * Effectiveness(DamageType::KINETIC,
                                                              registry.Get<Unit>(victim)->armorType);
         CC_CHECK(registry.Get<Unit>(victim)->health == expected);
-        CC_CHECK(unit->cooldown > 0.0f);
+        CC_CHECK(registry.Get<Unit>(attacker)->phase == AttackPhase::Recover);
+        CC_CHECK(registry.Get<Unit>(attacker)->cooldown > 0.0f);
 
         // Cooldown gates the next shot: one frame later, no further damage.
         const float hpAfterFirst = registry.Get<Unit>(victim)->health;
         UpdateUnit(attacker, registry, map, kDt);
         CC_CHECK(registry.Get<Unit>(victim)->health == hpAfterFirst);
 
-        // After a full cooldown cycle, it fires again.
-        StepAll(registry, map, kDt, 61);
+        // After a full cooldown cycle (1.0s) + windup, it fires again.
+        StepAll(registry, map, kDt, 70);
         CC_CHECK(registry.Get<Unit>(victim)->health < hpAfterFirst);
     }
 
@@ -115,7 +120,7 @@ void RunStateMachineTests()
         const Entity killer = AddSoldier(registry, UnitType::HeavyTank, 0, 0.0f, 0.0f);
         const Entity doomed = AddSoldier(registry, UnitType::Engineer, 1, 100.0f, 0.0f);
         registry.Get<Unit>(doomed)->health = 1.0f;
-        UpdateUnit(killer, registry, map, kDt); // fires: 35 dmg kills
+        StepAll(registry, map, kDt, 12); // windup completes, hit lands: 35+ dmg kills
         CC_CHECK(registry.Get<Unit>(doomed)->health <= 0.0f);
         UpdateUnit(killer, registry, map, kDt); // notices the corpse
         const Unit *unit = registry.Get<Unit>(killer);

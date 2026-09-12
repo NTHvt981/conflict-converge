@@ -64,6 +64,7 @@ int main(void)
 				unit.path.clear();
 				unit.pathNext = 0;
 				unit.target = kInvalidEntity; // M3 Goal 5: halt drops combat too
+				unit.phase = AttackPhase::Ready; // M4 Goal 3: halt cancels the telegraph
 				unit.velocity = { 0.0f, 0.0f };
 				unit.state = UnitState::Idle;
 				SnapUnitToTile(unit);

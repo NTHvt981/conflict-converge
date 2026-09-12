@@ -17,10 +17,34 @@ void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
 namespace
 {
 
-// Fire through the M4 damage matrix and restart the cooldown.
-void FireAt(Unit &attacker, Unit &target)
+// M4 Goal 3: strike phasing. Ready + cooled + armed -> WindUp; WindUp expiry
+// lands the hit via ResolveAttack and enters Recover; Recover ends when the
+// cooldown hits zero. Called only while in range of a valid target.
+void UpdateAttack(Unit &attacker, Unit &target, float dtSeconds)
 {
-    ResolveAttack(attacker, target);
+    if (attacker.phase == AttackPhase::Ready)
+    {
+        if (attacker.cooldown <= 0.0f && attacker.attackPower > 0)
+        {
+            attacker.phase = AttackPhase::WindUp;
+            attacker.phaseTime = attacker.windupTime;
+        }
+        return;
+    }
+    if (attacker.phase == AttackPhase::WindUp)
+    {
+        attacker.phaseTime -= dtSeconds;
+        if (attacker.phaseTime <= 0.0f)
+        {
+            ResolveAttack(attacker, target);
+            attacker.phase = AttackPhase::Recover;
+        }
+        return;
+    }
+    if (attacker.cooldown <= 0.0f)
+    {
+        attacker.phase = AttackPhase::Ready;
+    }
 }
 
 void StopMoving(Unit &unit)
@@ -67,10 +91,7 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
             {
                 StopMoving(*unit);
                 unit->state = UnitState::Attacking;
-                if (unit->cooldown <= 0.0f && unit->attackPower > 0)
-                {
-                    FireAt(*unit, *target);
-                }
+                UpdateAttack(*unit, *target, dtSeconds);
                 return;
             }
         }
@@ -103,10 +124,7 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
     {
         unit->state = UnitState::Attacking;
         unit->velocity = { 0.0f, 0.0f };
-        if (unit->cooldown <= 0.0f && unit->attackPower > 0)
-        {
-            FireAt(*unit, *registry.Get<Unit>(unit->target));
-        }
+        UpdateAttack(*unit, *registry.Get<Unit>(unit->target), dtSeconds);
         return;
     }
 
@@ -184,6 +202,8 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
 
     const float step = speedPixelsPerSec * dtSeconds;
     unit.state = UnitState::Moving;
+    // M4 Goal 3: stepping cancels any telegraph — a mover never lands a hit.
+    unit.phase = AttackPhase::Ready;
 
     // M3 Goal 3: walk the A* waypoints (tile top-left corners, so every
     // stop stays snapped). A consumed path (cursor past the end, e.g. a

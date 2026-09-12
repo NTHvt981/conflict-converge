@@ -49,6 +49,16 @@ enum class UnitState
     Attacking
 };
 
+// M4: attack phases within a single strike. Ready -> WindUp (telegraph, then
+// the hit lands through ResolveAttack) -> Recover (rides the cooldown) ->
+// Ready. Moving cancels back to Ready (see UpdateUnitMovement).
+enum class AttackPhase
+{
+    Ready,
+    WindUp,
+    Recover
+};
+
 struct Unit
 {
     float health = 100.0f;
@@ -58,6 +68,9 @@ struct Unit
     int attackRange = 0; // pixels (circle/radius check, M3G4/M4)
     float cooldown = 0.0f; // live attack timer: seconds until next strike (M3G5)
     float cooldownTime = 0.0f; // seconds between attacks (reset value)
+    AttackPhase phase = AttackPhase::Ready; // strike telegraph state (M4G3)
+    float phaseTime = 0.0f; // live WindUp countdown (M4G3)
+    float windupTime = 0.15f; // telegraph duration before the hit lands (M4G3)
     float speed = 0.0f; // pixels per second (M3G2 stat table)
     float sightRange = 0.0f; // pixels: targeting acquisition radius (M3G4)
     Vector2 position = {}; // snapped to 64x64 grid (M2)
