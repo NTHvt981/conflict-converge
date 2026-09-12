@@ -16,7 +16,7 @@
 |-----------|------|--------------|--------|
 | M1 | Foundation & Setup | None | 🟢 Complete |
 | M2 | Core Movement System | M1 | 🟢 Complete |
-| M3 | Unit System | M2 | 🔴 Not Started |
+| M3 | Unit System | M2 | 🟢 Complete |
 | M4 | Combat System | M3 | 🔴 Not Started |
 | M5 | Resource & Economy | M4 | 🔴 Not Started |
 | M6 | UI & Minimap | M5 | 🔴 Not Started |
@@ -118,11 +118,11 @@
 ## Milestone M3: Unit System
 
 ### Goals
-- [ ] Implement Unit component with all attributes
-- [ ] Create unit type definitions (7 types)
-- [ ] Implement basic AI behaviors (pathfinding, targeting)
-- [ ] Formation tactics for unit groups
-- [ ] Unit state management (idle, moving, attacking)
+- [x] Implement Unit component with all attributes
+- [x] Create unit type definitions (7 types)
+- [x] Implement basic AI behaviors (pathfinding, targeting)
+- [x] Formation tactics for unit groups
+- [x] Unit state management (idle, moving, attacking)
 
 ### Implementation Steps
 1. **Unit Component Design**

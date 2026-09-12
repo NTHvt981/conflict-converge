@@ -9,7 +9,7 @@
 #include "InputManager.h" // M2 Goal 6: per-frame input pump (WASD, mouse, shortcuts)
 #include "TileMap.h"   // M2 Goal 1: passable/blocked tile grid
 #include "Unit.h"      // M2 Goal 2/4: snapped units with move orders
-#include "UnitStats.h" // M3 Goal 2: demo units spawn with type stats
+#include "UnitFactory.h" // M3 Goal 6: cost-validated demo spawns + death sweep
 #include "Pathfinder.h" // M3 Goal 3: right-click orders route around blocks
 #include <iostream>
 #include <vector>
@@ -30,21 +30,21 @@ int main(void)
 	constexpr float kCameraSpeed = 400.0f; // pixels per second
 	// Unit speed now comes from M3 base stats (Unit::speed, ApplyBaseStats).
 
-	// M2 Goal 4 demo world: registry of units on a tile map. Placeholder
+	// M3 Goal 6 demo world: units spawn through the factory (costs deducted
+	// from starting funds, UnitSpawned announced) on the tile map. Placeholder
 	// art is colored rectangles (see M2 blockings); sprites arrive later.
 	Registry registry;
+	ResourceSystem resources;
+	resources.AddIron(1000);
+	resources.AddOil(500);
+	EventDispatcher events;
+	UnitFactory factory(registry, resources, events);
 	TileMap map(20, 15);
 	map.Set({ 6, 3 }, TerrainType::Water);
 	map.Set({ 7, 3 }, TerrainType::Water);
 	map.Set({ 6, 4 }, TerrainType::Water);
 	auto spawnDemo = [&](UnitType type, int tileX, int tileY, int team) {
-		Unit unit;
-		unit.type = type;
-		ApplyBaseStats(unit); // M3 Goal 2: real speed/sight/combat stats
-		unit.teamID = team;
-		unit.position = cc::ToRaylib(cc::TileToWorld(tileX, tileY));
-		SnapUnitToTile(unit);
-		registry.Add(registry.Create(), unit);
+		factory.Spawn(type, team, cc::ToRaylib(cc::TileToWorld(tileX, tileY)));
 	};
 	spawnDemo(UnitType::Infantry, 2, 2, 0);
 	spawnDemo(UnitType::LightTank, 4, 2, 0);
@@ -107,6 +107,19 @@ int main(void)
 		registry.Each<Unit>([&](Entity id, Unit &unit) {
 			UpdateUnit(id, registry, map, GetFrameTime()); // M3 Goal 5: AI driver
 		});
+		// M3 Goal 6: collect the fallen, then destroy through the factory so
+		// UnitDestroyed is announced (destroying inside Each would invalidate it).
+		std::vector<Entity> dead;
+		registry.Each<Unit>([&](Entity id, const Unit &unit) {
+			if (unit.health <= 0.0f)
+			{
+				dead.push_back(id);
+			}
+		});
+		for (Entity id : dead)
+		{
+			factory.DestroyUnit(id);
+		}
 
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
