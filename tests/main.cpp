@@ -11,6 +11,7 @@ void RunRegistryTests();
 void RunCcAssertTests();
 void RunTileMapTests();
 void RunUnitSnapTests();
+void RunCameraTests();
 
 int main()
 {
@@ -20,6 +21,7 @@ int main()
     RunCcAssertTests();
     RunTileMapTests();
     RunUnitSnapTests();
+    RunCameraTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);

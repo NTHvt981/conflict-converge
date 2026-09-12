@@ -80,7 +80,7 @@
 ### Goals
 - [x] Implement tile-based movement system (64x64 tiles)
 - [x] Unit snapping to tile grid
-- [ ] Manual camera panning with WASD keys
+- [x] Manual camera panning with WASD keys
 - [ ] Mouse selection and command inputs
 - [ ] Keyboard shortcut support
 - [ ] Basic input handling framework
