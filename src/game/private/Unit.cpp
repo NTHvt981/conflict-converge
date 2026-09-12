@@ -74,6 +74,14 @@ void UpdateUnit(Entity self, Registry &registry, const TileMap &map, float dtSec
             unit->cooldown = 0.0f;
         }
     }
+    if (unit->hitFlashTime > 0.0f)
+    {
+        unit->hitFlashTime -= dtSeconds;
+        if (unit->hitFlashTime < 0.0f)
+        {
+            unit->hitFlashTime = 0.0f;
+        }
+    }
 
     // Explicit player orders win over acquiring NEW targets — but a unit
     // already engaging (chase path with a set target) stops to fire the

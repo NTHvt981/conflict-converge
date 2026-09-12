@@ -71,6 +71,8 @@ struct Unit
     AttackPhase phase = AttackPhase::Ready; // strike telegraph state (M4G3)
     float phaseTime = 0.0f; // live WindUp countdown (M4G3)
     float windupTime = 0.15f; // telegraph duration before the hit lands (M4G3)
+    float lastDamageTaken = 0.0f; // most recent effective hit, for the M4G5 number
+    float hitFlashTime = 0.0f;    // live overlay countdown, decayed in UpdateUnit (M4G5)
     float speed = 0.0f; // pixels per second (M3G2 stat table)
     float sightRange = 0.0f; // pixels: targeting acquisition radius (M3G4)
     Vector2 position = {}; // snapped to 64x64 grid (M2)

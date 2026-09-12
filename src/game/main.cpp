@@ -145,7 +145,8 @@ int main(void)
 		}
 
 		// Units as 32x32 placeholder rects: red-ringed when selected,
-		// orange-bodied when Attacking with a tracer to the target (M3G5).
+		// orange-bodied when Attacking with a tracer to the target (M3G5),
+		// white-flashed with a damage number while hitFlashTime runs (M4G5).
 		registry.Each<Unit>([&](Entity, Unit &unit) {
 			const Rectangle body = { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };
 			const Vector2 center = { body.x + 16.0f, body.y + 16.0f };
@@ -153,6 +154,12 @@ int main(void)
 			if (unit.isSelected)
 			{
 				DrawRectangleLinesEx(body, 3.0f, RED);
+			}
+			if (unit.hitFlashTime > 0.0f)
+			{
+				DrawRectangleRec(body, Fade(WHITE, 0.7f));
+				DrawText(TextFormat("-%.0f", unit.lastDamageTaken), static_cast<int>(body.x),
+				         static_cast<int>(body.y) - 18, 16, RED);
 			}
 			if (unit.state == UnitState::Attacking)
 			{

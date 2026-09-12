@@ -17,7 +17,7 @@
 | M1 | Foundation & Setup | None | 🟢 Complete |
 | M2 | Core Movement System | M1 | 🟢 Complete |
 | M3 | Unit System | M2 | 🟢 Complete |
-| M4 | Combat System | M3 | 🔴 Not Started |
+| M4 | Combat System | M3 | 🟢 Complete |
 | M5 | Resource & Economy | M4 | 🔴 Not Started |
 | M6 | UI & Minimap | M5 | 🔴 Not Started |
 | M7 | Save/Load & Integration Tests | M6 | 🔴 Not Started |
@@ -173,12 +173,12 @@
 ## Milestone M4: Combat System
 
 ### Goals
-- [ ] Implement damage calculation (attack type + armor type)
-- [ ] Create 2D hitbox system with raylib sprites
-- [ ] Add attack animations and cooldowns
-- [ ] Prevent infantry crushing by vehicles/tanks
-- [ ] Attack range checking
-- [ ] Damage feedback visualization
+- [x] Implement damage calculation (attack type + armor type)
+- [x] Create 2D hitbox system with raylib sprites
+- [x] Add attack animations and cooldowns
+- [x] Prevent infantry crushing by vehicles/tanks
+- [x] Attack range checking
+- [x] Damage feedback visualization
 
 ### Implementation Steps
 1. **Damage System**

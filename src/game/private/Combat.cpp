@@ -24,6 +24,11 @@ float ResolveAttack(Unit &attacker, Unit &defender, AttackContext context)
     const float effective = static_cast<float>(attacker.attackPower) *
                             Effectiveness(attacker.damageType, defender.armorType);
     defender.health -= effective;
+    if (effective > 0.0f)
+    {
+        defender.lastDamageTaken = effective;
+        defender.hitFlashTime = kHitFlashDuration;
+    }
     attacker.cooldown = attacker.cooldownTime;
     return effective;
 }

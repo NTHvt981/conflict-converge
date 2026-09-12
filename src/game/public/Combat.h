@@ -17,11 +17,16 @@ float Effectiveness(DamageType dealt, ArmorType armor);
 // Apply scaled damage to the defender and restart the attacker's cooldown.
 // Returns the effective damage dealt. Crush hits (contact/overrun, as
 // opposed to Direct fire) are negated against crush-protected foot units.
+// A landed hit (effective > 0) stamps the defender's M4G5 feedback fields
+// (lastDamageTaken + hitFlashTime); negated/zero hits leave them untouched.
 enum class AttackContext
 {
     Direct, // ranged/melee fire: full matrix damage
     Crush   // vehicle contact: negated vs foot (M4G4), matrix otherwise
 };
+
+// Seconds a victim flashes after taking a hit (M4G5 overlay + number).
+inline constexpr float kHitFlashDuration = 0.25f;
 float ResolveAttack(Unit &attacker, Unit &defender, AttackContext context = AttackContext::Direct);
 
 // M4 Goal 4: anti-crush rule. Vehicle hulls (IFV/Artillery/Light/HeavyTank)
