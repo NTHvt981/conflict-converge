@@ -14,7 +14,7 @@
 
 | Milestone | Name | Dependencies | Status |
 |-----------|------|--------------|--------|
-| M1 | Foundation & Setup | None | 🟡 In Progress |
+| M1 | Foundation & Setup | None | 🟢 Complete |
 | M2 | Core Movement System | M1 | 🔴 Not Started |
 | M3 | Unit System | M2 | 🔴 Not Started |
 | M4 | Combat System | M3 | 🔴 Not Started |
@@ -33,7 +33,7 @@
 - [x] Implement raygui for UI framework
 - [x] Set up event dispatcher architecture
 - [x] Create ECS-lite component-based architecture
-- [ ] Configure debug/release profiles with assertions
+- [x] Configure debug/release profiles with assertions
 
 ### Implementation Steps
 1. **Premake5 Setup**

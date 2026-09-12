@@ -4,9 +4,22 @@
 
 workspace "ConflictConverge"
     configurations { "Debug", "Release" }
-    
-    -- Output directory  
+
+    -- Output directory
     location "prj"
+
+-- M1 Goal 7: build profiles shared by every project below.
+-- Debug keeps assertions enabled (no NDEBUG) with full symbols;
+-- Release defines NDEBUG (compiles out CC_ASSERT, see Assert.h) and optimizes.
+filter "configurations:Debug"
+    defines { "CC_DEBUG" }
+    symbols "On"
+
+filter "configurations:Release"
+    defines { "NDEBUG" }
+    optimize "On"
+
+filter {}
 
 -- Project to build raylib as static library from deps/
 project "raylib-static"
