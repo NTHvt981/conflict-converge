@@ -15,6 +15,7 @@
 #include "Nodes.h" // M5 Goal 3: demo resource nodes + harvester
 #include "Production.h" // M5 Goal 6: demo factory production queue
 #include "Minimap.h" // M6 Goal 1: unit-position minimap (periodic refresh)
+#include "Hud.h" // M6 Goal 2: raygui resource + selection panels
 #include <iostream>
 #include <vector>
 #include <format>
@@ -272,9 +273,9 @@ int main(void)
 			1.0f, WHITE);
 		DrawRectangleLinesEx(minimap.screenRect, 1.0f, DARKGRAY);
 
-		// M5 HUD preview (proper raygui panels in M6): stockpiles + queue.
-		DrawText(TextFormat("Iron: %ld  Oil: %ld", resources.iron, resources.oil), 620, 20, 20,
-		         DARKGRAY);
+		// M6 Goal 2: raygui HUD (proper panels replace the M5 text counters).
+		DrawResourcePanel(resources);
+		DrawSelectionPanel(registry);
 		if (!queue.Empty())
 		{
 			DrawText("Producing...", 620, 48, 16, GRAY);

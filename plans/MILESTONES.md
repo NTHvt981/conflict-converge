@@ -253,9 +253,9 @@
 ## Milestone M6: UI & Minimap
 
 ### Goals
-- [ ] Implement raygui-based UI framework
+- [x] Implement raygui-based UI framework
 - [x] Create minimap (unit positions only, periodic refresh)
-- [ ] Display resource counters (iron/oil)
+- [x] Display resource counters (iron/oil)
 - [ ] Unit selection highlighting
 - [ ] Keyboard shortcut overlays
 - [ ] Game menu system
