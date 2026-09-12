@@ -243,11 +243,6 @@ int main(void)
 		});
 	});
 
-	// M1 Goal 4 proof-of-integration: a raygui button counting clicks.
-	// Full HUD/minimap/menu UI lands in M6.
-	int buttonClicks = 0;
-	bool showInfoBox = true;
-
 	while (!WindowShouldClose() && !menu.quitRequested)
 	{
 		// M2 Goal 6: single input pump (always runs: P must unpause too).
@@ -684,17 +679,6 @@ int main(void)
 			}
 		}
 
-		if (GuiButton(Rectangle{ 20, 20, 140, 30 }, "Click me"))
-		{
-			buttonClicks++;
-		}
-		DrawText(TextFormat("raygui clicks: %d", buttonClicks), 20, 60, 20, DARKGRAY);
-
-		if (showInfoBox)
-		{
-			showInfoBox = !GuiWindowBox(Rectangle{ 20, 100, 260, 100 }, "raygui works");
-			GuiLabel(Rectangle{ 40, 140, 220, 20 }, "UI framework integrated (M1).");
-		}
 		// M6 Goal 3: menu overlays sit on top of the frame.
 		if (menu.state == MenuState::Paused)
 		{
