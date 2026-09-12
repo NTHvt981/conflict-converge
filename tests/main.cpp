@@ -42,6 +42,7 @@ void RunPerfTests();
 void RunAICommanderTests();
 void RunFogTests();
 void RunFogCombatTests();
+void RunMapFileTests();
 
 int main()
 {
@@ -82,6 +83,7 @@ int main()
     RunAICommanderTests();
     RunFogTests();
     RunFogCombatTests();
+    RunMapFileTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);

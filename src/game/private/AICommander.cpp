@@ -117,7 +117,8 @@ void AICommander::SetupBase()
             break;
         }
     }
-    const cc::IVec2 factorySpots[] = { { 0, 2 }, { 3, 0 }, { -2, 2 }, { 0, -3 } };
+    const cc::IVec2 factorySpots[] = { { 0, 2 }, { 3, 0 },  { -2, 2 }, { 0, -3 },
+                                       { -2, 0 }, { 0, -2 }, { 2, -2 }, { -3, 0 } };
     for (const cc::IVec2 &spot : factorySpots)
     {
         if (PlaceBuilding(registry_, map_, BuildingType::Factory, teamID_, homeTile_.x + spot.x,

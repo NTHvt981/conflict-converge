@@ -19,6 +19,7 @@
 #include "Hud.h" // M6 Goal 2: raygui resource + selection panels
 #include "Menu.h" // M6 Goal 3: pause / outcome / settings menu flow
 #include "FogOfWar.h" // M9: per-team visibility (shroud, targeting gate)
+#include "MapFile.h" // M10: demo loads Crossroads from data/
 #include "AICommander.h" // M8: enemy commander (build order, waves, scouting)
 #include <iostream>
 #include <vector>
@@ -57,36 +58,85 @@ int main(void)
 	UnitFactory factory(registry, resources, events);
 	TileMap map(20, 15);
 	FogOfWar fog; // M9: recomputed every Playing frame, carried by WorldState
-	fog.Resize(20, 15);
-	map.Set({ 6, 3 }, TerrainType::Water);
-	map.Set({ 7, 3 }, TerrainType::Water);
-	map.Set({ 6, 4 }, TerrainType::Water);
+	ResourceNodes nodes;
+	// M10: demo loads Crossroads; bases, units, and the harvester follow its
+	// markers. A missing file falls back to the legacy hardcoded layout.
+	MapData demoMap;
+	cc::IVec2 playerHome{ 2, 2 };
+	cc::IVec2 aiHome{ 16, 9 };
+	cc::IVec2 harvestTile{ 15, 3 };
+	if (ParseMapFile("data/crossroads.map", demoMap))
+	{
+		ApplyMapData(demoMap, map, nodes);
+		if (!demoMap.playerSpawns.empty())
+		{
+			playerHome = demoMap.playerSpawns[0];
+		}
+		if (!demoMap.aiSpawns.empty())
+		{
+			aiHome = demoMap.aiSpawns[0];
+		}
+		for (const MapNodeSpawn &spawn : demoMap.nodes)
+		{
+			if (spawn.kind == ResourceKind::Iron)
+			{
+				harvestTile = spawn.tile;
+				break;
+			}
+		}
+	}
+	else
+	{
+		map.Set({ 6, 3 }, TerrainType::Water);
+		map.Set({ 7, 3 }, TerrainType::Water);
+		map.Set({ 6, 4 }, TerrainType::Water);
+		nodes.SpawnNode(map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
+		nodes.SpawnNode(map, ResourceKind::Oil, { 15, 12 }, 150.0f, 10.0f);
+	}
+	fog.Resize(map.Width(), map.Height());
 	auto spawnDemo = [&](UnitType type, int tileX, int tileY, int team) {
 		factory.Spawn(type, team, cc::ToRaylib(cc::TileToWorld(tileX, tileY)));
 	};
-	spawnDemo(UnitType::Infantry, 2, 2, 0);
-	spawnDemo(UnitType::LightTank, 4, 2, 0);
-	spawnDemo(UnitType::Artillery, 3, 5, 0);
+	spawnDemo(UnitType::Infantry, playerHome.x, playerHome.y, 0);
+	spawnDemo(UnitType::LightTank, playerHome.x + 2, playerHome.y, 0);
+	spawnDemo(UnitType::Artillery, playerHome.x + 1, playerHome.y + 3, 0);
 
-	// M5 demo economy: home base + factory + depot, two field nodes with a
-	// harvester Engineer parked on the iron, and a factory queue building
-	// reinforcements at the rally point. Costs come out of starting funds.
-	PlaceBuilding(registry, map, BuildingType::Base, 0, 1, 10);
-	PlaceBuilding(registry, map, BuildingType::ResourceDepot, 0, 5, 10);
-	PlaceBuilding(registry, map, BuildingType::Factory, 0, 10, 10);
-	ResourceNodes nodes;
-	nodes.SpawnNode(map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
-	nodes.SpawnNode(map, ResourceKind::Oil, { 15, 12 }, 150.0f, 10.0f);
-	spawnDemo(UnitType::Engineer, 15, 3, 0); // harvester: idles on the iron node
+	// M5 demo economy: home base + factory + depot around the player marker,
+	// a harvester Engineer parked on the first iron node, and a factory queue
+	// building reinforcements at the rally point. Costs come out of funds.
+	auto placeDemoBase = [&](int team, cc::IVec2 anchor) {
+		PlaceBuilding(registry, map, BuildingType::Base, team, anchor.x, anchor.y);
+		const cc::IVec2 depotSpots[] = { { 2, 0 }, { 0, 2 }, { -1, 0 } };
+		for (const cc::IVec2 &spot : depotSpots)
+		{
+			if (PlaceBuilding(registry, map, BuildingType::ResourceDepot, team, anchor.x + spot.x,
+			                  anchor.y + spot.y) != kInvalidEntity)
+			{
+				break;
+			}
+		}
+		const cc::IVec2 factorySpots[] = { { 0, 2 }, { 3, 0 }, { -2, 2 } };
+		for (const cc::IVec2 &spot : factorySpots)
+		{
+			if (PlaceBuilding(registry, map, BuildingType::Factory, team, anchor.x + spot.x,
+			                  anchor.y + spot.y) != kInvalidEntity)
+			{
+				break;
+			}
+		}
+	};
+	placeDemoBase(0, playerHome);
+	spawnDemo(UnitType::Engineer, harvestTile.x, harvestTile.y, 0); // harvester on iron
 	ProductionQueue queue;
 	queue.Enqueue(resources, UnitType::Infantry);
 	queue.Enqueue(resources, UnitType::LightTank);
-	const Vector2 rallyPos = cc::ToRaylib(cc::TileToWorld(13, 11));
+	const Vector2 rallyPos =
+		cc::ToRaylib(cc::TileToWorld(playerHome.x + 4, playerHome.y));
 
 	// M8: enemy commander owns team 1 under fair rules (own funds, own
 	// buildings, same order/spend APIs). Its starting guard keeps team 1
 	// fielded from frame one so the outcome check never fires instantly.
-	AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 16, 9 }, { 1, 10 });
+	AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Medium, aiHome, playerHome);
 	ai.SetupBase();
 
 	// M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
@@ -200,7 +250,10 @@ int main(void)
 						}
 						const Vector2 corner = minimap.WorldToMinimap(cc::ToRaylib(cc::TileToWorld(x, y)),
 						                                             map.Width(), map.Height());
-						const Color tint = terrain == TerrainType::Water ? DARKBLUE : DARKGRAY;
+						const Color tint = terrain == TerrainType::Water    ? DARKBLUE
+						                     : terrain == TerrainType::Forest ? Color{ 20, 90, 20, 255 }
+						                     : terrain == TerrainType::Rock   ? GRAY
+						                                                      : DARKGRAY;
 						DrawRectangleV({ corner.x - minimap.screenRect.x, corner.y - minimap.screenRect.y },
 						               { 8.0f, 8.0f }, tint);
 					}
@@ -233,15 +286,24 @@ int main(void)
 		DrawText("WASD pans the camera", 200, 170, 20, GRAY);
 		DrawText("Left-click selects, right-click orders", 200, 195, 20, GRAY);
 
-		// Tile grid: water filled, grass outlined.
+		// Tile grid: water/forest/rock filled, grass outlined.
 		for (int y = 0; y < map.Height(); ++y)
 		{
 			for (int x = 0; x < map.Width(); ++x)
 			{
 				const Vector2 corner = cc::ToRaylib(cc::TileToWorld(x, y));
-				if (map.Get({ x, y }) == TerrainType::Water)
+				const TerrainType terrain = map.Get({ x, y });
+				if (terrain == TerrainType::Water)
 				{
 					DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, SKYBLUE);
+				}
+				else if (terrain == TerrainType::Forest)
+				{
+					DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, DARKGREEN);
+				}
+				else if (terrain == TerrainType::Rock)
+				{
+					DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, GRAY);
 				}
 				DrawRectangleLinesEx({ corner.x, corner.y, cc::TILE_SIZE, cc::TILE_SIZE }, 1.0f, LIGHTGRAY);
 			}

@@ -1,0 +1,277 @@
+// Unit tests for M10 map files (format validation, shipped-map sanity,
+// save roundtrip on a loaded map).
+
+#include "test_harness.h"
+
+#include "AICommander.h" // demo smoke: SetupBase must fit on shipped maps
+#include "Building.h" // demo smoke: player placements must fit
+#include "Event.h"
+#include "FogOfWar.h"
+#include "GameCamera.h"
+#include "MapFile.h"
+#include "Nodes.h"
+#include "Pathfinder.h" // TerrainCost hook
+#include "Registry.h"
+#include "ResourceSystem.h"
+#include "SaveGame.h"
+#include "TileMap.h"
+
+#include <filesystem>
+#include <fstream>
+#include <queue>
+
+namespace
+{
+
+std::string TempMap(const std::string &name)
+{
+    return (std::filesystem::temp_directory_path() / name).string();
+}
+
+void WriteFile(const std::string &path, const std::string &content)
+{
+    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    out << content;
+}
+
+bool Reachable(const TileMap &map, cc::IVec2 from, cc::IVec2 to)
+{
+    if (!map.InBounds(from) || !map.InBounds(to))
+    {
+        return false;
+    }
+    std::vector<char> seen(static_cast<std::size_t>(map.Width()) * map.Height(), 0);
+    std::queue<cc::IVec2> open;
+    open.push(from);
+    seen[static_cast<std::size_t>(from.y) * map.Width() + from.x] = 1;
+    const cc::IVec2 dirs[] = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+    while (!open.empty())
+    {
+        const cc::IVec2 cur = open.front();
+        open.pop();
+        if (cur == to)
+        {
+            return true;
+        }
+        for (cc::IVec2 d : dirs)
+        {
+            const cc::IVec2 next{ cur.x + d.x, cur.y + d.y };
+            if (!map.InBounds(next) || map.IsBlocked(next))
+            {
+                continue;
+            }
+            const std::size_t i = static_cast<std::size_t>(next.y) * map.Width() + next.x;
+            if (!seen[i])
+            {
+                seen[i] = 1;
+                open.push(next);
+            }
+        }
+    }
+    return false;
+}
+
+// Shipped maps live in data/ at repo root; the test binary may run from
+// repo root or prj/bin/<Config>, so probe both relative spellings.
+bool LoadShipped(const std::string &name, MapData &out)
+{
+    const std::string candidates[] = { "data/" + name, "../../data/" + name,
+                                       "../../../data/" + name };
+    for (const std::string &path : candidates)
+    {
+        if (ParseMapFile(path, out))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+const char *kValidMap = "# Conflict Converge map v1\n"
+                        "name=Probe\n"
+                        "author=test\n"
+                        "width=4\n"
+                        "height=3\n"
+                        ".1~.\n"
+                        ".TI2\n"
+                        ".^BO\n";
+
+} // namespace
+
+void RunMapFileTests()
+{
+    // --- terrain types + cost hook ---
+    CC_CHECK(!TileMap(4, 4).IsBlocked({ 0, 0 })); // grass
+    TileMap blocked(4, 4);
+    blocked.Set({ 0, 0 }, TerrainType::Forest);
+    blocked.Set({ 1, 0 }, TerrainType::Rock);
+    CC_CHECK(!blocked.IsBlocked({ 0, 0 })); // forest passable
+    CC_CHECK(blocked.IsBlocked({ 1, 0 }));  // rock walls
+    CC_CHECK(TerrainCost(TerrainType::Grass) == 1.0f);
+    CC_CHECK(TerrainCost(TerrainType::Forest) == 1.0f); // uniform per Q55
+    CC_CHECK(TerrainCost(TerrainType::Water) == 1.0f);
+
+    // --- valid parse: every legend character lands correctly ---
+    const std::string good = TempMap("cc_map_good.map");
+    WriteFile(good, kValidMap);
+    MapData data;
+    CC_CHECK(ParseMapFile(good, data));
+    CC_CHECK(data.name == "Probe" && data.author == "test");
+    CC_CHECK(data.width == 4 && data.height == 3);
+    CC_CHECK(data.terrain[1] == TerrainType::Grass); // '1' marker sits on grass
+    CC_CHECK(data.terrain[2] == TerrainType::Water);
+    CC_CHECK(data.terrain[5] == TerrainType::Forest);
+    CC_CHECK(data.terrain[6] == TerrainType::Grass); // 'I' sits on grass
+    CC_CHECK(data.terrain[7] == TerrainType::Grass); // '2' sits on grass
+    CC_CHECK(data.terrain[9] == TerrainType::Rock);
+    CC_CHECK(data.terrain[10] == TerrainType::Building);
+    CC_CHECK(data.terrain[11] == TerrainType::Grass); // 'O' sits on grass
+    CC_CHECK(data.playerSpawns.size() == 1 && data.playerSpawns[0] == cc::IVec2(1, 0));
+    CC_CHECK(data.aiSpawns.size() == 1 && data.aiSpawns[0] == cc::IVec2(3, 1));
+    CC_CHECK(data.nodes.size() == 2);
+
+    // --- rejection paths ---
+    MapData bad;
+    CC_CHECK(!ParseMapFile(TempMap("cc_map_missing.map"), bad)); // absent file
+    const std::string badChar = TempMap("cc_map_badchar.map");
+    WriteFile(badChar, "# c\nname=N\nauthor=\nwidth=2\nheight=1\n.X\n");
+    CC_CHECK(!ParseMapFile(badChar, bad));
+    const std::string shortRow = TempMap("cc_map_shortrow.map");
+    WriteFile(shortRow, "# c\nname=N\nauthor=\nwidth=2\nheight=1\n.\n");
+    CC_CHECK(!ParseMapFile(shortRow, bad));
+    const std::string rowCount = TempMap("cc_map_rowcount.map");
+    WriteFile(rowCount, "# c\nname=N\nauthor=\nwidth=2\nheight=2\n..\n..\n..\n");
+    CC_CHECK(!ParseMapFile(rowCount, bad));
+    const std::string badHeader = TempMap("cc_map_badheader.map");
+    WriteFile(badHeader, "# c\nname=N\nauthor=\nwidth=2\n");
+    CC_CHECK(!ParseMapFile(badHeader, bad));
+    const std::string badDim = TempMap("cc_map_baddim.map");
+    WriteFile(badDim, "# c\nname=N\nauthor=\nwidth=0\nheight=1\n.\n");
+    CC_CHECK(!ParseMapFile(badDim, bad));
+    const std::string noComment = TempMap("cc_map_nocomment.map");
+    WriteFile(noComment, "name=N\nauthor=\nwidth=2\nheight=1\n..\n");
+    CC_CHECK(!ParseMapFile(noComment, bad));
+
+    // --- apply: resize + terrain + default node amounts ---
+    TileMap applied(2, 2);
+    ResourceNodes appliedNodes;
+    CC_CHECK(ApplyMapData(data, applied, appliedNodes));
+    CC_CHECK(applied.Width() == 4 && applied.Height() == 3);
+    CC_CHECK(applied.Get({ 2, 0 }) == TerrainType::Water);
+    CC_CHECK(applied.Get({ 1, 1 }) == TerrainType::Forest);
+    CC_CHECK(applied.Get({ 1, 2 }) == TerrainType::Rock);
+    CC_CHECK(applied.Get({ 2, 2 }) == TerrainType::Building);
+    CC_CHECK(appliedNodes.Count() == 2);
+    const ResourceNode *iron = appliedNodes.FindAt({ 2, 1 });
+    CC_CHECK(iron != nullptr && iron->kind == ResourceKind::Iron && iron->amount == 200.0f);
+
+    // --- shipped maps: load, dims, markers, connectivity ---
+    const char *shipped[] = { "crossroads.map", "twin_basins.map" };
+    for (const char *name : shipped)
+    {
+        MapData ship;
+        CC_CHECK(LoadShipped(name, ship));
+        CC_CHECK(ship.width == 24 && ship.height == 18);
+        CC_CHECK(ship.playerSpawns.size() == 1 && ship.aiSpawns.size() == 1);
+        if (ship.playerSpawns.size() != 1 || ship.aiSpawns.size() != 1)
+        {
+            continue; // no spawns to test connectivity from (load failed above)
+        }
+        CC_CHECK(ship.nodes.size() >= 3); // home iron each + contested oil
+        TileMap shipMap(4, 4);
+        ResourceNodes shipNodes;
+        CC_CHECK(ApplyMapData(ship, shipMap, shipNodes));
+        const cc::IVec2 home = ship.playerSpawns[0];
+        const cc::IVec2 away = ship.aiSpawns[0];
+        CC_CHECK(Reachable(shipMap, home, away)); // bases connected
+        for (const MapNodeSpawn &spawn : ship.nodes)
+        {
+            CC_CHECK(!shipMap.IsBlocked(spawn.tile));   // nodes stand on grass
+            CC_CHECK(Reachable(shipMap, home, spawn.tile)); // harvesters can walk there
+        }
+        // Mirror symmetry: every tile mirrors across the center point.
+        for (int y = 0; y < ship.height; ++y)
+        {
+            for (int x = 0; x < ship.width; ++x)
+            {
+                CC_CHECK(shipMap.Get({ x, y }) ==
+                         shipMap.Get({ ship.width - 1 - x, ship.height - 1 - y }));
+            }
+        }
+    }
+
+    // --- demo smoke: the exact placements main.cpp uses must fit ---
+    {
+        MapData demo;
+        CC_CHECK(LoadShipped("crossroads.map", demo));
+        CC_CHECK(!demo.playerSpawns.empty() && !demo.aiSpawns.empty());
+        if (!demo.playerSpawns.empty() && !demo.aiSpawns.empty())
+        {
+            Registry demoRegistry;
+            TileMap demoMap(4, 4);
+            ResourceNodes demoNodes;
+            ResourceSystem demoResources;
+            EventDispatcher demoEvents;
+            CC_CHECK(ApplyMapData(demo, demoMap, demoNodes));
+            const cc::IVec2 home = demo.playerSpawns[0];
+            CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::Base, 0, home.x,
+                                   home.y) != kInvalidEntity);
+            CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::ResourceDepot, 0,
+                                   home.x + 2, home.y) != kInvalidEntity);
+            CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::Factory, 0, home.x,
+                                   home.y + 2) != kInvalidEntity);
+            AICommander demoAI(demoRegistry, demoMap, demoNodes, demoEvents, 1,
+                               AIDifficulty::Medium, demo.aiSpawns[0], home);
+            demoAI.SetupBase();
+            int aiBuildings = 0;
+            demoRegistry.Each<Building>([&](Entity, const Building &b) {
+                if (b.teamID == 1 && b.state == BuildingState::Operational)
+                {
+                    ++aiBuildings;
+                }
+            });
+            CC_CHECK(aiBuildings == 3); // AI factory fits the corner too
+        }
+    }
+
+    // --- save/load roundtrip on a loaded map ---
+    MapData cross;
+    CC_CHECK(LoadShipped("crossroads.map", cross));
+    Registry registry;
+    ResourceSystem resources;
+    TileMap roundMap(4, 4);
+    GameCamera camera;
+    ResourceNodes roundNodes;
+    FogOfWar fog;
+    CC_CHECK(ApplyMapData(cross, roundMap, roundNodes));
+    fog.Resize(roundMap.Width(), roundMap.Height());
+    WorldState src{ &registry, &resources, &roundMap, &camera, &roundNodes, &fog };
+    const std::string savePath = TempMap("cc_map_roundtrip.ccpb");
+    CC_CHECK(SaveWorld(src, savePath));
+    Registry registry2;
+    ResourceSystem resources2;
+    TileMap roundMap2(4, 4);
+    GameCamera camera2;
+    ResourceNodes roundNodes2;
+    FogOfWar fog2;
+    fog2.Resize(4, 4);
+    WorldState dst{ &registry2, &resources2, &roundMap2, &camera2, &roundNodes2, &fog2 };
+    CC_CHECK(LoadWorld(dst, savePath));
+    CC_CHECK(roundMap2.Width() == 24 && roundMap2.Height() == 18);
+    CC_CHECK(roundNodes2.Count() == cross.nodes.size());
+    bool terrainMatch = true;
+    for (int y = 0; y < 18 && terrainMatch; ++y)
+    {
+        for (int x = 0; x < 24; ++x)
+        {
+            if (roundMap2.Get({ x, y }) != roundMap.Get({ x, y }))
+            {
+                terrainMatch = false;
+                break;
+            }
+        }
+    }
+    CC_CHECK(terrainMatch);
+    std::remove(savePath.c_str());
+    std::remove(good.c_str());
+}

@@ -45,7 +45,8 @@ bool TileMap::IsBlocked(cc::IVec2 tile) const
         return true;
     }
     TerrainType terrain = tiles_[Index(tile)];
-    return terrain == TerrainType::Water || terrain == TerrainType::Building;
+    return terrain == TerrainType::Water || terrain == TerrainType::Building ||
+           terrain == TerrainType::Rock;
 }
 
 void TileMap::Clear(TerrainType fill)

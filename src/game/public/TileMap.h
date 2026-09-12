@@ -15,7 +15,10 @@ enum class TerrainType : std::uint8_t
 {
     Grass,    // passable, default fill
     Water,    // blocked (impassable)
-    Building  // blocked (occupied by a structure)
+    Building, // blocked (occupied by a structure)
+    // M10: appended AFTER Building so old saves (values 0-2) still decode.
+    Forest, // passable, cost multiplier ready (uniform 1.0 per Q55)
+    Rock      // blocked (impassable wall tile for choke points)
 };
 
 class TileMap
@@ -32,8 +35,9 @@ public:
     TerrainType Get(cc::IVec2 tile) const;
     void Set(cc::IVec2 tile, TerrainType terrain);
 
-    // Blocked = Water or Building. Out-of-bounds counts as blocked so
-    // movement stays inside the map without extra edge checks.
+    // Blocked = Water, Building, or Rock. Forest is passable. Out-of-bounds
+    // counts as blocked so movement stays inside the map without extra
+    // edge checks.
     bool IsBlocked(cc::IVec2 tile) const;
 
     void Clear(TerrainType fill = TerrainType::Grass);

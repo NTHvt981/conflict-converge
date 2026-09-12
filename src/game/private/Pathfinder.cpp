@@ -21,7 +21,7 @@ int Manhattan(cc::IVec2 a, cc::IVec2 b)
 
 struct OpenNode
 {
-    int priority = 0;
+    float priority = 0.0f;
     cc::IVec2 tile{ 0, 0 };
 };
 
@@ -35,6 +35,12 @@ bool operator<(const OpenNode &a, const OpenNode &b)
 const cc::IVec2 kDirs[] = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
 
 } // namespace
+
+float TerrainCost(TerrainType terrain)
+{
+    (void)terrain; // uniform 1.0 per Q55; branch here for costly ground later
+    return 1.0f;
+}
 
 TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal)
 {
@@ -57,11 +63,11 @@ TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal)
 
     const int width = map.Width();
     std::priority_queue<OpenNode> open;
-    open.push({ Manhattan(start, goal), start });
+    open.push({ static_cast<float>(Manhattan(start, goal)), start });
 
-    std::unordered_map<int, int> costSoFar; // tile key -> g cost
+    std::unordered_map<int, float> costSoFar; // tile key -> g cost
     std::unordered_map<int, cc::IVec2> cameFrom; // tile key -> previous tile
-    costSoFar[TileKey(start, width)] = 0;
+    costSoFar[TileKey(start, width)] = 0.0f;
 
     while (!open.empty())
     {
@@ -80,7 +86,8 @@ TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal)
                 continue;
             }
             const int nextKey = TileKey(next, width);
-            const int newCost = costSoFar[TileKey(current, width)] + 1;
+            const float newCost =
+                costSoFar[TileKey(current, width)] + TerrainCost(map.Get(next));
             const auto existing = costSoFar.find(nextKey);
             if (existing == costSoFar.end() || newCost < existing->second)
             {

@@ -12,6 +12,11 @@
 
 using TilePath = std::vector<cc::IVec2>;
 
+// M10: per-terrain step cost. Uniform 1.0 for every passable tile (Q55);
+// raise Forest here when designers want costly ground. Multipliers must stay
+// >= 1.0: the Manhattan heuristic assumes unit minimum step cost.
+float TerrainCost(TerrainType terrain);
+
 // 4-directional A* from start to goal (inclusive both ends). Returns an
 // empty path when unreachable, when either end is blocked, or when the map
 // has no tiles. start == goal yields a single-node path.

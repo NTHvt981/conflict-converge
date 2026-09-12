@@ -23,7 +23,7 @@
 | M7 | Save/Load & Integration Tests | M6 | 🟢 Complete |
 | M8 | Enemy AI Commander | M7 | 🟢 Complete |
 | M9 | Fog of War & Recon | M8 | 🟢 Complete |
-| M10 | Map Files & Terrain | M7 | 🔴 Not Started |
+| M10 | Map Files & Terrain | M7 | 🟢 Complete |
 | M11 | Audio | M7 | 🔴 Not Started |
 | M12 | Art & Animation | M7 | 🔴 Not Started |
 | M13 | Command Depth & Balance | M8 | 🔴 Not Started |
@@ -401,11 +401,11 @@ Rationale: sight ranges exist (M3) but all units see everything — no scouting 
 Rationale: maps are hardcoded in main.cpp, yet Q46/Q54/Q73 already decided text-format map files with a metadata header loaded from `data/` at runtime. Terrain movement costs were also approved (Q47/Q55, uniform start).
 
 ### Goals
-- [ ] Define text `.map` format with header (version, dimensions, author notes)
-- [ ] Implement map loader from `data/` (terrain legend, water/building tiles, node + spawn markers)
-- [ ] Support terrain movement costs (uniform at first, per-type multipliers ready)
-- [ ] Ship 2+ hand-made maps using choke points and separated starting bases
-- [ ] Demo loads a map file instead of hardcoded tiles
+- [x] Define text `.map` format with header (version, dimensions, author notes)
+- [x] Implement map loader from `data/` (terrain legend, water/building tiles, node + spawn markers)
+- [x] Support terrain movement costs (uniform at first, per-type multipliers ready)
+- [x] Ship 2+ hand-made maps using choke points and separated starting bases
+- [x] Demo loads a map file instead of hardcoded tiles
 
 ### Implementation Steps
 1. **Format + Loader**

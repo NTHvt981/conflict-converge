@@ -198,7 +198,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
     for (std::int64_t i = 0; i < tileCount; ++i)
     {
         const std::int32_t t = msg.map().terrain(static_cast<int>(i));
-        if (t < 0 || t > static_cast<std::int32_t>(TerrainType::Building))
+        if (t < 0 || t > static_cast<std::int32_t>(TerrainType::Rock))
         {
             return false;
         }
