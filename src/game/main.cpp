@@ -9,6 +9,8 @@
 #include "InputManager.h" // M2 Goal 6: per-frame input pump (WASD, mouse, shortcuts)
 #include "TileMap.h"   // M2 Goal 1: passable/blocked tile grid
 #include "Unit.h"      // M2 Goal 2/4: snapped units with move orders
+#include "UnitStats.h" // M3 Goal 2: demo units spawn with type stats
+#include "Pathfinder.h" // M3 Goal 3: right-click orders route around blocks
 #include <iostream>
 #include <vector>
 #include <format>
@@ -26,7 +28,7 @@ int main(void)
 	camera.view.rotation = 0.0f;
 	camera.view.zoom = 1.0f;
 	constexpr float kCameraSpeed = 400.0f; // pixels per second
-	constexpr float kUnitSpeed = 200.0f; // pixels per second
+	// Unit speed now comes from M3 base stats (Unit::speed, ApplyBaseStats).
 
 	// M2 Goal 4 demo world: registry of units on a tile map. Placeholder
 	// art is colored rectangles (see M2 blockings); sprites arrive later.
@@ -38,6 +40,7 @@ int main(void)
 	auto spawnDemo = [&](UnitType type, int tileX, int tileY) {
 		Unit unit;
 		unit.type = type;
+		ApplyBaseStats(unit); // M3 Goal 2: real speed/sight/combat stats
 		unit.position = cc::ToRaylib(cc::TileToWorld(tileX, tileY));
 		SnapUnitToTile(unit);
 		registry.Add(registry.Create(), unit);
@@ -73,6 +76,7 @@ int main(void)
 		input.Update(camera, kCameraSpeed, GetFrameTime());
 
 		// M2 Goal 4 mouse inputs: left-click selects, right-click orders.
+	// M3 Goal 3: orders pathfind around water/buildings via IssuePathOrder.
 		if (input.LeftPressed())
 		{
 			const Vector2 world = input.MouseWorld(camera);
@@ -91,11 +95,11 @@ int main(void)
 			const Entity selected = SelectedUnit(registry);
 			if (Unit *ordered = registry.Get<Unit>(selected))
 			{
-				IssueMoveOrder(*ordered, input.MouseWorld(camera));
+				IssuePathOrder(*ordered, map, input.MouseWorld(camera));
 			}
 		}
 		registry.Each<Unit>([&](Entity, Unit &unit) {
-			UpdateUnitMovement(unit, map, kUnitSpeed, GetFrameTime());
+			UpdateUnitMovement(unit, map, unit.speed, GetFrameTime());
 		});
 
 		BeginDrawing();

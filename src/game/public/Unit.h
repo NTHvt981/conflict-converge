@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstddef> // std::size_t
+#include <vector>  // M3 Goal 3: Unit::path waypoint list
+
 #include "raylib.h" // Vector2
 
 #include "MathUtils.h" // cc:: tile-grid snapping (M2 Goal 2)
@@ -69,6 +72,12 @@ struct Unit
     // the target and stops at the first blocked tile.
     Vector2 moveTarget = {};
     bool hasMoveOrder = false;
+    // M3 Goal 3: A* waypoint list (tile indices) with a consumption cursor.
+    // Empty/inactive unless hasPath; UpdateUnitMovement walks it waypoint by
+    // waypoint and keeps the M2 straight-line behavior otherwise.
+    std::vector<cc::IVec2> path;
+    std::size_t pathNext = 0;
+    bool hasPath = false;
 };
 
 // M2 Goal 2: snap a unit's world position to its tile's top-left corner
