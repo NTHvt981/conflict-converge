@@ -20,7 +20,7 @@
 | M4 | Combat System | M3 | 🟢 Complete |
 | M5 | Resource & Economy | M4 | 🟢 Complete |
 | M6 | UI & Minimap | M5 | 🟢 Complete |
-| M7 | Save/Load & Integration Tests | M6 | 🔴 Not Started |
+| M7 | Save/Load & Integration Tests | M6 | 🟢 Complete |
 
 ---
 
@@ -293,7 +293,7 @@
 ### Goals
 - [x] Implement save game functionality
 - [x] Implement load game functionality
-- [ ] Create unit tests for all core components
+- [x] Create unit tests for all core components
 - [x] Create integration tests for game loop
 - [x] Performance profiling (60 FPS target validation)
 
