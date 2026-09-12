@@ -28,7 +28,7 @@
 | M12 | Art & Animation | M7 | 🔴 Not Started |
 | M13 | Command Depth & Balance | M8 | 🔴 Not Started |
 | M14 | Main Menu & Game Shell | M7 | 🔴 Not Started |
-| M15 | Protobuf Serialization Migration | M7 | 🔴 Not Started |
+| M15 | Protobuf Serialization Migration | M7 | 🟢 Complete |
 
 ---
 
@@ -540,11 +540,11 @@ Rationale: there is no main menu — the game boots straight into the demo skirm
 Rationale: Q48 chose Protocol Buffers but M7 shipped a custom `CCSV` binary for zero-dependency builds; Q84 decided to migrate now. Do this before M9 so fog explored-sets land directly in the final format instead of a throwaway v2.
 
 ### Goals
-- [ ] Add protobuf dependency via `libs_deps.json` + bootstrap (pinned version, Windows static link)
-- [ ] Define `.proto` schema covering the full WorldState (resources + carry, camera, map + terrain, units incl. targets/orders/paths/phases/flash, buildings, nodes + carry, explored sets, settings)
-- [ ] Replace SaveWorld/LoadWorld internals with protobuf encode/decode, keeping the two-phase load + target-index remap semantics
-- [ ] Migrate the quicksave slot; document that old `CCSV` files are not loadable (no back-compat shim)
-- [ ] Keep the test binary headless-safe (no device, no network)
+- [x] Add protobuf dependency via `libs_deps.json` + bootstrap (pinned version, Windows static link)
+- [x] Define `.proto` schema covering the full WorldState (resources + carry, camera, map + terrain, units incl. targets/orders/paths/phases/flash, buildings, nodes + carry, explored sets, settings)
+- [x] Replace SaveWorld/LoadWorld internals with protobuf encode/decode, keeping the two-phase load + target-index remap semantics
+- [x] Migrate the quicksave slot; document that old `CCSV` files are not loadable (no back-compat shim)
+- [x] Keep the test binary headless-safe (no device, no network)
 
 ### Implementation Steps
 1. **Schema + Build**

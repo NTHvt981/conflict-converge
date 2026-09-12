@@ -8,6 +8,10 @@ workspace "ConflictConverge"
     -- Output directory
     location "prj"
 
+    -- M15: /FS serializes PDB writes. The protobuf generated headers are
+    -- huge; without this, parallel CL instances lock vc143.pdb (MSVC C1041).
+    buildoptions { "/FS" }
+
 -- M1 Goal 7: build profiles shared by every project below.
 -- Debug keeps assertions enabled (no NDEBUG) with full symbols;
 -- Release defines NDEBUG (compiles out CC_ASSERT, see Assert.h) and optimizes.
@@ -75,6 +79,7 @@ project "conflict-converge"
     -- Source files from src/ folder
     files {
         "src/**.cpp",
+        "src/**.cc",
         "src/**.h",
         "src/**.inl"
     }
@@ -84,6 +89,7 @@ project "conflict-converge"
         "deps/raylib/src",
         "deps/raygui/src",
         "deps/glm",
+        "deps/protobuf/src",
         "..",
         "src/game",
         "src/game/public",
@@ -101,6 +107,17 @@ project "conflict-converge"
         "shell32"
     }
 
+    -- M15: CMake-built protobuf static lib (Release: libprotobuf.lib in
+    -- build/Release, Debug: libprotobufd.lib in build/Debug). Shared CRT
+    -- (/MD) matches these projects; do not flip protobuf_MSVC_STATIC_RUNTIME.
+    filter "configurations:Debug"
+        libdirs { "deps/protobuf/build/Debug" }
+        links { "libprotobufd" }
+    filter "configurations:Release"
+        libdirs { "deps/protobuf/build/Release" }
+        links { "libprotobuf" }
+    filter {}
+
 -- Test project
 project "conflict-converge-test"
     kind "ConsoleApp"
@@ -116,7 +133,8 @@ project "conflict-converge-test"
         "tests/**.cpp",
         "tests/**.h",
         "tests/**.inl",
-        "src/game/private/**.cpp"
+        "src/game/private/**.cpp",
+        "src/game/private/**.cc"
     }
     
     -- Include directories
@@ -124,6 +142,7 @@ project "conflict-converge-test"
         "deps/raylib/src",
         "deps/raygui/src",
         "deps/glm",
+        "deps/protobuf/src",
         "..",
         "src/game/public"
     }
@@ -138,3 +157,12 @@ project "conflict-converge-test"
         "winmm",
         "shell32"
     }
+
+    -- M15: same CMake-built protobuf lib as the game project (see above).
+    filter "configurations:Debug"
+        libdirs { "deps/protobuf/build/Debug" }
+        links { "libprotobufd" }
+    filter "configurations:Release"
+        libdirs { "deps/protobuf/build/Release" }
+        links { "libprotobuf" }
+    filter {}

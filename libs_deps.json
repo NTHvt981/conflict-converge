@@ -22,5 +22,12 @@
         "git_repo": "https://github.com/g-truc/glm.git",
         "dest": "deps/glm",
         "git_tag": "1.0.3"
+    },
+    {
+        "name": "protobuf",
+        "git_repo": "https://github.com/protocolbuffers/protobuf.git",
+        "dest": "deps/protobuf",
+        "git_tag": "v21.12",
+        "depth": 1
     }
 ]

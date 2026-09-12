@@ -11,6 +11,7 @@
 #include "TileMap.h"
 #include "Unit.h"
 #include "UnitStats.h"
+#include "../../src/game/private/savegame.pb.h" // private/ is NOT on the test include path
 
 #include <cstdio>
 #include <filesystem>
@@ -35,7 +36,7 @@ struct Fixture
 
 std::string ScratchPath()
 {
-    return (std::filesystem::temp_directory_path() / "cc_save_roundtrip.ccsv").string();
+    return (std::filesystem::temp_directory_path() / "cc_save_roundtrip.ccpb").string();
 }
 
 bool Near(float a, float b)
@@ -170,6 +171,28 @@ void RunSaveGameTests()
         std::ofstream bad(path, std::ios::binary | std::ios::trunc);
         const char junk2[] = { 'N', 'O', 'P', 'E', 0, 0, 0, 0 };
         bad.write(junk2, sizeof(junk2));
+    }
+    CC_CHECK(!LoadWorld(victimState, path));
+    CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
+
+    {
+        // Old CCSV custom-binary files are not loadable (no back-compat shim).
+        std::ofstream old(path, std::ios::binary | std::ios::trunc);
+        const char legacy[] = { 'C', 'C', 'S', 'V', 1, 0, 0, 0 };
+        old.write(legacy, sizeof(legacy));
+    }
+    CC_CHECK(!LoadWorld(victimState, path));
+    CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
+
+    {
+        // Unsupported save_version inside a well-formed protobuf payload.
+        cc::save::SaveGame future;
+        future.set_save_version(99);
+        std::string payload;
+        CC_CHECK(future.SerializeToString(&payload));
+        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        out.write("CCPB", 4);
+        out.write(payload.data(), static_cast<std::streamsize>(payload.size()));
     }
     CC_CHECK(!LoadWorld(victimState, path));
     CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);

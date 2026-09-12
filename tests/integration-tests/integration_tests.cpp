@@ -147,7 +147,7 @@ void RunIntegrationTests()
         SimulateCombatFrames(registry, map, factory, 60);
 
         const std::string path =
-            (std::filesystem::temp_directory_path() / "cc_integration_midfight.ccsv").string();
+            (std::filesystem::temp_directory_path() / "cc_integration_midfight.ccpb").string();
         WorldState src{ &registry, &resources, &map, &camera, &nodes };
         CC_CHECK(SaveWorld(src, path));
 

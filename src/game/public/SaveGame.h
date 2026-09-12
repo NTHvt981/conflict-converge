@@ -8,12 +8,13 @@ class TileMap;
 class GameCamera;
 class ResourceNodes;
 
-// M7: versioned binary save/load. Layout (little-endian, Windows x86 target):
-//   "CCSV" magic, uint32 version, then resources (+carry), camera, map,
-//   units, buildings, nodes (+carry).
+// M7: versioned binary save/load. M15 migrated the payload to protobuf
+// (proto/savegame.proto, checked-in generated code in ../private/):
+//   "CCPB" magic, then one serialized cc.save.SaveGame message.
 // Entity IDs are session-local: unit targets are stored as indices into the
 // saved unit array (-1 = none) and remapped to fresh IDs on load. Production
 // queues, menu state, and UI toggles are session-only and NOT saved.
+// Old "CCSV" custom-binary files are rejected by the magic check.
 inline constexpr unsigned int kSaveVersion = 1;
 
 struct WorldState

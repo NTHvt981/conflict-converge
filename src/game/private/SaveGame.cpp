@@ -3,7 +3,11 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
+#include <limits>
+#include <string>
 #include <vector>
+
+#include "savegame.pb.h"
 
 #include "Building.h"
 #include "CcAssert.h"
@@ -17,7 +21,7 @@
 namespace
 {
 
-constexpr char kMagic[4] = { 'C', 'C', 'S', 'V' };
+constexpr char kMagic[4] = { 'C', 'C', 'P', 'B' };
 // Garbage-input guards: saves violating these are rejected, never trusted.
 constexpr std::int32_t kMaxMapTiles = 1024 * 1024;
 constexpr std::int32_t kMaxUnits = 100000;
@@ -25,79 +29,54 @@ constexpr std::int32_t kMaxBuildings = 100000;
 constexpr std::int32_t kMaxNodes = 100000;
 constexpr std::uint32_t kMaxPathNodes = 100000;
 
-class Writer
+void FillVec2(cc::save::Vec2 *out, Vector2 v)
 {
-public:
-    template <typename T> void Write(T value)
-    {
-        static_assert(std::is_trivially_copyable_v<T>);
-        const std::uint8_t *bytes = reinterpret_cast<const std::uint8_t *>(&value);
-        buffer_.insert(buffer_.end(), bytes, bytes + sizeof(T));
-    }
-    void WriteBool(bool value)
-    {
-        buffer_.push_back(value ? 1 : 0);
-    }
-    const std::vector<std::uint8_t> &Buffer() const
-    {
-        return buffer_;
-    }
-
-private:
-    std::vector<std::uint8_t> buffer_;
-};
-
-class Reader
-{
-public:
-    Reader(const std::uint8_t *data, std::size_t size) : data_(data), size_(size)
-    {
-    }
-    template <typename T> bool Read(T &out)
-    {
-        static_assert(std::is_trivially_copyable_v<T>);
-        if (pos_ + sizeof(T) > size_)
-        {
-            return false;
-        }
-        std::memcpy(&out, data_ + pos_, sizeof(T));
-        pos_ += sizeof(T);
-        return true;
-    }
-    bool ReadBool(bool &out)
-    {
-        std::uint8_t byte = 0;
-        if (!Read(byte))
-        {
-            return false;
-        }
-        out = byte != 0;
-        return true;
-    }
-    bool AtEnd() const
-    {
-        return pos_ == size_;
-    }
-
-private:
-    const std::uint8_t *data_ = nullptr;
-    std::size_t size_ = 0;
-    std::size_t pos_ = 0;
-};
-
-void WriteVec2(Writer &out, Vector2 v)
-{
-    out.Write(v.x);
-    out.Write(v.y);
+    out->set_x(v.x);
+    out->set_y(v.y);
 }
 
-bool ReadVec2(Reader &in, Vector2 &v)
+Vector2 ToVec2(const cc::save::Vec2 &in)
 {
-    return in.Read(v.x) && in.Read(v.y);
+    return { in.x(), in.y() };
 }
 
-// Decoded snapshot: LoadWorld parses the whole buffer into these first and
-// only touches the live world when every byte checks out.
+void FillUnit(cc::save::Unit *out, const Unit &u, std::int32_t targetIndex)
+{
+    out->set_health(u.health);
+    out->set_armor_type(static_cast<std::int32_t>(u.armorType));
+    out->set_damage_type(static_cast<std::int32_t>(u.damageType));
+    out->set_attack_power(u.attackPower);
+    out->set_attack_range(u.attackRange);
+    out->set_cooldown(u.cooldown);
+    out->set_cooldown_time(u.cooldownTime);
+    out->set_phase(static_cast<std::int32_t>(u.phase));
+    out->set_phase_time(u.phaseTime);
+    out->set_windup_time(u.windupTime);
+    out->set_last_damage(u.lastDamageTaken);
+    out->set_hit_flash(u.hitFlashTime);
+    out->set_speed(u.speed);
+    out->set_sight_range(u.sightRange);
+    FillVec2(out->mutable_position(), u.position);
+    FillVec2(out->mutable_velocity(), u.velocity);
+    out->set_selected(u.isSelected);
+    out->set_team(u.teamID);
+    out->set_type(static_cast<std::int32_t>(u.type));
+    out->set_state(static_cast<std::int32_t>(u.state));
+    out->set_target_index(targetIndex);
+    FillVec2(out->mutable_move_target(), u.moveTarget);
+    out->set_has_move_order(u.hasMoveOrder);
+    for (const cc::IVec2 &step : u.path)
+    {
+        cc::save::IVec2 *dst = out->add_path();
+        dst->set_x(step.x);
+        dst->set_y(step.y);
+    }
+    out->set_path_next(static_cast<std::uint32_t>(u.pathNext));
+    out->set_has_path(u.hasPath);
+}
+
+// Decoded snapshot: LoadWorld parses the whole message into these first and
+// only touches the live world when every field checks out.
 struct SavedUnit
 {
     Unit unit;
@@ -106,8 +85,8 @@ struct SavedUnit
 
 struct SavedWorld
 {
-    std::int32_t iron = 0;
-    std::int32_t oil = 0;
+    long iron = 0;
+    long oil = 0;
     float ironCarry = 0.0f;
     float oilCarry = 0.0f;
     Camera2D camera = {};
@@ -121,151 +100,169 @@ struct SavedWorld
     float nodeOilCarry = 0.0f;
 };
 
-bool Decode(const std::vector<std::uint8_t> &bytes, SavedWorld &out)
+bool InRange(std::int64_t value)
 {
-    Reader in(bytes.data(), bytes.size());
-    char magic[4] = {};
-    for (char &c : magic)
-    {
-        if (!in.Read(c))
-        {
-            return false;
-        }
-    }
-    if (std::memcmp(magic, kMagic, sizeof(kMagic)) != 0)
-    {
-        return false;
-    }
-    std::uint32_t version = 0;
-    if (!in.Read(version) || version != kSaveVersion)
+    return value >= static_cast<std::int64_t>((std::numeric_limits<std::int32_t>::min)()) &&
+           value <= static_cast<std::int64_t>((std::numeric_limits<std::int32_t>::max)());
+}
+
+bool DecodeUnit(const cc::save::Unit &in, SavedUnit &out)
+{
+    Unit &u = out.unit;
+    if (in.armor_type() < 0 || in.armor_type() > static_cast<int>(ArmorType::COMPOSITE) ||
+        in.damage_type() < 0 || in.damage_type() > static_cast<int>(DamageType::ENERGY) ||
+        in.type() < 0 || in.type() > static_cast<int>(UnitType::HeavyTank) || in.state() < 0 ||
+        in.state() > static_cast<int>(UnitState::Attacking) || in.phase() < 0 ||
+        in.phase() > static_cast<int>(AttackPhase::Recover))
     {
         return false;
     }
-    if (!in.Read(out.iron) || !in.Read(out.oil) || !in.Read(out.ironCarry) || !in.Read(out.oilCarry))
+    if (static_cast<std::uint32_t>(in.path_size()) > kMaxPathNodes)
     {
         return false;
     }
-    if (!ReadVec2(in, out.camera.target) || !ReadVec2(in, out.camera.offset) || !in.Read(out.camera.rotation) ||
-        !in.Read(out.camera.zoom))
+    u.health = in.health();
+    u.armorType = static_cast<ArmorType>(in.armor_type());
+    u.damageType = static_cast<DamageType>(in.damage_type());
+    u.attackPower = in.attack_power();
+    u.attackRange = in.attack_range();
+    u.cooldown = in.cooldown();
+    u.cooldownTime = in.cooldown_time();
+    u.phase = static_cast<AttackPhase>(in.phase());
+    u.phaseTime = in.phase_time();
+    u.windupTime = in.windup_time();
+    u.lastDamageTaken = in.last_damage();
+    u.hitFlashTime = in.hit_flash();
+    u.speed = in.speed();
+    u.sightRange = in.sight_range();
+    u.position = ToVec2(in.position());
+    u.velocity = ToVec2(in.velocity());
+    u.isSelected = in.selected();
+    u.teamID = in.team();
+    u.type = static_cast<UnitType>(in.type());
+    u.state = static_cast<UnitState>(in.state());
+    out.targetIndex = in.target_index();
+    u.moveTarget = ToVec2(in.move_target());
+    u.hasMoveOrder = in.has_move_order();
+    u.path.clear();
+    u.path.reserve(static_cast<std::size_t>(in.path_size()));
+    for (const cc::save::IVec2 &step : in.path())
+    {
+        u.path.push_back({ step.x(), step.y() });
+    }
+    u.pathNext = static_cast<std::size_t>(in.path_next());
+    u.hasPath = in.has_path();
+    u.target = kInvalidEntity; // remapped to fresh IDs at commit time
+    return true;
+}
+
+bool Decode(const std::string &payload, SavedWorld &out)
+{
+    cc::save::SaveGame msg;
+    if (!msg.ParseFromString(payload))
     {
         return false;
     }
-    if (!in.Read(out.mapWidth) || !in.Read(out.mapHeight) || out.mapWidth <= 0 || out.mapHeight <= 0)
+    if (msg.save_version() != kSaveVersion)
+    {
+        return false;
+    }
+    if (!InRange(msg.resources().iron()) || !InRange(msg.resources().oil()))
+    {
+        return false;
+    }
+    out.iron = static_cast<long>(msg.resources().iron());
+    out.oil = static_cast<long>(msg.resources().oil());
+    out.ironCarry = msg.resources().iron_carry();
+    out.oilCarry = msg.resources().oil_carry();
+    out.camera.target = ToVec2(msg.camera().target());
+    out.camera.offset = ToVec2(msg.camera().offset());
+    out.camera.rotation = msg.camera().rotation();
+    out.camera.zoom = msg.camera().zoom();
+
+    out.mapWidth = msg.map().width();
+    out.mapHeight = msg.map().height();
+    if (out.mapWidth <= 0 || out.mapHeight <= 0)
     {
         return false;
     }
     const std::int64_t tileCount = static_cast<std::int64_t>(out.mapWidth) * out.mapHeight;
-    if (tileCount > kMaxMapTiles)
+    if (tileCount > kMaxMapTiles || msg.map().terrain_size() != tileCount)
     {
         return false;
     }
     out.terrain.resize(static_cast<std::size_t>(tileCount));
-    for (std::uint8_t &t : out.terrain)
+    for (std::int64_t i = 0; i < tileCount; ++i)
     {
-        if (!in.Read(t) || t > static_cast<std::uint8_t>(TerrainType::Building))
+        const std::int32_t t = msg.map().terrain(static_cast<int>(i));
+        if (t < 0 || t > static_cast<std::int32_t>(TerrainType::Building))
         {
             return false;
         }
+        out.terrain[static_cast<std::size_t>(i)] = static_cast<std::uint8_t>(t);
     }
-    std::int32_t unitCount = 0;
-    if (!in.Read(unitCount) || unitCount < 0 || unitCount > kMaxUnits)
-    {
-        return false;
-    }
-    out.units.resize(static_cast<std::size_t>(unitCount));
-    for (SavedUnit &saved : out.units)
-    {
-        Unit &u = saved.unit;
-        std::int32_t type = 0, armor = 0, damage = 0, state = 0, phase = 0;
-        if (!in.Read(u.health) || !in.Read(armor) || !in.Read(damage) || !in.Read(u.attackPower) ||
-            !in.Read(u.attackRange) || !in.Read(u.cooldown) || !in.Read(u.cooldownTime) || !in.Read(phase) ||
-            !in.Read(u.phaseTime) || !in.Read(u.windupTime) || !in.Read(u.lastDamageTaken) ||
-            !in.Read(u.hitFlashTime) || !in.Read(u.speed) || !in.Read(u.sightRange) || !ReadVec2(in, u.position) ||
-            !ReadVec2(in, u.velocity) || !in.ReadBool(u.isSelected) || !in.Read(u.teamID) || !in.Read(type) ||
-            !in.Read(state) || !in.Read(saved.targetIndex) || !ReadVec2(in, u.moveTarget) ||
-            !in.ReadBool(u.hasMoveOrder))
-        {
-            return false;
-        }
-        if (type < 0 || type > static_cast<std::int32_t>(UnitType::HeavyTank) || state < 0 ||
-            state > static_cast<std::int32_t>(UnitState::Attacking) || phase < 0 ||
-            phase > static_cast<std::int32_t>(AttackPhase::Recover))
-        {
-            return false;
-        }
-        u.armorType = static_cast<ArmorType>(armor);
-        u.damageType = static_cast<DamageType>(damage);
-        u.type = static_cast<UnitType>(type);
-        u.state = static_cast<UnitState>(state);
-        u.phase = static_cast<AttackPhase>(phase);
-        if (armor < 0 || armor > static_cast<std::int32_t>(ArmorType::COMPOSITE) || damage < 0 ||
-            damage > static_cast<std::int32_t>(DamageType::ENERGY))
-        {
-            return false;
-        }
-        std::uint32_t pathCount = 0;
-        if (!in.Read(pathCount) || pathCount > kMaxPathNodes)
-        {
-            return false;
-        }
-        u.path.resize(pathCount);
-        for (cc::IVec2 &step : u.path)
-        {
-            if (!in.Read(step.x) || !in.Read(step.y))
-            {
-                return false;
-            }
-        }
-        std::uint32_t pathNext = 0;
-        if (!in.Read(pathNext) || !in.ReadBool(u.hasPath))
-        {
-            return false;
-        }
-        u.pathNext = pathNext;
-        u.target = kInvalidEntity; // remapped to fresh IDs at commit time
-    }
-    std::int32_t buildingCount = 0;
-    if (!in.Read(buildingCount) || buildingCount < 0 || buildingCount > kMaxBuildings)
+
+    if (msg.units_size() > kMaxUnits)
     {
         return false;
     }
-    out.buildings.resize(static_cast<std::size_t>(buildingCount));
-    for (Building &b : out.buildings)
+    out.units.clear();
+    out.units.reserve(static_cast<std::size_t>(msg.units_size()));
+    for (const cc::save::Unit &in : msg.units())
     {
-        std::int32_t type = 0, state = 0;
-        if (!in.Read(type) || !in.Read(state) || !in.Read(b.teamID) || !in.Read(b.tileX) || !in.Read(b.tileY))
+        SavedUnit saved;
+        if (!DecodeUnit(in, saved))
         {
             return false;
         }
-        if (type < 0 || type > static_cast<std::int32_t>(BuildingType::Factory) || state < 0 ||
-            state > static_cast<std::int32_t>(BuildingState::Destroyed))
-        {
-            return false;
-        }
-        b.type = static_cast<BuildingType>(type);
-        b.state = static_cast<BuildingState>(state);
+        out.units.push_back(saved);
     }
-    std::int32_t nodeCount = 0;
-    if (!in.Read(nodeCount) || nodeCount < 0 || nodeCount > kMaxNodes)
+
+    if (msg.buildings_size() > kMaxBuildings)
     {
         return false;
     }
-    out.nodes.resize(static_cast<std::size_t>(nodeCount));
-    for (ResourceNode &node : out.nodes)
+    out.buildings.clear();
+    for (const cc::save::Building &in : msg.buildings())
     {
-        std::int32_t kind = 0;
-        if (!in.Read(kind) || !in.Read(node.tile.x) || !in.Read(node.tile.y) || !in.Read(node.amount) ||
-            !in.Read(node.maxAmount) || !in.Read(node.respawnDelay) || !in.Read(node.respawnTimer))
+        if (in.type() < 0 || in.type() > static_cast<int>(BuildingType::Factory) || in.state() < 0 ||
+            in.state() > static_cast<int>(BuildingState::Destroyed))
         {
             return false;
         }
-        if (kind < 0 || kind > static_cast<std::int32_t>(ResourceKind::Oil))
-        {
-            return false;
-        }
-        node.kind = static_cast<ResourceKind>(kind);
+        Building b;
+        b.type = static_cast<BuildingType>(in.type());
+        b.state = static_cast<BuildingState>(in.state());
+        b.teamID = in.team();
+        b.tileX = in.tile_x();
+        b.tileY = in.tile_y();
+        out.buildings.push_back(b);
     }
-    return in.Read(out.nodeIronCarry) && in.Read(out.nodeOilCarry) && in.AtEnd();
+
+    if (msg.nodes_size() > kMaxNodes)
+    {
+        return false;
+    }
+    out.nodes.clear();
+    for (const cc::save::ResourceNode &in : msg.nodes())
+    {
+        if (in.kind() < 0 || in.kind() > static_cast<int>(ResourceKind::Oil))
+        {
+            return false;
+        }
+        ResourceNode node;
+        node.kind = static_cast<ResourceKind>(in.kind());
+        node.tile = { in.tile().x(), in.tile().y() };
+        node.amount = in.amount();
+        node.maxAmount = in.max_amount();
+        node.respawnDelay = in.respawn_delay();
+        node.respawnTimer = in.respawn_timer();
+        out.nodes.push_back(node);
+    }
+    out.nodeIronCarry = msg.node_iron_carry();
+    out.nodeOilCarry = msg.node_oil_carry();
+    // msg.explored() is reserved for M9 fog; accepted at any size here.
+    return true;
 }
 
 } // namespace
@@ -277,56 +274,31 @@ bool SaveWorld(const WorldState &world, const std::string &path)
     {
         return false;
     }
-    Writer out;
-    for (char c : kMagic)
-    {
-        out.Write(c);
-    }
-    out.Write(kSaveVersion);
-    out.Write(static_cast<std::int32_t>(world.resources->iron));
-    out.Write(static_cast<std::int32_t>(world.resources->oil));
-    out.Write(world.resources->IronCarry());
-    out.Write(world.resources->OilCarry());
-    WriteVec2(out, world.camera->view.target);
-    WriteVec2(out, world.camera->view.offset);
-    out.Write(world.camera->view.rotation);
-    out.Write(world.camera->view.zoom);
-    out.Write(world.map->Width());
-    out.Write(world.map->Height());
+    cc::save::SaveGame msg;
+    msg.set_save_version(kSaveVersion);
+    msg.mutable_resources()->set_iron(static_cast<std::int64_t>(world.resources->iron));
+    msg.mutable_resources()->set_oil(static_cast<std::int64_t>(world.resources->oil));
+    msg.mutable_resources()->set_iron_carry(world.resources->IronCarry());
+    msg.mutable_resources()->set_oil_carry(world.resources->OilCarry());
+    FillVec2(msg.mutable_camera()->mutable_target(), world.camera->view.target);
+    FillVec2(msg.mutable_camera()->mutable_offset(), world.camera->view.offset);
+    msg.mutable_camera()->set_rotation(world.camera->view.rotation);
+    msg.mutable_camera()->set_zoom(world.camera->view.zoom);
+    msg.mutable_map()->set_width(world.map->Width());
+    msg.mutable_map()->set_height(world.map->Height());
     for (int y = 0; y < world.map->Height(); ++y)
     {
         for (int x = 0; x < world.map->Width(); ++x)
         {
-            out.Write(static_cast<std::uint8_t>(world.map->Get({ x, y })));
+            msg.mutable_map()->add_terrain(static_cast<std::int32_t>(world.map->Get({ x, y })));
         }
     }
     // Units in Each() order; targets stored as indices into that same order.
     std::vector<Entity> order;
     world.registry->Each<Unit>([&](Entity id, const Unit &) { order.push_back(id); });
-    out.Write(static_cast<std::int32_t>(order.size()));
     for (Entity id : order)
     {
         const Unit &u = *world.registry->Get<Unit>(id);
-        out.Write(u.health);
-        out.Write(static_cast<std::int32_t>(u.armorType));
-        out.Write(static_cast<std::int32_t>(u.damageType));
-        out.Write(u.attackPower);
-        out.Write(u.attackRange);
-        out.Write(u.cooldown);
-        out.Write(u.cooldownTime);
-        out.Write(static_cast<std::int32_t>(u.phase));
-        out.Write(u.phaseTime);
-        out.Write(u.windupTime);
-        out.Write(u.lastDamageTaken);
-        out.Write(u.hitFlashTime);
-        out.Write(u.speed);
-        out.Write(u.sightRange);
-        WriteVec2(out, u.position);
-        WriteVec2(out, u.velocity);
-        out.WriteBool(u.isSelected);
-        out.Write(u.teamID);
-        out.Write(static_cast<std::int32_t>(u.type));
-        out.Write(static_cast<std::int32_t>(u.state));
         std::int32_t targetIndex = -1;
         if (u.target != kInvalidEntity)
         {
@@ -339,53 +311,41 @@ bool SaveWorld(const WorldState &world, const std::string &path)
                 }
             }
         }
-        out.Write(targetIndex);
-        WriteVec2(out, u.moveTarget);
-        out.WriteBool(u.hasMoveOrder);
-        out.Write(static_cast<std::uint32_t>(u.path.size()));
-        for (const cc::IVec2 &step : u.path)
-        {
-            out.Write(step.x);
-            out.Write(step.y);
-        }
-        out.Write(static_cast<std::uint32_t>(u.pathNext));
-        out.WriteBool(u.hasPath);
+        FillUnit(msg.add_units(), u, targetIndex);
     }
-    std::vector<Building> buildings;
-    world.registry->Each<Building>([&](Entity, const Building &b) { buildings.push_back(b); });
-    out.Write(static_cast<std::int32_t>(buildings.size()));
-    for (const Building &b : buildings)
-    {
-        out.Write(static_cast<std::int32_t>(b.type));
-        out.Write(static_cast<std::int32_t>(b.state));
-        out.Write(b.teamID);
-        out.Write(b.tileX);
-        out.Write(b.tileY);
-    }
-    std::vector<ResourceNode> nodes;
-    world.nodes->Each([&](const ResourceNode &node) { nodes.push_back(node); });
-    out.Write(static_cast<std::int32_t>(nodes.size()));
-    for (const ResourceNode &node : nodes)
-    {
-        out.Write(static_cast<std::int32_t>(node.kind));
-        out.Write(node.tile.x);
-        out.Write(node.tile.y);
-        out.Write(node.amount);
-        out.Write(node.maxAmount);
-        out.Write(node.respawnDelay);
-        out.Write(node.respawnTimer);
-    }
-    out.Write(world.nodes->IronCarry());
-    out.Write(world.nodes->OilCarry());
+    world.registry->Each<Building>([&](Entity, const Building &b) {
+        cc::save::Building *out = msg.add_buildings();
+        out->set_type(static_cast<std::int32_t>(b.type));
+        out->set_state(static_cast<std::int32_t>(b.state));
+        out->set_team(b.teamID);
+        out->set_tile_x(b.tileX);
+        out->set_tile_y(b.tileY);
+    });
+    world.nodes->Each([&](const ResourceNode &node) {
+        cc::save::ResourceNode *out = msg.add_nodes();
+        out->set_kind(static_cast<std::int32_t>(node.kind));
+        out->mutable_tile()->set_x(node.tile.x);
+        out->mutable_tile()->set_y(node.tile.y);
+        out->set_amount(node.amount);
+        out->set_max_amount(node.maxAmount);
+        out->set_respawn_delay(node.respawnDelay);
+        out->set_respawn_timer(node.respawnTimer);
+    });
+    msg.set_node_iron_carry(world.nodes->IronCarry());
+    msg.set_node_oil_carry(world.nodes->OilCarry());
 
+    std::string payload;
+    if (!msg.SerializeToString(&payload))
+    {
+        return false;
+    }
     std::ofstream file(path, std::ios::binary | std::ios::trunc);
     if (!file)
     {
         return false;
     }
-    const std::vector<std::uint8_t> &buffer = out.Buffer();
-    file.write(reinterpret_cast<const char *>(buffer.data()),
-               static_cast<std::streamsize>(buffer.size()));
+    file.write(kMagic, sizeof(kMagic));
+    file.write(payload.data(), static_cast<std::streamsize>(payload.size()));
     return static_cast<bool>(file);
 }
 
@@ -402,23 +362,28 @@ bool LoadWorld(const WorldState &world, const std::string &path)
         return false;
     }
     const std::streamsize size = file.tellg();
-    if (size <= 0)
+    if (size <= static_cast<std::streamsize>(sizeof(kMagic)))
     {
         return false;
     }
     file.seekg(0);
-    std::vector<std::uint8_t> bytes(static_cast<std::size_t>(size));
-    if (!file.read(reinterpret_cast<char *>(bytes.data()), size))
+    char magic[sizeof(kMagic)] = {};
+    if (!file.read(magic, sizeof(magic)) || std::memcmp(magic, kMagic, sizeof(kMagic)) != 0)
+    {
+        return false; // rejects old CCSV files and garbage alike
+    }
+    std::string payload(static_cast<std::size_t>(size) - sizeof(kMagic), '\0');
+    if (!file.read(payload.data(), static_cast<std::streamsize>(payload.size())))
     {
         return false;
     }
     SavedWorld saved;
-    if (!Decode(bytes, saved))
+    if (!Decode(payload, saved))
     {
         return false; // destination world untouched
     }
 
-    // Commit: every byte validated, apply in dependency order.
+    // Commit: every field validated, apply in dependency order.
     world.registry->Clear();
     world.resources->iron = saved.iron;
     world.resources->oil = saved.oil;

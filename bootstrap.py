@@ -30,6 +30,7 @@ def pull_git_repo(dep_info: dict):
     git_source = dep_info.get("git_repo", dep_info.get("git_source"))
     dest = dep_info["dest"]
     git_tag = dep_info.get("git_tag")
+    depth = dep_info.get("depth") # optional shallow clone (large repos: protobuf)
 
     # Use script directory as base for dest path
     script_dir = Path(__file__).parent.resolve()
@@ -48,6 +49,9 @@ def pull_git_repo(dep_info: dict):
     try:
         # Clone the repository with specific tag/branch
         clone_cmd = ["git", "clone", git_source, str(full_dest)]
+        if depth:
+            clone_cmd.append("--depth")
+            clone_cmd.append(str(depth))
         if git_tag:
             clone_cmd.append("--branch")
             clone_cmd.append(git_tag)
@@ -72,6 +76,9 @@ def pull_git_repo(dep_info: dict):
             
             try:
                 clone_cmd = ["git", "clone", git_source, str(full_dest)]
+                if depth:
+                    clone_cmd.append("--depth")
+                    clone_cmd.append(str(depth))
                 if git_tag:
                     clone_cmd.append("--branch")
                     clone_cmd.append(git_tag)

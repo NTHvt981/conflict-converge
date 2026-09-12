@@ -1,0 +1,107 @@
+// Conflict Converge save format (M15: protobuf migration, Q84).
+// Covers the full WorldState: resources (+fractional carry), camera, map,
+// units (stats, orders, paths, attack phases, hit-flash), buildings, nodes
+// (+carry). `explored` is reserved for M9 fog-of-war visibility sets.
+// Enum-typed fields stay int32 with explicit range checks on decode (proto3
+// accepts any value on the wire; garbage must still be rejected).
+syntax = "proto3";
+
+package cc.save;
+
+message Vec2
+{
+    float x = 1;
+    float y = 2;
+}
+
+message IVec2
+{
+    int32 x = 1;
+    int32 y = 2;
+}
+
+message Resources
+{
+    int64 iron = 1;
+    int64 oil = 2;
+    float iron_carry = 3;
+    float oil_carry = 4;
+}
+
+message Camera
+{
+    Vec2 target = 1;
+    Vec2 offset = 2;
+    float rotation = 3;
+    float zoom = 4;
+}
+
+message TileMap
+{
+    int32 width = 1;
+    int32 height = 2;
+    repeated int32 terrain = 3 [packed = true]; // row-major TerrainType values
+}
+
+message Unit
+{
+    float health = 1;
+    int32 armor_type = 2;   // ArmorType
+    int32 damage_type = 3;  // DamageType
+    int32 attack_power = 4;
+    int32 attack_range = 5;
+    float cooldown = 6;
+    float cooldown_time = 7;
+    int32 phase = 8; // AttackPhase
+    float phase_time = 9;
+    float windup_time = 10;
+    float last_damage = 11;
+    float hit_flash = 12;
+    float speed = 13;
+    float sight_range = 14;
+    Vec2 position = 15;
+    Vec2 velocity = 16;
+    bool selected = 17;
+    int32 team = 18;
+    int32 type = 19;  // UnitType
+    int32 state = 20; // UnitState
+    int32 target_index = 21; // index into SaveGame.units (-1 = none)
+    Vec2 move_target = 22;
+    bool has_move_order = 23;
+    repeated IVec2 path = 24;
+    uint32 path_next = 25;
+    bool has_path = 26;
+}
+
+message Building
+{
+    int32 type = 1;  // BuildingType
+    int32 state = 2; // BuildingState
+    int32 team = 3;
+    int32 tile_x = 4;
+    int32 tile_y = 5;
+}
+
+message ResourceNode
+{
+    int32 kind = 1; // ResourceKind
+    IVec2 tile = 2;
+    float amount = 3;
+    float max_amount = 4;
+    float respawn_delay = 5;
+    float respawn_timer = 6;
+}
+
+message SaveGame
+{
+    uint32 save_version = 1;
+    Resources resources = 2;
+    Camera camera = 3;
+    TileMap map = 4;
+    repeated Unit units = 5;
+    repeated Building buildings = 6;
+    repeated ResourceNode nodes = 7;
+    float node_iron_carry = 8;
+    float node_oil_carry = 9;
+    bytes explored = 10; // M9 fog visibility sets (empty until then)
+}

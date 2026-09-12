@@ -94,10 +94,10 @@ int main(void)
 	input.shortcuts.Bind(KEY_F1, [&] { showHints = !showHints; });
 	input.shortcuts.Bind(KEY_P, [&] { menu.TogglePause(); });
 	input.shortcuts.Bind(KEY_F5, [&] {
-		SaveWorld({ &registry, &resources, &map, &camera, &nodes }, "data/quicksave.ccsv");
+		SaveWorld({ &registry, &resources, &map, &camera, &nodes }, "data/quicksave.ccpb");
 	});
 	input.shortcuts.Bind(KEY_F9, [&] {
-		LoadWorld({ &registry, &resources, &map, &camera, &nodes }, "data/quicksave.ccsv");
+		LoadWorld({ &registry, &resources, &map, &camera, &nodes }, "data/quicksave.ccpb");
 	});
 	input.shortcuts.Bind(KEY_ESCAPE, [&] { DeselectAll(registry); });
 	input.shortcuts.Bind(KEY_SPACE, [&] {
