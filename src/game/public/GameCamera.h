@@ -24,6 +24,11 @@ public:
     // target (raylib handles the offset math in ScreenToWorld).
     void AdjustZoom(float wheelSteps);
 
+    // Camera bounds: keep the view inside the world rect so panning past
+    // the map edge never shows void. Small maps center instead of clamp.
+    // Pure math (headless-safe). screenW/H are live window pixels.
+    void ClampToMap(float mapWidthPx, float mapHeightPx, int screenW, int screenH);
+
     // Screen pixel -> world position under the current view (pure math,
     // safe headless for tests).
     Vector2 ScreenToWorld(Vector2 screenPos) const;

@@ -257,6 +257,10 @@ int main(void)
 		camera.view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
 		minimap.screenRect.x = static_cast<float>(screenWidth) - minimap.screenRect.width - 10.0f;
 		minimap.screenRect.y = static_cast<float>(screenHeight) - minimap.screenRect.height - 10.0f;
+		// Camera bounds: pan/zoom/minimap jumps never leave the world zone.
+		camera.ClampToMap(static_cast<float>(map.Width()) * cc::TILE_SIZE,
+		                  static_cast<float>(map.Height()) * cc::TILE_SIZE, screenWidth,
+		                  screenHeight);
 
 		// M6 Goal 3: orders, AI, economy, and minimap only advance while
 		// Playing; rendering below always runs so menus overlay a live frame.
