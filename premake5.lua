@@ -84,7 +84,8 @@ project "conflict-converge"
         "src/**.inl"
     }
     
-    -- Include directories
+    -- Include directories (subsystem dirs keep includes bare: #include "Unit.h"
+    -- works from any TU, same as when the folders were flat)
     includedirs {
         "deps/raylib/src",
         "deps/raygui/src",
@@ -93,7 +94,17 @@ project "conflict-converge"
         "..",
         "src/game",
         "src/game/public",
-        "src/game/private"
+        "src/game/private",
+        "src/game/public/core",
+        "src/game/public/world",
+        "src/game/public/units",
+        "src/game/public/economy",
+        "src/game/public/app",
+        "src/game/private/core",
+        "src/game/private/world",
+        "src/game/private/units",
+        "src/game/private/economy",
+        "src/game/private/app"
     }
     
     -- Link with raylib and raygui static libraries, plus the Windows system
@@ -137,14 +148,19 @@ project "conflict-converge-test"
         "src/game/private/**.cc"
     }
     
-    -- Include directories
+    -- Include directories (same subsystem dirs as the game project)
     includedirs {
         "deps/raylib/src",
         "deps/raygui/src",
         "deps/glm",
         "deps/protobuf/src",
         "..",
-        "src/game/public"
+        "src/game/public",
+        "src/game/public/core",
+        "src/game/public/world",
+        "src/game/public/units",
+        "src/game/public/economy",
+        "src/game/public/app"
     }
     
     -- Link with raylib and raygui static libraries, plus the Windows system

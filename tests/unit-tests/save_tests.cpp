@@ -12,7 +12,7 @@
 #include "TileMap.h"
 #include "Unit.h"
 #include "UnitStats.h"
-#include "../../src/game/private/savegame.pb.h" // private/ is NOT on the test include path
+#include "../../src/game/private/app/savegame.pb.h" // private/ is NOT on the test include path
 
 #include <cstdio>
 #include <filesystem>

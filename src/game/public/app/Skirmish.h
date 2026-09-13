@@ -15,10 +15,10 @@ class ProductionQueue;
 class UnitFactory;
 class GameCamera;
 
-// M14: skirmish world build/teardown shared by main.cpp and headless tests.
-// The bundle is non-owning: main.cpp owns the objects as boot-level locals
-// and Build/Reset only refill their contents, so shortcut lambdas plus the
-// factory/AI reference bindings stay valid across matches.
+// M14: skirmish world build/teardown shared by Game and headless tests.
+// The bundle is non-owning: Game owns the objects as members and Build/Reset
+// only refills their contents, so shortcut lambdas plus the factory/AI
+// reference bindings stay valid across matches.
 
 // Marker-derived start spots (player + AI homes, first iron node).
 struct SkirmishSpots

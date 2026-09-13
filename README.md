@@ -36,7 +36,7 @@ Re-run `premake5 vs2022` after adding or removing any source file. Re-run protoc
 after editing the schema (generated code is checked in, CI verifies it is current):
 
 ```bat
-deps/protobuf/build/Release/protoc.exe --proto_path=proto --cpp_out=src/game/private proto/savegame.proto
+deps/protobuf/build/Release/protoc.exe --proto_path=proto --cpp_out=src/game/private/app proto/savegame.proto
 ```
 
 ## Build

@@ -45,7 +45,7 @@ jobs:
 
       - name: Verify checked-in protoc output is current
         run: |
-          deps/protobuf/build/Release/protoc.exe --proto_path=proto --cpp_out=src/game/private proto/savegame.proto
+          deps/protobuf/build/Release/protoc.exe --proto_path=proto --cpp_out=src/game/private/app proto/savegame.proto
           git diff --exit-code -- src/game/private
 
       - name: Install premake5
