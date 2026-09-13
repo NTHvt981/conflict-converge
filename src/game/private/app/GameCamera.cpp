@@ -52,13 +52,13 @@ void GameCamera::AdjustZoom(float wheelSteps)
         zoom /= 1.125f;
         wheelSteps += 1.0f;
     }
-    if (zoom < 0.5f)
+    if (zoom < GameCamera::kMinZoom)
     {
-        zoom = 0.5f;
+        zoom = GameCamera::kMinZoom;
     }
-    if (zoom > 2.0f)
+    if (zoom > GameCamera::kMaxZoom)
     {
-        zoom = 2.0f;
+        zoom = GameCamera::kMaxZoom;
     }
     view.zoom = zoom;
 }
@@ -91,5 +91,27 @@ void GameCamera::ClampToMap(float mapWidthPx, float mapHeightPx, int screenW, in
     else if (view.target.y > mapHeightPx - halfH)
     {
         view.target.y = mapHeightPx - halfH;
+    }
+}
+
+float GameCamera::MinZoomForWorld(float mapWidthPx, float mapHeightPx, int screenW,
+                                  int screenH) const
+{
+    if (mapWidthPx <= 0.0f || mapHeightPx <= 0.0f || screenW <= 0 || screenH <= 0)
+    {
+        return kMinZoom;
+    }
+    const float fitW = static_cast<float>(screenW) / mapWidthPx;
+    const float fitH = static_cast<float>(screenH) / mapHeightPx;
+    const float fit = fitW > fitH ? fitW : fitH;
+    return fit > kMaxZoom ? kMaxZoom : fit;
+}
+
+void GameCamera::ClampZoomToWorld(float mapWidthPx, float mapHeightPx, int screenW, int screenH)
+{
+    const float floor = MinZoomForWorld(mapWidthPx, mapHeightPx, screenW, screenH);
+    if (view.zoom < floor)
+    {
+        view.zoom = floor;
     }
 }

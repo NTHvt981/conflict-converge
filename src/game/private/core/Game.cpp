@@ -324,6 +324,8 @@ void Game::Update()
     // Camera speed is a live menu setting (M6 Goal 3).
     input.Update(camera, menu.settings.cameraSpeed, GetFrameTime());
     // M13: scroll-wheel zoom (clamped in GameCamera) runs even paused.
+    // Zoom-out floor follows the world: at min zoom the map exactly fills
+    // the screen, so over-zooming can never show void past the edge.
     camera.AdjustZoom(input.WheelDelta());
     // M13: resizable window — refresh live dims, keep the camera centered
     // and the minimap docked bottom-right (texture size is fixed).
@@ -333,6 +335,9 @@ void Game::Update()
     minimap.screenRect.x = static_cast<float>(screenWidth) - minimap.screenRect.width - 10.0f;
     minimap.screenRect.y = static_cast<float>(screenHeight) - minimap.screenRect.height - 10.0f;
     // Camera bounds: pan/zoom/minimap jumps never leave the world zone.
+    camera.ClampZoomToWorld(static_cast<float>(map.Width()) * cc::TILE_SIZE,
+                            static_cast<float>(map.Height()) * cc::TILE_SIZE, screenWidth,
+                            screenHeight);
     camera.ClampToMap(static_cast<float>(map.Width()) * cc::TILE_SIZE,
                       static_cast<float>(map.Height()) * cc::TILE_SIZE, screenWidth,
                       screenHeight);

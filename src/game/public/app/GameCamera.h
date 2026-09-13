@@ -11,6 +11,9 @@
 class GameCamera
 {
 public:
+    static constexpr float kMinZoom = 0.5f; // absolute floor (Q53)
+    static constexpr float kMaxZoom = 2.0f; // absolute ceiling (Q53)
+
     Camera2D view = {};
 
     // Poll WASD and pan at speed pixels/sec scaled by dt seconds.
@@ -23,6 +26,15 @@ public:
     // 1.125x, clamped to [kMinZoom, kMaxZoom]; zoom anchors on the view
     // target (raylib handles the offset math in ScreenToWorld).
     void AdjustZoom(float wheelSteps);
+
+    // World-based zoom-out limit: the smallest zoom that still fills the
+    // screen with world (no void beyond the map edge). Pure math,
+    // headless-safe. Degenerate dims fall back to kMinZoom; the result
+    // never exceeds kMaxZoom (huge windows just pin at max zoom).
+    float MinZoomForWorld(float mapWidthPx, float mapHeightPx, int screenW, int screenH) const;
+    // Raise view.zoom to MinZoomForWorld when zoomed out past it. Call
+    // after AdjustZoom each frame; zoomed-in views are untouched.
+    void ClampZoomToWorld(float mapWidthPx, float mapHeightPx, int screenW, int screenH);
 
     // Camera bounds: keep the view inside the world rect so panning past
     // the map edge never shows void. Small maps center instead of clamp.

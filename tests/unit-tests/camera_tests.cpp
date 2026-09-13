@@ -68,4 +68,24 @@ void RunCameraTests()
     zoomed.ClampToMap(1536.0f, 1152.0f, 800, 450); // half-view 200x112.5
     CC_CHECK(zoomed.view.target.x == 200.0f);
     CC_CHECK(zoomed.view.target.y == 112.5f);
+
+    // --- MinZoomForWorld: smallest zoom that still fills the screen ---
+    GameCamera zoomBound;
+    // 24x18 map (1536x1152) in a 1280x720 window: width binds (0.833).
+    CC_CHECK(CcNear(zoomBound.MinZoomForWorld(1536.0f, 1152.0f, 1280, 720), 0.833f, 0.001f));
+    // Tall window on a wide map: height binds instead.
+    CC_CHECK(CcNear(zoomBound.MinZoomForWorld(1536.0f, 1152.0f, 400, 1000), 0.868f, 0.001f));
+    // Degenerate dims fall back to the absolute floor, never above max.
+    CC_CHECK(zoomBound.MinZoomForWorld(0.0f, 1152.0f, 1280, 720) == GameCamera::kMinZoom);
+    CC_CHECK(zoomBound.MinZoomForWorld(1536.0f, 1152.0f, 0, 720) == GameCamera::kMinZoom);
+    CC_CHECK(zoomBound.MinZoomForWorld(100.0f, 100.0f, 4000, 4000) == GameCamera::kMaxZoom);
+
+    // --- ClampZoomToWorld: over-zoomed views snap back, others untouched ---
+    GameCamera wide;
+    wide.view.zoom = 0.5f; // absolute floor, but world needs 0.833 here
+    wide.ClampZoomToWorld(1536.0f, 1152.0f, 1280, 720);
+    CC_CHECK(CcNear(wide.view.zoom, 0.833f, 0.001f));
+    wide.view.zoom = 1.5f; // inside bounds: stays put
+    wide.ClampZoomToWorld(1536.0f, 1152.0f, 1280, 720);
+    CC_CHECK(wide.view.zoom == 1.5f);
 }
