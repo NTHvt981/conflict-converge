@@ -129,6 +129,18 @@ project "conflict-converge"
         links { "libprotobuf" }
     filter {}
 
+    -- Runtime data staging (game project only): the game resolves data/,
+    -- settings, and quicksaves relative to CWD, which under VS F5 is the
+    -- project dir (prj/), not the repo root -- hence the empty setup map
+    -- list. The postbuild copy covers direct exe runs; debugdir covers VS
+    -- F5 (working dir = repo root, where data/ lives). NOTE: debugdir is
+    -- resolved against the workspace root, so ".." alone would land one
+    -- level too high -- always anchor it at the project dir like this.
+    debugdir "%{wks.location}/.."
+    postbuildcommands {
+        "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
+    }
+
 -- Test project
 project "conflict-converge-test"
     kind "ConsoleApp"
