@@ -1,0 +1,69 @@
+# Conflict Converge CI: bootstrap deps, build protobuf (pinned v21.12, Win32),
+# verify checked-in protoc output, generate projects, build Debug+Release,
+# run the headless test suite. See AGENTS.md (Setup/Commands) for the local
+# equivalents of every step below.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python (bootstrap.py needs stdlib only)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore deps cache (third-party sources + protobuf build)
+        id: deps-cache
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: deps-${{ hashFiles('libs_deps.json') }}-v1
+
+      - name: Bootstrap third-party deps
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        run: python bootstrap.py
+
+      - name: Build protobuf (Win32, shared CRT to match /MD)
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        run: |
+          cmake -S deps/protobuf/cmake -B deps/protobuf/build -G "Visual Studio 17 2022" -A Win32 -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -Dprotobuf_WITH_ZLIB=OFF -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
+          cmake --build deps/protobuf/build --config Release --target libprotobuf protoc
+          cmake --build deps/protobuf/build --config Debug --target libprotobuf
+
+      - name: Verify checked-in protoc output is current
+        run: |
+          deps/protobuf/build/Release/protoc.exe --proto_path=proto --cpp_out=src/game/private proto/savegame.proto
+          git diff --exit-code -- src/game/private
+
+      - name: Install premake5
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta2/premake-5.0.0-beta2-windows.zip" -OutFile "$env:RUNNER_TEMP/premake.zip"
+          Expand-Archive "$env:RUNNER_TEMP/premake.zip" -DestinationPath "$env:RUNNER_TEMP/premake-bin"
+          "$env:RUNNER_TEMP/premake-bin" >> $env:GITHUB_PATH
+
+      - name: Generate projects (required after any source file add/remove)
+        run: premake5 vs2022
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build ${{ matrix.config }} Win32 (solution defines Win32 only)
+        run: msbuild prj/ConflictConverge.sln /p:Configuration=${{ matrix.config }} /p:Platform=Win32 /v:minimal /nologo /clp:ErrorsOnly
+
+      - name: Run tests (${{ matrix.config }}, exit 1 on failure)
+        run: prj/bin/${{ matrix.config }}/conflict-converge-test.exe
+        timeout-minutes: 15
