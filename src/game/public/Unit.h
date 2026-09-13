@@ -152,6 +152,12 @@ void IssueRepairOrder(Unit &engineer, Entity target);
 // at the first blocked tile (TileMap::IsBlocked, out-of-bounds included).
 void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec, float dtSeconds);
 
+// Overlap avoidance pass: pushes living units whose 32px bodies intersect
+// apart (half-overlap each, speed-capped per frame). Deterministic (no RNG)
+// so tests can assert exact spreads. Call once per frame after the
+// UpdateUnit loop; corpses are ignored.
+void SeparateUnits(Registry &registry, float dtSeconds);
+
 // M3 Goal 5: per-frame AI driver — Idle -> Moving -> Attacking with attack
 // cooldowns. Priority: explicit player orders (hasMoveOrder/hasPath) beat AI
 // engagement; otherwise the unit acquires (M3G4), chases out-of-range

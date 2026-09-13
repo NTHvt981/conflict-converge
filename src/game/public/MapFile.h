@@ -50,6 +50,21 @@ bool ParseMapFile(const std::string &path, MapData &out);
 // dimension overflow.
 bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes);
 
+// M14: skirmish-setup map entry — header metadata plus the file path.
+// ListMaps enumerates dir/*.map, keeping only files that parse (header
+// gives name/author/dimensions for the setup screen). Sorted by path so
+// the list is stable across frames; empty when the dir is missing.
+struct MapEntry
+{
+    std::string path;
+    std::string name;
+    std::string author;
+    int width = 0;
+    int height = 0;
+};
+
+std::vector<MapEntry> ListMaps(const std::string &dir);
+
 // Nearest walkable tile to (tileX, tileY) within a small spiral (units must
 // never spawn inside fresh Building footprints). Falls back to the requested
 // tile when nothing walkable is near.

@@ -27,10 +27,11 @@ public:
 
     // Snapshot from explicit values (tests, scripted input).
     void Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool rightPressed, float wheelDelta = 0.0f,
-                  bool shiftDown = false);
+                  bool shiftDown = false, bool leftDown = false);
 
     Vector2 MouseScreen() const;
-    bool LeftPressed() const;
+    bool LeftPressed() const; // edge: button went down this frame
+    bool LeftDown() const;    // level: button held (drag-box gestures)
     bool RightPressed() const;
     float WheelDelta() const; // mouse wheel steps this frame (M13 zoom)
     bool ShiftDown() const;   // either shift key held (M13 slot load/save combos)
@@ -44,4 +45,5 @@ private:
     bool rightPressed_ = false;
     float wheelDelta_ = 0.0f;
     bool shiftDown_ = false;
+    bool leftDown_ = false;
 };

@@ -114,6 +114,24 @@ cc::IVec2 AICommander::LastSeenEnemy() const
     return lastSeenEnemy_;
 }
 
+void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile)
+{
+    params_ = ParamsFor(difficulty);
+    difficulty_ = difficulty;
+    homeTile_ = homeTile;
+    enemyTile_ = enemyTile;
+    rallyTile_ = homeTile + cc::IVec2(0, 3);
+    lastSeenEnemy_ = enemyTile;
+    resources_ = ResourceSystem();
+    queue_ = ProductionQueue();
+    harvesters_.clear();
+    compIndex_ = 0;
+    scouted_ = false;
+    scoutTimer_ = params_.scoutInterval;
+    timeSinceLaunch_ = params_.relaunchCooldown;
+    wavesLaunched_ = 0;
+}
+
 void AICommander::SetupBase()
 {
     // Same starting funds as the demo player: fair rules (Q74).

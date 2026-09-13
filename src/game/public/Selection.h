@@ -1,6 +1,6 @@
 #pragma once
 
-#include "raylib.h" // Vector2
+#include "raylib.h" // Vector2, Rectangle
 
 #include "Registry.h" // Entity, kInvalidEntity
 
@@ -13,3 +13,11 @@ void DeselectAll(Registry &registry);
 
 // First selected unit, or kInvalidEntity (right-click orders target this).
 Entity SelectedUnit(Registry &registry);
+
+// Normalize a drag box (either corner may lead) to positive width/height.
+Rectangle NormalizeRect(Vector2 a, Vector2 b);
+
+// Box-select every unit whose body center falls inside worldBox. With
+// add=false the box replaces the selection, otherwise it extends it.
+// Returns how many units the box picked.
+int SelectInRect(Registry &registry, Rectangle worldBox, bool add);

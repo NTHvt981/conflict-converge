@@ -11,17 +11,19 @@ void InputManager::PollLive()
 {
     Snapshot(GetMousePosition(), IsMouseButtonPressed(MOUSE_BUTTON_LEFT),
              IsMouseButtonPressed(MOUSE_BUTTON_RIGHT), GetMouseWheelMove(),
-             IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT));
+             IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT),
+             IsMouseButtonDown(MOUSE_BUTTON_LEFT));
 }
 
 void InputManager::Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool rightPressed, float wheelDelta,
-                            bool shiftDown)
+                            bool shiftDown, bool leftDown)
 {
     mouseScreen_ = mouseScreenPos;
     leftPressed_ = leftPressed;
     rightPressed_ = rightPressed;
     wheelDelta_ = wheelDelta;
     shiftDown_ = shiftDown;
+    leftDown_ = leftDown;
 }
 
 Vector2 InputManager::MouseScreen() const
@@ -32,6 +34,11 @@ Vector2 InputManager::MouseScreen() const
 bool InputManager::LeftPressed() const
 {
     return leftPressed_;
+}
+
+bool InputManager::LeftDown() const
+{
+    return leftDown_;
 }
 
 bool InputManager::RightPressed() const

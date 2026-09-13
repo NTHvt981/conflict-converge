@@ -1,5 +1,7 @@
 #include "MapFile.h"
 
+#include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -176,4 +178,38 @@ cc::IVec2 NearestFreeTile(const TileMap &map, int tileX, int tileY)
         }
     }
     return want;
+}
+
+std::vector<MapEntry> ListMaps(const std::string &dir)
+{
+    std::vector<MapEntry> maps;
+    std::error_code ec;
+    std::filesystem::directory_iterator it(dir, ec);
+    if (ec)
+    {
+        return maps; // missing/unreadable dir: setup shows an empty list
+    }
+    const std::filesystem::directory_iterator end;
+    for (; it != end; it.increment(ec))
+    {
+        if (ec || !it->is_regular_file(ec) || it->path().extension() != ".map")
+        {
+            continue;
+        }
+        MapData data;
+        if (!ParseMapFile(it->path().string(), data))
+        {
+            continue; // unparseable files never reach the setup screen
+        }
+        MapEntry entry;
+        entry.path = it->path().string();
+        entry.name = data.name.empty() ? it->path().stem().string() : data.name;
+        entry.author = data.author;
+        entry.width = data.width;
+        entry.height = data.height;
+        maps.push_back(std::move(entry));
+    }
+    std::sort(maps.begin(), maps.end(),
+              [](const MapEntry &a, const MapEntry &b) { return a.path < b.path; });
+    return maps;
 }

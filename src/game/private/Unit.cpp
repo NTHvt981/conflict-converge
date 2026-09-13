@@ -617,3 +617,52 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         return;
     }
 }
+
+void SeparateUnits(Registry &registry, float dtSeconds)
+{
+    // Body size matches the 32x32 hitbox (M4G2); the per-pair push is capped
+    // so crowds relax over frames instead of teleporting.
+    constexpr float kBody = 32.0f;
+    constexpr float kPushPerSecond = 96.0f;
+    if (dtSeconds <= 0.0f)
+    {
+        return;
+    }
+    struct Item
+    {
+        Unit *unit = nullptr;
+    };
+    std::vector<Item> items;
+    registry.Each<Unit>([&](Entity, Unit &unit) {
+        if (unit.health > 0.0f)
+        {
+            items.push_back({ &unit });
+        }
+    });
+    const float cap = kPushPerSecond * dtSeconds;
+    for (std::size_t i = 0; i < items.size(); ++i)
+    {
+        for (std::size_t j = i + 1; j < items.size(); ++j)
+        {
+            const cc::Vec2 a = cc::ToGlm(items[i].unit->position) + cc::Vec2(32.0f, 32.0f);
+            const cc::Vec2 b = cc::ToGlm(items[j].unit->position) + cc::Vec2(32.0f, 32.0f);
+            const cc::Vec2 delta = a - b;
+            const float dist = glm::length(delta);
+            if (dist >= kBody)
+            {
+                continue;
+            }
+            // Exact stacks split along +x (deterministic, no RNG).
+            const cc::Vec2 dir = dist > 0.001f ? delta / dist : cc::Vec2(1.0f, 0.0f);
+            float push = (kBody - dist) / 2.0f;
+            if (push > cap)
+            {
+                push = cap;
+            }
+            items[i].unit->position =
+                cc::ToRaylib(cc::ToGlm(items[i].unit->position) + dir * push);
+            items[j].unit->position =
+                cc::ToRaylib(cc::ToGlm(items[j].unit->position) - dir * push);
+        }
+    }
+}

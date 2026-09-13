@@ -27,7 +27,7 @@
 | M11 | Audio | M7 | 🟢 Complete |
 | M12 | Art & Animation | M7 | 🟢 Complete |
 | M13 | Command Depth & Balance | M8 | 🟢 Complete |
-| M14 | Main Menu & Game Shell | M7 | 🔴 Not Started |
+| M14 | Main Menu & Game Shell | M7 | 🟢 Complete |
 | M15 | Protobuf Serialization Migration | M7 | 🟢 Complete |
 
 ---
@@ -510,11 +510,11 @@ Rationale: the order set is move-only; genre basics like attack-move, stances, a
 Rationale: there is no main menu — the game boots straight into the demo skirmish. M6 built pause, game-over/victory, and settings overlays, but no title screen, skirmish setup, or shell around the match. This milestone adds the boot-to-menu flow and wires it to the other milestones' outputs (map list from M10, difficulty from M8, volumes from M11, save slots from M13).
 
 ### Goals
-- [ ] Boot to a title screen (not directly into battle); Start Skirmish / Load Game / Settings / Quit
-- [ ] Skirmish setup screen: map select (lists `data/*.map`), difficulty select (Easy/Medium/Hard), player color/faction display (map + difficulty only for v1 per Q85)
-- [ ] Settings screen: camera speed, minimap toggle, volumes + mute (shared with pause menu)
-- [ ] Load-game entry listing available save slots; Quit exits cleanly
-- [ ] Menu navigation fully testable headless (state machine without raygui calls)
+- [x] Boot to a title screen (not directly into battle); Start Skirmish / Load Game / Settings / Quit
+- [x] Skirmish setup screen: map select (lists `data/*.map`), difficulty select (Easy/Medium/Hard), player color/faction display (map + difficulty only for v1 per Q85)
+- [x] Settings screen: camera speed, minimap toggle, volumes + mute (shared with pause menu)
+- [x] Load-game entry listing available save slots; Quit exits cleanly
+- [x] Menu navigation fully testable headless (state machine without raygui calls)
 
 ### Implementation Steps
 1. **Menu State**

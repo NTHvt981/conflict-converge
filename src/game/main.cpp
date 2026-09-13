@@ -23,10 +23,31 @@
 #include "Audio.h" // M11: synthesized SFX + looped music (data/audio/*.wav)
 #include "MapFile.h" // M10: demo loads Crossroads from data/
 #include "AICommander.h" // M8: enemy commander (build order, waves, scouting)
+#include "Skirmish.h" // M14: testable match build/teardown over boot-level objects
+#include "Formation.h" // drag-select squads fan out through formation moves
 #include <iostream>
+#include <filesystem> // M14: save-slot existence for the load screen
 #include <vector>
 #include <format>
 #include <cmath> // M12: muzzle direction normalization
+
+namespace
+{
+// M14: setup-screen and HUD difficulty label.
+const char *DifficultyName(AIDifficulty difficulty)
+{
+    switch (difficulty)
+    {
+    case AIDifficulty::Easy:
+        return "Easy";
+    case AIDifficulty::Hard:
+        return "Hard";
+    case AIDifficulty::Medium:
+    default:
+        return "Medium";
+    }
+}
+} // namespace
 
 int main(void)
 {
@@ -50,8 +71,9 @@ int main(void)
 	// rate limit, outcome transitions).
 	int lastBuildingCount = 0;
 	int lastDepletedCount = 0;
+	int lastQueueSize = 0; // M14: production-order edge trigger
 	float attackSfxTimer = 0.0f;
-	MenuState lastOutcomeState = MenuState::Playing;
+	MenuState lastOutcomeState = MenuState::MainMenu; // M14: boot to title
 	bool hasFactory = false; // M13: recomputed per frame, gates queue + panel
 
 	GameCamera camera;
@@ -60,7 +82,10 @@ int main(void)
 	camera.view.zoom = 1.0f;
 	// M6 Goal 3: menu flow (pause/outcome/settings); camera speed is a
 	// live setting, not a constant, so the settings slider can tune it.
+	// M14: boots at MainMenu; persisted settings load here (Q86), ignored
+	// when the file is missing.
 	MenuFlow menu;
+	LoadSettings(menu.settings, kSettingsPath);
 
 	// M6 Goal 1: minimap texture (bottom-right, 4:3 like the 20x15 map).
 	Minimap minimap;
@@ -68,135 +93,155 @@ int main(void)
 	               160.0f, 120.0f });
 	// Unit speed now comes from M3 base stats (Unit::speed, ApplyBaseStats).
 
-	// M3 Goal 6 demo world: units spawn through the factory (costs deducted
-	// from starting funds, UnitSpawned announced) on the tile map. Placeholder
-	// art is colored rectangles (see M2 blockings); sprites arrive later.
+	// M14: world objects are boot-level locals, but match CONTENT only builds
+	// after Start confirms (BuildSkirmish) or a slot loads. Build/Reset refill
+	// contents in place, so shortcut lambdas plus the factory/AI reference
+	// bindings stay valid across matches.
 	Registry registry;
 	ResourceSystem resources;
-	resources.AddIron(1000);
-	resources.AddOil(500);
 	EventDispatcher events;
 	UnitFactory factory(registry, resources, events);
 	TileMap map(20, 15);
 	FogOfWar fog; // M9: recomputed every Playing frame, carried by WorldState
 	ResourceNodes nodes;
-	// M10: demo loads Crossroads; bases, units, and the harvester follow its
-	// markers. A missing file falls back to the legacy hardcoded layout.
-	MapData demoMap;
-	cc::IVec2 playerHome{ 2, 2 };
-	cc::IVec2 aiHome{ 16, 9 };
-	cc::IVec2 harvestTile{ 15, 3 };
-	if (ParseMapFile("data/crossroads.map", demoMap))
-	{
-		ApplyMapData(demoMap, map, nodes);
-		if (!demoMap.playerSpawns.empty())
-		{
-			playerHome = demoMap.playerSpawns[0];
-		}
-		if (!demoMap.aiSpawns.empty())
-		{
-			aiHome = demoMap.aiSpawns[0];
-		}
-		for (const MapNodeSpawn &spawn : demoMap.nodes)
-		{
-			if (spawn.kind == ResourceKind::Iron)
-			{
-				harvestTile = spawn.tile;
-				break;
-			}
-		}
-	}
-	else
-	{
-		map.Set({ 6, 3 }, TerrainType::Water);
-		map.Set({ 7, 3 }, TerrainType::Water);
-		map.Set({ 6, 4 }, TerrainType::Water);
-		nodes.SpawnNode(map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
-		nodes.SpawnNode(map, ResourceKind::Oil, { 15, 12 }, 150.0f, 10.0f);
-	}
-	fog.Resize(map.Width(), map.Height());
-	auto spawnDemo = [&](UnitType type, int tileX, int tileY, int team) {
-		// Spawn on walkable ground: the marker itself may sit inside the
-		// freshly placed base footprint (trapped units otherwise).
-		const cc::IVec2 free = NearestFreeTile(map, tileX, tileY);
-		factory.Spawn(type, team, cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
-	};
-
-	// M5 demo economy: home base + factory + depot around the player marker,
-	// a harvester Engineer parked on the first iron node, and a factory queue
-	// building reinforcements at the rally point. Costs come out of funds.
-	// NOTE: the base goes down BEFORE units spawn, so NearestFreeTile routes
-	// around the footprint instead of trapping units inside it.
-	auto placeDemoBase = [&](int team, cc::IVec2 anchor) {
-		PlaceBuilding(registry, map, BuildingType::Base, team, anchor.x, anchor.y);
-		const cc::IVec2 depotSpots[] = { { 2, 0 }, { 0, 2 }, { -1, 0 } };
-		for (const cc::IVec2 &spot : depotSpots)
-		{
-			if (PlaceBuilding(registry, map, BuildingType::ResourceDepot, team, anchor.x + spot.x,
-			                  anchor.y + spot.y) != kInvalidEntity)
-			{
-				break;
-			}
-		}
-		const cc::IVec2 factorySpots[] = { { 0, 2 }, { 3, 0 }, { -2, 2 } };
-		for (const cc::IVec2 &spot : factorySpots)
-		{
-			if (PlaceBuilding(registry, map, BuildingType::Factory, team, anchor.x + spot.x,
-			                  anchor.y + spot.y) != kInvalidEntity)
-			{
-				break;
-			}
-		}
-	};
-	placeDemoBase(0, playerHome);
-	spawnDemo(UnitType::Infantry, playerHome.x, playerHome.y, 0);
-	spawnDemo(UnitType::LightTank, playerHome.x + 2, playerHome.y, 0);
-	spawnDemo(UnitType::Artillery, playerHome.x + 1, playerHome.y + 3, 0);
-	spawnDemo(UnitType::Engineer, harvestTile.x, harvestTile.y, 0); // harvester on iron
 	ProductionQueue queue;
-	queue.Enqueue(resources, UnitType::Infantry);
-	queue.Enqueue(resources, UnitType::LightTank);
 	// M13: rally point moves by click (R toggles rally mode below).
-	Vector2 rallyPos = cc::ToRaylib(cc::TileToWorld(playerHome.x + 4, playerHome.y));
+	Vector2 rallyPos = {};
 	bool settingRally = false;
+	// Drag-box selection gesture (cleared on every match start).
+	bool dragging = false;
+	Vector2 dragStart = {};
+	// M8: enemy commander owns team 1 under fair rules. Parked without a
+	// base until the first Start/Load re-arms it (BuildSkirmish runs Reset +
+	// SetupBase; the load path runs Reset bare since the file fields the AI).
+	AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 });
+	SkirmishWorld skirmish{ &registry, &resources, &map, &fog, &nodes,
+	                        &queue,   &factory,   &ai, &camera, &rallyPos };
+	// M14: match session — nothing simulates or renders until Start.
+	bool worldActive = false;
+	AIDifficulty worldDifficulty = AIDifficulty::Medium;
+	std::string worldMapPath; // map the active match was seeded from
 
-	// M8: enemy commander owns team 1 under fair rules (own funds, own
-	// buildings, same order/spend APIs). Its starting guard keeps team 1
-	// fielded from frame one so the outcome check never fires instantly.
-	AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Medium, aiHome, playerHome);
-	ai.SetupBase();
+	// M14: bare-event announcer for the Q57 game-state + UI event types.
+	auto announce = [&](EventType type) {
+		Event bare;
+		bare.type = type;
+		events.Dispatch(bare);
+	};
 
-	// M11: production/spawn confirmations. Subscribed after setup so the
-	// boot-time spawns don't chatter.
+	// M11: production/spawn confirmations (stateless: survives across matches).
 	events.Subscribe(EventType::UnitSpawned, [&](const Event &) { audio.Play(SfxId::Confirm); });
 
 	// M13: shared snapshot for the save-slot bindings below.
 	WorldState worldState{ &registry, &resources, &map, &camera, &nodes, &fog };
+
+	// M14: (re)start a skirmish from the setup screen: seed the world, reset
+	// every per-match poll, and announce the match.
+	auto startMatch = [&](const std::string &mapPath, AIDifficulty difficulty) {
+		BuildSkirmish(skirmish, mapPath, difficulty);
+		worldMapPath = mapPath;
+		worldDifficulty = difficulty;
+		worldActive = true;
+		settingRally = false;
+		dragging = false;
+		lastBuildingCount = 0;
+		lastDepletedCount = 0;
+		lastQueueSize = 0;
+		attackSfxTimer = 0.0f;
+		lastOutcomeState = MenuState::Playing;
+		hasFactory = false;
+		camera.view.zoom = 1.0f;
+		minimap.elapsed = minimap.refreshInterval; // repaint for the new map now
+		announce(EventType::MenuAction);
+		announce(EventType::MatchStarted);
+	};
+	// M14: teardown back to the title (world contents dropped).
+	auto quitToMenu = [&] {
+		ResetSkirmish(skirmish);
+		worldActive = false;
+		announce(EventType::MenuAction);
+		menu.OpenMainMenu();
+	};
 
 	// M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
 	// deselects, Space halts selected units, P pauses (M6 Goal 3),
 	// F1 toggles the shortcut overlay (M6 Goal 4).
 	InputManager input;
 	bool showHints = true; // M6 Goal 4: F1 toggles the shortcut overlay
+	int setupScroll = 0; // M14: setup-screen map list scroll position
 	input.shortcuts.Bind(KEY_F1, [&] { showHints = !showHints; });
-	input.shortcuts.Bind(KEY_P, [&] { menu.TogglePause(); });
+	input.shortcuts.Bind(KEY_P, [&] {
+		if (menu.state == MenuState::Playing)
+		{
+			menu.TogglePause();
+			announce(EventType::MenuAction);
+			announce(EventType::MatchPaused);
+		}
+		else if (menu.state == MenuState::Paused)
+		{
+			menu.TogglePause();
+			announce(EventType::MenuAction);
+		}
+	});
 	input.shortcuts.Bind(KEY_F5, [&] {
+		if (!worldActive || menu.state != MenuState::Playing)
+		{
+			return;
+		}
 		SaveWorld({ &registry, &resources, &map, &camera, &nodes, &fog }, "data/quicksave.ccpb");
 	});
 	input.shortcuts.Bind(KEY_F9, [&] {
+		if (!worldActive || menu.state != MenuState::Playing)
+		{
+			return;
+		}
 		LoadWorld({ &registry, &resources, &map, &camera, &nodes, &fog }, "data/quicksave.ccpb");
 	});
 	// M13: named save slots (F6-8 store, Shift+F6-8 recall).
-	input.shortcuts.Bind(KEY_F6, [&] { SaveWorld(worldState, SaveSlotPath(1)); });
-	input.shortcuts.Bind(KEY_F7, [&] { SaveWorld(worldState, SaveSlotPath(2)); });
-	input.shortcuts.Bind(KEY_F8, [&] { SaveWorld(worldState, SaveSlotPath(3)); });
-	input.shortcuts.BindChord(KEY_F6, [&] { LoadWorld(worldState, SaveSlotPath(1)); });
-	input.shortcuts.BindChord(KEY_F7, [&] { LoadWorld(worldState, SaveSlotPath(2)); });
-	input.shortcuts.BindChord(KEY_F8, [&] { LoadWorld(worldState, SaveSlotPath(3)); });
+	input.shortcuts.Bind(KEY_F6, [&] {
+		if (worldActive && menu.state == MenuState::Playing)
+		{
+			SaveWorld(worldState, SaveSlotPath(1));
+		}
+	});
+	input.shortcuts.Bind(KEY_F7, [&] {
+		if (worldActive && menu.state == MenuState::Playing)
+		{
+			SaveWorld(worldState, SaveSlotPath(2));
+		}
+	});
+	input.shortcuts.Bind(KEY_F8, [&] {
+		if (worldActive && menu.state == MenuState::Playing)
+		{
+			SaveWorld(worldState, SaveSlotPath(3));
+		}
+	});
+	input.shortcuts.BindChord(KEY_F6, [&] {
+		if (worldActive && menu.state == MenuState::Playing)
+		{
+			LoadWorld(worldState, SaveSlotPath(1));
+		}
+	});
+	input.shortcuts.BindChord(KEY_F7, [&] {
+		if (worldActive && menu.state == MenuState::Playing)
+		{
+			LoadWorld(worldState, SaveSlotPath(2));
+		}
+	});
+	input.shortcuts.BindChord(KEY_F8, [&] {
+		if (worldActive && menu.state == MenuState::Playing)
+		{
+			LoadWorld(worldState, SaveSlotPath(3));
+		}
+	});
 	// M13: order keys act on the current selection. A attack-moves to the
 	// cursor, H/G switch stances, V patrols cursor-and-back, R toggles
-	// rally-point placement.
+	// rally-point placement. M14: world keys are dead outside a live match.
 	input.shortcuts.Bind(KEY_A, [&] {
+		if (!worldActive || menu.state != MenuState::Playing)
+		{
+			return;
+		}
 		const Entity selected = SelectedUnit(registry);
 		if (Unit *ordered = registry.Get<Unit>(selected))
 		{
@@ -205,6 +250,10 @@ int main(void)
 		}
 	});
 	input.shortcuts.Bind(KEY_H, [&] {
+		if (!worldActive || menu.state != MenuState::Playing)
+		{
+			return;
+		}
 		const Entity selected = SelectedUnit(registry);
 		if (Unit *unit = registry.Get<Unit>(selected))
 		{
@@ -212,6 +261,10 @@ int main(void)
 		}
 	});
 	input.shortcuts.Bind(KEY_G, [&] {
+		if (!worldActive || menu.state != MenuState::Playing)
+		{
+			return;
+		}
 		const Entity selected = SelectedUnit(registry);
 		if (Unit *unit = registry.Get<Unit>(selected))
 		{
@@ -219,6 +272,10 @@ int main(void)
 		}
 	});
 	input.shortcuts.Bind(KEY_V, [&] {
+		if (!worldActive || menu.state != MenuState::Playing)
+		{
+			return;
+		}
 		const Entity selected = SelectedUnit(registry);
 		if (Unit *ordered = registry.Get<Unit>(selected))
 		{
@@ -226,9 +283,41 @@ int main(void)
 			audio.Play(SfxId::Confirm);
 		}
 	});
-	input.shortcuts.Bind(KEY_R, [&] { settingRally = !settingRally; });
-	input.shortcuts.Bind(KEY_ESCAPE, [&] { DeselectAll(registry); });
+	input.shortcuts.Bind(KEY_R, [&] {
+		if (worldActive && menu.state == MenuState::Playing)
+		{
+			settingRally = !settingRally;
+		}
+	});
+	input.shortcuts.Bind(KEY_ESCAPE, [&] {
+		// M14: Esc backs out of menu screens; in-match it keeps the M2
+		// deselect behavior (Paused resumes).
+		if (!worldActive)
+		{
+			if (menu.state == MenuState::SkirmishSetup || menu.state == MenuState::Settings ||
+			    menu.state == MenuState::LoadGame)
+			{
+				announce(EventType::MenuAction);
+				menu.OpenMainMenu();
+			}
+			return;
+		}
+		if (menu.state == MenuState::Playing)
+		{
+			DeselectAll(registry);
+			dragging = false;
+		}
+		else if (menu.state == MenuState::Paused)
+		{
+			menu.TogglePause();
+			announce(EventType::MenuAction);
+		}
+	});
 	input.shortcuts.Bind(KEY_SPACE, [&] {
+		if (!worldActive || menu.state != MenuState::Playing)
+		{
+			return;
+		}
 		registry.Each<Unit>([&](Entity, Unit &unit) {
 			if (unit.isSelected)
 			{
@@ -267,12 +356,190 @@ int main(void)
 		                  static_cast<float>(map.Height()) * cc::TILE_SIZE, screenWidth,
 		                  screenHeight);
 
+		// M14: menu branch — no world simulates or renders until Start (or a
+		// slot load). The match code below runs untouched once worldActive.
+		if (!worldActive)
+		{
+			audio.ApplySettings(menu.settings.masterVolume, menu.settings.musicVolume,
+			                    menu.settings.sfxVolume, menu.settings.mute);
+			audio.UpdateMusic();
+
+			BeginDrawing();
+			ClearBackground(RAYWHITE);
+			const float cx = screenWidth / 2.0f;
+			if (menu.state == MenuState::MainMenu)
+			{
+				DrawText("CONFLICT CONVERGE", static_cast<int>(cx) - 290, 110, 52, DARKGRAY);
+				DrawText("real-time strategy demo", static_cast<int>(cx) - 140, 175, 20, GRAY);
+				if (GuiButton({ cx - 130.0f, 245.0f, 260.0f, 40.0f }, "Start Skirmish"))
+				{
+					menu.OpenSetup(ListMaps("data"));
+					announce(EventType::MenuAction);
+				}
+				if (GuiButton({ cx - 130.0f, 295.0f, 260.0f, 40.0f }, "Load Game"))
+				{
+					menu.OpenLoad();
+					announce(EventType::MenuAction);
+				}
+				if (GuiButton({ cx - 130.0f, 345.0f, 260.0f, 40.0f }, "Settings"))
+				{
+					menu.OpenSettings();
+					announce(EventType::MenuAction);
+				}
+				if (GuiButton({ cx - 130.0f, 395.0f, 260.0f, 40.0f }, "Quit"))
+				{
+					announce(EventType::MenuAction);
+					menu.quitRequested = true;
+				}
+			}
+			else if (menu.state == MenuState::SkirmishSetup)
+			{
+				DrawText("Skirmish setup", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
+				GuiLabel({ cx - 200.0f, 80.0f, 400.0f, 20.0f }, "Map (from data/*.map)");
+				std::string items;
+				for (const MapEntry &entry : menu.setup.maps)
+				{
+					items += entry.name + " (" + std::to_string(entry.width) + "x" +
+					         std::to_string(entry.height) + ");";
+				}
+				if (items.empty())
+				{
+					items = "<no maps found>;";
+				}
+				int picked = menu.setup.mapIndex;
+				GuiListView({ cx - 200.0f, 105.0f, 400.0f, 200.0f }, items.c_str(),
+				            &setupScroll, &picked);
+				menu.SelectMap(picked);
+				if (const MapEntry *sel = menu.setup.SelectedMap())
+				{
+					DrawText(TextFormat("by %s  %s", sel->author.empty() ? "-" : sel->author.c_str(),
+					                    sel->path.c_str()),
+					         static_cast<int>(cx) - 200, 312, 14, GRAY);
+				}
+				GuiLabel({ cx - 200.0f, 335.0f, 400.0f, 20.0f }, "AI difficulty");
+				int diffActive = static_cast<int>(menu.setup.difficulty);
+				GuiToggleGroup({ cx - 200.0f, 360.0f, 400.0f, 30.0f }, "Easy;Medium;Hard",
+				               &diffActive);
+				if (diffActive < 0 || diffActive > 2)
+				{
+					diffActive = 1;
+				}
+				menu.SelectDifficulty(static_cast<AIDifficulty>(diffActive));
+				if (!menu.setup.CanStart())
+				{
+					GuiDisable();
+				}
+				if (GuiButton({ cx - 200.0f, 400.0f, 195.0f, 40.0f }, "Start match"))
+				{
+					if (const MapEntry *sel = menu.setup.SelectedMap(); sel != nullptr)
+					{
+						if (menu.StartMatch())
+						{
+							startMatch(sel->path, menu.setup.difficulty);
+						}
+					}
+				}
+				GuiEnable();
+				if (GuiButton({ cx + 5.0f, 400.0f, 195.0f, 40.0f }, "Back"))
+				{
+					announce(EventType::MenuAction);
+					menu.OpenMainMenu();
+				}
+			}
+			else if (menu.state == MenuState::Settings)
+			{
+				DrawText("Settings", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
+				GuiLabel({ cx - 200.0f, 90.0f, 400.0f, 20.0f }, "Camera speed");
+				GuiSlider({ cx - 200.0f, 115.0f, 400.0f, 20.0f }, "100", "800",
+				          &menu.settings.cameraSpeed, 100.0f, 800.0f);
+				GuiCheckBox({ cx - 200.0f, 145.0f, 20.0f, 20.0f }, "Minimap",
+				            &menu.settings.showMinimap);
+				GuiLabel({ cx - 200.0f, 175.0f, 400.0f, 20.0f }, "Master volume");
+				GuiSlider({ cx - 200.0f, 200.0f, 400.0f, 20.0f }, "0", "1",
+				          &menu.settings.masterVolume, 0.0f, 1.0f);
+				GuiLabel({ cx - 200.0f, 230.0f, 400.0f, 20.0f }, "Music volume");
+				GuiSlider({ cx - 200.0f, 255.0f, 400.0f, 20.0f }, "0", "1",
+				          &menu.settings.musicVolume, 0.0f, 1.0f);
+				GuiLabel({ cx - 200.0f, 285.0f, 400.0f, 20.0f }, "SFX volume");
+				GuiSlider({ cx - 200.0f, 310.0f, 400.0f, 20.0f }, "0", "1",
+				          &menu.settings.sfxVolume, 0.0f, 1.0f);
+				GuiCheckBox({ cx - 200.0f, 340.0f, 20.0f, 20.0f }, "Mute", &menu.settings.mute);
+				if (GuiButton({ cx - 200.0f, 375.0f, 400.0f, 40.0f }, "Back"))
+				{
+					SaveSettings(menu.settings, kSettingsPath); // M14: Q86 persistence
+					announce(EventType::MenuAction);
+					menu.OpenMainMenu();
+				}
+			}
+			else if (menu.state == MenuState::LoadGame)
+			{
+				DrawText("Load game", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
+				const std::string slotPaths[4] = { "data/quicksave.ccpb", SaveSlotPath(1),
+					                               SaveSlotPath(2), SaveSlotPath(3) };
+				const char *slotLabels[4] = { "Quicksave", "Slot 1", "Slot 2", "Slot 3" };
+				for (int i = 0; i < 4; ++i)
+				{
+					std::error_code ec;
+					const bool filled =
+					    std::filesystem::exists(slotPaths[i], ec) && !ec;
+					if (!filled)
+					{
+						GuiDisable();
+					}
+					if (GuiButton({ cx - 200.0f, static_cast<float>(90 + i * 50), 400.0f, 40.0f },
+					              slotLabels[i]))
+					{
+						// M14: load over a fresh shell (LoadWorld clears +
+						// rebuilds). The file already fields the AI side, so
+						// the commander re-arms bare — no second SetupBase.
+						ResetSkirmish(skirmish);
+						if (LoadWorld(worldState, slotPaths[i]))
+						{
+							const SkirmishSpots spots = SpotsForMap(
+								worldMapPath.empty() ? "data/crossroads.map" : worldMapPath);
+							ai.Reset(menu.setup.difficulty, spots.aiHome, spots.playerHome);
+							rallyPos = camera.view.target;
+							worldDifficulty = menu.setup.difficulty;
+							worldActive = true;
+							settingRally = false;
+							dragging = false;
+							lastBuildingCount = 0;
+							lastDepletedCount = 0;
+							lastQueueSize = 0;
+							attackSfxTimer = 0.0f;
+							lastOutcomeState = MenuState::Playing;
+							hasFactory = false;
+							camera.view.zoom = 1.0f;
+							minimap.elapsed = minimap.refreshInterval;
+							menu.state = MenuState::Playing;
+							announce(EventType::MenuAction);
+							announce(EventType::MatchStarted);
+						}
+					}
+					GuiEnable();
+				}
+				if (GuiButton({ cx - 200.0f, 300.0f, 400.0f, 40.0f }, "Back"))
+				{
+					announce(EventType::MenuAction);
+					menu.OpenMainMenu();
+				}
+			}
+			else
+			{
+				// Unreachable (match states always carry a world); recover.
+				menu.OpenMainMenu();
+			}
+			EndDrawing();
+			continue;
+		}
+
 		// M6 Goal 3: orders, AI, economy, and minimap only advance while
 		// Playing; rendering below always runs so menus overlay a live frame.
 		if (menu.state == MenuState::Playing)
 		{
 
-			// M2 Goal 4 mouse inputs: left-click selects, right-click orders.
+			// M2 Goal 4 mouse inputs: press starts a drag-box gesture,
+			// release resolves it (click = pick, box = SelectInRect).
 			// M3 Goal 3: orders pathfind around water/buildings via IssuePathOrder.
 			// M13 routes minimap clicks to the camera and rally-mode clicks
 			// to the factory rally point before unit selection.
@@ -290,6 +557,16 @@ int main(void)
 				}
 				else
 				{
+					dragging = true;
+					dragStart = input.MouseScreen();
+				}
+			}
+			if (dragging && !input.LeftDown())
+			{
+				dragging = false;
+				const Rectangle box = NormalizeRect(dragStart, input.MouseScreen());
+				if (box.width < 6.0f && box.height < 6.0f)
+				{
 					const Vector2 world = input.MouseWorld(camera);
 					const Entity hit = PickUnitAt(registry, world);
 					if (hit != kInvalidEntity)
@@ -302,14 +579,42 @@ int main(void)
 						DeselectAll(registry);
 					}
 				}
+				else
+				{
+					// Screen box corners back to world space (Shift extends).
+					const Vector2 worldA = camera.ScreenToWorld({ box.x, box.y });
+					const Vector2 worldB =
+					    camera.ScreenToWorld({ box.x + box.width, box.y + box.height });
+					if (SelectInRect(registry, NormalizeRect(worldA, worldB),
+					                 input.ShiftDown()) > 0)
+					{
+						audio.Play(SfxId::Select);
+					}
+				}
 			}
 			if (input.RightPressed())
 			{
-				const Entity selected = SelectedUnit(registry);
-				if (Unit *ordered = registry.Get<Unit>(selected))
+				// Single selection keeps the direct path order; groups fan
+				// out through the formation move.
+				std::vector<Entity> squad;
+				registry.Each<Unit>([&](Entity id, const Unit &unit) {
+					if (unit.isSelected)
+					{
+						squad.push_back(id);
+					}
+				});
+				if (squad.size() == 1)
 				{
-					IssuePathOrder(*ordered, map, input.MouseWorld(camera));
-					audio.Play(SfxId::Confirm); // M11: order acknowledged
+					if (Unit *ordered = registry.Get<Unit>(squad[0]))
+					{
+						IssuePathOrder(*ordered, map, input.MouseWorld(camera));
+						audio.Play(SfxId::Confirm); // M11: order acknowledged
+					}
+				}
+				else if (!squad.empty())
+				{
+					formation::IssueFormationMove(registry, squad, map, input.MouseWorld(camera));
+					audio.Play(SfxId::Confirm);
 				}
 			}
 			// M9: rebuild visibility from current positions before anyone acquires.
@@ -317,6 +622,8 @@ int main(void)
 			registry.Each<Unit>([&](Entity id, Unit &unit) {
 				UpdateUnit(id, registry, map, GetFrameTime(), &fog); // M3G5 driver (+M9 fog gate)
 			});
+			// Overlap avoidance: fan out stacked bodies after the AI driver.
+			SeparateUnits(registry, GetFrameTime());
 			// M3 Goal 6: collect the fallen, then destroy through the factory so
 			// UnitDestroyed is announced (destroying inside Each would invalidate it).
 			// dt is shared by the M11 polls below and the economy tick further down.
@@ -403,6 +710,7 @@ int main(void)
 			if (depletedCount > lastDepletedCount)
 			{
 				audio.Play(SfxId::Deplete);
+				announce(EventType::ResourceDepleted); // M14: Q57 resource event
 			}
 			lastDepletedCount = depletedCount;
 			// M5 economy tick: base trickle, node respawn, harvest, production.
@@ -424,6 +732,13 @@ int main(void)
 			{
 				queue.Update(factory, 0, rallyPos, dt);
 			}
+			// M14: Q57 production-ordered event on every queue growth (panel
+			// buttons and the M5 seed enqueues both flow through here).
+			if (queue.Size() > static_cast<std::size_t>(lastQueueSize))
+			{
+				announce(EventType::ProductionOrdered);
+			}
+			lastQueueSize = static_cast<int>(queue.Size());
 		ai.Update(dt); // M8: enemy build order, waves, scouting, retreat
 			// M6 Goal 1: periodic minimap refresh (terrain blocks + unit dots).
 			if (minimap.PollRefresh(dt))
@@ -468,15 +783,18 @@ int main(void)
 			// M6 Goal 3: decide terminal states from the living rosters.
 			menu.ShowOutcome(TeamHasUnits(registry, 0), TeamHasUnits(registry, 1));
 			// M11: fanfare on the transition frame only.
+			// M14: Q57 game-state events ride the same transition.
 			if (menu.state != lastOutcomeState)
 			{
 				if (menu.state == MenuState::Victory)
 				{
 					audio.Play(SfxId::Victory);
+					announce(EventType::Victory);
 				}
 				else if (menu.state == MenuState::GameOver)
 				{
 					audio.Play(SfxId::Defeat);
+					announce(EventType::GameOver);
 				}
 				lastOutcomeState = menu.state;
 			}
@@ -634,6 +952,12 @@ int main(void)
 		}
 		EndMode2D();
 
+		// Drag-box visual (screen space, under the HUD panels).
+		if (dragging && input.LeftDown())
+		{
+			DrawRectangleLinesEx(NormalizeRect(dragStart, input.MouseScreen()), 1.0f, GREEN);
+		}
+
 		// M6 Goal 1: minimap blit (texture is Y-flipped) + viewport box.
 		// Hidden from the settings panel (M6 Goal 3).
 		if (menu.settings.showMinimap)
@@ -675,8 +999,10 @@ int main(void)
 
 		// M7 Goal 3: live frame-rate readout (60 FPS target validation).
 		DrawFPS(620, 88);
-		// M8: enemy commander status (demo plays Medium).
-		DrawText(TextFormat("Enemy: Medium  Waves: %d", ai.WavesLaunched()), 620, 108, 16, GRAY);
+		// M8: enemy commander status (M14: difficulty comes from the setup).
+		DrawText(TextFormat("Enemy: %s  Waves: %d", DifficultyName(worldDifficulty),
+		                    ai.WavesLaunched()),
+		         620, 108, 16, GRAY);
 
 		// M6 Goal 4: shortcut overlay, bottom-left, toggled with F1.
 		if (showHints)
@@ -692,19 +1018,20 @@ int main(void)
 		if (menu.state == MenuState::Paused)
 		{
 			DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));
-			if (GuiWindowBox(Rectangle{ 250, 40, 300, 360 }, "Paused"))
+			if (GuiWindowBox(Rectangle{ 250, 40, 300, 400 }, "Paused"))
 			{
 				menu.state = MenuState::Playing;
 			}
 			if (GuiButton(Rectangle{ 270, 85, 260, 30 }, "Resume"))
 			{
+				announce(EventType::MenuAction);
 				menu.state = MenuState::Playing;
 			}
 			GuiLabel(Rectangle{ 270, 122, 260, 20 }, "Camera speed");
 			GuiSlider(Rectangle{ 270, 145, 260, 20 }, "100", "800", &menu.settings.cameraSpeed,
 			          100.0f, 800.0f);
 			GuiCheckBox(Rectangle{ 270, 170, 20, 20 }, "Minimap", &menu.settings.showMinimap);
-			// M11: volumes (0..1) + mute; file persistence arrives with M14.
+			// M11: volumes (0..1) + mute, persisted by the M14 settings file.
 			GuiLabel(Rectangle{ 270, 195, 260, 20 }, "Master volume");
 			GuiSlider(Rectangle{ 270, 218, 260, 20 }, "0", "1", &menu.settings.masterVolume,
 			          0.0f, 1.0f);
@@ -715,7 +1042,13 @@ int main(void)
 			GuiSlider(Rectangle{ 270, 314, 260, 20 }, "0", "1", &menu.settings.sfxVolume,
 			          0.0f, 1.0f);
 			GuiCheckBox(Rectangle{ 270, 340, 20, 20 }, "Mute", &menu.settings.mute);
-			if (GuiButton(Rectangle{ 270, 365, 260, 30 }, "Quit to desktop"))
+			// M14: pause shares MenuSettings with the settings screen; leaving
+			// via Back-equivalent persists (Q86), pause buttons apply live.
+			if (GuiButton(Rectangle{ 270, 365, 260, 30 }, "Quit to menu"))
+			{
+				quitToMenu();
+			}
+			if (GuiButton(Rectangle{ 270, 400, 260, 30 }, "Quit to desktop"))
 			{
 				menu.quitRequested = true;
 			}
@@ -724,13 +1057,17 @@ int main(void)
 		{
 			DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.6f));
 			const bool won = menu.state == MenuState::Victory;
-			if (GuiWindowBox(Rectangle{ 250, 150, 300, 150 }, won ? "Victory!" : "Defeat"))
+			if (GuiWindowBox(Rectangle{ 250, 140, 300, 195 }, won ? "Victory!" : "Defeat"))
 			{
 				menu.quitRequested = true;
 			}
-			GuiLabel(Rectangle{ 270, 195, 260, 20 },
+			GuiLabel(Rectangle{ 270, 185, 260, 20 },
 			         won ? "Enemy force destroyed." : "Your force was destroyed.");
-			if (GuiButton(Rectangle{ 270, 250, 260, 30 }, "Quit to desktop"))
+			if (GuiButton(Rectangle{ 270, 240, 260, 30 }, "Return to menu"))
+			{
+				quitToMenu();
+			}
+			if (GuiButton(Rectangle{ 270, 280, 260, 30 }, "Quit to desktop"))
 			{
 				menu.quitRequested = true;
 			}

@@ -42,3 +42,41 @@ Entity SelectedUnit(Registry &registry)
     });
     return found;
 }
+
+Rectangle NormalizeRect(Vector2 a, Vector2 b)
+{
+    Rectangle box;
+    box.x = a.x < b.x ? a.x : b.x;
+    box.y = a.y < b.y ? a.y : b.y;
+    box.width = a.x < b.x ? b.x - a.x : a.x - b.x;
+    box.height = a.y < b.y ? b.y - a.y : a.y - b.y;
+    return box;
+}
+
+int SelectInRect(Registry &registry, Rectangle worldBox, bool add)
+{
+    const Rectangle box = NormalizeRect({ worldBox.x, worldBox.y },
+                                        { worldBox.x + worldBox.width,
+                                          worldBox.y + worldBox.height });
+    int picked = 0;
+    registry.Each<Unit>([&](Entity, Unit &unit) {
+        // Body center (32x32 hitbox inset, matches the M4 selection visual).
+        const float cx = unit.position.x + 32.0f;
+        const float cy = unit.position.y + 32.0f;
+        const bool inside = cx >= box.x && cx <= box.x + box.width && cy >= box.y &&
+                            cy <= box.y + box.height;
+        if (!add)
+        {
+            unit.isSelected = inside;
+        }
+        else if (inside)
+        {
+            unit.isSelected = true;
+        }
+        if (unit.isSelected && inside)
+        {
+            ++picked;
+        }
+    });
+    return picked;
+}

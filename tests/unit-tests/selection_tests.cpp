@@ -54,4 +54,25 @@ void RunSelectionTests()
     CC_CHECK(SelectedUnit(empty) == kInvalidEntity);
     DeselectAll(empty); // no-op, must not crash
     CC_CHECK(true);
+
+    // --- NormalizeRect: either corner may lead ---
+    const Rectangle norm = NormalizeRect({ 5.0f, 9.0f }, { 1.0f, 3.0f });
+    CC_CHECK(norm.x == 1.0f && norm.y == 3.0f);
+    CC_CHECK(norm.width == 4.0f && norm.height == 6.0f);
+    const Rectangle same = NormalizeRect({ 2.0f, 2.0f }, { 2.0f, 2.0f });
+    CC_CHECK(same.width == 0.0f && same.height == 0.0f);
+
+    // --- SelectInRect: body centers are (96,96)=a and (288,160)=b ---
+    DeselectAll(registry);
+    CC_CHECK(SelectInRect(registry, { 80.0f, 80.0f, 240.0f, 120.0f }, false) == 2);
+    CC_CHECK(registry.Get<Unit>(a)->isSelected && registry.Get<Unit>(b)->isSelected);
+    CC_CHECK(SelectInRect(registry, { 80.0f, 80.0f, 40.0f, 40.0f }, false) == 1);
+    CC_CHECK(registry.Get<Unit>(a)->isSelected);
+    CC_CHECK(!registry.Get<Unit>(b)->isSelected);
+    // Shift extends the selection instead of replacing it.
+    CC_CHECK(SelectInRect(registry, { 270.0f, 140.0f, 60.0f, 60.0f }, true) == 1);
+    CC_CHECK(registry.Get<Unit>(a)->isSelected && registry.Get<Unit>(b)->isSelected);
+    // Empty box in replace mode clears everything.
+    CC_CHECK(SelectInRect(registry, { 600.0f, 600.0f, 50.0f, 50.0f }, false) == 0);
+    CC_CHECK(SelectedUnit(registry) == kInvalidEntity);
 }

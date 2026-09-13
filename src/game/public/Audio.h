@@ -38,7 +38,7 @@ public:
     void UpdateMusic();  // pump the stream; call every frame when ready
 
     // Volumes in 0..1 (clamped); mute zeroes the master output.
-    // File persistence for these arrives with the M14 settings file.
+    // Persisted by the M14 settings file (data/settings.cfg).
     void ApplySettings(float master, float music, float sfx, bool mute);
     float MasterVolume() const;
     float MusicVolume() const;

@@ -285,4 +285,37 @@ void RunMapFileTests()
     CC_CHECK(terrainMatch);
     std::remove(savePath.c_str());
     std::remove(good.c_str());
+
+    // --- M14: ListMaps enumerates the shipped data/ dir for setup ---
+    const std::string dataDirs[] = { "data", "../../data", "../../../data" };
+    std::string dataDir;
+    for (const std::string &dir : dataDirs)
+    {
+        std::error_code ec;
+        if (std::filesystem::is_directory(dir, ec) && !ec)
+        {
+            dataDir = dir;
+            break;
+        }
+    }
+    CC_CHECK(!dataDir.empty());
+    if (!dataDir.empty())
+    {
+        const std::vector<MapEntry> maps = ListMaps(dataDir);
+        CC_CHECK(maps.size() >= 2); // Crossroads + Twin Basins ship
+        bool crossroads = false;
+        bool twinBasins = false;
+        for (const MapEntry &entry : maps)
+        {
+            CC_CHECK(!entry.name.empty() && entry.width > 0 && entry.height > 0);
+            crossroads = crossroads || entry.name == "Crossroads";
+            twinBasins = twinBasins || entry.name == "Twin Basins";
+        }
+        CC_CHECK(crossroads && twinBasins);
+        for (std::size_t i = 1; i < maps.size(); ++i)
+        {
+            CC_CHECK(maps[i - 1].path <= maps[i].path); // stable setup order
+        }
+    }
+    CC_CHECK(ListMaps(TempMap("cc_no_such_dir_xyz")).empty()); // missing dir
 }

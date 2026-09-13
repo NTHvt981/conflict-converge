@@ -14,7 +14,20 @@ enum class EventType
     None,
     UnitSpawned,
     UnitDestroyed,
-    ResourceChanged
+    ResourceChanged,
+    // M14 (Q57 categories): unit damage, resource depletion, game-state
+    // (match start/pause/game-over/victory), and UI (menu actions,
+    // production ordered). Game-state + UI are dispatched by the menu/match
+    // flow; UnitDamaged/ResourceDepleted reserve the unit/resource slots
+    // (combat and gather ticks stay dispatcher-free for now).
+    UnitDamaged,
+    ResourceDepleted,
+    MatchStarted,
+    MatchPaused,
+    GameOver,
+    Victory,
+    MenuAction,
+    ProductionOrdered
 };
 
 struct Event

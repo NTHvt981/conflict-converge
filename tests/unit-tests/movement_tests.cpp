@@ -70,4 +70,69 @@ void RunMovementTests()
         UpdateUnitMovement(trapped, footprint, 64.0f, 1.0f);
     }
     CC_CHECK(!footprint.IsBlocked(cc::WorldToTile(cc::ToGlm(trapped.position))));
+
+    // --- SeparateUnits: overlapping bodies fan out, corpses ignored ---
+    Registry crowd;
+    auto addBody = [&](float x, float y, float health) {
+        const Entity e = crowd.Create();
+        Unit body;
+        body.position = { x, y };
+        body.health = health;
+        crowd.Add(e, body);
+        return e;
+    };
+    const Entity left = addBody(0.0f, 0.0f, 100.0f);
+    const Entity right = addBody(16.0f, 0.0f, 100.0f); // centers 16px apart
+    const Entity far = addBody(500.0f, 500.0f, 100.0f);
+    const Entity corpse = addBody(8.0f, 0.0f, 0.0f); // dead: never pushes
+    SeparateUnits(crowd, 1.0f);
+    // 16px gap needs 32: each side takes half (8px), far under the 96px cap.
+    CC_CHECK(crowd.Get<Unit>(left)->position.x == -8.0f);
+    CC_CHECK(crowd.Get<Unit>(right)->position.x == 24.0f);
+    CC_CHECK(crowd.Get<Unit>(left)->position.y == 0.0f);
+    CC_CHECK(crowd.Get<Unit>(far)->position.x == 500.0f);
+    CC_CHECK(crowd.Get<Unit>(corpse)->position.x == 8.0f);
+
+    // --- exact stacks split deterministically (order-agnostic checks) ---
+    Registry stack;
+    auto addStacked = [&](Registry &reg) {
+        const Entity e = reg.Create();
+        Unit body;
+        body.position = { 100.0f, 100.0f };
+        body.health = 100.0f;
+        reg.Add(e, body);
+        return e;
+    };
+    const Entity t0 = addStacked(stack);
+    const Entity t1 = addStacked(stack);
+    SeparateUnits(stack, 1.0f);
+    const float x0 = stack.Get<Unit>(t0)->position.x;
+    const float x1 = stack.Get<Unit>(t1)->position.x;
+    CC_CHECK(x0 - x1 == 32.0f || x0 - x1 == -32.0f); // full 32px gap...
+    CC_CHECK((x0 + x1) / 2.0f == 100.0f);           // ...centered, along x
+    CC_CHECK(stack.Get<Unit>(t0)->position.y == 100.0f);
+    CC_CHECK(stack.Get<Unit>(t1)->position.y == 100.0f);
+
+    // --- push is speed-capped per frame ---
+    Registry capped;
+    auto addCapped = [&](float x) {
+        const Entity e = capped.Create();
+        Unit body;
+        body.position = { x, 0.0f };
+        body.health = 100.0f;
+        capped.Add(e, body);
+        return e;
+    };
+    const Entity p0 = addCapped(0.0f);
+    const Entity p1 = addCapped(2.0f);
+    SeparateUnits(capped, 0.01f); // cap = 0.96px per side
+    const float gap =
+        capped.Get<Unit>(p0)->position.x - capped.Get<Unit>(p1)->position.x;
+    CC_CHECK(CcNear(gap, 2.0f + 2.0f * 0.96f) || CcNear(gap, -(2.0f + 2.0f * 0.96f)));
+
+    // --- non-positive dt is a no-op ---
+    const float before = capped.Get<Unit>(p0)->position.x;
+    SeparateUnits(capped, 0.0f);
+    SeparateUnits(capped, -1.0f);
+    CC_CHECK(capped.Get<Unit>(p0)->position.x == before);
 }

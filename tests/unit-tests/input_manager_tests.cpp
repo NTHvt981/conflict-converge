@@ -12,6 +12,7 @@ void RunInputManagerTests()
     // --- default snapshot: centered mouse, nothing pressed ---
     CC_CHECK(input.MouseScreen().x == 0.0f);
     CC_CHECK(!input.LeftPressed());
+    CC_CHECK(!input.LeftDown());
     CC_CHECK(!input.RightPressed());
 
     // --- snapshot stores position + edges ---
@@ -39,6 +40,17 @@ void RunInputManagerTests()
     input.Snapshot({ 0.0f, 0.0f }, false, false);
     CC_CHECK(!input.LeftPressed());
     CC_CHECK(!input.RightPressed());
+
+    // --- LeftDown tracks the hold level independently of the edge ---
+    input.Snapshot({ 0.0f, 0.0f }, true, false, 0.0f, false, true);
+    CC_CHECK(input.LeftPressed());
+    CC_CHECK(input.LeftDown());
+    input.Snapshot({ 0.0f, 0.0f }, false, false, 0.0f, false, true);
+    CC_CHECK(!input.LeftPressed());
+    CC_CHECK(input.LeftDown()); // still held: the drag continues
+    input.Snapshot({ 0.0f, 0.0f }, false, false);
+    CC_CHECK(!input.LeftPressed());
+    CC_CHECK(!input.LeftDown()); // released
 
     // --- shortcut registry rides along and fires through the manager ---
     int halts = 0;

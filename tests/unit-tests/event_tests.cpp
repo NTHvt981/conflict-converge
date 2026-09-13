@@ -61,4 +61,33 @@ void RunEventTests()
     dispatcher.Dispatch(destroyed);
     CC_CHECK(calls.size() == 2);
     CC_CHECK(seenTeam == 7);
+
+    // --- M14 (Q57): game-state + UI categories ride the same dispatcher ---
+    EventDispatcher flow;
+    std::vector<EventType> seen;
+    flow.Subscribe(EventType::MatchStarted,
+                   [&](const Event &e) { seen.push_back(e.type); });
+    flow.Subscribe(EventType::MatchPaused, [&](const Event &e) { seen.push_back(e.type); });
+    flow.Subscribe(EventType::GameOver, [&](const Event &e) { seen.push_back(e.type); });
+    flow.Subscribe(EventType::Victory, [&](const Event &e) { seen.push_back(e.type); });
+    flow.Subscribe(EventType::MenuAction, [&](const Event &e) { seen.push_back(e.type); });
+    flow.Subscribe(EventType::ProductionOrdered,
+                   [&](const Event &e) { seen.push_back(e.type); });
+    Event bare;
+    bare.type = EventType::MenuAction;
+    flow.Dispatch(bare);
+    bare.type = EventType::MatchStarted;
+    flow.Dispatch(bare);
+    bare.type = EventType::MatchPaused;
+    flow.Dispatch(bare);
+    bare.type = EventType::ProductionOrdered;
+    flow.Dispatch(bare);
+    bare.type = EventType::Victory;
+    flow.Dispatch(bare);
+    CC_CHECK(seen.size() == 5);
+    CC_CHECK(seen[0] == EventType::MenuAction);
+    CC_CHECK(seen[1] == EventType::MatchStarted);
+    CC_CHECK(seen[2] == EventType::MatchPaused);
+    CC_CHECK(seen[3] == EventType::ProductionOrdered);
+    CC_CHECK(seen[4] == EventType::Victory);
 }
