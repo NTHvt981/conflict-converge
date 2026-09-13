@@ -177,7 +177,8 @@ void RunMapFileTests()
     CC_CHECK(iron != nullptr && iron->kind == ResourceKind::Iron && iron->amount == 200.0f);
 
     // --- shipped maps: load, dims, markers, connectivity ---
-    const char *shipped[] = { "crossroads.map", "twin_basins.map" };
+    const char *shipped[] = { "crossroads.map", "twin_basins.map", "high_ridge.map",
+                                "salt_flats.map" };
     for (const char *name : shipped)
     {
         MapData ship;
