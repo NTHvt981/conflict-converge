@@ -418,7 +418,13 @@ int main(void)
 				}
 				GuiLabel({ cx - 200.0f, 335.0f, 400.0f, 20.0f }, "AI difficulty");
 				int diffActive = static_cast<int>(menu.setup.difficulty);
-				GuiToggleGroup({ cx - 200.0f, 360.0f, 400.0f, 30.0f }, "Easy;Medium;Hard",
+				// raygui GuiToggleGroup bounds.width is per-item unless
+				// GROUP_WIDTH_FULL=1 (default 0): 400px would make each of the
+				// 3 toggles 400px wide (1200px total, overflowing the panel).
+				// Fit 3 items exactly in the 400px panel (local qwen verified: 132).
+				const float diffPad = static_cast<float>(GuiGetStyle(TOGGLE, GROUP_PADDING));
+				const float diffItemW = (400.0f - diffPad * 2.0f) / 3.0f;
+				GuiToggleGroup({ cx - 200.0f, 360.0f, diffItemW, 30.0f }, "Easy;Medium;Hard",
 				               &diffActive);
 				if (diffActive < 0 || diffActive > 2)
 				{
