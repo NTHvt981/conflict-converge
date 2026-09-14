@@ -573,7 +573,7 @@ pair of homes plus a commander that fights *for* the player. Targeting,
 victory, and fog were already team-based, so no combat/outcome changes.
 
 ### Goals
-- [x] `data/twin_falls_2v2.map` (28x20, two `1` + two `2` markers, center river with a bridge gap, per-side + contested nodes)
+- [x] `data/maps/twin_falls_2v2.map` (28x20, two `1` + two `2` markers, center river with a bridge gap, per-side + contested nodes)
 - [x] `SpotsForMap` 2v2 detection (`is2v2`, `allyHome`, `enemyHome2`; single-pair maps stay on the 1v1 path)
 - [x] `AICommander::Reset` takes the team (safe: factory spawns and building placement consume `teamID_` per call, factory itself is team-free)
 - [x] `Game` owns `allyAI` (team 0) + `enemyAI2` (team 1): armed by `BuildSkirmish` only on 2v2 maps, ticked only while fielding units, re-armed bare by the load path

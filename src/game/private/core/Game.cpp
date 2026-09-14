@@ -403,7 +403,7 @@ void Game::Update()
             DrawText("real-time strategy demo", static_cast<int>(cx) - 140, 175, 20, GRAY);
             if (GuiButton({ cx - 130.0f, 245.0f, 260.0f, 40.0f }, "Start Skirmish"))
             {
-                menu.OpenSetup(ListMaps("data"));
+                menu.OpenSetup(ListMaps("data/maps"));
                 Announce(EventType::MenuAction);
             }
             if (GuiButton({ cx - 130.0f, 295.0f, 260.0f, 40.0f }, "Load Game"))
@@ -532,7 +532,7 @@ void Game::Update()
                     if (LoadWorld(worldState, slotPaths[i]))
                     {
                         const SkirmishSpots spots = SpotsForMap(
-                            worldMapPath.empty() ? "data/crossroads.map" : worldMapPath);
+                            worldMapPath.empty() ? "data/maps/crossroads.map" : worldMapPath);
                         ai.Reset(menu.setup.difficulty, spots.aiHome, spots.playerHome, 1);
                         if (spots.is2v2)
                         {

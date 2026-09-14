@@ -78,12 +78,12 @@ void RunMenuTests()
     CC_CHECK(boot.state == MenuState::MainMenu);
 
     MapEntry cross;
-    cross.path = "data/crossroads.map";
+    cross.path = "data/maps/crossroads.map";
     cross.name = "Crossroads";
     cross.width = 24;
     cross.height = 18;
     MapEntry basins;
-    basins.path = "data/twin_basins.map";
+    basins.path = "data/maps/twin_basins.map";
     basins.name = "Twin Basins";
     basins.width = 24;
     basins.height = 18;

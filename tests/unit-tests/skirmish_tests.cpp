@@ -26,8 +26,8 @@ namespace
 
 std::string ShippedMap(const std::string &name)
 {
-    const std::string candidates[] = { "data/" + name, "../../data/" + name,
-                                       "../../../data/" + name };
+    const std::string candidates[] = { "data/maps/" + name, "../../data/maps/" + name,
+                                       "../../../data/maps/" + name };
     for (const std::string &path : candidates)
     {
         MapData probe;

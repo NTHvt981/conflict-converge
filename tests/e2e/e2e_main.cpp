@@ -97,7 +97,7 @@ void ScenarioStartAndSimulate()
     game.Init();
     MenuFlow &menu = game.E2EMenu();
     CC_CHECK(menu.state == MenuState::MainMenu);
-    menu.OpenSetup(ListMaps("data"));
+    menu.OpenSetup(ListMaps("data/maps"));
     CC_CHECK(menu.state == MenuState::SkirmishSetup);
     CC_CHECK(!menu.setup.maps.empty());
     menu.SelectMap(0);
@@ -121,7 +121,7 @@ void ScenarioOutcomes()
     Game game;
     game.Init();
     MenuFlow &menu = game.E2EMenu();
-    menu.OpenSetup(ListMaps("data"));
+    menu.OpenSetup(ListMaps("data/maps"));
     menu.SelectMap(0);
     CC_CHECK(game.E2EStartSelectedMatch());
     RazeTeamBuildings(game.E2ERegistry(), game.E2EMap(), 1);
@@ -159,7 +159,7 @@ void ScenarioOutcomes()
     game.E2EQuitToMenu();
     CC_CHECK(!game.IsWorldActive());
     CC_CHECK(menu.state == MenuState::MainMenu);
-    menu.OpenSetup(ListMaps("data"));
+    menu.OpenSetup(ListMaps("data/maps"));
     menu.SelectMap(0);
     CC_CHECK(game.E2EStartSelectedMatch());
     CC_CHECK(game.IsWorldActive());
@@ -178,7 +178,7 @@ void ScenarioAlliedAI()
     Game game;
     game.Init();
     MenuFlow &menu = game.E2EMenu();
-    menu.OpenSetup(ListMaps("data"));
+    menu.OpenSetup(ListMaps("data/maps"));
     const int twinFalls = FindMap(menu, "Twin Falls 2v2");
     CC_CHECK(twinFalls >= 0);
     if (twinFalls >= 0)

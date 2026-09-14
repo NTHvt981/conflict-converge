@@ -71,12 +71,12 @@ bool Reachable(const TileMap &map, cc::IVec2 from, cc::IVec2 to)
     return false;
 }
 
-// Shipped maps live in data/ at repo root; the test binary may run from
+// Shipped maps live in data/maps at repo root; the test binary may run from
 // repo root or prj/bin/<Config>, so probe both relative spellings.
 bool LoadShipped(const std::string &name, MapData &out)
 {
-    const std::string candidates[] = { "data/" + name, "../../data/" + name,
-                                       "../../../data/" + name };
+    const std::string candidates[] = { "data/maps/" + name, "../../data/maps/" + name,
+                                       "../../../data/maps/" + name };
     for (const std::string &path : candidates)
     {
         if (ParseMapFile(path, out))
@@ -316,8 +316,8 @@ void RunMapFileTests()
     std::remove(savePath.c_str());
     std::remove(good.c_str());
 
-    // --- M14: ListMaps enumerates the shipped data/ dir for setup ---
-    const std::string dataDirs[] = { "data", "../../data", "../../../data" };
+    // --- M14: ListMaps enumerates the shipped data/maps dir for setup ---
+    const std::string dataDirs[] = { "data/maps", "../../data/maps", "../../../data/maps" };
     std::string dataDir;
     for (const std::string &dir : dataDirs)
     {
