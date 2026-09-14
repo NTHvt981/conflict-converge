@@ -18,6 +18,28 @@ float Clamp01(float v)
 
 const char *kAssetDir = "data/audio/";
 
+// Minimum seconds between two plays of the same sound. The game loop
+// retriggers combat sounds unconditionally (Explosion on every death-frame,
+// Attack every 0.12s while anything winds up, Confirm per production spawn),
+// so without floors a battle is a 60Hz retrigger roar (recorded playtest:
+// "sound spam"). One-shots and edge-triggered UI sounds stay at 0.
+double MinIntervalSeconds(SfxId id)
+{
+    switch (id)
+    {
+    case SfxId::Explosion:
+        return 0.30;
+    case SfxId::Confirm:
+        return 0.20;
+    case SfxId::Attack:
+        return 0.10; // backstop under the caller's 0.12s gate
+    case SfxId::Select:
+        return 0.05;
+    default:
+        return 0.0; // Place/Deplete/Victory/Defeat: rare by construction
+    }
+}
+
 } // namespace
 
 const char *Audio::FileFor(SfxId id)
@@ -61,6 +83,10 @@ bool Audio::Init(bool withDevice)
     music_ = LoadMusicStream((std::string(kAssetDir) + "music_loop.wav").c_str());
     music_.looping = true;
     ready_ = true;
+    for (int i = 0; i < static_cast<int>(SfxId::Count); ++i)
+    {
+        lastPlay_[i] = -1.0e9; // first play of each sound always lands
+    }
     ApplySettings(master_, musicVol_, sfx_, muted_);
     return true;
 }
@@ -98,8 +124,27 @@ void Audio::Play(SfxId id)
     {
         return;
     }
+    if (!ShouldPlay(id, GetTime()))
+    {
+        return; // retrigger floor: swallowed, not stacked
+    }
     SetSoundVolume(sounds_[i], sfx_);
     PlaySound(sounds_[i]);
+}
+
+bool Audio::ShouldPlay(SfxId id, double now)
+{
+    const int i = static_cast<int>(id);
+    if (i < 0 || i >= static_cast<int>(SfxId::Count))
+    {
+        return false;
+    }
+    if (now - lastPlay_[i] < MinIntervalSeconds(id))
+    {
+        return false;
+    }
+    lastPlay_[i] = now;
+    return true;
 }
 
 void Audio::UpdateMusic()

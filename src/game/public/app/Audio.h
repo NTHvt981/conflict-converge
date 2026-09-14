@@ -15,7 +15,7 @@ enum class SfxId
 {
     Select,   // unit selected
     Confirm,  // order acknowledged / unit produced
-    Attack,   // strike telegraph (rate-limited by the caller)
+    Attack,   // strike telegraph (caller 0.12s gate + Audio floor backstop)
     Explosion, // unit destroyed
     Place,    // building placed
     Deplete,  // resource node exhausted
@@ -35,6 +35,12 @@ public:
 
     bool IsReady() const;
     void Play(SfxId id); // no-op unless ready
+    // Per-sound retrigger floor (seconds since the same id last played).
+    // Pure on (id, now): the headless-testable half of Play, which feeds it
+    // GetTime(). True on first call ever (last-play starts at -infinity).
+    // Victory/Defeat always return true: one-shots must never be swallowed.
+    // Out-of-range ids always return false.
+    bool ShouldPlay(SfxId id, double now);
     void UpdateMusic();  // pump the stream; call every frame when ready
 
     // Volumes in 0..1 (clamped); mute zeroes the master output.
@@ -56,4 +62,7 @@ private:
     float musicVol_ = 0.8f;
     float sfx_ = 1.0f;
     bool muted_ = false;
+    // Last-play timestamps (seconds, same clock as ShouldPlay's now) for
+    // the retrigger floors. See MinIntervalSeconds in Audio.cpp.
+    double lastPlay_[static_cast<int>(SfxId::Count)] = {};
 };

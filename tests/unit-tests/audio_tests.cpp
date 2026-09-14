@@ -65,4 +65,27 @@ void RunAudioTests()
         CC_CHECK(settings.sfxVolume == 1.0f);
         CC_CHECK(!settings.mute);
     }
+
+    // --- per-sound rate limiting: combat retrigger storms collapse ---
+    // (Game::Update plays Explosion on every death-frame and Attack every
+    // 0.12s while anything winds up; without floors that is a 60Hz roar.)
+    {
+        Audio audio;
+        CC_CHECK(audio.ShouldPlay(SfxId::Explosion, 100.0));
+        CC_CHECK(!audio.ShouldPlay(SfxId::Explosion, 100.1));
+        CC_CHECK(!audio.ShouldPlay(SfxId::Explosion, 100.29));
+        CC_CHECK(audio.ShouldPlay(SfxId::Explosion, 100.31));
+        CC_CHECK(audio.ShouldPlay(SfxId::Confirm, 50.0));
+        CC_CHECK(!audio.ShouldPlay(SfxId::Confirm, 50.1));
+        CC_CHECK(audio.ShouldPlay(SfxId::Confirm, 50.25));
+        // Victory/Defeat are never throttled (one-shots must always land).
+        CC_CHECK(audio.ShouldPlay(SfxId::Victory, 0.0));
+        CC_CHECK(audio.ShouldPlay(SfxId::Victory, 0.0));
+        CC_CHECK(audio.ShouldPlay(SfxId::Defeat, 0.0));
+        // Floors are per-sound: Attack plays even right after an Explosion.
+        CC_CHECK(audio.ShouldPlay(SfxId::Attack, 100.15));
+        // Out-of-range ids never play, never crash.
+        CC_CHECK(!audio.ShouldPlay(static_cast<SfxId>(-1), 100.0));
+        CC_CHECK(!audio.ShouldPlay(SfxId::Count, 100.0));
+    }
 }
