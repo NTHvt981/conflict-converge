@@ -43,6 +43,17 @@ public:
     // Convenience for main(): Init + loop + Shutdown.
     int Run();
 
+    // E2E driver seam (tests/e2e only): the hidden-window harness drives
+    // the real loop without a human. The game and unit tests never touch
+    // these; they forward to the same private paths the GUI buttons use.
+    MenuFlow &E2EMenu();
+    Registry &E2ERegistry();
+    TileMap &E2EMap();
+    bool IsWorldActive() const;
+    // SelectedMap + difficulty -> StartMatch; false when nothing selected.
+    bool E2EStartSelectedMatch();
+    void E2EQuitToMenu();
+
 private:
     void Announce(EventType type);
     void StartMatch(const std::string &mapPath, AIDifficulty difficulty);
@@ -75,6 +86,12 @@ private:
     InputManager input;
 
     bool worldActive = false;
+    // 2v2 overflow commanders tick only in 2v2 matches. NEVER gate them on
+    // unit counts: parked commanders share teams with live units (allyAI is
+    // team 0 like the player), so a count guard wakes them in 1v1 — where
+    // the ally would then order the player's army and spawn free units at
+    // the origin (found by e2e: phantom scouts at (0,3), hijacked mop-up).
+    bool worldIs2v2 = false;
     AIDifficulty worldDifficulty = AIDifficulty::Medium;
     std::string worldMapPath;
 

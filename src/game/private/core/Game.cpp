@@ -94,6 +94,7 @@ void Game::Init()
     // bindings stay valid across matches.
     // M14: match session — nothing simulates or renders until Start.
     worldActive = false;
+    worldIs2v2 = false;
     worldDifficulty = AIDifficulty::Medium;
     worldMapPath.clear(); // map the active match was seeded from
     settingRally = false;
@@ -117,12 +118,52 @@ void Game::Announce(EventType type)
 
 // M14: (re)start a skirmish from the setup screen: seed the world, reset
 // every per-match poll, and announce the match.
+MenuFlow &Game::E2EMenu()
+{
+    return menu;
+}
+
+Registry &Game::E2ERegistry()
+{
+    return registry;
+}
+
+TileMap &Game::E2EMap()
+{
+    return map;
+}
+
+bool Game::IsWorldActive() const
+{
+    return worldActive;
+}
+
+// Same path as the setup screen's "Start match" button (Menu.cpp dispatch).
+bool Game::E2EStartSelectedMatch()
+{
+    if (const MapEntry *sel = menu.setup.SelectedMap(); sel != nullptr)
+    {
+        if (menu.StartMatch())
+        {
+            StartMatch(sel->path, menu.setup.difficulty);
+            return true;
+        }
+    }
+    return false;
+}
+
+void Game::E2EQuitToMenu()
+{
+    QuitToMenu();
+}
+
 void Game::StartMatch(const std::string &mapPath, AIDifficulty difficulty)
 {
     BuildSkirmish(skirmish, mapPath, difficulty);
     worldMapPath = mapPath;
     worldDifficulty = difficulty;
     worldActive = true;
+    worldIs2v2 = SpotsForMap(mapPath).is2v2;
     settingRally = false;
     dragging = false;
     lastBuildingCount = 0;
@@ -142,6 +183,7 @@ void Game::QuitToMenu()
 {
     ResetSkirmish(skirmish);
     worldActive = false;
+    worldIs2v2 = false;
     Announce(EventType::MenuAction);
     menu.OpenMainMenu();
 }
@@ -503,6 +545,7 @@ void Game::Update()
                         rallyPos = camera.view.target;
                         worldDifficulty = menu.setup.difficulty;
                         worldActive = true;
+                        worldIs2v2 = spots.is2v2;
                         settingRally = false;
                         dragging = false;
                         lastBuildingCount = 0;
@@ -742,15 +785,11 @@ void Game::Update()
         }
         lastQueueSize = static_cast<int>(queue.Size());
         ai.Update(dt); // M8: enemy build order, waves, scouting, retreat
-        // 2v2 overflow commanders tick only while they field units: parked
-        // commanders own nothing, so their Updates are cheap no-ops, but the
-        // guard keeps 1v1 frame profiles bit-identical.
-        if (allyAI.CombatUnitCount() + allyAI.HarvesterCount() > 0)
+        // 2v2 overflow commanders tick only in 2v2 matches (see worldIs2v2:
+        // count-gating wakes parked commanders in 1v1 via shared teams).
+        if (worldIs2v2)
         {
-            allyAI.Update(dt); // allied build order + waves beside the player
-        }
-        if (enemyAI2.CombatUnitCount() + enemyAI2.HarvesterCount() > 0)
-        {
+            allyAI.Update(dt);   // allied build order + waves beside the player
             enemyAI2.Update(dt); // second enemy front
         }
         // M6 Goal 1: periodic minimap refresh (terrain blocks + unit dots).

@@ -159,6 +159,12 @@ project "conflict-converge-test"
         "src/game/private/**.cpp",
         "src/game/private/**.cc"
     }
+
+    -- Tier-1 e2e lives in its own binary below (own main + a real window),
+    -- so it must not compile into the headless runner.
+    removefiles {
+        "tests/e2e/**"
+    }
     
     -- Include directories (same subsystem dirs as the game project)
     includedirs {
@@ -194,3 +200,59 @@ project "conflict-converge-test"
         libdirs { "deps/protobuf/build/Release" }
         links { "libprotobuf" }
     filter {}
+
+-- Tier-1 end-to-end project: the real Game loop in a hidden window
+-- (tests/e2e/e2e_main.cpp). Own binary, excluded from the default test run:
+-- it needs a GPU context and real time, so it is a local pre-commit gate.
+project "conflict-converge-e2e"
+    kind "ConsoleApp"
+    cppdialect "C++20"
+
+    dependson { "conflict-converge" }
+
+    files {
+        "tests/e2e/**.cpp",
+        "tests/e2e/**.h",
+        "tests/e2e/**.inl",
+        "src/game/private/**.cpp",
+        "src/game/private/**.cc"
+    }
+
+    includedirs {
+        "deps/raylib/src",
+        "deps/raygui/src",
+        "deps/glm",
+        "deps/protobuf/src",
+        "..",
+        "src/game/public",
+        "src/game/public/core",
+        "src/game/public/world",
+        "src/game/public/units",
+        "src/game/public/economy",
+        "src/game/public/app",
+        "tests/unit-tests"
+    }
+
+    links {
+        "raylib-static",
+        "raygui-static",
+        "opengl32",
+        "gdi32",
+        "winmm",
+        "shell32"
+    }
+
+    filter "configurations:Debug"
+        libdirs { "deps/protobuf/build/Debug" }
+        links { "libprotobufd" }
+    filter "configurations:Release"
+        libdirs { "deps/protobuf/build/Release" }
+        links { "libprotobuf" }
+    filter {}
+
+    -- Same staging as the game: data/ beside the exe for direct runs,
+    -- repo root as the VS debugger working dir.
+    debugdir "%{wks.location}/.."
+    postbuildcommands {
+        "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
+    }
