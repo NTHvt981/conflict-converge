@@ -364,7 +364,9 @@ Rationale: every system so far serves a skirmish against a scripted demo enemy. 
    - Difficulty unit tests: wave size/timers scale monotonically Easy → Hard
 
 ### Blockings
-- ⚠️ Difficulty tuning needs playtesting after initial implementation
+- ✅ Difficulty tuning resolved by the balance pass (docs/BALANCE.md Pass 2):
+  fighting-withdrawal retreats + Hard reserve mass; Easy-vs-Medium and
+  Medium-vs-Hard soaks both terminate with the favored side winning
 
 ---
 
@@ -501,7 +503,9 @@ Rationale: the order set is move-only; genre basics like attack-move, stances, a
    - AI-vs-AI soak tests assert no stalemates and decisive ends (measured ~82 sim-seconds for Easy-vs-Medium)
 
 ### Blockings
-- ⚠️ The numbers pass itself needs playtesting + AI soak runs once M8 exists
+- ✅ Numbers pass done (docs/BALANCE.md Pass 2): spreadsheet verified
+  against code, full difficulty-ladder soaks green, unit stats intentionally
+  untouched — the tune was AI behavior + arena, not numbers
 
 ---
 
@@ -589,8 +593,8 @@ victory, and fog were already team-based, so no combat/outcome changes.
 | Blocking | Required For | Resolution Needed |
 |----------|---------------|-------------------|
 | AI-generated sprite sheets | M12 | Generate unit/building/node sheets (verify licensing before shipping) |
-| Unit balance numbers | M13 | Spreadsheet pass + AI soak tests once M8 exists |
-| AI difficulty tuning | M8 | Playtesting after implementation |
+| Unit balance numbers | M13 | Resolved by the balance pass (docs/BALANCE.md Pass 2) |
+| AI difficulty tuning | M8 | Resolved by the balance pass (ladder soaks green) |
 | protoc codegen approach | M15 | Decide checked-in code vs generate step during implementation |
 
 ---

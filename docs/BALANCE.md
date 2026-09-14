@@ -54,7 +54,36 @@ Harvest: 10 iron/s or 8 oil/s per Engineer on a live node. Starting funds:
 | Medium | 2 | 5 | 30s | 20s | Infantry x2 + LightTank |
 | Hard | 3 | 4 | 15s | 15s | Infantry + LightTank + Artillery + IFV + retreats |
 
-## Pass 1 (M13): soak results
+## Pass 2 (balance milestone): full ladder proof on a representative arena
+
+- Easy-vs-Medium (24x18 corner-homes arena, fair funds): Medium wins in
+  6704 frames (~112 sim-seconds); no stalemate. The bigger arena decides
+  faster than the old 16x12 phone booth (8332f there): open ground lets
+  Medium's LightTanks kite and accumulate instead of trading at contact.
+- Medium-vs-Hard, same arena: Hard wins in 15912 frames (~265 sim-seconds);
+  no stalemate. Even attrition to ~t=180, then Hard's production compounds
+  (10-12 fielded vs 2-3) once Medium's Factory falls. Kill telemetry is
+  tracked per rung in the soak (`RunAISoak` helper).
+- Tune deltas that earned the second rung (each measured against the soak,
+  one variable at a time):
+  1. Fighting withdrawal: `RetreatTick` issued plain move orders, so damaged
+     units (full DPS — damage never scales with health) disengaged and died
+     marching home. Retreats are attack-move now: Hard withdraws fighting.
+  2. Hard masses up: new `reserveUnits` param (Hard +2 → pipeline 8 vs
+     Medium's 7). Threshold stays 4 per spec — sooner waves AND heavier ones.
+     Pipeline is still `threshold + 2 + reserve`, so Easy/Medium are untouched.
+  3. Representative arena: the 16x12 booth decided by cost-efficiency at
+     contact range, structurally negating Hard's kit (384-range artillery,
+     15s scouts, retreat micro). Soaks run on a 24x18 180-degree-symmetric
+     arena with corner homes; cap scaled 3 → 4.5 sim-minutes for the march.
+- Deliberately NOT changed: unit stats/costs/matrix (duel TTKs and
+  cost-efficiency roles verified against the table above — e.g. 8x AntiArmor
+  ≈ 1x HeavyTank on cost, decided by focus fire, as intended), node/income
+  rates, building HP.
+- Retune if playtesting disagrees; the soaks assert termination + the
+  favored-side win per rung.
+
+## Pass 1 (M13): soak results (historical — 16x12 arena, superseded by Pass 2)
 
 - Easy-vs-Medium AI skirmish (16x12 mirror arena, fair funds): Medium wins
   decisively in 4916 frames (~82 sim-seconds); no stalemate. Kill telemetry

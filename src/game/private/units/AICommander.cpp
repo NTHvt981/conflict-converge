@@ -31,6 +31,8 @@ AIDifficultyParams ParamsFor(AIDifficulty difficulty)
     case AIDifficulty::Hard:
         params.harvesters = 3;
         params.waveThreshold = 4;
+        params.reserveUnits = 2; // mass up: pipeline 8 vs Medium's 7, so the
+                                 // lower threshold attacks sooner AND heavier
         params.scoutInterval = 15.0f;
         params.relaunchCooldown = 15.0f;
         params.retreats = true;
@@ -259,7 +261,9 @@ void AICommander::MaintainProduction()
     }
     // Keep the pipeline (fielded combat units + queued builds) at threshold.
     // Queue charges upfront, so this naturally paces itself on income.
-    const int desired = params_.waveThreshold + 2;
+    // Hard masses above the line via reserveUnits (its threshold stays low
+    // per spec: sooner waves, but heavier ones).
+    const int desired = params_.waveThreshold + 2 + params_.reserveUnits;
     int pipeline = CombatUnitCount() + static_cast<int>(queue_.Size());
     int guard = 0;
     while (pipeline < desired && guard < desired)
@@ -340,7 +344,12 @@ void AICommander::RetreatTick()
         const float maxHealth = BaseStats(unit.type).health;
         if (maxHealth > 0.0f && unit.health < 0.3f * maxHealth)
         {
-            IssueMoveOrder(unit, cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
+            // Fighting withdrawal: damage does not scale with health, so a
+            // plain move order forfeits full-DPS units (measured: Hard bled
+            // out short-handed and lost the Medium-vs-Hard soak). Attack-move
+            // keeps retreating units dealing damage while they fall back.
+            IssueAttackMoveOrder(unit, map_,
+                                cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
         }
     });
 }

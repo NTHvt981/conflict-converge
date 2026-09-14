@@ -32,6 +32,7 @@ struct AIDifficultyParams
 {
     int harvesters = 2;              // Engineers to sustain on iron
     int waveThreshold = 5;           // combat units required to launch a wave
+    int reserveUnits = 0;            // extra standing army above threshold+2
     float scoutInterval = 30.0f;     // seconds between scout dispatches
     float relaunchCooldown = 20.0f;  // seconds between wave launches
     bool retreats = false;           // pull sub-30% units home (Hard only)

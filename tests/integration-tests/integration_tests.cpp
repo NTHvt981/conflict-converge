@@ -77,6 +77,73 @@ void DeployFaceoff(Registry &registry, UnitFactory &factory, UnitType type)
     }
 }
 
+// AI-vs-AI soak driver: two commanders build, harvest, wave, and scrap
+// until one team is wiped or the cap hits. Prints kill/wave telemetry every
+// 20 sim-seconds. Returns frames simulated. Death sweep mirrors the game
+// loop (corpse kill-credit by team, then destroy).
+int RunAISoak(Registry &registry, TileMap &map, ResourceNodes &nodes, AICommander &first,
+              AICommander &second, const char *label)
+{
+    int frames = 0;
+    int kills0 = 0, kills1 = 0;
+    // 4.5 sim-minutes: the Crossroads-sized arena trebles march distances
+    // vs the old phone booth, so games legitimately run longer.
+    constexpr int kCap = 16200;
+    while (CountTeam(registry, 0) > 0 && CountTeam(registry, 1) > 0 && frames < kCap)
+    {
+        first.Update(kDt);
+        second.Update(kDt);
+        nodes.Update(kDt);
+        registry.Each<Unit>([&](Entity id, Unit &unit) {
+            UpdateUnit(id, registry, map, kDt);
+        });
+        std::vector<Entity> dead;
+        registry.Each<Unit>([&](Entity id, const Unit &unit) {
+            if (unit.health <= 0.0f)
+            {
+                dead.push_back(id);
+            }
+        });
+        for (Entity id : dead)
+        {
+            if (const Unit *corpse = registry.Get<Unit>(id))
+            {
+                if (corpse->teamID == 0)
+                {
+                    ++kills0;
+                }
+                else
+                {
+                    ++kills1;
+                }
+            }
+            registry.Destroy(id);
+        }
+        ++frames;
+        if (frames % 1200 == 0)
+        {
+            std::printf("soak %s t=%ds t0=%d t1=%d kills=%d/%d waves=%d/%d\n", label, frames / 60,
+                        CountTeam(registry, 0), CountTeam(registry, 1), kills0, kills1,
+                        first.WavesLaunched(), second.WavesLaunched());
+        }
+    }
+    std::printf("soak: %s decided in %d frames\n", label, frames);
+    return frames;
+}
+
+// Mirror arena factory for soaks: Crossroads-sized (24x18) with corner
+// homes, so range, scouting, and retreats — Hard's whole kit — actually
+// matter. The old 16x12 phone booth decided by cost-efficiency alone at
+// contact range, which structurally negates artillery/scouts and flattered
+// cheap mass. Nodes and homes are 180-degree symmetric.
+void SeedSoakArena(TileMap &map, ResourceNodes &nodes)
+{
+    nodes.SpawnNode(map, ResourceKind::Iron, { 4, 13 }, 300.0f, 10.0f);
+    nodes.SpawnNode(map, ResourceKind::Oil, { 5, 11 }, 200.0f, 10.0f);
+    nodes.SpawnNode(map, ResourceKind::Iron, { 19, 4 }, 300.0f, 10.0f);
+    nodes.SpawnNode(map, ResourceKind::Oil, { 18, 6 }, 200.0f, 10.0f);
+}
+
 } // namespace
 
 void RunIntegrationTests()
@@ -177,66 +244,39 @@ void RunIntegrationTests()
         std::filesystem::remove(path, ec);
     }
 
-    // --- M13 balance soak: Easy vs Medium ends decisively, no stalemate ---
-    // Compact arena (16x12): contact in seconds, so tactics decide — not march time.
+    // --- M13 balance soak: the difficulty ladder decides games, no stalemates ---
+    // Easy-vs-Medium: Medium wins. Medium-vs-Hard: Hard wins. Same mirror
+    // arena and cap for both rungs so the frame counts compare directly.
     {
         Registry registry;
-        TileMap map(16, 12);
+        TileMap map(24, 18);
         ResourceNodes nodes;
-        nodes.SpawnNode(map, ResourceKind::Iron, { 3, 10 }, 300.0f, 10.0f);
-        nodes.SpawnNode(map, ResourceKind::Oil, { 3, 8 }, 200.0f, 10.0f);
-        nodes.SpawnNode(map, ResourceKind::Iron, { 12, 1 }, 300.0f, 10.0f);
-        nodes.SpawnNode(map, ResourceKind::Oil, { 12, 3 }, 200.0f, 10.0f);
+        SeedSoakArena(map, nodes);
         EventDispatcher events;
-        AICommander easy(registry, map, nodes, events, 0, AIDifficulty::Easy, { 2, 9 }, { 13, 2 });
-        AICommander medium(registry, map, nodes, events, 1, AIDifficulty::Medium, { 13, 2 },
-                           { 2, 9 });
+        AICommander easy(registry, map, nodes, events, 0, AIDifficulty::Easy, { 2, 15 }, { 21, 2 });
+        AICommander medium(registry, map, nodes, events, 1, AIDifficulty::Medium, { 21, 2 },
+                           { 2, 15 });
         easy.SetupBase();
         medium.SetupBase();
-        int frames = 0;
-        int kills0 = 0, kills1 = 0;
-        constexpr int kCap = 10800; // 3 sim-minutes; tightened after measuring
-        while (CountTeam(registry, 0) > 0 && CountTeam(registry, 1) > 0 && frames < kCap)
-        {
-            easy.Update(kDt);
-            medium.Update(kDt);
-            nodes.Update(kDt);
-            registry.Each<Unit>([&](Entity id, Unit &unit) {
-                UpdateUnit(id, registry, map, kDt);
-            });
-            std::vector<Entity> dead;
-            registry.Each<Unit>([&](Entity id, const Unit &unit) {
-                if (unit.health <= 0.0f)
-                {
-                    dead.push_back(id);
-                }
-            });
-            for (Entity id : dead)
-            {
-                if (const Unit *corpse = registry.Get<Unit>(id))
-                {
-                    if (corpse->teamID == 0)
-                    {
-                        ++kills0;
-                    }
-                    else
-                    {
-                        ++kills1;
-                    }
-                }
-                registry.Destroy(id);
-            }
-            ++frames;
-            if (frames % 1200 == 0)
-            {
-                std::printf("soak t=%ds t0=%d t1=%d kills=%d/%d waves=%d/%d\n", frames / 60,
-                            CountTeam(registry, 0), CountTeam(registry, 1), kills0, kills1,
-                            easy.WavesLaunched(), medium.WavesLaunched());
-            }
-        }
-        std::printf("soak: Easy-vs-Medium decided in %d frames\n", frames);
-        CC_CHECK(frames < kCap); // terminated: no stalemate
-        CC_CHECK(CountTeam(registry, 1) > 0); // Medium wins the ladder
+        const int frames = RunAISoak(registry, map, nodes, easy, medium, "Easy-vs-Medium");
+        CC_CHECK(frames < 16200); // terminated: no stalemate
+        CC_CHECK(CountTeam(registry, 1) > 0); // Medium wins the first rung
+        CC_CHECK(CountTeam(registry, 0) == 0);
+    }
+    {
+        Registry registry;
+        TileMap map(24, 18);
+        ResourceNodes nodes;
+        SeedSoakArena(map, nodes);
+        EventDispatcher events;
+        AICommander medium(registry, map, nodes, events, 0, AIDifficulty::Medium, { 2, 15 },
+                           { 21, 2 });
+        AICommander hard(registry, map, nodes, events, 1, AIDifficulty::Hard, { 21, 2 }, { 2, 15 });
+        medium.SetupBase();
+        hard.SetupBase();
+        const int frames = RunAISoak(registry, map, nodes, medium, hard, "Medium-vs-Hard");
+        CC_CHECK(frames < 16200); // terminated: no stalemate
+        CC_CHECK(CountTeam(registry, 1) > 0); // Hard wins the second rung
         CC_CHECK(CountTeam(registry, 0) == 0);
     }
 }
