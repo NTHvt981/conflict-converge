@@ -28,6 +28,19 @@ SkirmishSpots SpotsForMap(const std::string &mapPath)
     {
         spots.aiHome = data.aiSpawns[0];
     }
+    // 2v2: second markers per side arm the allied + second enemy commanders.
+    // Fallbacks keep single-pair maps on the 1v1 path (is2v2 false).
+    if (data.playerSpawns.size() >= 2 && data.aiSpawns.size() >= 2)
+    {
+        spots.allyHome = data.playerSpawns[1];
+        spots.enemyHome2 = data.aiSpawns[1];
+        spots.is2v2 = true;
+    }
+    else
+    {
+        spots.allyHome = { spots.playerHome.x, spots.playerHome.y + 10 };
+        spots.enemyHome2 = { spots.aiHome.x, spots.aiHome.y - 4 };
+    }
     for (const MapNodeSpawn &spawn : data.nodes)
     {
         if (spawn.kind == ResourceKind::Iron)
@@ -62,7 +75,15 @@ void ResetSkirmish(SkirmishWorld &world)
         // Park the commander without a base: the next Build re-arms it via
         // Reset + SetupBase, while the load path re-arms it bare (the loaded
         // world already fields the AI side).
-        world.ai->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 });
+        world.ai->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, 1);
+    }
+    if (world.allyAI != nullptr)
+    {
+        world.allyAI->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, 0);
+    }
+    if (world.enemyAI2 != nullptr)
+    {
+        world.enemyAI2->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, 1);
     }
 }
 
@@ -147,8 +168,29 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 
     // Enemy commander owns team 1 under fair rules. Its starting guard keeps
     // team 1 fielded from frame one so the outcome check never fires instantly.
-    world.ai->Reset(difficulty, spots.aiHome, spots.playerHome);
+    world.ai->Reset(difficulty, spots.aiHome, spots.playerHome, 1);
     world.ai->SetupBase();
+
+    // 2v2: the allied commander plays team 0 beside the player, and a second
+    // enemy holds the far side for team 1. Same difficulty all around; each
+    // side's guards keep both teams fielded from frame one. Shared-team
+    // economy: base income and harvest ticks are credited per team, so both
+    // ledgers on a side benefit (allies genuinely share the pool).
+    if (spots.is2v2)
+    {
+        if (world.allyAI != nullptr)
+        {
+            // SetupBase places the ally's own Base/Depot/Factory (no
+            // placeBase: that would double-place on the same anchor).
+            world.allyAI->Reset(difficulty, spots.allyHome, spots.aiHome, 0);
+            world.allyAI->SetupBase();
+        }
+        if (world.enemyAI2 != nullptr)
+        {
+            world.enemyAI2->Reset(difficulty, spots.enemyHome2, spots.playerHome, 1);
+            world.enemyAI2->SetupBase();
+        }
+    }
 
     *world.rallyPos = cc::ToRaylib(cc::TileToWorld(spots.playerHome.x + 4, spots.playerHome.y));
     world.camera->view.target = cc::ToRaylib(

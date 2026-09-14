@@ -64,6 +64,11 @@ private:
     ProductionQueue queue;
     UnitFactory factory;
     AICommander ai;
+    // 2v2 overflow commanders: allied (team 0) + second enemy (team 1).
+    // Declared after ai (same reference dependencies); parked by
+    // ResetSkirmish and armed by BuildSkirmish only on 2v2 maps.
+    AICommander allyAI;
+    AICommander enemyAI2;
     Vector2 rallyPos = {};
     SkirmishWorld skirmish;
     WorldState worldState;

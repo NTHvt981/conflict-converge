@@ -212,6 +212,35 @@ void RunMapFileTests()
         }
     }
 
+    // --- 2v2 map: two markers per side, wider dims, same guarantees ---
+    {
+        MapData falls;
+        CC_CHECK(LoadShipped("twin_falls_2v2.map", falls));
+        CC_CHECK(falls.width == 28 && falls.height == 20);
+        CC_CHECK(falls.playerSpawns.size() == 2 && falls.aiSpawns.size() == 2);
+        CC_CHECK(falls.playerSpawns[0] == cc::IVec2(3, 3));
+        CC_CHECK(falls.playerSpawns[1] == cc::IVec2(3, 16));
+        CC_CHECK(falls.aiSpawns[0] == cc::IVec2(24, 3));
+        CC_CHECK(falls.aiSpawns[1] == cc::IVec2(24, 16));
+        CC_CHECK(falls.nodes.size() >= 6); // home pairs + contested center
+        TileMap fallsMap(4, 4);
+        ResourceNodes fallsNodes;
+        CC_CHECK(ApplyMapData(falls, fallsMap, fallsNodes));
+        for (const cc::IVec2 &home :
+             { falls.playerSpawns[0], falls.playerSpawns[1] })
+        {
+            for (const cc::IVec2 &away : { falls.aiSpawns[0], falls.aiSpawns[1] })
+            {
+                CC_CHECK(Reachable(fallsMap, home, away)); // every pairing meets
+            }
+            for (const MapNodeSpawn &spawn : falls.nodes)
+            {
+                CC_CHECK(!fallsMap.IsBlocked(spawn.tile));
+                CC_CHECK(Reachable(fallsMap, home, spawn.tile));
+            }
+        }
+    }
+
     // --- demo smoke: the exact placements main.cpp uses must fit ---
     {
         MapData demo;

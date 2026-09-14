@@ -49,11 +49,13 @@ public:
     // Seed funds + place Base/Depot/Factory around homeTile + spawn one
     // starting guard (so the team is never trivially wiped at frame one).
     void SetupBase();
-    // Restart for a new match on a fresh world: difficulty, homes, timers,
-    // tracked harvesters, and the owned economy/queue reset. Reference
-    // members (registry/map/nodes/factory bindings) are untouched, so the
-    // commander's world objects must outlive it across matches.
-    void Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile);
+    // Restart for a new match on a fresh world: team, difficulty, homes,
+    // timers, tracked harvesters, and the owned economy/queue reset.
+    // Reference members (registry/map/nodes/factory bindings) are untouched,
+    // so the commander's world objects must outlive it across matches.
+    // The team is resettable because nothing team-bound lives in the
+    // commander: factory spawns and building placement take teamID_ per call.
+    void Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile, int teamID);
     // One decision tick: income, harvesters, production, waves, scouting,
     // retreat. Safe to call every frame (cheap guards inside).
     void Update(float dt);

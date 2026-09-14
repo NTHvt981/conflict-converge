@@ -21,11 +21,17 @@ class GameCamera;
 // reference bindings stay valid across matches.
 
 // Marker-derived start spots (player + AI homes, first iron node).
+// 2v2 maps carry two markers per side: allyHome is the second '1', enemyHome2
+// the second '2'. is2v2 is true only when both sides field a pair; otherwise
+// the extra homes fall back near the primary ones and no extra commander runs.
 struct SkirmishSpots
 {
     cc::IVec2 playerHome{ 2, 2 };
     cc::IVec2 aiHome{ 16, 9 };
+    cc::IVec2 allyHome{ 2, 12 };
+    cc::IVec2 enemyHome2{ 16, 5 };
     cc::IVec2 harvest{ 15, 3 };
+    bool is2v2 = false;
 };
 
 // Parse mapPath for spawn/node markers; missing or unparseable files yield
@@ -42,6 +48,10 @@ struct SkirmishWorld
     ProductionQueue *queue = nullptr;
     UnitFactory *factory = nullptr;
     AICommander *ai = nullptr;
+    // 2v2 overflow: allied commander (team 0) + second enemy (team 1).
+    // Null in 1v1 builds; BuildSkirmish only touches non-null commanders.
+    AICommander *allyAI = nullptr;
+    AICommander *enemyAI2 = nullptr;
     GameCamera *camera = nullptr;
     Vector2 *rallyPos = nullptr;
 };

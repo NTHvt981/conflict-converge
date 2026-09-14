@@ -53,7 +53,28 @@ struct Harness
     Vector2 rallyPos = {};
     AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     SkirmishWorld world{ &registry, &resources, &map, &fog, &nodes,
-                         &queue,   &factory,   &ai, &camera, &rallyPos };
+                         &queue,   &factory,   &ai, nullptr, nullptr, &camera, &rallyPos };
+};
+
+// 2v2 overflow: allied commander (team 0) + second enemy (team 1) wired
+// into the bundle; 1v1 Harness above leaves them null by default.
+struct Harness2v2
+{
+    Registry registry;
+    ResourceSystem resources;
+    TileMap map{ 20, 15 };
+    FogOfWar fog;
+    ResourceNodes nodes;
+    ProductionQueue queue;
+    EventDispatcher events;
+    UnitFactory factory{ registry, resources, events };
+    GameCamera camera;
+    Vector2 rallyPos = {};
+    AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
+    AICommander allyAI{ registry, map, nodes, events, 0, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
+    AICommander enemyAI2{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
+    SkirmishWorld world{ &registry, &resources, &map, &fog, &nodes,
+                         &queue,   &factory,   &ai, &allyAI, &enemyAI2, &camera, &rallyPos };
 };
 
 } // namespace
@@ -145,4 +166,57 @@ void RunSkirmishTests()
     CC_CHECK(game.ai.Difficulty() == AIDifficulty::Easy);
     CC_CHECK(TeamHasUnits(game.registry, 0));
     CC_CHECK(TeamHasUnits(game.registry, 1));
+
+    // --- 2v2: twin-falls markers arm the allied + second enemy commanders ---
+    const std::string falls = ShippedMap("twin_falls_2v2.map");
+    CC_CHECK(!falls.empty());
+    if (!falls.empty())
+    {
+        const SkirmishSpots f2 = SpotsForMap(falls);
+        CC_CHECK(f2.is2v2);
+        CC_CHECK(f2.allyHome == cc::IVec2(3, 16));
+        CC_CHECK(f2.enemyHome2 == cc::IVec2(24, 16));
+        // 1v1 maps stay off the 2v2 path.
+        CC_CHECK(!SpotsForMap(cross).is2v2);
+
+        Harness2v2 ally;
+        CC_CHECK(BuildSkirmish(ally.world, falls, AIDifficulty::Easy));
+        CC_CHECK(ally.allyAI.TeamID() == 0);
+        CC_CHECK(ally.enemyAI2.TeamID() == 1);
+        CC_CHECK(ally.allyAI.CombatUnitCount() > 0); // allied guard fielded
+        CC_CHECK(ally.allyAI.HasFactory());          // allied base produces
+        CC_CHECK(ally.enemyAI2.CombatUnitCount() > 0);
+        CC_CHECK(ally.enemyAI2.HasFactory());
+        CC_CHECK(TeamHasUnits(ally.registry, 0));
+        CC_CHECK(TeamHasUnits(ally.registry, 1));
+        for (int i = 0; i < 600; ++i)
+        {
+            const float dt = 1.0f / 60.0f;
+            ally.fog.Recompute(ally.registry);
+            ally.registry.Each<Unit>([&](Entity id, Unit &unit) {
+                UpdateUnit(id, ally.registry, ally.map, dt, &ally.fog);
+            });
+            UpdateBaseIncome(ally.registry, ally.resources, dt, 0);
+            ally.nodes.Update(dt);
+            ally.nodes.GatherTick(ally.registry, ally.resources, dt, 0);
+            if (ally.ai.HasFactory())
+            {
+                ally.queue.Update(ally.factory, 0, ally.rallyPos, dt);
+            }
+            ally.ai.Update(dt);
+            ally.allyAI.Update(dt);
+            ally.enemyAI2.Update(dt);
+        }
+        CC_CHECK(TeamHasUnits(ally.registry, 0));
+        CC_CHECK(TeamHasUnits(ally.registry, 1));
+        CC_CHECK(ally.allyAI.TeamID() == 0); // teams survive the sim
+        CC_CHECK(ally.enemyAI2.TeamID() == 1);
+        ResetSkirmish(ally.world);
+        CC_CHECK(!TeamHasUnits(ally.registry, 0));
+        CC_CHECK(!TeamHasUnits(ally.registry, 1));
+        CC_CHECK(ally.allyAI.WavesLaunched() == 0);
+        CC_CHECK(ally.enemyAI2.WavesLaunched() == 0);
+        CC_CHECK(ally.allyAI.TeamID() == 0); // parked, not re-teamed
+        CC_CHECK(ally.enemyAI2.TeamID() == 1);
+    }
 }

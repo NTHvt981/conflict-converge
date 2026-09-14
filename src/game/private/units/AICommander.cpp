@@ -114,10 +114,12 @@ cc::IVec2 AICommander::LastSeenEnemy() const
     return lastSeenEnemy_;
 }
 
-void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile)
+void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile,
+                        int teamID)
 {
     params_ = ParamsFor(difficulty);
     difficulty_ = difficulty;
+    teamID_ = teamID;
     homeTile_ = homeTile;
     enemyTile_ = enemyTile;
     rallyTile_ = homeTile + cc::IVec2(0, 3);

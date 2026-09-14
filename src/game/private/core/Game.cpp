@@ -40,8 +40,10 @@ Game::Game()
     // base until the first Start/Load re-arms it (BuildSkirmish runs Reset +
     // SetupBase; the load path runs Reset bare since the file fields the AI).
     , ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
+    , allyAI(registry, map, nodes, events, 0, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
+    , enemyAI2(registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
     , skirmish{ &registry, &resources, &map, &fog, &nodes,
-                &queue,   &factory,   &ai, &camera, &rallyPos }
+                &queue,   &factory,   &ai, &allyAI, &enemyAI2, &camera, &rallyPos }
     // M13: shared snapshot for the save-slot bindings.
     , worldState{ &registry, &resources, &map, &camera, &nodes, &fog }
 {
@@ -489,7 +491,15 @@ void Game::Update()
                     {
                         const SkirmishSpots spots = SpotsForMap(
                             worldMapPath.empty() ? "data/crossroads.map" : worldMapPath);
-                        ai.Reset(menu.setup.difficulty, spots.aiHome, spots.playerHome);
+                        ai.Reset(menu.setup.difficulty, spots.aiHome, spots.playerHome, 1);
+                        if (spots.is2v2)
+                        {
+                            // 2v2 save: the file already fields all three AI
+                            // sides, so all commanders re-arm bare.
+                            allyAI.Reset(menu.setup.difficulty, spots.allyHome, spots.aiHome, 0);
+                            enemyAI2.Reset(menu.setup.difficulty, spots.enemyHome2,
+                                           spots.playerHome, 1);
+                        }
                         rallyPos = camera.view.target;
                         worldDifficulty = menu.setup.difficulty;
                         worldActive = true;
@@ -732,6 +742,17 @@ void Game::Update()
         }
         lastQueueSize = static_cast<int>(queue.Size());
         ai.Update(dt); // M8: enemy build order, waves, scouting, retreat
+        // 2v2 overflow commanders tick only while they field units: parked
+        // commanders own nothing, so their Updates are cheap no-ops, but the
+        // guard keeps 1v1 frame profiles bit-identical.
+        if (allyAI.CombatUnitCount() + allyAI.HarvesterCount() > 0)
+        {
+            allyAI.Update(dt); // allied build order + waves beside the player
+        }
+        if (enemyAI2.CombatUnitCount() + enemyAI2.HarvesterCount() > 0)
+        {
+            enemyAI2.Update(dt); // second enemy front
+        }
         // M6 Goal 1: periodic minimap refresh (terrain blocks + unit dots).
         if (minimap.PollRefresh(dt))
         {

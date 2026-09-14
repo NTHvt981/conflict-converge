@@ -562,6 +562,28 @@ Rationale: Q48 chose Protocol Buffers but M7 shipped a custom `CCSV` binary for 
 
 ---
 
+## Milestone M16: 2v2 Skirmish + Allied AI
+
+Rationale: 1v1 (player vs M8 commander) is proven; team play needs a second
+pair of homes plus a commander that fights *for* the player. Targeting,
+victory, and fog were already team-based, so no combat/outcome changes.
+
+### Goals
+- [x] `data/twin_falls_2v2.map` (28x20, two `1` + two `2` markers, center river with a bridge gap, per-side + contested nodes)
+- [x] `SpotsForMap` 2v2 detection (`is2v2`, `allyHome`, `enemyHome2`; single-pair maps stay on the 1v1 path)
+- [x] `AICommander::Reset` takes the team (safe: factory spawns and building placement consume `teamID_` per call, factory itself is team-free)
+- [x] `Game` owns `allyAI` (team 0) + `enemyAI2` (team 1): armed by `BuildSkirmish` only on 2v2 maps, ticked only while fielding units, re-armed bare by the load path
+- [x] Tests: mapfile 2v2 block (dims, markers, all-pairs connectivity) + skirmish 2v2 block (guards, factories, 10s sim, reset parks); suite green (2890 checks)
+
+### Judgments
+- **Shared-team economy**: base income and harvest ticks credit per team, so both ledgers on a side benefit (allies genuinely share the pool). Chosen over per-commander ownership because buildings/units carry no owner field — only a team — and adding one would ripple through targeting, fog, and saves.
+- **2v2 auto-arms by marker count, no setup-UI change**: maps with two markers per side draft the extra commanders; the map name ("Twin Falls 2v2") advertises it. A setup toggle can come later without touching the sim.
+
+### Blockings
+- None (save format untouched — AI state was never saved)
+
+---
+
 ## Summary of Known Blockings
 
 | Blocking | Required For | Resolution Needed |
