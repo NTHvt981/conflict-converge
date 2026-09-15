@@ -48,6 +48,7 @@ void RunArtTests();
 void RunOrdersTests();
 void RunCommandUiTests();
 void RunSkirmishTests();
+void RunFootprintTests();
 
 int main()
 {
@@ -94,6 +95,7 @@ int main()
     RunOrdersTests();
     RunCommandUiTests();
     RunSkirmishTests();
+    RunFootprintTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);

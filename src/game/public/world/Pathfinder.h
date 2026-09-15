@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "MathUtils.h" // cc::IVec2, tile helpers
-#include "TileMap.h"   // blocked queries
+#include "TileMap.h"   // blocked queries, OccupancyGrid
 #include "Unit.h"      // Unit, Vector2
 
 // M3 Goal 3: tile-grid A* pathfinding. M2 orders walked straight lines and
@@ -22,7 +22,20 @@ float TerrainCost(TerrainType terrain);
 // has no tiles. start == goal yields a single-node path.
 TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal);
 
+// Phase 4: 8-directional footprint-aware A*. The search expands neighbors
+// in all 8 directions with octile heuristic. Each candidate anchor is
+// validated through OccupancyGrid::CanEnter for the unit's full footprint.
+// Returns an empty path when no valid anchor position fits the footprint.
+TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
+                           cc::IVec2 start, cc::IVec2 goal,
+                           int footprintW, int footprintH,
+                           Entity self, std::uint32_t selfGen);
+
 // Order a unit along an A* path to a world target (target snapped to its
 // tile). Clears any previous path. Falls back to a straight M2 move order
 // when no path exists, so the unit still reacts to the click.
 void IssuePathOrder(Unit &unit, const TileMap &map, Vector2 worldTarget);
+
+// Phase 4: footprint-aware path order. Uses 8-dir A* with CanEnter checks.
+void IssuePathOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
+                             Vector2 worldTarget, Entity self, std::uint32_t selfGen);

@@ -9,6 +9,7 @@
 class Registry;
 class ResourceSystem;
 class TileMap;
+class OccupancyGrid;
 class FogOfWar;
 class ResourceNodes;
 class ProductionQueue;
@@ -43,6 +44,7 @@ struct SkirmishWorld
     Registry *registry = nullptr;
     ResourceSystem *resources = nullptr;
     TileMap *map = nullptr;
+    OccupancyGrid *occ = nullptr; // Phase 4: tile occupancy
     FogOfWar *fog = nullptr;
     ResourceNodes *nodes = nullptr;
     ProductionQueue *queue = nullptr;

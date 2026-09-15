@@ -78,9 +78,25 @@ void RunRegistryTests()
     CC_CHECK(!registry.Has<Marker>(recycled));
     CC_CHECK(registry.EntityCount() == 2);
 
+    // --- generation counter: increments on recycle, stable while alive ---
+    CC_CHECK(registry.Generation(a) > 1); // recycled: gen bumped
+    const std::uint32_t genRecycled = registry.Generation(recycled);
+    CC_CHECK(genRecycled > 1);
+    // Create a fresh entity: gen is always > 0 (monotonically increasing)
+    Entity fresh = registry.Create();
+    CC_CHECK(registry.Generation(fresh) > 0);
+    const std::uint32_t genFresh = registry.Generation(fresh);
+    // Destroy + re-create: gen bumps again
+    registry.Destroy(fresh);
+    Entity reCreated = registry.Create();
+    CC_CHECK(registry.Generation(reCreated) > genFresh);
+
     // --- clear resets everything ---
     registry.Clear();
     CC_CHECK(registry.EntityCount() == 0);
     CC_CHECK(!registry.IsAlive(b));
     CC_CHECK(!registry.Has<Marker>(b));
+    // Generation resets to 1 after clear
+    Entity afterClear = registry.Create();
+    CC_CHECK(registry.Generation(afterClear) == 1);
 }

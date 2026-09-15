@@ -52,3 +52,63 @@ private:
     int height_ = 0;
     std::vector<TerrainType> tiles_;
 };
+
+// Phase 4: grid occupancy for multi-tile units and buildings.
+// Stores per-tile entity references (unit or building) with generation
+// counters so stale IDs from recycled entities are detected. Buildings
+// use a separate buildingId map since they persist across unit lifetimes.
+
+using Entity = std::uint32_t;
+inline constexpr Entity kOccEmpty = 0;
+
+struct OccEntry
+{
+    Entity entity = kOccEmpty;
+    std::uint32_t generation = 0;
+};
+
+class OccupancyGrid
+{
+public:
+    OccupancyGrid(int widthTiles, int heightTiles);
+
+    int Width() const;
+    int Height() const;
+    bool InBounds(cc::IVec2 tile) const;
+
+    // Per-tile unit occupancy (entity + generation for stale detection).
+    OccEntry GetUnit(cc::IVec2 tile) const;
+    void SetUnit(cc::IVec2 tile, Entity entity, std::uint32_t generation);
+
+    // Per-tile building ownership (separate from unit occupancy).
+    Entity GetBuilding(cc::IVec2 tile) const;
+    void SetBuilding(cc::IVec2 tile, Entity building);
+
+    // Reserve all tiles in a rectangular footprint for a unit.
+    // anchor is the top-left tile; extends toward +x/+y.
+    void ReserveFootprint(cc::IVec2 anchor, int footprintW, int footprintH,
+                          Entity entity, std::uint32_t generation);
+
+    // Release all tiles in a rectangular footprint.
+    void ReleaseFootprint(cc::IVec2 anchor, int footprintW, int footprintH);
+
+    // Check whether a unit's entire footprint can enter at anchor.
+    // Returns true only if every tile in the footprint is in-bounds,
+    // not terrain-blocked, and not occupied by another entity.
+    bool CanEnter(const TileMap &map, cc::IVec2 anchor, int footprintW, int footprintH,
+                  Entity self, std::uint32_t selfGen) const;
+
+    // Reset all occupancy (unit + building).
+    void Clear();
+
+    // Resize (clears occupancy).
+    void Resize(int widthTiles, int heightTiles);
+
+private:
+    int Index(cc::IVec2 tile) const;
+
+    int width_ = 0;
+    int height_ = 0;
+    std::vector<OccEntry> units_;
+    std::vector<Entity> buildings_;
+};

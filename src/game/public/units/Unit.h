@@ -9,6 +9,7 @@
 #include "Registry.h" // Entity / kInvalidEntity for Unit::target
 
 class TileMap; // movement queries blocked tiles; included in Unit.cpp
+class OccupancyGrid; // Phase 4: footprint-aware movement; included in Unit.cpp
 class FogOfWar;  // M9 visibility gate for acquisition; included in Unit.cpp
 
 // Forward-declared API shapes for M3 (Unit System) and M4 (Combat System).
@@ -118,6 +119,11 @@ struct Unit
     // M13: Engineer repair order (channeled, time cost only — Q83).
     bool hasRepairOrder = false;
     Entity repairTarget = kInvalidEntity;
+    // Phase 4: multi-tile footprint. 1x1 for infantry, 2x2 for vehicles.
+    // Anchor tile is the unit's logical position; the footprint extends
+    // toward +x/+y from the anchor. Occupancy and CanEnter check all tiles.
+    int footprintWidth = 1;
+    int footprintHeight = 1;
 };
 
 // M2 Goal 2: snap a unit's world position to its tile's top-left corner
@@ -150,7 +156,11 @@ void IssueRepairOrder(Unit &engineer, Entity target);
 
 // Advance one frame toward the pending order; stops snapped on arrival or
 // at the first blocked tile (TileMap::IsBlocked, out-of-bounds included).
-void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec, float dtSeconds);
+// Phase 4: when occ is non-null, checks footprint occupancy to prevent
+// stepping into occupied tiles; entity/generation identify self.
+void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec, float dtSeconds,
+                        OccupancyGrid *occ = nullptr, Entity self = 0,
+                        std::uint32_t selfGen = 0);
 
 // Overlap avoidance pass: pushes living units whose 32px bodies intersect
 // apart (half-overlap each, speed-capped per frame). Deterministic (no RNG)
@@ -166,5 +176,6 @@ void SeparateUnits(Registry &registry, float dtSeconds);
 // factory destroys and announces them).
 // M9: pass fog to gate acquisition + chase validation on visibility
 // (nullptr = ungated legacy behavior, keeps old call sites working).
+// Phase 4: pass occ for footprint-aware movement (nullptr = legacy behavior).
 void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
-                const FogOfWar *fog = nullptr);
+                const FogOfWar *fog = nullptr, OccupancyGrid *occ = nullptr);

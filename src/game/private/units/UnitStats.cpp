@@ -36,4 +36,9 @@ void ApplyBaseStats(Unit &unit)
     unit.cooldown = 0.0f;
     unit.speed = stats.speed;
     unit.sightRange = stats.sightRange;
+    // Phase 4: footprint. Infantry types are 1x1; vehicles are 2x2.
+    const bool isVehicle = unit.type == UnitType::IFV || unit.type == UnitType::Artillery ||
+                           unit.type == UnitType::LightTank || unit.type == UnitType::HeavyTank;
+    unit.footprintWidth = isVehicle ? 2 : 1;
+    unit.footprintHeight = isVehicle ? 2 : 1;
 }

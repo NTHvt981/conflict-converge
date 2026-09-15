@@ -9,10 +9,14 @@ Entity Registry::Create()
     {
         entity = free_.back();
         free_.pop_back();
+        // Bump generation so stale (entity, gen) pairs in occupancy grids
+        // are detected after recycle (docs/NOTES.md finding #2).
+        generations_[entity] = nextGen_++;
     }
     else
     {
         entity = next_++;
+        generations_[entity] = nextGen_++;
     }
     alive_.insert(entity);
     return entity;
@@ -41,6 +45,12 @@ std::size_t Registry::EntityCount() const
     return alive_.size();
 }
 
+std::uint32_t Registry::Generation(Entity entity) const
+{
+    auto it = generations_.find(entity);
+    return it == generations_.end() ? 0 : it->second;
+}
+
 void Registry::Clear()
 {
     for (auto &[type, pool] : pools_)
@@ -49,5 +59,7 @@ void Registry::Clear()
     }
     alive_.clear();
     free_.clear();
+    generations_.clear();
+    nextGen_ = 1;
     next_ = 1;
 }

@@ -4,7 +4,8 @@
 
 #include "Formation.h"
 #include "TileMap.h"
-#include "Unit.h" // Unit components under test
+#include "Unit.h"      // Unit components under test
+#include "UnitStats.h" // ApplyBaseStats
 
 #include <set>
 
@@ -78,4 +79,75 @@ void RunFormationTests()
         }
     });
     CC_CHECK(reordered == 3);
+
+    // --- Phase 7: FormationOffsetsFP ---
+    {
+        // cellSize=1 matches legacy FormationOffsets
+        const std::vector<cc::IVec2> fp1 = formation::FormationOffsetsFP(4, 1);
+        CC_CHECK(fp1.size() == 4);
+        CC_CHECK(fp1[0] == cc::IVec2(0, 0));
+        CC_CHECK(fp1[1] == cc::IVec2(1, 0));
+        CC_CHECK(fp1[2] == cc::IVec2(0, 1));
+        CC_CHECK(fp1[3] == cc::IVec2(1, 1));
+    }
+    {
+        // cellSize=2: 4 units get 2-tile spacing
+        const std::vector<cc::IVec2> fp2 = formation::FormationOffsetsFP(4, 2);
+        CC_CHECK(fp2.size() == 4);
+        CC_CHECK(fp2[0] == cc::IVec2(0, 0));
+        CC_CHECK(fp2[1] == cc::IVec2(2, 0));
+        CC_CHECK(fp2[2] == cc::IVec2(0, 2));
+        CC_CHECK(fp2[3] == cc::IVec2(2, 2));
+    }
+    {
+        // cellSize=0 or negative returns empty
+        CC_CHECK(formation::FormationOffsetsFP(4, 0).empty());
+        CC_CHECK(formation::FormationOffsetsFP(4, -1).empty());
+    }
+    {
+        // 6 units, cellSize=2: 3 columns × 2 rows, all unique
+        const std::vector<cc::IVec2> fp6 = formation::FormationOffsetsFP(6, 2);
+        CC_CHECK(fp6.size() == 6);
+        std::set<std::pair<int, int>> seen;
+        for (const auto &v : fp6)
+        {
+            seen.insert({ v.x, v.y });
+        }
+        CC_CHECK(seen.size() == 6);
+        // All offsets are multiples of 2
+        for (const auto &v : fp6)
+        {
+            CC_CHECK(v.x % 2 == 0);
+            CC_CHECK(v.y % 2 == 0);
+        }
+    }
+
+    // --- Phase 7: IssueFormationMoveFP with 2x2 vehicles ---
+    {
+        Registry fpRegistry;
+        TileMap fpMap(20, 15);
+        OccupancyGrid fpOcc(20, 15);
+        std::vector<Entity> vehicles;
+        for (int i = 0; i < 2; ++i)
+        {
+            Unit unit;
+            unit.type = UnitType::HeavyTank;
+            ApplyBaseStats(unit);
+            unit.teamID = 0;
+            unit.position = cc::ToRaylib(cc::TileToWorld(i * 3, 0));
+            vehicles.push_back(fpRegistry.Create());
+            fpRegistry.Add(vehicles.back(), unit);
+        }
+        formation::IssueFormationMoveFP(fpRegistry, vehicles, fpMap, fpOcc,
+                                        cc::ToRaylib(cc::TileToWorld(10, 10)));
+        // Both units should have orders
+        int orderedCount = 0;
+        fpRegistry.Each<Unit>([&](Entity, const Unit &unit) {
+            if (unit.hasMoveOrder || unit.hasPath)
+            {
+                ++orderedCount;
+            }
+        });
+        CC_CHECK(orderedCount == 2);
+    }
 }

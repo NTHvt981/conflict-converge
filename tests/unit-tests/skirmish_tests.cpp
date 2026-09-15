@@ -44,6 +44,7 @@ struct Harness
     Registry registry;
     ResourceSystem resources;
     TileMap map{ 20, 15 };
+    OccupancyGrid occ{ 20, 15 };
     FogOfWar fog;
     ResourceNodes nodes;
     ProductionQueue queue;
@@ -52,7 +53,7 @@ struct Harness
     GameCamera camera;
     Vector2 rallyPos = {};
     AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
-    SkirmishWorld world{ &registry, &resources, &map, &fog, &nodes,
+    SkirmishWorld world{ &registry, &resources, &map, &occ, &fog, &nodes,
                          &queue,   &factory,   &ai, nullptr, nullptr, &camera, &rallyPos };
 };
 
@@ -63,6 +64,7 @@ struct Harness2v2
     Registry registry;
     ResourceSystem resources;
     TileMap map{ 20, 15 };
+    OccupancyGrid occ{ 20, 15 };
     FogOfWar fog;
     ResourceNodes nodes;
     ProductionQueue queue;
@@ -73,7 +75,7 @@ struct Harness2v2
     AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     AICommander allyAI{ registry, map, nodes, events, 0, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     AICommander enemyAI2{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
-    SkirmishWorld world{ &registry, &resources, &map, &fog, &nodes,
+    SkirmishWorld world{ &registry, &resources, &map, &occ, &fog, &nodes,
                          &queue,   &factory,   &ai, &allyAI, &enemyAI2, &camera, &rallyPos };
 };
 

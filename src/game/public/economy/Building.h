@@ -1,5 +1,8 @@
 #pragma once
 
+#include <array>
+#include <vector>
+
 #include "MathUtils.h" // cc::IVec2
 #include "Registry.h"  // Entity, Registry
 #include "ResourceSystem.h" // UpdateBaseIncome destination
@@ -57,3 +60,15 @@ bool DemolishBuilding(Registry &registry, TileMap &map, Entity entity);
 // resources. teamID filters ownership (-1 = every team, test/demo default).
 void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float dt,
                       int teamID = -1);
+
+// Phase 5: Walkable entrance tiles adjacent to a building's footprint.
+// Returns tiles outside the footprint that are in-bounds and not blocked
+// (grass/forest). Suitable for units to stand on when entering/repairing.
+std::vector<cc::IVec2> BuildingEntrances(const TileMap &map, int tileX, int tileY,
+                                          int fpW, int fpH);
+
+// Phase 5: Attack positions around a building. Returns up to maxPositions
+// perimeter tiles distributed around the footprint. Units are spread
+// evenly across available positions so they don't all converge on one tile.
+std::vector<cc::IVec2> BuildingAttackPositions(const TileMap &map, int tileX, int tileY,
+                                                int fpW, int fpH, int maxPositions = 12);

@@ -70,6 +70,7 @@ private:
     ResourceSystem resources;
     EventDispatcher events;
     TileMap map;
+    OccupancyGrid occ; // Phase 4: unit/building tile occupancy
     FogOfWar fog;
     ResourceNodes nodes;
     ProductionQueue queue;

@@ -301,7 +301,7 @@ bool EngageTarget(Unit &attacker, Registry &registry, TileMap &map, Entity id,
 }
 
 void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
-                const FogOfWar *fog)
+                const FogOfWar *fog, OccupancyGrid *occ)
 {
     Unit *unit = registry.Get<Unit>(self);
     if (unit == nullptr || unit->health <= 0.0f)
@@ -344,7 +344,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
             {
                 IssuePathOrder(*unit, map, cc::ToRaylib(cc::TileToWorld(goalTile.x, goalTile.y)));
             }
-            UpdateUnitMovement(*unit, map, unit->speed, dtSeconds);
+            UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self, registry.Generation(self));
             unit->state = UnitState::Moving;
             return;
         }
@@ -390,7 +390,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
                     return; // orders intact: the march resumes after the kill
                 }
                 IssuePathOrder(*unit, map, TargetPosition(registry, unit->target)); // detour
-                UpdateUnitMovement(*unit, map, unit->speed, dtSeconds);
+                UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self, registry.Generation(self));
                 unit->state = UnitState::Moving;
                 return;
             }
@@ -414,7 +414,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
                 return;
             }
         }
-        UpdateUnitMovement(*unit, map, unit->speed, dtSeconds);
+        UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self, registry.Generation(self));
         return;
     }
 
@@ -480,7 +480,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     {
         IssuePathOrder(*unit, map, aimPos);
     }
-    UpdateUnitMovement(*unit, map, unit->speed, dtSeconds);
+    UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self, registry.Generation(self));
 }
 
 namespace
@@ -494,7 +494,11 @@ enum class StepResult
 };
 
 // Advance pos toward target by at most step; reports (not applies) arrival.
-StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &map, cc::Vec2 &outNext)
+// Phase 4: when occ is non-null, checks footprint occupancy to prevent
+// stepping into tiles occupied by other entities.
+StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &map, cc::Vec2 &outNext,
+                      OccupancyGrid *occ = nullptr, Entity self = 0, std::uint32_t selfGen = 0,
+                      int footprintW = 1, int footprintH = 1)
 {
     const cc::Vec2 diff = target - pos;
     const float dist = glm::length(diff);
@@ -514,6 +518,15 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
     if (map.IsBlocked(to) && to != from)
     {
         return StepResult::Blocked;
+    }
+    // Phase 4: occupancy check — reject moves into tiles occupied by other
+    // entities (full footprint check for multi-tile units).
+    if (occ != nullptr && to != from)
+    {
+        if (!occ->CanEnter(map, to, footprintW, footprintH, self, selfGen))
+        {
+            return StepResult::Blocked;
+        }
     }
     outNext = next;
     return StepResult::Stepped;
@@ -544,7 +557,8 @@ void CancelAtBlocked(Unit &unit)
 
 } // namespace
 
-void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec, float dtSeconds)
+void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec, float dtSeconds,
+                        OccupancyGrid *occ, Entity self, std::uint32_t selfGen)
 {
     if (!unit.hasMoveOrder && !unit.hasPath)
     {
@@ -570,7 +584,8 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         const cc::IVec2 node = unit.path[unit.pathNext];
         const cc::Vec2 waypoint = cc::TileToWorld(node.x, node.y);
         cc::Vec2 next = cc::ToGlm(unit.position);
-        switch (StepToward(cc::ToGlm(unit.position), waypoint, step, map, next))
+        switch (StepToward(cc::ToGlm(unit.position), waypoint, step, map, next,
+                           occ, self, selfGen, unit.footprintWidth, unit.footprintHeight))
         {
         case StepResult::Arrived:
             unit.position = cc::ToRaylib(waypoint);
@@ -599,7 +614,8 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
 
     // M2 straight-line fallback (no path, or path exhausted its order).
     cc::Vec2 next = cc::ToGlm(unit.position);
-    switch (StepToward(cc::ToGlm(unit.position), cc::ToGlm(unit.moveTarget), step, map, next))
+    switch (StepToward(cc::ToGlm(unit.position), cc::ToGlm(unit.moveTarget), step, map, next,
+                       occ, self, selfGen, unit.footprintWidth, unit.footprintHeight))
     {
     case StepResult::Arrived:
         // Arrival: land exactly on the snapped destination.

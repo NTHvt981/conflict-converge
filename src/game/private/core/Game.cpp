@@ -35,6 +35,7 @@ const char *DifficultyName(AIDifficulty difficulty)
 
 Game::Game()
     : map(20, 15)
+    , occ(20, 15)
     , factory(registry, resources, events)
     // M8: enemy commander owns team 1 under fair rules. Parked without a
     // base until the first Start/Load re-arms it (BuildSkirmish runs Reset +
@@ -42,7 +43,7 @@ Game::Game()
     , ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
     , allyAI(registry, map, nodes, events, 0, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
     , enemyAI2(registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
-    , skirmish{ &registry, &resources, &map, &fog, &nodes,
+    , skirmish{ &registry, &resources, &map, &occ, &fog, &nodes,
                 &queue,   &factory,   &ai, &allyAI, &enemyAI2, &camera, &rallyPos }
     // M13: shared snapshot for the save-slot bindings.
     , worldState{ &registry, &resources, &map, &camera, &nodes, &fog }
@@ -664,8 +665,21 @@ void Game::Update()
         }
         // M9: rebuild visibility from current positions before anyone acquires.
         fog.Recompute(registry);
+        // Phase 4: reserve each unit's current anchor tile before movement,
+        // so StepToward's CanEnter check prevents two units from entering
+        // the same tile. Release old reservation first to handle units that
+        // moved to a new tile since last frame.
         registry.Each<Unit>([&](Entity id, Unit &unit) {
-            UpdateUnit(id, registry, map, GetFrameTime(), &fog); // M3G5 driver (+M9 fog gate)
+            if (unit.health > 0.0f)
+            {
+                const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(unit.position));
+                occ.ReleaseFootprint(anchor, unit.footprintWidth, unit.footprintHeight);
+                occ.ReserveFootprint(anchor, unit.footprintWidth, unit.footprintHeight,
+                                     id, registry.Generation(id));
+            }
+        });
+        registry.Each<Unit>([&](Entity id, Unit &unit) {
+            UpdateUnit(id, registry, map, GetFrameTime(), &fog, &occ); // M3G5 driver (+M9 fog gate, Phase 4 occ)
         });
         // Overlap avoidance: fan out stacked bodies after the AI driver.
         SeparateUnits(registry, GetFrameTime());
@@ -688,6 +702,9 @@ void Game::Update()
                 art.ParticlesPool().SpawnBurst(
                     { corpse->position.x + 32.0f, corpse->position.y + 32.0f }, ORANGE, 24,
                     120.0f, 0.6f);
+                // Phase 4: release occupancy tiles before teardown.
+                const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(corpse->position));
+                occ.ReleaseFootprint(anchor, corpse->footprintWidth, corpse->footprintHeight);
             }
             factory.DestroyUnit(id);
         }
@@ -937,7 +954,7 @@ void Game::Update()
     // red-ringed when selected, tracer to the target when Attacking (M3G5),
     // white-flashed with a damage number while hitFlashTime runs (M4G5).
     // Selected units also get a health bar (M6 Goal 4).
-    registry.Each<Unit>([&](Entity, Unit &unit) {
+    registry.Each<Unit>([&](Entity id, Unit &unit) {
         // M9: enemies render only on tiles team 0 currently sees.
         if (unit.teamID != 0 &&
             !fog.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit.position))))
@@ -952,7 +969,15 @@ void Game::Update()
         }
         else
         {
-            art.DrawUnit(unit.type, unit.teamID, FrameForPhase(unit.phase), unit.position);
+            // Phase 14: infantry draws as a squad cluster; vehicles draw
+            // as a single sprite (count == 1, offset {0,0}).
+            std::array<Vector2, 6> slots;
+            const int count = SquadSlots(unit.type, id, UnitHealthFraction(unit), slots);
+            for (int i = 0; i < count; ++i)
+            {
+                art.DrawUnit(unit.type, unit.teamID, FrameForPhase(unit.phase),
+                             { unit.position.x + slots[i].x, unit.position.y + slots[i].y });
+            }
         }
         if (unit.isSelected)
         {

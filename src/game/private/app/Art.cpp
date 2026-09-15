@@ -19,6 +19,61 @@ UnitFrame FrameForPhase(AttackPhase phase)
     return UnitFrame::Idle;
 }
 
+// Phase 14: deterministic hash for per-entity jitter (no RNG, no save state).
+static unsigned int HashId(unsigned int id)
+{
+    id = ((id >> 16) ^ id) * 0x45d9f3b;
+    id = ((id >> 16) ^ id) * 0x45d9f3b;
+    id = (id >> 16) ^ id;
+    return id;
+}
+
+int SquadSlots(UnitType type, unsigned int id, float healthFraction,
+               std::array<Vector2, 6> &outOffsets)
+{
+    // Only foot types get the squad visual.
+    if (type != UnitType::Infantry && type != UnitType::AntiArmorInfantry &&
+        type != UnitType::Engineer)
+    {
+        outOffsets[0] = { 0.0f, 0.0f };
+        return 1;
+    }
+
+    // Soldier count from health: 6 at >83%, 5 at >67%, 4 at >50%,
+    // 3 at >33%, 2 at >17%, 1 otherwise.
+    int count;
+    if (healthFraction > 0.83f)
+        count = 6;
+    else if (healthFraction > 0.67f)
+        count = 5;
+    else if (healthFraction > 0.50f)
+        count = 4;
+    else if (healthFraction > 0.33f)
+        count = 3;
+    else if (healthFraction > 0.17f)
+        count = 2;
+    else
+        count = 1;
+
+    // Fixed 6-slot layout: two rows of 3, centered around (16,16) within
+    // the 32x32 body inset. Offsets stay inside ±12px from center.
+    constexpr float kBaseOffsets[6][2] = {
+        { -8.0f, -8.0f }, { 0.0f, -8.0f }, { 8.0f, -8.0f },
+        { -8.0f,  4.0f }, { 0.0f,  4.0f }, { 8.0f,  4.0f }
+    };
+
+    const unsigned int h = HashId(id);
+    for (int i = 0; i < count; ++i)
+    {
+        // Deterministic jitter: ±2px per axis, derived from id + slot index.
+        const unsigned int jitter = HashId(h + static_cast<unsigned int>(i));
+        const float jx = static_cast<float>((jitter & 0x7) - 3); // -3..+4 -> approx ±2
+        const float jy = static_cast<float>(((jitter >> 3) & 0x7) - 3);
+        outOffsets[i] = { kBaseOffsets[i][0] + jx, kBaseOffsets[i][1] + jy };
+    }
+    return count;
+}
+
 void Particles::SpawnBurst(Vector2 center, Color color, int count, float speed, float life)
 {
     for (int i = 0; i < count && live_.size() < kMax; ++i)

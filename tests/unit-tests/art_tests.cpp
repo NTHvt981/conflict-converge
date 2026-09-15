@@ -68,4 +68,37 @@ void RunArtTests()
         art.Shutdown(); // safe without Init(true)
         CC_CHECK(art.UseRectangles());
     }
+
+    // --- Phase 14: SquadSlots ---
+    {
+        std::array<Vector2, 6> offsets;
+
+        // Infantry at full health → 6 soldiers
+        const int infCount = SquadSlots(UnitType::Infantry, 42, 1.0f, offsets);
+        CC_CHECK(infCount == 6);
+        // All 6 offsets must be non-identical (spaced apart)
+        CC_CHECK(offsets[0].x != offsets[3].x || offsets[0].y != offsets[3].y);
+
+        // Infantry at 40% health → 3 soldiers
+        const int midCount = SquadSlots(UnitType::Infantry, 42, 0.40f, offsets);
+        CC_CHECK(midCount == 3);
+
+        // Infantry at 5% health → 1 soldier
+        const int lowCount = SquadSlots(UnitType::Infantry, 42, 0.05f, offsets);
+        CC_CHECK(lowCount == 1);
+
+        // Non-infantry always returns 1 with offset {0,0}
+        std::array<Vector2, 6> vOffsets;
+        const int tankCount = SquadSlots(UnitType::HeavyTank, 99, 1.0f, vOffsets);
+        CC_CHECK(tankCount == 1);
+        CC_CHECK(vOffsets[0].x == 0.0f);
+        CC_CHECK(vOffsets[0].y == 0.0f);
+
+        // Deterministic: same id + health → same offsets
+        std::array<Vector2, 6> a, b;
+        SquadSlots(UnitType::Infantry, 77, 0.90f, a);
+        SquadSlots(UnitType::Infantry, 77, 0.90f, b);
+        CC_CHECK(a[0].x == b[0].x);
+        CC_CHECK(a[0].y == b[0].y);
+    }
 }

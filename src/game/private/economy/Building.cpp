@@ -124,3 +124,55 @@ void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float
                              kBaseOilPerSecond * static_cast<float>(bases), dt);
     }
 }
+
+// Phase 5: entrance tiles (walkable tiles just outside the building footprint).
+std::vector<cc::IVec2> BuildingEntrances(const TileMap &map, int tileX, int tileY,
+                                          int fpW, int fpH)
+{
+    std::vector<cc::IVec2> result;
+    // Scan every tile in the one-ring around the footprint.
+    for (int y = tileY - 1; y <= tileY + fpH; ++y)
+    {
+        for (int x = tileX - 1; x <= tileX + fpW; ++x)
+        {
+            // Skip tiles inside the footprint itself.
+            if (x >= tileX && x < tileX + fpW && y >= tileY && y < tileY + fpH)
+            {
+                continue;
+            }
+            if (!map.InBounds({ x, y }))
+            {
+                continue;
+            }
+            if (map.IsBlocked({ x, y }))
+            {
+                continue;
+            }
+            result.push_back({ x, y });
+        }
+    }
+    return result;
+}
+
+// Phase 5: attack positions around the building perimeter.
+// Returns up to maxPositions evenly-spaced walkable tiles.
+std::vector<cc::IVec2> BuildingAttackPositions(const TileMap &map, int tileX, int tileY,
+                                                int fpW, int fpH, int maxPositions)
+{
+    // Collect all walkable perimeter tiles (same set as entrances).
+    auto all = BuildingEntrances(map, tileX, tileY, fpW, fpH);
+    if (all.empty() || static_cast<int>(all.size()) <= maxPositions)
+    {
+        return all;
+    }
+    // Evenly sample from the perimeter list.
+    std::vector<cc::IVec2> result;
+    result.reserve(maxPositions);
+    const float step = static_cast<float>(all.size()) / static_cast<float>(maxPositions);
+    for (int i = 0; i < maxPositions; ++i)
+    {
+        const int idx = static_cast<int>(static_cast<float>(i) * step);
+        result.push_back(all[idx]);
+    }
+    return result;
+}

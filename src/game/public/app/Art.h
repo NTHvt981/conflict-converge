@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <vector>
 
@@ -24,6 +25,15 @@ enum class UnitFrame
     Attack
 };
 UnitFrame FrameForPhase(AttackPhase phase);
+
+// Phase 14: Infantry squad visual. Returns the number of soldier sprites
+// to draw (1-6, driven by healthFraction) and fills outOffsets with that
+// many Vector2 pixel offsets from the unit's tile-corner position.
+// Deterministic per-entity (same id always produces the same layout) so it
+// doesn't need to be stored or included in save data.
+// Returns count=1 with outOffsets[0]={0,0} for non-infantry types.
+int SquadSlots(UnitType type, unsigned int id, float healthFraction,
+               std::array<Vector2, 6> &outOffsets);
 
 // CPU particle pool: impact sparks, muzzle flashes, death bursts.
 // Logic is device-independent (tested); Draw needs a live window.

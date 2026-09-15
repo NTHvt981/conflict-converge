@@ -27,6 +27,11 @@ public:
     bool IsAlive(Entity entity) const;
     std::size_t EntityCount() const;
 
+    // Generation counter: increments each time an entity ID is recycled.
+    // Occupancy grids store (entity, generation) to detect stale references
+    // after destroy+reuse (Phase 4 prerequisite, docs/NOTES.md finding #2).
+    std::uint32_t Generation(Entity entity) const;
+
     // --- component access (per-type pools) ---
     template <typename T> void Add(Entity entity, T component);
     template <typename T> bool Has(Entity entity) const;
@@ -69,6 +74,8 @@ private:
     std::unordered_map<std::type_index, std::unique_ptr<IPool>> pools_;
     std::unordered_set<Entity> alive_;
     std::vector<Entity> free_;
+    std::unordered_map<Entity, std::uint32_t> generations_;
+    std::uint32_t nextGen_ = 1;
     Entity next_ = 1;
 };
 

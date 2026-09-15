@@ -8,7 +8,7 @@
 #include "Production.h"    // Enqueue
 #include "Registry.h"      // Clear
 #include "ResourceSystem.h" // starting funds
-#include "TileMap.h"       // Resize, Set
+#include "TileMap.h"       // Resize, Set, OccupancyGrid
 #include "Unit.h"          // UnitType
 #include "UnitFactory.h"   // Spawn
 
@@ -58,6 +58,10 @@ void ResetSkirmish(SkirmishWorld &world)
     {
         world.registry->Clear();
     }
+    if (world.occ != nullptr)
+    {
+        world.occ->Clear();
+    }
     if (world.resources != nullptr)
     {
         *world.resources = ResourceSystem();
@@ -90,9 +94,9 @@ void ResetSkirmish(SkirmishWorld &world)
 bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficulty difficulty)
 {
     if (world.registry == nullptr || world.resources == nullptr || world.map == nullptr ||
-        world.fog == nullptr || world.nodes == nullptr || world.queue == nullptr ||
-        world.factory == nullptr || world.ai == nullptr || world.camera == nullptr ||
-        world.rallyPos == nullptr)
+        world.occ == nullptr || world.fog == nullptr || world.nodes == nullptr ||
+        world.queue == nullptr || world.factory == nullptr || world.ai == nullptr ||
+        world.camera == nullptr || world.rallyPos == nullptr)
     {
         return false;
     }
@@ -101,6 +105,7 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
     Registry &registry = *world.registry;
     ResourceSystem &resources = *world.resources;
     TileMap &map = *world.map;
+    OccupancyGrid &occ = *world.occ;
     FogOfWar &fog = *world.fog;
     ResourceNodes &nodes = *world.nodes;
     ProductionQueue &queue = *world.queue;
@@ -128,6 +133,7 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
         nodes.SpawnNode(map, ResourceKind::Oil, { 15, 12 }, 150.0f, 10.0f);
     }
     fog.Resize(map.Width(), map.Height());
+    occ.Resize(map.Width(), map.Height());
 
     auto spawnDemo = [&](UnitType type, int tileX, int tileY, int team) {
         // Spawn on walkable ground: the marker itself may sit inside the
@@ -136,22 +142,34 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
         factory.Spawn(type, team, cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
     };
     auto placeBase = [&](int team, cc::IVec2 anchor) {
-        PlaceBuilding(registry, map, BuildingType::Base, team, anchor.x, anchor.y);
+        const Entity base = PlaceBuilding(registry, map, BuildingType::Base, team, anchor.x, anchor.y);
+        if (base != kInvalidEntity)
+        {
+            const cc::IVec2 fp = Footprint(BuildingType::Base);
+            occ.ReserveFootprint(anchor, fp.x, fp.y, base, registry.Generation(base));
+        }
         const cc::IVec2 depotSpots[] = { { 2, 0 }, { 0, 2 }, { -1, 0 } };
         for (const cc::IVec2 &spot : depotSpots)
         {
-            if (PlaceBuilding(registry, map, BuildingType::ResourceDepot, team, anchor.x + spot.x,
-                              anchor.y + spot.y) != kInvalidEntity)
+            const Entity depot = PlaceBuilding(registry, map, BuildingType::ResourceDepot, team,
+                                               anchor.x + spot.x, anchor.y + spot.y);
+            if (depot != kInvalidEntity)
             {
+                occ.ReserveFootprint({ anchor.x + spot.x, anchor.y + spot.y }, 1, 1, depot,
+                                     registry.Generation(depot));
                 break;
             }
         }
         const cc::IVec2 factorySpots[] = { { 0, 2 }, { 3, 0 }, { -2, 2 } };
         for (const cc::IVec2 &spot : factorySpots)
         {
-            if (PlaceBuilding(registry, map, BuildingType::Factory, team, anchor.x + spot.x,
-                              anchor.y + spot.y) != kInvalidEntity)
+            const Entity fac = PlaceBuilding(registry, map, BuildingType::Factory, team,
+                                             anchor.x + spot.x, anchor.y + spot.y);
+            if (fac != kInvalidEntity)
             {
+                const cc::IVec2 fp = Footprint(BuildingType::Factory);
+                occ.ReserveFootprint({ anchor.x + spot.x, anchor.y + spot.y }, fp.x, fp.y, fac,
+                                     registry.Generation(fac));
                 break;
             }
         }
