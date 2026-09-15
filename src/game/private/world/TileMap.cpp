@@ -151,6 +151,50 @@ void OccupancyGrid::ReleaseFootprint(cc::IVec2 anchor, int footprintW, int footp
     }
 }
 
+void OccupancyGrid::ReleaseFootprintOwned(cc::IVec2 anchor, int footprintW, int footprintH,
+                                          Entity entity, std::uint32_t generation)
+{
+    for (int dy = 0; dy < footprintH; ++dy)
+    {
+        for (int dx = 0; dx < footprintW; ++dx)
+        {
+            const cc::IVec2 tile{ anchor.x + dx, anchor.y + dy };
+            if (InBounds(tile))
+            {
+                const OccEntry occ = GetUnit(tile);
+                if (occ.entity == entity && occ.generation == generation)
+                {
+                    SetUnit(tile, kOccEmpty, 0);
+                }
+            }
+        }
+    }
+}
+
+int OccupancyGrid::ReserveFootprintOwned(cc::IVec2 anchor, int footprintW, int footprintH,
+                                         Entity entity, std::uint32_t generation)
+{
+    int reserved = 0;
+    for (int dy = 0; dy < footprintH; ++dy)
+    {
+        for (int dx = 0; dx < footprintW; ++dx)
+        {
+            const cc::IVec2 tile{ anchor.x + dx, anchor.y + dy };
+            if (InBounds(tile))
+            {
+                const OccEntry occ = GetUnit(tile);
+                if (occ.entity == kOccEmpty ||
+                    (occ.entity == entity && occ.generation == generation))
+                {
+                    SetUnit(tile, entity, generation);
+                    ++reserved;
+                }
+            }
+        }
+    }
+    return reserved;
+}
+
 bool OccupancyGrid::CanEnter(const TileMap &map, cc::IVec2 anchor, int footprintW, int footprintH,
                               Entity self, std::uint32_t selfGen) const
 {

@@ -653,13 +653,15 @@ void Game::Update()
             {
                 if (Unit *ordered = registry.Get<Unit>(squad[0]))
                 {
-                    IssuePathOrder(*ordered, map, input.MouseWorld(camera));
+                    IssuePathOrderFootprint(*ordered, map, occ, input.MouseWorld(camera),
+                                            squad[0], registry.Generation(squad[0]));
                     audio.Play(SfxId::Confirm); // M11: order acknowledged
                 }
             }
             else if (!squad.empty())
             {
-                formation::IssueFormationMove(registry, squad, map, input.MouseWorld(camera));
+                formation::IssueFormationMoveFP(registry, squad, map, occ,
+                                                input.MouseWorld(camera));
                 audio.Play(SfxId::Confirm);
             }
         }
@@ -667,15 +669,17 @@ void Game::Update()
         fog.Recompute(registry);
         // Phase 4: reserve each unit's current anchor tile before movement,
         // so StepToward's CanEnter check prevents two units from entering
-        // the same tile. Release old reservation first to handle units that
-        // moved to a new tile since last frame.
+        // the same tile. Ownership-checked: a shoved unit never wipes or
+        // steals another unit's reservation, it just goes unreserved until
+        // separation pushes it clear.
         registry.Each<Unit>([&](Entity id, Unit &unit) {
             if (unit.health > 0.0f)
             {
                 const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(unit.position));
-                occ.ReleaseFootprint(anchor, unit.footprintWidth, unit.footprintHeight);
-                occ.ReserveFootprint(anchor, unit.footprintWidth, unit.footprintHeight,
-                                     id, registry.Generation(id));
+                occ.ReleaseFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight,
+                                          id, registry.Generation(id));
+                occ.ReserveFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight,
+                                          id, registry.Generation(id));
             }
         });
         registry.Each<Unit>([&](Entity id, Unit &unit) {
@@ -702,9 +706,12 @@ void Game::Update()
                 art.ParticlesPool().SpawnBurst(
                     { corpse->position.x + 32.0f, corpse->position.y + 32.0f }, ORANGE, 24,
                     120.0f, 0.6f);
-                // Phase 4: release occupancy tiles before teardown.
+                // Phase 4: release occupancy tiles before teardown (owned:
+                // a corpse shoved onto a live unit's tile must not wipe it).
                 const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(corpse->position));
-                occ.ReleaseFootprint(anchor, corpse->footprintWidth, corpse->footprintHeight);
+                occ.ReleaseFootprintOwned(anchor, corpse->footprintWidth,
+                                          corpse->footprintHeight, id,
+                                          registry.Generation(id));
             }
             factory.DestroyUnit(id);
         }

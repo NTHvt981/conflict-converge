@@ -8,7 +8,9 @@
 #include "raylib.h"    // Vector2
 
 class TileMap; // fwd-decl (Formation.cpp includes TileMap.h)
-struct OccupancyGrid; // fwd-decl
+class OccupancyGrid; // fwd-decl: class, not struct (TileMap.h defines it as
+                     // a class; struct here mangles a different symbol and
+                     // breaks the link the moment a class-first TU calls in).
 
 // M3 Goal 6: formation movement. A group ordered to a point fans out over
 // neighboring tiles (row-major grid from the anchor) so units don't stack.

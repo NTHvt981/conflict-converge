@@ -89,7 +89,11 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
         {
             continue;
         }
-        const cc::IVec2 slot = anchor + offsets[i];
+        // Slots landing on units sanitize to the nearest enterable anchor
+        // so squadmates don't all cancel against the same blocker.
+        const cc::IVec2 slot = NearestEnterableTile(
+            map, occ, anchor + offsets[i], unit->footprintWidth, unit->footprintHeight,
+            units[i], registry.Generation(units[i]));
         IssuePathOrderFootprint(*unit, map, occ,
                                 cc::ToRaylib(cc::TileToWorld(slot.x, slot.y)),
                                 units[i], registry.Generation(units[i]));

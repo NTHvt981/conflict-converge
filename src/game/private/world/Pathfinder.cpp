@@ -222,6 +222,31 @@ TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
     return TilePath(reversed.rbegin(), reversed.rend());
 }
 
+cc::IVec2 NearestEnterableTile(const TileMap &map, const OccupancyGrid &occ,
+                               cc::IVec2 want, int footprintW, int footprintH,
+                               Entity self, std::uint32_t selfGen)
+{
+    if (occ.CanEnter(map, want, footprintW, footprintH, self, selfGen))
+    {
+        return want;
+    }
+    for (int ring = 1; ring <= 5; ++ring)
+    {
+        for (int dy = -ring; dy <= ring; ++dy)
+        {
+            for (int dx = -ring; dx <= ring; ++dx)
+            {
+                const cc::IVec2 tile{ want.x + dx, want.y + dy };
+                if (occ.CanEnter(map, tile, footprintW, footprintH, self, selfGen))
+                {
+                    return tile;
+                }
+            }
+        }
+    }
+    return want;
+}
+
 void IssuePathOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
 {
     const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
@@ -242,13 +267,19 @@ void IssuePathOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
     // The first node is the unit's own tile: start walking at the next one.
     unit.pathNext = 1;
     unit.hasPath = true;
+    unit.blockedTime = 0.0f;
+    unit.blockedRepaths = 0;
 }
 
 void IssuePathOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
                              Vector2 worldTarget, Entity self, std::uint32_t selfGen)
 {
     const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
-    const cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(worldTarget)));
+    cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(worldTarget)));
+    // Clicks landing on units sanitize to the nearest enterable anchor, so
+    // the unit stops beside the blocker instead of cancelling against it.
+    goal = NearestEnterableTile(map, occ, goal, unit.footprintWidth, unit.footprintHeight,
+                                self, selfGen);
     TilePath path = FindPathFootprint(map, occ, start, goal,
                                       unit.footprintWidth, unit.footprintHeight,
                                       self, selfGen);
@@ -266,4 +297,6 @@ void IssuePathOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid
     unit.path = std::move(path);
     unit.pathNext = 1;
     unit.hasPath = true;
+    unit.blockedTime = 0.0f;
+    unit.blockedRepaths = 0;
 }

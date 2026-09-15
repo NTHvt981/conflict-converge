@@ -124,6 +124,13 @@ struct Unit
     // toward +x/+y from the anchor. Occupancy and CanEnter check all tiles.
     int footprintWidth = 1;
     int footprintHeight = 1;
+    // Blocked-move retry (transient, never saved): when a step is blocked by
+    // another unit, the order is kept and the path recomputed instead of
+    // instantly cancelled. blockedTime accrues while blocked; every retry
+    // interval the route is replanned; after the repath budget runs out the
+    // order cancels as before. Reset by every new order, arrival, and cancel.
+    float blockedTime = 0.0f;
+    int blockedRepaths = 0;
 };
 
 // M2 Goal 2: snap a unit's world position to its tile's top-left corner
@@ -154,18 +161,20 @@ void IssuePatrolOrder(Unit &unit, const TileMap &map, Vector2 pointA, Vector2 po
 // No-op unless the issuer is an Engineer.
 void IssueRepairOrder(Unit &engineer, Entity target);
 
-// Advance one frame toward the pending order; stops snapped on arrival or
-// at the first blocked tile (TileMap::IsBlocked, out-of-bounds included).
+// Advance one frame toward the pending order; stops snapped on arrival.
+// Terrain-blocked steps cancel the order immediately (M2 legacy); steps
+// blocked by another unit wait and replan a few times first, cancelling
+// only when the retry budget runs out.
 // Phase 4: when occ is non-null, checks footprint occupancy to prevent
 // stepping into occupied tiles; entity/generation identify self.
 void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec, float dtSeconds,
                         OccupancyGrid *occ = nullptr, Entity self = 0,
                         std::uint32_t selfGen = 0);
 
-// Overlap avoidance pass: pushes living units whose 32px bodies intersect
-// apart (half-overlap each, speed-capped per frame). Deterministic (no RNG)
-// so tests can assert exact spreads. Call once per frame after the
-// UpdateUnit loop; corpses are ignored.
+// Overlap avoidance pass: pushes living units whose footprint-sized bodies
+// intersect apart (half-overlap each, speed-capped per frame).
+// Deterministic (no RNG) so tests can assert exact spreads. Call once per
+// frame after the UpdateUnit loop; corpses are ignored.
 void SeparateUnits(Registry &registry, float dtSeconds);
 
 // M3 Goal 5: per-frame AI driver — Idle -> Moving -> Attacking with attack

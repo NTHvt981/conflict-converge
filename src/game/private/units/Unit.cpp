@@ -17,6 +17,8 @@ void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
 {
     unit.moveTarget = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldTarget)));
     unit.hasMoveOrder = true;
+    unit.blockedTime = 0.0f;
+    unit.blockedRepaths = 0;
     // A plain move replaces fancier orders (attack-move, repair).
     unit.attackMove = false;
     unit.hasRepairOrder = false;
@@ -488,9 +490,10 @@ namespace
 
 enum class StepResult
 {
-    Arrived, // within one step: caller snaps to target
-    Blocked, // next position enters a blocked tile: caller cancels + snaps
-    Stepped, // advanced one step toward the target
+    Arrived,    // within one step: caller snaps to target
+    Blocked,    // next position enters terrain-blocked tile: caller cancels
+    BlockedUnit,// next position enters a unit-occupied tile: caller retries
+    Stepped,    // advanced one step toward the target
 };
 
 // Advance pos toward target by at most step; reports (not applies) arrival.
@@ -520,12 +523,14 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
         return StepResult::Blocked;
     }
     // Phase 4: occupancy check — reject moves into tiles occupied by other
-    // entities (full footprint check for multi-tile units).
+    // entities (full footprint check for multi-tile units). Transient by
+    // nature (units move), so the caller waits and replans instead of
+    // cancelling like it does for permanent terrain blocks.
     if (occ != nullptr && to != from)
     {
         if (!occ->CanEnter(map, to, footprintW, footprintH, self, selfGen))
         {
-            return StepResult::Blocked;
+            return StepResult::BlockedUnit;
         }
     }
     outNext = next;
@@ -542,6 +547,8 @@ void Arrive(Unit &unit, cc::Vec2 where)
     unit.path.clear();
     unit.pathNext = 0;
     unit.state = UnitState::Idle;
+    unit.blockedTime = 0.0f;
+    unit.blockedRepaths = 0;
 }
 
 void CancelAtBlocked(Unit &unit)
@@ -552,7 +559,61 @@ void CancelAtBlocked(Unit &unit)
     unit.path.clear();
     unit.pathNext = 0;
     unit.state = UnitState::Idle;
+    unit.blockedTime = 0.0f;
+    unit.blockedRepaths = 0;
     SnapUnitToTile(unit);
+}
+
+// Blocked-move retry: a transient unit blocker shouldn't kill the order.
+// Holds position while blockedTime accrues; every retry interval the route
+// to moveTarget is replanned (footprint-aware when occ is present).
+// Returns true when the order survives (waiting, arrived via replan, or
+// replanned), false when the repath budget is spent and the caller should
+// cancel as before.
+constexpr float kBlockedRetryDelaySeconds = 0.5f;
+constexpr int kMaxBlockedRepaths = 3;
+
+bool TryBlockedRetry(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
+                     std::uint32_t selfGen, float dtSeconds)
+{
+    unit.velocity = { 0.0f, 0.0f };
+    unit.blockedTime += dtSeconds;
+    if (unit.blockedTime < kBlockedRetryDelaySeconds)
+    {
+        return true; // hold position, keep the order
+    }
+    if (unit.blockedRepaths >= kMaxBlockedRepaths)
+    {
+        return false; // budget spent: caller cancels
+    }
+    ++unit.blockedRepaths;
+    unit.blockedTime = 0.0f;
+    const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
+    const cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(unit.moveTarget)));
+    TilePath fresh;
+    if (occ != nullptr)
+    {
+        fresh = FindPathFootprint(map, *occ, start, goal, unit.footprintWidth,
+                                  unit.footprintHeight, self, selfGen);
+    }
+    else
+    {
+        fresh = FindPath(map, start, goal);
+    }
+    if (fresh.empty())
+    {
+        return true; // no route yet: keep waiting on the old waypoints
+    }
+    if (fresh.size() == 1)
+    {
+        Arrive(unit, cc::ToGlm(unit.moveTarget)); // replanned onto our own tile
+        return true;
+    }
+    unit.path = std::move(fresh);
+    unit.pathNext = 1;
+    unit.hasPath = true;
+    unit.hasMoveOrder = true;
+    return true;
 }
 
 } // namespace
@@ -600,11 +661,21 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
             }
             return;
         case StepResult::Blocked:
-            // Paths avoid blocked tiles by construction; a block here means
-            // the map changed mid-walk, so cancel rather than push through.
+            // Terrain blocks are permanent: cancel immediately (M2 legacy).
+            CancelAtBlocked(unit);
+            return;
+        case StepResult::BlockedUnit:
+            // Paths avoid occupied tiles by construction; a block here means
+            // a unit crossed mid-walk, so wait and replan a few times before
+            // cancelling rather than dying on the first transient contact.
+            if (TryBlockedRetry(unit, map, occ, self, selfGen, dtSeconds))
+            {
+                return;
+            }
             CancelAtBlocked(unit);
             return;
         case StepResult::Stepped:
+            unit.blockedTime = 0.0f; // progress: not stuck
             unit.velocity = cc::ToRaylib((waypoint - cc::ToGlm(unit.position)) /
                                          glm::length(waypoint - cc::ToGlm(unit.position)) * speedPixelsPerSec);
             unit.position = cc::ToRaylib(next);
@@ -622,10 +693,20 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         Arrive(unit, cc::ToGlm(unit.moveTarget));
         return;
     case StepResult::Blocked:
-        // Blocked: hold position, snapped, order cancelled.
+        // Terrain: hold position, snapped, order cancelled (M2 legacy).
+        CancelAtBlocked(unit);
+        return;
+    case StepResult::BlockedUnit:
+        // Units: wait and replan first; only cancel when the budget runs
+        // out (see the path branch above).
+        if (TryBlockedRetry(unit, map, occ, self, selfGen, dtSeconds))
+        {
+            return;
+        }
         CancelAtBlocked(unit);
         return;
     case StepResult::Stepped:
+        unit.blockedTime = 0.0f; // progress: not stuck
         unit.velocity = cc::ToRaylib((cc::ToGlm(unit.moveTarget) - cc::ToGlm(unit.position)) /
                                      glm::length(cc::ToGlm(unit.moveTarget) - cc::ToGlm(unit.position)) *
                                      speedPixelsPerSec);
@@ -636,9 +717,10 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
 
 void SeparateUnits(Registry &registry, float dtSeconds)
 {
-    // Body size matches the 32x32 hitbox (M4G2); the per-pair push is capped
-    // so crowds relax over frames instead of teleporting.
-    constexpr float kBody = 32.0f;
+    // Body half-extent scales with the footprint (16px per tile): 1x1 keeps
+    // the legacy 32px body (M4G2 hitbox), 2x2 vehicles push as 64px bodies
+    // so crowds of mixed sizes relax instead of interpenetrating. The
+    // per-pair push is capped so crowds relax over frames, not teleport.
     constexpr float kPushPerSecond = 96.0f;
     if (dtSeconds <= 0.0f)
     {
@@ -647,12 +729,15 @@ void SeparateUnits(Registry &registry, float dtSeconds)
     struct Item
     {
         Unit *unit = nullptr;
+        float half = 16.0f;
     };
     std::vector<Item> items;
     registry.Each<Unit>([&](Entity, Unit &unit) {
         if (unit.health > 0.0f)
         {
-            items.push_back({ &unit });
+            const int dim = unit.footprintWidth > unit.footprintHeight ? unit.footprintWidth
+                                                                       : unit.footprintHeight;
+            items.push_back({ &unit, 16.0f * static_cast<float>(dim > 0 ? dim : 1) });
         }
     });
     const float cap = kPushPerSecond * dtSeconds;
@@ -660,17 +745,21 @@ void SeparateUnits(Registry &registry, float dtSeconds)
     {
         for (std::size_t j = i + 1; j < items.size(); ++j)
         {
-            const cc::Vec2 a = cc::ToGlm(items[i].unit->position) + cc::Vec2(32.0f, 32.0f);
-            const cc::Vec2 b = cc::ToGlm(items[j].unit->position) + cc::Vec2(32.0f, 32.0f);
+            // Body spans [pos+16, pos+16+2*half]; center accordingly.
+            const cc::Vec2 a = cc::ToGlm(items[i].unit->position) +
+                               cc::Vec2(16.0f + items[i].half, 16.0f + items[i].half);
+            const cc::Vec2 b = cc::ToGlm(items[j].unit->position) +
+                               cc::Vec2(16.0f + items[j].half, 16.0f + items[j].half);
             const cc::Vec2 delta = a - b;
             const float dist = glm::length(delta);
-            if (dist >= kBody)
+            const float minDist = items[i].half + items[j].half;
+            if (dist >= minDist)
             {
                 continue;
             }
             // Exact stacks split along +x (deterministic, no RNG).
             const cc::Vec2 dir = dist > 0.001f ? delta / dist : cc::Vec2(1.0f, 0.0f);
-            float push = (kBody - dist) / 2.0f;
+            float push = (minDist - dist) / 2.0f;
             if (push > cap)
             {
                 push = cap;

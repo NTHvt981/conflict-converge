@@ -3,10 +3,13 @@
 
 #include "test_harness.h"
 
+#include "Formation.h"
 #include "Pathfinder.h"
 #include "TileMap.h"
 #include "Unit.h"
 #include "UnitStats.h"
+
+#include <set>
 
 namespace
 {
@@ -259,6 +262,215 @@ void RunFootprintTests()
         const int frames = WalkUntilIdle(unit, map, unit.speed, 1.0f / 60.0f, 300);
         CC_CHECK(!unit.hasMoveOrder);
         CC_CHECK(unit.state == UnitState::Idle);
+        CC_CHECK(frames < 300);
+    }
+
+    // --- NearestEnterableTile: goal sanitization ---
+    {
+        TileMap map(10, 10);
+        OccupancyGrid occ(10, 10);
+        // Free goal returns unchanged.
+        CC_CHECK(NearestEnterableTile(map, occ, { 5, 5 }, 1, 1, 7, 1) == cc::IVec2(5, 5));
+        // Occupied goal (other entity) shifts to an enterable neighbor.
+        occ.ReserveFootprint({ 5, 5 }, 1, 1, 9, 1);
+        const cc::IVec2 near = NearestEnterableTile(map, occ, { 5, 5 }, 1, 1, 7, 1);
+        CC_CHECK(!(near == cc::IVec2(5, 5)));
+        CC_CHECK(occ.CanEnter(map, near, 1, 1, 7, 1));
+        // Self-occupied goal stays (self-exclusion).
+        occ.ReserveFootprint({ 2, 2 }, 1, 1, 7, 1);
+        CC_CHECK(NearestEnterableTile(map, occ, { 2, 2 }, 1, 1, 7, 1) == cc::IVec2(2, 2));
+        // Nothing enterable nearby returns the request unchanged.
+        for (int y = 0; y < 10; ++y)
+        {
+            for (int x = 0; x < 10; ++x)
+            {
+                occ.ReserveFootprint({ x, y }, 1, 1, 9, 1);
+            }
+        }
+        CC_CHECK(NearestEnterableTile(map, occ, { 5, 5 }, 1, 1, 7, 1) == cc::IVec2(5, 5));
+    }
+
+    // --- IssuePathOrderFootprint: occupied goal stops beside the blocker ---
+    {
+        TileMap map(10, 10);
+        OccupancyGrid occ(10, 10);
+        Registry registry;
+        const Entity mover = registry.Create();
+        Unit unit;
+        unit.footprintWidth = 1;
+        unit.footprintHeight = 1;
+        unit.position = cc::ToRaylib(cc::TileToWorld(0, 0));
+        registry.Add(mover, unit);
+        const Entity blocker = registry.Create();
+        occ.ReserveFootprint({ 5, 5 }, 1, 1, blocker, registry.Generation(blocker));
+
+        Unit *m = registry.Get<Unit>(mover);
+        IssuePathOrderFootprint(*m, map, occ, cc::ToRaylib(cc::TileToWorld(5, 5)), mover,
+                                registry.Generation(mover));
+        CC_CHECK(m->hasPath); // routed, not straight-fallback-cancelled
+        const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(m->moveTarget));
+        CC_CHECK(!(dest == cc::IVec2(5, 5)));
+        CC_CHECK(occ.CanEnter(map, dest, 1, 1, mover, registry.Generation(mover)));
+    }
+
+    // --- IssueFormationMoveFP: slots on blockers sanitize, no shared tile ---
+    {
+        TileMap map(20, 15);
+        OccupancyGrid occ(20, 15);
+        Registry registry;
+        std::vector<Entity> squad;
+        for (int i = 0; i < 2; ++i)
+        {
+            Unit unit;
+            unit.footprintWidth = 1;
+            unit.footprintHeight = 1;
+            unit.position = cc::ToRaylib(cc::TileToWorld(i, 0));
+            squad.push_back(registry.Create());
+            registry.Add(squad.back(), unit);
+        }
+        const Entity blocker = registry.Create();
+        occ.ReserveFootprint({ 10, 10 }, 1, 1, blocker, registry.Generation(blocker));
+
+        formation::IssueFormationMoveFP(registry, squad, map, occ,
+                                        cc::ToRaylib(cc::TileToWorld(10, 10)));
+        std::set<std::pair<int, int>> dests;
+        int orderedCount = 0;
+        registry.Each<Unit>([&](Entity id, const Unit &u) {
+            if (id == blocker)
+            {
+                return;
+            }
+            if (u.hasMoveOrder || u.hasPath)
+            {
+                ++orderedCount;
+            }
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(u.moveTarget));
+            CC_CHECK(!(dest == cc::IVec2(10, 10))); // nobody drives into the blocker
+            dests.insert({ dest.x, dest.y });
+        });
+        CC_CHECK(orderedCount == 2);
+        CC_CHECK(dests.size() == 2);
+    }
+
+    // --- Owned release/reserve: nobody wipes or steals another anchor ---
+    {
+        OccupancyGrid occ(8, 8);
+        occ.ReserveFootprint({ 3, 3 }, 1, 1, 10, 1);
+        // Foreign release leaves the cell alone; owned release clears it.
+        occ.ReleaseFootprintOwned({ 3, 3 }, 1, 1, 99, 1);
+        CC_CHECK(occ.GetUnit({ 3, 3 }).entity == 10);
+        occ.ReleaseFootprintOwned({ 3, 3 }, 1, 1, 10, 2); // stale generation
+        CC_CHECK(occ.GetUnit({ 3, 3 }).entity == 10);
+        occ.ReleaseFootprintOwned({ 3, 3 }, 1, 1, 10, 1);
+        CC_CHECK(occ.GetUnit({ 3, 3 }).entity == kOccEmpty);
+        // Owned reserve stamps free cells but never clobbers another anchor.
+        occ.ReserveFootprint({ 4, 4 }, 1, 1, 10, 1);
+        CC_CHECK(occ.ReserveFootprintOwned({ 3, 3 }, 2, 2, 20, 1) == 3);
+        CC_CHECK(occ.GetUnit({ 4, 4 }).entity == 10); // untouched
+        CC_CHECK(occ.GetUnit({ 3, 3 }).entity == 20);
+        // Fully overlapped reserve takes nothing.
+        CC_CHECK(occ.ReserveFootprintOwned({ 4, 4 }, 1, 1, 30, 1) == 0);
+        CC_CHECK(occ.GetUnit({ 4, 4 }).entity == 10);
+    }
+
+    // --- Blocked retry: transient blocker waits, replans, arrives ---
+    {
+        TileMap map(10, 10);
+        OccupancyGrid occ(10, 10);
+        Registry registry;
+        const Entity mover = registry.Create();
+        Unit unit;
+        unit.footprintWidth = 1;
+        unit.footprintHeight = 1;
+        unit.speed = 120.0f;
+        unit.position = cc::ToRaylib(cc::TileToWorld(0, 0));
+        registry.Add(mover, unit);
+        const Entity blocker = registry.Create();
+
+        Unit *m = registry.Get<Unit>(mover);
+        IssuePathOrderFootprint(*m, map, occ, cc::ToRaylib(cc::TileToWorld(4, 0)), mover,
+                                registry.Generation(mover));
+        CC_CHECK(m->hasPath);
+        // Drop a blocker onto the route mid-walk (old code cancels here).
+        occ.ReserveFootprint({ 2, 0 }, 1, 1, blocker, registry.Generation(blocker));
+        int frames = 0;
+        while ((m->hasMoveOrder || m->hasPath) && frames < 1200)
+        {
+            UpdateUnitMovement(*m, map, m->speed, 1.0f / 60.0f, &occ, mover,
+                               registry.Generation(mover));
+            ++frames;
+        }
+        CC_CHECK(!m->hasMoveOrder && !m->hasPath); // arrived, not stuck
+        CC_CHECK(cc::WorldToTile(cc::ToGlm(m->position)) == cc::IVec2(4, 0));
+        CC_CHECK(frames > 60); // survived the block (instant-cancel dies ~32)
+        CC_CHECK(frames < 1200);
+    }
+
+    // --- Blocked retry: permanent wall exhausts the budget and cancels ---
+    {
+        TileMap map(10, 10);
+        OccupancyGrid occ(10, 10);
+        Registry registry;
+        const Entity mover = registry.Create();
+        Unit unit;
+        unit.footprintWidth = 1;
+        unit.footprintHeight = 1;
+        unit.speed = 120.0f;
+        unit.position = cc::ToRaylib(cc::TileToWorld(0, 0));
+        registry.Add(mover, unit);
+        const Entity wall = registry.Create();
+        const std::uint32_t wallGen = registry.Generation(wall);
+        occ.ReserveFootprint({ 1, 0 }, 1, 1, wall, wallGen);
+        occ.ReserveFootprint({ 0, 1 }, 1, 1, wall, wallGen);
+        occ.ReserveFootprint({ 1, 1 }, 1, 1, wall, wallGen);
+        occ.ReserveFootprint({ 2, 1 }, 1, 1, wall, wallGen);
+
+        Unit *m = registry.Get<Unit>(mover);
+        IssueMoveOrder(*m, cc::ToRaylib(cc::TileToWorld(2, 0))); // straight at the wall
+        int frames = 0;
+        while ((m->hasMoveOrder || m->hasPath) && frames < 600)
+        {
+            UpdateUnitMovement(*m, map, m->speed, 1.0f / 60.0f, &occ, mover,
+                               registry.Generation(mover));
+            ++frames;
+        }
+        CC_CHECK(!m->hasMoveOrder && !m->hasPath); // gave up, order gone
+        CC_CHECK(m->state == UnitState::Idle);
+        CC_CHECK(cc::WorldToTile(cc::ToGlm(m->position)) == cc::IVec2(0, 0));
+        CC_CHECK(frames > 90); // waited through retries (3 x 0.5s), not instant
+        CC_CHECK(frames < 600);
+    }
+
+    // --- SeparateUnits: 2x2 bodies relax to a 64px gap ---
+    {
+        Registry crowded;
+        for (int i = 0; i < 2; ++i)
+        {
+            const Entity e = crowded.Create();
+            Unit tank;
+            tank.type = UnitType::HeavyTank;
+            ApplyBaseStats(tank);
+            tank.position = cc::ToRaylib(cc::TileToWorld(4, 4));
+            tank.health = 100.0f;
+            crowded.Add(e, tank);
+        }
+        int frames = 0;
+        float dist = 0.0f;
+        while (frames < 300)
+        {
+            SeparateUnits(crowded, 1.0f / 60.0f);
+            ++frames;
+            std::vector<cc::Vec2> centers;
+            crowded.Each<Unit>([&](Entity, const Unit &u) {
+                centers.push_back(cc::ToGlm(u.position) + cc::Vec2(48.0f, 48.0f));
+            });
+            dist = glm::length(centers[0] - centers[1]);
+            if (dist >= 64.0f)
+            {
+                break;
+            }
+        }
+        CC_CHECK(dist >= 64.0f);
         CC_CHECK(frames < 300);
     }
 }

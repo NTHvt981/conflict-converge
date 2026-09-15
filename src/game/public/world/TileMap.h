@@ -92,6 +92,15 @@ public:
     // Release all tiles in a rectangular footprint.
     void ReleaseFootprint(cc::IVec2 anchor, int footprintW, int footprintH);
 
+    // Ownership-checked variants for the per-frame pre-pass and teardown:
+    // release clears only cells holding (entity, generation), reserve stamps
+    // only free-or-self cells and never clobbers another unit's anchor.
+    // Returns the number of cells reserved (0 when fully overlapped).
+    void ReleaseFootprintOwned(cc::IVec2 anchor, int footprintW, int footprintH,
+                               Entity entity, std::uint32_t generation);
+    int ReserveFootprintOwned(cc::IVec2 anchor, int footprintW, int footprintH,
+                              Entity entity, std::uint32_t generation);
+
     // Check whether a unit's entire footprint can enter at anchor.
     // Returns true only if every tile in the footprint is in-bounds,
     // not terrain-blocked, and not occupied by another entity.

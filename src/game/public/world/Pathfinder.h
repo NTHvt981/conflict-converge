@@ -31,6 +31,14 @@ TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
                            int footprintW, int footprintH,
                            Entity self, std::uint32_t selfGen);
 
+// Nearest anchor tile the footprint can enter (ring search, radius 5).
+// Returns the request unchanged when it is already enterable, the nearest
+// enterable tile otherwise, or the request when nothing enterable is near.
+// Pure, headless-safe. Used to sanitize order goals clicked onto units.
+cc::IVec2 NearestEnterableTile(const TileMap &map, const OccupancyGrid &occ,
+                               cc::IVec2 want, int footprintW, int footprintH,
+                               Entity self, std::uint32_t selfGen);
+
 // Order a unit along an A* path to a world target (target snapped to its
 // tile). Clears any previous path. Falls back to a straight M2 move order
 // when no path exists, so the unit still reacts to the click.
