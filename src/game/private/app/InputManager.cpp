@@ -3,6 +3,7 @@
 void InputManager::Update(GameCamera &camera, float cameraSpeedPixelsPerSec, float dtSeconds)
 {
     camera.UpdateWASD(cameraSpeedPixelsPerSec, dtSeconds);
+    camera.UpdateEdgePan(cameraSpeedPixelsPerSec, dtSeconds, GetScreenWidth(), GetScreenHeight());
     shortcuts.PollAndFire();
     PollLive();
 }

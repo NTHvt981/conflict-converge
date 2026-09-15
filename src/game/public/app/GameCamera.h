@@ -19,6 +19,12 @@ public:
     // Poll WASD and pan at speed pixels/sec scaled by dt seconds.
     void UpdateWASD(float speedPixelsPerSec, float dtSeconds);
 
+    // Edge panning: pan the camera when the mouse cursor is within
+    // `margin` pixels of any screen edge. Uses the same speed as WASD.
+    // Pass the live window dimensions (GetScreenWidth/Height).
+    void UpdateEdgePan(float speedPixelsPerSec, float dtSeconds,
+                       int screenW, int screenH, float margin = 20.0f);
+
     // Key-free pan by a raw screen-space delta (tests, scripted moves).
     void Pan(Vector2 delta);
 

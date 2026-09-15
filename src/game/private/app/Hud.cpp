@@ -127,10 +127,14 @@ std::vector<UnitType> ProductionMenuOrder()
 
 int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool hasFactory)
 {
-    GuiPanel({ 618.0f, 128.0f, 174.0f, 188.0f }, "Factory");
+    const float pw = 174.0f;
+    const float ph = 188.0f;
+    const float px = static_cast<float>(GetScreenWidth()) - pw - 10.0f;
+    const float py = static_cast<float>(GetScreenHeight()) - ph - 10.0f;
+    GuiPanel({ px, py, pw, ph }, "Factory");
     if (!hasFactory)
     {
-        GuiLabel({ 630.0f, 150.0f, 150.0f, 20.0f }, "Need Factory");
+        GuiLabel({ px + 12.0f, py + 22.0f, 150.0f, 20.0f }, "Need Factory");
         return kNoProductionClick;
     }
     int clicked = kNoProductionClick;
@@ -141,13 +145,13 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
         char label[48];
         std::snprintf(label, sizeof(label), "%s %ld/%ld", UnitTypeName(order[i]), cost.iron,
                       cost.oil);
-        const float y = 150.0f + static_cast<float>(i) * 18.0f;
+        const float y = py + 22.0f + static_cast<float>(i) * 18.0f;
         const bool affordable = resources.iron >= cost.iron && resources.oil >= cost.oil;
         if (!affordable)
         {
             GuiDisable();
         }
-        if (GuiButton({ 630.0f, y, 150.0f, 16.0f }, label))
+        if (GuiButton({ px + 12.0f, y, 150.0f, 16.0f }, label))
         {
             clicked = static_cast<int>(i);
         }
@@ -158,8 +162,8 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
     }
     char queueLine[48];
     std::snprintf(queueLine, sizeof(queueLine), "Queue: %d", static_cast<int>(queue.Size()));
-    GuiLabel({ 630.0f, 278.0f, 80.0f, 16.0f }, queueLine);
-    if (GuiButton({ 712.0f, 278.0f, 68.0f, 16.0f }, "Cancel"))
+    GuiLabel({ px + 12.0f, py + ph - 22.0f, 80.0f, 16.0f }, queueLine);
+    if (GuiButton({ px + 94.0f, py + ph - 22.0f, 68.0f, 16.0f }, "Cancel"))
     {
         queue.CancelTop(resources);
     }

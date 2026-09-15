@@ -30,6 +30,35 @@ void GameCamera::Pan(Vector2 delta)
     view.target.y += delta.y;
 }
 
+void GameCamera::UpdateEdgePan(float speedPixelsPerSec, float dtSeconds,
+                               int screenW, int screenH, float margin)
+{
+    const Vector2 mouse = GetMousePosition();
+    Vector2 delta = { 0.0f, 0.0f };
+    if (mouse.x < margin)
+    {
+        delta.x = -1.0f;
+    }
+    else if (mouse.x > static_cast<float>(screenW) - margin)
+    {
+        delta.x = 1.0f;
+    }
+    if (mouse.y < margin)
+    {
+        delta.y = -1.0f;
+    }
+    else if (mouse.y > static_cast<float>(screenH) - margin)
+    {
+        delta.y = 1.0f;
+    }
+    if (delta.x != 0.0f || delta.y != 0.0f)
+    {
+        delta.x *= speedPixelsPerSec * dtSeconds;
+        delta.y *= speedPixelsPerSec * dtSeconds;
+        Pan(delta);
+    }
+}
+
 Vector2 GameCamera::ScreenToWorld(Vector2 screenPos) const
 {
     return GetScreenToWorld2D(screenPos, view);

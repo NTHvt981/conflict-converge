@@ -84,8 +84,8 @@ void Game::Init()
     // when the file is missing.
     LoadSettings(menu.settings, kSettingsPath);
 
-    // M6 Goal 1: minimap texture (bottom-right, 4:3 like the 20x15 map).
-    minimap.Init({ static_cast<float>(kInitialWidth) - 170.0f, static_cast<float>(kInitialHeight) - 130.0f,
+    // M6 Goal 1: minimap texture (top-right, 4:3 like the 20x15 map).
+    minimap.Init({ static_cast<float>(kInitialWidth) - 170.0f, 10.0f,
                    160.0f, 120.0f });
     // Unit speed now comes from M3 base stats (Unit::speed, ApplyBaseStats).
 
@@ -373,12 +373,12 @@ void Game::Update()
     // the screen, so over-zooming can never show void past the edge.
     camera.AdjustZoom(input.WheelDelta());
     // M13: resizable window — refresh live dims, keep the camera centered
-    // and the minimap docked bottom-right (texture size is fixed).
+    // and the minimap docked top-right (texture size is fixed).
     const int screenWidth = GetScreenWidth();
     const int screenHeight = GetScreenHeight();
     camera.view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
     minimap.screenRect.x = static_cast<float>(screenWidth) - minimap.screenRect.width - 10.0f;
-    minimap.screenRect.y = static_cast<float>(screenHeight) - minimap.screenRect.height - 10.0f;
+    minimap.screenRect.y = 10.0f;
     // Camera bounds: pan/zoom/minimap jumps never leave the world zone.
     camera.ClampZoomToWorld(static_cast<float>(map.Width()) * cc::TILE_SIZE,
                             static_cast<float>(map.Height()) * cc::TILE_SIZE, screenWidth,
@@ -1069,17 +1069,19 @@ void Game::Update()
     }
     if (!queue.Empty())
     {
-        DrawText("Producing...", 620, 48, 16, GRAY);
-        DrawRectangle(620, 68, 150, 12, LIGHTGRAY);
-        DrawRectangle(620, 68, static_cast<int>(150.0f * queue.HeadProgress()), 12, DARKGREEN);
+        const float ppw = 174.0f;
+        const float ppx = static_cast<float>(screenWidth) - ppw - 10.0f;
+        DrawText("Producing...", static_cast<int>(ppx), screenHeight - 222, 16, GRAY);
+        DrawRectangle(static_cast<int>(ppx), screenHeight - 202, 150, 12, LIGHTGRAY);
+        DrawRectangle(static_cast<int>(ppx), screenHeight - 202, static_cast<int>(150.0f * queue.HeadProgress()), 12, DARKGREEN);
     }
 
     // M7 Goal 3: live frame-rate readout (60 FPS target validation).
-    DrawFPS(620, 88);
+    DrawFPS(screenWidth - 170, 135);
     // M8: enemy commander status (M14: difficulty comes from the setup).
     DrawText(TextFormat("Enemy: %s  Waves: %d", DifficultyName(worldDifficulty),
                         ai.WavesLaunched()),
-             620, 108, 16, GRAY);
+             screenWidth - 170, 155, 16, GRAY);
 
     // M6 Goal 4: shortcut overlay, bottom-left, toggled with F1.
     if (showHints)
