@@ -6,7 +6,7 @@ so there is no Advance Wars licensing exposure. Open the .vox in
 MagicaVoxel, pose/copy it per animation frame, and feed frames to the
 3D-to-2D sprite tool.
 
-Usage: python tools/gen_voxel_tank.py [--team 0|1] [--out path]
+Usage: python tools/gen_voxels.py [--team 0|1] [--unit NAME] [--out path]
 Verifies itself by re-parsing the file and printing top/side slices.
 """
 
@@ -280,6 +280,116 @@ def build_vehicle(kind: str) -> tuple[tuple[int, int, int], list[tuple[int, int,
 
 
 # --------------------------------------------------------------------------
+# Buildings. Team color reads from trim/roof accents (structures are mostly
+# concrete + metal so both factions share the same gray masses).
+# base:    25 x 25 x 10 HQ — slab, wings, tower, antenna, corner lamps.
+# depot:   13 x 13 x 9  resource depot — silo, crates, office, beacon.
+# factory: 25 x 21 x 12 production — hall, skylights, big door, chimney,
+#          vents, storage tanks, beacon.
+# --------------------------------------------------------------------------
+
+def build_building(kind: str) -> tuple[tuple[int, int, int], list[tuple[int, int, int, int]]]:
+    assert kind in ("base", "depot", "factory"), kind
+    vox: dict[tuple[int, int, int], int] = {}
+
+    def put(x0: int, x1: int, y0: int, y1: int, z0: int, z1: int, color: int) -> None:
+        for x in range(x0, x1 + 1):
+            for y in range(y0, y1 + 1):
+                for z in range(z0, z1 + 1):
+                    vox[(x, y, z)] = color
+
+    if kind == "base":
+        sx, sy, sz = 25, 25, 10
+        put(0, 24, 0, 24, 0, 0, DARK)    # foundation slab
+        put(0, 24, 0, 0, 0, 0, TRIM)    # slab border
+        put(0, 24, 24, 24, 0, 0, TRIM)
+        put(0, 0, 0, 24, 0, 0, TRIM)
+        put(24, 24, 0, 24, 0, 0, TRIM)
+        put(1, 23, 1, 23, 1, 1, METAL)  # parade concrete
+        put(8, 16, 8, 16, 1, 5, BODY)   # HQ block
+        put(8, 16, 8, 8, 3, 4, LIGHT)   # windows, front
+        put(8, 8, 8, 16, 3, 4, LIGHT)   # windows, near side
+        put(16, 16, 8, 16, 3, 4, LIGHT)  # windows, far side
+        put(8, 16, 8, 8, 5, 5, TRIM)    # banner stripe
+        put(11, 13, 16, 16, 1, 3, DARK)  # entrance
+        put(7, 17, 7, 17, 6, 6, DARK)   # HQ roof slab
+        put(11, 13, 11, 13, 6, 8, BODY)  # tower
+        put(11, 13, 11, 11, 7, 7, LIGHT)  # tower windows
+        put(12, 12, 12, 12, 7, 8, METAL)  # antenna mast
+        put(12, 12, 12, 12, 9, 9, LIGHT)  # beacon
+        put(3, 7, 10, 14, 1, 3, BODY)   # west wing
+        put(17, 21, 10, 14, 1, 3, BODY)  # east wing
+        put(3, 7, 10, 14, 4, 4, DARK)   # wing roofs
+        put(17, 21, 10, 14, 4, 4, DARK)
+        put(3, 7, 10, 10, 2, 3, LIGHT)  # wing windows
+        put(17, 21, 10, 10, 2, 3, LIGHT)
+        for cx, cy in ((1, 1), (23, 1), (1, 23), (23, 23)):
+            put(cx, cx, cy, cy, 1, 3, METAL)  # corner posts
+            put(cx, cx, cy, cy, 4, 4, LIGHT)  # lamps
+    elif kind == "depot":
+        sx, sy, sz = 13, 13, 9
+        put(0, 12, 0, 12, 0, 0, DARK)    # pad
+        put(0, 12, 0, 0, 0, 0, TRIM)
+        put(0, 12, 12, 12, 0, 0, TRIM)
+        put(0, 0, 0, 12, 0, 0, TRIM)
+        put(12, 12, 0, 12, 0, 0, TRIM)
+        put(4, 8, 4, 8, 1, 6, METAL)    # silo body
+        put(4, 8, 4, 4, 2, 2, TRIM)     # silo rings
+        put(4, 8, 8, 8, 2, 2, TRIM)
+        put(4, 8, 4, 4, 4, 4, TRIM)
+        put(4, 8, 8, 8, 4, 4, TRIM)
+        put(4, 8, 4, 4, 6, 6, TRIM)
+        put(4, 8, 8, 8, 6, 6, TRIM)
+        put(4, 8, 4, 8, 7, 7, DARK)     # silo cap
+        put(6, 6, 6, 6, 8, 8, LIGHT)    # beacon
+        put(8, 12, 6, 6, 1, 1, METAL)   # feed pipe
+        put(9, 11, 9, 11, 1, 2, TRIM)   # crates
+        put(10, 12, 2, 4, 1, 1, DARK)
+        put(1, 2, 9, 11, 1, 3, DARK)
+        put(1, 3, 1, 3, 1, 3, BODY)     # office
+        put(1, 3, 1, 1, 2, 2, LIGHT)    # office window
+        put(2, 2, 3, 3, 1, 2, DARK)     # office door
+        put(1, 3, 1, 3, 4, 4, DARK)     # office roof
+    else:  # factory
+        sx, sy, sz = 25, 21, 12
+        put(0, 24, 0, 20, 0, 0, DARK)   # slab
+        put(0, 24, 0, 0, 0, 0, TRIM)
+        put(0, 24, 20, 20, 0, 0, TRIM)
+        put(0, 0, 0, 20, 0, 0, TRIM)
+        put(24, 24, 0, 20, 0, 0, TRIM)
+        put(3, 21, 4, 16, 1, 6, BODY)   # main hall
+        put(3, 21, 4, 16, 7, 7, DARK)   # roof slab
+        put(5, 19, 9, 11, 7, 7, LIGHT)  # skylight band
+        put(3, 3, 8, 12, 1, 4, DARK)    # big door opening
+        put(3, 3, 8, 12, 5, 5, TRIM)    # door lintel
+        put(4, 20, 4, 4, 3, 4, LIGHT)   # side windows
+        put(4, 20, 16, 16, 3, 4, LIGHT)
+        put(3, 21, 4, 4, 5, 5, TRIM)    # team stripes
+        put(3, 21, 16, 16, 5, 5, TRIM)
+        put(19, 21, 5, 7, 1, 10, DARK)  # chimney stack
+        put(19, 21, 5, 7, 4, 4, TRIM)   # chimney bands
+        put(19, 21, 5, 7, 7, 7, TRIM)
+        put(19, 21, 5, 7, 10, 10, METAL)  # chimney cap
+        put(20, 20, 6, 6, 11, 11, LIGHT)  # beacon
+        put(6, 7, 6, 8, 8, 8, METAL)    # roof vents
+        put(12, 13, 12, 14, 8, 8, METAL)
+        put(1, 4, 1, 3, 1, 3, BODY)     # annex office
+        put(1, 4, 1, 1, 2, 2, LIGHT)
+        put(1, 4, 1, 3, 4, 4, DARK)
+        put(22, 23, 14, 15, 1, 3, METAL)  # storage tanks
+        put(22, 23, 17, 18, 1, 3, METAL)
+        put(22, 23, 14, 15, 4, 4, DARK)
+        put(22, 23, 17, 18, 4, 4, DARK)
+        put(21, 21, 14, 18, 1, 1, METAL)  # tank feed pipe
+
+    voxels = [(x, y, z, c) for (x, y, z), c in sorted(vox.items())]
+    assert max(x for x, _, _, _ in voxels) < sx, f"{kind} x overflow"
+    assert max(y for _, y, _, _ in voxels) < sy, f"{kind} y overflow"
+    assert max(z for _, _, z, _ in voxels) < sz, f"{kind} z overflow"
+    return (sx, sy, sz), voxels
+
+
+# --------------------------------------------------------------------------
 # Foot set: one parametric soldier (7 x 7 x 11, facing +x), gear per role.
 # kind: "infantry" (rifle), "antiarmor" (shoulder launcher), "engineer"
 # (backpack + beacon, no rifle).
@@ -373,7 +483,8 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--team", type=int, choices=(0, 1), default=0)
     parser.add_argument("--unit", type=str,
                         choices=("lighttank", "ifv", "artillery", "heavytank",
-                                 "infantry", "antiarmor", "engineer"),
+                                 "infantry", "antiarmor", "engineer",
+                                 "base", "depot", "factory"),
                         default="lighttank")
     parser.add_argument("--out", type=str, default="")
     args = parser.parse_args(argv)
@@ -384,6 +495,8 @@ def main(argv: list[str]) -> int:
         size, voxels = build_tank(args.team)
     elif args.unit in ("infantry", "antiarmor", "engineer"):
         size, voxels = build_soldier(args.unit)
+    elif args.unit in ("base", "depot", "factory"):
+        size, voxels = build_building(args.unit)
     else:
         size, voxels = build_vehicle(args.unit)
     write_vox(out, size, voxels, make_palette(args.team))
