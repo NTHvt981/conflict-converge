@@ -1,0 +1,76 @@
+// Conflict Converge sprite-atlas data (JSON, parsed via protobuf-JSON).
+// Mirrors the GameFramework Textures/Sprites/Animations trio, plus a grid
+// shorthand so uniform sheets (e.g. 8x8x32px infantry placeholders) expand
+// to named sprites at load instead of hand-writing every cell rect.
+// Data lives in data/sprites.json (top-level for now, relocatable later).
+syntax = "proto3";
+
+package cc.sprites;
+
+message SpriteBounds
+{
+    int32 left = 1;
+    int32 top = 2;
+    int32 right = 3;
+    int32 bottom = 4;
+}
+
+message SpriteOrigin
+{
+    int32 x = 1;
+    int32 y = 2;
+}
+
+message SpriteTexture
+{
+    int32 id = 1;
+    string file = 2; // relative to data/sprites/
+    int32 width = 3;
+    int32 height = 4;
+}
+
+message SpriteDef
+{
+    string name = 1;
+    int32 id = 2;
+    int32 texture = 3; // SpriteTexture.id
+    SpriteBounds bounds = 4;
+    SpriteOrigin origin = 5;
+}
+
+// Uniform-sheet shorthand: expands to cols*rows SpriteDefs named
+// "<prefix>_<r>_<c>" with ids start_id + r*cols + c. Cell (r,c) covers
+// [c*cell_w, r*cell_h, (c+1)*cell_w, (r+1)*cell_h).
+message SpriteGrid
+{
+    int32 texture = 1;
+    string prefix = 2;
+    int32 start_id = 3;
+    int32 rows = 4;
+    int32 cols = 5;
+    int32 cell_w = 6;
+    int32 cell_h = 7;
+    SpriteOrigin origin = 8;
+}
+
+message AnimFrame
+{
+    int32 sprite = 1; // SpriteDef.id
+    int32 duration_ms = 2;
+}
+
+message SpriteAnim
+{
+    string name = 1;
+    int32 id = 2;
+    bool loop = 3;
+    repeated AnimFrame frames = 4;
+}
+
+message SpriteSheet
+{
+    repeated SpriteTexture textures = 1;
+    repeated SpriteDef sprites = 2;
+    repeated SpriteGrid grids = 3;
+    repeated SpriteAnim animations = 4;
+}

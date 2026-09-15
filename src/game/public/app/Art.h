@@ -2,11 +2,14 @@
 
 #include <array>
 #include <cstddef>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "raylib.h" // Texture2D, Vector2, Color (device-independent types)
 #include "Building.h" // BuildingType for DrawBuilding
 #include "Nodes.h"    // ResourceKind for DrawNode/DrawIcon
+#include "SpriteData.h" // SpriteSheetData for the JSON atlas
 #include "Unit.h"     // UnitType, AttackPhase
 
 // M12: sprite art + particles. Filenames under data/sprites/ are the
@@ -14,6 +17,10 @@
 // later): units/<type>_<blue|red>_<idle|attack>.png (32px),
 // buildings/<base|factory|depot>_<blue|red>.png (64/64/32px),
 // nodes/<iron|oil>.png (32px), icons/<iron|oil>.png (16px).
+// Atlas override: data/sprites.json (schema in proto/spritedata.proto)
+// names source-rects inside sheet PNGs (e.g. placeholder infantry 8x8
+// grids). Types with atlas entries render from the atlas (team-tinted, since
+// sheet art is white); types without fall through to the filename path.
 // Headless-safe: Init(false) loads nothing and UseRectangles() reports true,
 // so tests and the fallback path never touch the GPU.
 
@@ -75,9 +82,30 @@ public:
 
     // tileCorner = unit.position (snapped); sprite fills the 32x32 body inset.
     void DrawUnit(UnitType type, int teamID, UnitFrame frame, Vector2 tileCorner) const;
+    // Atlas override: source-rect blit of a named sprite from sprites.json,
+    // origin-aligned to the 32x32 body center. No-op when the atlas is down
+    // or the name is unknown (headless-safe).
+    void DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint) const;
     void DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const;
     void DrawNode(ResourceKind kind, Vector2 center) const;
     void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon
+
+    // Atlas status: true once sprites.json parsed AND every sheet texture
+    // loaded (Init(true) path). Headless-safe query.
+    bool UseAtlas() const;
+    // Parse data/sprites.json without touching the GPU (tests, LoadAtlas
+    // seam). False when the file is missing or invalid.
+    bool LoadAtlas();
+    // Sprite name for a unit at timeSeconds (GetTime() at the call site):
+    // "<type>_walk" animation frame while moving (id-offset so squads don't
+    // march in sync), "<type>_idle_0_0" otherwise. Empty when no sheet is
+    // loaded or the type has no entries — caller falls back to DrawUnit.
+    // Pure logic (works headless after LoadAtlas, no GPU), unit-tested.
+    std::string UnitSprite(UnitType type, bool moving, unsigned int id,
+                           float timeSeconds) const;
+    // Team color for atlas tinting (sheet art is white): BLUE/RED, matching
+    // the rectangle-fallback body colors.
+    static Color TeamTint(int teamID);
 
     Particles &ParticlesPool();
     const Particles &ParticlesPool() const;
@@ -86,6 +114,10 @@ private:
     static int TeamSlot(int teamID); // 0 -> blue, anything else -> red
     bool ready_ = false;
     bool fallback_ = true;
+    bool atlasReady_ = false;
+    bool sheetLoaded_ = false;
+    SpriteSheetData sheet_;
+    std::unordered_map<int, Texture2D> atlas_; // SpriteTextureInfo.id -> sheet
     Particles particles_;
     Texture2D units_[7][2][2] = {}; // [type][team][frame]
     Texture2D buildings_[3][2] = {}; // [type][team]

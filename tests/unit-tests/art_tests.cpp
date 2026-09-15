@@ -101,4 +101,37 @@ void RunArtTests()
         CC_CHECK(a[0].x == b[0].x);
         CC_CHECK(a[0].y == b[0].y);
     }
+
+    // --- atlas: down headless, draw is a safe no-op ---
+    {
+        Art art;
+        CC_CHECK(!art.UseAtlas());
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f).empty());
+        art.DrawAtlasFrame("infantry_idle_0_0", { 0.0f, 0.0f }, WHITE); // no crash
+        const Color blue = Art::TeamTint(0);
+        CC_CHECK(blue.r == BLUE.r && blue.g == BLUE.g && blue.b == BLUE.b);
+        const Color red = Art::TeamTint(1);
+        CC_CHECK(red.r == RED.r && red.g == RED.g && red.b == RED.b);
+    }
+
+    // --- atlas: idle sprite + walk cycle from data/sprites.json ---
+    {
+        Art art;
+        CC_CHECK(art.LoadAtlas());
+        CC_CHECK(!art.UseAtlas()); // parsed, but no GPU textures headless
+        // Idle resolves to the first idle cell.
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f) == "infantry_idle_0_0");
+        // Walk anim is 4x120ms; id 1 offsets 37ms in: t=0 -> frame 0.
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.0f) == "infantry_walk_0_0");
+        // t=130ms + 37 offset = 167 -> frame 1.
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f) == "infantry_walk_0_1");
+        // Per-entity desync: id 200 offsets 200ms in -> frame 1 at t=0.
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 200, 0.0f) == "infantry_walk_0_1");
+        // Deterministic: same args -> same frame.
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f) ==
+                 art.UnitSprite(UnitType::Infantry, true, 1, 0.13f));
+        // Types without atlas entries resolve empty (legacy DrawUnit covers).
+        CC_CHECK(art.UnitSprite(UnitType::HeavyTank, true, 1, 0.0f).empty());
+        CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f).empty());
+    }
 }

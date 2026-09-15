@@ -963,20 +963,44 @@ void Game::Update()
         }
         const Rectangle body = { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };
         const Vector2 center = { body.x + 16.0f, body.y + 16.0f };
-        if (art.UseRectangles())
+        if (art.UseRectangles() && !art.UseAtlas())
         {
             DrawRectangleRec(body, unit.state == UnitState::Attacking ? ORANGE : BLUE);
         }
         else
         {
             // Phase 14: infantry draws as a squad cluster; vehicles draw
-            // as a single sprite (count == 1, offset {0,0}).
+            // as a single sprite (count == 1, offset {0,0}). Atlas-first:
+            // moving units cycle "<type>_walk", everything else idles on
+            // "<type>_idle_0_0"; types without atlas entries fall through
+            // to the legacy DrawUnit (or a tinted rect when that is down).
             std::array<Vector2, 6> slots;
             const int count = SquadSlots(unit.type, id, UnitHealthFraction(unit), slots);
+            const bool moving = unit.state == UnitState::Moving;
+            const float animTime = static_cast<float>(GetTime());
+            const Color tint = Art::TeamTint(unit.teamID);
             for (int i = 0; i < count; ++i)
             {
-                art.DrawUnit(unit.type, unit.teamID, FrameForPhase(unit.phase),
-                             { unit.position.x + slots[i].x, unit.position.y + slots[i].y });
+                const Vector2 corner = { unit.position.x + slots[i].x,
+                                         unit.position.y + slots[i].y };
+                if (art.UseAtlas())
+                {
+                    const std::string sprite = art.UnitSprite(unit.type, moving, id, animTime);
+                    if (!sprite.empty())
+                    {
+                        art.DrawAtlasFrame(sprite, corner, tint);
+                        continue;
+                    }
+                }
+                if (!art.UseRectangles())
+                {
+                    art.DrawUnit(unit.type, unit.teamID, FrameForPhase(unit.phase), corner);
+                }
+                else
+                {
+                    DrawRectangleRec({ corner.x + 26.0f, corner.y + 26.0f, 12.0f, 12.0f },
+                                     tint);
+                }
             }
         }
         if (unit.isSelected)

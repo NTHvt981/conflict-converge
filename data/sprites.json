@@ -1,0 +1,26 @@
+{
+  "textures": [
+    { "id": 0, "file": "units/placeholder_infantry_idle.png", "width": 256, "height": 256 },
+    { "id": 1, "file": "units/placeholder_infantry_walk.png", "width": 256, "height": 256 }
+  ],
+  "sprites": [],
+  "grids": [
+    { "texture": 0, "prefix": "infantry_idle", "startId": 0,
+      "rows": 8, "cols": 8, "cellW": 32, "cellH": 32,
+      "origin": { "x": 16, "y": 16 } },
+    { "texture": 1, "prefix": "infantry_walk", "startId": 64,
+      "rows": 8, "cols": 8, "cellW": 32, "cellH": 32,
+      "origin": { "x": 16, "y": 16 } }
+  ],
+  "animations": [
+    { "name": "infantry_idle", "id": 0, "loop": false,
+      "frames": [{ "sprite": 0, "durationMs": 500 }] },
+    { "name": "infantry_walk", "id": 1, "loop": true,
+      "frames": [
+        { "sprite": 64, "durationMs": 120 },
+        { "sprite": 65, "durationMs": 120 },
+        { "sprite": 66, "durationMs": 120 },
+        { "sprite": 67, "durationMs": 120 }
+      ] }
+  ]
+}

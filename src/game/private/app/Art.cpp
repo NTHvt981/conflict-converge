@@ -238,6 +238,33 @@ bool Art::Init(bool withDevice)
             fallback_ = true;
         }
     }
+    // Atlas override: sprites.json + sheet PNGs. Missing files just leave
+    // the atlas down (legacy/rectangle paths are unaffected).
+    atlasReady_ = LoadAtlas();
+    if (atlasReady_)
+    {
+        for (const SpriteTextureInfo &t : sheet_.textures)
+        {
+            std::snprintf(path, sizeof(path), "data/sprites/%s", t.file.c_str());
+            const Texture2D tex = LoadTexture(path);
+            if (tex.id == 0)
+            {
+                atlasReady_ = false;
+                break;
+            }
+            atlas_[t.id] = tex;
+        }
+        if (!atlasReady_)
+        {
+            for (const auto &entry : atlas_)
+            {
+                UnloadTexture(entry.second);
+            }
+            atlas_.clear();
+            sheet_ = SpriteSheetData{};
+            sheetLoaded_ = false;
+        }
+    }
     ready_ = !fallback_;
     return ready_;
 }
@@ -282,6 +309,14 @@ void Art::Shutdown()
             icons_[k] = {};
         }
     }
+    for (const auto &entry : atlas_)
+    {
+        UnloadTexture(entry.second);
+    }
+    atlas_.clear();
+    sheet_ = SpriteSheetData{};
+    atlasReady_ = false;
+    sheetLoaded_ = false;
     particles_.Clear();
     ready_ = false;
     fallback_ = true;
@@ -315,6 +350,108 @@ void Art::DrawUnit(UnitType type, int teamID, UnitFrame frame, Vector2 tileCorne
     }
     const Texture2D tex = units_[static_cast<int>(type)][TeamSlot(teamID)][static_cast<int>(frame)];
     DrawTextureV(tex, { tileCorner.x + 16.0f, tileCorner.y + 16.0f }, WHITE);
+}
+
+bool Art::UseAtlas() const
+{
+    return atlasReady_;
+}
+
+bool Art::LoadAtlas()
+{
+    SpriteSheetData sheet;
+    if (!LoadSpriteSheet("data/sprites.json", sheet))
+    {
+        return false;
+    }
+    sheet_ = sheet;
+    sheetLoaded_ = true;
+    return true;
+}
+
+std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
+                            float timeSeconds) const
+{
+    if (!sheetLoaded_)
+    {
+        return {};
+    }
+    const std::string prefix = UnitFile(type);
+    if (moving)
+    {
+        // "<type>_walk" animation frame at timeSeconds; per-entity offset so
+        // squad soldiers don't march in sync. Falls through to idle when the
+        // type has no walk animation.
+        if (const SpriteAnimInfo *anim = FindAnimByName(sheet_, prefix + "_walk");
+            anim != nullptr && !anim->frames.empty())
+        {
+            int total = 0;
+            for (const SpriteAnimFrame &f : anim->frames)
+            {
+                total += f.durationMs;
+            }
+            if (total > 0)
+            {
+                int t = static_cast<int>(timeSeconds * 1000.0f) +
+                        static_cast<int>(id * 37u % static_cast<unsigned int>(total));
+                t %= total;
+                if (t < 0)
+                {
+                    t += total;
+                }
+                for (const SpriteAnimFrame &f : anim->frames)
+                {
+                    if (t < f.durationMs)
+                    {
+                        if (const SpriteDefInfo *s = FindSpriteById(sheet_, f.sprite);
+                            s != nullptr)
+                        {
+                            return s->name;
+                        }
+                        break;
+                    }
+                    t -= f.durationMs;
+                }
+            }
+        }
+    }
+    if (const SpriteDefInfo *idle = FindSpriteByName(sheet_, prefix + "_idle_0_0");
+        idle != nullptr)
+    {
+        return idle->name;
+    }
+    return {};
+}
+
+Color Art::TeamTint(int teamID)
+{
+    return teamID == 0 ? BLUE : RED;
+}
+
+void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint) const
+{
+    if (!atlasReady_ || spriteName.empty())
+    {
+        return;
+    }
+    const SpriteDefInfo *s = FindSpriteByName(sheet_, spriteName);
+    if (s == nullptr)
+    {
+        return;
+    }
+    const auto it = atlas_.find(s->texture);
+    if (it == atlas_.end() || it->second.id == 0)
+    {
+        return;
+    }
+    const float w = static_cast<float>(s->bounds.right - s->bounds.left);
+    const float h = static_cast<float>(s->bounds.bottom - s->bounds.top);
+    const Rectangle src = { static_cast<float>(s->bounds.left), static_cast<float>(s->bounds.top),
+                            w, h };
+    // The sprite origin lands on the 32x32 body center (tileCorner + 32).
+    const Vector2 dest = { tileCorner.x + 32.0f - static_cast<float>(s->origin.x),
+                           tileCorner.y + 32.0f - static_cast<float>(s->origin.y) };
+    DrawTextureRec(it->second, src, dest, tint);
 }
 
 void Art::DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const
