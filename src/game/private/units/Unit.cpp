@@ -46,6 +46,40 @@ void IssueAttackMoveOrderFootprint(Unit &unit, const TileMap &map, const Occupan
     unit.attackMoveDest = unit.moveTarget;
 }
 
+namespace
+{
+
+// Driver-issued leg (chase, remarch, repair approach, patrol): re-issue only
+// when no path is active or the sanitized goal tile changed — this bounds
+// footprint A* to tile changes instead of every frame while chasing (the
+// old detour re-pathed unconditionally). Footprint-aware when occ is
+// present, legacy blind otherwise. Returns true when an order was issued.
+bool ReissueDriverOrder(Unit &unit, TileMap &map, OccupancyGrid *occ, Vector2 dest,
+                        Entity self, Registry &registry)
+{
+    const cc::IVec2 wantTile = cc::WorldToTile(cc::ToGlm(dest));
+    const cc::IVec2 goalTile =
+        (occ != nullptr) ? NearestEnterableTile(map, *occ, wantTile, unit.footprintWidth,
+                                                unit.footprintHeight, self,
+                                                registry.Generation(self))
+                         : wantTile;
+    if (unit.hasPath && cc::WorldToTile(cc::ToGlm(unit.moveTarget)) == goalTile)
+    {
+        return false;
+    }
+    if (occ != nullptr)
+    {
+        IssuePathOrderFootprint(unit, map, *occ, dest, self, registry.Generation(self));
+    }
+    else
+    {
+        IssuePathOrder(unit, map, dest);
+    }
+    return true;
+}
+
+} // namespace
+
 void SetStance(Unit &unit, Stance stance)
 {
     unit.stance = stance;
@@ -353,10 +387,9 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         else if (glm::distance(cc::ToGlm(unit->position), cc::ToGlm(aim)) > kRepairRange)
         {
             const cc::IVec2 goalTile = RepairApproachTile(map, cc::WorldToTile(cc::ToGlm(aim)));
-            if (!unit->hasPath || !(cc::WorldToTile(cc::ToGlm(unit->moveTarget)) == goalTile))
-            {
-                IssuePathOrder(*unit, map, cc::ToRaylib(cc::TileToWorld(goalTile.x, goalTile.y)));
-            }
+            ReissueDriverOrder(*unit, map, occ,
+                               cc::ToRaylib(cc::TileToWorld(goalTile.x, goalTile.y)), self,
+                               registry);
             UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self, registry.Generation(self));
             unit->state = UnitState::Moving;
             return;
@@ -402,18 +435,30 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
                 {
                     return; // orders intact: the march resumes after the kill
                 }
-                IssuePathOrder(*unit, map, TargetPosition(registry, unit->target)); // detour
+                // Chase detour: re-issued every frame while closing (NOT tile-
+                // guarded like the other legs). A guard here makes blocked
+                // chasers stand and wait on the retry budget while the melee
+                // flows around them; the churn-and-replan keeps them sliding
+                // into contact, and the M-vs-H soak is tuned on exactly that
+                // (a tile guard flipped it). Footprint-aware when bound.
+                if (occ != nullptr)
+                {
+                    IssuePathOrderFootprint(*unit, map, *occ,
+                                            TargetPosition(registry, unit->target), self,
+                                            registry.Generation(self));
+                }
+                else
+                {
+                    IssuePathOrder(*unit, map, TargetPosition(registry, unit->target)); // detour
+                }
                 UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self, registry.Generation(self));
                 unit->state = UnitState::Moving;
                 return;
             }
             unit->target = kInvalidEntity;
-            const cc::IVec2 destTile = cc::WorldToTile(cc::ToGlm(unit->attackMoveDest));
-            if (!unit->hasMoveOrder || !unit->hasPath ||
-                !(cc::WorldToTile(cc::ToGlm(unit->moveTarget)) == destTile))
-            {
-                IssuePathOrder(*unit, map, unit->attackMoveDest); // (re)march
-            }
+            // (re)march: resumes the recorded destination (re-sanitized: the
+            // tile may have filled since the order was issued).
+            ReissueDriverOrder(*unit, map, occ, unit->attackMoveDest, self, registry);
         }
         if (unit->target != kInvalidEntity)
         {
@@ -463,7 +508,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         {
             const Vector2 leg = unit->patrolToB ? unit->patrolB : unit->patrolA;
             unit->patrolToB = !unit->patrolToB;
-            IssuePathOrder(*unit, map, leg);
+            ReissueDriverOrder(*unit, map, occ, leg, self, registry);
             unit->state = UnitState::Moving;
             return;
         }
@@ -487,12 +532,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 
     // Chase: re-path only when the target entered a new tile, then walk.
     // An unreachable target degrades to an M2 straight-line bump (IssuePathOrder fallback).
-    const Vector2 aimPos = TargetPosition(registry, unit->target);
-    const cc::IVec2 targetTile = cc::WorldToTile(cc::ToGlm(aimPos));
-    if (!unit->hasPath || !(cc::WorldToTile(cc::ToGlm(unit->moveTarget)) == targetTile))
-    {
-        IssuePathOrder(*unit, map, aimPos);
-    }
+    ReissueDriverOrder(*unit, map, occ, TargetPosition(registry, unit->target), self, registry);
     UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self, registry.Generation(self));
 }
 

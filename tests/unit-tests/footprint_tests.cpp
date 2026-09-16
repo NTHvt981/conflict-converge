@@ -10,6 +10,7 @@
 #include "UnitStats.h"
 
 #include <set>
+#include <tuple>
 
 namespace
 {
@@ -504,5 +505,59 @@ void RunFootprintTests()
         box.ReserveFootprint({ 2, 2 }, 1, 1, 9, 1);
         TileMap boxMap(3, 3);
         CC_CHECK(FindPathFootprint(boxMap, box, { 1, 1 }, { 0, 0 }, 1, 1, 7, 1).empty());
+    }
+
+    // --- Guard chase detour routes footprint-aware with occ, blind without ---
+    {
+        constexpr float kDt = 1.0f / 60.0f;
+        auto makeDuel = []() {
+            // chaser (0,0, team 0) vs prey (4,0 = 256px: out of 128px range,
+            // inside 320px sight). Returns registry with both spawned.
+            Registry registry;
+            const Entity chaser = registry.Create();
+            Unit hunter;
+            hunter.type = UnitType::Infantry;
+            ApplyBaseStats(hunter);
+            hunter.teamID = 0;
+            hunter.position = cc::ToRaylib(cc::TileToWorld(0, 0));
+            registry.Add(chaser, hunter);
+            const Entity prey = registry.Create();
+            Unit victim;
+            victim.type = UnitType::Infantry;
+            ApplyBaseStats(victim);
+            victim.teamID = 1;
+            victim.position = cc::ToRaylib(cc::TileToWorld(4, 0));
+            registry.Add(prey, victim);
+            return std::make_tuple(std::move(registry), chaser, prey);
+        };
+        // With occ (prey anchor reserved like the live pre-pass): the detour
+        // sanitizes to a neighbor and paths there.
+        {
+            auto [registry, chaser, prey] = makeDuel();
+            OccupancyGrid occ(10, 10);
+            TileMap map(10, 10);
+            occ.ReserveFootprint({ 4, 0 }, 1, 1, prey, registry.Generation(prey));
+            UpdateUnit(chaser, registry, map, kDt, nullptr, &occ);
+            const Unit *hunter = registry.Get<Unit>(chaser);
+            CC_CHECK(hunter->target == prey);
+            CC_CHECK(hunter->hasPath);
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(hunter->moveTarget));
+            CC_CHECK(!(dest == cc::IVec2(4, 0)));
+            CC_CHECK(occ.CanEnter(map, dest, 1, 1, chaser, registry.Generation(chaser)));
+            // Second tick with an unmoved target: no re-issue churn.
+            const TilePath first = hunter->path;
+            UpdateUnit(chaser, registry, map, kDt, nullptr, &occ);
+            CC_CHECK(registry.Get<Unit>(chaser)->path == first);
+        }
+        // Without occ: legacy blind detour drives at the target tile.
+        {
+            auto [registry, chaser, prey] = makeDuel();
+            TileMap map(10, 10);
+            UpdateUnit(chaser, registry, map, kDt);
+            const Unit *hunter = registry.Get<Unit>(chaser);
+            CC_CHECK(hunter->target == prey);
+            CC_CHECK(hunter->hasPath);
+            CC_CHECK(cc::WorldToTile(cc::ToGlm(hunter->moveTarget)) == cc::IVec2(4, 0));
+        }
     }
 }
