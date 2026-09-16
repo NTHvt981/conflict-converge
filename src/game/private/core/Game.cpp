@@ -367,6 +367,14 @@ void Game::BindShortcuts()
         }
         SelectAllBuildings(registry, BuildingType::Factory, 0); // team 0 is the player
     });
+    input.shortcuts.Bind(KEY_B, [&] {
+        // QoL move-at-slowest-speed: formation marches stop outrunning
+        // their slowest unit while armed.
+        if (worldActive && menu.state == MenuState::Playing)
+        {
+            moveAtSlowestSpeed = !moveAtSlowestSpeed;
+        }
+    });
     input.shortcuts.Bind(KEY_X, [&] {
         // QoL attack-ground mode: arm shelling; the next right-click fires
         // it (one-shot, see the RightPressed block), Escape cancels.
@@ -452,6 +460,7 @@ void Game::BindShortcuts()
                 unit.hasRepairOrder = false;
                 unit.repairTarget = kInvalidEntity;
                 unit.hasAttackGroundOrder = false; // QoL: halt drops shelling too
+                unit.speedCapPixelsPerSec = -1.0f; // QoL: halt drops the group cap
                 unit.orderQueue.clear(); // QoL: halt drops queued orders too
                 unit.phase = AttackPhase::Ready; // M4 Goal 3: halt cancels the telegraph
                 unit.velocity = { 0.0f, 0.0f };
@@ -831,6 +840,10 @@ void Game::Update()
                         else
                         {
                             ordered->orderQueue.clear();
+                            // Fresh single order (not formation): drop any
+                            // stale group cap — IssuePathOrder* doesn't route
+                            // through ClearOrders like the Issue* wrappers.
+                            ordered->speedCapPixelsPerSec = -1.0f;
                             IssuePathOrderFootprint(*ordered, map, occ,
                                                     input.MouseWorld(camera), squad[0],
                                                     registry.Generation(squad[0]));
@@ -866,7 +879,8 @@ void Game::Update()
                         }
                     }
                     formation::IssueFormationMoveFP(registry, squad, map, occ,
-                                                    input.MouseWorld(camera));
+                                                    input.MouseWorld(camera),
+                                                    moveAtSlowestSpeed);
                 }
                 audio.Play(SfxId::Confirm);
             }
@@ -889,7 +903,7 @@ void Game::Update()
                 const auto [lineStart, lineEnd] =
                     DraggedWorldLine(camera, rightDragStart, input.MouseScreen());
                 formation::IssueLineFormationMoveFP(registry, squad, map, occ, lineStart,
-                                                    lineEnd);
+                                                    lineEnd, moveAtSlowestSpeed);
                 audio.Play(SfxId::Confirm);
             }
         }

@@ -359,6 +359,7 @@ void ClearOrders(Unit &unit)
     unit.hasRepairOrder = false;
     unit.repairTarget = kInvalidEntity;
     unit.hasAttackGroundOrder = false;
+    unit.speedCapPixelsPerSec = -1.0f; // QoL: caps never leak across orders
 }
 
 } // namespace
@@ -592,7 +593,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
             ReissueDriverOrder(*unit, map, occ,
                                cc::ToRaylib(cc::TileToWorld(goalTile.x, goalTile.y)), self,
                                registry);
-            UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self, registry.Generation(self));
+            UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self, registry.Generation(self));
             unit->state = UnitState::Moving;
             return;
         }
@@ -627,7 +628,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         if (dist > static_cast<float>(unit->attackRange))
         {
             ReissueDriverOrder(*unit, map, occ, unit->attackGroundPos, self, registry);
-            UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self,
+            UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self,
                                registry.Generation(self));
             unit->state = UnitState::Moving;
             return;
@@ -678,7 +679,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
                 {
                     IssuePathOrder(*unit, map, TargetPosition(registry, unit->target)); // detour
                 }
-                UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self, registry.Generation(self));
+                UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self, registry.Generation(self));
                 unit->state = UnitState::Moving;
                 return;
             }
@@ -699,7 +700,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
                 return;
             }
         }
-        UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self, registry.Generation(self));
+        UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self, registry.Generation(self));
         return;
     }
 
@@ -760,7 +761,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     // Chase: re-path only when the target entered a new tile, then walk.
     // An unreachable target degrades to an M2 straight-line bump (IssuePathOrder fallback).
     ReissueDriverOrder(*unit, map, occ, TargetPosition(registry, unit->target), self, registry);
-    UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self, registry.Generation(self));
+    UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self, registry.Generation(self));
 }
 
 namespace
@@ -838,6 +839,7 @@ void Arrive(Unit &unit, cc::Vec2 where)
     unit.blockedRepaths = 0;
     unit.separationStallTime = 0.0f;
     unit.separationStallRepaths = 0;
+    unit.speedCapPixelsPerSec = -1.0f; // QoL: arrival drops the group cap
 }
 
 void CancelAtBlocked(Unit &unit)
@@ -852,6 +854,7 @@ void CancelAtBlocked(Unit &unit)
     unit.blockedRepaths = 0;
     unit.separationStallTime = 0.0f;
     unit.separationStallRepaths = 0;
+    unit.speedCapPixelsPerSec = -1.0f; // QoL: cancel drops the group cap
     SnapUnitToTile(unit);
 }
 
@@ -1179,7 +1182,7 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
             continue; // arrived this frame, or already caught by the normal block path
         }
         const float moved = glm::length(cc::ToGlm(unit->position) - cc::ToGlm(before));
-        const float expectedStep = unit->speed * dtSeconds;
+        const float expectedStep = EffectiveSpeed(*unit) * dtSeconds;
         if (expectedStep > 0.0f && moved < expectedStep * kStallProgressFraction)
         {
             ReportSeparationStall(*unit, map, &occ, id, registry.Generation(id), dtSeconds);

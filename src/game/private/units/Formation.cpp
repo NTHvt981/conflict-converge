@@ -62,10 +62,12 @@ void IssueFormationMove(Registry &registry, const std::vector<Entity> &units, co
 
 void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
                           const TileMap &map, const OccupancyGrid &occ,
-                          Vector2 worldTarget)
+                          Vector2 worldTarget, bool slowestSpeed)
 {
     // Determine the maximum footprint dimension for cell sizing.
     int cellSize = 1;
+    float minSpeed = 0.0f;
+    bool firstSpeed = true;
     for (std::size_t i = 0; i < units.size(); ++i)
     {
         const Unit *unit = registry.Get<Unit>(units[i]);
@@ -79,6 +81,11 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
         {
             cellSize = dim;
         }
+        if (firstSpeed || unit->speed < minSpeed)
+        {
+            minSpeed = unit->speed;
+            firstSpeed = false;
+        }
     }
     const std::vector<cc::IVec2> offsets = FormationOffsetsFP(units.size(), cellSize);
     const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(worldTarget));
@@ -89,6 +96,10 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
         {
             continue;
         }
+        // QoL slowest-speed: the whole squad marches at the minimum, set
+        // before the path order goes out (cleared: every other path assigns
+        // -1 explicitly so a stale cap never survives a fresh order).
+        unit->speedCapPixelsPerSec = slowestSpeed ? minSpeed : -1.0f;
         // Slots landing on units sanitize to the nearest enterable anchor
         // so squadmates don't all cancel against the same blocker.
         const cc::IVec2 slot = NearestEnterableTile(
@@ -126,10 +137,26 @@ std::vector<cc::Vec2> LineFormationPositions(std::size_t count, cc::Vec2 lineSta
 
 void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
                               const TileMap &map, const OccupancyGrid &occ,
-                              Vector2 lineStartWorld, Vector2 lineEndWorld)
+                              Vector2 lineStartWorld, Vector2 lineEndWorld,
+                              bool slowestSpeed)
 {
     const std::vector<cc::Vec2> positions = LineFormationPositions(
         units.size(), cc::ToGlm(lineStartWorld), cc::ToGlm(lineEndWorld));
+    float minSpeed = 0.0f;
+    bool firstSpeed = true;
+    for (std::size_t i = 0; i < units.size(); ++i)
+    {
+        const Unit *unit = registry.Get<Unit>(units[i]);
+        if (unit == nullptr)
+        {
+            continue;
+        }
+        if (firstSpeed || unit->speed < minSpeed)
+        {
+            minSpeed = unit->speed;
+            firstSpeed = false;
+        }
+    }
     for (std::size_t i = 0; i < units.size(); ++i)
     {
         Unit *unit = registry.Get<Unit>(units[i]);
@@ -137,6 +164,7 @@ void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &uni
         {
             continue; // destroyed/missing IDs don't shift the surviving slots
         }
+        unit->speedCapPixelsPerSec = slowestSpeed ? minSpeed : -1.0f;
         const cc::IVec2 want = cc::WorldToTile(positions[i]);
         const cc::IVec2 slot = NearestEnterableTile(
             map, occ, want, unit->footprintWidth, unit->footprintHeight, units[i],

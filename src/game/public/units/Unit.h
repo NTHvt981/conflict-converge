@@ -115,6 +115,12 @@ struct Unit
     float hitFlashTime = 0.0f;    // live overlay countdown, decayed in UpdateUnit (M4G5)
     float speed = 0.0f; // pixels per second (M3G2 stat table)
     float sightRange = 0.0f; // pixels: targeting acquisition radius (M3G4)
+    // QoL move-at-slowest-speed: caps effective speed below Unit::speed for
+    // the current order so fast units don't outrun slow ones in formation.
+    // -1 = uncapped. Reset on every new order, arrival, and cancel (see
+    // ClearOrders/Arrive/CancelAtBlocked/Space) so it never leaks into an
+    // unrelated later order.
+    float speedCapPixelsPerSec = -1.0f;
     Vector2 position = {}; // snapped to 64x64 grid (M2)
     Vector2 velocity = {};
     bool isSelected = false;
@@ -194,6 +200,17 @@ struct Unit
 inline void SnapUnitToTile(Unit &unit)
 {
     unit.position = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(unit.position)));
+}
+
+// QoL: effective movement speed honoring the slowest-speed cap (-1 = own
+// speed). All UpdateUnitMovement call sites use this, never Unit::speed.
+inline float EffectiveSpeed(const Unit &unit)
+{
+    if (unit.speedCapPixelsPerSec < 0.0f || unit.speedCapPixelsPerSec >= unit.speed)
+    {
+        return unit.speed;
+    }
+    return unit.speedCapPixelsPerSec;
 }
 
 // M2 Goal 4: right-click command input. Stores a tile-snapped destination;

@@ -7,6 +7,7 @@
 #include "Unit.h"      // Unit components under test
 #include "UnitStats.h" // ApplyBaseStats
 
+#include <cmath>
 #include <set>
 
 void RunFormationTests()
@@ -149,5 +150,47 @@ void RunFormationTests()
             }
         });
         CC_CHECK(orderedCount == 2);
+    }
+
+    // --- QoL slowest-speed: squad capped at the minimum, cleared after ---
+    {
+        Registry capRegistry;
+        TileMap capMap(20, 15);
+        OccupancyGrid capOcc(20, 15);
+        std::vector<Entity> mixed;
+        for (int i = 0; i < 3; ++i)
+        {
+            Unit unit;
+            unit.type = UnitType::Infantry;
+            ApplyBaseStats(unit);
+            unit.teamID = 0;
+            unit.position = cc::ToRaylib(cc::TileToWorld(i * 3, 0));
+            mixed.push_back(capRegistry.Create());
+            capRegistry.Add(mixed.back(), unit);
+        }
+        capRegistry.Get<Unit>(mixed[0])->speed = 200.0f;
+        capRegistry.Get<Unit>(mixed[1])->speed = 50.0f; // the minimum
+        capRegistry.Get<Unit>(mixed[2])->speed = 100.0f;
+        formation::IssueFormationMoveFP(capRegistry, mixed, capMap, capOcc,
+                                        cc::ToRaylib(cc::TileToWorld(10, 10)), true);
+        for (Entity id : mixed)
+        {
+            CC_CHECK(capRegistry.Get<Unit>(id)->speedCapPixelsPerSec == 50.0f);
+            CC_CHECK(EffectiveSpeed(*capRegistry.Get<Unit>(id)) == 50.0f);
+        }
+        // End to end: the 200-speed unit advances exactly 50px in one tick.
+        const Vector2 before = capRegistry.Get<Unit>(mixed[0])->position;
+        UpdateUnit(mixed[0], capRegistry, capMap, 1.0f);
+        const Vector2 after = capRegistry.Get<Unit>(mixed[0])->position;
+        const float dx = after.x - before.x;
+        const float dy = after.y - before.y;
+        CC_CHECK(CcNear(std::sqrt(dx * dx + dy * dy), 50.0f));
+        // Without the flag the cap is explicitly cleared, never stale.
+        formation::IssueFormationMoveFP(capRegistry, mixed, capMap, capOcc,
+                                        cc::ToRaylib(cc::TileToWorld(12, 12)), false);
+        for (Entity id : mixed)
+        {
+            CC_CHECK(capRegistry.Get<Unit>(id)->speedCapPixelsPerSec == -1.0f);
+        }
     }
 }

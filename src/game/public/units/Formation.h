@@ -39,7 +39,7 @@ void IssueFormationMove(Registry &registry, const std::vector<Entity> &units, co
 // in formation. Reads fpW/fpH from each Unit component.
 void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
                           const TileMap &map, const OccupancyGrid &occ,
-                          Vector2 worldTarget);
+                          Vector2 worldTarget, bool slowestSpeed = false);
 
 // QoL line formation: evenly spaces `count` points along the segment
 // lineStart->lineEnd (inclusive ends when count > 1; the midpoint for a
@@ -53,6 +53,7 @@ std::vector<cc::Vec2> LineFormationPositions(std::size_t count, cc::Vec2 lineSta
 // IssueFormationMoveFP. Same per-unit dispatch, different slot source.
 void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
                               const TileMap &map, const OccupancyGrid &occ,
-                              Vector2 lineStartWorld, Vector2 lineEndWorld);
+                              Vector2 lineStartWorld, Vector2 lineEndWorld,
+                              bool slowestSpeed = false);
 
 } // namespace formation

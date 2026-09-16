@@ -118,6 +118,9 @@ private:
     // exists yet for per-building toggles). Cap scales the repair rate.
     bool playerAutoRepair = false;
     float autoRepairCap = 1.0f;
+    // QoL move-at-slowest-speed: formation orders march at the squad
+    // minimum while true (toggled with B).
+    bool moveAtSlowestSpeed = false;
 
     // Per-frame poll state (M11 edge-triggered sounds, M14 transitions).
     int lastBuildingCount = 0;
