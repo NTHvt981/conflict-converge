@@ -151,6 +151,11 @@ struct Unit
     // M13: Engineer repair order (channeled, time cost only — Q83).
     bool hasRepairOrder = false;
     Entity repairTarget = kInvalidEntity;
+    // QoL attack-ground (standing shell-at-position order until cancelled).
+    // Continuous: keeps firing on cooldown while in range, hits nothing when
+    // the impact area is empty. Cleared like every other order below.
+    bool hasAttackGroundOrder = false;
+    Vector2 attackGroundPos = {};
     // QoL shift-queue: pending orders behind the current one, dispatched in
     // FIFO order as each completes. Transient like the rest of the order
     // state: not saved. Patrol never completes (loops), so anything queued
@@ -217,6 +222,14 @@ void IssueRepairOrder(Unit &engineer, Entity target);
 // issuing a repair order on `target` would stick (same validation the
 // driver runs, without starting the order).
 bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity target);
+
+// QoL attack-ground order: shell `worldPos` continuously until cancelled.
+// Out of range, the unit marches there first (footprint-aware variant
+// available); in range it fires through the normal windup/cooldown machine,
+// hitting nothing when the impact area is empty.
+void IssueAttackGroundOrder(Unit &unit, const TileMap &map, Vector2 worldPos);
+void IssueAttackGroundOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
+                                     Vector2 worldPos, Entity self, std::uint32_t selfGen);
 
 // QoL shift-queue entry point. shiftQueue=false: clears orderQueue and
 // issues immediately through the same clean dispatch as dequeued orders

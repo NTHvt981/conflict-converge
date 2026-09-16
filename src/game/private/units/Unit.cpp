@@ -15,23 +15,27 @@
 
 #include "UnitStats.h" // M13: max-health lookup for repair validation.
 
+namespace
+{
+
+void ClearOrders(Unit &unit); // defined beside IssueRepairOrder below
+
+} // namespace
+
 void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
 {
     unit.moveTarget = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldTarget)));
     unit.hasMoveOrder = true;
     unit.blockedTime = 0.0f;
     unit.blockedRepaths = 0;
-    // A plain move replaces fancier orders (attack-move, repair).
-    unit.attackMove = false;
-    unit.hasRepairOrder = false;
-    unit.repairTarget = kInvalidEntity;
+    // A plain move replaces fancier orders (attack-move, patrol, repair,
+    // attack-ground).
+    ClearOrders(unit);
 }
 
 void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
 {
-    unit.attackMove = false;
-    unit.hasRepairOrder = false;
-    unit.repairTarget = kInvalidEntity;
+    ClearOrders(unit);
     IssuePathOrder(unit, map, worldTarget); // A* (or straight fallback)
     unit.attackMove = true;
     unit.attackMoveDest = unit.moveTarget;
@@ -40,9 +44,7 @@ void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
 void IssueAttackMoveOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
                                    Vector2 worldTarget, Entity self, std::uint32_t selfGen)
 {
-    unit.attackMove = false;
-    unit.hasRepairOrder = false;
-    unit.repairTarget = kInvalidEntity;
+    ClearOrders(unit);
     IssuePathOrderFootprint(unit, map, occ, worldTarget, self, selfGen);
     unit.attackMove = true;
     unit.attackMoveDest = unit.moveTarget;
@@ -100,14 +102,12 @@ void SetStance(Unit &unit, Stance stance)
 
 void IssuePatrolOrder(Unit &unit, const TileMap &map, Vector2 pointA, Vector2 pointB)
 {
+    ClearOrders(unit);
     unit.stance = Stance::Patrol;
     unit.hasPatrol = true;
     unit.patrolA = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(pointA)));
     unit.patrolB = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(pointB)));
     unit.patrolToB = true;
-    unit.attackMove = false;
-    unit.hasRepairOrder = false;
-    unit.repairTarget = kInvalidEntity;
     IssuePathOrder(unit, map, unit.patrolB);
 }
 
@@ -179,7 +179,7 @@ void IssueRepairOrder(Unit &engineer, Entity target)
         return;
     }
     StopMoving(engineer);
-    engineer.attackMove = false;
+    ClearOrders(engineer);
     engineer.hasRepairOrder = true;
     engineer.repairTarget = target;
 }
@@ -195,10 +195,7 @@ namespace
 void DispatchQueuedOrder(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
                          std::uint32_t selfGen, const QueuedOrder &order)
 {
-    unit.attackMove = false;
-    unit.hasPatrol = false;
-    unit.hasRepairOrder = false;
-    unit.repairTarget = kInvalidEntity;
+    ClearOrders(unit);
     switch (order.kind)
     {
     case QueuedOrderKind::Move:
@@ -228,6 +225,15 @@ void DispatchQueuedOrder(Unit &unit, const TileMap &map, OccupancyGrid *occ, Ent
         IssueRepairOrder(unit, order.target);
         break;
     case QueuedOrderKind::AttackGround:
+        if (occ != nullptr)
+        {
+            IssueAttackGroundOrderFootprint(unit, map, *occ, order.pointA, self, selfGen);
+        }
+        else
+        {
+            IssueAttackGroundOrder(unit, map, order.pointA);
+        }
+        break;
     case QueuedOrderKind::Count:
         break;
     }
@@ -338,6 +344,40 @@ bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity targ
 {
     Vector2 aim = {};
     return RepairAim(registry, engineer, target, aim);
+}
+
+namespace
+{
+
+// Shared clear: exactly one order active at a time. Called by every
+// Issue*Order below (including the pre-existing ones, which previously
+// each cleared only a subset) and by the queued-order dispatch.
+void ClearOrders(Unit &unit)
+{
+    unit.attackMove = false;
+    unit.hasPatrol = false;
+    unit.hasRepairOrder = false;
+    unit.repairTarget = kInvalidEntity;
+    unit.hasAttackGroundOrder = false;
+}
+
+} // namespace
+
+void IssueAttackGroundOrder(Unit &unit, const TileMap &map, Vector2 worldPos)
+{
+    ClearOrders(unit);
+    unit.hasAttackGroundOrder = true;
+    unit.attackGroundPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
+    IssuePathOrder(unit, map, unit.attackGroundPos);
+}
+
+void IssueAttackGroundOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
+                                     Vector2 worldPos, Entity self, std::uint32_t selfGen)
+{
+    ClearOrders(unit);
+    unit.hasAttackGroundOrder = true;
+    unit.attackGroundPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
+    IssuePathOrderFootprint(unit, map, occ, unit.attackGroundPos, self, selfGen);
 }
 
 // Approach tile for repair work: the aim tile itself when walkable (units),
@@ -529,6 +569,31 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
             unit->velocity = { 0.0f, 0.0f };
             return;
         }
+    }
+
+    // QoL attack-ground: deliberate shell-at-position order, priority just
+    // below repair (also a deliberate player order). Out of range it marches
+    // there like any other approach leg; in range it keeps firing through
+    // the normal windup/cooldown machine until cancelled, hitting nothing
+    // when the impact area is empty.
+    if (unit->hasAttackGroundOrder)
+    {
+        const float dist =
+            glm::distance(cc::ToGlm(unit->position), cc::ToGlm(unit->attackGroundPos));
+        if (dist > static_cast<float>(unit->attackRange))
+        {
+            ReissueDriverOrder(*unit, map, occ, unit->attackGroundPos, self, registry);
+            UpdateUnitMovement(*unit, map, unit->speed, dtSeconds, occ, self,
+                               registry.Generation(self));
+            unit->state = UnitState::Moving;
+            return;
+        }
+        unit->state = UnitState::Attacking;
+        unit->velocity = { 0.0f, 0.0f };
+        UpdateAttackPhases(*unit, dtSeconds, [&] {
+            ResolveGroundAttack(registry, *unit, unit->attackGroundPos);
+        });
+        return;
     }
 
     // Explicit player orders win over acquiring NEW targets — but a unit

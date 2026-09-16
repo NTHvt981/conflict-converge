@@ -57,6 +57,37 @@ float ResolveBuildingAttack(Unit &attacker, Building &building)
     return effective;
 }
 
+void ResolveGroundAttack(Registry &registry, Unit &attacker, Vector2 pos)
+{
+    // Nearest live enemy to the impact point inside one tile. Attacker's
+    // own team and corpses never qualify (matches QueryUnitsInRect's
+    // exclusion semantics, plus a nearest-wins pick on top).
+    Entity best = kInvalidEntity;
+    float bestDistSq = 64.0f * 64.0f;
+    registry.Each<Unit>([&](Entity id, const Unit &unit) {
+        if (unit.health <= 0.0f || unit.teamID == attacker.teamID)
+        {
+            return;
+        }
+        const float dx = (unit.position.x + 32.0f) - pos.x;
+        const float dy = (unit.position.y + 32.0f) - pos.y;
+        const float distSq = dx * dx + dy * dy;
+        if (distSq < bestDistSq)
+        {
+            best = id;
+            bestDistSq = distSq;
+        }
+    });
+    if (best == kInvalidEntity)
+    {
+        return; // clean miss: the windup/cooldown still cycled
+    }
+    if (Unit *defender = registry.Get<Unit>(best))
+    {
+        ResolveAttack(attacker, *defender, AttackContext::Direct);
+    }
+}
+
 // M4 Goal 2: the body fills the center 32x32 of the unit's 64x64 tile.
 Rectangle HitboxOf(const Unit &unit)
 {

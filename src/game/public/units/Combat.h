@@ -36,6 +36,12 @@ float ResolveAttack(Unit &attacker, Unit &defender, AttackContext context = Atta
 // returns effective damage like ResolveAttack. The driver demolishes at zero.
 float ResolveBuildingAttack(Unit &attacker, Building &building);
 
+// QoL attack-ground: fires `attacker`'s attack at a world position.
+// Single-target (no splash falloff — that's a separate balance feature):
+// the nearest live enemy within one tile (64px) of `pos` takes a Direct
+// ResolveAttack; empty ground is a clean miss (the attacker still cycled).
+void ResolveGroundAttack(Registry &registry, Unit &attacker, Vector2 pos);
+
 // M4 Goal 4: anti-crush rule. Vehicle hulls (IFV/Artillery/Light/HeavyTank)
 // cannot crush foot units (Infantry/AntiArmor/Engineer) — the overrun deals
 // no damage. Vehicle-vs-vehicle rams and foot-vs-anything crushes still use

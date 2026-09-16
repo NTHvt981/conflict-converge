@@ -105,6 +105,9 @@ private:
     // (set via Ctrl+Shift+number, cleared by... nothing — persists until
     // rebound; -1 = off).
     int autoAddGroupBit = -1;
+    // QoL attack-ground mode (toggled with X): the next right-click shells
+    // the point instead of moving. One-shot, clears after a single use.
+    bool attackGroundMode = false;
 
     // Per-frame poll state (M11 edge-triggered sounds, M14 transitions).
     int lastBuildingCount = 0;

@@ -80,6 +80,7 @@ std::vector<std::string> ShortcutHintLines()
         "G Guard",
         "V Patrol",
         "R Rally",
+        "X AttackGnd",
         "Shift Queues",
         "Wheel Zoom",
         "F6-8 SaveSlot",

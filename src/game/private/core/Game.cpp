@@ -335,6 +335,14 @@ void Game::BindShortcuts()
             settingRally = !settingRally;
         }
     });
+    input.shortcuts.Bind(KEY_X, [&] {
+        // QoL attack-ground mode: arm shelling; the next right-click fires
+        // it (one-shot, see the RightPressed block), Escape cancels.
+        if (worldActive && menu.state == MenuState::Playing)
+        {
+            attackGroundMode = !attackGroundMode;
+        }
+    });
     input.shortcuts.Bind(KEY_ESCAPE, [&] {
         // M14: Esc backs out of menu screens; in-match it keeps the M2
         // deselect behavior (Paused resumes).
@@ -350,6 +358,7 @@ void Game::BindShortcuts()
         }
         if (menu.state == MenuState::Playing)
         {
+            attackGroundMode = false; // QoL: Esc also stands down shell mode
             DeselectAll(registry);
             dragging = false;
         }
@@ -375,6 +384,7 @@ void Game::BindShortcuts()
                 unit.attackMove = false; // M13: halt drops attack-move + repair too
                 unit.hasRepairOrder = false;
                 unit.repairTarget = kInvalidEntity;
+                unit.hasAttackGroundOrder = false; // QoL: halt drops shelling too
                 unit.orderQueue.clear(); // QoL: halt drops queued orders too
                 unit.phase = AttackPhase::Ready; // M4 Goal 3: halt cancels the telegraph
                 unit.velocity = { 0.0f, 0.0f };
@@ -661,6 +671,25 @@ void Game::Update()
         }
         if (input.RightPressed())
         {
+            // QoL attack-ground mode (toggled with X): the next right-click
+            // shells the clicked point instead of moving there. One-shot:
+            // the mode clears after a single use.
+            if (attackGroundMode)
+            {
+                attackGroundMode = false;
+                const Vector2 target = input.MouseWorld(camera);
+                const bool queued = input.ShiftDown();
+                registry.Each<Unit>([&](Entity id, Unit &unit) {
+                    if (unit.isSelected)
+                    {
+                        IssueOrEnqueue(unit, map, &occ, id, registry.Generation(id), queued,
+                                       QueuedOrder{ QueuedOrderKind::AttackGround, target });
+                    }
+                });
+                audio.Play(SfxId::Confirm);
+            }
+            else
+            {
             // Single selection keeps the direct path order; groups fan
             // out through the formation move.
             std::vector<Entity> squad;
@@ -763,6 +792,7 @@ void Game::Update()
                 }
                 audio.Play(SfxId::Confirm);
             }
+            } // plain right-click orders (attack-ground mode handled above)
         }
         // QoL control groups: number keys recall, Ctrl+number assigns the
         // current selection (replacing), Shift+number adds to it,
@@ -1234,6 +1264,10 @@ void Game::Update()
     if (settingRally)
     {
         DrawText("Rally: left-click to place (R cancels)", 250, 364, 16, DARKGREEN);
+    }
+    if (attackGroundMode)
+    {
+        DrawText("Shelling: right-click to fire (X/Esc cancels)", 250, 364, 16, RED);
     }
     if (!queue.Empty())
     {
