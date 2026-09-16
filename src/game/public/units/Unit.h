@@ -149,6 +149,12 @@ void IssueMoveOrder(Unit &unit, Vector2 worldTarget);
 // on contact and resumes the march when the target is lost.
 void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget);
 
+// Attack-move with a footprint-aware march route (8-dir A* + CanEnter +
+// occupied-goal sanitization). Chase/remarch legs stay driver-issued as
+// before; only the initial march plans around units.
+void IssueAttackMoveOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
+                                   Vector2 worldTarget, Entity self, std::uint32_t selfGen);
+
 // M13: stance switch. Leaving Patrol drops the route; orders are untouched.
 void SetStance(Unit &unit, Stance stance);
 

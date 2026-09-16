@@ -11,12 +11,16 @@
 #include "UnitFactory.h" // cost-validated spawner bound to the AI's resources
 
 class TileMap;        // fwd-decl (AICommander.cpp includes TileMap.h)
+class OccupancyGrid;  // fwd-decl: class, not struct (TileMap.h defines it)
 class ResourceNodes;  // fwd-decl (harvest target queries)
 class EventDispatcher; // fwd-decl (factory event routing)
 
 // M8: enemy AI commander. Plays by the same rules as the player — own
 // ResourceSystem seeded with starting funds, own ProductionQueue, buildings
 // placed through PlaceBuilding, orders through IssuePathOrder/IssueFormationMove.
+// Bind shared occupancy via SetOccupancy and march/harvest/scout/retreat
+// orders route footprint-aware (8-dir A*, occupied-goal sanitization);
+// unbound (headless tests) keeps the legacy blind behavior.
 // Difficulty (Q52) scales build size, wave thresholds, scout cadence, and
 // retreat behavior; handicaps are timer-based on Easy only, never free
 // resources (Q74). Waves launch on army-size thresholds (Q75).
@@ -60,6 +64,11 @@ public:
     // One decision tick: income, harvesters, production, waves, scouting,
     // retreat. Safe to call every frame (cheap guards inside).
     void Update(float dt);
+    // Bind shared unit occupancy for footprint-aware orders (nullable:
+    // null keeps legacy blind orders). The grid must outlive the commander;
+    // identity is stable across matches (Resize preserves the object), so
+    // binding once per world setup suffices — Reset never clears it.
+    void SetOccupancy(OccupancyGrid *occ);
 
     int TeamID() const;
     AIDifficulty Difficulty() const;
@@ -79,10 +88,14 @@ private:
     void RetreatTick();
     void OrderHarvesterToIron(Entity harvester);
     bool FindLiveIron(cc::IVec2 &outTile) const;
+    // Single-unit point order: footprint-aware when occupancy is bound,
+    // legacy blind otherwise. Waves use the attack-move FP variant inline.
+    void OrderMove(Unit &unit, Entity id, Vector2 dest);
 
     Registry &registry_;
     TileMap &map_;
     ResourceNodes &nodes_;
+    OccupancyGrid *occ_ = nullptr; // bound shared grid (null = legacy orders)
     ResourceSystem resources_; // owned: fair-rules economy, seeded like the player
     UnitFactory factory_;      // bound to resources_ above
     ProductionQueue queue_;

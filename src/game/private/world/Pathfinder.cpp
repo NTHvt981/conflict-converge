@@ -143,10 +143,12 @@ TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
     {
         return {};
     }
-    if (!occ.CanEnter(map, start, footprintW, footprintH, self, selfGen))
-    {
-        return {};
-    }
+    // No CanEnter gate on start: units routinely stand on building tiles
+    // (spawned inside fresh footprints, rally points, harvesters working a
+    // node edge). StepToward's step-out allowance already lets a unit leave
+    // a blocked anchor, and neighbors are still fully validated below, so
+    // gating here would strand every such unit on straight fallback. The
+    // legacy 4-dir FindPath likewise never gates start, for the same reason.
     if (start == goal)
     {
         return { start };

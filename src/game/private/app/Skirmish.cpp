@@ -89,6 +89,22 @@ void ResetSkirmish(SkirmishWorld &world)
     {
         world.enemyAI2->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, 1);
     }
+    // Bind shared occupancy so AI orders route footprint-aware. Identity is
+    // stable across matches (members, never reallocated), so binding here
+    // covers Build, menu Start, and the load path — all funnel through this
+    // reset. Null grid (bare tests) keeps legacy blind orders.
+    if (world.ai != nullptr)
+    {
+        world.ai->SetOccupancy(world.occ);
+    }
+    if (world.allyAI != nullptr)
+    {
+        world.allyAI->SetOccupancy(world.occ);
+    }
+    if (world.enemyAI2 != nullptr)
+    {
+        world.enemyAI2->SetOccupancy(world.occ);
+    }
 }
 
 bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficulty difficulty)

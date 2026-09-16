@@ -152,4 +152,122 @@ void RunAICommanderTests()
     CC_CHECK(left.WavesLaunched() + right.WavesLaunched() >= 1);
     CC_CHECK(simRegistry.EntityCount() > startEntities);
     CC_CHECK(left.HarvesterCount() + right.HarvesterCount() >= 1);
+
+    // --- bound occupancy: harvester order sanitizes off the blocked node ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        ResourceNodes nodes;
+        EventDispatcher events;
+        OccupancyGrid occ(20, 15);
+        AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 16, 9 },
+                       { 1, 10 });
+        ai.SetupBase();
+        ai.SetOccupancy(&occ);
+        nodes.SpawnNode(map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
+        const Entity blocker = registry.Create();
+        occ.ReserveFootprint({ 15, 3 }, 1, 1, blocker, registry.Generation(blocker));
+        for (int i = 0; i < 60; ++i)
+        {
+            ai.Update(1.0f / 60.0f);
+        }
+        CC_CHECK(ai.HarvesterCount() == medium.harvesters);
+        registry.Each<Unit>([&](Entity id, const Unit &unit) {
+            if (id == blocker || unit.type != UnitType::Engineer)
+            {
+                return;
+            }
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(unit.moveTarget));
+            CC_CHECK(!(dest == cc::IVec2(15, 3))); // beside the node, not inside
+            CC_CHECK(unit.hasMoveOrder || unit.hasPath);
+        });
+    }
+
+    // --- bound occupancy: wave keeps attack-move, slots avoid blockers ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        ResourceNodes nodes;
+        EventDispatcher events;
+        OccupancyGrid occ(20, 15);
+        ResourceSystem resources;
+        AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 16, 9 },
+                       { 1, 10 });
+        ai.SetupBase();
+        ai.SetOccupancy(&occ);
+        UnitFactory factory(registry, resources, events);
+        for (int i = 0; i < 3; ++i)
+        {
+            factory.SpawnPrepaid(UnitType::Infantry, 1,
+                                 cc::ToRaylib(cc::TileToWorld(16 + i, 9)));
+        }
+        // Wave slots around lastSeenEnemy (1,10): (1,10),(2,10),(1,11),(2,11).
+        const Entity blocker = registry.Create();
+        const std::uint32_t gen = registry.Generation(blocker);
+        occ.ReserveFootprint({ 1, 10 }, 1, 1, blocker, gen);
+        occ.ReserveFootprint({ 2, 10 }, 1, 1, blocker, gen);
+        occ.ReserveFootprint({ 1, 11 }, 1, 1, blocker, gen);
+        occ.ReserveFootprint({ 2, 11 }, 1, 1, blocker, gen);
+        ai.Update(1.0f / 60.0f);
+        CC_CHECK(ai.WavesLaunched() == 1);
+        int ordered = 0;
+        registry.Each<Unit>([&](Entity id, const Unit &unit) {
+            if (id == blocker || unit.teamID != 1 || unit.health <= 0.0f)
+            {
+                return;
+            }
+            if (unit.type == UnitType::Engineer)
+            {
+                return;
+            }
+            CC_CHECK(unit.attackMove); // FP march preserves attack-move
+            if (unit.hasMoveOrder || unit.hasPath)
+            {
+                ++ordered;
+            }
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(unit.moveTarget));
+            CC_CHECK(occ.CanEnter(map, dest, 1, 1, id, registry.Generation(id)));
+        });
+        CC_CHECK(ordered >= 3);
+    }
+
+    // --- unbound commander keeps legacy blind orders (null occ) ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        ResourceNodes nodes;
+        EventDispatcher events;
+        OccupancyGrid occ(20, 15);
+        ResourceSystem resources;
+        AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 16, 9 },
+                       { 1, 10 });
+        ai.SetupBase();
+        // NOTE: no SetOccupancy — legacy path.
+        UnitFactory factory(registry, resources, events);
+        for (int i = 0; i < 3; ++i)
+        {
+            factory.SpawnPrepaid(UnitType::Infantry, 1,
+                                 cc::ToRaylib(cc::TileToWorld(16 + i, 9)));
+        }
+        const Entity blocker = registry.Create();
+        occ.ReserveFootprint({ 1, 10 }, 1, 1, blocker, registry.Generation(blocker));
+        ai.Update(1.0f / 60.0f);
+        CC_CHECK(ai.WavesLaunched() == 1);
+        // Blind march drives straight at the slot even though it is occupied.
+        bool droveAtBlocker = false;
+        registry.Each<Unit>([&](Entity id, const Unit &unit) {
+            if (id == blocker || unit.teamID != 1 || unit.health <= 0.0f ||
+                unit.type == UnitType::Engineer)
+            {
+                return;
+            }
+            CC_CHECK(unit.attackMove);
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(unit.moveTarget));
+            if (dest == cc::IVec2(1, 10) || dest == cc::IVec2(2, 10))
+            {
+                droveAtBlocker = true;
+            }
+        });
+        CC_CHECK(droveAtBlocker);
+    }
 }

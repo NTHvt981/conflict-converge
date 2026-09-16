@@ -473,4 +473,36 @@ void RunFootprintTests()
         CC_CHECK(dist >= 64.0f);
         CC_CHECK(frames < 300);
     }
+
+    // --- Blocked start still paths: units live on building tiles ---
+    // Spawns, rally points, and harvesters sit inside/on footprints; the
+    // search must route out of them (StepToward's step-out allowance covers
+    // the first step) instead of stranding the unit on straight fallback.
+    {
+        TileMap map(10, 10);
+        map.Set({ 0, 0 }, TerrainType::Building);
+        OccupancyGrid occ(10, 10);
+        // Terrain-blocked anchor routes out.
+        const TilePath route = FindPathFootprint(map, occ, { 0, 0 }, { 3, 0 }, 1, 1, 7, 1);
+        CC_CHECK(!route.empty());
+        CC_CHECK(route.front() == cc::IVec2(0, 0));
+        CC_CHECK(route.back() == cc::IVec2(3, 0));
+        // Occupied-by-other anchor routes out too.
+        occ.ReserveFootprint({ 5, 5 }, 1, 1, 9, 1);
+        const TilePath route2 = FindPathFootprint(map, occ, { 5, 5 }, { 7, 5 }, 1, 1, 7, 1);
+        CC_CHECK(!route2.empty());
+        CC_CHECK(route2.back() == cc::IVec2(7, 5));
+        // Truly enclosed starts still fail closed (surrounded on all sides).
+        OccupancyGrid box(3, 3);
+        box.ReserveFootprint({ 0, 0 }, 1, 1, 9, 1);
+        box.ReserveFootprint({ 1, 0 }, 1, 1, 9, 1);
+        box.ReserveFootprint({ 2, 0 }, 1, 1, 9, 1);
+        box.ReserveFootprint({ 0, 1 }, 1, 1, 9, 1);
+        box.ReserveFootprint({ 2, 1 }, 1, 1, 9, 1);
+        box.ReserveFootprint({ 0, 2 }, 1, 1, 9, 1);
+        box.ReserveFootprint({ 1, 2 }, 1, 1, 9, 1);
+        box.ReserveFootprint({ 2, 2 }, 1, 1, 9, 1);
+        TileMap boxMap(3, 3);
+        CC_CHECK(FindPathFootprint(boxMap, box, { 1, 1 }, { 0, 0 }, 1, 1, 7, 1).empty());
+    }
 }

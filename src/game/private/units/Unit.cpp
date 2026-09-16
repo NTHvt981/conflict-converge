@@ -35,6 +35,17 @@ void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
     unit.attackMoveDest = unit.moveTarget;
 }
 
+void IssueAttackMoveOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
+                                   Vector2 worldTarget, Entity self, std::uint32_t selfGen)
+{
+    unit.attackMove = false;
+    unit.hasRepairOrder = false;
+    unit.repairTarget = kInvalidEntity;
+    IssuePathOrderFootprint(unit, map, occ, worldTarget, self, selfGen);
+    unit.attackMove = true;
+    unit.attackMoveDest = unit.moveTarget;
+}
+
 void SetStance(Unit &unit, Stance stance)
 {
     unit.stance = stance;

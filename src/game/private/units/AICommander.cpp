@@ -1,7 +1,7 @@
 #include "AICommander.h"
 
 #include "Building.h"   // PlaceBuilding, UpdateBaseIncome
-#include "Formation.h"  // formation::IssueFormationMove (wave launch)
+#include "Formation.h"  // formation::FormationOffsets (wave slots)
 #include "Nodes.h"      // iron node queries
 #include "Pathfinder.h" // IssuePathOrder (harvesters, scouts, retreat)
 #include "TileMap.h"
@@ -168,6 +168,23 @@ void AICommander::SetupBase()
                    cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
 }
 
+void AICommander::SetOccupancy(OccupancyGrid *occ)
+{
+    occ_ = occ;
+}
+
+void AICommander::OrderMove(Unit &unit, Entity id, Vector2 dest)
+{
+    if (occ_ != nullptr)
+    {
+        IssuePathOrderFootprint(unit, map_, *occ_, dest, id, registry_.Generation(id));
+    }
+    else
+    {
+        IssuePathOrder(unit, map_, dest);
+    }
+}
+
 void AICommander::Update(float dt)
 {
     if (dt <= 0.0f)
@@ -223,7 +240,7 @@ void AICommander::OrderHarvesterToIron(Entity harvester)
     }
     cc::IVec2 iron{ 0, 0 };
     const cc::IVec2 dest = FindLiveIron(iron) ? iron : homeTile_;
-    IssuePathOrder(*unit, map_, cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)));
+    OrderMove(*unit, harvester, cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)));
 }
 
 void AICommander::MaintainHarvesters()
@@ -295,6 +312,7 @@ void AICommander::MaybeLaunchWave()
     // M13: waves attack-move (not plain-move): marchers engage defenders on
     // contact instead of walking past them, then resume the advance. Plain
     // formation orders produced walk-through stalemates (measured in soak).
+    // The march itself routes footprint-aware when occupancy is bound.
     const std::vector<cc::IVec2> offsets = formation::FormationOffsets(army.size());
     for (std::size_t i = 0; i < army.size(); ++i)
     {
@@ -304,8 +322,16 @@ void AICommander::MaybeLaunchWave()
             continue;
         }
         const cc::IVec2 slot = lastSeenEnemy_ + offsets[i];
-        IssueAttackMoveOrder(*unit, map_,
-                             cc::ToRaylib(cc::TileToWorld(slot.x, slot.y)));
+        const Vector2 dest = cc::ToRaylib(cc::TileToWorld(slot.x, slot.y));
+        if (occ_ != nullptr)
+        {
+            IssueAttackMoveOrderFootprint(*unit, map_, *occ_, dest, army[i],
+                                          registry_.Generation(army[i]));
+        }
+        else
+        {
+            IssueAttackMoveOrder(*unit, map_, dest);
+        }
     }
     ++wavesLaunched_;
     timeSinceLaunch_ = 0.0f;
@@ -327,8 +353,7 @@ void AICommander::ScoutTick(float dt)
     }
     if (Unit *unit = registry_.Get<Unit>(scout))
     {
-        IssuePathOrder(*unit, map_,
-                       cc::ToRaylib(cc::TileToWorld(enemyTile_.x, enemyTile_.y)));
+        OrderMove(*unit, scout, cc::ToRaylib(cc::TileToWorld(enemyTile_.x, enemyTile_.y)));
     }
     scouted_ = true;
     lastSeenEnemy_ = enemyTile_; // waves rally on latest intel
@@ -336,7 +361,7 @@ void AICommander::ScoutTick(float dt)
 
 void AICommander::RetreatTick()
 {
-    registry_.Each<Unit>([&](Entity, Unit &unit) {
+    registry_.Each<Unit>([&](Entity id, Unit &unit) {
         if (unit.teamID != teamID_ || unit.health <= 0.0f || unit.type == UnitType::Engineer)
         {
             return;
@@ -348,8 +373,18 @@ void AICommander::RetreatTick()
             // plain move order forfeits full-DPS units (measured: Hard bled
             // out short-handed and lost the Medium-vs-Hard soak). Attack-move
             // keeps retreating units dealing damage while they fall back.
-            IssueAttackMoveOrder(unit, map_,
-                                cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
+            // The march itself routes footprint-aware when bound (same as
+            // waves above).
+            const Vector2 home = cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y));
+            if (occ_ != nullptr)
+            {
+                IssueAttackMoveOrderFootprint(unit, map_, *occ_, home, id,
+                                              registry_.Generation(id));
+            }
+            else
+            {
+                IssueAttackMoveOrder(unit, map_, home);
+            }
         }
     });
 }
