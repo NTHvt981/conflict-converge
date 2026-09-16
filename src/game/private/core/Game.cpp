@@ -664,6 +664,38 @@ void Game::Update()
                 audio.Play(SfxId::Confirm);
             }
         }
+        // QoL control groups: number keys recall, Ctrl+number assigns the
+        // current selection (replacing), Shift+number adds to it,
+        // Ctrl+Shift+number routes future production into it. Polled here
+        // (not via ShortcutRegistry) because one key needs 4-way
+        // modifier disambiguation the registry's plain/Shift-chord model
+        // can't express. Displayed 1-9,0 for bits 0-9.
+        static constexpr int kGroupKeys[10] = { KEY_ONE,   KEY_TWO,   KEY_THREE, KEY_FOUR,
+                                                KEY_FIVE,  KEY_SIX,   KEY_SEVEN, KEY_EIGHT,
+                                                KEY_NINE,  KEY_ZERO };
+        for (int bit = 0; bit < 10; ++bit)
+        {
+            if (!IsKeyPressed(kGroupKeys[bit]))
+            {
+                continue;
+            }
+            if (input.CtrlDown() && input.ShiftDown())
+            {
+                autoAddGroupBit = bit;
+            }
+            else if (input.CtrlDown())
+            {
+                AssignControlGroup(registry, bit);
+            }
+            else if (input.ShiftDown())
+            {
+                AddToControlGroup(registry, bit);
+            }
+            else
+            {
+                RecallControlGroup(registry, bit);
+            }
+        }
         // M9: rebuild visibility from current positions before anyone acquires.
         fog.Recompute(registry);
         // Phase 4 + stall-fix: occupancy pre-pass, per-unit driver (M3G5,
@@ -783,7 +815,14 @@ void Game::Update()
         });
         if (hasFactory)
         {
-            queue.Update(factory, 0, rallyPos, dt);
+            const Entity spawned = queue.Update(factory, 0, rallyPos, dt);
+            if (spawned != kInvalidEntity && autoAddGroupBit >= 0)
+            {
+                if (Unit *fresh = registry.Get<Unit>(spawned))
+                {
+                    fresh->controlGroups |= (1u << static_cast<unsigned int>(autoAddGroupBit));
+                }
+            }
         }
         // M14: Q57 production-ordered event on every queue growth (panel
         // buttons and the M5 seed enqueues both flow through here).
@@ -1004,6 +1043,17 @@ void Game::Update()
             DrawRectangle(static_cast<int>(body.x), static_cast<int>(body.y) - 8,
                           static_cast<int>(body.width * fraction), 5, GREEN);
         }
+        if (unit.controlGroups != 0)
+        {
+            // QoL control-group badge: lowest group number, above the bar.
+            int lowestBit = 0;
+            while (lowestBit < 9 && (unit.controlGroups & (1u << lowestBit)) == 0)
+            {
+                ++lowestBit;
+            }
+            DrawText(TextFormat("%d", (lowestBit + 1) % 10), static_cast<int>(body.x),
+                     static_cast<int>(body.y) - 22, 12, DARKBLUE);
+        }
         if (unit.hitFlashTime > 0.0f)
         {
             DrawRectangleRec(body, Fade(WHITE, 0.7f));
@@ -1067,6 +1117,7 @@ void Game::Update()
     // M6 Goal 2: raygui HUD (proper panels replace the M5 text counters).
     DrawResourcePanel(resources, &art);
     DrawSelectionPanel(registry);
+    DrawControlGroupStrip(registry, 0, autoAddGroupBit); // QoL: team 0 is the player
     DrawSaveSlots();
     // M13: factory panel (build buttons, queue, cancel); rally hint
     // while placing the rally point. Recomputed here (not just the sim

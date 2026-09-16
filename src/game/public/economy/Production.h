@@ -25,7 +25,9 @@ public:
     // Drop the head item, refunding its full cost. No-op when empty.
     void CancelTop(ResourceSystem &resources);
     // Advance the head build; finished units SpawnPrepaid at rallyPos.
-    void Update(UnitFactory &factory, int teamID, Vector2 rallyPos, float dt);
+    // Returns the spawned entity, or kInvalidEntity when nothing completed
+    // this call (QoL: lets callers tag fresh production, e.g. control groups).
+    Entity Update(UnitFactory &factory, int teamID, Vector2 rallyPos, float dt);
 
     bool Empty() const;
     std::size_t Size() const;

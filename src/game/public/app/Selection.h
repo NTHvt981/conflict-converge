@@ -27,3 +27,12 @@ Rectangle DraggedWorldBox(const GameCamera &camera, Vector2 screenStart, Vector2
 // add=false the box replaces the selection, otherwise it extends it.
 // Returns how many units the box picked.
 int SelectInRect(Registry &registry, Rectangle worldBox, bool add);
+
+// QoL control groups (bit N of Unit::controlGroups = member of group N).
+// Assign replaces group bit's membership with the current selection;
+// AddTo stamps the bit on selected units without clearing existing members;
+// Recall selects exactly the bit's members (replacing selection).
+// Returns how many units were stamped (assign/add) or selected (recall).
+int AssignControlGroup(Registry &registry, int groupBit);
+int AddToControlGroup(Registry &registry, int groupBit);
+int RecallControlGroup(Registry &registry, int groupBit);

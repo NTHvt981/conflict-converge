@@ -83,6 +83,10 @@ std::vector<std::string> ShortcutHintLines()
         "Wheel Zoom",
         "F6-8 SaveSlot",
         "Shift+F6-8 Load",
+        "Ctrl+1-0 Group",
+        "Shift+1-0 AddGrp",
+        "1-0 Recall",
+        "C+S+1-0 AutoAdd",
     };
 }
 
@@ -116,6 +120,42 @@ void DrawSelectionPanel(Registry &registry)
         text = summary.c_str();
     }
     GuiLabel({ 262.0f, 410.0f, 280.0f, 20.0f }, text);
+}
+
+// QoL control-group strip: 10 numbered boxes under the stockpile panel.
+// Filled green when the group has members (sky-blue when fully selected),
+// dimmed when empty; gold border marks the auto-add group for production.
+void DrawControlGroupStrip(Registry &registry, int teamID, int autoAddGroupBit)
+{
+    const float boxW = 26.0f, boxH = 20.0f, gap = 2.0f;
+    for (int bit = 0; bit < 10; ++bit)
+    {
+        const unsigned int mask = 1u << static_cast<unsigned int>(bit);
+        int count = 0;
+        bool allSelected = true;
+        registry.Each<Unit>([&](Entity, const Unit &unit) {
+            if (unit.teamID != teamID || (unit.controlGroups & mask) == 0)
+            {
+                return;
+            }
+            ++count;
+            if (!unit.isSelected)
+            {
+                allSelected = false;
+            }
+        });
+        const float x = 8.0f + static_cast<float>(bit) * (boxW + gap);
+        const Color fill =
+            count == 0 ? Fade(GRAY, 0.3f) : (allSelected ? SKYBLUE : DARKGREEN);
+        DrawRectangle(static_cast<int>(x), 70, static_cast<int>(boxW), static_cast<int>(boxH),
+                      fill);
+        if (bit == autoAddGroupBit)
+        {
+            DrawRectangleLinesEx({ x, 70.0f, boxW, boxH }, 2.0f, GOLD);
+        }
+        DrawText(TextFormat("%d:%d", (bit + 1) % 10, count), static_cast<int>(x) + 2, 74, 10,
+                 BLACK);
+    }
 }
 
 std::vector<UnitType> ProductionMenuOrder()

@@ -101,6 +101,10 @@ private:
     Vector2 dragStart = {};
     bool showHints = true;
     int setupScroll = 0;
+    // QoL control groups: production auto-joins this group bit when >= 0
+    // (set via Ctrl+Shift+number, cleared by... nothing — persists until
+    // rebound; -1 = off).
+    int autoAddGroupBit = -1;
 
     // Per-frame poll state (M11 edge-triggered sounds, M14 transitions).
     int lastBuildingCount = 0;

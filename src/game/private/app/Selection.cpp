@@ -85,3 +85,76 @@ int SelectInRect(Registry &registry, Rectangle worldBox, bool add)
     });
     return picked;
 }
+
+namespace
+{
+
+bool ValidGroupBit(int groupBit)
+{
+    return groupBit >= 0 && groupBit < 10;
+}
+
+unsigned int GroupMask(int groupBit)
+{
+    return 1u << static_cast<unsigned int>(groupBit);
+}
+
+} // namespace
+
+int AssignControlGroup(Registry &registry, int groupBit)
+{
+    if (!ValidGroupBit(groupBit))
+    {
+        return 0;
+    }
+    const unsigned int mask = GroupMask(groupBit);
+    int stamped = 0;
+    registry.Each<Unit>([&](Entity, Unit &unit) {
+        if (unit.isSelected)
+        {
+            unit.controlGroups |= mask;
+            ++stamped;
+        }
+        else
+        {
+            unit.controlGroups &= ~mask;
+        }
+    });
+    return stamped;
+}
+
+int AddToControlGroup(Registry &registry, int groupBit)
+{
+    if (!ValidGroupBit(groupBit))
+    {
+        return 0;
+    }
+    const unsigned int mask = GroupMask(groupBit);
+    int stamped = 0;
+    registry.Each<Unit>([&](Entity, Unit &unit) {
+        if (unit.isSelected)
+        {
+            unit.controlGroups |= mask;
+            ++stamped;
+        }
+    });
+    return stamped;
+}
+
+int RecallControlGroup(Registry &registry, int groupBit)
+{
+    if (!ValidGroupBit(groupBit))
+    {
+        return 0;
+    }
+    const unsigned int mask = GroupMask(groupBit);
+    int picked = 0;
+    registry.Each<Unit>([&](Entity, Unit &unit) {
+        unit.isSelected = (unit.controlGroups & mask) != 0;
+        if (unit.isSelected)
+        {
+            ++picked;
+        }
+    });
+    return picked;
+}

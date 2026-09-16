@@ -13,6 +13,7 @@ void RunTileMapTests();
 void RunUnitSnapTests();
 void RunCameraTests();
 void RunSelectionTests();
+void RunControlGroupTests();
 void RunMovementTests();
 void RunShortcutTests();
 void RunInputManagerTests();
@@ -62,6 +63,7 @@ int main()
     RunUnitSnapTests();
     RunCameraTests();
     RunSelectionTests();
+    RunControlGroupTests();
     RunMovementTests();
     RunShortcutTests();
     RunInputManagerTests();

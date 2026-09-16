@@ -95,6 +95,11 @@ struct Unit
     Vector2 position = {}; // snapped to 64x64 grid (M2)
     Vector2 velocity = {};
     bool isSelected = false;
+    // QoL control groups: bit N = member of group N (10 groups, 0-9).
+    // 0 = none. Transient UX convenience like isSelected: not saved.
+    // Assigned via Ctrl+number (replace), extended via Shift+number (add),
+    // recalled via plain number.
+    unsigned int controlGroups = 0;
     int teamID = 0;
     UnitType type = UnitType::Infantry;
     UnitState state = UnitState::Idle;

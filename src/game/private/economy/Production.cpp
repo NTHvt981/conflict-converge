@@ -37,11 +37,11 @@ void ProductionQueue::CancelTop(ResourceSystem &resources)
     items_.erase(items_.begin());
 }
 
-void ProductionQueue::Update(UnitFactory &factory, int teamID, Vector2 rallyPos, float dt)
+Entity ProductionQueue::Update(UnitFactory &factory, int teamID, Vector2 rallyPos, float dt)
 {
     if (items_.empty() || dt <= 0.0f)
     {
-        return;
+        return kInvalidEntity;
     }
     Item &head = items_.front();
     head.progress += dt;
@@ -54,14 +54,16 @@ void ProductionQueue::Update(UnitFactory &factory, int teamID, Vector2 rallyPos,
         const Item done = head;
         // Already paid at Enqueue; a short-funded spawn here would eat the
         // item, so SpawnPrepaid (not Spawn) keeps cost handling in one place.
-        factory.SpawnPrepaid(done.type, teamID, rallyPos);
+        const Entity spawned = factory.SpawnPrepaid(done.type, teamID, rallyPos);
         const float overflow = done.progress - done.buildTime;
         items_.erase(items_.begin());
         if (!items_.empty() && overflow > 0.0f)
         {
             items_.front().progress += overflow;
         }
+        return spawned;
     }
+    return kInvalidEntity;
 }
 
 bool ProductionQueue::Empty() const
