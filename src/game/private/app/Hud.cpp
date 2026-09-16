@@ -81,6 +81,7 @@ std::vector<std::string> ShortcutHintLines()
         "V Patrol",
         "R Rally",
         "X AttackGnd",
+        "T AutoRetreat",
         "J JumpPing",
         "Shift Queues",
         "Wheel Zoom",

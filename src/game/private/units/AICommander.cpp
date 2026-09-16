@@ -365,44 +365,8 @@ void AICommander::ScoutTick(float dt)
 
 void AICommander::RetreatTick()
 {
-    registry_.Each<Unit>([&](Entity id, Unit &unit) {
-        if (unit.teamID != teamID_ || unit.health <= 0.0f || unit.type == UnitType::Engineer)
-        {
-            return;
-        }
-        const float maxHealth = BaseStats(unit.type).health;
-        if (maxHealth > 0.0f && unit.health < 0.3f * maxHealth)
-        {
-            // Fighting withdrawal: damage does not scale with health, so a
-            // plain move order forfeits full-DPS units (measured: Hard bled
-            // out short-handed and lost the Medium-vs-Hard soak). Attack-move
-            // keeps retreating units dealing damage while they fall back.
-            // The march itself routes footprint-aware when bound (same as
-            // waves above). Guarded like ReissueDriverOrder: only re-path
-            // when the goal tile changed, so retreating units through a
-            // chokepoint get the hold-and-retry grace period instead of a
-            // full footprint A* replan every frame.
-            const Vector2 home = cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y));
-            const cc::IVec2 wantTile = cc::WorldToTile(cc::ToGlm(home));
-            const cc::IVec2 goalTile =
-                (occ_ != nullptr) ? NearestEnterableTile(map_, *occ_, wantTile, unit.footprintWidth,
-                                                         unit.footprintHeight, id,
-                                                         registry_.Generation(id))
-                                  : wantTile;
-            if (unit.attackMove && unit.hasPath &&
-                cc::WorldToTile(cc::ToGlm(unit.moveTarget)) == goalTile)
-            {
-                return;
-            }
-            if (occ_ != nullptr)
-            {
-                IssueAttackMoveOrderFootprint(unit, map_, *occ_, home, id,
-                                              registry_.Generation(id));
-            }
-            else
-            {
-                IssueAttackMoveOrder(unit, map_, home);
-            }
-        }
-    });
+    // Fighting withdrawal (attack-move, never plain move) toward the home
+    // tile; shared implementation with the player-facing auto-retreat.
+    const Vector2 home = cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y));
+    RetreatIfLowHP(registry_, map_, occ_, home, teamID_, kRetreatHealthFraction, false);
 }

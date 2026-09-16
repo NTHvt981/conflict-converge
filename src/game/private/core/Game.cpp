@@ -353,6 +353,28 @@ void Game::BindShortcuts()
             attackGroundMode = !attackGroundMode;
         }
     });
+    input.shortcuts.Bind(KEY_T, [&] {
+        // QoL auto-retreat opt-in: per-unit, so glass cannons can retreat
+        // while tanks hold. Sets the whole selection uniformly (all on
+        // unless all are already on, then all off).
+        if (!worldActive || menu.state != MenuState::Playing)
+        {
+            return;
+        }
+        bool allOn = true;
+        registry.Each<Unit>([&](Entity, const Unit &unit) {
+            if (unit.isSelected && !unit.autoRetreat)
+            {
+                allOn = false;
+            }
+        });
+        registry.Each<Unit>([&](Entity, Unit &unit) {
+            if (unit.isSelected)
+            {
+                unit.autoRetreat = !allOn;
+            }
+        });
+    });
     input.shortcuts.Bind(KEY_J, [&] {
         // QoL: jump the camera to the most recent attack/loss ping.
         if (!worldActive || menu.state != MenuState::Playing)
@@ -991,6 +1013,34 @@ void Game::Update()
             Announce(EventType::ProductionOrdered);
         }
         lastQueueSize = static_cast<int>(queue.Size());
+        // QoL player auto-retreat: opted-in units below threshold fall back
+        // to the rally point (or the nearest owned Base when no rally was
+        // ever placed). Shared RetreatIfLowHP with the AI's RetreatTick.
+        {
+            Vector2 home = rallyPos;
+            if (home.x == 0.0f && home.y == 0.0f)
+            {
+                float bestDistSq = -1.0f;
+                registry.Each<Building>([&](Entity, const Building &building) {
+                    if (building.teamID != 0 || building.type != BuildingType::Base ||
+                        building.state != BuildingState::Operational)
+                    {
+                        return;
+                    }
+                    const cc::Vec2 corner = cc::TileToWorld(building.tileX, building.tileY);
+                    const Vector2 center = { corner.x + 32.0f, corner.y + 32.0f };
+                    const float dx = center.x - static_cast<float>(map.Width()) * 32.0f;
+                    const float dy = center.y - static_cast<float>(map.Height()) * 32.0f;
+                    const float distSq = dx * dx + dy * dy;
+                    if (bestDistSq < 0.0f || distSq < bestDistSq)
+                    {
+                        bestDistSq = distSq;
+                        home = center;
+                    }
+                });
+            }
+            RetreatIfLowHP(registry, map, &occ, home, 0, kRetreatHealthFraction, true);
+        }
         ai.Update(dt); // M8: enemy build order, waves, scouting, retreat
         // 2v2 overflow commanders tick only in 2v2 matches (see worldIs2v2:
         // count-gating wakes parked commanders in 1v1 via shared teams).

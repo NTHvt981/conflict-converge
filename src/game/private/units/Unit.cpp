@@ -380,6 +380,49 @@ void IssueAttackGroundOrderFootprint(Unit &unit, const TileMap &map, const Occup
     IssuePathOrderFootprint(unit, map, occ, unit.attackGroundPos, self, selfGen);
 }
 
+void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector2 home, int teamID,
+                    float healthFraction, bool onlyAutoRetreat)
+{
+    registry.Each<Unit>([&](Entity id, Unit &unit) {
+        if (unit.teamID != teamID || unit.health <= 0.0f || unit.type == UnitType::Engineer)
+        {
+            return;
+        }
+        if (onlyAutoRetreat && !unit.autoRetreat)
+        {
+            return;
+        }
+        const float maxHealth = BaseStats(unit.type).health;
+        if (maxHealth <= 0.0f || unit.health >= healthFraction * maxHealth)
+        {
+            return;
+        }
+        // Guarded like ReissueDriverOrder: only re-path when the goal tile
+        // changed, so retreating units through a chokepoint get the
+        // hold-and-retry grace period instead of a full footprint A*
+        // replan every frame.
+        const cc::IVec2 wantTile = cc::WorldToTile(cc::ToGlm(home));
+        const cc::IVec2 goalTile =
+            (occ != nullptr)
+                ? NearestEnterableTile(map, *occ, wantTile, unit.footprintWidth,
+                                       unit.footprintHeight, id, registry.Generation(id))
+                : wantTile;
+        if (unit.attackMove && unit.hasPath &&
+            cc::WorldToTile(cc::ToGlm(unit.moveTarget)) == goalTile)
+        {
+            return;
+        }
+        if (occ != nullptr)
+        {
+            IssueAttackMoveOrderFootprint(unit, map, *occ, home, id, registry.Generation(id));
+        }
+        else
+        {
+            IssueAttackMoveOrder(unit, map, home);
+        }
+    });
+}
+
 // Approach tile for repair work: the aim tile itself when walkable (units),
 // else the nearest passable ring (building footprints are blocked, so the
 // engineer parks beside the structure instead of pushing into it).

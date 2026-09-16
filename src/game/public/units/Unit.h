@@ -145,6 +145,9 @@ struct Unit
     Vector2 attackMoveDest = {};
     // M13: stance + patrol route (looping waypoint pair while idle).
     Stance stance = Stance::Guard;
+    // QoL auto-retreat opt-in (player side; AI retreats by difficulty and
+    // ignores this flag — see RetreatIfLowHP's onlyAutoRetreat parameter).
+    bool autoRetreat = false;
     bool hasPatrol = false;
     Vector2 patrolA = {};
     Vector2 patrolB = {};
@@ -231,6 +234,19 @@ bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity targ
 void IssueAttackGroundOrder(Unit &unit, const TileMap &map, Vector2 worldPos);
 void IssueAttackGroundOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
                                      Vector2 worldPos, Entity self, std::uint32_t selfGen);
+
+// QoL + AI shared retreat threshold: fraction of type-max HP below which
+// damaged units fall back. Hoisted from AICommander::RetreatTick so both
+// call sites reference one named constant (tune here, not inline).
+inline constexpr float kRetreatHealthFraction = 0.3f;
+
+// Orders sub-threshold, non-Engineer, alive units of teamID to fall back
+// toward `home` via fighting withdrawal (attack-move, never plain move —
+// plain move forfeits full-DPS units, measured in the Medium-vs-Hard soak).
+// onlyAutoRetreat=true additionally requires Unit::autoRetreat (player
+// opt-in); the AI passes false (its units retreat by difficulty instead).
+void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector2 home, int teamID,
+                    float healthFraction, bool onlyAutoRetreat);
 
 // QoL shift-queue entry point. shiftQueue=false: clears orderQueue and
 // issues immediately through the same clean dispatch as dequeued orders
