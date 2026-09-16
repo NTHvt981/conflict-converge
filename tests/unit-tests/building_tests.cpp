@@ -3,6 +3,7 @@
 #include "test_harness.h"
 
 #include "Building.h"
+#include "Selection.h"
 #include "TileMap.h"
 
 #include <vector>
@@ -178,5 +179,29 @@ void RunBuildingTests()
         }
         auto positions = BuildingAttackPositions(map2, 5, 5, 2, 2, 12);
         CC_CHECK(static_cast<int>(positions.size()) == 0);
+    }
+
+    // --- QoL SelectAllBuildings: same-team same-type only, replaces ---
+    {
+        Registry lots;
+        TileMap lotsMap(20, 15);
+        const Entity facA =
+            PlaceBuilding(lots, lotsMap, BuildingType::Factory, 0, 1, 1);
+        const Entity facB =
+            PlaceBuilding(lots, lotsMap, BuildingType::Factory, 0, 5, 5);
+        const Entity depot =
+            PlaceBuilding(lots, lotsMap, BuildingType::ResourceDepot, 0, 10, 10);
+        const Entity foeFac =
+            PlaceBuilding(lots, lotsMap, BuildingType::Factory, 1, 12, 12);
+        CC_CHECK(facA != kInvalidEntity && facB != kInvalidEntity);
+        CC_CHECK(depot != kInvalidEntity && foeFac != kInvalidEntity);
+        CC_CHECK(SelectAllBuildings(lots, BuildingType::Factory, 0) == 2);
+        CC_CHECK(lots.Get<Building>(facA)->isSelected);
+        CC_CHECK(lots.Get<Building>(facB)->isSelected);
+        CC_CHECK(!lots.Get<Building>(depot)->isSelected);
+        CC_CHECK(!lots.Get<Building>(foeFac)->isSelected);
+        CC_CHECK(SelectAllBuildings(lots, BuildingType::ResourceDepot, 0) == 1);
+        CC_CHECK(!lots.Get<Building>(facA)->isSelected); // replaced
+        CC_CHECK(lots.Get<Building>(depot)->isSelected);
     }
 }

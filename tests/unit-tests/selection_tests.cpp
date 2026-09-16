@@ -120,4 +120,21 @@ void RunSelectionTests()
     CC_CHECK(idleReg.Get<Unit>(idleTank)->isSelected);
     CC_CHECK(!idleReg.Get<Unit>(idleEng)->isSelected);
     CC_CHECK(!idleReg.Get<Unit>(movingTank)->isSelected);
+
+    // --- SelectAllOfType: same-team same-type only; add extends ---
+    Registry typeReg;
+    const Entity infA = SpawnAt(typeReg, 64.0f, 64.0f);
+    typeReg.Get<Unit>(infA)->type = UnitType::Infantry;
+    const Entity infB = SpawnAt(typeReg, 256.0f, 64.0f);
+    typeReg.Get<Unit>(infB)->type = UnitType::Infantry;
+    const Entity tank = SpawnAt(typeReg, 64.0f, 256.0f);
+    typeReg.Get<Unit>(tank)->type = UnitType::LightTank;
+    const Entity foeInf = SpawnAt(typeReg, 256.0f, 256.0f);
+    typeReg.Get<Unit>(foeInf)->type = UnitType::Infantry;
+    typeReg.Get<Unit>(foeInf)->teamID = 1;
+    CC_CHECK(SelectAllOfType(typeReg, UnitType::Infantry, 0, false) == 2);
+    CC_CHECK(typeReg.Get<Unit>(infA)->isSelected && typeReg.Get<Unit>(infB)->isSelected);
+    CC_CHECK(!typeReg.Get<Unit>(tank)->isSelected && !typeReg.Get<Unit>(foeInf)->isSelected);
+    CC_CHECK(SelectAllOfType(typeReg, UnitType::LightTank, 0, true) == 1); // extends
+    CC_CHECK(typeReg.Get<Unit>(infA)->isSelected && typeReg.Get<Unit>(tank)->isSelected);
 }

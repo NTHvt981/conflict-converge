@@ -4,6 +4,7 @@
 #include <filesystem>
 
 #include "Art.h"        // M12 resource icons (optional, may be fallback)
+#include "Building.h"   // BuildingTypeName + selected-building summary
 #include "raygui.h"   // panels/labels
 #include "SaveGame.h" // M13 slot paths
 #include "Selection.h" // SelectedUnit
@@ -28,6 +29,20 @@ const char *UnitTypeName(UnitType type)
         return "Light Tank";
     case UnitType::HeavyTank:
         return "Heavy Tank";
+    }
+    return "Unknown";
+}
+
+const char *BuildingTypeName(BuildingType type)
+{
+    switch (type)
+    {
+    case BuildingType::Base:
+        return "Base";
+    case BuildingType::ResourceDepot:
+        return "Depot";
+    case BuildingType::Factory:
+        return "Factory";
     }
     return "Unknown";
 }
@@ -80,6 +95,8 @@ std::vector<std::string> ShortcutHintLines()
         "G Guard",
         "V Patrol",
         "R Rally",
+        "C SelectType",
+        "F Factories",
         "X AttackGnd",
         "T AutoRetreat",
         "J JumpPing",
@@ -122,6 +139,30 @@ void DrawSelectionPanel(Registry &registry)
     {
         summary = SelectionSummary(*unit);
         text = summary.c_str();
+    }
+    else
+    {
+        // QoL: building selection summary (no unit selected).
+        int count = 0;
+        BuildingType firstType = BuildingType::Base;
+        registry.Each<Building>([&](Entity, const Building &building) {
+            if (building.isSelected)
+            {
+                if (count == 0)
+                {
+                    firstType = building.type;
+                }
+                ++count;
+            }
+        });
+        if (count > 0)
+        {
+            char buf[64];
+            std::snprintf(buf, sizeof(buf), "%d %s selected", count,
+                          BuildingTypeName(firstType));
+            summary = buf;
+            text = summary.c_str();
+        }
     }
     GuiLabel({ 262.0f, 410.0f, 280.0f, 20.0f }, text);
 }

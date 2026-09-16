@@ -345,6 +345,28 @@ void Game::BindShortcuts()
             settingRally = !settingRally;
         }
     });
+    input.shortcuts.Bind(KEY_C, [&] {
+        // QoL select-all-of-type: everything of the selected unit's type.
+        if (!worldActive || menu.state != MenuState::Playing)
+        {
+            return;
+        }
+        const Entity selected = SelectedUnit(registry);
+        const Unit *unit = registry.Get<Unit>(selected);
+        if (unit != nullptr)
+        {
+            SelectAllOfType(registry, unit->type, 0, false); // team 0 is the player
+        }
+    });
+    input.shortcuts.Bind(KEY_F, [&] {
+        // QoL select-all-production: every owned Factory (minimal building
+        // selection — highlight ring + panel count, no command UI yet).
+        if (!worldActive || menu.state != MenuState::Playing)
+        {
+            return;
+        }
+        SelectAllBuildings(registry, BuildingType::Factory, 0); // team 0 is the player
+    });
     input.shortcuts.Bind(KEY_X, [&] {
         // QoL attack-ground mode: arm shelling; the next right-click fires
         // it (one-shot, see the RightPressed block), Escape cancels.
@@ -1173,6 +1195,13 @@ void Game::Update()
         else
         {
             art.DrawBuilding(building.type, building.teamID, building.tileX, building.tileY);
+        }
+        if (building.isSelected)
+        {
+            // QoL building-selection highlight (mirrors the unit outline).
+            const float w = static_cast<float>(size.x) * cc::TILE_SIZE;
+            const float h = static_cast<float>(size.y) * cc::TILE_SIZE;
+            DrawRectangleLinesEx({ corner.x, corner.y, w, h }, 3.0f, RED);
         }
     });
     nodes.Each([&](const ResourceNode &node) {

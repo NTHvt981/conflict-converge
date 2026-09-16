@@ -34,6 +34,9 @@ struct Building
     BuildingType type = BuildingType::Base;
     BuildingState state = BuildingState::Operational;
     int teamID = 0;
+    // QoL building selection (mirrors Unit::isSelected): set by
+    // SelectAllBuildings; rendered as a highlight ring. Not saved.
+    bool isSelected = false;
     int tileX = 0; // top-left of the footprint
     int tileY = 0;
     // M13: structural HP so Engineers have something to repair. Nothing

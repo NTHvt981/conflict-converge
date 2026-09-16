@@ -5,6 +5,9 @@
 #include "GameCamera.h" // ScreenToWorld for drag conversion
 #include "Registry.h" // Entity, kInvalidEntity
 
+enum class BuildingType; // fwd-decl (Selection.cpp includes Building.h)
+enum class UnitType; // fwd-decl (Selection.cpp includes Unit.h)
+
 // M2 Goal 4: mouse selection (left-click pick) over the unit registry.
 // Hit test is the unit's 64x64 tile box at its snapped position.
 
@@ -46,3 +49,11 @@ int RecallControlGroup(Registry &registry, int groupBit);
 int SelectIdle(Registry &registry, int teamID, bool workersOnly);
 // Non-mutating count for HUD buttons (live counts without side effects).
 int CountIdle(const Registry &registry, int teamID, bool workersOnly);
+
+// QoL select-all-of-type: every same-team unit of `type`. add=false
+// replaces (like SelectInRect), true extends. Returns picked count.
+int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add);
+// QoL select-all-buildings: every same-team building of `type` (minimal
+// building-selection groundwork for the production hotkey and future
+// per-building UI). Replaces building selection; returns picked count.
+int SelectAllBuildings(Registry &registry, BuildingType type, int teamID);

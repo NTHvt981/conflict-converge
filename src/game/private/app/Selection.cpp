@@ -1,5 +1,6 @@
 #include "Selection.h"
 
+#include "Building.h" // SelectAllBuildings
 #include "MathUtils.h" // cc::TILE_SIZE hit box
 #include "Unit.h"
 
@@ -198,4 +199,38 @@ int CountIdle(const Registry &registry, int teamID, bool workersOnly)
         }
     });
     return count;
+}
+
+int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add)
+{
+    int picked = 0;
+    registry.Each<Unit>([&](Entity, Unit &unit) {
+        const bool match = unit.teamID == teamID && unit.type == type;
+        if (!add)
+        {
+            unit.isSelected = match;
+        }
+        else if (match)
+        {
+            unit.isSelected = true;
+        }
+        if (unit.isSelected && match)
+        {
+            ++picked;
+        }
+    });
+    return picked;
+}
+
+int SelectAllBuildings(Registry &registry, BuildingType type, int teamID)
+{
+    int picked = 0;
+    registry.Each<Building>([&](Entity, Building &building) {
+        building.isSelected = (building.teamID == teamID && building.type == type);
+        if (building.isSelected)
+        {
+            ++picked;
+        }
+    });
+    return picked;
 }

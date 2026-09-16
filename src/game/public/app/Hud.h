@@ -9,11 +9,13 @@
 #include "Production.h"    // ProductionQueue for the factory panel
 
 class Art; // fwd-decl (Hud.cpp includes Art.h for icons)
+enum class BuildingType; // fwd-decl (Hud.cpp includes Building.h)
 
 // M6 Goal 2: HUD panels. Text content is built by pure functions (tested);
 // the Draw* wrappers below are thin raygui calls owned by main.cpp.
 
 const char *UnitTypeName(UnitType type);
+const char *BuildingTypeName(BuildingType type);
 std::string FormatResources(const ResourceSystem &resources);
 std::string SelectionSummary(const Unit &unit);
 // M6 Goal 4: selection visuals + shortcut overlay builders.
