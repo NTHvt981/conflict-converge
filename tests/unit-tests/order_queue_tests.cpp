@@ -5,6 +5,7 @@
 
 #include "TileMap.h"
 #include "Unit.h"
+#include "UnitStats.h"
 
 namespace
 {
@@ -140,5 +141,36 @@ void RunOrderQueueTests()
         UpdateUnit(id, registry, map, 1.0f); // steps into water -> cancels
         CC_CHECK(!unit.hasMoveOrder);
         CC_CHECK(unit.orderQueue.empty()); // stuck: rest dropped, not marched
+    }
+
+    // --- repair orders queue and complete like other order types ---
+    {
+        Registry registry;
+        TileMap map(10, 10);
+        const Entity eng = SpawnInfantry(registry, 1, 1);
+        registry.Get<Unit>(eng)->type = UnitType::Engineer;
+        const Entity tank = SpawnInfantry(registry, 2, 1);
+        Unit *patient = registry.Get<Unit>(tank);
+        patient->type = UnitType::LightTank;
+        const float maxHp = BaseStats(UnitType::LightTank).health;
+        patient->health = maxHp - 30.0f; // damaged but alive
+        Unit &engineer = *registry.Get<Unit>(eng);
+
+        // Pre-checks mirror the right-click gesture's gating.
+        CC_CHECK(CanRepairTarget(registry, engineer, tank));
+        CC_CHECK(!CanRepairTarget(registry, *patient, tank)); // not an Engineer
+        patient->health = maxHp;
+        CC_CHECK(!CanRepairTarget(registry, engineer, tank)); // healthy: nothing to do
+        patient->health = maxHp - 30.0f;
+
+        IssueOrEnqueue(engineer, map, nullptr, eng, 0, false,
+                       QueuedOrder{ QueuedOrderKind::Repair, {}, {}, tank });
+        CC_CHECK(engineer.hasRepairOrder);
+        for (int i = 0; i < 30 && engineer.hasRepairOrder; ++i)
+        {
+            UpdateUnit(eng, registry, map, 1.0f);
+        }
+        CC_CHECK(!engineer.hasRepairOrder); // healed to full: order done
+        CC_CHECK(patient->health == maxHp);
     }
 }

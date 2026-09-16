@@ -213,6 +213,11 @@ void IssuePatrolOrder(Unit &unit, const TileMap &map, Vector2 pointA, Vector2 po
 // No-op unless the issuer is an Engineer.
 void IssueRepairOrder(Unit &engineer, Entity target);
 
+// QoL: player-side pre-check for the right-click repair gesture. True when
+// issuing a repair order on `target` would stick (same validation the
+// driver runs, without starting the order).
+bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity target);
+
 // QoL shift-queue entry point. shiftQueue=false: clears orderQueue and
 // issues immediately through the same clean dispatch as dequeued orders
 // (exactly one active order; footprint-aware where applicable).

@@ -334,6 +334,12 @@ bool RepairAim(const Registry &registry, const Unit &engineer, Entity target, Ve
     return false;
 }
 
+bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity target)
+{
+    Vector2 aim = {};
+    return RepairAim(registry, engineer, target, aim);
+}
+
 // Approach tile for repair work: the aim tile itself when walkable (units),
 // else the nearest passable ring (building footprints are blocked, so the
 // engineer parks beside the structure instead of pushing into it).

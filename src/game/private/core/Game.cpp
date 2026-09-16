@@ -674,19 +674,60 @@ void Game::Update()
             {
                 if (Unit *ordered = registry.Get<Unit>(squad[0]))
                 {
-                    if (input.ShiftDown())
+                    // QoL single-target repair: a lone selected Engineer
+                    // right-clicked onto a damaged same-team unit/building
+                    // repairs instead of moving (Shift queues it behind the
+                    // current order via the same path as other orders).
+                    bool repaired = false;
+                    if (ordered->type == UnitType::Engineer)
                     {
-                        // QoL: queue behind the current order.
-                        IssueOrEnqueue(*ordered, map, &occ, squad[0],
-                                       registry.Generation(squad[0]), true,
-                                       QueuedOrder{ QueuedOrderKind::Move,
-                                                    input.MouseWorld(camera) });
+                        const Vector2 world = input.MouseWorld(camera);
+                        Entity patient = PickUnitAt(registry, world);
+                        if (patient == kInvalidEntity ||
+                            !CanRepairTarget(registry, *ordered, patient))
+                        {
+                            patient = kInvalidEntity;
+                            const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(world));
+                            registry.Each<Building>([&](Entity id, const Building &building) {
+                                if (patient != kInvalidEntity)
+                                {
+                                    return;
+                                }
+                                const cc::IVec2 fp = Footprint(building.type);
+                                if (tile.x >= building.tileX &&
+                                    tile.x < building.tileX + fp.x &&
+                                    tile.y >= building.tileY && tile.y < building.tileY + fp.y &&
+                                    CanRepairTarget(registry, *ordered, id))
+                                {
+                                    patient = id;
+                                }
+                            });
+                        }
+                        if (patient != kInvalidEntity)
+                        {
+                            IssueOrEnqueue(*ordered, map, &occ, squad[0],
+                                           registry.Generation(squad[0]), input.ShiftDown(),
+                                           QueuedOrder{ QueuedOrderKind::Repair, {}, {}, patient });
+                            repaired = true;
+                        }
                     }
-                    else
+                    if (!repaired)
                     {
-                        ordered->orderQueue.clear();
-                        IssuePathOrderFootprint(*ordered, map, occ, input.MouseWorld(camera),
-                                                squad[0], registry.Generation(squad[0]));
+                        if (input.ShiftDown())
+                        {
+                            // QoL: queue behind the current order.
+                            IssueOrEnqueue(*ordered, map, &occ, squad[0],
+                                           registry.Generation(squad[0]), true,
+                                           QueuedOrder{ QueuedOrderKind::Move,
+                                                        input.MouseWorld(camera) });
+                        }
+                        else
+                        {
+                            ordered->orderQueue.clear();
+                            IssuePathOrderFootprint(*ordered, map, occ,
+                                                    input.MouseWorld(camera), squad[0],
+                                                    registry.Generation(squad[0]));
+                        }
                     }
                     audio.Play(SfxId::Confirm); // M11: order acknowledged
                 }
