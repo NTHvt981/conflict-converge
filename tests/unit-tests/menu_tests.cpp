@@ -123,6 +123,7 @@ void RunMenuTests()
     MenuSettings saved;
     saved.cameraSpeed = 512.5f;
     saved.showMinimap = false;
+    saved.rightDragPan = true;
     saved.masterVolume = 0.5f;
     saved.musicVolume = 0.25f;
     saved.sfxVolume = 0.75f;
@@ -134,6 +135,7 @@ void RunMenuTests()
     CC_CHECK(LoadSettings(loaded, settingsPath));
     CC_CHECK(loaded.cameraSpeed == 512.5f);
     CC_CHECK(!loaded.showMinimap);
+    CC_CHECK(loaded.rightDragPan);
     CC_CHECK(loaded.masterVolume == 0.5f);
     CC_CHECK(loaded.musicVolume == 0.25f);
     CC_CHECK(loaded.sfxVolume == 0.75f);
@@ -143,16 +145,19 @@ void RunMenuTests()
     {
         std::ofstream junk(settingsPath, std::ios::trunc);
         junk << "cameraSpeed=banana\nmasterVolume=7\nshowMinimap=2\nmute=1\nunknownKey=9\n";
+        junk << "rightDragPan=maybe\n";
     }
     MenuSettings strict;
     strict.cameraSpeed = 400.0f;
     strict.masterVolume = 1.0f;
     strict.showMinimap = true;
+    strict.rightDragPan = true;
     strict.mute = false;
     CC_CHECK(LoadSettings(strict, settingsPath));
     CC_CHECK(strict.cameraSpeed == 400.0f); // garbage kept the old value
     CC_CHECK(strict.masterVolume == 1.0f);  // out-of-range clamped
     CC_CHECK(strict.showMinimap);           // "2" rejected
+    CC_CHECK(strict.rightDragPan);          // "maybe" rejected
     CC_CHECK(strict.mute);
     std::remove(settingsPath.c_str());
 }

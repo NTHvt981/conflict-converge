@@ -434,6 +434,8 @@ void Game::BindShortcuts()
         {
             attackGroundMode = false; // QoL: Esc also stands down shell mode
             rightDragging = false; // QoL: Esc also cancels a drawn line
+            pendingRightClick = false; // QoL: Esc also drops a deferred click
+            rightDragDist = 0.0f;
             DeselectAll(registry);
             dragging = false;
         }
@@ -609,7 +611,9 @@ void Game::Update()
             GuiSlider({ cx - 200.0f, 310.0f, 400.0f, 20.0f }, "0", "1",
                       &menu.settings.sfxVolume, 0.0f, 1.0f);
             GuiCheckBox({ cx - 200.0f, 340.0f, 20.0f, 20.0f }, "Mute", &menu.settings.mute);
-            if (GuiButton({ cx - 200.0f, 375.0f, 400.0f, 40.0f }, "Back"))
+            GuiCheckBox({ cx - 200.0f, 365.0f, 20.0f, 20.0f }, "Right-drag pan",
+                        &menu.settings.rightDragPan);
+            if (GuiButton({ cx - 200.0f, 400.0f, 400.0f, 40.0f }, "Back"))
             {
                 SaveSettings(menu.settings, kSettingsPath); // M14: Q86 persistence
                 Announce(EventType::MenuAction);
@@ -745,19 +749,35 @@ void Game::Update()
                 }
             }
         }
+        const bool altDown = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
+        // QoL right-drag pan (opt-in setting): accumulate held distance
+        // every frame; past the click-vs-drag threshold the camera grabs
+        // the world (mirrors left-click's 6px click-vs-box rule).
+        if (input.RightDown() && !altDown)
+        {
+            const Vector2 panDelta = input.MouseDeltaScreen();
+            rightDragDist += std::sqrt(panDelta.x * panDelta.x + panDelta.y * panDelta.y);
+            if (menu.settings.rightDragPan && rightDragDist > 6.0f)
+            {
+                const float zoom = camera.view.zoom <= 0.0f ? 1.0f : camera.view.zoom;
+                camera.Pan({ -panDelta.x / zoom, -panDelta.y / zoom });
+            }
+        }
         if (input.RightPressed())
         {
             // QoL line formation: Alt+right-drag draws a placement line
             // (Ctrl is groups, Shift is queueing — Alt stays unambiguous).
             // No order fires on the press itself; the release dispatches.
-            if (IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT))
+            if (altDown)
             {
                 rightDragging = true;
                 rightDragStart = input.MouseScreen();
             }
         }
-        if (input.RightPressed() && !rightDragging)
-        {
+        // QoL right-click orders, shared by the immediate path (option off)
+        // and the deferred release path (option on: click-vs-drag is only
+        // known on release, where the mouse still sits ~at the press point).
+        auto dispatchRightClickOrders = [&]() {
             // QoL attack-ground mode (toggled with X): the next right-click
             // shells the clicked point instead of moving there. One-shot:
             // the mode clears after a single use.
@@ -885,6 +905,28 @@ void Game::Update()
                 audio.Play(SfxId::Confirm);
             }
             }
+        };
+        if (input.RightPressed() && !rightDragging)
+        {
+            if (menu.settings.rightDragPan && !altDown)
+            {
+                pendingRightClick = true; // decided on release, below
+            }
+            else
+            {
+                dispatchRightClickOrders();
+            }
+        }
+        if (!input.RightDown())
+        {
+            // Release with the option on: a sub-threshold press was a click
+            // after all — run the deferred order now (~at the press point).
+            if (pendingRightClick && rightDragDist < 6.0f)
+            {
+                dispatchRightClickOrders();
+            }
+            pendingRightClick = false;
+            rightDragDist = 0.0f;
         }
         // QoL line formation release: order the current squad along the
         // drawn line, then stand down the gesture.
@@ -1504,13 +1546,15 @@ void Game::Update()
         GuiSlider(Rectangle{ 270, 314, 260, 20 }, "0", "1", &menu.settings.sfxVolume,
                   0.0f, 1.0f);
         GuiCheckBox(Rectangle{ 270, 340, 20, 20 }, "Mute", &menu.settings.mute);
+        GuiCheckBox(Rectangle{ 270, 365, 20, 20 }, "Right-drag pan",
+                    &menu.settings.rightDragPan);
         // M14: pause shares MenuSettings with the settings screen; leaving
         // via Back-equivalent persists (Q86), pause buttons apply live.
-        if (GuiButton(Rectangle{ 270, 365, 260, 30 }, "Quit to menu"))
+        if (GuiButton(Rectangle{ 270, 390, 260, 30 }, "Quit to menu"))
         {
             QuitToMenu();
         }
-        if (GuiButton(Rectangle{ 270, 400, 260, 30 }, "Quit to desktop"))
+        if (GuiButton(Rectangle{ 270, 425, 260, 30 }, "Quit to desktop"))
         {
             menu.quitRequested = true;
         }

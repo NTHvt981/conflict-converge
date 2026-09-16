@@ -31,6 +31,9 @@ public:
                   bool ctrlDown = false);
 
     Vector2 MouseScreen() const;
+    // Frame-to-frame mouse movement in screen px (for drag-pan). Zero on
+    // the first snapshot (no previous position yet).
+    Vector2 MouseDeltaScreen() const;
     bool LeftPressed() const; // edge: button went down this frame
     bool LeftDown() const;    // level: button held (drag-box gestures)
     bool RightPressed() const;
@@ -44,6 +47,9 @@ public:
 
 private:
     Vector2 mouseScreen_ = {};
+    Vector2 prevMouseScreen_ = {};
+    Vector2 mouseDelta_ = {};
+    bool hasPrevMouse_ = false;
     bool leftPressed_ = false;
     bool rightPressed_ = false;
     float wheelDelta_ = 0.0f;

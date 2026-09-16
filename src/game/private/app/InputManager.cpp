@@ -20,6 +20,14 @@ void InputManager::PollLive()
 void InputManager::Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool rightPressed, float wheelDelta,
                             bool shiftDown, bool leftDown, bool rightDown, bool ctrlDown)
 {
+    if (!hasPrevMouse_)
+    {
+        prevMouseScreen_ = mouseScreenPos;
+        hasPrevMouse_ = true;
+    }
+    mouseDelta_ = { mouseScreenPos.x - prevMouseScreen_.x,
+                    mouseScreenPos.y - prevMouseScreen_.y };
+    prevMouseScreen_ = mouseScreenPos;
     mouseScreen_ = mouseScreenPos;
     leftPressed_ = leftPressed;
     rightPressed_ = rightPressed;
@@ -33,6 +41,11 @@ void InputManager::Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool right
 Vector2 InputManager::MouseScreen() const
 {
     return mouseScreen_;
+}
+
+Vector2 InputManager::MouseDeltaScreen() const
+{
+    return mouseDelta_;
 }
 
 bool InputManager::LeftPressed() const

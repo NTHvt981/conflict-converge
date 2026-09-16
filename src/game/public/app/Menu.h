@@ -30,6 +30,9 @@ struct MenuSettings
 {
     float cameraSpeed = 400.0f;
     bool showMinimap = true;
+    // QoL right-drag camera pan (opt-in; default keeps right-click purely
+    // for orders). Persisted below like the other settings.
+    bool rightDragPan = false;
     // M11: audio volumes (0..1) + mute, persisted by the M14 settings file.
     float masterVolume = 1.0f;
     float musicVolume = 0.8f;

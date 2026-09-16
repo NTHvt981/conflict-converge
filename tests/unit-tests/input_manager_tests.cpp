@@ -71,6 +71,23 @@ void RunInputManagerTests()
     input.Snapshot({ 0.0f, 0.0f }, false, false);
     CC_CHECK(!input.CtrlDown());
 
+    // --- MouseDeltaScreen tracks frame-to-frame movement ---
+    // (previous snapshot in this test left the mouse at the origin)
+    input.Snapshot({ 100.0f, 100.0f }, false, false);
+    CC_CHECK(input.MouseDeltaScreen().x == 100.0f);
+    CC_CHECK(input.MouseDeltaScreen().y == 100.0f);
+    input.Snapshot({ 110.0f, 95.0f }, false, false);
+    CC_CHECK(input.MouseDeltaScreen().x == 10.0f);
+    CC_CHECK(input.MouseDeltaScreen().y == -5.0f);
+    input.Snapshot({ 110.0f, 95.0f }, false, false);
+    CC_CHECK(input.MouseDeltaScreen().x == 0.0f); // held still
+    CC_CHECK(input.MouseDeltaScreen().y == 0.0f);
+    // A fresh manager reports no jump on its very first snapshot.
+    InputManager fresh;
+    fresh.Snapshot({ 50.0f, 60.0f }, false, false);
+    CC_CHECK(fresh.MouseDeltaScreen().x == 0.0f);
+    CC_CHECK(fresh.MouseDeltaScreen().y == 0.0f);
+
     // --- shortcut registry rides along and fires through the manager ---
     int halts = 0;
     input.shortcuts.Bind(32, [&] { ++halts; });

@@ -113,6 +113,7 @@ bool SaveSettings(const MenuSettings &settings, const std::string &path)
     file << "# Conflict Converge settings v1\n";
     file << "cameraSpeed=" << settings.cameraSpeed << "\n";
     file << "showMinimap=" << (settings.showMinimap ? 1 : 0) << "\n";
+    file << "rightDragPan=" << (settings.rightDragPan ? 1 : 0) << "\n";
     file << "masterVolume=" << settings.masterVolume << "\n";
     file << "musicVolume=" << settings.musicVolume << "\n";
     file << "sfxVolume=" << settings.sfxVolume << "\n";
@@ -159,6 +160,13 @@ bool LoadSettings(MenuSettings &settings, const std::string &path)
             if (value == "0" || value == "1")
             {
                 parsed.showMinimap = value == "1";
+            }
+        }
+        else if (key == "rightDragPan")
+        {
+            if (value == "0" || value == "1")
+            {
+                parsed.rightDragPan = value == "1";
             }
         }
         else if (key == "masterVolume")

@@ -105,6 +105,10 @@ private:
     // issuing a point order (mirrors dragging/dragStart for the left button).
     bool rightDragging = false;
     Vector2 rightDragStart = {};
+    // QoL right-drag pan (opt-in): press defers the click order until
+    // release decides click (order) vs. drag (pan), past a pixel threshold.
+    bool pendingRightClick = false;
+    float rightDragDist = 0.0f;
     bool showHints = true;
     int setupScroll = 0;
     // QoL control groups: production auto-joins this group bit when >= 0
