@@ -35,10 +35,15 @@ float ResolveAttack(Unit &attacker, Unit &defender, AttackContext context)
     return effective;
 }
 
+bool IsVehicleHull(UnitType attackerType)
+{
+    return attackerType == UnitType::IFV || attackerType == UnitType::Artillery ||
+           attackerType == UnitType::LightTank || attackerType == UnitType::HeavyTank;
+}
+
 bool IsCrushNegated(UnitType attackerType, UnitType defenderType)
 {
-    const bool vehicleAttacker = attackerType == UnitType::IFV || attackerType == UnitType::Artillery ||
-                                 attackerType == UnitType::LightTank || attackerType == UnitType::HeavyTank;
+    const bool vehicleAttacker = IsVehicleHull(attackerType);
     const bool footDefender = defenderType == UnitType::Infantry ||
                               defenderType == UnitType::AntiArmorInfantry || defenderType == UnitType::Engineer;
     return vehicleAttacker && footDefender;

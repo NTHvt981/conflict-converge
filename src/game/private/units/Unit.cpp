@@ -842,17 +842,22 @@ void SeparateUnits(Registry &registry, float dtSeconds)
             items[j].unit->position =
                 cc::ToRaylib(cc::ToGlm(items[j].unit->position) - dir * push);
             // M4G4 overrun: enemies in body contact trade crush hits.
-            // Vehicle-on-foot is negated inside ResolveAttack (the documented
-            // rule, previously dead code: no production path passed Crush);
-            // anything else takes matrix damage. Gated on each attacker's
-            // cooldown so contact can't machine-gun outside the fire cycle.
+            // Crush is vehicle contact (AttackContext docs): only hulls
+            // attempt it — foot-vs-foot stays bloodless as before, and
+            // vehicle-on-foot is negated inside ResolveAttack (the
+            // documented rule, previously dead code: no production path
+            // passed Crush). Gated on each attacker's cooldown so contact
+            // can't machine-gun outside the fire cycle. Proven soak-neutral
+            // (identical Medium-vs-Hard trajectory with and without).
             if (items[i].unit->teamID != items[j].unit->teamID)
             {
-                if (items[i].unit->health > 0.0f && items[i].unit->cooldown <= 0.0f)
+                if (items[i].unit->health > 0.0f && IsVehicleHull(items[i].unit->type) &&
+                    items[i].unit->cooldown <= 0.0f)
                 {
                     ResolveAttack(*items[i].unit, *items[j].unit, AttackContext::Crush);
                 }
-                if (items[j].unit->health > 0.0f && items[j].unit->cooldown <= 0.0f)
+                if (items[j].unit->health > 0.0f && IsVehicleHull(items[j].unit->type) &&
+                    items[j].unit->cooldown <= 0.0f)
                 {
                     ResolveAttack(*items[j].unit, *items[i].unit, AttackContext::Crush);
                 }

@@ -40,6 +40,7 @@ float ResolveBuildingAttack(Unit &attacker, Building &building);
 // cannot crush foot units (Infantry/AntiArmor/Engineer) — the overrun deals
 // no damage. Vehicle-vs-vehicle rams and foot-vs-anything crushes still use
 // the matrix.
+bool IsVehicleHull(UnitType attackerType);
 bool IsCrushNegated(UnitType attackerType, UnitType defenderType);
 
 // M4 Goal 2: 2D hitbox system. Every unit body is a 32x32 rect centered in
