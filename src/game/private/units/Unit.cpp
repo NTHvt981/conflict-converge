@@ -567,6 +567,15 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
                       OccupancyGrid *occ = nullptr, Entity self = 0, std::uint32_t selfGen = 0,
                       int footprintW = 1, int footprintH = 1)
 {
+    if (step <= 0.0f)
+    {
+        // No movement budget (degenerate dt): hold position without
+        // touching outNext. BlockedUnit waits and retries rather than
+        // cancelling (terrain) or snapping (arrival), and — unlike the
+        // dist <= step check below — it can't divide by zero when a
+        // negative step meets dist == 0.
+        return StepResult::BlockedUnit;
+    }
     const cc::Vec2 diff = target - pos;
     const float dist = glm::length(diff);
     if (dist <= step)
