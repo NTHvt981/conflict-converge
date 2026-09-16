@@ -32,10 +32,12 @@ public:
     void Clear();
 
 private:
-    struct Binding
+    struct KeyBindings
     {
-        Action action;
-        bool requireShift = false;
+        Action plain;
+        Action chord;
+        bool hasPlain = false;
+        bool hasChord = false;
     };
-    std::unordered_map<int, Binding> bindings_;
+    std::unordered_map<int, KeyBindings> bindings_;
 };
