@@ -18,8 +18,16 @@ UnitCost CostOf(UnitType type);
 
 // Spawns units with base stats applied, deducting costs and emitting
 // lifecycle events (UnitSpawned/UnitDestroyed) for UI (M6) and tests.
-class UnitFactory
+// QoL pings need position + team, which bare Event doesn't carry —
+// lifecycle events dispatch this derived payload instead. Subscribers that
+// don't care keep taking `const Event&` and ignore the rest.
+struct UnitLifecycleEvent : Event
 {
+    Vector2 position = {};
+    int teamID = 0;
+};
+
+class UnitFactory{
 public:
     UnitFactory(Registry &registry, ResourceSystem &resources, EventDispatcher &events);
 

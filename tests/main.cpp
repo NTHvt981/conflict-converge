@@ -16,6 +16,7 @@ void RunSelectionTests();
 void RunControlGroupTests();
 void RunOrderQueueTests();
 void RunAttackGroundTests();
+void RunPingTests();
 void RunMovementTests();
 void RunShortcutTests();
 void RunInputManagerTests();
@@ -68,6 +69,7 @@ int main()
     RunControlGroupTests();
     RunOrderQueueTests();
     RunAttackGroundTests();
+    RunPingTests();
     RunMovementTests();
     RunShortcutTests();
     RunInputManagerTests();

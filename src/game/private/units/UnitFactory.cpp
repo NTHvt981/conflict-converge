@@ -54,8 +54,10 @@ Entity UnitFactory::SpawnPrepaid(UnitType type, int teamID, Vector2 worldPos)
     const Entity id = registry_.Create();
     registry_.Add(id, unit);
 
-    Event spawned;
+    UnitLifecycleEvent spawned;
     spawned.type = EventType::UnitSpawned;
+    spawned.position = worldPos;
+    spawned.teamID = teamID;
     events_.Dispatch(spawned);
     return id;
 }
@@ -66,8 +68,13 @@ void UnitFactory::DestroyUnit(Entity entity)
     {
         return;
     }
-    Event destroyed;
+    UnitLifecycleEvent destroyed;
     destroyed.type = EventType::UnitDestroyed;
+    if (const Unit *unit = registry_.Get<Unit>(entity))
+    {
+        destroyed.position = unit->position;
+        destroyed.teamID = unit->teamID;
+    }
     events_.Dispatch(destroyed);
     registry_.Destroy(entity);
 }

@@ -14,6 +14,7 @@
 #include "Menu.h"
 #include "Minimap.h"
 #include "Nodes.h"
+#include "Pings.h"
 #include "Production.h"
 #include "Registry.h"
 #include "ResourceSystem.h"
@@ -66,6 +67,7 @@ private:
     GameCamera camera;
     MenuFlow menu;
     Minimap minimap;
+    Pings pings; // QoL attack/event pings (minimap blips + camera jump)
     Registry registry;
     ResourceSystem resources;
     EventDispatcher events;

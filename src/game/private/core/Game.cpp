@@ -105,6 +105,16 @@ void Game::Init()
 
     // M11: production/spawn confirmations (stateless: survives across matches).
     events.Subscribe(EventType::UnitSpawned, [&](const Event &) { audio.Play(SfxId::Confirm); });
+    // QoL pings: player-unit losses raise a marker (position rides the
+    // lifecycle payload; dynamic_cast guards against bare-Event sources).
+    events.Subscribe(EventType::UnitDestroyed, [&](const Event &e) {
+        const auto *lifecycle = dynamic_cast<const UnitLifecycleEvent *>(&e);
+        if (lifecycle != nullptr && lifecycle->teamID == 0)
+        {
+            pings.Raise({ lifecycle->position.x + 32.0f, lifecycle->position.y + 32.0f },
+                        PingKind::UnitLost);
+        }
+    });
 
     BindShortcuts();
 }
@@ -341,6 +351,18 @@ void Game::BindShortcuts()
         if (worldActive && menu.state == MenuState::Playing)
         {
             attackGroundMode = !attackGroundMode;
+        }
+    });
+    input.shortcuts.Bind(KEY_J, [&] {
+        // QoL: jump the camera to the most recent attack/loss ping.
+        if (!worldActive || menu.state != MenuState::Playing)
+        {
+            return;
+        }
+        Vector2 pingPos = {};
+        if (pings.Latest(pingPos))
+        {
+            camera.view.target = pingPos;
         }
     });
     input.shortcuts.Bind(KEY_ESCAPE, [&] {
@@ -872,6 +894,13 @@ void Game::Update()
             if (unit.hitFlashTime > 0.20f)
             {
                 art.ParticlesPool().SpawnBurst(center, YELLOW, 6, 90.0f, 0.25f);
+                // QoL pings: same "just got hit" detector, no Combat.h
+                // changes (per-kind floor inside Pings stops spam).
+                // Team 0 is the player.
+                if (unit.teamID == 0)
+                {
+                    pings.Raise(center, PingKind::UnderAttack);
+                }
             }
             if (unit.phase == AttackPhase::WindUp)
             {
@@ -890,6 +919,7 @@ void Game::Update()
             }
         });
         art.ParticlesPool().Update(dt);
+        pings.Update(dt); // QoL: age out attack/loss markers
         attackSfxTimer -= dt;
         bool windingUp = false;
         registry.Each<Unit>([&](Entity, const Unit &unit) {
@@ -1242,6 +1272,17 @@ void Game::Update()
             minimap.ViewportRect(camera.view, screenWidth, screenHeight, map.Width(), map.Height()),
             1.0f, WHITE);
         DrawRectangleLinesEx(minimap.screenRect, 1.0f, DARKGRAY);
+        // QoL ping blips: pulsing markers, fading by age. Red = under
+        // attack, orange = unit lost.
+        for (const Ping &ping : pings.Active())
+        {
+            const Vector2 blip = minimap.WorldToMinimap(ping.worldPos, map.Width(), map.Height());
+            const float pulse = 2.0f + ping.age * 2.0f;
+            const Color color = ping.kind == PingKind::UnderAttack
+                                    ? Fade(RED, 1.0f - ping.age / 5.0f)
+                                    : Fade(ORANGE, 1.0f - ping.age / 5.0f);
+            DrawCircleV(blip, pulse, color);
+        }
     }
 
     // M6 Goal 2: raygui HUD (proper panels replace the M5 text counters).
