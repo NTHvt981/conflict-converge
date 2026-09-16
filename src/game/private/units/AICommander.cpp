@@ -374,8 +374,22 @@ void AICommander::RetreatTick()
             // out short-handed and lost the Medium-vs-Hard soak). Attack-move
             // keeps retreating units dealing damage while they fall back.
             // The march itself routes footprint-aware when bound (same as
-            // waves above).
+            // waves above). Guarded like ReissueDriverOrder: only re-path
+            // when the goal tile changed, so retreating units through a
+            // chokepoint get the hold-and-retry grace period instead of a
+            // full footprint A* replan every frame.
             const Vector2 home = cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y));
+            const cc::IVec2 wantTile = cc::WorldToTile(cc::ToGlm(home));
+            const cc::IVec2 goalTile =
+                (occ_ != nullptr) ? NearestEnterableTile(map_, *occ_, wantTile, unit.footprintWidth,
+                                                         unit.footprintHeight, id,
+                                                         registry_.Generation(id))
+                                  : wantTile;
+            if (unit.attackMove && unit.hasPath &&
+                cc::WorldToTile(cc::ToGlm(unit.moveTarget)) == goalTile)
+            {
+                return;
+            }
             if (occ_ != nullptr)
             {
                 IssueAttackMoveOrderFootprint(unit, map_, *occ_, home, id,
