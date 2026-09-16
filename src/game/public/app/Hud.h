@@ -37,6 +37,10 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
 // raygui calls; slot files live at SaveSlotPath().
 void DrawSaveSlots();
 void DrawSelectionPanel(Registry &registry); // non-const: SelectedUnit queries selection
+// QoL idle-select buttons ("Workers (N)" / "Army (N)") with live counts.
+// Clicking selects that idle subset (replacing selection); greyed when 0.
+// Call after EndMode2D.
+void DrawIdleButtons(Registry &registry, int teamID);
 // QoL control-group strip (10 boxes: member counts, selection + auto-add
 // highlight). Pure scan + draw calls; call after EndMode2D.
 void DrawControlGroupStrip(Registry &registry, int teamID, int autoAddGroupBit);

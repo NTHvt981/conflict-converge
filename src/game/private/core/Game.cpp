@@ -1217,6 +1217,7 @@ void Game::Update()
     // M6 Goal 2: raygui HUD (proper panels replace the M5 text counters).
     DrawResourcePanel(resources, &art);
     DrawSelectionPanel(registry);
+    DrawIdleButtons(registry, 0); // QoL: team 0 is the player
     DrawControlGroupStrip(registry, 0, autoAddGroupBit); // QoL: team 0 is the player
     DrawSaveSlots();
     // M13: factory panel (build buttons, queue, cancel); rally hint

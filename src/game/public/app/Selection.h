@@ -36,3 +36,13 @@ int SelectInRect(Registry &registry, Rectangle worldBox, bool add);
 int AssignControlGroup(Registry &registry, int groupBit);
 int AddToControlGroup(Registry &registry, int groupBit);
 int RecallControlGroup(Registry &registry, int groupBit);
+
+// QoL idle selection: selects every same-team unit with nothing to do
+// (state Idle, no move/path/repair order). workersOnly=true restricts to
+// Engineers (the sole gatherer type); false selects the idle army
+// (everyone else). Channeling repair-Engineers also report state Idle,
+// so hasRepairOrder is checked explicitly — busy repair crews are never
+// flagged idle. Replaces the selection; returns how many were picked.
+int SelectIdle(Registry &registry, int teamID, bool workersOnly);
+// Non-mutating count for HUD buttons (live counts without side effects).
+int CountIdle(const Registry &registry, int teamID, bool workersOnly);

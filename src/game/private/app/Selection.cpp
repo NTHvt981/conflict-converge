@@ -158,3 +158,44 @@ int RecallControlGroup(Registry &registry, int groupBit)
     });
     return picked;
 }
+
+namespace
+{
+
+bool IsIdleWorker(const Unit &unit, int teamID, bool workersOnly)
+{
+    if (unit.teamID != teamID || unit.state != UnitState::Idle || unit.hasMoveOrder ||
+        unit.hasPath || unit.hasRepairOrder)
+    {
+        return false;
+    }
+    const bool isEngineer = unit.type == UnitType::Engineer;
+    return workersOnly ? isEngineer : !isEngineer;
+}
+
+} // namespace
+
+int SelectIdle(Registry &registry, int teamID, bool workersOnly)
+{
+    int picked = 0;
+    registry.Each<Unit>([&](Entity, Unit &unit) {
+        unit.isSelected = IsIdleWorker(unit, teamID, workersOnly);
+        if (unit.isSelected)
+        {
+            ++picked;
+        }
+    });
+    return picked;
+}
+
+int CountIdle(const Registry &registry, int teamID, bool workersOnly)
+{
+    int count = 0;
+    registry.Each<Unit>([&](Entity, const Unit &unit) {
+        if (IsIdleWorker(unit, teamID, workersOnly))
+        {
+            ++count;
+        }
+    });
+    return count;
+}

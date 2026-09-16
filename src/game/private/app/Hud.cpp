@@ -123,6 +123,40 @@ void DrawSelectionPanel(Registry &registry)
     GuiLabel({ 262.0f, 410.0f, 280.0f, 20.0f }, text);
 }
 
+void DrawIdleButtons(Registry &registry, int teamID)
+{
+    GuiPanel({ 560.0f, 386.0f, 150.0f, 56.0f }, "Idle");
+    const int workers = CountIdle(registry, teamID, true);
+    const int army = CountIdle(registry, teamID, false);
+    char label[32];
+    std::snprintf(label, sizeof(label), "Workers (%d)", workers);
+    if (workers == 0)
+    {
+        GuiDisable();
+    }
+    if (GuiButton({ 570.0f, 392.0f, 130.0f, 20.0f }, label))
+    {
+        SelectIdle(registry, teamID, true);
+    }
+    if (workers == 0)
+    {
+        GuiEnable();
+    }
+    std::snprintf(label, sizeof(label), "Army (%d)", army);
+    if (army == 0)
+    {
+        GuiDisable();
+    }
+    if (GuiButton({ 570.0f, 416.0f, 130.0f, 20.0f }, label))
+    {
+        SelectIdle(registry, teamID, false);
+    }
+    if (army == 0)
+    {
+        GuiEnable();
+    }
+}
+
 // QoL control-group strip: 10 numbered boxes under the stockpile panel.
 // Filled green when the group has members (sky-blue when fully selected),
 // dimmed when empty; gold border marks the auto-add group for production.
