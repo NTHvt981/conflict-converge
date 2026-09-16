@@ -505,7 +505,8 @@ bool EngageTarget(Unit &attacker, Registry &registry, TileMap &map, Entity id,
 }
 
 void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
-                const FogOfWar *fog, OccupancyGrid *occ)
+                const FogOfWar *fog, OccupancyGrid *occ,
+                const std::unordered_map<Entity, float> *reserved)
 {
     Unit *unit = registry.Get<Unit>(self);
     if (unit == nullptr || unit->health <= 0.0f)
@@ -606,7 +607,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         // Structures are contact too: marches raze production on the way.
         if (unit->attackMove)
         {
-            unit->target = AcquireTarget(registry, self, fog);
+            unit->target = AcquireTarget(registry, self, fog, reserved);
             if (unit->target == kInvalidEntity)
             {
                 unit->target = AcquireBuildingTarget(registry, self, fog);
@@ -667,7 +668,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     }
     if (unit->target == kInvalidEntity)
     {
-        unit->target = AcquireTarget(registry, self, fog);
+        unit->target = AcquireTarget(registry, self, fog, reserved);
         if (unit->target != kInvalidEntity && unit->stance == Stance::Hold)
         {
             // Hold: stand still, firing only at what is already in range.
@@ -1093,8 +1094,21 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
         preMovePositions.push_back({ id, unit.position });
     });
 
-    registry.Each<Unit>(
-        [&](Entity id, Unit &) { UpdateUnit(id, registry, map, dtSeconds, fog, &occ); });
+    // QoL overkill protection: sum committed damage (mid-WindUp/Recover
+    // attackers) per target once, so acquisition spreads fire instead of
+    // piling onto already-doomed targets.
+    ReservedDamageMap reservedDamage;
+    registry.Each<Unit>([&](Entity, const Unit &unit) {
+        if (unit.health > 0.0f && unit.target != kInvalidEntity &&
+            (unit.phase == AttackPhase::WindUp || unit.phase == AttackPhase::Recover))
+        {
+            reservedDamage[unit.target] += static_cast<float>(unit.attackPower);
+        }
+    });
+
+    registry.Each<Unit>([&](Entity id, Unit &) {
+        UpdateUnit(id, registry, map, dtSeconds, fog, &occ, &reservedDamage);
+    });
 
     // Overlap avoidance: fan out stacked bodies after the AI driver.
     SeparateUnits(registry, dtSeconds);

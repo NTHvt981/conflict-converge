@@ -77,4 +77,24 @@ void RunTargetingTests()
     const Entity blindId = registry.Create();
     registry.Add(blindId, blind);
     CC_CHECK(AcquireTarget(registry, blindId) == kInvalidEntity);
+
+    // --- overkill protection: reserved-lethal targets are skipped ---
+    {
+        Registry battle;
+        const Entity hunter = AddSoldier(battle, UnitType::Infantry, 0, 0.0f, 0.0f);
+        const Entity doomed = AddSoldier(battle, UnitType::LightTank, 1, 100.0f, 0.0f);
+        const Entity healthy = AddSoldier(battle, UnitType::Engineer, 1, 150.0f, 0.0f);
+        battle.Get<Unit>(doomed)->health = 5.0f; // one hit from anything
+        // No reservation: threat logic picks the tank (power 20 > 2).
+        CC_CHECK(AcquireTarget(battle, hunter) == doomed);
+        // 10 power committed mid-windup: hunter spreads to the engineer.
+        ReservedDamageMap reserved;
+        reserved[doomed] = 10.0f;
+        CC_CHECK(AcquireTarget(battle, hunter, nullptr, &reserved) == healthy);
+        // Partial reservation below lethal: still a valid target.
+        reserved[doomed] = 4.0f;
+        CC_CHECK(AcquireTarget(battle, hunter, nullptr, &reserved) == doomed);
+        // Null map (legacy callers, direct UpdateUnit tests): unchanged.
+        CC_CHECK(AcquireTarget(battle, hunter, nullptr, nullptr) == doomed);
+    }
 }

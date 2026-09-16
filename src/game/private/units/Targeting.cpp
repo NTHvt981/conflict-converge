@@ -9,7 +9,8 @@ float DistanceBetween(const Unit &a, const Unit &b)
     return glm::distance(cc::ToGlm(a.position), cc::ToGlm(b.position));
 }
 
-Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fog)
+Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fog,
+                     const ReservedDamageMap *reserved)
 {
     const Unit *self = registry.Get<Unit>(seeker);
     if (self == nullptr || self->sightRange <= 0.0f)
@@ -26,6 +27,18 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
         if (candidate == seeker || unit.teamID == self->teamID || unit.health <= 0.0f)
         {
             return; // self, ally, or already dead
+        }
+        if (reserved != nullptr)
+        {
+            // Overkill protection: someone already has enough committed to
+            // finish this candidate — look elsewhere. attackPower is a
+            // conservative proxy for landed damage (armor effectiveness
+            // would only reduce it); slight over-reserving is acceptable.
+            const auto it = reserved->find(candidate);
+            if (it != reserved->end() && unit.health - it->second <= 0.0f)
+            {
+                return;
+            }
         }
         const float dist = glm::distance(cc::ToGlm(self->position), cc::ToGlm(unit.position));
         if (dist > self->sightRange)

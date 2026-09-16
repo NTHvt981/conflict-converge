@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef> // std::size_t
+#include <unordered_map> // QoL reserved-damage map (see Targeting.h alias)
 #include <vector>  // M3 Goal 3: Unit::path waypoint list
 
 #include "raylib.h" // Vector2
@@ -268,8 +269,11 @@ void SeparateUnits(Registry &registry, float dtSeconds);
 // M9: pass fog to gate acquisition + chase validation on visibility
 // (nullptr = ungated legacy behavior, keeps old call sites working).
 // Phase 4: pass occ for footprint-aware movement (nullptr = legacy behavior).
+// QoL: pass the frame's reserved-damage map for overkill protection
+// (Targeting.h's ReservedDamageMap; nullptr = legacy, tests keep working).
 void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
-                const FogOfWar *fog = nullptr, OccupancyGrid *occ = nullptr);
+                const FogOfWar *fog = nullptr, OccupancyGrid *occ = nullptr,
+                const std::unordered_map<Entity, float> *reserved = nullptr);
 
 // Stall-fix: SeparateUnits' continuous-space push can undo a step that
 // StepToward already reported as successful (Stepped, non-zero velocity),

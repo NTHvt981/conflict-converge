@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "Registry.h" // Registry, Entity, kInvalidEntity
 #include "Unit.h"     // Unit
 
@@ -11,12 +13,22 @@ struct Building; // fwd-decl (Targeting.cpp includes Building.h)
 
 float DistanceBetween(const Unit &a, const Unit &b);
 
+// QoL overkill protection: frame-scoped "reserved lethal damage" — the sum
+// of attackPower from every unit currently mid-WindUp/Recover against each
+// target entity. Built once per frame (see RunUnitMovementFrame) and passed
+// to AcquireTarget so new attackers skip targets that already have enough
+// committed to kill them, spreading fire instead of piling on.
+using ReservedDamageMap = std::unordered_map<Entity, float>;
+
 // Nearest living enemy of a different team within seeker.sightRange.
 // Threat priority: highest attackPower wins, ties broken by distance.
 // Returns kInvalidEntity when the seeker is missing or nothing qualifies.
 // M9: with fog, candidates on tiles unseen by the seeker's team are skipped —
 // except for Artillery, which blind-fires into shroud at no penalty (Q78).
-Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fog = nullptr);
+// QoL: with reserved, candidates whose health is already covered by
+// committed damage are skipped (overkill protection); nullptr = legacy.
+Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fog = nullptr,
+                     const ReservedDamageMap *reserved = nullptr);
 
 // M13: nearest Operational enemy building within sightRange. Same fog gate
 // (artillery exempt); wrecked, own-team, and unseen structures are skipped.
