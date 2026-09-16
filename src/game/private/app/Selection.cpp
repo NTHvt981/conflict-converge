@@ -53,6 +53,11 @@ Rectangle NormalizeRect(Vector2 a, Vector2 b)
     return box;
 }
 
+Rectangle DraggedWorldBox(const GameCamera &camera, Vector2 screenStart, Vector2 screenEnd)
+{
+    return NormalizeRect(camera.ScreenToWorld(screenStart), camera.ScreenToWorld(screenEnd));
+}
+
 int SelectInRect(Registry &registry, Rectangle worldBox, bool add)
 {
     const Rectangle box = NormalizeRect({ worldBox.x, worldBox.y },

@@ -628,10 +628,9 @@ void Game::Update()
             else
             {
                 // Screen box corners back to world space (Shift extends).
-                const Vector2 worldA = camera.ScreenToWorld({ box.x, box.y });
-                const Vector2 worldB =
-                    camera.ScreenToWorld({ box.x + box.width, box.y + box.height });
-                if (SelectInRect(registry, NormalizeRect(worldA, worldB),
+                if (SelectInRect(registry,
+                                 DraggedWorldBox(camera, { box.x, box.y },
+                                                 { box.x + box.width, box.y + box.height }),
                                  input.ShiftDown()) > 0)
                 {
                     audio.Play(SfxId::Select);

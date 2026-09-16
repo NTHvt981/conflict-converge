@@ -27,14 +27,17 @@ public:
 
     // Snapshot from explicit values (tests, scripted input).
     void Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool rightPressed, float wheelDelta = 0.0f,
-                  bool shiftDown = false, bool leftDown = false);
+                  bool shiftDown = false, bool leftDown = false, bool rightDown = false,
+                  bool ctrlDown = false);
 
     Vector2 MouseScreen() const;
     bool LeftPressed() const; // edge: button went down this frame
     bool LeftDown() const;    // level: button held (drag-box gestures)
     bool RightPressed() const;
+    bool RightDown() const;  // level: right button held (line-draw, right-drag pan)
     float WheelDelta() const; // mouse wheel steps this frame (M13 zoom)
     bool ShiftDown() const;   // either shift key held (M13 slot load/save combos)
+    bool CtrlDown() const;    // either control key held (QoL control groups)
 
     // Snapshot mouse position under the given camera view.
     Vector2 MouseWorld(const GameCamera &camera) const;
@@ -46,4 +49,6 @@ private:
     float wheelDelta_ = 0.0f;
     bool shiftDown_ = false;
     bool leftDown_ = false;
+    bool rightDown_ = false;
+    bool ctrlDown_ = false;
 };

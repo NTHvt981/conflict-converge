@@ -13,11 +13,12 @@ void InputManager::PollLive()
     Snapshot(GetMousePosition(), IsMouseButtonPressed(MOUSE_BUTTON_LEFT),
              IsMouseButtonPressed(MOUSE_BUTTON_RIGHT), GetMouseWheelMove(),
              IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT),
-             IsMouseButtonDown(MOUSE_BUTTON_LEFT));
+             IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsMouseButtonDown(MOUSE_BUTTON_RIGHT),
+             IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL));
 }
 
 void InputManager::Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool rightPressed, float wheelDelta,
-                            bool shiftDown, bool leftDown)
+                            bool shiftDown, bool leftDown, bool rightDown, bool ctrlDown)
 {
     mouseScreen_ = mouseScreenPos;
     leftPressed_ = leftPressed;
@@ -25,6 +26,8 @@ void InputManager::Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool right
     wheelDelta_ = wheelDelta;
     shiftDown_ = shiftDown;
     leftDown_ = leftDown;
+    rightDown_ = rightDown;
+    ctrlDown_ = ctrlDown;
 }
 
 Vector2 InputManager::MouseScreen() const
@@ -47,6 +50,11 @@ bool InputManager::RightPressed() const
     return rightPressed_;
 }
 
+bool InputManager::RightDown() const
+{
+    return rightDown_;
+}
+
 float InputManager::WheelDelta() const
 {
     return wheelDelta_;
@@ -55,6 +63,11 @@ float InputManager::WheelDelta() const
 bool InputManager::ShiftDown() const
 {
     return shiftDown_;
+}
+
+bool InputManager::CtrlDown() const
+{
+    return ctrlDown_;
 }
 
 Vector2 InputManager::MouseWorld(const GameCamera &camera) const

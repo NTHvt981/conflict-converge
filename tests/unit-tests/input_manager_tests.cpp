@@ -52,6 +52,25 @@ void RunInputManagerTests()
     CC_CHECK(!input.LeftPressed());
     CC_CHECK(!input.LeftDown()); // released
 
+    // --- RightDown mirrors LeftDown for the right button ---
+    CC_CHECK(!input.RightDown());
+    input.Snapshot({ 0.0f, 0.0f }, false, true, 0.0f, false, false, true);
+    CC_CHECK(input.RightPressed());
+    CC_CHECK(input.RightDown());
+    input.Snapshot({ 0.0f, 0.0f }, false, false, 0.0f, false, false, true);
+    CC_CHECK(!input.RightPressed());
+    CC_CHECK(input.RightDown()); // still held
+    input.Snapshot({ 0.0f, 0.0f }, false, false);
+    CC_CHECK(!input.RightDown()); // released
+
+    // --- CtrlDown mirrors ShiftDown for control-group chords ---
+    CC_CHECK(!input.CtrlDown());
+    input.Snapshot({ 0.0f, 0.0f }, false, false, 0.0f, false, false, false, true);
+    CC_CHECK(input.CtrlDown());
+    CC_CHECK(!input.ShiftDown());
+    input.Snapshot({ 0.0f, 0.0f }, false, false);
+    CC_CHECK(!input.CtrlDown());
+
     // --- shortcut registry rides along and fires through the manager ---
     int halts = 0;
     input.shortcuts.Bind(32, [&] { ++halts; });

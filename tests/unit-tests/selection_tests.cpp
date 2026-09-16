@@ -2,6 +2,7 @@
 
 #include "test_harness.h"
 
+#include "GameCamera.h"
 #include "Selection.h"
 #include "Unit.h"
 
@@ -75,4 +76,20 @@ void RunSelectionTests()
     // Empty box in replace mode clears everything.
     CC_CHECK(SelectInRect(registry, { 600.0f, 600.0f, 50.0f, 50.0f }, false) == 0);
     CC_CHECK(SelectedUnit(registry) == kInvalidEntity);
+
+    // --- DraggedWorldBox: screen drag -> normalized world rect ---
+    GameCamera camera;
+    camera.view.offset = { 400.0f, 225.0f };
+    camera.view.zoom = 1.0f;
+    camera.view.target = { 64.0f, 64.0f };
+    // Screen (400,225) maps to world (64,64); +64px right maps +64 world.
+    const Rectangle dragged =
+        DraggedWorldBox(camera, { 464.0f, 257.0f }, { 400.0f, 225.0f });
+    CC_CHECK(CcNear(dragged.x, 64.0f) && CcNear(dragged.y, 64.0f));
+    CC_CHECK(CcNear(dragged.width, 64.0f) && CcNear(dragged.height, 32.0f));
+    // Matches the manual NormalizeRect(ScreenToWorld x2) it replaced.
+    const Rectangle manual = NormalizeRect(camera.ScreenToWorld({ 464.0f, 257.0f }),
+                                           camera.ScreenToWorld({ 400.0f, 225.0f }));
+    CC_CHECK(dragged.x == manual.x && dragged.y == manual.y);
+    CC_CHECK(dragged.width == manual.width && dragged.height == manual.height);
 }
