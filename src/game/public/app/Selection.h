@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility> // std::pair for DraggedWorldLine
+
 #include "raylib.h" // Vector2, Rectangle
 
 #include "GameCamera.h" // ScreenToWorld for drag conversion
@@ -25,6 +27,10 @@ Rectangle NormalizeRect(Vector2 a, Vector2 b);
 // normalized world-space rectangle, via the camera's current view.
 // Shared seam for box-select, line formation, and area commands.
 Rectangle DraggedWorldBox(const GameCamera &camera, Vector2 screenStart, Vector2 screenEnd);
+// Screen-space drag endpoints into world space (no normalization — a line
+// has direction, unlike a box). For line-draw formation placement.
+std::pair<Vector2, Vector2> DraggedWorldLine(const GameCamera &camera, Vector2 screenStart,
+                                             Vector2 screenEnd);
 
 // Box-select every unit whose body center falls inside worldBox. With
 // add=false the box replaces the selection, otherwise it extends it.

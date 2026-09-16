@@ -27,6 +27,7 @@ void RunPathfindTests();
 void RunTargetingTests();
 void RunStateMachineTests();
 void RunFormationTests();
+void RunLineFormationTests();
 void RunFactoryTests();
 void RunSaveGameTests();
 void RunIncomeTests();
@@ -81,6 +82,7 @@ int main()
     RunTargetingTests();
     RunStateMachineTests();
     RunFormationTests();
+    RunLineFormationTests();
     RunFactoryTests();
     RunSaveGameTests();
     RunIncomeTests();

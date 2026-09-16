@@ -41,4 +41,18 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
                           const TileMap &map, const OccupancyGrid &occ,
                           Vector2 worldTarget);
 
+// QoL line formation: evenly spaces `count` points along the segment
+// lineStart->lineEnd (inclusive ends when count > 1; the midpoint for a
+// single unit). Pure geometry, unit-testable without a Registry (mirrors
+// FormationOffsetsFP's shape).
+std::vector<cc::Vec2> LineFormationPositions(std::size_t count, cc::Vec2 lineStart,
+                                             cc::Vec2 lineEnd);
+
+// Orders `units` into a line between lineStart/lineEnd (world space),
+// each snapped to its nearest enterable tile exactly like
+// IssueFormationMoveFP. Same per-unit dispatch, different slot source.
+void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
+                              const TileMap &map, const OccupancyGrid &occ,
+                              Vector2 lineStartWorld, Vector2 lineEndWorld);
+
 } // namespace formation

@@ -425,6 +425,7 @@ void Game::BindShortcuts()
         if (menu.state == MenuState::Playing)
         {
             attackGroundMode = false; // QoL: Esc also stands down shell mode
+            rightDragging = false; // QoL: Esc also cancels a drawn line
             DeselectAll(registry);
             dragging = false;
         }
@@ -737,6 +738,17 @@ void Game::Update()
         }
         if (input.RightPressed())
         {
+            // QoL line formation: Alt+right-drag draws a placement line
+            // (Ctrl is groups, Shift is queueing — Alt stays unambiguous).
+            // No order fires on the press itself; the release dispatches.
+            if (IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT))
+            {
+                rightDragging = true;
+                rightDragStart = input.MouseScreen();
+            }
+        }
+        if (input.RightPressed() && !rightDragging)
+        {
             // QoL attack-ground mode (toggled with X): the next right-click
             // shells the clicked point instead of moving there. One-shot:
             // the mode clears after a single use.
@@ -858,7 +870,28 @@ void Game::Update()
                 }
                 audio.Play(SfxId::Confirm);
             }
-            } // plain right-click orders (attack-ground mode handled above)
+            }
+        }
+        // QoL line formation release: order the current squad along the
+        // drawn line, then stand down the gesture.
+        if (rightDragging && !input.RightDown())
+        {
+            rightDragging = false;
+            std::vector<Entity> squad;
+            registry.Each<Unit>([&](Entity id, const Unit &unit) {
+                if (unit.isSelected)
+                {
+                    squad.push_back(id);
+                }
+            });
+            if (!squad.empty())
+            {
+                const auto [lineStart, lineEnd] =
+                    DraggedWorldLine(camera, rightDragStart, input.MouseScreen());
+                formation::IssueLineFormationMoveFP(registry, squad, map, occ, lineStart,
+                                                    lineEnd);
+                audio.Play(SfxId::Confirm);
+            }
         }
         // QoL control groups: number keys recall, Ctrl+number assigns the
         // current selection (replacing), Shift+number adds to it,
@@ -1344,6 +1377,13 @@ void Game::Update()
     if (dragging && input.LeftDown())
     {
         DrawRectangleLinesEx(NormalizeRect(dragStart, input.MouseScreen()), 1.0f, GREEN);
+    }
+    // QoL line-formation preview (screen space, same layer as drag-box).
+    if (rightDragging && input.RightDown())
+    {
+        DrawLineEx(rightDragStart, input.MouseScreen(), 2.0f, SKYBLUE);
+        DrawCircleV(rightDragStart, 3.0f, SKYBLUE);
+        DrawCircleV(input.MouseScreen(), 3.0f, SKYBLUE);
     }
 
     // M6 Goal 1: minimap blit (texture is Y-flipped) + viewport box.

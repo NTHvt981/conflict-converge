@@ -100,4 +100,51 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
     }
 }
 
+std::vector<cc::Vec2> LineFormationPositions(std::size_t count, cc::Vec2 lineStart,
+                                             cc::Vec2 lineEnd)
+{
+    std::vector<cc::Vec2> positions;
+    if (count == 0)
+    {
+        return positions;
+    }
+    positions.reserve(count);
+    if (count == 1)
+    {
+        positions.push_back({ (lineStart.x + lineEnd.x) / 2.0f,
+                              (lineStart.y + lineEnd.y) / 2.0f });
+        return positions;
+    }
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        const float t = static_cast<float>(i) / static_cast<float>(count - 1);
+        positions.push_back({ lineStart.x + (lineEnd.x - lineStart.x) * t,
+                              lineStart.y + (lineEnd.y - lineStart.y) * t });
+    }
+    return positions;
+}
+
+void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
+                              const TileMap &map, const OccupancyGrid &occ,
+                              Vector2 lineStartWorld, Vector2 lineEndWorld)
+{
+    const std::vector<cc::Vec2> positions = LineFormationPositions(
+        units.size(), cc::ToGlm(lineStartWorld), cc::ToGlm(lineEndWorld));
+    for (std::size_t i = 0; i < units.size(); ++i)
+    {
+        Unit *unit = registry.Get<Unit>(units[i]);
+        if (unit == nullptr)
+        {
+            continue; // destroyed/missing IDs don't shift the surviving slots
+        }
+        const cc::IVec2 want = cc::WorldToTile(positions[i]);
+        const cc::IVec2 slot = NearestEnterableTile(
+            map, occ, want, unit->footprintWidth, unit->footprintHeight, units[i],
+            registry.Generation(units[i]));
+        IssuePathOrderFootprint(*unit, map, occ,
+                                cc::ToRaylib(cc::TileToWorld(slot.x, slot.y)),
+                                units[i], registry.Generation(units[i]));
+    }
+}
+
 } // namespace formation

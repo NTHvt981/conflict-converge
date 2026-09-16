@@ -101,6 +101,10 @@ private:
     bool settingRally = false;
     bool dragging = false;
     Vector2 dragStart = {};
+    // QoL line formation: Alt+right-drag draws a placement line instead of
+    // issuing a point order (mirrors dragging/dragStart for the left button).
+    bool rightDragging = false;
+    Vector2 rightDragStart = {};
     bool showHints = true;
     int setupScroll = 0;
     // QoL control groups: production auto-joins this group bit when >= 0
