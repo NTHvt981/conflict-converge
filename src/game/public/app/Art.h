@@ -34,8 +34,9 @@ enum class UnitFrame
 UnitFrame FrameForPhase(AttackPhase phase);
 
 // Phase 14: Infantry squad visual. Returns the number of soldier sprites
-// to draw (1-6, driven by healthFraction) and fills outOffsets with that
-// many Vector2 pixel offsets from the unit's tile-corner position.
+// to draw (driven by healthFraction, capped per type: 5 for Infantry, 2 for
+// AntiArmorInfantry, 1 for Engineers and vehicles) and fills outOffsets with
+// that many Vector2 pixel offsets from the unit's tile-corner position.
 // Deterministic per-entity (same id always produces the same layout) so it
 // doesn't need to be stored or included in save data.
 // Returns count=1 with outOffsets[0]={0,0} for non-infantry types.

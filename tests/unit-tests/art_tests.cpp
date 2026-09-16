@@ -73,19 +73,29 @@ void RunArtTests()
     {
         std::array<Vector2, 6> offsets;
 
-        // Infantry at full health → 6 soldiers
+        // Infantry at full health → 5 soldiers
         const int infCount = SquadSlots(UnitType::Infantry, 42, 1.0f, offsets);
-        CC_CHECK(infCount == 6);
-        // All 6 offsets must be non-identical (spaced apart)
+        CC_CHECK(infCount == 5);
+        // All 5 offsets must be non-identical (spaced apart)
         CC_CHECK(offsets[0].x != offsets[3].x || offsets[0].y != offsets[3].y);
 
-        // Infantry at 40% health → 3 soldiers
+        // Infantry at 40% health → 2 soldiers (0.40 is not > 0.40)
         const int midCount = SquadSlots(UnitType::Infantry, 42, 0.40f, offsets);
-        CC_CHECK(midCount == 3);
+        CC_CHECK(midCount == 2);
 
         // Infantry at 5% health → 1 soldier
         const int lowCount = SquadSlots(UnitType::Infantry, 42, 0.05f, offsets);
         CC_CHECK(lowCount == 1);
+
+        // AntiArmorInfantry: 2-man team above half health, 1 below.
+        std::array<Vector2, 6> aOffsets;
+        CC_CHECK(SquadSlots(UnitType::AntiArmorInfantry, 10, 0.90f, aOffsets) == 2);
+        CC_CHECK(SquadSlots(UnitType::AntiArmorInfantry, 10, 0.40f, aOffsets) == 1);
+
+        // Engineer: always a single centered sprite, like a vehicle.
+        std::array<Vector2, 6> eOffsets;
+        CC_CHECK(SquadSlots(UnitType::Engineer, 20, 1.0f, eOffsets) == 1);
+        CC_CHECK(eOffsets[0].x == 0.0f && eOffsets[0].y == 0.0f);
 
         // Non-infantry always returns 1 with offset {0,0}
         std::array<Vector2, 6> vOffsets;

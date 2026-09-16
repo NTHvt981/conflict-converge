@@ -31,29 +31,35 @@ static unsigned int HashId(unsigned int id)
 int SquadSlots(UnitType type, unsigned int id, float healthFraction,
                std::array<Vector2, 6> &outOffsets)
 {
-    // Only foot types get the squad visual.
-    if (type != UnitType::Infantry && type != UnitType::AntiArmorInfantry &&
-        type != UnitType::Engineer)
+    // Only foot types with multi-soldier visuals get the squad treatment.
+    // Engineers render as a single centered sprite (like vehicles).
+    if (type != UnitType::Infantry && type != UnitType::AntiArmorInfantry)
     {
         outOffsets[0] = { 0.0f, 0.0f };
         return 1;
     }
 
-    // Soldier count from health: 6 at >83%, 5 at >67%, 4 at >50%,
-    // 3 at >33%, 2 at >17%, 1 otherwise.
+    // Soldier count from health, scaled to each type's max squad size:
+    // Infantry 5 at >80%, 4 at >60%, 3 at >40%, 2 at >20%, 1 otherwise;
+    // AntiArmorInfantry fights as a 2-man team, dropping to 1 below half.
     int count;
-    if (healthFraction > 0.83f)
-        count = 6;
-    else if (healthFraction > 0.67f)
-        count = 5;
-    else if (healthFraction > 0.50f)
-        count = 4;
-    else if (healthFraction > 0.33f)
-        count = 3;
-    else if (healthFraction > 0.17f)
-        count = 2;
+    if (type == UnitType::Infantry)
+    {
+        if (healthFraction > 0.80f)
+            count = 5;
+        else if (healthFraction > 0.60f)
+            count = 4;
+        else if (healthFraction > 0.40f)
+            count = 3;
+        else if (healthFraction > 0.20f)
+            count = 2;
+        else
+            count = 1;
+    }
     else
-        count = 1;
+    {
+        count = (healthFraction > 0.50f) ? 2 : 1;
+    }
 
     // Fixed 6-slot layout: two rows of 3, centered around (16,16) within
     // the 32x32 body inset. Offsets stay inside ±12px from center.
