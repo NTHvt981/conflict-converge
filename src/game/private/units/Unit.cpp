@@ -841,6 +841,22 @@ void SeparateUnits(Registry &registry, float dtSeconds)
                 cc::ToRaylib(cc::ToGlm(items[i].unit->position) + dir * push);
             items[j].unit->position =
                 cc::ToRaylib(cc::ToGlm(items[j].unit->position) - dir * push);
+            // M4G4 overrun: enemies in body contact trade crush hits.
+            // Vehicle-on-foot is negated inside ResolveAttack (the documented
+            // rule, previously dead code: no production path passed Crush);
+            // anything else takes matrix damage. Gated on each attacker's
+            // cooldown so contact can't machine-gun outside the fire cycle.
+            if (items[i].unit->teamID != items[j].unit->teamID)
+            {
+                if (items[i].unit->health > 0.0f && items[i].unit->cooldown <= 0.0f)
+                {
+                    ResolveAttack(*items[i].unit, *items[j].unit, AttackContext::Crush);
+                }
+                if (items[j].unit->health > 0.0f && items[j].unit->cooldown <= 0.0f)
+                {
+                    ResolveAttack(*items[j].unit, *items[i].unit, AttackContext::Crush);
+                }
+            }
         }
     }
 }
