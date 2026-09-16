@@ -135,12 +135,22 @@ bool ParseMapFile(const std::string &path, MapData &out)
 
 bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes)
 {
+    return ApplyMapData(data, map, nodes, nullptr);
+}
+
+bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes,
+                  OccupancyGrid *occ)
+{
     if (data.width <= 0 || data.height <= 0 ||
         static_cast<std::int64_t>(data.width) * data.height > kMaxTiles)
     {
         return false;
     }
     map.Resize(data.width, data.height);
+    if (occ != nullptr)
+    {
+        occ->Resize(data.width, data.height);
+    }
     for (int y = 0; y < data.height; ++y)
     {
         for (int x = 0; x < data.width; ++x)

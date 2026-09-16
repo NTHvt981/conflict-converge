@@ -420,6 +420,11 @@ bool LoadWorld(const WorldState &world, const std::string &path)
     world.resources->SetCarry(saved.ironCarry, saved.oilCarry);
     world.camera->view = saved.camera;
     world.map->Resize(saved.mapWidth, saved.mapHeight);
+    if (world.occ != nullptr)
+    {
+        world.occ->Clear();
+        world.occ->Resize(saved.mapWidth, saved.mapHeight);
+    }
     for (int y = 0; y < saved.mapHeight; ++y)
     {
         for (int x = 0; x < saved.mapWidth; ++x)

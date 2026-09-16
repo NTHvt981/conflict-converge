@@ -8,6 +8,7 @@
 #include "TileMap.h"   // TerrainType grid
 
 class ResourceNodes; // fwd-decl (MapFile.cpp includes Nodes.h)
+class OccupancyGrid; // fwd-decl (TileMap.h defines it; resynced on apply)
 
 // M10: text `.map` format (Q46 text, Q54 header, Q73 data/ loading, Q79 legend).
 // Strict layout — comment, name, author, width, height, then exactly
@@ -47,8 +48,12 @@ bool ParseMapFile(const std::string &path, MapData &out);
 // Materialize parsed data: Resize + terrain, node spawns (default amounts),
 // `B` tiles already baked into terrain. Markers stay in MapData for the
 // caller (demo places bases/units relative to them). False only on
-// dimension overflow.
+// dimension overflow. The OccupancyGrid overload additionally resyncs (and
+// clears) the grid to the new dims so stale widths can't corrupt footprint
+// reservations; pass nullptr to keep the legacy 3-arg behavior.
 bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes);
+bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes,
+                  OccupancyGrid *occ);
 
 // M14: skirmish-setup map entry — header metadata plus the file path.
 // ListMaps enumerates dir/*.map, keeping only files that parse (header

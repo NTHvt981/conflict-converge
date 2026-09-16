@@ -136,7 +136,7 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
     MapData data;
     if (ParseMapFile(mapPath, data))
     {
-        ApplyMapData(data, map, nodes);
+        ApplyMapData(data, map, nodes, &occ);
     }
     else
     {

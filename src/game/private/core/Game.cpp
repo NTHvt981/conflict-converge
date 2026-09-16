@@ -46,7 +46,7 @@ Game::Game()
     , skirmish{ &registry, &resources, &map, &occ, &fog, &nodes,
                 &queue,   &factory,   &ai, &allyAI, &enemyAI2, &camera, &rallyPos }
     // M13: shared snapshot for the save-slot bindings.
-    , worldState{ &registry, &resources, &map, &camera, &nodes, &fog }
+    , worldState{ &registry, &resources, &map, &camera, &nodes, &fog, &occ }
 {
 }
 
@@ -213,14 +213,14 @@ void Game::BindShortcuts()
         {
             return;
         }
-        SaveWorld({ &registry, &resources, &map, &camera, &nodes, &fog }, "data/quicksave.ccpb");
+        SaveWorld({ &registry, &resources, &map, &camera, &nodes, &fog, &occ }, "data/quicksave.ccpb");
     });
     input.shortcuts.Bind(KEY_F9, [&] {
         if (!worldActive || menu.state != MenuState::Playing)
         {
             return;
         }
-        LoadWorld({ &registry, &resources, &map, &camera, &nodes, &fog }, "data/quicksave.ccpb");
+        LoadWorld({ &registry, &resources, &map, &camera, &nodes, &fog, &occ }, "data/quicksave.ccpb");
     });
     // M13: named save slots (F6-8 store, Shift+F6-8 recall).
     input.shortcuts.Bind(KEY_F6, [&] {

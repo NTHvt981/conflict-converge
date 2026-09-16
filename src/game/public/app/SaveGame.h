@@ -5,6 +5,7 @@
 class Registry;
 class ResourceSystem;
 class TileMap;
+class OccupancyGrid;
 class GameCamera;
 class ResourceNodes;
 class FogOfWar;
@@ -26,6 +27,10 @@ struct WorldState
     GameCamera *camera = nullptr;
     ResourceNodes *nodes = nullptr;
     FogOfWar *fog = nullptr; // M9: per-team explored memory (saved via team_fog)
+    // Phase 4: tile occupancy. Optional (defaults null for bare tests):
+    // LoadWorld resyncs it to the save's dims when present so a stale
+    // width can't corrupt footprint reservations across a load.
+    OccupancyGrid *occ = nullptr;
 };
 
 // Every WorldState pointer must be non-null. Save returns false on I/O
