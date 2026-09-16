@@ -344,13 +344,14 @@ void AICommander::ScoutTick(float dt)
     {
         return;
     }
-    scoutTimer_ = params_.scoutInterval;
     const Entity scout = factory_.Spawn(UnitType::Infantry, teamID_,
                                         cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
     if (scout == kInvalidEntity)
     {
+        scoutTimer_ = 1.0f; // funds/site blocked: retry soon, not next frame
         return;
     }
+    scoutTimer_ = params_.scoutInterval;
     if (Unit *unit = registry_.Get<Unit>(scout))
     {
         OrderMove(*unit, scout, cc::ToRaylib(cc::TileToWorld(enemyTile_.x, enemyTile_.y)));
