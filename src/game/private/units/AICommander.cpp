@@ -142,12 +142,12 @@ void AICommander::SetupBase()
     resources_.AddIron(1000);
     resources_.AddOil(500);
 
-    PlaceBuilding(registry_, map_, BuildingType::Base, teamID_, homeTile_.x, homeTile_.y);
+    PlaceBuilding(registry_, map_, BuildingType::Base, teamID_, homeTile_.x, homeTile_.y, &nodes_);
     const cc::IVec2 depotSpots[] = { { 2, 0 }, { 0, 2 }, { -1, 0 }, { 0, -2 } };
     for (const cc::IVec2 &spot : depotSpots)
     {
         if (PlaceBuilding(registry_, map_, BuildingType::ResourceDepot, teamID_, homeTile_.x + spot.x,
-                          homeTile_.y + spot.y) != kInvalidEntity)
+                          homeTile_.y + spot.y, &nodes_) != kInvalidEntity)
         {
             break;
         }
@@ -157,7 +157,7 @@ void AICommander::SetupBase()
     for (const cc::IVec2 &spot : factorySpots)
     {
         if (PlaceBuilding(registry_, map_, BuildingType::Factory, teamID_, homeTile_.x + spot.x,
-                          homeTile_.y + spot.y) != kInvalidEntity)
+                          homeTile_.y + spot.y, &nodes_) != kInvalidEntity)
         {
             break;
         }

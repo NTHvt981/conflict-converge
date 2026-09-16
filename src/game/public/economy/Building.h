@@ -8,6 +8,7 @@
 #include "ResourceSystem.h" // UpdateBaseIncome destination
 
 class TileMap; // fwd-decl (Building.cpp includes TileMap.h)
+class ResourceNodes; // fwd-decl (node-occupancy guard, Building.cpp includes Nodes.h)
 
 // M5 Goals 2/5: base building mechanics. Buildings occupy a tile footprint
 // (marked TerrainType::Building, hence blocked + overlap-proof) and go
@@ -49,8 +50,14 @@ cc::IVec2 Footprint(BuildingType type);
 // Validate (in-bounds, all Grass, team stored) and place: creates the entity,
 // attaches the component, marks footprint tiles as Building.
 // Returns kInvalidEntity when any footprint tile is out-of-bounds or not Grass.
+// The nodes-aware overload additionally refuses footprints covering a live
+// (or depleted-but-respawning) resource node — node tiles stay Grass by
+// design so gatherers can stand on them, and building over one would strand
+// the resource permanently. Pass nullptr to keep the legacy behavior.
 Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
                      int tileY);
+Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
+                     int tileY, const ResourceNodes *nodes);
 
 // Mark Destroyed, restore footprint tiles to Grass, remove the entity.
 // Returns false for missing/non-building IDs (no-op).

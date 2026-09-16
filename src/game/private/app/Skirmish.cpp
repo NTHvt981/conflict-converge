@@ -158,7 +158,8 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
         factory.Spawn(type, team, cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
     };
     auto placeBase = [&](int team, cc::IVec2 anchor) {
-        const Entity base = PlaceBuilding(registry, map, BuildingType::Base, team, anchor.x, anchor.y);
+        const Entity base = PlaceBuilding(registry, map, BuildingType::Base, team, anchor.x, anchor.y,
+                                            &nodes);
         if (base != kInvalidEntity)
         {
             const cc::IVec2 fp = Footprint(BuildingType::Base);
@@ -168,7 +169,7 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
         for (const cc::IVec2 &spot : depotSpots)
         {
             const Entity depot = PlaceBuilding(registry, map, BuildingType::ResourceDepot, team,
-                                               anchor.x + spot.x, anchor.y + spot.y);
+                                               anchor.x + spot.x, anchor.y + spot.y, &nodes);
             if (depot != kInvalidEntity)
             {
                 occ.ReserveFootprint({ anchor.x + spot.x, anchor.y + spot.y }, 1, 1, depot,
@@ -180,7 +181,7 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
         for (const cc::IVec2 &spot : factorySpots)
         {
             const Entity fac = PlaceBuilding(registry, map, BuildingType::Factory, team,
-                                             anchor.x + spot.x, anchor.y + spot.y);
+                                             anchor.x + spot.x, anchor.y + spot.y, &nodes);
             if (fac != kInvalidEntity)
             {
                 const cc::IVec2 fp = Footprint(BuildingType::Factory);

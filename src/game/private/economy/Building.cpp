@@ -1,5 +1,6 @@
 #include "Building.h"
 
+#include "Nodes.h"
 #include "TileMap.h"
 
 // Placeholder base trickle (per Operational Base); M5 balance pass tunes these.
@@ -74,10 +75,29 @@ void MarkFootprint(TileMap &map, cc::IVec2 size, int tileX, int tileY, TerrainTy
 Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
                      int tileY)
 {
+    return PlaceBuilding(registry, map, type, teamID, tileX, tileY, nullptr);
+}
+
+Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
+                     int tileY, const ResourceNodes *nodes)
+{
     const cc::IVec2 size = Footprint(type);
     if (!FootprintBuildable(map, size, tileX, tileY))
     {
         return kInvalidEntity;
+    }
+    if (nodes != nullptr)
+    {
+        for (int y = 0; y < size.y; ++y)
+        {
+            for (int x = 0; x < size.x; ++x)
+            {
+                if (nodes->FindAt({ tileX + x, tileY + y }) != nullptr)
+                {
+                    return kInvalidEntity;
+                }
+            }
+        }
     }
     Building building;
     building.type = type;
