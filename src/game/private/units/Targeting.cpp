@@ -1,12 +1,26 @@
 #include "Targeting.h"
 
 #include "Building.h"  // M13: structural targets for raze orders
+#include "Combat.h"    // IsVehicleHull for the priority matrix
 #include "FogOfWar.h"  // M9 visibility gate (nullptr = ungated, legacy tests)
 #include "MathUtils.h" // glm distance via cc::Vec2
 
 float DistanceBetween(const Unit &a, const Unit &b)
 {
     return glm::distance(cc::ToGlm(a.position), cc::ToGlm(b.position));
+}
+
+float TargetPriorityWeight(UnitType seekerType, UnitType candidateType)
+{
+    if (!IsVehicleHull(candidateType))
+    {
+        return 1.0f; // foot candidates: nobody deprioritizes them below neutral
+    }
+    if (IsVehicleHull(seekerType) || seekerType == UnitType::AntiArmorInfantry)
+    {
+        return 1.5f; // armor hunters prefer vehicle targets
+    }
+    return 1.0f;
 }
 
 Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fog,
@@ -21,7 +35,7 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
     const bool seesThroughFog = (fog == nullptr) || self->type == UnitType::Artillery;
 
     Entity best = kInvalidEntity;
-    int bestThreat = -1;
+    float bestThreat = -1.0f;
     float bestDist = 0.0f;
     registry.Each<Unit>([&](Entity candidate, const Unit &unit) {
         if (candidate == seeker || unit.teamID == self->teamID || unit.health <= 0.0f)
@@ -50,10 +64,12 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
         {
             return; // shrouded: hold fire until recon reveals the tile
         }
-        if (unit.attackPower > bestThreat || (unit.attackPower == bestThreat && dist < bestDist))
+        const float threat =
+            static_cast<float>(unit.attackPower) * TargetPriorityWeight(self->type, unit.type);
+        if (threat > bestThreat || (threat == bestThreat && dist < bestDist))
         {
             best = candidate;
-            bestThreat = unit.attackPower;
+            bestThreat = threat;
             bestDist = dist;
         }
     });

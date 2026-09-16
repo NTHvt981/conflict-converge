@@ -13,6 +13,13 @@ struct Building; // fwd-decl (Targeting.cpp includes Building.h)
 
 float DistanceBetween(const Unit &a, const Unit &b);
 
+// QoL target priority: multiplier on a candidate's threat score based on
+// the seeker's type — armored seekers and AntiArmorInfantry prefer engaging
+// vehicles over infantry. 1.0 = neutral. Mirrors Effectiveness's matrix
+// shape (Combat.cpp). Conservative first cut; retune without touching
+// call sites.
+float TargetPriorityWeight(UnitType seekerType, UnitType candidateType);
+
 // QoL overkill protection: frame-scoped "reserved lethal damage" — the sum
 // of attackPower from every unit currently mid-WindUp/Recover against each
 // target entity. Built once per frame (see RunUnitMovementFrame) and passed

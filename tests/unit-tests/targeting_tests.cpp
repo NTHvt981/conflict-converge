@@ -57,6 +57,22 @@ void RunTargetingTests()
     registry.Get<Unit>(strongFar)->attackPower = 2;
     CC_CHECK(AcquireTarget(registry, seeker) == weakNear);
 
+    // --- target priority: armor hunters prefer vehicles at equal power ---
+    {
+        Registry duel;
+        const Entity heavy = AddSoldier(duel, UnitType::HeavyTank, 0, 0.0f, 0.0f);
+        const Entity tank = AddSoldier(duel, UnitType::LightTank, 1, 200.0f, 0.0f);
+        const Entity foot = AddSoldier(duel, UnitType::Infantry, 1, 100.0f, 0.0f);
+        duel.Get<Unit>(tank)->attackPower = 10;
+        duel.Get<Unit>(foot)->attackPower = 10;
+        CC_CHECK(AcquireTarget(duel, heavy) == tank); // 10*1.5 beats 10*1.0
+        const Entity grunt = AddSoldier(duel, UnitType::Infantry, 0, 0.0f, 0.0f);
+        CC_CHECK(AcquireTarget(duel, grunt) == foot); // neutral: nearest wins
+        CC_CHECK(TargetPriorityWeight(UnitType::AntiArmorInfantry, UnitType::HeavyTank) > 1.0f);
+        CC_CHECK(TargetPriorityWeight(UnitType::Infantry, UnitType::HeavyTank) == 1.0f);
+        CC_CHECK(TargetPriorityWeight(UnitType::HeavyTank, UnitType::Infantry) == 1.0f);
+    }
+
     // --- allies, the dead, and the out-of-sight are ignored ---
     AddSoldier(registry, UnitType::HeavyTank, 0, 50.0f, 0.0f); // ally, pow 35
     const Entity corpse = AddSoldier(registry, UnitType::HeavyTank, 1, 60.0f, 0.0f);
