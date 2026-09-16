@@ -49,6 +49,8 @@ void IssueAttackMoveOrderFootprint(Unit &unit, const TileMap &map, const Occupan
 namespace
 {
 
+void LoseTarget(Unit &unit); // defined beside StopMoving below
+
 // Driver-issued leg (chase, remarch, repair approach, patrol): re-issue only
 // when no path is active or the sanitized goal tile changed — this bounds
 // footprint A* to tile changes instead of every frame while chasing (the
@@ -90,7 +92,7 @@ void SetStance(Unit &unit, Stance stance)
     if (stance == Stance::Hold)
     {
         // Stand down immediately; firing in range resumes below.
-        unit.target = kInvalidEntity;
+        LoseTarget(unit);
     }
 }
 
@@ -153,6 +155,17 @@ void StopMoving(Unit &unit)
     unit.path.clear();
     unit.pathNext = 0;
     unit.velocity = { 0.0f, 0.0f };
+}
+
+void LoseTarget(Unit &unit)
+{
+    unit.target = kInvalidEntity;
+    // Dropping a target cancels any telegraph: the next engagement must run
+    // the full windup. Otherwise a mid-WindUp unit whose target dies carries
+    // residual phaseTime into a freshly acquired target and lands early,
+    // bypassing part of the intended telegraph window.
+    unit.phase = AttackPhase::Ready;
+    unit.phaseTime = 0.0f;
 }
 
 } // namespace
@@ -464,7 +477,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         {
             if (!ValidateTarget(registry, *unit, unit->target, fog))
             {
-                unit->target = kInvalidEntity;
+                LoseTarget(*unit);
             }
             else if (EngageTarget(*unit, registry, map, unit->target, fog, dtSeconds))
             {
@@ -480,7 +493,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     // or fog-hidden for non-artillery).
     if (unit->target != kInvalidEntity && !ValidateTarget(registry, *unit, unit->target, fog))
     {
-        unit->target = kInvalidEntity;
+        LoseTarget(*unit);
     }
     if (unit->target == kInvalidEntity)
     {
@@ -491,7 +504,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
             const Unit *sighting = registry.Get<Unit>(unit->target);
             if (sighting == nullptr || !InAttackRange(*unit, *sighting))
             {
-                unit->target = kInvalidEntity;
+                LoseTarget(*unit);
             }
         }
     }
@@ -524,7 +537,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     if (unit->stance == Stance::Hold)
     {
         // Out of range and holding: stand down instead of chasing.
-        unit->target = kInvalidEntity;
+        LoseTarget(*unit);
         unit->state = UnitState::Idle;
         unit->velocity = { 0.0f, 0.0f };
         return;
