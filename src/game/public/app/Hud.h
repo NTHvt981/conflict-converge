@@ -37,6 +37,10 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
 // raygui calls; slot files live at SaveSlotPath().
 void DrawSaveSlots();
 void DrawSelectionPanel(Registry &registry); // non-const: SelectedUnit queries selection
+// QoL auto-repair panel: global checkbox + rate-cap slider operating
+// directly on the caller's toggle state (immediate-mode, like the factory
+// panel). Call after EndMode2D.
+void DrawRepairPanel(bool *enabled, float *capFraction);
 // QoL idle-select buttons ("Workers (N)" / "Army (N)") with live counts.
 // Clicking selects that idle subset (replacing selection); greyed when 0.
 // Call after EndMode2D.

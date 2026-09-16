@@ -126,6 +126,13 @@ void DrawSelectionPanel(Registry &registry)
     GuiLabel({ 262.0f, 410.0f, 280.0f, 20.0f }, text);
 }
 
+void DrawRepairPanel(bool *enabled, float *capFraction)
+{
+    GuiPanel({ 720.0f, 386.0f, 150.0f, 56.0f }, "Repair");
+    GuiCheckBox({ 730.0f, 392.0f, 16.0f, 16.0f }, "Auto", enabled);
+    GuiSlider({ 730.0f, 414.0f, 130.0f, 16.0f }, "Cap", "", capFraction, 0.0f, 1.0f);
+}
+
 void DrawIdleButtons(Registry &registry, int teamID)
 {
     GuiPanel({ 560.0f, 386.0f, 150.0f, 56.0f }, "Idle");

@@ -42,6 +42,9 @@ struct Building
     // default type); PlaceBuilding stamps the real per-type max anyway.
     float health = 400.0f;
     float maxHealth = 400.0f;
+    // QoL auto-repair fractional accumulator (mirrors ResourceSystem's
+    // income-carry idiom): sub-HP heal budget banks here across frames.
+    float repairCarry = 0.0f;
 };
 
 // Full-health value per type (placement + save-load repair of legacy zeros).
@@ -70,6 +73,16 @@ bool DemolishBuilding(Registry &registry, TileMap &map, Entity entity);
 // resources. teamID filters ownership (-1 = every team, test/demo default).
 void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float dt,
                       int teamID = -1);
+
+// QoL building auto-repair: every Operational damaged building of teamID
+// (or all teams if -1) heals toward maxHealth, funds-costed (iron per HP,
+// atomic TrySpend quanta — pauses, never partially charges, when broke).
+// Rate scales with capFraction (0 = paused, 1 = full rate); sub-HP budget
+// banks in Building::repairCarry. Player-side v1 is a single global toggle
+// on Game (no per-building selection exists yet); AI is deliberately not
+// wired (its economy is soak-tuned, and Engineers already repair free).
+void UpdateBuildingAutoRepair(Registry &registry, ResourceSystem &resources, float dt, int teamID,
+                              float capFraction);
 
 // Phase 5: Walkable entrance tiles adjacent to a building's footprint.
 // Returns tiles outside the footprint that are in-bounds and not blocked

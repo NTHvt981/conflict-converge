@@ -110,6 +110,10 @@ private:
     // QoL attack-ground mode (toggled with X): the next right-click shells
     // the point instead of moving. One-shot, clears after a single use.
     bool attackGroundMode = false;
+    // QoL building auto-repair (player-global v1: no building selection
+    // exists yet for per-building toggles). Cap scales the repair rate.
+    bool playerAutoRepair = false;
+    float autoRepairCap = 1.0f;
 
     // Per-frame poll state (M11 edge-triggered sounds, M14 transitions).
     int lastBuildingCount = 0;

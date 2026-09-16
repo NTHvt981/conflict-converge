@@ -1013,6 +1013,12 @@ void Game::Update()
             Announce(EventType::ProductionOrdered);
         }
         lastQueueSize = static_cast<int>(queue.Size());
+        // QoL building auto-repair (player team 0 only; AI economy is
+        // soak-tuned and Engineers already repair free — see Building.h).
+        if (playerAutoRepair)
+        {
+            UpdateBuildingAutoRepair(registry, resources, dt, 0, autoRepairCap);
+        }
         // QoL player auto-retreat: opted-in units below threshold fall back
         // to the rally point (or the nearest owned Base when no rally was
         // ever placed). Shared RetreatIfLowHP with the AI's RetreatTick.
@@ -1339,6 +1345,7 @@ void Game::Update()
     DrawResourcePanel(resources, &art);
     DrawSelectionPanel(registry);
     DrawIdleButtons(registry, 0); // QoL: team 0 is the player
+    DrawRepairPanel(&playerAutoRepair, &autoRepairCap);
     DrawControlGroupStrip(registry, 0, autoAddGroupBit); // QoL: team 0 is the player
     DrawSaveSlots();
     // M13: factory panel (build buttons, queue, cancel); rally hint

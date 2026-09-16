@@ -1,5 +1,7 @@
 #include "Building.h"
 
+#include <cmath> // floor/ceil for repair quanta
+
 #include "Nodes.h"
 #include "TileMap.h"
 
@@ -143,6 +145,54 @@ void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float
         resources.TickIncome(kBaseIronPerSecond * static_cast<float>(bases),
                              kBaseOilPerSecond * static_cast<float>(bases), dt);
     }
+}
+
+// QoL auto-repair pacing: matches the Engineer channel rate so the paid
+// convenience doesn't out-heal the free manual option; iron-only (placing
+// structures is free, so there is no per-type cost table to mirror).
+inline constexpr float kAutoRepairRateHPPerSec = 15.0f;
+inline constexpr float kAutoRepairIronPerHP = 0.5f;
+
+void UpdateBuildingAutoRepair(Registry &registry, ResourceSystem &resources, float dt, int teamID,
+                              float capFraction)
+{
+    if (dt <= 0.0f || capFraction <= 0.0f)
+    {
+        return;
+    }
+    registry.Each<Building>([&](Entity, Building &building) {
+        if (building.state != BuildingState::Operational ||
+            (teamID >= 0 && building.teamID != teamID))
+        {
+            return;
+        }
+        const float missing = building.maxHealth - building.health;
+        if (missing <= 0.0f)
+        {
+            building.repairCarry = 0.0f;
+            return;
+        }
+        building.repairCarry += kAutoRepairRateHPPerSec * capFraction * dt;
+        if (building.repairCarry > missing)
+        {
+            building.repairCarry = missing; // never bank past full
+        }
+        const float take = std::floor(std::min(building.repairCarry, missing));
+        if (take < 1.0f)
+        {
+            return; // sub-HP remainder waits for more damage/budget
+        }
+        const long cost = static_cast<long>(std::ceil(take * kAutoRepairIronPerHP));
+        if (!resources.TrySpend(cost, 0))
+        {
+            // Broke: pause with no progress banked (carry reset, never
+            // partially charged) — poverty must not buy a burst heal later.
+            building.repairCarry = 0.0f;
+            return;
+        }
+        building.health += take;
+        building.repairCarry -= take;
+    });
 }
 
 // Phase 5: entrance tiles (walkable tiles just outside the building footprint).
