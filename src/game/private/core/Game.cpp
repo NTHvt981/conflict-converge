@@ -267,10 +267,21 @@ void Game::BindShortcuts()
         {
             return;
         }
-        const Entity selected = SelectedUnit(registry);
-        if (Unit *ordered = registry.Get<Unit>(selected))
+        // QoL: squad-wide (not just SelectedUnit) + Shift-queues behind
+        // the current order instead of replacing it.
+        const Vector2 dest = input.MouseWorld(camera);
+        const bool queued = input.ShiftDown();
+        int acted = 0;
+        registry.Each<Unit>([&](Entity id, Unit &unit) {
+            if (unit.isSelected)
+            {
+                IssueOrEnqueue(unit, map, &occ, id, registry.Generation(id), queued,
+                               QueuedOrder{ QueuedOrderKind::AttackMove, dest });
+                ++acted;
+            }
+        });
+        if (acted > 0)
         {
-            IssueAttackMoveOrder(*ordered, map, input.MouseWorld(camera));
             audio.Play(SfxId::Confirm);
         }
     });
@@ -301,10 +312,20 @@ void Game::BindShortcuts()
         {
             return;
         }
-        const Entity selected = SelectedUnit(registry);
-        if (Unit *ordered = registry.Get<Unit>(selected))
+        // QoL: squad-wide patrol + Shift-queue, same shape as KEY_A above.
+        const Vector2 dest = input.MouseWorld(camera);
+        const bool queued = input.ShiftDown();
+        int acted = 0;
+        registry.Each<Unit>([&](Entity id, Unit &unit) {
+            if (unit.isSelected)
+            {
+                IssueOrEnqueue(unit, map, &occ, id, registry.Generation(id), queued,
+                               QueuedOrder{ QueuedOrderKind::Patrol, unit.position, dest });
+                ++acted;
+            }
+        });
+        if (acted > 0)
         {
-            IssuePatrolOrder(*ordered, map, ordered->position, input.MouseWorld(camera));
             audio.Play(SfxId::Confirm);
         }
     });
@@ -354,6 +375,7 @@ void Game::BindShortcuts()
                 unit.attackMove = false; // M13: halt drops attack-move + repair too
                 unit.hasRepairOrder = false;
                 unit.repairTarget = kInvalidEntity;
+                unit.orderQueue.clear(); // QoL: halt drops queued orders too
                 unit.phase = AttackPhase::Ready; // M4 Goal 3: halt cancels the telegraph
                 unit.velocity = { 0.0f, 0.0f };
                 unit.state = UnitState::Idle;
@@ -652,15 +674,52 @@ void Game::Update()
             {
                 if (Unit *ordered = registry.Get<Unit>(squad[0]))
                 {
-                    IssuePathOrderFootprint(*ordered, map, occ, input.MouseWorld(camera),
-                                            squad[0], registry.Generation(squad[0]));
+                    if (input.ShiftDown())
+                    {
+                        // QoL: queue behind the current order.
+                        IssueOrEnqueue(*ordered, map, &occ, squad[0],
+                                       registry.Generation(squad[0]), true,
+                                       QueuedOrder{ QueuedOrderKind::Move,
+                                                    input.MouseWorld(camera) });
+                    }
+                    else
+                    {
+                        ordered->orderQueue.clear();
+                        IssuePathOrderFootprint(*ordered, map, occ, input.MouseWorld(camera),
+                                                squad[0], registry.Generation(squad[0]));
+                    }
                     audio.Play(SfxId::Confirm); // M11: order acknowledged
                 }
             }
             else if (!squad.empty())
             {
-                formation::IssueFormationMoveFP(registry, squad, map, occ,
-                                                input.MouseWorld(camera));
+                if (input.ShiftDown())
+                {
+                    // QoL: queue the same destination per unit (no fan-out
+                    // for queued legs — formation applies to live orders).
+                    const Vector2 dest = input.MouseWorld(camera);
+                    for (const Entity id : squad)
+                    {
+                        if (Unit *unit = registry.Get<Unit>(id))
+                        {
+                            IssueOrEnqueue(*unit, map, &occ, id, registry.Generation(id),
+                                           true,
+                                           QueuedOrder{ QueuedOrderKind::Move, dest });
+                        }
+                    }
+                }
+                else
+                {
+                    for (const Entity id : squad)
+                    {
+                        if (Unit *unit = registry.Get<Unit>(id))
+                        {
+                            unit->orderQueue.clear();
+                        }
+                    }
+                    formation::IssueFormationMoveFP(registry, squad, map, occ,
+                                                    input.MouseWorld(camera));
+                }
                 audio.Play(SfxId::Confirm);
             }
         }

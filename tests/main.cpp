@@ -14,6 +14,7 @@ void RunUnitSnapTests();
 void RunCameraTests();
 void RunSelectionTests();
 void RunControlGroupTests();
+void RunOrderQueueTests();
 void RunMovementTests();
 void RunShortcutTests();
 void RunInputManagerTests();
@@ -64,6 +65,7 @@ int main()
     RunCameraTests();
     RunSelectionTests();
     RunControlGroupTests();
+    RunOrderQueueTests();
     RunMovementTests();
     RunShortcutTests();
     RunInputManagerTests();

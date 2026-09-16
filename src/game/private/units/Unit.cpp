@@ -184,6 +184,99 @@ void IssueRepairOrder(Unit &engineer, Entity target)
     engineer.repairTarget = target;
 }
 
+namespace
+{
+
+// Dispatches one queued order through the same Issue* functions as live
+// orders. Clears every other order's fields first so exactly one is active
+// (queued dispatch always starts clean, unlike some live paths that only
+// clear a subset). AttackGround has no order type yet — ignored until it
+// lands (enqueue sites must not produce it before then).
+void DispatchQueuedOrder(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
+                         std::uint32_t selfGen, const QueuedOrder &order)
+{
+    unit.attackMove = false;
+    unit.hasPatrol = false;
+    unit.hasRepairOrder = false;
+    unit.repairTarget = kInvalidEntity;
+    switch (order.kind)
+    {
+    case QueuedOrderKind::Move:
+        if (occ != nullptr)
+        {
+            IssuePathOrderFootprint(unit, map, *occ, order.pointA, self, selfGen);
+        }
+        else
+        {
+            IssuePathOrder(unit, map, order.pointA);
+        }
+        break;
+    case QueuedOrderKind::AttackMove:
+        if (occ != nullptr)
+        {
+            IssueAttackMoveOrderFootprint(unit, map, *occ, order.pointA, self, selfGen);
+        }
+        else
+        {
+            IssueAttackMoveOrder(unit, map, order.pointA);
+        }
+        break;
+    case QueuedOrderKind::Patrol:
+        IssuePatrolOrder(unit, map, order.pointA, order.pointB);
+        break;
+    case QueuedOrderKind::Repair:
+        IssueRepairOrder(unit, order.target);
+        break;
+    case QueuedOrderKind::AttackGround:
+    case QueuedOrderKind::Count:
+        break;
+    }
+}
+
+// Runs the next queued order after the current one genuinely finishes
+// (arrival, repair-target lost). Skipped for patrol (loops forever —
+// anything queued behind one runs only if the patrol is overwritten) and
+// when the queue is empty. One dispatch per call, so chains terminate.
+void OnOrderFinished(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
+                     std::uint32_t selfGen)
+{
+    if (unit.hasPatrol || unit.orderQueue.empty())
+    {
+        return;
+    }
+    const QueuedOrder next = unit.orderQueue.front();
+    unit.orderQueue.erase(unit.orderQueue.begin());
+    DispatchQueuedOrder(unit, map, occ, self, selfGen, next);
+}
+
+// A cancelled order (blocked-budget exhausted) drops the rest of the queue
+// too: a stuck unit blindly marching into queued orders it also can't reach
+// is worse UX than stopping for a new player command.
+void OnOrderCancelled(Unit &unit)
+{
+    unit.orderQueue.clear();
+}
+
+} // namespace
+
+void IssueOrEnqueue(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
+                    std::uint32_t selfGen, bool shiftQueue, QueuedOrder order)
+{
+    if (!shiftQueue)
+    {
+        unit.orderQueue.clear();
+        DispatchQueuedOrder(unit, map, occ, self, selfGen, order);
+        return;
+    }
+    if (!unit.hasMoveOrder && !unit.hasPath && !unit.hasRepairOrder && !unit.hasPatrol &&
+        unit.orderQueue.empty())
+    {
+        DispatchQueuedOrder(unit, map, occ, self, selfGen, order);
+        return;
+    }
+    unit.orderQueue.push_back(order);
+}
+
 // M9: a set target standing on a tile the unit's team cannot see is dropped —
 // except for Artillery, which blind-fires into shroud at no penalty (Q78).
 bool LostToFog(const Unit &unit, const Unit &target, const FogOfWar *fog)
@@ -401,6 +494,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         {
             unit->hasRepairOrder = false;
             unit->repairTarget = kInvalidEntity;
+            OnOrderFinished(*unit, map, occ, self, registry.Generation(self));
         }
         else if (glm::distance(cc::ToGlm(unit->position), cc::ToGlm(aim)) > kRepairRange)
         {
@@ -694,6 +788,7 @@ bool TryBlockedRetryWithBudget(Unit &unit, const TileMap &map, OccupancyGrid *oc
     if (fresh.size() == 1)
     {
         Arrive(unit, cc::ToGlm(unit.moveTarget)); // replanned onto our own tile
+        OnOrderFinished(unit, map, occ, self, selfGen);
         return true;
     }
     unit.path = std::move(fresh);
@@ -733,6 +828,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         if (unit.pathNext >= unit.path.size())
         {
             Arrive(unit, cc::ToGlm(unit.moveTarget));
+            OnOrderFinished(unit, map, occ, self, selfGen);
             return;
         }
 
@@ -748,6 +844,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
             if (unit.pathNext >= unit.path.size())
             {
                 Arrive(unit, cc::ToGlm(unit.moveTarget));
+                OnOrderFinished(unit, map, occ, self, selfGen);
             }
             else
             {
@@ -757,6 +854,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         case StepResult::Blocked:
             // Terrain blocks are permanent: cancel immediately (M2 legacy).
             CancelAtBlocked(unit);
+            OnOrderCancelled(unit);
             return;
         case StepResult::BlockedUnit:
             // Paths avoid occupied tiles by construction; a block here means
@@ -767,6 +865,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
                 return;
             }
             CancelAtBlocked(unit);
+            OnOrderCancelled(unit);
             return;
         case StepResult::Stepped:
             unit.blockedTime = 0.0f; // progress: not stuck
@@ -785,10 +884,12 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
     case StepResult::Arrived:
         // Arrival: land exactly on the snapped destination.
         Arrive(unit, cc::ToGlm(unit.moveTarget));
+        OnOrderFinished(unit, map, occ, self, selfGen);
         return;
     case StepResult::Blocked:
         // Terrain: hold position, snapped, order cancelled (M2 legacy).
         CancelAtBlocked(unit);
+        OnOrderCancelled(unit);
         return;
     case StepResult::BlockedUnit:
         // Units: wait and replan first; only cancel when the budget runs
@@ -798,6 +899,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
             return;
         }
         CancelAtBlocked(unit);
+        OnOrderCancelled(unit);
         return;
     case StepResult::Stepped:
         unit.blockedTime = 0.0f; // progress: not stuck
@@ -894,6 +996,7 @@ void ReportSeparationStall(Unit &unit, const TileMap &map, OccupancyGrid *occ, E
                                    unit.separationStallTime, unit.separationStallRepaths))
     {
         CancelAtBlocked(unit);
+        OnOrderCancelled(unit);
     }
 }
 

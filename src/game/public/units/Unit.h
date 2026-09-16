@@ -76,6 +76,28 @@ enum class Stance
     Patrol
 };
 
+// QoL shift-queued order. `kind` selects which payload fields are valid;
+// unused fields are ignored (Patrol uses pointA/pointB, Move uses only
+// pointA, Repair uses target). Keep Count last (matches the save-enum
+// convention) so future order types extend the same dispatch.
+enum class QueuedOrderKind
+{
+    Move,
+    AttackMove,
+    Patrol,
+    Repair,
+    AttackGround, // reserved: needs the attack-ground order type first
+    Count
+};
+
+struct QueuedOrder
+{
+    QueuedOrderKind kind = QueuedOrderKind::Move;
+    Vector2 pointA = {};
+    Vector2 pointB = {}; // Patrol's second waypoint
+    Entity target = kInvalidEntity; // Repair's target
+};
+
 struct Unit
 {
     float health = 100.0f;
@@ -129,6 +151,11 @@ struct Unit
     // M13: Engineer repair order (channeled, time cost only — Q83).
     bool hasRepairOrder = false;
     Entity repairTarget = kInvalidEntity;
+    // QoL shift-queue: pending orders behind the current one, dispatched in
+    // FIFO order as each completes. Transient like the rest of the order
+    // state: not saved. Patrol never completes (loops), so anything queued
+    // behind a patrol runs only if the patrol is explicitly overwritten.
+    std::vector<QueuedOrder> orderQueue;
     // Phase 4: multi-tile footprint. 1x1 for infantry, 2x2 for vehicles.
     // Anchor tile is the unit's logical position; the footprint extends
     // toward +x/+y from the anchor. Occupancy and CanEnter check all tiles.
@@ -185,6 +212,18 @@ void IssuePatrolOrder(Unit &unit, const TileMap &map, Vector2 pointA, Vector2 po
 // building. Heals over time while in range; costs time, not resources (Q83).
 // No-op unless the issuer is an Engineer.
 void IssueRepairOrder(Unit &engineer, Entity target);
+
+// QoL shift-queue entry point. shiftQueue=false: clears orderQueue and
+// issues immediately through the same clean dispatch as dequeued orders
+// (exactly one active order; footprint-aware where applicable).
+// shiftQueue=true: appends instead — unless the unit is fully idle with an
+// empty queue, in which case it issues immediately (queueing on an idle
+// unit starts it right away, matching genre convention). Used by the
+// keyboard order shortcuts; plain right-click keeps its legacy direct
+// IssuePathOrderFootprint call (plus a queue clear) and only routes
+// Shift+right-click through here.
+void IssueOrEnqueue(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
+                    std::uint32_t selfGen, bool shiftQueue, QueuedOrder order);
 
 // Advance one frame toward the pending order; stops snapped on arrival.
 // Terrain-blocked steps cancel the order immediately (M2 legacy); steps
