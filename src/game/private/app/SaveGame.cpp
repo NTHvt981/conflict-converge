@@ -30,6 +30,10 @@ constexpr std::int32_t kMaxBuildings = 100000;
 constexpr std::int32_t kMaxNodes = 100000;
 constexpr std::uint32_t kMaxPathNodes = 100000;
 constexpr std::int32_t kMaxFogTeams = 16;
+// Playable sides: teams are 0 (player/allies) and 1 (enemies) in every mode
+// (2v2 shares teams, it never adds new ones). Anything else on the wire is
+// corruption, never a future extension — reject it.
+constexpr int kMaxTeamID = 1;
 
 void FillVec2(cc::save::Vec2 *out, Vector2 v)
 {
@@ -109,14 +113,16 @@ bool InRange(std::int64_t value)
            value <= static_cast<std::int64_t>((std::numeric_limits<std::int32_t>::max)());
 }
 
-bool DecodeUnit(const cc::save::Unit &in, SavedUnit &out)
+bool DecodeUnit(const cc::save::Unit &in, SavedUnit &out, std::int32_t mapWidth,
+                std::int32_t mapHeight)
 {
     Unit &u = out.unit;
     if (in.armor_type() < 0 || in.armor_type() > static_cast<int>(ArmorType::COMPOSITE) ||
         in.damage_type() < 0 || in.damage_type() > static_cast<int>(DamageType::ENERGY) ||
         in.type() < 0 || in.type() > static_cast<int>(UnitType::HeavyTank) || in.state() < 0 ||
         in.state() > static_cast<int>(UnitState::Attacking) || in.phase() < 0 ||
-        in.phase() > static_cast<int>(AttackPhase::Recover))
+        in.phase() > static_cast<int>(AttackPhase::Recover) || in.team() < 0 ||
+        in.team() > kMaxTeamID)
     {
         return false;
     }
@@ -151,7 +157,15 @@ bool DecodeUnit(const cc::save::Unit &in, SavedUnit &out)
     u.path.reserve(static_cast<std::size_t>(in.path_size()));
     for (const cc::save::IVec2 &step : in.path())
     {
+        if (step.x() < 0 || step.x() >= mapWidth || step.y() < 0 || step.y() >= mapHeight)
+        {
+            return false;
+        }
         u.path.push_back({ step.x(), step.y() });
+    }
+    if (in.path_next() > static_cast<std::uint32_t>(u.path.size()))
+    {
+        return false;
     }
     u.pathNext = static_cast<std::size_t>(in.path_next());
     u.hasPath = in.has_path();
@@ -214,7 +228,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
     for (const cc::save::Unit &in : msg.units())
     {
         SavedUnit saved;
-        if (!DecodeUnit(in, saved))
+        if (!DecodeUnit(in, saved, out.mapWidth, out.mapHeight))
         {
             return false;
         }
@@ -229,13 +243,22 @@ bool Decode(const std::string &payload, SavedWorld &out)
     for (const cc::save::Building &in : msg.buildings())
     {
         if (in.type() < 0 || in.type() > static_cast<int>(BuildingType::Factory) || in.state() < 0 ||
-            in.state() > static_cast<int>(BuildingState::Destroyed))
+            in.state() > static_cast<int>(BuildingState::Destroyed) || in.team() < 0 ||
+            in.team() > kMaxTeamID)
         {
             return false;
         }
         Building b;
         b.type = static_cast<BuildingType>(in.type());
         b.state = static_cast<BuildingState>(in.state());
+        // The whole footprint must sit inside the save's own map, not just
+        // the anchor — downstream code indexes every footprint tile.
+        const cc::IVec2 fp = Footprint(b.type);
+        if (in.tile_x() < 0 || in.tile_y() < 0 || in.tile_x() + fp.x > out.mapWidth ||
+            in.tile_y() + fp.y > out.mapHeight)
+        {
+            return false;
+        }
         b.teamID = in.team();
         b.tileX = in.tile_x();
         b.tileY = in.tile_y();
@@ -259,6 +282,11 @@ bool Decode(const std::string &payload, SavedWorld &out)
     for (const cc::save::ResourceNode &in : msg.nodes())
     {
         if (in.kind() < 0 || in.kind() > static_cast<int>(ResourceKind::Oil))
+        {
+            return false;
+        }
+        if (in.tile().x() < 0 || in.tile().x() >= out.mapWidth || in.tile().y() < 0 ||
+            in.tile().y() >= out.mapHeight)
         {
             return false;
         }
