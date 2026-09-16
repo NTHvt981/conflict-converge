@@ -158,37 +158,90 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
         factory.Spawn(type, team, cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
     };
     auto placeBase = [&](int team, cc::IVec2 anchor) {
-        const Entity base = PlaceBuilding(registry, map, BuildingType::Base, team, anchor.x, anchor.y,
-                                            &nodes);
-        if (base != kInvalidEntity)
+        // Reserve a fresh footprint in the occupancy grid.
+        auto reserve = [&](cc::IVec2 at, BuildingType type, Entity entity) {
+            const cc::IVec2 fp = Footprint(type);
+            occ.ReserveFootprint(at, fp.x, fp.y, entity, registry.Generation(entity));
+        };
+        // Try one candidate site; returns kInvalidEntity when blocked.
+        auto trySite = [&](BuildingType type, cc::IVec2 at) -> Entity {
+            const Entity e =
+                PlaceBuilding(registry, map, type, team, at.x, at.y, &nodes);
+            if (e != kInvalidEntity)
+            {
+                reserve(at, type, e);
+            }
+            return e;
+        };
+        // Spiral fallback (rings 1..6) when every preferred spot is
+        // blocked: an adversarial map must not silently leave a side
+        // without production.
+        auto trySpiral = [&](BuildingType type, cc::IVec2 center) -> Entity {
+            for (int ring = 1; ring <= 6; ++ring)
+            {
+                for (int dy = -ring; dy <= ring; ++dy)
+                {
+                    for (int dx = -ring; dx <= ring; ++dx)
+                    {
+                        const Entity e = trySite(type, { center.x + dx, center.y + dy });
+                        if (e != kInvalidEntity)
+                        {
+                            return e;
+                        }
+                    }
+                }
+            }
+            return kInvalidEntity;
+        };
+        // Base first at the preferred anchor, else wherever fits nearby.
+        // Depot/factory cluster around wherever the base actually landed.
+        cc::IVec2 home = anchor;
+        bool basePlaced = trySite(BuildingType::Base, home) != kInvalidEntity;
+        for (int ring = 1; !basePlaced && ring <= 6; ++ring)
         {
-            const cc::IVec2 fp = Footprint(BuildingType::Base);
-            occ.ReserveFootprint(anchor, fp.x, fp.y, base, registry.Generation(base));
+            for (int dy = -ring; !basePlaced && dy <= ring; ++dy)
+            {
+                for (int dx = -ring; dx <= ring; ++dx)
+                {
+                    if (trySite(BuildingType::Base, { anchor.x + dx, anchor.y + dy }) !=
+                        kInvalidEntity)
+                    {
+                        home = { anchor.x + dx, anchor.y + dy };
+                        basePlaced = true;
+                        break;
+                    }
+                }
+            }
         }
         const cc::IVec2 depotSpots[] = { { 2, 0 }, { 0, 2 }, { -1, 0 } };
+        bool placed = false;
         for (const cc::IVec2 &spot : depotSpots)
         {
-            const Entity depot = PlaceBuilding(registry, map, BuildingType::ResourceDepot, team,
-                                               anchor.x + spot.x, anchor.y + spot.y, &nodes);
-            if (depot != kInvalidEntity)
+            if (trySite(BuildingType::ResourceDepot, { home.x + spot.x, home.y + spot.y }) !=
+                kInvalidEntity)
             {
-                occ.ReserveFootprint({ anchor.x + spot.x, anchor.y + spot.y }, 1, 1, depot,
-                                     registry.Generation(depot));
+                placed = true;
                 break;
             }
         }
+        if (!placed)
+        {
+            trySpiral(BuildingType::ResourceDepot, home);
+        }
         const cc::IVec2 factorySpots[] = { { 0, 2 }, { 3, 0 }, { -2, 2 } };
+        placed = false;
         for (const cc::IVec2 &spot : factorySpots)
         {
-            const Entity fac = PlaceBuilding(registry, map, BuildingType::Factory, team,
-                                             anchor.x + spot.x, anchor.y + spot.y, &nodes);
-            if (fac != kInvalidEntity)
+            if (trySite(BuildingType::Factory, { home.x + spot.x, home.y + spot.y }) !=
+                kInvalidEntity)
             {
-                const cc::IVec2 fp = Footprint(BuildingType::Factory);
-                occ.ReserveFootprint({ anchor.x + spot.x, anchor.y + spot.y }, fp.x, fp.y, fac,
-                                     registry.Generation(fac));
+                placed = true;
                 break;
             }
+        }
+        if (!placed)
+        {
+            trySpiral(BuildingType::Factory, home);
         }
     };
     // NOTE: bases go down BEFORE units spawn, so NearestFreeTile routes
