@@ -18,13 +18,15 @@ enum class BuildingType
 {
     Base,         // 2x2, generates base income (see UpdateBaseIncome)
     ResourceDepot, // 1x1, drop-off marker for future harvester routes
-    Factory       // 2x2, owns a unit production queue (M5 Goal 6)
+    Factory,       // 2x2, owns a unit production queue (M5 Goal 6)
+    Count // keep last: save decode validates < Count
 };
 
 enum class BuildingState
 {
     Operational,
-    Destroyed // terminal; entity removal follows via DemolishBuilding
+    Destroyed, // terminal; entity removal follows via DemolishBuilding
+    Count // keep last: save decode validates < Count
 };
 
 struct Building

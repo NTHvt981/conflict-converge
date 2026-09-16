@@ -35,6 +35,20 @@ constexpr std::int32_t kMaxFogTeams = 16;
 // corruption, never a future extension — reject it.
 constexpr int kMaxTeamID = 1;
 
+// Wire-range pins: every enum validated below ends in a Count sentinel, and
+// the decode checks accept [0, Count). Appending a variant bumps Count and
+// trips these asserts on purpose — extend the decode handling deliberately
+// (defaults? migration?), never silently.
+static_assert(static_cast<int>(ArmorType::Count) == 3, "ArmorType grew: review save decode");
+static_assert(static_cast<int>(DamageType::Count) == 3, "DamageType grew: review save decode");
+static_assert(static_cast<int>(UnitType::Count) == 7, "UnitType grew: review save decode");
+static_assert(static_cast<int>(UnitState::Count) == 3, "UnitState grew: review save decode");
+static_assert(static_cast<int>(AttackPhase::Count) == 3, "AttackPhase grew: review save decode");
+static_assert(static_cast<int>(TerrainType::Count) == 5, "TerrainType grew: review save decode");
+static_assert(static_cast<int>(BuildingType::Count) == 3, "BuildingType grew: review save decode");
+static_assert(static_cast<int>(BuildingState::Count) == 2, "BuildingState grew: review save decode");
+static_assert(static_cast<int>(ResourceKind::Count) == 2, "ResourceKind grew: review save decode");
+
 void FillVec2(cc::save::Vec2 *out, Vector2 v)
 {
     out->set_x(v.x);
@@ -117,11 +131,11 @@ bool DecodeUnit(const cc::save::Unit &in, SavedUnit &out, std::int32_t mapWidth,
                 std::int32_t mapHeight)
 {
     Unit &u = out.unit;
-    if (in.armor_type() < 0 || in.armor_type() > static_cast<int>(ArmorType::COMPOSITE) ||
-        in.damage_type() < 0 || in.damage_type() > static_cast<int>(DamageType::ENERGY) ||
-        in.type() < 0 || in.type() > static_cast<int>(UnitType::HeavyTank) || in.state() < 0 ||
-        in.state() > static_cast<int>(UnitState::Attacking) || in.phase() < 0 ||
-        in.phase() > static_cast<int>(AttackPhase::Recover) || in.team() < 0 ||
+    if (in.armor_type() < 0 || in.armor_type() >= static_cast<int>(ArmorType::Count) ||
+        in.damage_type() < 0 || in.damage_type() >= static_cast<int>(DamageType::Count) ||
+        in.type() < 0 || in.type() >= static_cast<int>(UnitType::Count) || in.state() < 0 ||
+        in.state() >= static_cast<int>(UnitState::Count) || in.phase() < 0 ||
+        in.phase() >= static_cast<int>(AttackPhase::Count) || in.team() < 0 ||
         in.team() > kMaxTeamID)
     {
         return false;
@@ -212,7 +226,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
     for (std::int64_t i = 0; i < tileCount; ++i)
     {
         const std::int32_t t = msg.map().terrain(static_cast<int>(i));
-        if (t < 0 || t > static_cast<std::int32_t>(TerrainType::Rock))
+        if (t < 0 || t >= static_cast<std::int32_t>(TerrainType::Count))
         {
             return false;
         }
@@ -242,8 +256,8 @@ bool Decode(const std::string &payload, SavedWorld &out)
     out.buildings.clear();
     for (const cc::save::Building &in : msg.buildings())
     {
-        if (in.type() < 0 || in.type() > static_cast<int>(BuildingType::Factory) || in.state() < 0 ||
-            in.state() > static_cast<int>(BuildingState::Destroyed) || in.team() < 0 ||
+        if (in.type() < 0 || in.type() >= static_cast<int>(BuildingType::Count) || in.state() < 0 ||
+            in.state() >= static_cast<int>(BuildingState::Count) || in.team() < 0 ||
             in.team() > kMaxTeamID)
         {
             return false;
@@ -290,7 +304,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
     out.nodes.clear();
     for (const cc::save::ResourceNode &in : msg.nodes())
     {
-        if (in.kind() < 0 || in.kind() > static_cast<int>(ResourceKind::Oil))
+        if (in.kind() < 0 || in.kind() >= static_cast<int>(ResourceKind::Count))
         {
             return false;
         }

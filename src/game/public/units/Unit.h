@@ -25,7 +25,8 @@ enum class UnitType
     IFV,
     Artillery,
     LightTank,
-    HeavyTank
+    HeavyTank,
+    Count // keep last: save decode validates < Count (see SaveGame.cpp)
 };
 
 // M4: damage/armor types (inspired by C&C, CoH).
@@ -33,14 +34,16 @@ enum class DamageType
 {
     KINETIC,
     EXPLOSIVE,
-    ENERGY
+    ENERGY,
+    Count // keep last: save decode validates < Count
 };
 
 enum class ArmorType
 {
     STEEL,
     RUBBER,
-    COMPOSITE
+    COMPOSITE,
+    Count // keep last: save decode validates < Count
 };
 
 // M3: unit state machine — Idle -> Moving -> Attacking.
@@ -48,7 +51,8 @@ enum class UnitState
 {
     Idle,
     Moving,
-    Attacking
+    Attacking,
+    Count // keep last: save decode validates < Count
 };
 
 // M4: attack phases within a single strike. Ready -> WindUp (telegraph, then
@@ -58,7 +62,8 @@ enum class AttackPhase
 {
     Ready,
     WindUp,
-    Recover
+    Recover,
+    Count // keep last: save decode validates < Count
 };
 
 // M13: combat stances. Guard is the legacy behavior (acquire + chase);

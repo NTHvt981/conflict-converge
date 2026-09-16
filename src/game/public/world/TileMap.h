@@ -18,7 +18,8 @@ enum class TerrainType : std::uint8_t
     Building, // blocked (occupied by a structure)
     // M10: appended AFTER Building so old saves (values 0-2) still decode.
     Forest, // passable, cost multiplier ready (uniform 1.0 per Q55)
-    Rock      // blocked (impassable wall tile for choke points)
+    Rock,    // blocked (impassable wall tile for choke points)
+    Count // keep last: save decode validates < Count
 };
 
 class TileMap

@@ -16,7 +16,8 @@ class TileMap; // fwd-decl (Nodes.cpp includes TileMap.h)
 enum class ResourceKind
 {
     Iron,
-    Oil
+    Oil,
+    Count // keep last: save decode validates < Count
 };
 
 struct ResourceNode
