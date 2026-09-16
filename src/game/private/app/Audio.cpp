@@ -42,6 +42,14 @@ double MinIntervalSeconds(SfxId id)
 
 } // namespace
 
+Audio::Audio()
+{
+    for (int i = 0; i < static_cast<int>(SfxId::Count); ++i)
+    {
+        lastPlay_[i] = -1.0e9; // first play of each sound always lands
+    }
+}
+
 const char *Audio::FileFor(SfxId id)
 {
     switch (id)
@@ -71,6 +79,10 @@ const char *Audio::FileFor(SfxId id)
 bool Audio::Init(bool withDevice)
 {
     Shutdown();
+    for (int i = 0; i < static_cast<int>(SfxId::Count); ++i)
+    {
+        lastPlay_[i] = -1.0e9; // (re)arm on every Init, headless path included
+    }
     if (!withDevice)
     {
         return false; // headless/test path: nothing loaded, plays no-op
@@ -83,10 +95,6 @@ bool Audio::Init(bool withDevice)
     music_ = LoadMusicStream((std::string(kAssetDir) + "music_loop.wav").c_str());
     music_.looping = true;
     ready_ = true;
-    for (int i = 0; i < static_cast<int>(SfxId::Count); ++i)
-    {
-        lastPlay_[i] = -1.0e9; // first play of each sound always lands
-    }
     ApplySettings(master_, musicVol_, sfx_, muted_);
     return true;
 }
@@ -106,6 +114,10 @@ void Audio::Shutdown()
     music_ = {};
     musicStarted_ = false;
     ready_ = false;
+    for (int i = 0; i < static_cast<int>(SfxId::Count); ++i)
+    {
+        lastPlay_[i] = -1.0e9; // next Init/ShouldPlay starts from first-play
+    }
 }
 
 bool Audio::IsReady() const

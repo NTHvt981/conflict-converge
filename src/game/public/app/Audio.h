@@ -27,6 +27,7 @@ enum class SfxId
 class Audio
 {
 public:
+    Audio(); // last-play starts at -infinity: first ShouldPlay ever is true
     // Load assets (data/audio/*.wav) and start the music loop. With
     // withDevice=false, loads nothing and reports !IsReady; every other
     // method stays safe to call. Returns IsReady().
