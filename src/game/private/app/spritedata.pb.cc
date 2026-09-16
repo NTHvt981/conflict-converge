@@ -75,6 +75,7 @@ PROTOBUF_CONSTEXPR SpriteDef::SpriteDef(
   , /*decltype(_impl_.origin_)*/nullptr
   , /*decltype(_impl_.id_)*/0
   , /*decltype(_impl_.texture_)*/0
+  , /*decltype(_impl_.mask_sprite_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct SpriteDefDefaultTypeInternal {
   PROTOBUF_CONSTEXPR SpriteDefDefaultTypeInternal()
@@ -95,6 +96,7 @@ PROTOBUF_CONSTEXPR SpriteGrid::SpriteGrid(
   , /*decltype(_impl_.cols_)*/0
   , /*decltype(_impl_.cell_w_)*/0
   , /*decltype(_impl_.cell_h_)*/0
+  , /*decltype(_impl_.mask_grid_start_id_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct SpriteGridDefaultTypeInternal {
   PROTOBUF_CONSTEXPR SpriteGridDefaultTypeInternal()
@@ -197,6 +199,7 @@ const uint32_t TableStruct_spritedata_2eproto::offsets[] PROTOBUF_SECTION_VARIAB
   PROTOBUF_FIELD_OFFSET(::cc::sprites::SpriteDef, _impl_.texture_),
   PROTOBUF_FIELD_OFFSET(::cc::sprites::SpriteDef, _impl_.bounds_),
   PROTOBUF_FIELD_OFFSET(::cc::sprites::SpriteDef, _impl_.origin_),
+  PROTOBUF_FIELD_OFFSET(::cc::sprites::SpriteDef, _impl_.mask_sprite_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::cc::sprites::SpriteGrid, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -211,6 +214,7 @@ const uint32_t TableStruct_spritedata_2eproto::offsets[] PROTOBUF_SECTION_VARIAB
   PROTOBUF_FIELD_OFFSET(::cc::sprites::SpriteGrid, _impl_.cell_w_),
   PROTOBUF_FIELD_OFFSET(::cc::sprites::SpriteGrid, _impl_.cell_h_),
   PROTOBUF_FIELD_OFFSET(::cc::sprites::SpriteGrid, _impl_.origin_),
+  PROTOBUF_FIELD_OFFSET(::cc::sprites::SpriteGrid, _impl_.mask_grid_start_id_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::cc::sprites::AnimFrame, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -245,10 +249,10 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 10, -1, -1, sizeof(::cc::sprites::SpriteOrigin)},
   { 18, -1, -1, sizeof(::cc::sprites::SpriteTexture)},
   { 28, -1, -1, sizeof(::cc::sprites::SpriteDef)},
-  { 39, -1, -1, sizeof(::cc::sprites::SpriteGrid)},
-  { 53, -1, -1, sizeof(::cc::sprites::AnimFrame)},
-  { 61, -1, -1, sizeof(::cc::sprites::SpriteAnim)},
-  { 71, -1, -1, sizeof(::cc::sprites::SpriteSheet)},
+  { 40, -1, -1, sizeof(::cc::sprites::SpriteGrid)},
+  { 55, -1, -1, sizeof(::cc::sprites::AnimFrame)},
+  { 63, -1, -1, sizeof(::cc::sprites::SpriteAnim)},
+  { 73, -1, -1, sizeof(::cc::sprites::SpriteSheet)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -268,27 +272,28 @@ const char descriptor_table_protodef_spritedata_2eproto[] PROTOBUF_SECTION_VARIA
   "ht\030\003 \001(\005\022\016\n\006bottom\030\004 \001(\005\"$\n\014SpriteOrigin"
   "\022\t\n\001x\030\001 \001(\005\022\t\n\001y\030\002 \001(\005\"H\n\rSpriteTexture\022"
   "\n\n\002id\030\001 \001(\005\022\014\n\004file\030\002 \001(\t\022\r\n\005width\030\003 \001(\005"
-  "\022\016\n\006height\030\004 \001(\005\"\212\001\n\tSpriteDef\022\014\n\004name\030\001"
+  "\022\016\n\006height\030\004 \001(\005\"\237\001\n\tSpriteDef\022\014\n\004name\030\001"
   " \001(\t\022\n\n\002id\030\002 \001(\005\022\017\n\007texture\030\003 \001(\005\022(\n\006bou"
   "nds\030\004 \001(\0132\030.cc.sprites.SpriteBounds\022(\n\006o"
-  "rigin\030\005 \001(\0132\030.cc.sprites.SpriteOrigin\"\245\001"
-  "\n\nSpriteGrid\022\017\n\007texture\030\001 \001(\005\022\016\n\006prefix\030"
-  "\002 \001(\t\022\020\n\010start_id\030\003 \001(\005\022\014\n\004rows\030\004 \001(\005\022\014\n"
-  "\004cols\030\005 \001(\005\022\016\n\006cell_w\030\006 \001(\005\022\016\n\006cell_h\030\007 "
-  "\001(\005\022(\n\006origin\030\010 \001(\0132\030.cc.sprites.SpriteO"
-  "rigin\"0\n\tAnimFrame\022\016\n\006sprite\030\001 \001(\005\022\023\n\013du"
-  "ration_ms\030\002 \001(\005\"[\n\nSpriteAnim\022\014\n\004name\030\001 "
-  "\001(\t\022\n\n\002id\030\002 \001(\005\022\014\n\004loop\030\003 \001(\010\022%\n\006frames\030"
-  "\004 \003(\0132\025.cc.sprites.AnimFrame\"\265\001\n\013SpriteS"
-  "heet\022+\n\010textures\030\001 \003(\0132\031.cc.sprites.Spri"
-  "teTexture\022&\n\007sprites\030\002 \003(\0132\025.cc.sprites."
-  "SpriteDef\022%\n\005grids\030\003 \003(\0132\026.cc.sprites.Sp"
-  "riteGrid\022*\n\nanimations\030\004 \003(\0132\026.cc.sprite"
-  "s.SpriteAnimb\006proto3"
+  "rigin\030\005 \001(\0132\030.cc.sprites.SpriteOrigin\022\023\n"
+  "\013mask_sprite\030\006 \001(\005\"\301\001\n\nSpriteGrid\022\017\n\007tex"
+  "ture\030\001 \001(\005\022\016\n\006prefix\030\002 \001(\t\022\020\n\010start_id\030\003"
+  " \001(\005\022\014\n\004rows\030\004 \001(\005\022\014\n\004cols\030\005 \001(\005\022\016\n\006cell"
+  "_w\030\006 \001(\005\022\016\n\006cell_h\030\007 \001(\005\022(\n\006origin\030\010 \001(\013"
+  "2\030.cc.sprites.SpriteOrigin\022\032\n\022mask_grid_"
+  "start_id\030\t \001(\005\"0\n\tAnimFrame\022\016\n\006sprite\030\001 "
+  "\001(\005\022\023\n\013duration_ms\030\002 \001(\005\"[\n\nSpriteAnim\022\014"
+  "\n\004name\030\001 \001(\t\022\n\n\002id\030\002 \001(\005\022\014\n\004loop\030\003 \001(\010\022%"
+  "\n\006frames\030\004 \003(\0132\025.cc.sprites.AnimFrame\"\265\001"
+  "\n\013SpriteSheet\022+\n\010textures\030\001 \003(\0132\031.cc.spr"
+  "ites.SpriteTexture\022&\n\007sprites\030\002 \003(\0132\025.cc"
+  ".sprites.SpriteDef\022%\n\005grids\030\003 \003(\0132\026.cc.s"
+  "prites.SpriteGrid\022*\n\nanimations\030\004 \003(\0132\026."
+  "cc.sprites.SpriteAnimb\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_spritedata_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_spritedata_2eproto = {
-    false, false, 860, descriptor_table_protodef_spritedata_2eproto,
+    false, false, 909, descriptor_table_protodef_spritedata_2eproto,
     "spritedata.proto",
     &descriptor_table_spritedata_2eproto_once, nullptr, 0, 8,
     schemas, file_default_instances, TableStruct_spritedata_2eproto::offsets,
@@ -1092,6 +1097,7 @@ SpriteDef::SpriteDef(const SpriteDef& from)
     , decltype(_impl_.origin_){nullptr}
     , decltype(_impl_.id_){}
     , decltype(_impl_.texture_){}
+    , decltype(_impl_.mask_sprite_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -1110,8 +1116,8 @@ SpriteDef::SpriteDef(const SpriteDef& from)
     _this->_impl_.origin_ = new ::cc::sprites::SpriteOrigin(*from._impl_.origin_);
   }
   ::memcpy(&_impl_.id_, &from._impl_.id_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.texture_) -
-    reinterpret_cast<char*>(&_impl_.id_)) + sizeof(_impl_.texture_));
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.mask_sprite_) -
+    reinterpret_cast<char*>(&_impl_.id_)) + sizeof(_impl_.mask_sprite_));
   // @@protoc_insertion_point(copy_constructor:cc.sprites.SpriteDef)
 }
 
@@ -1125,6 +1131,7 @@ inline void SpriteDef::SharedCtor(
     , decltype(_impl_.origin_){nullptr}
     , decltype(_impl_.id_){0}
     , decltype(_impl_.texture_){0}
+    , decltype(_impl_.mask_sprite_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.name_.InitDefault();
@@ -1169,8 +1176,8 @@ void SpriteDef::Clear() {
   }
   _impl_.origin_ = nullptr;
   ::memset(&_impl_.id_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.texture_) -
-      reinterpret_cast<char*>(&_impl_.id_)) + sizeof(_impl_.texture_));
+      reinterpret_cast<char*>(&_impl_.mask_sprite_) -
+      reinterpret_cast<char*>(&_impl_.id_)) + sizeof(_impl_.mask_sprite_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1218,6 +1225,14 @@ const char* SpriteDef::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx
       case 5:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 42)) {
           ptr = ctx->ParseMessage(_internal_mutable_origin(), ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // int32 mask_sprite = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 48)) {
+          _impl_.mask_sprite_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -1287,6 +1302,12 @@ uint8_t* SpriteDef::_InternalSerialize(
         _Internal::origin(this).GetCachedSize(), target, stream);
   }
 
+  // int32 mask_sprite = 6;
+  if (this->_internal_mask_sprite() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(6, this->_internal_mask_sprite(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1334,6 +1355,11 @@ size_t SpriteDef::ByteSizeLong() const {
     total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_texture());
   }
 
+  // int32 mask_sprite = 6;
+  if (this->_internal_mask_sprite() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_mask_sprite());
+  }
+
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
@@ -1369,6 +1395,9 @@ void SpriteDef::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROT
   if (from._internal_texture() != 0) {
     _this->_internal_set_texture(from._internal_texture());
   }
+  if (from._internal_mask_sprite() != 0) {
+    _this->_internal_set_mask_sprite(from._internal_mask_sprite());
+  }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -1393,8 +1422,8 @@ void SpriteDef::InternalSwap(SpriteDef* other) {
       &other->_impl_.name_, rhs_arena
   );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(SpriteDef, _impl_.texture_)
-      + sizeof(SpriteDef::_impl_.texture_)
+      PROTOBUF_FIELD_OFFSET(SpriteDef, _impl_.mask_sprite_)
+      + sizeof(SpriteDef::_impl_.mask_sprite_)
       - PROTOBUF_FIELD_OFFSET(SpriteDef, _impl_.bounds_)>(
           reinterpret_cast<char*>(&_impl_.bounds_),
           reinterpret_cast<char*>(&other->_impl_.bounds_));
@@ -1435,6 +1464,7 @@ SpriteGrid::SpriteGrid(const SpriteGrid& from)
     , decltype(_impl_.cols_){}
     , decltype(_impl_.cell_w_){}
     , decltype(_impl_.cell_h_){}
+    , decltype(_impl_.mask_grid_start_id_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -1450,8 +1480,8 @@ SpriteGrid::SpriteGrid(const SpriteGrid& from)
     _this->_impl_.origin_ = new ::cc::sprites::SpriteOrigin(*from._impl_.origin_);
   }
   ::memcpy(&_impl_.texture_, &from._impl_.texture_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.cell_h_) -
-    reinterpret_cast<char*>(&_impl_.texture_)) + sizeof(_impl_.cell_h_));
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.mask_grid_start_id_) -
+    reinterpret_cast<char*>(&_impl_.texture_)) + sizeof(_impl_.mask_grid_start_id_));
   // @@protoc_insertion_point(copy_constructor:cc.sprites.SpriteGrid)
 }
 
@@ -1468,6 +1498,7 @@ inline void SpriteGrid::SharedCtor(
     , decltype(_impl_.cols_){0}
     , decltype(_impl_.cell_w_){0}
     , decltype(_impl_.cell_h_){0}
+    , decltype(_impl_.mask_grid_start_id_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.prefix_.InitDefault();
@@ -1507,8 +1538,8 @@ void SpriteGrid::Clear() {
   }
   _impl_.origin_ = nullptr;
   ::memset(&_impl_.texture_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.cell_h_) -
-      reinterpret_cast<char*>(&_impl_.texture_)) + sizeof(_impl_.cell_h_));
+      reinterpret_cast<char*>(&_impl_.mask_grid_start_id_) -
+      reinterpret_cast<char*>(&_impl_.texture_)) + sizeof(_impl_.mask_grid_start_id_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1580,6 +1611,14 @@ const char* SpriteGrid::_InternalParse(const char* ptr, ::_pbi::ParseContext* ct
       case 8:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 66)) {
           ptr = ctx->ParseMessage(_internal_mutable_origin(), ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // int32 mask_grid_start_id = 9;
+      case 9:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 72)) {
+          _impl_.mask_grid_start_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -1666,6 +1705,12 @@ uint8_t* SpriteGrid::_InternalSerialize(
         _Internal::origin(this).GetCachedSize(), target, stream);
   }
 
+  // int32 mask_grid_start_id = 9;
+  if (this->_internal_mask_grid_start_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(9, this->_internal_mask_grid_start_id(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1726,6 +1771,11 @@ size_t SpriteGrid::ByteSizeLong() const {
     total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_cell_h());
   }
 
+  // int32 mask_grid_start_id = 9;
+  if (this->_internal_mask_grid_start_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_mask_grid_start_id());
+  }
+
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
@@ -1769,6 +1819,9 @@ void SpriteGrid::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PRO
   if (from._internal_cell_h() != 0) {
     _this->_internal_set_cell_h(from._internal_cell_h());
   }
+  if (from._internal_mask_grid_start_id() != 0) {
+    _this->_internal_set_mask_grid_start_id(from._internal_mask_grid_start_id());
+  }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -1793,8 +1846,8 @@ void SpriteGrid::InternalSwap(SpriteGrid* other) {
       &other->_impl_.prefix_, rhs_arena
   );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(SpriteGrid, _impl_.cell_h_)
-      + sizeof(SpriteGrid::_impl_.cell_h_)
+      PROTOBUF_FIELD_OFFSET(SpriteGrid, _impl_.mask_grid_start_id_)
+      + sizeof(SpriteGrid::_impl_.mask_grid_start_id_)
       - PROTOBUF_FIELD_OFFSET(SpriteGrid, _impl_.origin_)>(
           reinterpret_cast<char*>(&_impl_.origin_),
           reinterpret_cast<char*>(&other->_impl_.origin_));

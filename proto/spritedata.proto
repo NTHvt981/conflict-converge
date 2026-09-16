@@ -36,6 +36,9 @@ message SpriteDef
     int32 texture = 3; // SpriteTexture.id
     SpriteBounds bounds = 4;
     SpriteOrigin origin = 5;
+    int32 mask_sprite = 6; // SpriteDef.id of the paired team-color mask
+                           // sprite; 0 = none (full-sprite tint, correct
+                           // for all-white placeholder art).
 }
 
 // Uniform-sheet shorthand: expands to cols*rows SpriteDefs named
@@ -51,6 +54,8 @@ message SpriteGrid
     int32 cell_w = 6;
     int32 cell_h = 7;
     SpriteOrigin origin = 8;
+    int32 mask_grid_start_id = 9; // if != 0, cell (r,c) of this grid gets
+                                  // maskSprite = mask_grid_start_id + r*cols + c
 }
 
 message AnimFrame

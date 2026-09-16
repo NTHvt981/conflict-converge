@@ -38,6 +38,11 @@ struct SpriteDefInfo
     int texture = 0; // SpriteTextureInfo.id
     SpriteRect bounds;
     SpriteOriginPx origin;
+    // Team-color mask (base+mask convention): SpriteDefInfo.id of the paired
+    // mask sprite (armor pixels baked pure white, rest transparent), drawn
+    // team-tinted over the base drawn at true colors. 0 = no mask: the whole
+    // sprite is tinted (correct for all-white placeholder art).
+    int maskSprite = 0;
 };
 
 struct SpriteAnimFrame
@@ -62,9 +67,9 @@ struct SpriteSheetData
 };
 
 // Parse a sprite JSON file. False on missing/unreadable files, malformed
-// JSON, or validation failures (duplicate ids/names, dangling texture or
-// sprite refs, out-of-bounds or degenerate rects, empty animations,
-// non-positive durations/dims); `out` untouched then.
+// JSON, or validation failures (duplicate ids/names, dangling texture,
+// sprite, or mask refs, mask/base size mismatch, out-of-bounds or degenerate
+// rects, empty animations, non-positive durations/dims); `out` untouched then.
 bool LoadSpriteSheet(const std::string &path, SpriteSheetData &out);
 
 // Parse sprite JSON from memory (same validation as LoadSpriteSheet).

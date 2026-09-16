@@ -19,8 +19,11 @@
 // nodes/<iron|oil>.png (32px), icons/<iron|oil>.png (16px).
 // Atlas override: data/sprites.json (schema in proto/spritedata.proto)
 // names source-rects inside sheet PNGs (e.g. placeholder infantry 8x8
-// grids). Types with atlas entries render from the atlas (team-tinted, since
-// sheet art is white); types without fall through to the filename path.
+// grids). Types with atlas entries render from the atlas; types without
+// fall through to the filename path. Team coloring is base+mask: the base
+// sprite draws at true colors and its paired mask sprite (armor pixels baked
+// pure white, rest transparent) draws team-tinted on top; sprites without a
+// mask take the full-sprite tint (correct for all-white placeholder art).
 // Headless-safe: Init(false) loads nothing and UseRectangles() reports true,
 // so tests and the fallback path never touch the GPU.
 
@@ -109,8 +112,9 @@ public:
     // Pure logic (works headless after LoadAtlas, no GPU), unit-tested.
     std::string UnitSprite(UnitType type, bool moving, unsigned int id,
                            float timeSeconds) const;
-    // Team color for atlas tinting (sheet art is white): BLUE/RED, matching
-    // the rectangle-fallback body colors.
+    // Team color for atlas mask tinting: BLUE/RED, matching the
+    // rectangle-fallback body colors. Applies to the mask layer only; base
+    // art keeps its baked colors.
     static Color TeamTint(int teamID);
 
     Particles &ParticlesPool();
@@ -118,6 +122,9 @@ public:
 
 private:
     static int TeamSlot(int teamID); // 0 -> blue, anything else -> red
+    // Single scaled atlas blit shared by both DrawAtlasFrame branches.
+    void DrawOneAtlasSprite(const SpriteDefInfo &sprite, Vector2 tileCorner, Color tint,
+                            float scale) const;
     bool ready_ = false;
     bool fallback_ = true;
     bool atlasReady_ = false;

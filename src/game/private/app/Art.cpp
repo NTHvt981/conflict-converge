@@ -467,20 +467,37 @@ void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Colo
     {
         return;
     }
-    const auto it = atlas_.find(s->texture);
+    if (s->maskSprite == 0)
+    {
+        // No mask: full-sprite multiply tint (correct for all-white art).
+        DrawOneAtlasSprite(*s, tileCorner, tint, scale);
+        return;
+    }
+    // Base layer at true colors, mask layer team-tinted on top.
+    DrawOneAtlasSprite(*s, tileCorner, WHITE, scale);
+    if (const SpriteDefInfo *mask = FindSpriteById(sheet_, s->maskSprite); mask != nullptr)
+    {
+        DrawOneAtlasSprite(*mask, tileCorner, tint, scale);
+    }
+}
+
+void Art::DrawOneAtlasSprite(const SpriteDefInfo &s, Vector2 tileCorner, Color tint,
+                             float scale) const
+{
+    const auto it = atlas_.find(s.texture);
     if (it == atlas_.end() || it->second.id == 0)
     {
         return;
     }
-    const float w = static_cast<float>(s->bounds.right - s->bounds.left);
-    const float h = static_cast<float>(s->bounds.bottom - s->bounds.top);
-    const Rectangle src = { static_cast<float>(s->bounds.left), static_cast<float>(s->bounds.top),
+    const float w = static_cast<float>(s.bounds.right - s.bounds.left);
+    const float h = static_cast<float>(s.bounds.bottom - s.bounds.top);
+    const Rectangle src = { static_cast<float>(s.bounds.left), static_cast<float>(s.bounds.top),
                             w, h };
     // The sprite origin lands on the 32x32 body center (tileCorner + 32);
     // scale shrinks the blit around that anchor so squad clusters separate.
     const Vector2 anchor = { tileCorner.x + 32.0f, tileCorner.y + 32.0f };
-    const Rectangle dest = { anchor.x - static_cast<float>(s->origin.x) * scale,
-                             anchor.y - static_cast<float>(s->origin.y) * scale, w * scale,
+    const Rectangle dest = { anchor.x - static_cast<float>(s.origin.x) * scale,
+                             anchor.y - static_cast<float>(s.origin.y) * scale, w * scale,
                              h * scale };
     DrawTexturePro(it->second, src, dest, { 0.0f, 0.0f }, 0.0f, tint);
 }

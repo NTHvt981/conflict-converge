@@ -739,6 +739,7 @@ class SpriteDef final :
     kOriginFieldNumber = 5,
     kIdFieldNumber = 2,
     kTextureFieldNumber = 3,
+    kMaskSpriteFieldNumber = 6,
   };
   // string name = 1;
   void clear_name();
@@ -808,6 +809,15 @@ class SpriteDef final :
   void _internal_set_texture(int32_t value);
   public:
 
+  // int32 mask_sprite = 6;
+  void clear_mask_sprite();
+  int32_t mask_sprite() const;
+  void set_mask_sprite(int32_t value);
+  private:
+  int32_t _internal_mask_sprite() const;
+  void _internal_set_mask_sprite(int32_t value);
+  public:
+
   // @@protoc_insertion_point(class_scope:cc.sprites.SpriteDef)
  private:
   class _Internal;
@@ -821,6 +831,7 @@ class SpriteDef final :
     ::cc::sprites::SpriteOrigin* origin_;
     int32_t id_;
     int32_t texture_;
+    int32_t mask_sprite_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -957,6 +968,7 @@ class SpriteGrid final :
     kColsFieldNumber = 5,
     kCellWFieldNumber = 6,
     kCellHFieldNumber = 7,
+    kMaskGridStartIdFieldNumber = 9,
   };
   // string prefix = 2;
   void clear_prefix();
@@ -1044,6 +1056,15 @@ class SpriteGrid final :
   void _internal_set_cell_h(int32_t value);
   public:
 
+  // int32 mask_grid_start_id = 9;
+  void clear_mask_grid_start_id();
+  int32_t mask_grid_start_id() const;
+  void set_mask_grid_start_id(int32_t value);
+  private:
+  int32_t _internal_mask_grid_start_id() const;
+  void _internal_set_mask_grid_start_id(int32_t value);
+  public:
+
   // @@protoc_insertion_point(class_scope:cc.sprites.SpriteGrid)
  private:
   class _Internal;
@@ -1060,6 +1081,7 @@ class SpriteGrid final :
     int32_t cols_;
     int32_t cell_w_;
     int32_t cell_h_;
+    int32_t mask_grid_start_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -2159,6 +2181,26 @@ inline void SpriteDef::set_allocated_origin(::cc::sprites::SpriteOrigin* origin)
   // @@protoc_insertion_point(field_set_allocated:cc.sprites.SpriteDef.origin)
 }
 
+// int32 mask_sprite = 6;
+inline void SpriteDef::clear_mask_sprite() {
+  _impl_.mask_sprite_ = 0;
+}
+inline int32_t SpriteDef::_internal_mask_sprite() const {
+  return _impl_.mask_sprite_;
+}
+inline int32_t SpriteDef::mask_sprite() const {
+  // @@protoc_insertion_point(field_get:cc.sprites.SpriteDef.mask_sprite)
+  return _internal_mask_sprite();
+}
+inline void SpriteDef::_internal_set_mask_sprite(int32_t value) {
+  
+  _impl_.mask_sprite_ = value;
+}
+inline void SpriteDef::set_mask_sprite(int32_t value) {
+  _internal_set_mask_sprite(value);
+  // @@protoc_insertion_point(field_set:cc.sprites.SpriteDef.mask_sprite)
+}
+
 // -------------------------------------------------------------------
 
 // SpriteGrid
@@ -2421,6 +2463,26 @@ inline void SpriteGrid::set_allocated_origin(::cc::sprites::SpriteOrigin* origin
   }
   _impl_.origin_ = origin;
   // @@protoc_insertion_point(field_set_allocated:cc.sprites.SpriteGrid.origin)
+}
+
+// int32 mask_grid_start_id = 9;
+inline void SpriteGrid::clear_mask_grid_start_id() {
+  _impl_.mask_grid_start_id_ = 0;
+}
+inline int32_t SpriteGrid::_internal_mask_grid_start_id() const {
+  return _impl_.mask_grid_start_id_;
+}
+inline int32_t SpriteGrid::mask_grid_start_id() const {
+  // @@protoc_insertion_point(field_get:cc.sprites.SpriteGrid.mask_grid_start_id)
+  return _internal_mask_grid_start_id();
+}
+inline void SpriteGrid::_internal_set_mask_grid_start_id(int32_t value) {
+  
+  _impl_.mask_grid_start_id_ = value;
+}
+inline void SpriteGrid::set_mask_grid_start_id(int32_t value) {
+  _internal_set_mask_grid_start_id(value);
+  // @@protoc_insertion_point(field_set:cc.sprites.SpriteGrid.mask_grid_start_id)
 }
 
 // -------------------------------------------------------------------

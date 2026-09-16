@@ -75,7 +75,8 @@ bool ParseSpriteSheetJson(const std::string &json, SpriteSheetData &out)
     std::unordered_set<std::string> spriteNames;
 
     auto pushSprite = [&](const std::string &name, int id, int texture,
-                          const SpriteRect &bounds, const SpriteOriginPx &origin) -> bool {
+                          const SpriteRect &bounds, const SpriteOriginPx &origin,
+                          int maskSprite) -> bool {
         if (name.empty() || !spriteIds.insert(id).second || !spriteNames.insert(name).second)
         {
             return false;
@@ -93,6 +94,9 @@ bool ParseSpriteSheetJson(const std::string &json, SpriteSheetData &out)
         info.texture = texture;
         info.bounds = bounds;
         info.origin = origin;
+        // Stored unvalidated: the mask sprite may be pushed later in load
+        // order (a later grid), so refs resolve in the pass after both loops.
+        info.maskSprite = maskSprite;
         sheet.sprites.push_back(info);
         return true;
     };
@@ -103,7 +107,7 @@ bool ParseSpriteSheetJson(const std::string &json, SpriteSheetData &out)
         const SpriteRect bounds{ s.bounds().left(), s.bounds().top(), s.bounds().right(),
                                 s.bounds().bottom() };
         const SpriteOriginPx origin{ s.origin().x(), s.origin().y() };
-        if (!pushSprite(s.name(), s.id(), s.texture(), bounds, origin))
+        if (!pushSprite(s.name(), s.id(), s.texture(), bounds, origin, s.mask_sprite()))
         {
             return false;
         }
@@ -132,12 +136,40 @@ bool ParseSpriteSheetJson(const std::string &json, SpriteSheetData &out)
                 std::snprintf(name, sizeof(name), "%s_%d_%d", g.prefix().c_str(), r, c);
                 const SpriteRect bounds{ c * g.cell_w(), r * g.cell_h(), (c + 1) * g.cell_w(),
                                          (r + 1) * g.cell_h() };
+                const int maskId = g.mask_grid_start_id() != 0
+                                       ? g.mask_grid_start_id() + r * g.cols() + c
+                                       : 0;
                 if (!pushSprite(name, g.start_id() + r * g.cols() + c, g.texture(), bounds,
-                                origin))
+                                origin, maskId))
                 {
                     return false;
                 }
             }
+        }
+    }
+
+    // --- mask refs: must resolve to a same-sized sprite (pixel-aligned
+    // composite). Runs after both loops since a mask may be declared later
+    // in load order than its base (same reason animation frames validate
+    // late).
+    for (const SpriteDefInfo &s : sheet.sprites)
+    {
+        if (s.maskSprite == 0)
+        {
+            continue;
+        }
+        const SpriteDefInfo *mask = FindSpriteById(sheet, s.maskSprite);
+        if (mask == nullptr)
+        {
+            return false; // dangling mask ref
+        }
+        const int w = s.bounds.right - s.bounds.left;
+        const int h = s.bounds.bottom - s.bounds.top;
+        const int mw = mask->bounds.right - mask->bounds.left;
+        const int mh = mask->bounds.bottom - mask->bounds.top;
+        if (w != mw || h != mh)
+        {
+            return false; // base/mask must composite pixel-aligned
         }
     }
 
