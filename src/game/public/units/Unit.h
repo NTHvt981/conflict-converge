@@ -136,6 +136,15 @@ struct Unit
     // order cancels as before. Reset by every new order, arrival, and cancel.
     float blockedTime = 0.0f;
     int blockedRepaths = 0;
+    // Stall-fix: same wait/replan/cancel budget as blockedTime/blockedRepaths
+    // above, but tracked separately for ReportSeparationStall. A unit stuck
+    // in the SeparateUnits equilibrium keeps reporting StepResult::Stepped
+    // every frame (it never crosses a tile boundary), which unconditionally
+    // resets blockedTime to 0 -- sharing counters would erase this budget
+    // before it could ever reach the retry threshold. Reset alongside
+    // blockedTime/blockedRepaths by every new order, arrival, and cancel.
+    float separationStallTime = 0.0f;
+    int separationStallRepaths = 0;
 };
 
 // M2 Goal 2: snap a unit's world position to its tile's top-left corner
@@ -199,3 +208,20 @@ void SeparateUnits(Registry &registry, float dtSeconds);
 // Phase 4: pass occ for footprint-aware movement (nullptr = legacy behavior).
 void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
                 const FogOfWar *fog = nullptr, OccupancyGrid *occ = nullptr);
+
+// Stall-fix: SeparateUnits' continuous-space push can undo a step that
+// StepToward already reported as successful (Stepped, non-zero velocity),
+// wedging two converging units apart just short of the tile boundary that
+// CanEnter would have gated. StepToward/TryBlockedRetry never see this --
+// nothing ever tried to enter an occupied tile -- so it needs its own hook.
+// Applies the same wait/replan/cancel budget as a normal transient
+// unit-block (TryBlockedRetry). No-op unless the unit has an active order.
+void ReportSeparationStall(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
+                           std::uint32_t selfGen, float dtSeconds);
+
+// Full per-frame movement pipeline: occupancy pre-pass, per-unit AI/movement
+// driver, continuous-space separation, then separation-stall detection.
+// Extracted so the real game loop and tests drive units through the exact
+// same sequence and can't drift apart on ordering (see ReportSeparationStall).
+void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
+                          const FogOfWar *fog, float dtSeconds);

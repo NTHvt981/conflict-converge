@@ -50,6 +50,7 @@ void RunCommandUiTests();
 void RunSkirmishTests();
 void RunFootprintTests();
 void RunSpriteDataTests();
+void RunMovementStallTests();
 
 int main()
 {
@@ -98,6 +99,7 @@ int main()
     RunSkirmishTests();
     RunFootprintTests();
     RunSpriteDataTests();
+    RunMovementStallTests();
 
     const TestStats &stats = CcTestStats();
     std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);

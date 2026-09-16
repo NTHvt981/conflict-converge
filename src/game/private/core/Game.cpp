@@ -667,26 +667,11 @@ void Game::Update()
         }
         // M9: rebuild visibility from current positions before anyone acquires.
         fog.Recompute(registry);
-        // Phase 4: reserve each unit's current anchor tile before movement,
-        // so StepToward's CanEnter check prevents two units from entering
-        // the same tile. Ownership-checked: a shoved unit never wipes or
-        // steals another unit's reservation, it just goes unreserved until
-        // separation pushes it clear.
-        registry.Each<Unit>([&](Entity id, Unit &unit) {
-            if (unit.health > 0.0f)
-            {
-                const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(unit.position));
-                occ.ReleaseFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight,
-                                          id, registry.Generation(id));
-                occ.ReserveFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight,
-                                          id, registry.Generation(id));
-            }
-        });
-        registry.Each<Unit>([&](Entity id, Unit &unit) {
-            UpdateUnit(id, registry, map, GetFrameTime(), &fog, &occ); // M3G5 driver (+M9 fog gate, Phase 4 occ)
-        });
-        // Overlap avoidance: fan out stacked bodies after the AI driver.
-        SeparateUnits(registry, GetFrameTime());
+        // Phase 4 + stall-fix: occupancy pre-pass, per-unit driver (M3G5,
+        // M9 fog gate), overlap separation, and separation-stall detection,
+        // all as one pipeline (see RunUnitMovementFrame) so the game loop
+        // and tests can't drift apart on this sequencing.
+        RunUnitMovementFrame(registry, map, occ, &fog, GetFrameTime());
         // M3 Goal 6: collect the fallen, then destroy through the factory so
         // UnitDestroyed is announced (destroying inside Each would invalidate it).
         // dt is shared by the M11 polls below and the economy tick further down.

@@ -9,6 +9,8 @@
 #include "Building.h"  // M13: repair targets include structures.
 #include "UnitStats.h" // M13: max-health lookup for repair validation.
 
+#include <utility> // std::pair: RunUnitMovementFrame's pre-move position snapshot
+
 // Stub: unit behavior, AI, and factory arrive in M3.
 
 #include "UnitStats.h" // M13: max-health lookup for repair validation.
@@ -625,6 +627,8 @@ void Arrive(Unit &unit, cc::Vec2 where)
     unit.state = UnitState::Idle;
     unit.blockedTime = 0.0f;
     unit.blockedRepaths = 0;
+    unit.separationStallTime = 0.0f;
+    unit.separationStallRepaths = 0;
 }
 
 void CancelAtBlocked(Unit &unit)
@@ -637,6 +641,8 @@ void CancelAtBlocked(Unit &unit)
     unit.state = UnitState::Idle;
     unit.blockedTime = 0.0f;
     unit.blockedRepaths = 0;
+    unit.separationStallTime = 0.0f;
+    unit.separationStallRepaths = 0;
     SnapUnitToTile(unit);
 }
 
@@ -649,21 +655,26 @@ void CancelAtBlocked(Unit &unit)
 constexpr float kBlockedRetryDelaySeconds = 0.5f;
 constexpr int kMaxBlockedRepaths = 3;
 
-bool TryBlockedRetry(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
-                     std::uint32_t selfGen, float dtSeconds)
+// Shared by both blockedTime/blockedRepaths (StepResult::BlockedUnit) and
+// separationStallTime/separationStallRepaths (ReportSeparationStall) so the
+// two failure modes get the same wait/replan/cancel behavior without
+// sharing a counter (see the field comment on Unit::separationStallTime).
+bool TryBlockedRetryWithBudget(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
+                               std::uint32_t selfGen, float dtSeconds, float &blockedTime,
+                               int &blockedRepaths)
 {
     unit.velocity = { 0.0f, 0.0f };
-    unit.blockedTime += dtSeconds;
-    if (unit.blockedTime < kBlockedRetryDelaySeconds)
+    blockedTime += dtSeconds;
+    if (blockedTime < kBlockedRetryDelaySeconds)
     {
         return true; // hold position, keep the order
     }
-    if (unit.blockedRepaths >= kMaxBlockedRepaths)
+    if (blockedRepaths >= kMaxBlockedRepaths)
     {
         return false; // budget spent: caller cancels
     }
-    ++unit.blockedRepaths;
-    unit.blockedTime = 0.0f;
+    ++blockedRepaths;
+    blockedTime = 0.0f;
     const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
     const cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(unit.moveTarget)));
     TilePath fresh;
@@ -690,6 +701,13 @@ bool TryBlockedRetry(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity 
     unit.hasPath = true;
     unit.hasMoveOrder = true;
     return true;
+}
+
+bool TryBlockedRetry(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
+                     std::uint32_t selfGen, float dtSeconds)
+{
+    return TryBlockedRetryWithBudget(unit, map, occ, self, selfGen, dtSeconds, unit.blockedTime,
+                                     unit.blockedRepaths);
 }
 
 } // namespace
@@ -865,6 +883,82 @@ void SeparateUnits(Registry &registry, float dtSeconds)
                     ResolveAttack(*items[j].unit, *items[i].unit, AttackContext::Crush);
                 }
             }
+        }
+    }
+}
+
+void ReportSeparationStall(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
+                           std::uint32_t selfGen, float dtSeconds)
+{
+    if (!TryBlockedRetryWithBudget(unit, map, occ, self, selfGen, dtSeconds,
+                                   unit.separationStallTime, unit.separationStallRepaths))
+    {
+        CancelAtBlocked(unit);
+    }
+}
+
+void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
+                          const FogOfWar *fog, float dtSeconds)
+{
+    // Phase 4: reserve each unit's current anchor tile before movement, so
+    // StepToward's CanEnter check prevents two units from entering the same
+    // tile. Ownership-checked: a shoved unit never wipes or steals another
+    // unit's reservation, it just goes unreserved until separation pushes it
+    // clear. Snapshot pre-move positions in the same pass for the
+    // separation-stall check below.
+    std::vector<std::pair<Entity, Vector2>> preMovePositions;
+    registry.Each<Unit>([&](Entity id, Unit &unit) {
+        if (unit.health > 0.0f)
+        {
+            const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(unit.position));
+            occ.ReleaseFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight, id,
+                                      registry.Generation(id));
+            occ.ReserveFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight, id,
+                                      registry.Generation(id));
+        }
+        preMovePositions.push_back({ id, unit.position });
+    });
+
+    registry.Each<Unit>(
+        [&](Entity id, Unit &) { UpdateUnit(id, registry, map, dtSeconds, fog, &occ); });
+
+    // Overlap avoidance: fan out stacked bodies after the AI driver.
+    SeparateUnits(registry, dtSeconds);
+
+    // Separation-stall detection: a unit whose StepToward call this frame
+    // reported real forward progress (Stepped, non-zero velocity) but whose
+    // net displacement for the whole frame came out near zero was pushed
+    // back by SeparateUnits before it ever crossed a tile boundary. That
+    // failure mode never touches CanEnter, so TryBlockedRetry's normal
+    // trigger (StepResult::BlockedUnit) never fires on its own.
+    constexpr float kStallProgressFraction = 0.1f;
+    for (const auto &[id, before] : preMovePositions)
+    {
+        Unit *unit = registry.Get<Unit>(id);
+        if (unit == nullptr || unit->health <= 0.0f)
+        {
+            continue;
+        }
+        if (!unit->hasMoveOrder && !unit->hasPath)
+        {
+            continue;
+        }
+        if (unit->velocity.x == 0.0f && unit->velocity.y == 0.0f)
+        {
+            continue; // arrived this frame, or already caught by the normal block path
+        }
+        const float moved = glm::length(cc::ToGlm(unit->position) - cc::ToGlm(before));
+        const float expectedStep = unit->speed * dtSeconds;
+        if (expectedStep > 0.0f && moved < expectedStep * kStallProgressFraction)
+        {
+            ReportSeparationStall(*unit, map, &occ, id, registry.Generation(id), dtSeconds);
+        }
+        else
+        {
+            // Real progress went through this frame: forgive any partial
+            // stall budget instead of letting it carry over indefinitely.
+            unit->separationStallTime = 0.0f;
+            unit->separationStallRepaths = 0;
         }
     }
 }
