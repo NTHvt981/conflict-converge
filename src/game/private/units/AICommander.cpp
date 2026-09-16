@@ -346,12 +346,15 @@ void AICommander::ScoutTick(float dt)
     }
     const Entity scout = factory_.Spawn(UnitType::Infantry, teamID_,
                                         cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
+    // NOTE: the full-interval backoff below runs even when the spawn fails.
+    // A fast retry here was tried and reverted: refilling scouts ahead of
+    // the army re-tunes Hard's economy enough to flip the Medium-vs-Hard
+    // soak (measured). Revisit only with a soak re-tune, not alone.
+    scoutTimer_ = params_.scoutInterval;
     if (scout == kInvalidEntity)
     {
-        scoutTimer_ = 1.0f; // funds/site blocked: retry soon, not next frame
         return;
     }
-    scoutTimer_ = params_.scoutInterval;
     if (Unit *unit = registry_.Get<Unit>(scout))
     {
         OrderMove(*unit, scout, cc::ToRaylib(cc::TileToWorld(enemyTile_.x, enemyTile_.y)));
