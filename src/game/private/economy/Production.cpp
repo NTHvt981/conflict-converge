@@ -47,10 +47,11 @@ void ProductionQueue::Update(UnitFactory &factory, int teamID, Vector2 rallyPos,
     head.progress += dt;
     // Carry surplus past buildTime into the next item instead of dropping
     // it, so frame hitches and catch-up ticks don't silently slow
-    // production. Loops so one huge dt can finish several cheap items.
-    while (!items_.empty() && items_.front().progress >= items_.front().buildTime)
+    // production. At most one completion per call (the tested "finishes
+    // head only" contract); the carried surplus fires the next item sooner.
+    if (head.progress >= head.buildTime)
     {
-        const Item done = items_.front();
+        const Item done = head;
         // Already paid at Enqueue; a short-funded spawn here would eat the
         // item, so SpawnPrepaid (not Spawn) keeps cost handling in one place.
         factory.SpawnPrepaid(done.type, teamID, rallyPos);
