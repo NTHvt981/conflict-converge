@@ -252,7 +252,10 @@ cc::IVec2 RepairApproachTile(const TileMap &map, cc::IVec2 aimTile)
     {
         return aimTile;
     }
-    for (int ring = 1; ring <= 3; ++ring)
+    // Rings 1..6 (not 1..3): wide obstructions (large footprints, rubble
+    // fields, lake edges) need the extra reach before giving up, and the
+    // scan is a few hundred tile checks on repair orders only.
+    for (int ring = 1; ring <= 6; ++ring)
     {
         for (int dy = -ring; dy <= ring; ++dy)
         {
