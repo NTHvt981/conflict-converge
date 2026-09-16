@@ -38,9 +38,10 @@ struct Building
     int tileY = 0;
     // M13: structural HP so Engineers have something to repair. Nothing
     // damages buildings yet (combat is unit-vs-unit); tests wound them
-    // directly until building attacks arrive.
-    float health = 600.0f;
-    float maxHealth = 600.0f;
+    // directly until building attacks arrive. Defaults match Base (the
+    // default type); PlaceBuilding stamps the real per-type max anyway.
+    float health = 400.0f;
+    float maxHealth = 400.0f;
 };
 
 // Full-health value per type (placement + save-load repair of legacy zeros).
