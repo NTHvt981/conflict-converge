@@ -263,10 +263,19 @@ bool Decode(const std::string &payload, SavedWorld &out)
         b.tileX = in.tile_x();
         b.tileY = in.tile_y();
         // M13: legacy saves predate building HP (zeros on the wire) — heal
-        // those to full rather than loading rubble.
+        // those to full rather than loading rubble. Destroyed buildings
+        // legitimately save health=0, so the heal only applies while the
+        // structure is still standing.
         const float full = BuildingMaxHealth(b.type);
         b.maxHealth = in.max_health() > 0.0f ? in.max_health() : full;
-        b.health = in.health() > 0.0f ? in.health() : full;
+        if (b.state == BuildingState::Destroyed)
+        {
+            b.health = 0.0f;
+        }
+        else
+        {
+            b.health = in.health() > 0.0f ? in.health() : full;
+        }
         if (b.health > b.maxHealth)
         {
             b.health = b.maxHealth;
