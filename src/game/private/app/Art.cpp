@@ -29,13 +29,14 @@ static unsigned int HashId(unsigned int id)
 }
 
 int SquadSlots(UnitType type, unsigned int id, float healthFraction,
-               std::array<Vector2, 6> &outOffsets)
+               std::array<Vector2, 6> &outOffsets, float &outScale)
 {
     // Only foot types with multi-soldier visuals get the squad treatment.
     // Engineers render as a single centered sprite (like vehicles).
     if (type != UnitType::Infantry && type != UnitType::AntiArmorInfantry)
     {
         outOffsets[0] = { 0.0f, 0.0f };
+        outScale = 1.0f;
         return 1;
     }
 
@@ -61,21 +62,41 @@ int SquadSlots(UnitType type, unsigned int id, float healthFraction,
         count = (healthFraction > 0.50f) ? 2 : 1;
     }
 
-    // Fixed 6-slot layout: two rows of 3, centered around (16,16) within
-    // the 32x32 body inset. Offsets stay inside ±12px from center.
-    constexpr float kBaseOffsets[6][2] = {
-        { -8.0f, -8.0f }, { 0.0f, -8.0f }, { 8.0f, -8.0f },
-        { -8.0f,  4.0f }, { 0.0f,  4.0f }, { 8.0f,  4.0f }
+    // Per-count (scale, offsets): a 64x64 tile cannot fit multiple native
+    // 32px soldiers side by side (the old single 8px-spaced table overlapped
+    // ~75% per sprite), so each row shrinks the blit and spreads the slots
+    // so adjacent centers stay >= scale * 32px apart while the cluster stays
+    // near the tile's half-size. Index by count - 1; rows sized for the
+    // count (unused tail slots stay {0,0}).
+    struct SquadLayout
+    {
+        float scale;
+        float offsets[6][2];
     };
+    static constexpr SquadLayout kLayouts[6] = {
+        { 1.00f, { { 0, 0 } } },
+        { 0.80f, { { -14, 0 }, { 14, 0 } } },
+        { 0.70f, { { 0, -14 }, { -13, 10 }, { 13, 10 } } },
+        { 0.65f, { { -13, -13 }, { 13, -13 }, { -13, 13 }, { 13, 13 } } },
+        { 0.55f, { { 0, 0 }, { -15, -15 }, { 15, -15 }, { -15, 15 }, { 15, 15 } } },
+        { 0.50f,
+          { { -18, -17 }, { 0, -17 }, { 18, -17 }, { -18, 17 }, { 0, 17 }, { 18, 17 } } },
+    };
+    const SquadLayout &layout = kLayouts[count - 1];
+    outScale = layout.scale;
 
     const unsigned int h = HashId(id);
+    // Jitter scales down with the blit so it can't eat the thinner margins
+    // at higher counts (was a fixed ±2px against 16px sprites).
+    const float jitterPx = 2.0f * layout.scale;
     for (int i = 0; i < count; ++i)
     {
-        // Deterministic jitter: ±2px per axis, derived from id + slot index.
+        // Deterministic jitter derived from id + slot index.
         const unsigned int jitter = HashId(h + static_cast<unsigned int>(i));
-        const float jx = static_cast<float>((jitter & 0x7) - 3); // -3..+4 -> approx ±2
-        const float jy = static_cast<float>(((jitter >> 3) & 0x7) - 3);
-        outOffsets[i] = { kBaseOffsets[i][0] + jx, kBaseOffsets[i][1] + jy };
+        const float jx = (static_cast<float>(jitter & 0x7) / 7.0f - 0.5f) * 2.0f * jitterPx;
+        const float jy =
+            (static_cast<float>((jitter >> 3) & 0x7) / 7.0f - 0.5f) * 2.0f * jitterPx;
+        outOffsets[i] = { layout.offsets[i][0] + jx, layout.offsets[i][1] + jy };
     }
     return count;
 }
@@ -434,7 +455,8 @@ Color Art::TeamTint(int teamID)
     return teamID == 0 ? BLUE : RED;
 }
 
-void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint) const
+void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
+                           float scale) const
 {
     if (!atlasReady_ || spriteName.empty())
     {
@@ -454,10 +476,13 @@ void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Colo
     const float h = static_cast<float>(s->bounds.bottom - s->bounds.top);
     const Rectangle src = { static_cast<float>(s->bounds.left), static_cast<float>(s->bounds.top),
                             w, h };
-    // The sprite origin lands on the 32x32 body center (tileCorner + 32).
-    const Vector2 dest = { tileCorner.x + 32.0f - static_cast<float>(s->origin.x),
-                           tileCorner.y + 32.0f - static_cast<float>(s->origin.y) };
-    DrawTextureRec(it->second, src, dest, tint);
+    // The sprite origin lands on the 32x32 body center (tileCorner + 32);
+    // scale shrinks the blit around that anchor so squad clusters separate.
+    const Vector2 anchor = { tileCorner.x + 32.0f, tileCorner.y + 32.0f };
+    const Rectangle dest = { anchor.x - static_cast<float>(s->origin.x) * scale,
+                             anchor.y - static_cast<float>(s->origin.y) * scale, w * scale,
+                             h * scale };
+    DrawTexturePro(it->second, src, dest, { 0.0f, 0.0f }, 0.0f, tint);
 }
 
 void Art::DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const

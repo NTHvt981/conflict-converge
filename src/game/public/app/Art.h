@@ -40,8 +40,11 @@ UnitFrame FrameForPhase(AttackPhase phase);
 // Deterministic per-entity (same id always produces the same layout) so it
 // doesn't need to be stored or included in save data.
 // Returns count=1 with outOffsets[0]={0,0} for non-infantry types.
+// outScale shrinks with the count so clustered soldiers don't overlap:
+// adjacent centers stay >= scale * 32px apart (see the per-count table in
+// Art.cpp). The caller passes it to DrawAtlasFrame.
 int SquadSlots(UnitType type, unsigned int id, float healthFraction,
-               std::array<Vector2, 6> &outOffsets);
+               std::array<Vector2, 6> &outOffsets, float &outScale);
 
 // CPU particle pool: impact sparks, muzzle flashes, death bursts.
 // Logic is device-independent (tested); Draw needs a live window.
@@ -85,8 +88,10 @@ public:
     void DrawUnit(UnitType type, int teamID, UnitFrame frame, Vector2 tileCorner) const;
     // Atlas override: source-rect blit of a named sprite from sprites.json,
     // origin-aligned to the 32x32 body center. No-op when the atlas is down
-    // or the name is unknown (headless-safe).
-    void DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint) const;
+    // or the name is unknown (headless-safe). scale shrinks the blit around
+    // the same anchor (squad clusters); default 1.0 keeps other callers.
+    void DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
+                        float scale = 1.0f) const;
     void DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const;
     void DrawNode(ResourceKind kind, Vector2 center) const;
     void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon

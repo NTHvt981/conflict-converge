@@ -982,7 +982,8 @@ void Game::Update()
             // "<type>_idle_0_0"; types without atlas entries fall through
             // to the legacy DrawUnit (or a tinted rect when that is down).
             std::array<Vector2, 6> slots;
-            const int count = SquadSlots(unit.type, id, UnitHealthFraction(unit), slots);
+            float slotScale = 1.0f;
+            const int count = SquadSlots(unit.type, id, UnitHealthFraction(unit), slots, slotScale);
             const bool moving = unit.state == UnitState::Moving;
             const float animTime = static_cast<float>(GetTime());
             const Color tint = Art::TeamTint(unit.teamID);
@@ -995,7 +996,7 @@ void Game::Update()
                     const std::string sprite = art.UnitSprite(unit.type, moving, id, animTime);
                     if (!sprite.empty())
                     {
-                        art.DrawAtlasFrame(sprite, corner, tint);
+                        art.DrawAtlasFrame(sprite, corner, tint, slotScale);
                         continue;
                     }
                 }
