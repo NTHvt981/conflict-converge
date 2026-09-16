@@ -1,14 +1,46 @@
 #include "TileMap.h"
 
 #include <algorithm>
+#include <cstdint>
+
+namespace
+{
+// Same budget as MapFile's kMaxTiles: guards the size_t cast below so a
+// negative or gigantic dimension yields an empty grid instead of a
+// multi-exabyte vector allocation that throws before any assert could run.
+constexpr std::int64_t kMaxGridTiles = 1024 * 1024;
+
+bool GridDimsValid(int widthTiles, int heightTiles, std::size_t &outCount)
+{
+    if (widthTiles <= 0 || heightTiles <= 0)
+    {
+        return false;
+    }
+    const std::int64_t count =
+        static_cast<std::int64_t>(widthTiles) * static_cast<std::int64_t>(heightTiles);
+    if (count > kMaxGridTiles)
+    {
+        return false;
+    }
+    outCount = static_cast<std::size_t>(count);
+    return true;
+}
+} // namespace
 
 TileMap::TileMap(int widthTiles, int heightTiles)
-    : width_(widthTiles)
-    , height_(heightTiles)
-    , tiles_(static_cast<std::size_t>(widthTiles) * static_cast<std::size_t>(heightTiles),
-             TerrainType::Grass)
+    : width_(0)
+    , height_(0)
+    , tiles_()
 {
     CC_ASSERT(widthTiles > 0 && heightTiles > 0);
+    std::size_t count = 0;
+    if (!GridDimsValid(widthTiles, heightTiles, count))
+    {
+        return; // degenerate 0x0 grid: InBounds false, IsBlocked true
+    }
+    width_ = widthTiles;
+    height_ = heightTiles;
+    tiles_.assign(count, TerrainType::Grass);
 }
 
 int TileMap::Width() const
@@ -57,10 +89,14 @@ void TileMap::Clear(TerrainType fill)
 void TileMap::Resize(int widthTiles, int heightTiles)
 {
     CC_ASSERT(widthTiles > 0 && heightTiles > 0);
+    std::size_t count = 0;
+    if (!GridDimsValid(widthTiles, heightTiles, count))
+    {
+        return; // keep existing contents rather than corrupt on bad input
+    }
     width_ = widthTiles;
     height_ = heightTiles;
-    tiles_.assign(static_cast<std::size_t>(widthTiles) * static_cast<std::size_t>(heightTiles),
-                  TerrainType::Grass);
+    tiles_.assign(count, TerrainType::Grass);
 }
 
 int TileMap::Index(cc::IVec2 tile) const
@@ -71,14 +107,21 @@ int TileMap::Index(cc::IVec2 tile) const
 // --- OccupancyGrid ---
 
 OccupancyGrid::OccupancyGrid(int widthTiles, int heightTiles)
-    : width_(widthTiles)
-    , height_(heightTiles)
-    , units_(static_cast<std::size_t>(widthTiles) * static_cast<std::size_t>(heightTiles),
-             OccEntry{})
-    , buildings_(static_cast<std::size_t>(widthTiles) * static_cast<std::size_t>(heightTiles),
-                 kOccEmpty)
+    : width_(0)
+    , height_(0)
+    , units_()
+    , buildings_()
 {
     CC_ASSERT(widthTiles > 0 && heightTiles > 0);
+    std::size_t count = 0;
+    if (!GridDimsValid(widthTiles, heightTiles, count))
+    {
+        return; // degenerate 0x0 grid: InBounds false, CanEnter false
+    }
+    width_ = widthTiles;
+    height_ = heightTiles;
+    units_.assign(count, OccEntry{});
+    buildings_.assign(count, kOccEmpty);
 }
 
 int OccupancyGrid::Width() const
@@ -226,12 +269,15 @@ void OccupancyGrid::Clear()
 void OccupancyGrid::Resize(int widthTiles, int heightTiles)
 {
     CC_ASSERT(widthTiles > 0 && heightTiles > 0);
+    std::size_t count = 0;
+    if (!GridDimsValid(widthTiles, heightTiles, count))
+    {
+        return; // keep existing contents rather than corrupt on bad input
+    }
     width_ = widthTiles;
     height_ = heightTiles;
-    units_.assign(static_cast<std::size_t>(widthTiles) * static_cast<std::size_t>(heightTiles),
-                  OccEntry{});
-    buildings_.assign(static_cast<std::size_t>(widthTiles) * static_cast<std::size_t>(heightTiles),
-                      kOccEmpty);
+    units_.assign(count, OccEntry{});
+    buildings_.assign(count, kOccEmpty);
 }
 
 int OccupancyGrid::Index(cc::IVec2 tile) const
