@@ -91,9 +91,9 @@ void RunControlGroupTests()
     ProductionQueue queue;
     CC_CHECK(queue.Enqueue(resources, UnitType::Infantry));
     const Entity spawned =
-        queue.Update(factory, 0, { 0.0f, 0.0f }, BuildTime(UnitType::Infantry));
+        queue.Update(factory, resources, 0, { 0.0f, 0.0f }, BuildTime(UnitType::Infantry));
     CC_CHECK(spawned != kInvalidEntity);
     CC_CHECK(prodRegistry.Get<Unit>(spawned) != nullptr);
     // Nothing left to complete: no entity.
-    CC_CHECK(queue.Update(factory, 0, { 0.0f, 0.0f }, 1000.0f) == kInvalidEntity);
+    CC_CHECK(queue.Update(factory, resources, 0, { 0.0f, 0.0f }, 1000.0f) == kInvalidEntity);
 }

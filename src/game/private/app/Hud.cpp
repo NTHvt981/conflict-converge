@@ -192,13 +192,20 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
         {
             GuiDisable();
         }
-        if (GuiButton({ px + 12.0f, y, 150.0f, 16.0f }, label))
+        if (GuiButton({ px + 12.0f, y, 116.0f, 16.0f }, label))
         {
             clicked = static_cast<int>(i);
         }
         if (!affordable)
         {
             GuiEnable();
+        }
+        // QoL repeat toggle: arms the next build of this type to rebuild
+        // forever until cancelled. R = one-shot, R* = repeating.
+        const char *repLabel = queue.RepeatArmed(order[i]) ? "R*" : "R";
+        if (GuiButton({ px + 132.0f, y, 30.0f, 16.0f }, repLabel))
+        {
+            queue.SetRepeatArmed(order[i], !queue.RepeatArmed(order[i]));
         }
     }
     char queueLine[48];
@@ -210,7 +217,8 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
     }
     if (clicked != kNoProductionClick)
     {
-        queue.Enqueue(resources, order[static_cast<std::size_t>(clicked)]);
+        queue.Enqueue(resources, order[static_cast<std::size_t>(clicked)],
+                      queue.RepeatArmed(order[static_cast<std::size_t>(clicked)]));
     }
     return clicked;
 }

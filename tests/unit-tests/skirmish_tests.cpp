@@ -145,7 +145,7 @@ void RunSkirmishTests()
         game.nodes.GatherTick(game.registry, game.resources, dt, 0);
         if (game.ai.HasFactory())
         {
-            game.queue.Update(game.factory, 0, game.rallyPos, dt);
+            game.queue.Update(game.factory, game.resources, 0, game.rallyPos, dt);
         }
         game.ai.Update(dt);
     }
@@ -203,7 +203,7 @@ void RunSkirmishTests()
             ally.nodes.GatherTick(ally.registry, ally.resources, dt, 0);
             if (ally.ai.HasFactory())
             {
-                ally.queue.Update(ally.factory, 0, ally.rallyPos, dt);
+                ally.queue.Update(ally.factory, ally.resources, 0, ally.rallyPos, dt);
             }
             ally.ai.Update(dt);
             ally.allyAI.Update(dt);

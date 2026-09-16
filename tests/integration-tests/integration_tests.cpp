@@ -193,7 +193,7 @@ void RunIntegrationTests()
             UpdateBaseIncome(registry, resources, kDt, 0);
             nodes.Update(kDt);
             nodes.GatherTick(registry, resources, kDt);
-            queue.Update(factory, 0, rally, kDt);
+            queue.Update(factory, resources, 0, rally, kDt);
             registry.Each<Unit>([&](Entity id, Unit &unit) { UpdateUnit(id, registry, map, kDt); });
         }
         CC_CHECK(queue.Empty());                        // order rolled off the line

@@ -52,7 +52,8 @@ void RunProductionTests()
     CC_CHECK(brokeQueue.Empty());
 
     // --- partial progress advances without spawning ---
-    queue.Update(rig.factory, 0, { 0.0f, 0.0f }, BuildTime(UnitType::Infantry) * 0.5f);
+    queue.Update(rig.factory, rig.resources, 0, { 0.0f, 0.0f },
+                 BuildTime(UnitType::Infantry) * 0.5f);
     CC_CHECK(queue.Size() == 1);
     CC_CHECK(rig.spawned == 0);
     const float half = queue.HeadProgress();
@@ -60,7 +61,8 @@ void RunProductionTests()
 
     // --- completion spawns prepaid at the rally point (no second charge) ---
     const long ironBefore = rig.resources.iron;
-    queue.Update(rig.factory, 3, cc::ToRaylib(cc::TileToWorld(4, 4)), BuildTime(UnitType::Infantry));
+    queue.Update(rig.factory, rig.resources, 3, cc::ToRaylib(cc::TileToWorld(4, 4)),
+                 BuildTime(UnitType::Infantry));
     CC_CHECK(queue.Empty());
     CC_CHECK(rig.spawned == 1);
     CC_CHECK(rig.resources.iron == ironBefore); // prepaid: balances untouched
@@ -78,12 +80,53 @@ void RunProductionTests()
     ProductionQueue lineQueue;
     CC_CHECK(lineQueue.Enqueue(line.resources, UnitType::Infantry));
     CC_CHECK(lineQueue.Enqueue(line.resources, UnitType::Engineer));
-    lineQueue.Update(line.factory, 0, { 0.0f, 0.0f }, 1000.0f); // finishes head only
+    lineQueue.Update(line.factory, line.resources, 0, { 0.0f, 0.0f }, 1000.0f); // finishes head only
     CC_CHECK(lineQueue.Size() == 1);
     CC_CHECK(line.spawned == 1);
-    lineQueue.Update(line.factory, 0, { 0.0f, 0.0f }, 1000.0f);
+    lineQueue.Update(line.factory, line.resources, 0, { 0.0f, 0.0f }, 1000.0f);
     CC_CHECK(lineQueue.Empty());
     CC_CHECK(line.spawned == 2);
+
+    // --- repeat items re-charge and restart instead of popping ---
+    Rig rep;
+    ProductionQueue repQueue;
+    CC_CHECK(repQueue.Enqueue(rep.resources, UnitType::Infantry, true));
+    const UnitCost repCost = CostOf(UnitType::Infantry);
+    const long afterFirstCharge = rep.resources.iron;
+    repQueue.Update(rep.factory, rep.resources, 0, { 0.0f, 0.0f },
+                    BuildTime(UnitType::Infantry));
+    CC_CHECK(repQueue.Size() == 1); // still queued, rebuilding
+    CC_CHECK(rep.spawned == 1);
+    CC_CHECK(rep.resources.iron == afterFirstCharge - repCost.iron); // charged twice
+    repQueue.Update(rep.factory, rep.resources, 0, { 0.0f, 0.0f },
+                    BuildTime(UnitType::Infantry));
+    CC_CHECK(repQueue.Size() == 1);
+    CC_CHECK(rep.spawned == 2);
+
+    // --- broke repeat parks at 100% and resumes when funded ---
+    Rig poor;
+    ProductionQueue poorQueue;
+    CC_CHECK(poorQueue.Enqueue(poor.resources, UnitType::Infantry, true));
+    poorQueue.Update(poor.factory, poor.resources, 0, { 0.0f, 0.0f },
+                     BuildTime(UnitType::Infantry)); // first cycle ok
+    CC_CHECK(poor.spawned == 1);
+    poor.resources.iron = 0; // drain before the second cycle completes
+    poor.resources.oil = 0;
+    poorQueue.Update(poor.factory, poor.resources, 0, { 0.0f, 0.0f },
+                     BuildTime(UnitType::Infantry));
+    CC_CHECK(poorQueue.Size() == 1); // parked, not dropped
+    CC_CHECK(poor.spawned == 1);     // no free spawn while broke
+    poor.resources.AddIron(1000);
+    poor.resources.AddOil(500);
+    poorQueue.Update(poor.factory, poor.resources, 0, { 0.0f, 0.0f }, 0.01f);
+    CC_CHECK(poor.spawned == 2); // resumes on the next tick once affordable
+
+    // --- cancel still refunds + removes repeat items ("until cancelled") ---
+    CC_CHECK(!repQueue.Empty());
+    const long beforeCancel = rep.resources.iron;
+    repQueue.CancelTop(rep.resources);
+    CC_CHECK(repQueue.Empty());
+    CC_CHECK(rep.resources.iron == beforeCancel + repCost.iron);
 
     // --- cancel refunds the head and drops it ---
     Rig refund;

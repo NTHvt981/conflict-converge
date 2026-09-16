@@ -196,7 +196,7 @@ void AICommander::Update(float dt)
     if (HasFactory())
     {
         // M13: production dies with the structure — razed AI stays down.
-        queue_.Update(factory_, teamID_,
+        queue_.Update(factory_, resources_, teamID_,
                       cc::ToRaylib(cc::TileToWorld(rallyTile_.x, rallyTile_.y)), dt);
     }
     MaintainHarvesters();

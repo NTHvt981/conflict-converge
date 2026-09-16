@@ -874,7 +874,7 @@ void Game::Update()
         });
         if (hasFactory)
         {
-            const Entity spawned = queue.Update(factory, 0, rallyPos, dt);
+            const Entity spawned = queue.Update(factory, resources, 0, rallyPos, dt);
             if (spawned != kInvalidEntity && autoAddGroupBit >= 0)
             {
                 if (Unit *fresh = registry.Get<Unit>(spawned))
