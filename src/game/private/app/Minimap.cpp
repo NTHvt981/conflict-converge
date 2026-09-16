@@ -38,6 +38,10 @@ bool Minimap::PollRefresh(float dt)
 
 Vector2 Minimap::WorldToMinimap(Vector2 world, int mapW, int mapH) const
 {
+    if (mapW <= 0 || mapH <= 0 || screenRect.width <= 0.0f || screenRect.height <= 0.0f)
+    {
+        return { screenRect.x, screenRect.y };
+    }
     const float scaleX = screenRect.width / (static_cast<float>(mapW) * cc::TILE_SIZE);
     const float scaleY = screenRect.height / (static_cast<float>(mapH) * cc::TILE_SIZE);
     return { screenRect.x + world.x * scaleX, screenRect.y + world.y * scaleY };
