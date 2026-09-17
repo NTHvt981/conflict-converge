@@ -1,0 +1,517 @@
+{
+  "schema_version": 1,
+  "art_direction_brief": "art/art-direction-brief.md",
+  "assets": [
+    {
+      "id": "prototype-infantry-idle",
+      "role": "infantry idle poses, 8 facings (also used by PrototypeInfantry type)",
+      "path": "data/sprites/units/prototype_infantry_idle.png",
+      "status": "approved",
+      "technical": {
+        "dimensions": "128x32",
+        "grid": "8 cols x 1 row, cells 16x32",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 8,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "user image-generation tool (unspecified)",
+        "creator": "user",
+        "created_at": "2026-09-17",
+        "license": "project-owned (user-provided; confirm terms)",
+        "attribution": "",
+        "prompt_or_source_record": "test_sandbox/prototype_infantry_idle.png"
+      },
+      "verification": {
+        "native_scale_reviewed": true,
+        "in_engine_reviewed": true,
+        "technical_checks_passed": true,
+        "approved_by": "user"
+      }
+    },
+    {
+      "id": "prototype-infantry-run",
+      "role": "infantry run cycles, 8 facing columns x 4 frames (also used by PrototypeInfantry type)",
+      "path": "data/sprites/units/prototype_infantry_run.png",
+      "status": "approved",
+      "technical": {
+        "dimensions": "128x128",
+        "grid": "8 cols x 4 rows, cells 16x32; one column = one direction cycle",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 32,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin",
+        "stride-phase-per-column"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "user image-generation tool (unspecified)",
+        "creator": "user",
+        "created_at": "2026-09-17",
+        "license": "project-owned (user-provided; confirm terms)",
+        "attribution": "",
+        "prompt_or_source_record": "test_sandbox/prototype_infantry_run.png"
+      },
+      "verification": {
+        "native_scale_reviewed": true,
+        "in_engine_reviewed": true,
+        "technical_checks_passed": true,
+        "approved_by": "user"
+      }
+    },
+    {
+      "id": "antiarmor-infantry-idle",
+      "role": "anti-armor infantry idle poses, 8 facings",
+      "path": "data/sprites/units/antiarmor_infantry_idle.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x32",
+        "grid": "8 cols x 1 row, cells 16x32",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 8,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets as reference/edit input; keep launcher silhouette distinct from rifle"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    },
+    {
+      "id": "antiarmor-infantry-run",
+      "role": "anti-armor infantry run cycles, 8 facing columns x 4 frames",
+      "path": "data/sprites/units/antiarmor_infantry_run.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x128",
+        "grid": "8 cols x 4 rows, cells 16x32; one column = one direction cycle",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 32,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin",
+        "stride-phase-per-column"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets as reference/edit input; keep launcher silhouette distinct from rifle"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    },
+    {
+      "id": "engineer-idle",
+      "role": "engineer idle poses, 8 facings (wrench/tool silhouette)",
+      "path": "data/sprites/units/engineer_idle.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x32",
+        "grid": "8 cols x 1 row, cells 16x32",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 8,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets as reference/edit input; tool/wrench must read at 16px"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    },
+    {
+      "id": "engineer-run",
+      "role": "engineer run cycles, 8 facing columns x 4 frames",
+      "path": "data/sprites/units/engineer_run.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x128",
+        "grid": "8 cols x 4 rows, cells 16x32; one column = one direction cycle",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 32,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin",
+        "stride-phase-per-column"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets as reference/edit input; tool/wrench must read at 16px"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    },
+    {
+      "id": "ifv-idle",
+      "role": "IFV idle poses, 8 facings (small vehicle, single-sprite render)",
+      "path": "data/sprites/units/ifv_idle.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x32",
+        "grid": "8 cols x 1 row, cells 16x32",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 8,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; vehicle silhouette, wheels/tracks per facing"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    },
+    {
+      "id": "ifv-run",
+      "role": "IFV move cycles, 8 facing columns x 4 frames (wheel/track churn, hull stable)",
+      "path": "data/sprites/units/ifv_run.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x128",
+        "grid": "8 cols x 4 rows, cells 16x32; one column = one direction cycle",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 32,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin",
+        "hull-stable-per-column"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; vehicle silhouette, wheels/tracks per facing"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    },
+    {
+      "id": "artillery-idle",
+      "role": "artillery idle poses, 8 facings (gun barrel reads per facing)",
+      "path": "data/sprites/units/artillery_idle.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x32",
+        "grid": "8 cols x 1 row, cells 16x32",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 8,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; long barrel must read at 16px per facing"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    },
+    {
+      "id": "artillery-run",
+      "role": "artillery move cycles, 8 facing columns x 4 frames",
+      "path": "data/sprites/units/artillery_run.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x128",
+        "grid": "8 cols x 4 rows, cells 16x32; one column = one direction cycle",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 32,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin",
+        "hull-stable-per-column"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; long barrel must read at 16px per facing"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    },
+    {
+      "id": "light-tank-idle",
+      "role": "light tank idle poses, 8 facings (turret reads per facing)",
+      "path": "data/sprites/units/light_tank_idle.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x32",
+        "grid": "8 cols x 1 row, cells 16x32",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 8,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; turret + tracks per facing, lighter than heavy"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    },
+    {
+      "id": "light-tank-run",
+      "role": "light tank move cycles, 8 facing columns x 4 frames",
+      "path": "data/sprites/units/light_tank_run.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x128",
+        "grid": "8 cols x 4 rows, cells 16x32; one column = one direction cycle",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 32,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin",
+        "hull-stable-per-column"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; turret + tracks per facing, lighter than heavy"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    },
+    {
+      "id": "heavy-tank-idle",
+      "role": "heavy tank idle poses, 8 facings (bulkiest silhouette)",
+      "path": "data/sprites/units/heavy_tank_idle.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x32",
+        "grid": "8 cols x 1 row, cells 16x32",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 8,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; bulkiest silhouette, must still fit 16x32 cells"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    },
+    {
+      "id": "heavy-tank-run",
+      "role": "heavy tank move cycles, 8 facing columns x 4 frames",
+      "path": "data/sprites/units/heavy_tank_run.png",
+      "status": "planned",
+      "technical": {
+        "dimensions": "128x128",
+        "grid": "8 cols x 4 rows, cells 16x32; one column = one direction cycle",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 32,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin",
+        "hull-stable-per-column"
+      ],
+      "source": {
+        "kind": "generated",
+        "url_or_tool": "",
+        "creator": "",
+        "created_at": "",
+        "license": "",
+        "attribution": "",
+        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; bulkiest silhouette, must still fit 16x32 cells"
+      },
+      "verification": {
+        "native_scale_reviewed": false,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": false,
+        "approved_by": ""
+      }
+    }
+  ]
+}
