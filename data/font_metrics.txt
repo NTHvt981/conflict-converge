@@ -1,0 +1,27 @@
+# Baked default-font metrics -- DO NOT EDIT. Regenerate with
+# tools/bake_font_metrics.py (parses deps/raylib/src/rtext.c).
+baseSize=10
+firstChar=32
+count=224
+textSpacing=1
+advances=3,1,4,6,5,7,6,2,3,3,5,5,2,4,1,7,5,2,5,5,5,5,5,5,5,5,1,1,3,4,3,6,7,6,6,6,6,6,6,6,6,3,5,6,5,7,6,6,6,6,6,6,7,6,7,7,6,6,6,2,7,2,3,5,2,5,5,5,5,5,4,5,5,1,2,5,2,5,5,5,5,5,5,5,4,5,5,5,5,5,5,3,1,3,4,4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,5,5,7,1,5,3,7,3,5,4,1,7,4,3,5,3,3,2,5,6,1,2,2,3,5,6,6,6,6,6,6,6,6,6,6,7,6,6,6,6,6,3,3,3,3,7,6,6,6,6,6,6,5,6,6,6,6,6,6,4,6,5,5,5,5,5,5,9,5,5,5,5,5,2,2,3,3,5,5,5,5,5,5,5,5,5,5,5,5,5,5,3,5
+golden|7|1+ 2- 3+  (F6-8 save, S+F6-8 load)|134
+golden|7|Squad attack-move|73
+golden|7|Move at slowest speed|88
+golden|7|CONFLICT CONVERGE|84
+golden|7|Press a key for the armed action (Esc cancels)|187
+golden|10|1+ 2- 3+  (F6-8 save, S+F6-8 load)|177
+golden|10|Squad attack-move|98
+golden|10|Move at slowest speed|117
+golden|10|CONFLICT CONVERGE|114
+golden|10|Press a key for the armed action (Esc cancels)|248
+golden|15|1+ 2- 3+  (F6-8 save, S+F6-8 load)|248
+golden|15|Squad attack-move|138
+golden|15|Move at slowest speed|165
+golden|15|CONFLICT CONVERGE|162
+golden|15|Press a key for the armed action (Esc cancels)|349
+golden|20|1+ 2- 3+  (F6-8 save, S+F6-8 load)|320
+golden|20|Squad attack-move|179
+golden|20|Move at slowest speed|213
+golden|20|CONFLICT CONVERGE|211
+golden|20|Press a key for the armed action (Esc cancels)|450
