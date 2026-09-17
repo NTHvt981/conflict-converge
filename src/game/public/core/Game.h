@@ -188,6 +188,8 @@ private:
     HoverTooltipState hoverTip; // unit hover-tooltip debounce (Playing only)
     float shakeTrauma = 0.0f; // screen-shake trauma 0..1 (render copy only)
     DamageNumbers damageNumbers; // floating hit numbers (presentation-only, unsaved)
+    MenuState previousMenuState = MenuState::MainMenu; // transition-fade clock
+    float menuStateTime = 0.0f;
     MenuState lastOutcomeState = MenuState::MainMenu;
     bool hasFactory = false;
 };

@@ -201,4 +201,19 @@ void RunMenuTests()
     CC_CHECK(LoadSettings(lo, settingsPath));
     CC_CHECK(lo.uiScale == 0.75f);
     std::remove(settingsPath.c_str());
+
+    // --- menu transition clock: resets on change, accumulates otherwise ---
+    MenuState previous = MenuState::MainMenu;
+    float time = 0.0f;
+    TrackMenuTransition(previous, time, MenuState::MainMenu, 0.1f);
+    CC_CHECK(time == 0.1f); // same state: accumulates
+    CC_CHECK(MenuFadeAlpha(time) < 1.0f); // mid-fade
+    TrackMenuTransition(previous, time, MenuState::Settings, 0.1f);
+    CC_CHECK(previous == MenuState::Settings);
+    CC_CHECK(time == 0.0f); // changed state: resets, dt not added
+    CC_CHECK(MenuFadeAlpha(time) == 0.0f);
+    TrackMenuTransition(previous, time, MenuState::Settings, kMenuFadeInDuration);
+    CC_CHECK(MenuFadeAlpha(time) == 1.0f); // full duration: opaque-free
+    TrackMenuTransition(previous, time, MenuState::Settings, 10.0f);
+    CC_CHECK(MenuFadeAlpha(time) == 1.0f); // clamps, never exceeds 1
 }

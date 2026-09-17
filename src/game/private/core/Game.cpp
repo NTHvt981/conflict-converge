@@ -850,6 +850,9 @@ void Game::Update()
     camera.ClampToMap(static_cast<float>(map.Width()) * cc::TILE_SIZE,
                       static_cast<float>(map.Height()) * cc::TILE_SIZE, screenWidth,
                       screenHeight);
+    // Menu transition clock: edge-detects state changes for the fade-in
+    // overlay (both menu screens and in-world overlays share menu.state).
+    TrackMenuTransition(previousMenuState, menuStateTime, menu.state, GetFrameTime());
 
     // M14: menu branch — no world simulates or renders until Start (or a
     // slot load). The match code below runs untouched once worldActive.
@@ -1202,6 +1205,12 @@ void Game::Update()
         {
             // Unreachable (match states always carry a world); recover.
             menu.OpenMainMenu();
+        }
+        // Transition fade: fullscreen fade-from-black over the first moments
+        // of each screen (uniform across all branches, no per-screen edits).
+        if (const float fade = MenuFadeAlpha(menuStateTime); fade < 1.0f)
+        {
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 1.0f - fade));
         }
         EndDrawing();
         return;
@@ -2463,6 +2472,12 @@ void Game::Update()
         {
             menu.quitRequested = true;
         }
+    }
+    // Same transition fade as the menu branch: covers Playing entry and the
+    // Paused/Victory/GameOver overlays (all flow through menu.state).
+    if (const float fade = MenuFadeAlpha(menuStateTime); fade < 1.0f)
+    {
+        DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 1.0f - fade));
     }
     EndDrawing();
 }

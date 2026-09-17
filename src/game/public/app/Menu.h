@@ -107,5 +107,27 @@ inline const char *kSettingsPath = "data/settings.cfg";
 bool SaveSettings(const MenuSettings &settings, const std::string &path);
 bool LoadSettings(MenuSettings &settings, const std::string &path);
 
+// Menu transition clock (fade-in v1): call once per frame with the live
+// state; resets to 0 on change, accumulates dt otherwise. Pure, tested.
+// Game renders a fullscreen fade-from-black over the first kMenuFadeInDuration
+// seconds instead of snapping instantly between screens.
+constexpr float kMenuFadeInDuration = 0.2f;
+inline void TrackMenuTransition(MenuState &previous, float &time, MenuState current, float dt)
+{
+    if (current != previous)
+    {
+        previous = current;
+        time = 0.0f;
+    }
+    else
+    {
+        time += dt;
+    }
+}
+inline float MenuFadeAlpha(float time)
+{
+    return time >= kMenuFadeInDuration ? 1.0f : time / kMenuFadeInDuration;
+}
+
 // Any living unit (health > 0) on the given team keeps that side in the game.
 bool TeamHasUnits(const Registry &registry, int teamID);
