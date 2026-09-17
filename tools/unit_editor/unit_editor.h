@@ -49,7 +49,6 @@ struct EditorState
     bool boundBEdit = false;
     bool originXEdit = false;
     bool originYEdit = false;
-    bool showCollision = true;
     bool animatePreview = true;
     int listScroll = 0;
 

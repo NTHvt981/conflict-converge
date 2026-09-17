@@ -6,7 +6,6 @@
 #include "raygui.h"
 
 #include "Art.h"
-#include "MathUtils.h" // cc::TILE_SIZE for the collision overlay
 
 namespace
 {
@@ -156,16 +155,14 @@ void DrawStatsTab(EditorState &editor)
     }
 }
 
-// Shared sprite preview: the game's own rendering for this type at 1:1
-// (UnitSprite atlas lookup, flat-PNG fallback + note when unresolvable).
-Vector2 DrawPreview(EditorState &editor, Art &art, float panelX, float panelY,
-                    bool withCollision)
+// Sprite preview for the sprite tab: the game's own rendering for this
+// type at 1:1 (UnitSprite atlas lookup, flat-PNG fallback + note when
+// unresolvable).
+void DrawPreview(EditorState &editor, Art &art, float panelX, float panelY)
 {
     const UnitType type = static_cast<UnitType>(editor.selected);
-    const UnitConfig &config = editor.configs[editor.selected];
     GuiPanel({ panelX, panelY, 220.0f, 260.0f }, "Preview (1:1)");
-    // 32x32 body centered in the panel; footprint rect anchors at the
-    // tile-snapped top-left exactly like the game reserves it.
+    // 32x32 body centered in the panel.
     const Vector2 tileCorner = { panelX + 110.0f - 16.0f, panelY + 90.0f - 16.0f };
     const std::string sprite =
         art.UnitSprite(type, editor.animatePreview, 0, static_cast<float>(GetTime()));
@@ -181,13 +178,6 @@ Vector2 DrawPreview(EditorState &editor, Art &art, float panelX, float panelY,
         GuiLabel({ panelX + 10.0f, panelY + 218.0f, 200.0f, 20.0f },
                  "flat PNG fallback");
     }
-    if (withCollision && editor.showCollision)
-    {
-        DrawRectangleLines(static_cast<int>(tileCorner.x), static_cast<int>(tileCorner.y),
-                           config.footprintWidth * static_cast<int>(cc::TILE_SIZE),
-                           config.footprintHeight * static_cast<int>(cc::TILE_SIZE), RED);
-    }
-    return tileCorner;
 }
 
 void DrawSpritesTab(EditorState &editor, Art &art)
@@ -220,10 +210,10 @@ void DrawSpritesTab(EditorState &editor, Art &art)
     GuiCheckBox({ kX, 188.0f, 16.0f, 16.0f }, "Animate preview",
                 &editor.animatePreview);
 
-    DrawPreview(editor, art, 640.0f, 84.0f, false);
+    DrawPreview(editor, art, 640.0f, 84.0f);
 }
 
-void DrawCollisionTab(EditorState &editor, Art &art)
+void DrawCollisionTab(EditorState &editor)
 {
     UnitConfig &config = editor.configs[editor.selected];
     constexpr float kX = 240.0f;
@@ -277,13 +267,6 @@ void DrawCollisionTab(EditorState &editor, Art &art)
                   config.footprintWidth, config.footprintHeight);
     GuiLabel({ kX, 162.0f, 380.0f, 20.0f }, footprint);
     GuiLabel({ kX, 180.0f, 380.0f, 20.0f }, "Origin has no gameplay effect yet.");
-    GuiCheckBox({ kX, 206.0f, 16.0f, 16.0f }, "Show collision bound",
-                &editor.showCollision);
-    GuiLabel({ kX, 232.0f, 380.0f, 20.0f },
-             "Red = reserved tiles (64px each), not the");
-    GuiLabel({ kX, 250.0f, 380.0f, 20.0f }, "32x32 selection outline.");
-
-    DrawPreview(editor, art, 640.0f, 84.0f, true);
 }
 
 } // namespace
@@ -358,7 +341,7 @@ void DrawEditorFrame(EditorState &editor, Art &art)
     }
     else if (editor.tab == EditorState::kTabCollision)
     {
-        DrawCollisionTab(editor, art);
+        DrawCollisionTab(editor);
     }
     else
     {
