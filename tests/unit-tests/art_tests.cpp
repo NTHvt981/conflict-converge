@@ -93,8 +93,10 @@ void RunArtTests()
         CC_CHECK(!art.Init(false));
         CC_CHECK(!art.IsReady());
         CC_CHECK(art.UseRectangles());
+        CC_CHECK(!art.HasFont()); // UI typeface loads on the device path only
         art.Shutdown(); // safe without Init(true)
         CC_CHECK(art.UseRectangles());
+        CC_CHECK(!art.HasFont());
     }
 
     // --- Phase 14: SquadSlots ---

@@ -21,6 +21,9 @@ enum class TerrainType : std::uint8_t; // fwd-decl (Art.cpp includes TileMap.h)
 // buildings/<base|factory|depot>_<blue|red>.png (64/64/32px),
 // nodes/<iron|oil>.png (32px), icons/<iron|oil>.png (16px),
 // terrain_tiles/<grass|water|forest|rock>_64px.png (64px, no teams).
+// UI typeface: data/fonts/font.otf (Porto Buena, OFL — see data/fonts/OFL.txt),
+// baked at 64px for crisp DrawTextEx down to HUD sizes; missing file joins
+// the rectangle fallback (default font + flat fills, as before).
 // Atlas override: data/configs atlas JSON (schema in proto/spritedata.proto)
 // names source-rects inside sheet PNGs (e.g. placeholder infantry 8x8
 // grids). Types with atlas entries render from the atlas; types without
@@ -131,6 +134,17 @@ public:
     void DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const;
     void DrawNode(ResourceKind kind, Vector2 center) const;
     void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon
+    // UI typeface (Porto Buena, baked 64px). HasFont is false on the
+    // headless/rectangle path; UiFont is only valid to pass to raygui /
+    // DrawTextEx when HasFont() is true (never call it headless).
+    bool HasFont() const;
+    const Font &UiFont() const;
+    // Raw-text draw through the UI typeface (raygui owns control text via
+    // GuiSetFont; this covers the hand-drawn labels). Falls back to plain
+    // DrawText when art is null or down, so call sites stay one-token
+    // conversions and headless-safe. Spacing matches DrawText (size/10).
+    static void DrawUiText(const Art *art, const char *text, int x, int y, int size,
+                           Color color);
     // Terrain tile blit (64px, team-neutral). No-op when rectangles are up
     // or the type has no tile (Building/Count — headless-safe).
     void DrawTerrain(TerrainType type, Vector2 corner) const;
@@ -189,4 +203,6 @@ private:
     Texture2D nodes_[2] = {};        // [kind]
     Texture2D icons_[2] = {};        // [kind]
     Texture2D terrain_[4] = {};      // [TerrainSlot]: grass/water/forest/rock (no teams)
+    Font uiFont_ = {};               // Porto Buena (valid only when fontReady_)
+    bool fontReady_ = false;
 };

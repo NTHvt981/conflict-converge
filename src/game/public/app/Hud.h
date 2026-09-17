@@ -64,4 +64,5 @@ void DrawRepairPanel(bool *enabled, float *capFraction);
 void DrawIdleButtons(Registry &registry, int teamID);
 // QoL control-group strip (10 boxes: member counts, selection + auto-add
 // highlight). Pure scan + draw calls; call after EndMode2D.
-void DrawControlGroupStrip(Registry &registry, int teamID, int autoAddGroupBit);
+void DrawControlGroupStrip(Registry &registry, int teamID, int autoAddGroupBit,
+                           const Art *art = nullptr);

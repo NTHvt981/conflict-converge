@@ -336,7 +336,7 @@ void DrawIdleButtons(Registry &registry, int teamID)
 // QoL control-group strip: 10 numbered boxes under the stockpile panel.
 // Filled green when the group has members (sky-blue when fully selected),
 // dimmed when empty; gold border marks the auto-add group for production.
-void DrawControlGroupStrip(Registry &registry, int teamID, int autoAddGroupBit)
+void DrawControlGroupStrip(Registry &registry, int teamID, int autoAddGroupBit, const Art *art)
 {
     const float boxW = 26.0f, boxH = 20.0f, gap = 2.0f;
     for (int bit = 0; bit < 10; ++bit)
@@ -364,8 +364,8 @@ void DrawControlGroupStrip(Registry &registry, int teamID, int autoAddGroupBit)
         {
             DrawRectangleLinesEx({ x, 70.0f, boxW, boxH }, 2.0f, GOLD);
         }
-        DrawText(TextFormat("%d:%d", (bit + 1) % 10, count), static_cast<int>(x) + 2, 74, 10,
-                 BLACK);
+        Art::DrawUiText(art, TextFormat("%d:%d", (bit + 1) % 10, count), static_cast<int>(x) + 2,
+                        74, 10, BLACK);
     }
 }
 

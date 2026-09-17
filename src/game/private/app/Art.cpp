@@ -377,6 +377,14 @@ bool Art::Init(bool withDevice)
             fallback_ = true;
         }
     }
+    // UI typeface: missing file joins the rectangle fallback (default font
+    // + flat fills, exactly as before — no half-wired state).
+    uiFont_ = LoadFontEx("data/fonts/font.otf", 64, nullptr, 0);
+    fontReady_ = uiFont_.texture.id != 0;
+    if (!fontReady_)
+    {
+        fallback_ = true;
+    }
     // Atlas override: data/configs atlas JSON + sheet PNGs. Missing files
     // just leave the atlas down (legacy/rectangle paths are unaffected).
     atlasReady_ = LoadAtlas();
@@ -455,6 +463,12 @@ void Art::Shutdown()
             UnloadTexture(terrain_[s]);
             terrain_[s] = {};
         }
+    }
+    if (fontReady_)
+    {
+        UnloadFont(uiFont_);
+        uiFont_ = {};
+        fontReady_ = false;
     }
     for (const auto &entry : atlas_)
     {
@@ -673,6 +687,27 @@ void Art::DrawTerrain(TerrainType type, Vector2 corner) const
         return;
     }
     DrawTextureV(terrain_[slot], corner, WHITE);
+}
+
+bool Art::HasFont() const
+{
+    return fontReady_;
+}
+
+const Font &Art::UiFont() const
+{
+    return uiFont_;
+}
+
+void Art::DrawUiText(const Art *art, const char *text, int x, int y, int size, Color color)
+{
+    if (art != nullptr && art->fontReady_)
+    {
+        DrawTextEx(art->uiFont_, text, { static_cast<float>(x), static_cast<float>(y) },
+                   static_cast<float>(size), static_cast<float>(size) / 10.0f, color);
+        return;
+    }
+    DrawText(text, x, y, size, color);
 }
 
 void Art::DrawNode(ResourceKind kind, Vector2 center) const

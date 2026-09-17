@@ -144,6 +144,10 @@ void Game::Init()
     // M12: sprite + particle renderer. Missing files fall back to the
     // rectangle placeholders the tests exercise headless.
     art.Init(true);
+    if (art.HasFont())
+    {
+        GuiSetFont(art.UiFont()); // raygui controls render in Porto Buena
+    }
     // Poll state for edge-triggered sounds (placed/depleted counts, attack
     // rate limit, outcome transitions).
     lastBuildingCount = 0;
@@ -382,7 +386,7 @@ void Game::DrawHotkeyRemap(float cx)
 {
     // QoL remappable hotkeys (Tier 1): click a key, press the new one.
     // Stealing a claimed key needs a second click to confirm.
-    DrawText("Remap hotkeys", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
+    Art::DrawUiText(&art, "Remap hotkeys", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
     GuiLabel({ cx - 200.0f, 70.0f, 600.0f, 20.0f },
              remapArming >= 0 ? "Press a key for the armed action (Esc cancels)"
                               : "Click a key to rebind it. Digits/Alt (Tier 2) are fixed.");
@@ -878,8 +882,8 @@ void Game::Update()
         const float cx = screenWidth / 2.0f;
         if (menu.state == MenuState::MainMenu)
         {
-            DrawText("CONFLICT CONVERGE", static_cast<int>(cx) - 290, 110, 52, DARKGRAY);
-            DrawText("real-time strategy demo", static_cast<int>(cx) - 140, 175, 20, GRAY);
+            Art::DrawUiText(&art, "CONFLICT CONVERGE", static_cast<int>(cx) - 290, 110, 52, DARKGRAY);
+            Art::DrawUiText(&art, "real-time strategy demo", static_cast<int>(cx) - 140, 175, 20, GRAY);
             if (GuiButton({ cx - 130.0f, 245.0f, 260.0f, 40.0f }, "Start Skirmish"))
             {
                 menu.OpenSetup(ListMaps("data/maps"));
@@ -921,7 +925,7 @@ void Game::Update()
         }
         else if (menu.state == MenuState::SkirmishSetup)
         {
-            DrawText("Skirmish setup", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
+            Art::DrawUiText(&art, "Skirmish setup", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
             GuiLabel({ cx - 200.0f, 80.0f, 400.0f, 20.0f }, "Map (from data/*.map)");
             std::string items;
             for (const MapEntry &entry : menu.setup.maps)
@@ -939,7 +943,7 @@ void Game::Update()
             menu.SelectMap(picked);
             if (const MapEntry *sel = menu.setup.SelectedMap())
             {
-                DrawText(TextFormat("by %s  %s", sel->author.empty() ? "-" : sel->author.c_str(),
+                Art::DrawUiText(&art, TextFormat("by %s  %s", sel->author.empty() ? "-" : sel->author.c_str(),
                                     sel->path.c_str()),
                          static_cast<int>(cx) - 200, 312, 14, GRAY);
             }
@@ -981,7 +985,7 @@ void Game::Update()
         }
         else if (menu.state == MenuState::Settings)
         {
-            DrawText("Settings", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
+            Art::DrawUiText(&art, "Settings", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
             GuiLabel({ cx - 200.0f, 90.0f, 400.0f, 20.0f }, "Camera speed");
             GuiSetTooltip("WASD / edge-pan speed, pixels per second");
             GuiSlider({ cx - 200.0f, 115.0f, 400.0f, 20.0f }, "100", "800",
@@ -1038,7 +1042,7 @@ void Game::Update()
         }
         else if (menu.state == MenuState::LoadGame)
         {
-            DrawText("Load game", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
+            Art::DrawUiText(&art, "Load game", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
             const std::string slotPaths[4] = { "data/quicksave.ccpb", SaveSlotPath(1),
                                                SaveSlotPath(2), SaveSlotPath(3) };
             const char *slotLabels[4] = { "Quicksave", "Slot 1", "Slot 2", "Slot 3" };
@@ -1201,18 +1205,18 @@ void Game::Update()
             // Marker letters over their tiles.
             for (const MapNodeSpawn &spawn : editorMap.nodes)
             {
-                DrawText(spawn.kind == ResourceKind::Iron ? "I" : "O",
+                Art::DrawUiText(&art, spawn.kind == ResourceKind::Iron ? "I" : "O",
                          static_cast<int>(kOx + spawn.tile.x * kCell) + 7,
                          static_cast<int>(kOy + spawn.tile.y * kCell) + 3, 16, WHITE);
             }
             for (const cc::IVec2 &tile : editorMap.playerSpawns)
             {
-                DrawText("1", static_cast<int>(kOx + tile.x * kCell) + 7,
+                Art::DrawUiText(&art, "1", static_cast<int>(kOx + tile.x * kCell) + 7,
                          static_cast<int>(kOy + tile.y * kCell) + 3, 16, WHITE);
             }
             for (const cc::IVec2 &tile : editorMap.aiSpawns)
             {
-                DrawText("2", static_cast<int>(kOx + tile.x * kCell) + 7,
+                Art::DrawUiText(&art, "2", static_cast<int>(kOx + tile.x * kCell) + 7,
                          static_cast<int>(kOy + tile.y * kCell) + 3, 16, WHITE);
             }
             GuiLabel({ 660.0f, 150.0f, 260.0f, 20.0f }, "Left-drag paints, right-click erases");
@@ -2100,7 +2104,7 @@ void Game::Update()
             DrawRectangleV(corner, { w, h }, tint);
             const char *label =
                 building.type == BuildingType::Base ? "B" : building.type == BuildingType::Factory ? "F" : "D";
-            DrawText(label, static_cast<int>(corner.x) + 6, static_cast<int>(corner.y) + 4, 24, WHITE);
+            Art::DrawUiText(&art, label, static_cast<int>(corner.x) + 6, static_cast<int>(corner.y) + 4, 24, WHITE);
         }
         else
         {
@@ -2139,7 +2143,7 @@ void Game::Update()
                                static_cast<float>(fp.x) * cc::TILE_SIZE,
                                static_cast<float>(fp.y) * cc::TILE_SIZE },
                              2.0f, ok ? GREEN : RED);
-        DrawText(TextFormat("Placing: %s (1/2/3 type, Z/Esc done)",
+        Art::DrawUiText(&art, TextFormat("Placing: %s (1/2/3 type, Z/Esc done)",
                             BuildingTypeName(*placingType)),
                  static_cast<int>(ghostCorner.x), static_cast<int>(ghostCorner.y) - 20, 14,
                  ok ? DARKGREEN : RED);
@@ -2161,7 +2165,7 @@ void Game::Update()
         {
             art.DrawNode(node.kind, center);
         }
-        DrawText(TextFormat("%.0f", node.amount), static_cast<int>(center.x) - 12,
+        Art::DrawUiText(&art, TextFormat("%.0f", node.amount), static_cast<int>(center.x) - 12,
                  static_cast<int>(center.y) - 8, 12, DARKGRAY);
     });
 
@@ -2260,7 +2264,7 @@ void Game::Update()
             }
             const Rectangle badgeBox = SquadSelectionBox(
                 art, unit, id, !(art.UseRectangles() && !art.UseAtlas()), body);
-            DrawText(TextFormat("%d", (lowestBit + 1) % 10), static_cast<int>(badgeBox.x),
+            Art::DrawUiText(&art, TextFormat("%d", (lowestBit + 1) % 10), static_cast<int>(badgeBox.x),
                      static_cast<int>(badgeBox.y) - 14, 12, DARKBLUE);
         }
         if (unit.hitFlashTime > 0.0f)
@@ -2371,7 +2375,7 @@ void Game::Update()
     DrawSelectionPanel(registry, &art);
     DrawIdleButtons(registry, 0); // QoL: team 0 is the player
     DrawRepairPanel(&playerAutoRepair, &autoRepairCap);
-    DrawControlGroupStrip(registry, 0, autoAddGroupBit); // QoL: team 0 is the player
+    DrawControlGroupStrip(registry, 0, autoAddGroupBit, &art); // QoL: team 0 is the player
     DrawSaveSlots();
     // M13: factory panel (build buttons, queue, cancel); rally hint
     // while placing the rally point. Recomputed here (not just the sim
@@ -2386,17 +2390,17 @@ void Game::Update()
     DrawProductionPanel(resources, queue, hasFactory);
     if (settingRally)
     {
-        DrawText("Rally: left-click to place (R cancels)", 250, 364, 16, DARKGREEN);
+        Art::DrawUiText(&art, "Rally: left-click to place (R cancels)", 250, 364, 16, DARKGREEN);
     }
     if (attackGroundMode)
     {
-        DrawText("Shelling: right-click to fire (X/Esc cancels)", 250, 364, 16, RED);
+        Art::DrawUiText(&art, "Shelling: right-click to fire (X/Esc cancels)", 250, 364, 16, RED);
     }
     if (!queue.Empty())
     {
         const float ppw = 174.0f;
         const float ppx = static_cast<float>(screenWidth) - ppw - 10.0f;
-        DrawText("Producing...", static_cast<int>(ppx), screenHeight - 222, 16, GRAY);
+        Art::DrawUiText(&art, "Producing...", static_cast<int>(ppx), screenHeight - 222, 16, GRAY);
         DrawRectangle(static_cast<int>(ppx), screenHeight - 202, 150, 12, LIGHTGRAY);
         DrawRectangle(static_cast<int>(ppx), screenHeight - 202, static_cast<int>(150.0f * queue.HeadProgress()), 12, DARKGREEN);
     }
@@ -2404,7 +2408,7 @@ void Game::Update()
     // M7 Goal 3: live frame-rate readout (60 FPS target validation).
     DrawFPS(screenWidth - 170, 135);
     // M8: enemy commander status (M14: difficulty comes from the setup).
-    DrawText(TextFormat("Enemy: %s  Waves: %d", DifficultyName(worldDifficulty),
+    Art::DrawUiText(&art, TextFormat("Enemy: %s  Waves: %d", DifficultyName(worldDifficulty),
                         ai.WavesLaunched()),
              screenWidth - 170, 155, 16, GRAY);
 
@@ -2414,7 +2418,7 @@ void Game::Update()
         const std::vector<std::string> hints = ShortcutHintLines(hotkeys);
         for (std::size_t i = 0; i < hints.size(); ++i)
         {
-            DrawText(hints[i].c_str(), 8, 250 + static_cast<int>(i) * 18, 14, Fade(DARKGRAY, 0.8f));
+            Art::DrawUiText(&art, hints[i].c_str(), 8, 250 + static_cast<int>(i) * 18, 14, Fade(DARKGRAY, 0.8f));
         }
     }
 
@@ -2449,7 +2453,7 @@ void Game::Update()
                                   static_cast<int>(lines.size()) * 18 + 4, Fade(BLACK, 0.75f));
                     for (std::size_t i = 0; i < lines.size(); ++i)
                     {
-                        DrawText(lines[i].c_str(), tx, ty + static_cast<int>(i) * 18, 14,
+                        Art::DrawUiText(&art, lines[i].c_str(), tx, ty + static_cast<int>(i) * 18, 14,
                                  RAYWHITE);
                     }
                 }
@@ -2475,9 +2479,9 @@ void Game::Update()
         // QoL replay banner (no window: the world render stays visible).
         // Snapshot slideshow, not a re-simulation — production queues were
         // never saved, so units appear at snapshot boundaries.
-        DrawText(TextFormat("Replay %d/%d", replayCursor + 1, replayCount), 8, 96, 16,
+        Art::DrawUiText(&art, TextFormat("Replay %d/%d", replayCursor + 1, replayCount), 8, 96, 16,
                  DARKGRAY);
-        DrawText("Left/Right step - Esc exit", 8, 116, 14, Fade(DARKGRAY, 0.8f));
+        Art::DrawUiText(&art, "Left/Right step - Esc exit", 8, 116, 14, Fade(DARKGRAY, 0.8f));
     }
     if (menu.state == MenuState::Paused)
     {
