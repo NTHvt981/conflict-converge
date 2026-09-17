@@ -178,12 +178,13 @@ void RunArtTests()
         CC_CHECK(!art.UseAtlas()); // parsed, but no GPU textures headless
         // Idle resolves to the first idle cell.
         CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f) == "infantry_idle_0_0");
-        // Walk anim is 8x120ms; id 1 offsets 37ms in: t=0 -> frame 0.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.0f) == "infantry_walk_0_0");
+        // Walk anim is 4x120ms (run sheet column 6 = right-facing);
+        // id 1 offsets 37ms in: t=0 -> frame 0.
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.0f) == "infantry_walk_0_6");
         // t=130ms + 37 offset = 167 -> frame 1.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f) == "infantry_walk_0_1");
-        // Per-entity desync: id 200 offsets 200*37%960=680ms in -> frame 5 at t=0.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 200, 0.0f) == "infantry_walk_0_5");
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f) == "infantry_walk_1_6");
+        // Per-entity desync: id 200 offsets 200*37%480=200ms in -> frame 1 at t=0.
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 200, 0.0f) == "infantry_walk_1_6");
         // Deterministic: same args -> same frame.
         CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f) ==
                  art.UnitSprite(UnitType::Infantry, true, 1, 0.13f));

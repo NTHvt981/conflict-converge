@@ -192,24 +192,27 @@ void RunSpriteDataTests()
         CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
     }
 
-    // --- real data/configs atlas files: 2 prototype sheets, 16 sprites, 2 anims ---
+    // --- real data/configs atlas files: 2 prototype sheets, 40 sprites, 2 anims ---
     {
         SpriteSheetData sheet;
         CC_CHECK(LoadSpriteSheet(sheet));
         CC_CHECK(sheet.textures.size() == 2);
-        CC_CHECK(sheet.sprites.size() == 16); // 8 idle + 8 walk, no masks
+        CC_CHECK(sheet.sprites.size() == 40); // 8 idle + 32 walk (8 dirs x 4)
         const SpriteDefInfo *first = FindSpriteByName(sheet, "infantry_idle_0_0");
         CC_CHECK(first != nullptr && first->id == 0 &&
                  first->texture == "prototype_infantry_idle");
         CC_CHECK(first->bounds.left == 0 && first->bounds.top == 0);
         CC_CHECK(first->bounds.right == 16 && first->bounds.bottom == 32);
         CC_CHECK(first->maskSprite == 0); // prototype has no mask sheets: full tint
-        const SpriteDefInfo *last = FindSpriteByName(sheet, "infantry_walk_0_7");
-        CC_CHECK(last != nullptr && last->id == 107 &&
+        // Walk grid is 8 direction columns x 4 frames; the wired anim uses
+        // column 6 (right): ids 106/114/122/130.
+        const SpriteDefInfo *last = FindSpriteByName(sheet, "infantry_walk_3_6");
+        CC_CHECK(last != nullptr && last->id == 130 &&
                  last->texture == "prototype_infantry_run");
-        CC_CHECK(last->bounds.left == 112 && last->bounds.top == 0);
-        CC_CHECK(last->bounds.right == 128 && last->bounds.bottom == 32);
+        CC_CHECK(last->bounds.left == 96 && last->bounds.top == 96);
+        CC_CHECK(last->bounds.right == 112 && last->bounds.bottom == 128);
         const SpriteAnimInfo *walk = FindAnimByName(sheet, "infantry_walk");
-        CC_CHECK(walk != nullptr && walk->loop && walk->frames.size() == 8);
+        CC_CHECK(walk != nullptr && walk->loop && walk->frames.size() == 4);
+        CC_CHECK(walk->frames[0].sprite == 106 && walk->frames[3].sprite == 130);
     }
 }

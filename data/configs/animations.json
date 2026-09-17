@@ -4,14 +4,10 @@
       "frames": [{ "sprite": 0, "durationMs": 500 }] },
     { "name": "infantry_walk", "id": 1, "loop": true,
       "frames": [
-        { "sprite": 100, "durationMs": 120 },
-        { "sprite": 101, "durationMs": 120 },
-        { "sprite": 102, "durationMs": 120 },
-        { "sprite": 103, "durationMs": 120 },
-        { "sprite": 104, "durationMs": 120 },
-        { "sprite": 105, "durationMs": 120 },
         { "sprite": 106, "durationMs": 120 },
-        { "sprite": 107, "durationMs": 120 }
+        { "sprite": 114, "durationMs": 120 },
+        { "sprite": 122, "durationMs": 120 },
+        { "sprite": 130, "durationMs": 120 }
       ] }
   ]
 }

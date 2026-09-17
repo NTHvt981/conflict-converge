@@ -5,7 +5,7 @@
       "rows": 1, "cols": 8, "cellW": 16, "cellH": 32,
       "origin": { "x": 8, "y": 16 } },
     { "texture": "prototype_infantry_run", "prefix": "infantry_walk", "startId": 100,
-      "rows": 1, "cols": 8, "cellW": 16, "cellH": 32,
+      "rows": 4, "cols": 8, "cellW": 16, "cellH": 32,
       "origin": { "x": 8, "y": 16 } }
   ]
 }

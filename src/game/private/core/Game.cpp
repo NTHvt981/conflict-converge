@@ -43,7 +43,7 @@ Rectangle SquadSelectionBox(const Art &art, const Unit &unit, Entity id, bool at
     // 32x32 flat PNGs. Revisit if atlas art diversifies per type.
     const bool atlasCells =
         art.UseAtlas() && !art.UnitSprite(unit.type, false, id, 0.0f).empty();
-    const float s = slotScale * Art::BaseArtScale(unit.type);
+    const float s = Art::BaseArtScale(unit.type);
     float x0, y0, x1, y1;
     if (atlasCells)
     {
@@ -2011,7 +2011,7 @@ void Game::Update()
             // "<type>_idle_0_0"; types without atlas entries fall through
             // to the legacy DrawUnit (or a tinted rect when that is down).
             std::array<Vector2, 6> slots;
-            float slotScale = 1.0f;
+            float slotScale = 1.0f; // cluster layout only; render scale is BaseArtScale
             const int count = SquadSlots(unit.type, id, UnitHealthFraction(unit), slots, slotScale);
             const bool moving = unit.state == UnitState::Moving;
             const float animTime = static_cast<float>(GetTime());
@@ -2026,7 +2026,7 @@ void Game::Update()
                     if (!sprite.empty())
                     {
                         art.DrawAtlasFrame(sprite, corner, tint,
-                                           slotScale * Art::BaseArtScale(unit.type));
+                                           Art::BaseArtScale(unit.type));
                         continue;
                     }
                 }
