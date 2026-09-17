@@ -185,6 +185,22 @@ void Game::StartMatch(const std::string &mapPath, AIDifficulty difficulty)
     hasFactory = false;
     camera.view.zoom = 1.0f;
     minimap.elapsed = minimap.refreshInterval; // repaint for the new map now
+    // QoL snapshot replay: fresh recording for this match (last match only;
+    // the directory is cleared and frames renumbered from zero).
+    replayRecording = true;
+    replayTimer = 0.0f;
+    replayIndex = 0;
+    replayCount = 0;
+    replayCursor = 0;
+    replayPlayTimer = 0.0f;
+    {
+        std::error_code ec;
+        std::filesystem::create_directories(kReplayDir, ec);
+        for (int i = 0; i < kReplayMaxFrames; ++i)
+        {
+            std::filesystem::remove(ReplayFramePath(kReplayDir, i), ec);
+        }
+    }
     Announce(EventType::MenuAction);
     Announce(EventType::MatchStarted);
 }
@@ -195,8 +211,63 @@ void Game::QuitToMenu()
     ResetSkirmish(skirmish);
     worldActive = false;
     worldIs2v2 = false;
+    replayRecording = false; // QoL: keep this match's frames for the viewer
     Announce(EventType::MenuAction);
     menu.OpenMainMenu();
+}
+
+void Game::StepReplay(int dir)
+{
+    if (replayCount <= 0)
+    {
+        return;
+    }
+    replayCursor += dir;
+    if (replayCursor < 0)
+    {
+        replayCursor = 0;
+    }
+    if (replayCursor >= replayCount)
+    {
+        replayCursor = replayCount - 1;
+    }
+    if (LoadWorld(worldState, ReplayFramePath(kReplayDir, replayCursor)))
+    {
+        replayPlayTimer = 0.0f;
+        minimap.elapsed = minimap.refreshInterval; // repaint for the frame now
+    }
+}
+
+bool Game::WatchLastReplay()
+{
+    const int count = ReplayFrameCount(kReplayDir);
+    if (count <= 0)
+    {
+        return false;
+    }
+    ResetSkirmish(skirmish);
+    if (!LoadWorld(worldState, ReplayFramePath(kReplayDir, 0)))
+    {
+        return false;
+    }
+    replayRecording = false;
+    replayCount = count;
+    replayCursor = 0;
+    replayPlayTimer = 0.0f;
+    worldActive = true;
+    worldIs2v2 = false;
+    settingRally = false;
+    dragging = false;
+    rightDragging = false;
+    pendingRightClick = false;
+    rightDragDist = 0.0f;
+    attackGroundMode = false;
+    hasFactory = false;
+    camera.view.zoom = 1.0f;
+    minimap.elapsed = minimap.refreshInterval;
+    menu.state = MenuState::ReplayViewer;
+    Announce(EventType::MenuAction);
+    return true;
 }
 
 void Game::BindShortcuts()
@@ -417,9 +488,28 @@ void Game::BindShortcuts()
             camera.view.target = pingPos;
         }
     });
+    input.shortcuts.Bind(KEY_LEFT, [&] {
+        // QoL replay viewer: step one frame back (auto-play resumes after).
+        if (menu.state == MenuState::ReplayViewer)
+        {
+            StepReplay(-1);
+        }
+    });
+    input.shortcuts.Bind(KEY_RIGHT, [&] {
+        // QoL replay viewer: step one frame forward.
+        if (menu.state == MenuState::ReplayViewer)
+        {
+            StepReplay(1);
+        }
+    });
     input.shortcuts.Bind(KEY_ESCAPE, [&] {
         // M14: Esc backs out of menu screens; in-match it keeps the M2
         // deselect behavior (Paused resumes).
+        if (menu.state == MenuState::ReplayViewer)
+        {
+            QuitToMenu(); // viewer teardown (world was a loaded snapshot)
+            return;
+        }
         if (!worldActive)
         {
             if (menu.state == MenuState::SkirmishSetup || menu.state == MenuState::Settings ||
@@ -681,6 +771,17 @@ void Game::Update()
                 Announce(EventType::MenuAction);
                 menu.OpenMainMenu();
             }
+            // QoL snapshot replay entry: enabled when the last match left
+            // frames behind. Loads frame 0 and freezes the sim (viewer).
+            if (ReplayFrameCount(kReplayDir) <= 0)
+            {
+                GuiDisable();
+            }
+            if (GuiButton({ cx - 200.0f, 350.0f, 400.0f, 40.0f }, "Watch last replay"))
+            {
+                WatchLastReplay();
+            }
+            GuiEnable();
         }
         else
         {
@@ -1052,7 +1153,6 @@ void Game::Update()
             }
         });
         art.ParticlesPool().Update(dt);
-        pings.Update(dt); // QoL: age out attack/loss markers
         attackSfxTimer -= dt;
         bool windingUp = false;
         registry.Each<Unit>([&](Entity, const Unit &unit) {
@@ -1124,6 +1224,23 @@ void Game::Update()
             Announce(EventType::ProductionOrdered);
         }
         lastQueueSize = static_cast<int>(queue.Size());
+        // QoL snapshot replay: capture a full-state frame every 2s while
+        // the match runs (best-effort: a failed write retries next tick
+        // without consuming the frame number; stops at the frame cap).
+        if (replayRecording)
+        {
+            replayTimer += dt;
+            if (replayTimer >= 2.0f)
+            {
+                replayTimer = 0.0f;
+                if (replayIndex < kReplayMaxFrames &&
+                    SaveWorld(worldState, ReplayFramePath(kReplayDir, replayIndex)))
+                {
+                    ++replayIndex;
+                    replayCount = replayIndex;
+                }
+            }
+        }
         // QoL building auto-repair (player team 0 only; AI economy is
         // soak-tuned and Engineers already repair free — see Building.h).
         if (playerAutoRepair)
@@ -1230,6 +1347,23 @@ void Game::Update()
     audio.ApplySettings(menu.settings.masterVolume, menu.settings.musicVolume,
                         menu.settings.sfxVolume, menu.settings.mute);
     audio.UpdateMusic();
+
+    // QoL replay viewer auto-advance (outside the Playing sim gate: the
+    // viewer never simulates). Steps at the recording cadence; holds on
+    // the last frame instead of wrapping.
+    if (menu.state == MenuState::ReplayViewer && replayCount > 0)
+    {
+        replayPlayTimer += GetFrameTime();
+        if (replayPlayTimer >= 2.0f)
+        {
+            replayPlayTimer = 0.0f;
+            if (replayCursor + 1 < replayCount)
+            {
+                StepReplay(1);
+            }
+        }
+    }
+    pings.Update(GetFrameTime()); // QoL: UI clock — ages in menus/viewer too
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
@@ -1519,6 +1653,15 @@ void Game::Update()
     }
 
     // M6 Goal 3: menu overlays sit on top of the frame.
+    if (menu.state == MenuState::ReplayViewer)
+    {
+        // QoL replay banner (no window: the world render stays visible).
+        // Snapshot slideshow, not a re-simulation — production queues were
+        // never saved, so units appear at snapshot boundaries.
+        DrawText(TextFormat("Replay %d/%d", replayCursor + 1, replayCount), 8, 96, 16,
+                 DARKGRAY);
+        DrawText("Left/Right step - Esc exit", 8, 116, 14, Fade(DARKGRAY, 0.8f));
+    }
     if (menu.state == MenuState::Paused)
     {
         DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));

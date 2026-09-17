@@ -42,3 +42,16 @@ bool LoadWorld(const WorldState &world, const std::string &path);
 // M13: named save slots (1..3, clamped) under data/. The F5 quicksave path
 // stays separate.
 std::string SaveSlotPath(int slot);
+
+// QoL snapshot replays: periodic full-state SaveWorld captures, one file
+// per frame (replay_NNNN.ccpb in dir), played back by loading snapshots in
+// order. Reuses the save pipeline verbatim — NOT deterministic lockstep
+// (variable-dt sim can't re-simulate bit-identically), so expect a
+// full-state slideshow, not a re-simulation. Production queues aren't
+// saved (existing format limitation): units appear at snapshot boundaries.
+inline const char *kReplayDir = "data/replays";
+inline constexpr int kReplayMaxFrames = 300; // 10 min at the 2s cadence
+// Frame file path (zero-padded, sorts lexically = chronologically).
+std::string ReplayFramePath(const std::string &dir, int index);
+// How many contiguous frames exist starting at 0 (stops at the first gap).
+int ReplayFrameCount(const std::string &dir);

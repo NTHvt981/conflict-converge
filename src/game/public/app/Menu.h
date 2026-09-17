@@ -23,7 +23,10 @@ enum class MenuState
     Playing,
     Paused,
     GameOver,
-    Victory
+    Victory,
+    ReplayViewer // QoL snapshot replay: world renders from a loaded
+                 // snapshot, sim stays frozen (Playing-gated systems skip
+                 // this state exactly like they skip menus)
 };
 
 struct MenuSettings

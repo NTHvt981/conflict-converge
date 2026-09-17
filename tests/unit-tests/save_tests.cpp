@@ -220,5 +220,49 @@ void RunSaveGameTests()
     CC_CHECK(!LoadWorld(victimState, path));
     CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
+    // --- QoL replay sequencing: frames save/load in order with motion ---
+    {
+        const std::string dir =
+            (std::filesystem::temp_directory_path() / "cc_replay_test").string();
+        std::error_code ec;
+        std::filesystem::create_directories(dir, ec);
+        Fixture actor;
+        Unit walker;
+        walker.type = UnitType::Infantry;
+        ApplyBaseStats(walker);
+        walker.teamID = 0;
+        walker.speed = 64.0f;
+        walker.position = cc::ToRaylib(cc::TileToWorld(1, 1));
+        const Entity walkerId = actor.registry.Create();
+        actor.registry.Add(walkerId, walker);
+        IssueMoveOrder(*actor.registry.Get<Unit>(walkerId),
+                       cc::ToRaylib(cc::TileToWorld(5, 1)));
+
+        float expectedX[3] = {};
+        for (int frame = 0; frame < 3; ++frame)
+        {
+            UpdateUnit(walkerId, actor.registry, actor.map, 1.0f);
+            expectedX[frame] = actor.registry.Get<Unit>(walkerId)->position.x;
+            CC_CHECK(SaveWorld(actor.State(), ReplayFramePath(dir, frame)));
+        }
+        CC_CHECK(ReplayFrameCount(dir) == 3);
+        CC_CHECK(ReplayFramePath(dir, 0).find("replay_0000.ccpb") != std::string::npos);
+
+        // Reload each frame in order: positions match the recorded motion.
+        for (int frame = 0; frame < 3; ++frame)
+        {
+            Fixture viewer;
+            CC_CHECK(LoadWorld(viewer.State(), ReplayFramePath(dir, frame)));
+            Entity seen = kInvalidEntity;
+            viewer.registry.Each<Unit>([&](Entity id, const Unit &) { seen = id; });
+            CC_CHECK(seen != kInvalidEntity);
+            CC_CHECK(Near(viewer.registry.Get<Unit>(seen)->position.x, expectedX[frame]));
+        }
+        // A gap stops the count (stops at first missing frame).
+        std::filesystem::remove(ReplayFramePath(dir, 1), ec);
+        CC_CHECK(ReplayFrameCount(dir) == 1);
+        std::filesystem::remove_all(dir, ec);
+    }
+
     std::remove(path.c_str());
 }

@@ -60,6 +60,10 @@ private:
     void StartMatch(const std::string &mapPath, AIDifficulty difficulty);
     void QuitToMenu();
     void BindShortcuts();
+    // QoL snapshot replay viewer: step the loaded snapshot cursor
+    // (clamped, minimap poked). Enter via WatchLastReplay.
+    void StepReplay(int dir);
+    bool WatchLastReplay();
 
     // Former boot-level locals in main(), same order.
     Audio audio;
@@ -109,6 +113,13 @@ private:
     // release decides click (order) vs. drag (pan), past a pixel threshold.
     bool pendingRightClick = false;
     float rightDragDist = 0.0f;
+    // QoL snapshot replay recording (this match) + viewer cursor.
+    bool replayRecording = false;
+    float replayTimer = 0.0f;
+    int replayIndex = 0;
+    int replayCount = 0; // frames available for the viewer
+    int replayCursor = 0; // currently shown frame
+    float replayPlayTimer = 0.0f; // auto-advance clock in the viewer
     bool showHints = true;
     int setupScroll = 0;
     // QoL control groups: production auto-joins this group bit when >= 0
