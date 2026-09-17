@@ -23,13 +23,13 @@
         "origin"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "user image-generation tool (unspecified)",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py over user-modified AI voxel models",
         "creator": "user",
         "created_at": "2026-09-17",
-        "license": "project-owned (user-provided; confirm terms)",
+        "license": "base models AI-generated (generator terms apply — confirm); user voxel mods + conversion project-owned",
         "attribution": "",
-        "prompt_or_source_record": "test_sandbox/prototype_infantry_idle.png"
+        "prompt_or_source_record": "AI voxel base, user-modified; tools/convert_vox_to_sprite.py → test_sandbox/prototype_infantry_idle.png"
       },
       "verification": {
         "native_scale_reviewed": true,
@@ -60,13 +60,13 @@
         "stride-phase-per-column"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "user image-generation tool (unspecified)",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py over user-modified AI voxel models",
         "creator": "user",
         "created_at": "2026-09-17",
-        "license": "project-owned (user-provided; confirm terms)",
+        "license": "base models AI-generated (generator terms apply — confirm); user voxel mods + conversion project-owned",
         "attribution": "",
-        "prompt_or_source_record": "test_sandbox/prototype_infantry_run.png"
+        "prompt_or_source_record": "AI voxel base, user-modified; tools/convert_vox_to_sprite.py → test_sandbox/prototype_infantry_run.png"
       },
       "verification": {
         "native_scale_reviewed": true,
@@ -96,13 +96,13 @@
         "origin"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets as reference/edit input; keep launcher silhouette distinct from rifle"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; keep launcher silhouette distinct from rifle"
       },
       "verification": {
         "native_scale_reviewed": false,
@@ -133,13 +133,13 @@
         "stride-phase-per-column"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets as reference/edit input; keep launcher silhouette distinct from rifle"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; keep launcher silhouette distinct from rifle"
       },
       "verification": {
         "native_scale_reviewed": false,
@@ -169,13 +169,13 @@
         "origin"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets as reference/edit input; tool/wrench must read at 16px"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; tool/wrench must read at 16px"
       },
       "verification": {
         "native_scale_reviewed": false,
@@ -206,13 +206,13 @@
         "stride-phase-per-column"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets as reference/edit input; tool/wrench must read at 16px"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; tool/wrench must read at 16px"
       },
       "verification": {
         "native_scale_reviewed": false,
@@ -242,13 +242,13 @@
         "origin"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; vehicle silhouette, wheels/tracks per facing"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; vehicle silhouette, wheels/tracks per facing"
       },
       "verification": {
         "native_scale_reviewed": false,
@@ -279,13 +279,13 @@
         "hull-stable-per-column"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; vehicle silhouette, wheels/tracks per facing"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; vehicle silhouette, wheels/tracks per facing"
       },
       "verification": {
         "native_scale_reviewed": false,
@@ -315,13 +315,13 @@
         "origin"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; long barrel must read at 16px per facing"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; long barrel must read at 16px per facing"
       },
       "verification": {
         "native_scale_reviewed": false,
@@ -352,13 +352,13 @@
         "hull-stable-per-column"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; long barrel must read at 16px per facing"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; long barrel must read at 16px per facing"
       },
       "verification": {
         "native_scale_reviewed": false,
@@ -388,13 +388,13 @@
         "origin"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; turret + tracks per facing, lighter than heavy"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; turret + tracks per facing, lighter than heavy"
       },
       "verification": {
         "native_scale_reviewed": false,
@@ -425,13 +425,13 @@
         "hull-stable-per-column"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; turret + tracks per facing, lighter than heavy"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; turret + tracks per facing, lighter than heavy"
       },
       "verification": {
         "native_scale_reviewed": false,
@@ -461,13 +461,13 @@
         "origin"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; bulkiest silhouette, must still fit 16x32 cells"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; bulkiest silhouette, must still fit 16x32 cells"
       },
       "verification": {
         "native_scale_reviewed": false,
@@ -498,13 +498,13 @@
         "hull-stable-per-column"
       ],
       "source": {
-        "kind": "generated",
-        "url_or_tool": "",
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py (pending: voxel model first)",
         "creator": "",
         "created_at": "",
         "license": "",
         "attribution": "",
-        "prompt_or_source_record": "use prototype-infantry sheets for palette/scale reference only; bulkiest silhouette, must still fit 16x32 cells"
+        "prompt_or_source_record": "voxel model (AI base, user-modified) → tools/convert_vox_to_sprite.py; prototype sheets are the style reference; bulkiest silhouette, must still fit 16x32 cells"
       },
       "verification": {
         "native_scale_reviewed": false,

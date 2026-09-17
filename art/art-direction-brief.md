@@ -56,7 +56,12 @@ system → manifest (`asset-manifest.json`) → approve target → families.
 - Color space: sRGB PNG, no embedded profiles needed.
 - Texture/poly/material budgets: trivial (sub-3KB sheets); no budget
   pressure. No texture packing yet (one PNG per sheet).
-- Naming and folders: source `test_sandbox/<type>_{idle,run}.png` →
+- Naming and folders:
+- Source pipeline: AI voxel base model → user voxel edits (.vox kept
+  beside the PNGs) → tools/convert_vox_to_sprite.py (8 directions,
+  recentered, multiples of 16px) → test_sandbox PNGs → normalized into
+  data/sprites/units/ + data/configs atlas JSON. Provenance per asset in
+  asset-manifest.json. source `test_sandbox/<type>_{idle,run}.png` →
   runtime `data/sprites/units/<type>_{idle,run}.png`; atlas entries in
   `data/configs/{textures,sprites,animations}.json`; animation names
   `<prefix>_walk_<0-7>`, idle cells `<prefix>_idle_0_<0-7>`.
