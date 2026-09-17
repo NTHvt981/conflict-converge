@@ -19,6 +19,41 @@
 
 namespace
 {
+// Selection outline box: union of the rendered sprite rects. Atlas
+// clusters (and 2x prototype art) spread past the fixed 32x32 body inset,
+// so the red border follows the sprites instead of slicing through them.
+// Soldier i centers on corner+(16,16) — the 16x32 atlas cell
+// origin-aligned to the 32x32 body center — with half-extents (8s, 16s),
+// s = slotScale * BaseArtScale. Rectangle tier (no per-sprite geometry)
+// keeps the body. For a 1x single unit the union IS the body, so default
+// rendering is pixel-identical to before.
+Rectangle SquadSelectionBox(const Unit &unit, Entity id, bool atlasPath, Rectangle body)
+{
+    if (!atlasPath)
+    {
+        return body;
+    }
+    std::array<Vector2, 6> slots;
+    float slotScale = 1.0f;
+    const int count = SquadSlots(unit.type, id, UnitHealthFraction(unit), slots, slotScale);
+    const float s = slotScale * Art::BaseArtScale(unit.type);
+    const float hx = 8.0f * s;
+    const float hy = 16.0f * s;
+    float x0 = unit.position.x + slots[0].x + 16.0f - hx;
+    float y0 = unit.position.y + slots[0].y + 16.0f - hy;
+    float x1 = unit.position.x + slots[0].x + 16.0f + hx;
+    float y1 = unit.position.y + slots[0].y + 16.0f + hy;
+    for (int i = 1; i < count; ++i)
+    {
+        const float cx = unit.position.x + slots[i].x + 16.0f;
+        const float cy = unit.position.y + slots[i].y + 16.0f;
+        x0 = std::min(x0, cx - hx);
+        y0 = std::min(y0, cy - hy);
+        x1 = std::max(x1, cx + hx);
+        y1 = std::max(y1, cy + hy);
+    }
+    return { x0 - 2.0f, y0 - 2.0f, (x1 - x0) + 4.0f, (y1 - y0) + 4.0f };
+}
 // M14: setup-screen and HUD difficulty label.
 const char *DifficultyName(AIDifficulty difficulty)
 {
@@ -1979,12 +2014,18 @@ void Game::Update()
         }
         if (unit.isSelected)
         {
-            DrawRectangleLinesEx(body, 3.0f, RED);
+            // Border follows the rendered sprites (clusters/2x art spread
+            // past the body); the bar floats above the border with a gap
+            // instead of glued to the body top, where tall sprites touched it.
+            const Rectangle selBox = SquadSelectionBox(
+                unit, id, !(art.UseRectangles() && !art.UseAtlas()), body);
+            DrawRectangleLinesEx(selBox, 3.0f, RED);
             const float fraction = UnitHealthFraction(unit);
-            DrawRectangle(static_cast<int>(body.x), static_cast<int>(body.y) - 8,
-                          static_cast<int>(body.width), 5, Fade(RED, 0.6f));
-            DrawRectangle(static_cast<int>(body.x), static_cast<int>(body.y) - 8,
-                          static_cast<int>(body.width * fraction), 5, GREEN);
+            const float barY = selBox.y - 7.0f;
+            DrawRectangle(static_cast<int>(selBox.x), static_cast<int>(barY),
+                          static_cast<int>(selBox.width), 5, Fade(RED, 0.6f));
+            DrawRectangle(static_cast<int>(selBox.x), static_cast<int>(barY),
+                          static_cast<int>(selBox.width * fraction), 5, GREEN);
             // QoL range preview: attack-radius ring for selected units.
             if (unit.attackRange > 0)
             {
@@ -1994,14 +2035,17 @@ void Game::Update()
         }
         if (unit.controlGroups != 0)
         {
-            // QoL control-group badge: lowest group number, above the bar.
+            // QoL control-group badge: lowest group number, above the bar
+            // (same sprite-following box, so it never lands on a soldier).
             int lowestBit = 0;
             while (lowestBit < 9 && (unit.controlGroups & (1u << lowestBit)) == 0)
             {
                 ++lowestBit;
             }
-            DrawText(TextFormat("%d", (lowestBit + 1) % 10), static_cast<int>(body.x),
-                     static_cast<int>(body.y) - 22, 12, DARKBLUE);
+            const Rectangle badgeBox = SquadSelectionBox(
+                unit, id, !(art.UseRectangles() && !art.UseAtlas()), body);
+            DrawText(TextFormat("%d", (lowestBit + 1) % 10), static_cast<int>(badgeBox.x),
+                     static_cast<int>(badgeBox.y) - 14, 12, DARKBLUE);
         }
         if (unit.hitFlashTime > 0.0f)
         {

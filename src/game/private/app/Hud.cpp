@@ -137,7 +137,10 @@ void DrawSelectionPanel(Registry &registry)
 {
     const Entity selected = SelectedUnit(registry);
     const Unit *unit = registry.Get<Unit>(selected);
-    GuiPanel({ 250.0f, 386.0f, 300.0f, 56.0f }, "Selection");
+    // Bottom-left anchored (follows window height; identical to the old
+    // fixed y on a 450px window).
+    const float y = static_cast<float>(GetScreenHeight()) - 64.0f;
+    GuiPanel({ 8.0f, y, 300.0f, 56.0f }, "Selection");
     const char *text = "No selection";
     std::string summary;
     if (unit != nullptr)
@@ -169,19 +172,22 @@ void DrawSelectionPanel(Registry &registry)
             text = summary.c_str();
         }
     }
-    GuiLabel({ 262.0f, 410.0f, 280.0f, 20.0f }, text);
+    GuiLabel({ 20.0f, y + 24.0f, 280.0f, 20.0f }, text);
 }
 
 void DrawRepairPanel(bool *enabled, float *capFraction)
 {
-    GuiPanel({ 720.0f, 386.0f, 150.0f, 56.0f }, "Repair");
-    GuiCheckBox({ 730.0f, 392.0f, 16.0f, 16.0f }, "Auto", enabled);
-    GuiSlider({ 730.0f, 414.0f, 130.0f, 16.0f }, "Cap", "", capFraction, 0.0f, 1.0f);
+    const float y = static_cast<float>(GetScreenHeight()) - 64.0f;
+    GuiPanel({ 478.0f, y, 150.0f, 56.0f }, "Repair");
+    GuiCheckBox({ 488.0f, y + 6.0f, 16.0f, 16.0f }, "Auto", enabled);
+    GuiSlider({ 488.0f, y + 28.0f, 130.0f, 16.0f }, "Cap", "", capFraction, 0.0f, 1.0f);
 }
 
 void DrawIdleButtons(Registry &registry, int teamID)
 {
-    GuiPanel({ 560.0f, 386.0f, 150.0f, 56.0f }, "Idle");
+    GuiPanel({ 318.0f, static_cast<float>(GetScreenHeight()) - 64.0f, 150.0f, 56.0f },
+             "Idle");
+    const float y = static_cast<float>(GetScreenHeight()) - 64.0f;
     const int workers = CountIdle(registry, teamID, true);
     const int army = CountIdle(registry, teamID, false);
     char label[32];
@@ -190,7 +196,7 @@ void DrawIdleButtons(Registry &registry, int teamID)
     {
         GuiDisable();
     }
-    if (GuiButton({ 570.0f, 392.0f, 130.0f, 20.0f }, label))
+    if (GuiButton({ 328.0f, y + 6.0f, 130.0f, 20.0f }, label))
     {
         SelectIdle(registry, teamID, true);
     }
@@ -203,7 +209,7 @@ void DrawIdleButtons(Registry &registry, int teamID)
     {
         GuiDisable();
     }
-    if (GuiButton({ 570.0f, 416.0f, 130.0f, 20.0f }, label))
+    if (GuiButton({ 328.0f, y + 30.0f, 130.0f, 20.0f }, label))
     {
         SelectIdle(registry, teamID, false);
     }
