@@ -1,5 +1,25 @@
 # Plan: Fix two bugs found while auditing the QoL plans
 
+## Implementation status: FULLY SHIPPED (updated 2026-09-17, commit `593f210`)
+
+- Bug 1 as designed: `ClearOrders` exported (`Unit.h`/`Unit.cpp`), called
+  at all three gap sites (`Game.cpp` single-move, squad + line FP in
+  `Formation.cpp`); queue-clear moved inside both formation functions
+  (took the optional consolidation — `IssueFormationMoveFP` had exactly
+  one game caller, so its `Game.cpp` pre-loop is gone).
+- Bug 2 with one deviation: the centroid resolution shipped as
+  `ResolvePlayerRetreatHome(registry, rallyPos)` in `Unit.cpp`/`Unit.h`
+  instead of a verbatim inline block in `Game.cpp` (identical values;
+  an inline block is unreachable from `retreat_tests.cpp` without
+  duplicating the logic in the test). `Game.cpp` is a 2-line call;
+  `RetreatIfLowHP` signature untouched.
+- Tests: 4 new `order_queue_tests` cases (repair/attack-ground/patrol
+  flag clearing + line queue clear), 2 new `retreat_tests` cases
+  (multi-base where map-center and army-nearest disagree + rally
+  priority). Suite `checks: 3463, failures: 0` (+16); soak rungs decide
+  with the expected winners — unchanged by construction (the soak drives
+  `AICommander` directly; none of the changed lines execute there).
+
 Two real, currently-reachable bugs were found while verifying the shipped QoL work against
 `plans/QoL_*.md`. Both are isolated, small fixes. Full test suite is green (3447/3447) and both
 soak trajectories are unaffected today — these bugs are in paths the existing tests don't exercise
