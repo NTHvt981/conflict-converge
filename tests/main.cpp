@@ -56,6 +56,7 @@ void RunCommandUiTests();
 void RunSkirmishTests();
 void RunFootprintTests();
 void RunSpriteDataTests();
+void RunUnitConfigTests();
 void RunMovementStallTests();
 
 int main()
@@ -111,6 +112,7 @@ int main()
     RunSkirmishTests();
     RunFootprintTests();
     RunSpriteDataTests();
+    RunUnitConfigTests();
     RunMovementStallTests();
 
     const TestStats &stats = CcTestStats();

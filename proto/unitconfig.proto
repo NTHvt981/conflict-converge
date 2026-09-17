@@ -1,0 +1,55 @@
+// Conflict Converge per-unit-type config (JSON, parsed via protobuf-JSON).
+// One file per UnitType in data/configs/<lowercased-enum>.json (e.g.
+// data/configs/infantry.json). The game keeps its compiled-in defaults
+// (UnitStats.cpp kTable + the ApplyBaseStats footprint rule); a file only
+// overrides the entries it provides, and a missing directory degrades to
+// all-defaults (see plans/Standalone_Unit_Config_Editor_Plan.md).
+//
+// armor_type/damage_type are strings holding the C++ enum names ("RUBBER",
+// "KINETIC"), NOT proto enums: a proto enum would be a second source of
+// truth that drifts when Unit.h gains a value, while strings keep the C++
+// enums canonical with validation at load. Protobuf JSON accepts both
+// camelCase and the original snake_case names on parse; output uses
+// camelCase (attackPower, footprintWidth, ...).
+syntax = "proto3";
+
+package cc.unitconfig;
+
+message UnitStatsConfig
+{
+    // All numerics are `optional` so "missing" (fall back to the
+    // compiled-in default) stays distinguishable from an explicit zero.
+    // armor_type/damage_type need no presence: "" is never a valid enum
+    // name, so missing and empty both mean "use the default".
+    optional float health = 1;
+    string armor_type = 2;  // ArmorType enum name, e.g. "RUBBER"
+    string damage_type = 3; // DamageType enum name, e.g. "KINETIC"
+    optional int32 attack_power = 4;
+    optional int32 attack_range = 5; // pixels (64px tiles)
+    optional float cooldown_time = 6;
+    optional float speed = 7;        // pixels/sec
+    optional float sight_range = 8;  // pixels
+}
+
+message UnitCollisionConfig
+{
+    int32 footprint_width = 1;  // tiles
+    int32 footprint_height = 2; // tiles
+}
+
+message UnitArtConfig
+{
+    string sprite_prefix = 1;     // replaces the UnitFile() switch
+    string atlas_idle_prefix = 2; // SpriteAnim name in sprites.json, or "" = flat-PNG fallback
+    string atlas_walk_prefix = 3; // same, for the moving state
+}
+
+// One UnitConfig per file (no wrapping array, no "units" key); the "type"
+// field must match the UnitType enum name exactly (and the file's type).
+message UnitConfig
+{
+    string type = 1;
+    UnitStatsConfig stats = 2;
+    UnitCollisionConfig collision = 3;
+    UnitArtConfig art = 4;
+}

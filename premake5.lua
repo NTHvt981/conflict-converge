@@ -256,3 +256,63 @@ project "conflict-converge-e2e"
     postbuildcommands {
         "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
     }
+
+-- Standalone unit-config editor (plans/Standalone_Unit_Config_Editor_Plan.md
+-- section 2): its own windowed binary sharing only the data-layer + art TUs
+-- (UnitStats/UnitConfig/SpriteData + Art for the live preview), never
+-- Game.cpp or the test runner.
+project "conflict-converge-editor"
+    kind "ConsoleApp"
+    cppdialect "C++20"
+
+    files {
+        "tools/unit_editor/**.cpp",
+        "tools/unit_editor/**.h",
+        "src/game/private/core/MathUtils.cpp",
+        "src/game/private/units/UnitStats.cpp",
+        "src/game/private/app/UnitConfig.cpp",
+        "src/game/private/app/SpriteData.cpp",
+        "src/game/private/app/spritedata.pb.cc",
+        "src/game/private/app/unitconfig.pb.cc",
+        "src/game/private/app/Art.cpp"
+    }
+
+    includedirs {
+        "deps/raylib/src",
+        "deps/raygui/src",
+        "deps/glm",
+        "deps/protobuf/src",
+        "..",
+        "src/game/public",
+        "src/game/public/core",
+        "src/game/public/world",
+        "src/game/public/units",
+        "src/game/public/economy",
+        "src/game/public/app",
+        "tools/unit_editor"
+    }
+
+    links {
+        "raylib-static",
+        "raygui-static",
+        "opengl32",
+        "gdi32",
+        "winmm",
+        "shell32"
+    }
+
+    -- M15: same CMake-built protobuf lib as the game project (see above).
+    filter "configurations:Debug"
+        libdirs { "deps/protobuf/build/Debug" }
+        links { "libprotobufd" }
+    filter "configurations:Release"
+        libdirs { "deps/protobuf/build/Release" }
+        links { "libprotobuf" }
+    filter {}
+
+    -- Same staging as the game: data/configs resolves beside the exe for
+    -- direct runs, repo root as the VS debugger working dir.
+    debugdir "%{wks.location}/.."
+    postbuildcommands {
+        "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
+    }

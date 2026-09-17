@@ -1,0 +1,22 @@
+{
+  "type": "Infantry",
+  "stats": {
+    "health": 100,
+    "armorType": "RUBBER",
+    "damageType": "KINETIC",
+    "attackPower": 10,
+    "attackRange": 128,
+    "cooldownTime": 1,
+    "speed": 64,
+    "sightRange": 320
+  },
+  "collision": {
+    "footprintWidth": 1,
+    "footprintHeight": 1
+  },
+  "art": {
+    "spritePrefix": "infantry",
+    "atlasIdlePrefix": "infantry_idle",
+    "atlasWalkPrefix": "infantry_walk"
+  }
+}

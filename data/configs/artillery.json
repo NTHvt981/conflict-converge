@@ -1,0 +1,22 @@
+{
+  "type": "Artillery",
+  "stats": {
+    "health": 150,
+    "armorType": "STEEL",
+    "damageType": "EXPLOSIVE",
+    "attackPower": 40,
+    "attackRange": 384,
+    "cooldownTime": 3,
+    "speed": 48,
+    "sightRange": 320
+  },
+  "collision": {
+    "footprintWidth": 2,
+    "footprintHeight": 2
+  },
+  "art": {
+    "spritePrefix": "artillery",
+    "atlasIdlePrefix": "",
+    "atlasWalkPrefix": ""
+  }
+}

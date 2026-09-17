@@ -1,0 +1,22 @@
+{
+  "type": "HeavyTank",
+  "stats": {
+    "health": 500,
+    "armorType": "COMPOSITE",
+    "damageType": "EXPLOSIVE",
+    "attackPower": 35,
+    "attackRange": 224,
+    "cooldownTime": 1.8,
+    "speed": 64,
+    "sightRange": 320
+  },
+  "collision": {
+    "footprintWidth": 2,
+    "footprintHeight": 2
+  },
+  "art": {
+    "spritePrefix": "heavytank",
+    "atlasIdlePrefix": "",
+    "atlasWalkPrefix": ""
+  }
+}

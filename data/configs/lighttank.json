@@ -1,0 +1,22 @@
+{
+  "type": "LightTank",
+  "stats": {
+    "health": 300,
+    "armorType": "STEEL",
+    "damageType": "KINETIC",
+    "attackPower": 20,
+    "attackRange": 192,
+    "cooldownTime": 1.2,
+    "speed": 96,
+    "sightRange": 320
+  },
+  "collision": {
+    "footprintWidth": 2,
+    "footprintHeight": 2
+  },
+  "art": {
+    "spritePrefix": "lighttank",
+    "atlasIdlePrefix": "",
+    "atlasWalkPrefix": ""
+  }
+}

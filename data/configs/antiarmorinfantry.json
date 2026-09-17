@@ -1,0 +1,22 @@
+{
+  "type": "AntiArmorInfantry",
+  "stats": {
+    "health": 90,
+    "armorType": "RUBBER",
+    "damageType": "EXPLOSIVE",
+    "attackPower": 25,
+    "attackRange": 128,
+    "cooldownTime": 1.5,
+    "speed": 64,
+    "sightRange": 320
+  },
+  "collision": {
+    "footprintWidth": 1,
+    "footprintHeight": 1
+  },
+  "art": {
+    "spritePrefix": "antiarmor",
+    "atlasIdlePrefix": "",
+    "atlasWalkPrefix": ""
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "type": "Engineer",
+  "stats": {
+    "health": 60,
+    "armorType": "RUBBER",
+    "damageType": "KINETIC",
+    "attackPower": 2,
+    "attackRange": 64,
+    "cooldownTime": 1,
+    "speed": 64,
+    "sightRange": 256
+  },
+  "collision": {
+    "footprintWidth": 1,
+    "footprintHeight": 1
+  },
+  "art": {
+    "spritePrefix": "engineer",
+    "atlasIdlePrefix": "",
+    "atlasWalkPrefix": ""
+  }
+}

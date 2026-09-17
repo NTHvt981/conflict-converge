@@ -1,0 +1,22 @@
+{
+  "type": "IFV",
+  "stats": {
+    "health": 200,
+    "armorType": "STEEL",
+    "damageType": "KINETIC",
+    "attackPower": 15,
+    "attackRange": 192,
+    "cooldownTime": 0.8,
+    "speed": 128,
+    "sightRange": 384
+  },
+  "collision": {
+    "footprintWidth": 2,
+    "footprintHeight": 2
+  },
+  "art": {
+    "spritePrefix": "ifv",
+    "atlasIdlePrefix": "",
+    "atlasWalkPrefix": ""
+  }
+}
