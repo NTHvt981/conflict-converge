@@ -7,6 +7,7 @@
 #include "MapFile.h"     // MapEntry for the setup map list
 #include "Registry.h" // TeamHasUnits query
 #include "Unit.h"     // health aliveness check
+#include "reasings.h" // EaseQuadOut for the transition fade (pure, headless-safe)
 
 // M6 Goal 3: menu system. MenuFlow owns the top-level game state; main.cpp
 // skips the sim while paused and draws outcome/settings windows. Text and
@@ -126,7 +127,14 @@ inline void TrackMenuTransition(MenuState &previous, float &time, MenuState curr
 }
 inline float MenuFadeAlpha(float time)
 {
-    return time >= kMenuFadeInDuration ? 1.0f : time / kMenuFadeInDuration;
+    // Ease-out: content snaps in fast, then settles (linear felt mechanical
+    // over 0.2s). Clamped past the duration — Penner easings overshoot
+    // beyond d, so the guard is load-bearing, not cosmetic.
+    if (time >= kMenuFadeInDuration)
+    {
+        return 1.0f;
+    }
+    return EaseQuadOut(time, 0.0f, 1.0f, kMenuFadeInDuration);
 }
 
 // Any living unit (health > 0) on the given team keeps that side in the game.

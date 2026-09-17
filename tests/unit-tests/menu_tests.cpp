@@ -216,4 +216,6 @@ void RunMenuTests()
     CC_CHECK(MenuFadeAlpha(time) == 1.0f); // full duration: opaque-free
     TrackMenuTransition(previous, time, MenuState::Settings, 10.0f);
     CC_CHECK(MenuFadeAlpha(time) == 1.0f); // clamps, never exceeds 1
+    // Ease-out, not linear: halfway through time the fade is 3/4 done.
+    CC_CHECK(MenuFadeAlpha(kMenuFadeInDuration / 2.0f) == 0.75f);
 }
