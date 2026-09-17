@@ -192,27 +192,24 @@ void RunSpriteDataTests()
         CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
     }
 
-    // --- real data/configs atlas files: 4 sheets, 256 grid sprites, 2 anims ---
+    // --- real data/configs atlas files: 2 prototype sheets, 16 sprites, 2 anims ---
     {
         SpriteSheetData sheet;
         CC_CHECK(LoadSpriteSheet(sheet));
-        CC_CHECK(sheet.textures.size() == 4);
-        CC_CHECK(sheet.sprites.size() == 256);
+        CC_CHECK(sheet.textures.size() == 2);
+        CC_CHECK(sheet.sprites.size() == 16); // 8 idle + 8 walk, no masks
         const SpriteDefInfo *first = FindSpriteByName(sheet, "infantry_idle_0_0");
         CC_CHECK(first != nullptr && first->id == 0 &&
-                   first->texture == "infantry_idle_base");
+                 first->texture == "prototype_infantry_idle");
         CC_CHECK(first->bounds.left == 0 && first->bounds.top == 0);
-        CC_CHECK(first->bounds.right == 32 && first->bounds.bottom == 32);
-        CC_CHECK(first->maskSprite == 1000); // base+mask paired via grids
-        const SpriteDefInfo *firstMask = FindSpriteById(sheet, 1000);
-        CC_CHECK(firstMask != nullptr && firstMask->name == "infantry_idle_mask_0_0");
-        CC_CHECK(firstMask->bounds.right - firstMask->bounds.left == 32);
-        const SpriteDefInfo *last = FindSpriteByName(sheet, "infantry_walk_7_7");
-        CC_CHECK(last != nullptr && last->id == 2063 &&
-                   last->texture == "infantry_walk_base");
-        CC_CHECK(last->bounds.left == 224 && last->bounds.top == 224);
-        CC_CHECK(last->bounds.right == 256 && last->bounds.bottom == 256);
+        CC_CHECK(first->bounds.right == 16 && first->bounds.bottom == 32);
+        CC_CHECK(first->maskSprite == 0); // prototype has no mask sheets: full tint
+        const SpriteDefInfo *last = FindSpriteByName(sheet, "infantry_walk_0_7");
+        CC_CHECK(last != nullptr && last->id == 107 &&
+                 last->texture == "prototype_infantry_run");
+        CC_CHECK(last->bounds.left == 112 && last->bounds.top == 0);
+        CC_CHECK(last->bounds.right == 128 && last->bounds.bottom == 32);
         const SpriteAnimInfo *walk = FindAnimByName(sheet, "infantry_walk");
-        CC_CHECK(walk != nullptr && walk->loop && walk->frames.size() == 4);
+        CC_CHECK(walk != nullptr && walk->loop && walk->frames.size() == 8);
     }
 }

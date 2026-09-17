@@ -1,17 +1,11 @@
 {
   "sprites": [],
   "grids": [
-    { "texture": "infantry_idle_base", "prefix": "infantry_idle", "startId": 0,
-      "rows": 8, "cols": 8, "cellW": 32, "cellH": 32,
-      "origin": { "x": 16, "y": 16 }, "maskGridStartId": 1000 },
-    { "texture": "infantry_idle_mask", "prefix": "infantry_idle_mask", "startId": 1000,
-      "rows": 8, "cols": 8, "cellW": 32, "cellH": 32,
-      "origin": { "x": 16, "y": 16 } },
-    { "texture": "infantry_walk_base", "prefix": "infantry_walk", "startId": 2000,
-      "rows": 8, "cols": 8, "cellW": 32, "cellH": 32,
-      "origin": { "x": 16, "y": 16 }, "maskGridStartId": 3000 },
-    { "texture": "infantry_walk_mask", "prefix": "infantry_walk_mask", "startId": 3000,
-      "rows": 8, "cols": 8, "cellW": 32, "cellH": 32,
-      "origin": { "x": 16, "y": 16 } }
+    { "texture": "prototype_infantry_idle", "prefix": "infantry_idle", "startId": 0,
+      "rows": 1, "cols": 8, "cellW": 16, "cellH": 32,
+      "origin": { "x": 8, "y": 16 } },
+    { "texture": "prototype_infantry_run", "prefix": "infantry_walk", "startId": 100,
+      "rows": 1, "cols": 8, "cellW": 16, "cellH": 32,
+      "origin": { "x": 8, "y": 16 } }
   ]
 }
