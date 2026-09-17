@@ -12,6 +12,7 @@
 #include "FogOfWar.h"
 #include "GameCamera.h"
 #include "Hotkeys.h"
+#include "Hud.h" // hover-tooltip debounce state (pure, headless-safe)
 #include "InputManager.h"
 #include "MapFile.h"
 #include "Menu.h"
@@ -183,6 +184,7 @@ private:
     int lastDepletedCount = 0;
     int lastQueueSize = 0;
     float attackSfxTimer = 0.0f;
+    HoverTooltipState hoverTip; // unit hover-tooltip debounce (Playing only)
     MenuState lastOutcomeState = MenuState::MainMenu;
     bool hasFactory = false;
 };

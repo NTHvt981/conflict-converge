@@ -143,6 +143,62 @@ std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys)
     return lines;
 }
 
+bool UpdateHoverTooltip(HoverTooltipState &state, Entity hovered, float dt, float delay)
+{
+    if (hovered != state.hovered)
+    {
+        state.hovered = hovered;
+        state.time = 0.0f;
+        return false;
+    }
+    state.time += dt;
+    return state.hovered != kInvalidEntity && state.time >= delay;
+}
+
+namespace
+{
+
+const char *StanceName(Stance stance)
+{
+    switch (stance)
+    {
+    case Stance::Hold:
+        return "Hold";
+    case Stance::Guard:
+        return "Guard";
+    case Stance::Patrol:
+        return "Patrol";
+    }
+    return "Unknown";
+}
+
+const char *UnitStateName(UnitState state)
+{
+    switch (state)
+    {
+    case UnitState::Idle:
+        return "Idle";
+    case UnitState::Moving:
+        return "Moving";
+    case UnitState::Attacking:
+        return "Attacking";
+    case UnitState::Count:
+        return "Unknown";
+    default:
+        return "Unknown";
+    }
+}
+
+} // namespace
+
+std::vector<std::string> UnitTooltipLines(const Unit &unit)
+{
+    char second[64];
+    std::snprintf(second, sizeof(second), "%s, %s", StanceName(unit.stance),
+                  UnitStateName(unit.state));
+    return { SelectionSummary(unit), second };
+}
+
 void DrawResourcePanel(const ResourceSystem &resources, const Art *art)
 {
     GuiPanel({ 8.0f, 8.0f, 220.0f, 56.0f }, "Stockpile");
@@ -206,7 +262,9 @@ void DrawRepairPanel(bool *enabled, float *capFraction)
 {
     const float y = static_cast<float>(GetScreenHeight()) - 64.0f;
     GuiPanel({ 478.0f, y, 150.0f, 56.0f }, "Repair");
+    GuiSetTooltip("Repair damaged vehicles/buildings automatically with idle Engineers");
     GuiCheckBox({ 488.0f, y + 6.0f, 16.0f, 16.0f }, "Auto", enabled);
+    GuiSetTooltip("Max share of income auto-repair may spend");
     GuiSlider({ 488.0f, y + 28.0f, 130.0f, 16.0f }, "Cap", "", capFraction, 0.0f, 1.0f);
 }
 
@@ -223,6 +281,7 @@ void DrawIdleButtons(Registry &registry, int teamID)
     {
         GuiDisable();
     }
+    GuiSetTooltip("Select every idle Engineer (replaces selection)");
     if (GuiButton({ 328.0f, y + 6.0f, 130.0f, 20.0f }, label))
     {
         SelectIdle(registry, teamID, true);
@@ -236,6 +295,7 @@ void DrawIdleButtons(Registry &registry, int teamID)
     {
         GuiDisable();
     }
+    GuiSetTooltip("Select every idle combat unit (replaces selection)");
     if (GuiButton({ 328.0f, y + 30.0f, 130.0f, 20.0f }, label))
     {
         SelectIdle(registry, teamID, false);
@@ -315,6 +375,7 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
         {
             GuiDisable();
         }
+        GuiSetTooltip("Queue one unit, paid upfront, spawns at the rally point");
         if (GuiButton({ px + 12.0f, y, 116.0f, 16.0f }, label))
         {
             clicked = static_cast<int>(i);
@@ -326,6 +387,7 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
         // QoL repeat toggle: arms the next build of this type to rebuild
         // forever until cancelled. R = one-shot, R* = repeating.
         const char *repLabel = queue.RepeatArmed(order[i]) ? "R*" : "R";
+        GuiSetTooltip("Repeat this entry indefinitely until cancelled");
         if (GuiButton({ px + 132.0f, y, 30.0f, 16.0f }, repLabel))
         {
             queue.SetRepeatArmed(order[i], !queue.RepeatArmed(order[i]));
@@ -334,6 +396,7 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
     char queueLine[48];
     std::snprintf(queueLine, sizeof(queueLine), "Queue: %d", static_cast<int>(queue.Size()));
     GuiLabel({ px + 12.0f, py + ph - 22.0f, 80.0f, 16.0f }, queueLine);
+    GuiSetTooltip("Cancel the unit currently building (refunds its cost)");
     if (GuiButton({ px + 94.0f, py + ph - 22.0f, 68.0f, 16.0f }, "Cancel"))
     {
         queue.CancelTop(resources);

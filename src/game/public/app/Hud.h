@@ -22,6 +22,19 @@ std::string SelectionSummary(const Unit &unit);
 // M6 Goal 4: selection visuals + shortcut overlay builders.
 float UnitHealthFraction(const Unit &unit); // hp / max, clamped to [0, 1]
 std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys);
+// Hover tooltip (world-space unit info): debounce state + pure updater.
+// UpdateHoverTooltip returns true once the same unit has been hovered past
+// delay seconds; a changed hover target resets the timer.
+struct HoverTooltipState
+{
+    Entity hovered = kInvalidEntity;
+    float time = 0.0f;
+};
+constexpr float kHoverTooltipDelay = 0.4f;
+bool UpdateHoverTooltip(HoverTooltipState &state, Entity hovered, float dt, float delay);
+// Two-line stat block for a hovered unit (summary + stance/state). Pure,
+// tested; Game draws the lines near the cursor.
+std::vector<std::string> UnitTooltipLines(const Unit &unit);
 
 // Screen-space panels (call after EndMode2D).
 // M12: optional art draws 16px resource icons; nullptr keeps text-only

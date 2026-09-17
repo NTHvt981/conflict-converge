@@ -126,6 +126,7 @@ void Game::Init()
     InitWindow(kInitialWidth, kInitialHeight, "raylib basic window");
     SetWindowMinSize(800, 450); // HUD layout assumes at least this
     SetTargetFPS(60);
+    GuiEnableTooltip(); // hover tooltips on HUD/menu controls (GuiSetTooltip sites)
 
     // M11: audio device + asset load. The test binary never inits (headless).
     InitAudioDevice();
@@ -967,22 +968,30 @@ void Game::Update()
         {
             DrawText("Settings", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
             GuiLabel({ cx - 200.0f, 90.0f, 400.0f, 20.0f }, "Camera speed");
+            GuiSetTooltip("WASD / edge-pan speed, pixels per second");
             GuiSlider({ cx - 200.0f, 115.0f, 400.0f, 20.0f }, "100", "800",
                       &menu.settings.cameraSpeed, 100.0f, 800.0f);
+            GuiSetTooltip("Show the top-right minimap during matches");
             GuiCheckBox({ cx - 200.0f, 145.0f, 20.0f, 20.0f }, "Minimap",
                         &menu.settings.showMinimap);
             GuiLabel({ cx - 200.0f, 175.0f, 400.0f, 20.0f }, "Master volume");
+            GuiSetTooltip("Scales music and SFX together");
             GuiSlider({ cx - 200.0f, 200.0f, 400.0f, 20.0f }, "0", "1",
                       &menu.settings.masterVolume, 0.0f, 1.0f);
             GuiLabel({ cx - 200.0f, 230.0f, 400.0f, 20.0f }, "Music volume");
+            GuiSetTooltip("Background music level");
             GuiSlider({ cx - 200.0f, 255.0f, 400.0f, 20.0f }, "0", "1",
                       &menu.settings.musicVolume, 0.0f, 1.0f);
             GuiLabel({ cx - 200.0f, 285.0f, 400.0f, 20.0f }, "SFX volume");
+            GuiSetTooltip("Order confirmations, hits, and UI clicks");
             GuiSlider({ cx - 200.0f, 310.0f, 400.0f, 20.0f }, "0", "1",
                       &menu.settings.sfxVolume, 0.0f, 1.0f);
+            GuiSetTooltip("Silence all audio (volumes are kept)");
             GuiCheckBox({ cx - 200.0f, 340.0f, 20.0f, 20.0f }, "Mute", &menu.settings.mute);
+            GuiSetTooltip("Pan the camera by holding right-drag (right-click still orders)");
             GuiCheckBox({ cx - 200.0f, 365.0f, 20.0f, 20.0f }, "Right-drag pan",
                         &menu.settings.rightDragPan);
+            GuiSetTooltip("Orange/blue team palette instead of red/blue (applies live)");
             GuiCheckBox({ cx - 200.0f, 390.0f, 20.0f, 20.0f }, "Color-blind mode",
                         &menu.settings.colorBlindMode);
             art.SetColorBlindMode(menu.settings.colorBlindMode); // live, no reopen needed
@@ -2297,6 +2306,50 @@ void Game::Update()
         {
             DrawText(hints[i].c_str(), 8, 250 + static_cast<int>(i) * 18, 14, Fade(DARKGRAY, 0.8f));
         }
+    }
+
+    // Hover tooltip: stat block for the unit under the cursor after a short
+    // hold. Playing only; suppressed while an order/drag/placement gesture
+    // is in flight so it never collides with the selection box or ghost.
+    // Enemies show only under live fog (no scouting through the shroud).
+    if (menu.state == MenuState::Playing && !dragging && !placeDragActive &&
+        !repairDragActive && !rightDragging && !placingType.has_value() && !attackGroundMode &&
+        !areaRepairMode)
+    {
+        const Entity hovered = PickUnitAt(registry, input.MouseWorld(camera));
+        if (UpdateHoverTooltip(hoverTip, hovered, GetFrameTime(), kHoverTooltipDelay))
+        {
+            if (const Unit *unit = registry.Get<Unit>(hoverTip.hovered))
+            {
+                const bool visible =
+                    unit->teamID == 0 ||
+                    fog.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit->position)));
+                if (visible)
+                {
+                    const std::vector<std::string> lines = UnitTooltipLines(*unit);
+                    int width = 0;
+                    for (const std::string &line : lines)
+                    {
+                        width = std::max(width, MeasureText(line.c_str(), 14));
+                    }
+                    const Vector2 mouse = input.MouseScreen();
+                    const int tx = static_cast<int>(mouse.x) + 16;
+                    const int ty = static_cast<int>(mouse.y) + 20;
+                    DrawRectangle(tx - 4, ty - 4, width + 8,
+                                  static_cast<int>(lines.size()) * 18 + 4, Fade(BLACK, 0.75f));
+                    for (std::size_t i = 0; i < lines.size(); ++i)
+                    {
+                        DrawText(lines[i].c_str(), tx, ty + static_cast<int>(i) * 18, 14,
+                                 RAYWHITE);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        hoverTip.hovered = kInvalidEntity;
+        hoverTip.time = 0.0f;
     }
 
     // M6 Goal 3: menu overlays sit on top of the frame.

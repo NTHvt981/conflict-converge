@@ -61,4 +61,28 @@ void RunSelectionVisualTests()
     }
     CC_CHECK(hasNewBinding);
     CC_CHECK(!hasOldBinding);
+
+    // --- hover tooltip debounce: new target resets, hold past delay shows ---
+    HoverTooltipState tip;
+    Registry tipReg;
+    Entity u1 = tipReg.Create();
+    Unit uu1;
+    uu1.type = UnitType::Infantry;
+    uu1.health = BaseStats(UnitType::Infantry).health;
+    tipReg.Add(u1, uu1);
+    Entity u2 = tipReg.Create();
+    Unit uu2 = uu1;
+    tipReg.Add(u2, uu2);
+    CC_CHECK(!UpdateHoverTooltip(tip, u1, 0.1f, kHoverTooltipDelay));
+    CC_CHECK(!UpdateHoverTooltip(tip, u1, 0.1f, kHoverTooltipDelay)); // 0.2s < delay
+    CC_CHECK(!UpdateHoverTooltip(tip, u2, 0.1f, kHoverTooltipDelay)); // new target resets
+    CC_CHECK(!UpdateHoverTooltip(tip, u2, 0.35f, kHoverTooltipDelay)); // 0.35s < delay
+    CC_CHECK(UpdateHoverTooltip(tip, u2, 0.1f, kHoverTooltipDelay));  // 0.45s >= delay
+    CC_CHECK(!UpdateHoverTooltip(tip, kInvalidEntity, 1.0f, kHoverTooltipDelay)); // lost: hides
+
+    // --- tooltip lines: summary + stance/state ---
+    const std::vector<std::string> tipLines = UnitTooltipLines(uu1);
+    CC_CHECK(tipLines.size() == 2);
+    CC_CHECK(tipLines[0] == SelectionSummary(uu1));
+    CC_CHECK(tipLines[1] == "Guard, Idle");
 }
