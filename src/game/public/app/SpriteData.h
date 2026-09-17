@@ -3,7 +3,8 @@
 #include <string>
 #include <vector>
 
-// Sprite-atlas data (JSON at data/sprites.json, schema in
+// Sprite-atlas data (JSON in data/configs/: textures.json, sprites.json,
+// animations.json — one SpriteSheet section each, merged at load; schema in
 // proto/spritedata.proto, parsed via protobuf-JSON). Mirrors the
 // GameFramework Textures/Sprites/Animations trio: textures name the atlas
 // images, sprites name source-rects (explicit or grid-expanded), animations
@@ -66,11 +67,12 @@ struct SpriteSheetData
     std::vector<SpriteAnimInfo> animations;
 };
 
-// Parse a sprite JSON file. False on missing/unreadable files, malformed
-// JSON, or validation failures (duplicate ids/names, dangling texture,
-// sprite, or mask refs, mask/base size mismatch, out-of-bounds or degenerate
-// rects, empty animations, non-positive durations/dims); `out` untouched then.
-bool LoadSpriteSheet(const std::string &path, SpriteSheetData &out);
+// Load the three data/configs atlas files merged as one sheet. False when
+// any file is missing/unreadable or malformed, or when the merged sheet
+// fails validation (duplicate ids/names, dangling texture, sprite, or mask
+// refs, mask/base size mismatch, out-of-bounds or degenerate rects, empty
+// animations, non-positive durations/dims); `out` untouched then.
+bool LoadSpriteSheet(SpriteSheetData &out);
 
 // Parse sprite JSON from memory (same validation as LoadSpriteSheet).
 // False on malformed JSON or validation failures; `out` untouched then.

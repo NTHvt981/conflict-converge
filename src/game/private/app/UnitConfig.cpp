@@ -107,8 +107,8 @@ UnitConfig DefaultUnitConfig(UnitType type)
     config.footprintHeight = BaselineIsVehicle(type) ? 2 : 1;
     config.spritePrefix = BaselineSpritePrefix(type);
     // Only Infantry resolves atlas names in the game today
-    // (data/sprites.json has no other entries); the rest fall back to
-    // flat PNGs, represented here as empty prefixes.
+    // (data/configs/animations.json has no other entries); the rest fall
+    // back to flat PNGs, represented here as empty prefixes.
     if (type == UnitType::Infantry)
     {
         config.atlasIdlePrefix = "infantry_idle";
@@ -335,7 +335,7 @@ std::string UnitConfigToJson(const UnitConfig &config)
 
     std::string json;
     google::protobuf::util::JsonPrintOptions options;
-    options.add_whitespace = true; // hand-editable style, like sprites.json
+    options.add_whitespace = true; // hand-editable style, like the atlas JSON
     if (!google::protobuf::util::MessageToJsonString(proto, &json, options).ok())
     {
         return {};

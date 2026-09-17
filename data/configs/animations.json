@@ -1,0 +1,13 @@
+{
+  "animations": [
+    { "name": "infantry_idle", "id": 0, "loop": false,
+      "frames": [{ "sprite": 0, "durationMs": 500 }] },
+    { "name": "infantry_walk", "id": 1, "loop": true,
+      "frames": [
+        { "sprite": 2000, "durationMs": 120 },
+        { "sprite": 2001, "durationMs": 120 },
+        { "sprite": 2002, "durationMs": 120 },
+        { "sprite": 2003, "durationMs": 120 }
+      ] }
+  ]
+}

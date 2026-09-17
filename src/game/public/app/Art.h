@@ -17,7 +17,7 @@
 // later): units/<type>_<blue|red>_<idle|attack>.png (32px),
 // buildings/<base|factory|depot>_<blue|red>.png (64/64/32px),
 // nodes/<iron|oil>.png (32px), icons/<iron|oil>.png (16px).
-// Atlas override: data/sprites.json (schema in proto/spritedata.proto)
+// Atlas override: data/configs atlas JSON (schema in proto/spritedata.proto)
 // names source-rects inside sheet PNGs (e.g. placeholder infantry 8x8
 // grids). Types with atlas entries render from the atlas; types without
 // fall through to the filename path. Team coloring is base+mask: the base
@@ -89,7 +89,7 @@ public:
 
     // tileCorner = unit.position (snapped); sprite fills the 32x32 body inset.
     void DrawUnit(UnitType type, int teamID, UnitFrame frame, Vector2 tileCorner) const;
-    // Atlas override: source-rect blit of a named sprite from sprites.json,
+    // Atlas override: source-rect blit of a named sprite from the atlas,
     // origin-aligned to the 32x32 body center. No-op when the atlas is down
     // or the name is unknown (headless-safe). scale shrinks the blit around
     // the same anchor (squad clusters); default 1.0 keeps other callers.
@@ -99,11 +99,11 @@ public:
     void DrawNode(ResourceKind kind, Vector2 center) const;
     void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon
 
-    // Atlas status: true once sprites.json parsed AND every sheet texture
+    // Atlas status: true once the atlas JSON parsed AND every sheet texture
     // loaded (Init(true) path). Headless-safe query.
     bool UseAtlas() const;
-    // Parse data/sprites.json without touching the GPU (tests, LoadAtlas
-    // seam). False when the file is missing or invalid.
+    // Parse the data/configs atlas files without touching the GPU (tests,
+    // LoadAtlas seam). False when a file is missing or invalid.
     bool LoadAtlas();
     // Sprite name for a unit at timeSeconds (GetTime() at the call site):
     // "<type>_walk" animation frame while moving (id-offset so squads don't

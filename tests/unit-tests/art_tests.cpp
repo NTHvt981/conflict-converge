@@ -164,7 +164,7 @@ void RunArtTests()
         CC_CHECK(backToBlue.r == BLUE.r && backToBlue.g == BLUE.g && backToBlue.b == BLUE.b);
     }
 
-    // --- atlas: idle sprite + walk cycle from data/sprites.json ---
+    // --- atlas: idle sprite + walk cycle from the data/configs atlas ---
     {
         Art art;
         CC_CHECK(art.LoadAtlas());

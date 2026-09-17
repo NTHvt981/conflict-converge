@@ -265,8 +265,8 @@ bool Art::Init(bool withDevice)
             fallback_ = true;
         }
     }
-    // Atlas override: sprites.json + sheet PNGs. Missing files just leave
-    // the atlas down (legacy/rectangle paths are unaffected).
+    // Atlas override: data/configs atlas JSON + sheet PNGs. Missing files
+    // just leave the atlas down (legacy/rectangle paths are unaffected).
     atlasReady_ = LoadAtlas();
     if (atlasReady_)
     {
@@ -387,7 +387,7 @@ bool Art::UseAtlas() const
 bool Art::LoadAtlas()
 {
     SpriteSheetData sheet;
-    if (!LoadSpriteSheet("data/sprites.json", sheet))
+    if (!LoadSpriteSheet(sheet))
     {
         return false;
     }

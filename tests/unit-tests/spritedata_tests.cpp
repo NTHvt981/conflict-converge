@@ -1,5 +1,5 @@
 // Unit tests for the protobuf-JSON sprite-atlas loader (SpriteData).
-// Covers the real data/sprites.json happy path plus every validation
+// Covers the real data/configs atlas happy path plus every validation
 // rejection via inline JSON (no temp files). Headless-safe: no textures.
 
 #include "../unit-tests/test_harness.h"
@@ -71,14 +71,13 @@ void RunSpriteDataTests()
         CC_CHECK(FindAnimById(sheet, 999) == nullptr);
     }
 
-    // --- malformed JSON and missing files fail cleanly ---
+    // --- malformed JSON fails cleanly (missing atlas files fail the
+    // same way: LoadSpriteSheet is all-or-nothing over data/configs) ---
     {
         SpriteSheetData untouched;
         untouched.textures.push_back({ 7, "sentinel.png", 1, 1 });
         SpriteSheetData out = untouched;
         CC_CHECK(!ParseSpriteSheetJson("{ not json", out));
-        CC_CHECK(out.textures.size() == 1 && out.textures[0].id == 7); // untouched
-        CC_CHECK(!LoadSpriteSheet("data/does-not-exist.json", out));
         CC_CHECK(out.textures.size() == 1 && out.textures[0].id == 7); // untouched
     }
 
@@ -191,10 +190,10 @@ void RunSpriteDataTests()
         CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
     }
 
-    // --- real data/sprites.json: 4 sheets, 256 grid sprites, 2 anims ---
+    // --- real data/configs atlas files: 4 sheets, 256 grid sprites, 2 anims ---
     {
         SpriteSheetData sheet;
-        CC_CHECK(LoadSpriteSheet("data/sprites.json", sheet));
+        CC_CHECK(LoadSpriteSheet(sheet));
         CC_CHECK(sheet.textures.size() == 4);
         CC_CHECK(sheet.sprites.size() == 256);
         const SpriteDefInfo *first = FindSpriteByName(sheet, "infantry_idle_0_0");

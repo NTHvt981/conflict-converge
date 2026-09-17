@@ -46,7 +46,7 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
                          UnitConfig &out);
 
 // Single-file load/save. Save writes only this type's file,
-// pretty-printed to match data/sprites.json's hand-editable style.
+// pretty-printed to match the hand-editable data/configs JSON style.
 bool LoadUnitConfig(const std::string &path, UnitConfig &out);
 bool SaveUnitConfig(const std::string &path, const UnitConfig &config);
 std::string UnitConfigToJson(const UnitConfig &config);

@@ -40,7 +40,7 @@ message UnitCollisionConfig
 message UnitArtConfig
 {
     string sprite_prefix = 1;     // replaces the UnitFile() switch
-    string atlas_idle_prefix = 2; // SpriteAnim name in sprites.json, or "" = flat-PNG fallback
+    string atlas_idle_prefix = 2; // SpriteAnim name in data/configs/animations.json, or "" = flat-PNG fallback
     string atlas_walk_prefix = 3; // same, for the moving state
 }
 

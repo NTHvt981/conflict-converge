@@ -33,6 +33,8 @@ bool RectInside(int left, int top, int right, int bottom, int width, int height)
 
 } // namespace
 
+bool ValidateSpriteSheet(const cc::sprites::SpriteSheet &proto, SpriteSheetData &out);
+
 bool ParseSpriteSheetJson(const std::string &json, SpriteSheetData &out)
 {
     cc::sprites::SpriteSheet proto;
@@ -40,7 +42,11 @@ bool ParseSpriteSheetJson(const std::string &json, SpriteSheetData &out)
     {
         return false;
     }
+    return ValidateSpriteSheet(proto, out);
+}
 
+bool ValidateSpriteSheet(const cc::sprites::SpriteSheet &proto, SpriteSheetData &out)
+{
     SpriteSheetData sheet;
 
     // --- textures: unique ids, non-empty files, positive dims ---
@@ -205,14 +211,34 @@ bool ParseSpriteSheetJson(const std::string &json, SpriteSheetData &out)
     return true;
 }
 
-bool LoadSpriteSheet(const std::string &path, SpriteSheetData &out)
+bool LoadSpriteSheet(SpriteSheetData &out)
 {
-    std::string json;
-    if (!ReadWholeFile(path, json))
+    // Atlas data lives split across data/configs/ (one SpriteSheet section
+    // per file); the parts merge before the single validation pass, so
+    // cross-file refs (animations -> grid sprites) resolve and duplicate
+    // ids across files are still rejected. All-or-nothing: any missing or
+    // malformed part fails the whole load, like the old single file did.
+    static const char *kAtlasFiles[] = {
+        "data/configs/textures.json",
+        "data/configs/sprites.json",
+        "data/configs/animations.json",
+    };
+    cc::sprites::SpriteSheet merged;
+    for (const char *path : kAtlasFiles)
     {
-        return false;
+        std::string json;
+        if (!ReadWholeFile(path, json))
+        {
+            return false;
+        }
+        cc::sprites::SpriteSheet part;
+        if (!google::protobuf::util::JsonStringToMessage(json, &part).ok())
+        {
+            return false;
+        }
+        merged.MergeFrom(part);
     }
-    return ParseSpriteSheetJson(json, out);
+    return ValidateSpriteSheet(merged, out);
 }
 
 const SpriteDefInfo *FindSpriteByName(const SpriteSheetData &sheet, const std::string &name)

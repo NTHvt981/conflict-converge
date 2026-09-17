@@ -2,7 +2,8 @@
 // Mirrors the GameFramework Textures/Sprites/Animations trio, plus a grid
 // shorthand so uniform sheets (e.g. 8x8x32px infantry placeholders) expand
 // to named sprites at load instead of hand-writing every cell rect.
-// Data lives in data/sprites.json (top-level for now, relocatable later).
+// Data lives split across data/configs/textures.json, sprites.json, and
+// animations.json (one section each, merged at load).
 syntax = "proto3";
 
 package cc.sprites;

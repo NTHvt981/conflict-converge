@@ -1,0 +1,8 @@
+{
+  "textures": [
+    { "id": 0, "file": "units/infantry_idle_base.png", "width": 256, "height": 256 },
+    { "id": 1, "file": "units/infantry_idle_mask.png", "width": 256, "height": 256 },
+    { "id": 2, "file": "units/infantry_walk_base.png", "width": 256, "height": 256 },
+    { "id": 3, "file": "units/infantry_walk_mask.png", "width": 256, "height": 256 }
+  ]
+}
