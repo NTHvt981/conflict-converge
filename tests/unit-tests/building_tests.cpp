@@ -3,6 +3,7 @@
 #include "test_harness.h"
 
 #include "Building.h"
+#include "Nodes.h"
 #include "Selection.h"
 #include "TileMap.h"
 
@@ -203,5 +204,39 @@ void RunBuildingTests()
         CC_CHECK(SelectAllBuildings(lots, BuildingType::ResourceDepot, 0) == 1);
         CC_CHECK(!lots.Get<Building>(facA)->isSelected); // replaced
         CC_CHECK(lots.Get<Building>(depot)->isSelected);
+    }
+
+    // --- QoL CanPlaceBuilding: mirrors PlaceBuilding's validation ---
+    {
+        Registry yard;
+        TileMap yardMap(20, 15);
+        ResourceNodes yardNodes;
+        CC_CHECK(CanPlaceBuilding(yardMap, &yardNodes, BuildingType::Base, 1, 1));
+        CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::Base, 19, 14));
+        yardMap.Set({ 5, 5 }, TerrainType::Water);
+        CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::ResourceDepot, 5, 5));
+        // Node tile: predicate refuses where the placer would strand iron.
+        CC_CHECK(yardNodes.SpawnNode(yardMap, ResourceKind::Iron, { 8, 8 }, 200.0f, 10.0f));
+        CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::ResourceDepot, 8, 8));
+        CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::Base, 7, 7));
+        // Null nodes = legacy grass-only check.
+        CC_CHECK(CanPlaceBuilding(yardMap, nullptr, BuildingType::ResourceDepot, 8, 8));
+        // ...but placing there still fails through the nodes-aware overload.
+        CC_CHECK(PlaceBuilding(yard, yardMap, BuildingType::ResourceDepot, 0, 8, 8,
+                               &yardNodes) == kInvalidEntity);
+    }
+
+    // --- QoL AreaBuildSlots: footprint-stepped tiling, inclusive range ---
+    {
+        // Depot (1x1) over a 3x2 range: every tile is a slot.
+        const auto singles = AreaBuildSlots(BuildingType::ResourceDepot, { 1, 1 }, { 3, 2 });
+        CC_CHECK(singles.size() == 6);
+        CC_CHECK(singles.front() == cc::IVec2(1, 1) && singles.back() == cc::IVec2(3, 2));
+        // Base (2x2) over 0..3: anchors at even tiles only, no overlaps.
+        const auto quads = AreaBuildSlots(BuildingType::Base, { 0, 0 }, { 3, 3 });
+        CC_CHECK(quads.size() == 4);
+        CC_CHECK(quads[0] == cc::IVec2(0, 0) && quads[3] == cc::IVec2(2, 2));
+        // Reversed range: empty, never negative-stepped.
+        CC_CHECK(AreaBuildSlots(BuildingType::Base, { 3, 3 }, { 0, 0 }).empty());
     }
 }

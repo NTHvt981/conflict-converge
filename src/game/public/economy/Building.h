@@ -67,6 +67,16 @@ Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int te
                      int tileY);
 Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
                      int tileY, const ResourceNodes *nodes);
+// QoL area-build: the validation half of PlaceBuilding, exposed so the
+// placement ghost can preview green/red without side effects.
+bool CanPlaceBuilding(const TileMap &map, const ResourceNodes *nodes, BuildingType type,
+                      int tileX, int tileY);
+// QoL area-build: candidate footprint anchors tiling the inclusive tile
+// range [minTile, maxTile], stepped by the type's footprint so placements
+// never overlap each other. Callers attempt PlaceBuilding per slot and
+// skip failures (blocked tiles simply don't build).
+std::vector<cc::IVec2> AreaBuildSlots(BuildingType type, cc::IVec2 minTile,
+                                      cc::IVec2 maxTile);
 
 // Mark Destroyed, restore footprint tiles to Grass, remove the entity.
 // Returns false for missing/non-building IDs (no-op).

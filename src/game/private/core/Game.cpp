@@ -11,6 +11,7 @@
 #include "Selection.h" // M2 Goal 4: mouse selection helpers
 #include "Shortcuts.h" // M6 Goal 4: shortcut overlay lines
 #include "Unit.h" // M2 Goal 2/4: snapped units with move orders
+#include <algorithm> // QoL area-build tile-range min/max
 #include <filesystem> // M14: save-slot existence for the load screen
 #include <vector>
 #include <cmath> // M12: muzzle direction normalization
@@ -446,6 +447,23 @@ void Game::BindShortcuts()
             moveAtSlowestSpeed = !moveAtSlowestSpeed;
         }
     });
+    input.shortcuts.Bind(KEY_Z, [&] {
+        // QoL area-build placement flow: toggle, defaulting to Base.
+        // While engaged, 1/2/3 picks the type (see the group loop guard),
+        // left-click/drag places, right-click or Esc cancels.
+        if (worldActive && menu.state == MenuState::Playing)
+        {
+            if (placingType.has_value())
+            {
+                placingType.reset();
+            }
+            else
+            {
+                placingType = BuildingType::Base;
+            }
+            placeDragActive = false;
+        }
+    });
     input.shortcuts.Bind(KEY_X, [&] {
         // QoL attack-ground mode: arm shelling; the next right-click fires
         // it (one-shot, see the RightPressed block), Escape cancels.
@@ -526,6 +544,8 @@ void Game::BindShortcuts()
             rightDragging = false; // QoL: Esc also cancels a drawn line
             pendingRightClick = false; // QoL: Esc also drops a deferred click
             rightDragDist = 0.0f;
+            placingType.reset(); // QoL: Esc also exits placement mode
+            placeDragActive = false;
             DeselectAll(registry);
             dragging = false;
         }
@@ -925,7 +945,14 @@ void Game::Update()
         // to the factory rally point before unit selection.
         if (input.LeftPressed())
         {
-            if (minimap.Contains(input.MouseScreen()))
+            if (placingType.has_value())
+            {
+                // QoL area-build: press starts a placement drag (click =
+                // single footprint, drag = tiled pattern on release).
+                placeDragActive = true;
+                placeDragStart = input.MouseScreen();
+            }
+            else if (minimap.Contains(input.MouseScreen()))
             {
                 camera.view.target =
                     minimap.MinimapToWorld(input.MouseScreen(), map.Width(), map.Height());
@@ -971,6 +998,52 @@ void Game::Update()
                 }
             }
         }
+        // QoL area-build release: click places one footprint, a drag tiles
+        // the footprint across the box (invalid slots skipped silently).
+        // The mode stays engaged for rows of structures; right-click/Esc
+        // exits (see the RightPressed block and the Esc binding).
+        if (placeDragActive && !input.LeftDown())
+        {
+            placeDragActive = false;
+            if (placingType.has_value())
+            {
+                const Rectangle box =
+                    DraggedWorldBox(camera, placeDragStart, input.MouseScreen());
+                if (box.width < 6.0f && box.height < 6.0f)
+                {
+                    const cc::IVec2 tile =
+                        cc::WorldToTile(cc::ToGlm(input.MouseWorld(camera)));
+                    if (PlaceBuilding(registry, map, *placingType, 0, tile.x, tile.y,
+                                      &nodes) != kInvalidEntity)
+                    {
+                        audio.Play(SfxId::Place);
+                    }
+                }
+                else
+                {
+                    const cc::IVec2 a =
+                        cc::WorldToTile(cc::ToGlm({ box.x, box.y }));
+                    const cc::IVec2 b = cc::WorldToTile(
+                        cc::ToGlm({ box.x + box.width, box.y + box.height }));
+                    int placed = 0;
+                    for (const cc::IVec2 &slot :
+                         AreaBuildSlots(*placingType, { std::min(a.x, b.x),
+                                                        std::min(a.y, b.y) },
+                                        { std::max(a.x, b.x), std::max(a.y, b.y) }))
+                    {
+                        if (PlaceBuilding(registry, map, *placingType, 0, slot.x, slot.y,
+                                          &nodes) != kInvalidEntity)
+                        {
+                            ++placed;
+                        }
+                    }
+                    if (placed > 0)
+                    {
+                        audio.Play(SfxId::Place);
+                    }
+                }
+            }
+        }
         const bool altDown = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
         // QoL right-drag pan (opt-in setting): accumulate held distance
         // every frame; past the click-vs-drag threshold the camera grabs
@@ -985,18 +1058,26 @@ void Game::Update()
                 camera.Pan({ -panDelta.x / zoom, -panDelta.y / zoom });
             }
         }
+        // Whether this press cancelled placement (orders stay silent then).
+        const bool wasPlacing = placingType.has_value();
         if (input.RightPressed())
         {
+            // QoL area-build: right-click cancels placement (no order).
+            if (placingType.has_value())
+            {
+                placingType.reset();
+                placeDragActive = false;
+            }
             // QoL line formation: Alt+right-drag draws a placement line
             // (Ctrl is groups, Shift is queueing — Alt stays unambiguous).
             // No order fires on the press itself; the release dispatches.
-            if (altDown)
+            else if (altDown)
             {
                 rightDragging = true;
                 rightDragStart = input.MouseScreen();
             }
         }
-        // QoL right-click orders, shared by the immediate path (option off)
+        const bool cancelledPlacement = input.RightPressed() && wasPlacing;
         // and the deferred release path (option on: click-vs-drag is only
         // known on release, where the mouse still sits ~at the press point).
         auto dispatchRightClickOrders = [&]() {
@@ -1128,7 +1209,7 @@ void Game::Update()
             }
             }
         };
-        if (input.RightPressed() && !rightDragging)
+        if (input.RightPressed() && !rightDragging && !cancelledPlacement)
         {
             if (menu.settings.rightDragPan && !altDown)
             {
@@ -1182,9 +1263,9 @@ void Game::Update()
                                                 KEY_NINE,  KEY_ZERO };
         for (int bit = 0; bit < 10; ++bit)
         {
-            if (!IsKeyPressed(kGroupKeys[bit]))
+            if (!IsKeyPressed(kGroupKeys[bit]) || placingType.has_value())
             {
-                continue;
+                continue; // 1/2/3 steer the placement type while placing
             }
             if (input.CtrlDown() && input.ShiftDown())
             {
@@ -1201,6 +1282,23 @@ void Game::Update()
             else
             {
                 RecallControlGroup(registry, bit);
+            }
+        }
+        // QoL area-build: 1/2/3 picks the placement type while engaged
+        // (the group loop above stands down for those keys meanwhile).
+        if (placingType.has_value())
+        {
+            if (IsKeyPressed(KEY_ONE))
+            {
+                placingType = BuildingType::Base;
+            }
+            else if (IsKeyPressed(KEY_TWO))
+            {
+                placingType = BuildingType::ResourceDepot;
+            }
+            else if (IsKeyPressed(KEY_THREE))
+            {
+                placingType = BuildingType::Factory;
             }
         }
         // M9: rebuild visibility from current positions before anyone acquires.
@@ -1548,6 +1646,24 @@ void Game::Update()
             DrawRectangleLinesEx({ corner.x, corner.y, w, h }, 3.0f, RED);
         }
     });
+    // QoL area-build ghost: footprint outline under the cursor, green when
+    // CanPlaceBuilding passes, red when it doesn't. Stays engaged across
+    // placements (right-click/Esc exits); 1/2/3 switches the type.
+    if (placingType.has_value())
+    {
+        const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(input.MouseWorld(camera)));
+        const cc::IVec2 fp = Footprint(*placingType);
+        const Vector2 ghostCorner = cc::ToRaylib(cc::TileToWorld(tile.x, tile.y));
+        const bool ok = CanPlaceBuilding(map, &nodes, *placingType, tile.x, tile.y);
+        DrawRectangleLinesEx({ ghostCorner.x, ghostCorner.y,
+                               static_cast<float>(fp.x) * cc::TILE_SIZE,
+                               static_cast<float>(fp.y) * cc::TILE_SIZE },
+                             2.0f, ok ? GREEN : RED);
+        DrawText(TextFormat("Placing: %s (1/2/3 type, Z/Esc done)",
+                            BuildingTypeName(*placingType)),
+                 static_cast<int>(ghostCorner.x), static_cast<int>(ghostCorner.y) - 20, 14,
+                 ok ? DARKGREEN : RED);
+    }
     nodes.Each([&](const ResourceNode &node) {
         // M9: static features join the frozen snapshot once explored.
         if (!fog.IsExplored(0, node.tile))

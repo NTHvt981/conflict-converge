@@ -97,6 +97,7 @@ std::vector<std::string> ShortcutHintLines()
         "R Rally",
         "C SelectType",
         "F Factories",
+        "Z Place",
         "B SlowMove",
         "Alt+RDrag Line",
         "X AttackGnd",

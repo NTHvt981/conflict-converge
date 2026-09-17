@@ -1,11 +1,13 @@
 #pragma once
 
+#include <optional> // QoL placement flow (empty = not placing)
 #include <string>
 
 #include "raylib.h"
 #include "AICommander.h"
 #include "Art.h"
 #include "Audio.h"
+#include "Building.h" // BuildingType for the placement flow
 #include "Event.h"
 #include "FogOfWar.h"
 #include "GameCamera.h"
@@ -140,6 +142,13 @@ private:
     // QoL move-at-slowest-speed: formation orders march at the squad
     // minimum while true (toggled with B).
     bool moveAtSlowestSpeed = false;
+    // QoL area-build placement flow: some building while engaged (Z
+    // toggles, 1/2/3 picks the type, left-click/drag places, right-click
+    // or Esc cancels). Empty = not placing. Stays engaged across
+    // placements so rows of structures go down fast.
+    std::optional<BuildingType> placingType;
+    bool placeDragActive = false;
+    Vector2 placeDragStart = {};
 
     // Per-frame poll state (M11 edge-triggered sounds, M14 transitions).
     int lastBuildingCount = 0;

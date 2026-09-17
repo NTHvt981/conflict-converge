@@ -74,19 +74,13 @@ void MarkFootprint(TileMap &map, cc::IVec2 size, int tileX, int tileY, TerrainTy
 
 } // namespace
 
-Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
-                     int tileY)
-{
-    return PlaceBuilding(registry, map, type, teamID, tileX, tileY, nullptr);
-}
-
-Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
-                     int tileY, const ResourceNodes *nodes)
+bool CanPlaceBuilding(const TileMap &map, const ResourceNodes *nodes, BuildingType type,
+                      int tileX, int tileY)
 {
     const cc::IVec2 size = Footprint(type);
     if (!FootprintBuildable(map, size, tileX, tileY))
     {
-        return kInvalidEntity;
+        return false;
     }
     if (nodes != nullptr)
     {
@@ -96,11 +90,47 @@ Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int te
             {
                 if (nodes->FindAt({ tileX + x, tileY + y }) != nullptr)
                 {
-                    return kInvalidEntity;
+                    return false;
                 }
             }
         }
     }
+    return true;
+}
+
+std::vector<cc::IVec2> AreaBuildSlots(BuildingType type, cc::IVec2 minTile,
+                                      cc::IVec2 maxTile)
+{
+    std::vector<cc::IVec2> slots;
+    const cc::IVec2 fp = Footprint(type);
+    if (fp.x <= 0 || fp.y <= 0)
+    {
+        return slots;
+    }
+    for (int y = minTile.y; y <= maxTile.y; y += fp.y)
+    {
+        for (int x = minTile.x; x <= maxTile.x; x += fp.x)
+        {
+            slots.push_back({ x, y });
+        }
+    }
+    return slots;
+}
+
+Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
+                     int tileY)
+{
+    return PlaceBuilding(registry, map, type, teamID, tileX, tileY, nullptr);
+}
+
+Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
+                     int tileY, const ResourceNodes *nodes)
+{
+    if (!CanPlaceBuilding(map, nodes, type, tileX, tileY))
+    {
+        return kInvalidEntity;
+    }
+    const cc::IVec2 size = Footprint(type);
     Building building;
     building.type = type;
     building.state = BuildingState::Operational;
