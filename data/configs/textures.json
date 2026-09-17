@@ -1,6 +1,6 @@
 {
   "textures": [
-    { "id": "prototype_infantry_idle", "file": "units/prototype_infantry_idle.png", "width": 128, "height": 32 },
-    { "id": "prototype_infantry_run", "file": "units/prototype_infantry_run.png", "width": 128, "height": 128 }
+    { "id": "rifle_infantry_idle", "file": "units/rifle_infantry_idle.png", "width": 128, "height": 32 },
+    { "id": "rifle_infantry_run", "file": "units/rifle_infantry_run.png", "width": 128, "height": 128 }
   ]
 }

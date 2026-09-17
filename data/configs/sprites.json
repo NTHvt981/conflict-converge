@@ -1,10 +1,10 @@
 {
   "sprites": [],
   "grids": [
-    { "texture": "prototype_infantry_idle", "prefix": "infantry_idle", "startId": 0,
+    { "texture": "rifle_infantry_idle", "prefix": "infantry_idle", "startId": 0,
       "rows": 1, "cols": 8, "cellW": 16, "cellH": 32,
       "origin": { "x": 8, "y": 16 } },
-    { "texture": "prototype_infantry_run", "prefix": "infantry_walk", "startId": 100,
+    { "texture": "rifle_infantry_run", "prefix": "infantry_walk", "startId": 100,
       "rows": 4, "cols": 8, "cellW": 16, "cellH": 32,
       "origin": { "x": 8, "y": 16 } }
   ]

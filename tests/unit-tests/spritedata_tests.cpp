@@ -200,7 +200,7 @@ void RunSpriteDataTests()
         CC_CHECK(sheet.sprites.size() == 40); // 8 idle + 32 walk (8 dirs x 4)
         const SpriteDefInfo *first = FindSpriteByName(sheet, "infantry_idle_0_0");
         CC_CHECK(first != nullptr && first->id == 0 &&
-                 first->texture == "prototype_infantry_idle");
+                 first->texture == "rifle_infantry_idle");
         CC_CHECK(first->bounds.left == 0 && first->bounds.top == 0);
         CC_CHECK(first->bounds.right == 16 && first->bounds.bottom == 32);
         CC_CHECK(first->maskSprite == 0); // prototype has no mask sheets: full tint
@@ -208,7 +208,7 @@ void RunSpriteDataTests()
         // column 6 (right): ids 106/114/122/130.
         const SpriteDefInfo *last = FindSpriteByName(sheet, "infantry_walk_3_6");
         CC_CHECK(last != nullptr && last->id == 130 &&
-                 last->texture == "prototype_infantry_run");
+                 last->texture == "rifle_infantry_run");
         CC_CHECK(last->bounds.left == 96 && last->bounds.top == 96);
         CC_CHECK(last->bounds.right == 112 && last->bounds.bottom == 128);
         const SpriteAnimInfo *walk = FindAnimByName(sheet, "infantry_walk_6");

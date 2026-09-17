@@ -3,8 +3,81 @@
   "art_direction_brief": "art/art-direction-brief.md",
   "assets": [
     {
+      "id": "rifle-infantry-idle",
+      "role": "wired infantry idle poses, 8 facings (also rendered by PrototypeInfantry type)",
+      "path": "data/sprites/units/rifle_infantry_idle.png",
+      "status": "approved",
+      "technical": {
+        "dimensions": "128x32",
+        "grid": "8 cols x 1 row, cells 16x32",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 8,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin"
+      ],
+      "source": {
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py over user-modified AI voxel models",
+        "creator": "user",
+        "created_at": "2026-09-17",
+        "license": "base models AI-generated (generator terms apply — confirm); user voxel mods + conversion project-owned",
+        "attribution": "",
+        "prompt_or_source_record": "AI voxel base (rifle_infantry_idle.vox present in test_sandbox), user-modified; tools/convert_vox_to_sprite.py → test_sandbox/rifle_infantry_idle.png"
+      },
+      "verification": {
+        "native_scale_reviewed": true,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": true,
+        "approved_by": "user"
+      }
+    },
+    {
+      "id": "rifle-infantry-run",
+      "role": "wired infantry run cycles, 8 facing columns x 4 frames (also rendered by PrototypeInfantry type)",
+      "path": "data/sprites/units/rifle_infantry_run.png",
+      "status": "approved",
+      "technical": {
+        "dimensions": "128x128",
+        "grid": "8 cols x 4 rows, cells 16x32; one column = one direction cycle",
+        "alpha": true,
+        "anchor": "cell center (8,16), engine aligns to tile center",
+        "frames": 32,
+        "filtering": "bilinear (engine default; point proposed, undecided)"
+      },
+      "visual_locks": [
+        "palette",
+        "silhouette",
+        "proportions",
+        "facing",
+        "origin",
+        "stride-phase-per-column"
+      ],
+      "source": {
+        "kind": "voxel-to-sprite",
+        "url_or_tool": "tools/convert_vox_to_sprite.py over user-modified AI voxel models",
+        "creator": "user",
+        "created_at": "2026-09-17",
+        "license": "base models AI-generated (generator terms apply — confirm); user voxel mods + conversion project-owned",
+        "attribution": "",
+        "prompt_or_source_record": "run-cycle vox source not found in test_sandbox (no rifle_infantry_run.vox; only rifle_infantry_idle.vox) — confirm provenance; tools/convert_vox_to_sprite.py → test_sandbox/rifle_infantry_run.png"
+      },
+      "verification": {
+        "native_scale_reviewed": true,
+        "in_engine_reviewed": false,
+        "technical_checks_passed": true,
+        "approved_by": "user"
+      }
+    },
+    {
       "id": "prototype-infantry-idle",
-      "role": "infantry idle poses, 8 facings (also used by PrototypeInfantry type)",
+      "role": "SUPERSEDED as wired art by rifle-infantry-idle; kept as style reference + fallback source",
       "path": "data/sprites/units/prototype_infantry_idle.png",
       "status": "approved",
       "technical": {
@@ -40,7 +113,7 @@
     },
     {
       "id": "prototype-infantry-run",
-      "role": "infantry run cycles, 8 facing columns x 4 frames (also used by PrototypeInfantry type)",
+      "role": "SUPERSEDED as wired art by rifle-infantry-run; kept as style reference + fallback source",
       "path": "data/sprites/units/prototype_infantry_run.png",
       "status": "approved",
       "technical": {
