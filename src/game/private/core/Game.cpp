@@ -1867,6 +1867,7 @@ void Game::Update()
         {
             UpdateBuildingAutoRepair(registry, resources, dt, 0, autoRepairCap);
         }
+        UpdateBuildingConstruction(registry, dt); // sites -> Operational, all teams
         // QoL player auto-retreat: opted-in units below threshold fall back
         // to the rally point (or the nearest owned Base when no rally was
         // ever placed). Shared RetreatIfLowHP with the AI's RetreatTick.
@@ -2087,6 +2088,18 @@ void Game::Update()
             const float w = static_cast<float>(size.x) * cc::TILE_SIZE;
             const float h = static_cast<float>(size.y) * cc::TILE_SIZE;
             DrawRectangleLinesEx({ corner.x, corner.y, w, h }, 3.0f, RED);
+        }
+        if (building.state == BuildingState::UnderConstruction)
+        {
+            // World-space progress bar above the footprint (same two-rect
+            // technique as the unit health bar below).
+            const float w = static_cast<float>(size.x) * cc::TILE_SIZE;
+            const float fraction = building.constructionTime / BuildingBuildTime(building.type);
+            const float clamped = fraction < 0.0f ? 0.0f : (fraction > 1.0f ? 1.0f : fraction);
+            DrawRectangle(static_cast<int>(corner.x), static_cast<int>(corner.y) - 10,
+                          static_cast<int>(w), 6, LIGHTGRAY);
+            DrawRectangle(static_cast<int>(corner.x), static_cast<int>(corner.y) - 10,
+                          static_cast<int>(w * clamped), 6, DARKGREEN);
         }
     });
     // QoL area-build ghost: footprint outline under the cursor, green when

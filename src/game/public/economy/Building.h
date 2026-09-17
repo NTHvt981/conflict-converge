@@ -12,7 +12,9 @@ class ResourceNodes; // fwd-decl (node-occupancy guard, Building.cpp includes No
 
 // M5 Goals 2/5: base building mechanics. Buildings occupy a tile footprint
 // (marked TerrainType::Building, hence blocked + overlap-proof) and go
-// through a small state machine: Operational -> Destroyed.
+// through a small state machine: UnderConstruction -> Operational ->
+// Destroyed. UnderConstruction is appended after Destroyed (not before
+// Operational) so legacy saves keep decoding: wire values 0/1 are unchanged.
 
 enum class BuildingType
 {
@@ -26,6 +28,7 @@ enum class BuildingState
 {
     Operational,
     Destroyed, // terminal; entity removal follows via DemolishBuilding
+    UnderConstruction, // freshly placed: ramps health, gates in UpdateBuildingConstruction
     Count // keep last: save decode validates < Count
 };
 
@@ -45,6 +48,9 @@ struct Building
     // default type); PlaceBuilding stamps the real per-type max anyway.
     float health = 400.0f;
     float maxHealth = 400.0f;
+    // Construction progress: seconds since placement while UnderConstruction
+    // (not saved — a loaded site restarts its timer; see SaveGame.cpp).
+    float constructionTime = 0.0f;
     // QoL auto-repair fractional accumulator (mirrors ResourceSystem's
     // income-carry idiom): sub-HP heal budget banks here across frames.
     float repairCarry = 0.0f;
@@ -52,6 +58,16 @@ struct Building
 
 // Full-health value per type (placement + save-load repair of legacy zeros).
 float BuildingMaxHealth(BuildingType type);
+// Seconds a fresh placement needs to reach Operational (Base 3, Depot 2,
+// Factory 4 — a visible beat without stalling openings or flipping the
+// soak ladder's tuned AI timings).
+float BuildingBuildTime(BuildingType type);
+// Advance every UnderConstruction building: ramp health proportionally,
+// flip to Operational at exactly maxHealth on completion. UnderConstruction
+// sites earn no income, can't produce, can't be repair/attack-targeted —
+// every one of those gates already checks == Operational, so no gate
+// changes are needed (verified, not assumed).
+void UpdateBuildingConstruction(Registry &registry, float dt);
 
 // Tile footprint (w, h) per building type.
 cc::IVec2 Footprint(BuildingType type);

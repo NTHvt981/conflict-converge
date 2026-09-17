@@ -264,6 +264,7 @@ void RunMapFileTests()
             AICommander demoAI(demoRegistry, demoMap, demoNodes, demoEvents, 1,
                                AIDifficulty::Medium, demo.aiSpawns[0], home);
             demoAI.SetupBase();
+            UpdateBuildingConstruction(demoRegistry, 20.0f); // sites -> Operational
             int aiBuildings = 0;
             demoRegistry.Each<Building>([&](Entity, const Building &b) {
                 if (b.teamID == 1 && b.state == BuildingState::Operational)

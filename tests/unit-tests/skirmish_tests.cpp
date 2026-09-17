@@ -119,6 +119,7 @@ void RunSkirmishTests()
     CC_CHECK(TeamHasUnits(game.registry, 0));
     CC_CHECK(TeamHasUnits(game.registry, 1));
     CC_CHECK(!game.queue.Empty());
+    UpdateBuildingConstruction(game.registry, 20.0f); // sites -> Operational
     CC_CHECK(game.ai.HasFactory());
     CC_CHECK(game.resources.iron >= 0 && game.resources.oil >= 0);
     // Camera + rally aim at the player home.
@@ -136,6 +137,7 @@ void RunSkirmishTests()
     for (int i = 0; i < 600; ++i)
     {
         const float dt = 1.0f / 60.0f;
+        UpdateBuildingConstruction(game.registry, dt); // sites -> Operational, like Game
         game.fog.Recompute(game.registry);
         game.registry.Each<Unit>([&](Entity id, Unit &unit) {
             UpdateUnit(id, game.registry, game.map, dt, &game.fog);
@@ -228,6 +230,7 @@ void RunSkirmishTests()
         CC_CHECK(ally.allyAI.TeamID() == 0);
         CC_CHECK(ally.enemyAI2.TeamID() == 1);
         CC_CHECK(ally.allyAI.CombatUnitCount() > 0); // allied guard fielded
+        UpdateBuildingConstruction(ally.registry, 20.0f); // sites -> Operational
         CC_CHECK(ally.allyAI.HasFactory());          // allied base produces
         CC_CHECK(ally.enemyAI2.CombatUnitCount() > 0);
         CC_CHECK(ally.enemyAI2.HasFactory());
@@ -236,6 +239,7 @@ void RunSkirmishTests()
         for (int i = 0; i < 600; ++i)
         {
             const float dt = 1.0f / 60.0f;
+            UpdateBuildingConstruction(ally.registry, dt); // sites -> Operational, like Game
             ally.fog.Recompute(ally.registry);
             ally.registry.Each<Unit>([&](Entity id, Unit &unit) {
                 UpdateUnit(id, ally.registry, ally.map, dt, &ally.fog);

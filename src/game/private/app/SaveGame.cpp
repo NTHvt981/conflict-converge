@@ -48,7 +48,10 @@ static_assert(static_cast<int>(UnitState::Count) == 3, "UnitState grew: review s
 static_assert(static_cast<int>(AttackPhase::Count) == 3, "AttackPhase grew: review save decode");
 static_assert(static_cast<int>(TerrainType::Count) == 5, "TerrainType grew: review save decode");
 static_assert(static_cast<int>(BuildingType::Count) == 3, "BuildingType grew: review save decode");
-static_assert(static_cast<int>(BuildingState::Count) == 2, "BuildingState grew: review save decode");
+static_assert(static_cast<int>(BuildingState::Count) == 3, "BuildingState grew: review save decode");
+// Reviewed: UnderConstruction appended AFTER Destroyed, so wire values 0/1
+// decode exactly like legacy saves; 2 loads as UnderConstruction with a
+// restarted timer (constructionTime is not serialized — see below).
 static_assert(static_cast<int>(ResourceKind::Count) == 2, "ResourceKind grew: review save decode");
 
 void FillVec2(cc::save::Vec2 *out, Vector2 v)
@@ -286,6 +289,14 @@ bool Decode(const std::string &payload, SavedWorld &out)
         b.maxHealth = in.max_health() > 0.0f ? in.max_health() : full;
         if (b.state == BuildingState::Destroyed)
         {
+            b.health = 0.0f;
+        }
+        else if (b.state == BuildingState::UnderConstruction)
+        {
+            // Timer isn't serialized: restart construction from 0 rather
+            // than resuming mid-ramp (also dodges the legacy zero-heal
+            // above, which would load a fresh site at full health).
+            b.constructionTime = 0.0f;
             b.health = 0.0f;
         }
         else

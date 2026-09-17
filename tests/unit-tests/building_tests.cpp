@@ -24,7 +24,8 @@ void RunBuildingTests()
     const Building *stored = registry.Get<Building>(base);
     CC_CHECK(stored != nullptr);
     CC_CHECK(stored->type == BuildingType::Base);
-    CC_CHECK(stored->state == BuildingState::Operational);
+    CC_CHECK(stored->state == BuildingState::UnderConstruction); // sites ramp, not instant
+    CC_CHECK(stored->health == 0.0f);
     CC_CHECK(stored->teamID == 0);
     CC_CHECK(map.Get({ 1, 1 }) == TerrainType::Building);
     CC_CHECK(map.Get({ 2, 2 }) == TerrainType::Building);
@@ -59,6 +60,7 @@ void RunBuildingTests()
     PlaceBuilding(economy, emap, BuildingType::Base, 0, 0, 0);
     PlaceBuilding(economy, emap, BuildingType::Factory, 0, 5, 5); // no income
     PlaceBuilding(economy, emap, BuildingType::Base, 1, 10, 10);
+    UpdateBuildingConstruction(economy, 20.0f); // sites -> Operational (game ticks this)
     ResourceSystem resources;
     UpdateBaseIncome(economy, resources, 1.0f);
     CC_CHECK(resources.iron == 4 && resources.oil == 2);
@@ -85,6 +87,7 @@ void RunBuildingTests()
         const Entity hut =
             PlaceBuilding(yard, yardMap, BuildingType::Base, 0, 1, 1);
         CC_CHECK(hut != kInvalidEntity);
+        UpdateBuildingConstruction(yard, 20.0f); // Operational before wounding
         Building *wounded = yard.Get<Building>(hut);
         wounded->health = 300.0f; // 100 missing of 400
         ResourceSystem funds;
@@ -115,6 +118,56 @@ void RunBuildingTests()
         CC_CHECK(wounded->health == 330.0f);
         UpdateBuildingAutoRepair(yard, funds, 1.0f, -1, 1.0f);
         CC_CHECK(wounded->health == 345.0f); // -1 = every team
+    }
+
+    // --- construction: sites ramp 0 -> max, then go Operational exactly ---
+    {
+        Registry site;
+        TileMap siteMap(20, 15);
+        const Entity baseId = PlaceBuilding(site, siteMap, BuildingType::Base, 0, 1, 1);
+        const Entity depotId =
+            PlaceBuilding(site, siteMap, BuildingType::ResourceDepot, 0, 5, 5);
+        Building *baseB = site.Get<Building>(baseId);
+        Building *depotB = site.Get<Building>(depotId);
+        CC_CHECK(baseB->state == BuildingState::UnderConstruction);
+        CC_CHECK(baseB->health == 0.0f && baseB->maxHealth == 400.0f);
+        CC_CHECK(BuildingBuildTime(BuildingType::Base) == 3.0f);
+        CC_CHECK(BuildingBuildTime(BuildingType::ResourceDepot) == 2.0f);
+        CC_CHECK(BuildingBuildTime(BuildingType::Factory) == 4.0f);
+        // Half the depot's build time: proportional ramp, still building.
+        UpdateBuildingConstruction(site, 1.0f);
+        CC_CHECK(depotB->state == BuildingState::UnderConstruction);
+        CC_CHECK(depotB->health == 100.0f); // 200 * 1/2
+        CC_CHECK(baseB->state == BuildingState::UnderConstruction);
+        CC_CHECK(baseB->health > 0.0f && baseB->health < baseB->maxHealth); // 400 * 1/3
+        // Sites earn no income while building.
+        ResourceSystem siteFunds;
+        UpdateBaseIncome(site, siteFunds, 10.0f, 0);
+        CC_CHECK(siteFunds.iron == 0 && siteFunds.oil == 0);
+        // Sites can't be auto-repaired (gates check == Operational).
+        siteFunds.AddIron(1000);
+        UpdateBuildingAutoRepair(site, siteFunds, 10.0f, 0, 1.0f);
+        CC_CHECK(baseB->health > 0.0f && baseB->health < baseB->maxHealth &&
+                 siteFunds.iron == 1000);
+        // Depot finishes first (2s); base still ramping.
+        UpdateBuildingConstruction(site, 1.0f);
+        CC_CHECK(depotB->state == BuildingState::Operational);
+        CC_CHECK(depotB->health == depotB->maxHealth); // exact, never overshoots
+        CC_CHECK(baseB->state == BuildingState::UnderConstruction);
+        // Base completes; income flows again.
+        UpdateBuildingConstruction(site, 2.0f);
+        CC_CHECK(baseB->state == BuildingState::Operational);
+        CC_CHECK(baseB->health == baseB->maxHealth);
+        ResourceSystem flowing;
+        UpdateBaseIncome(site, flowing, 1.0f, 0);
+        CC_CHECK(flowing.iron == 2 && flowing.oil == 1);
+        // Non-positive dt never advances or completes.
+        const Entity lateId =
+            PlaceBuilding(site, siteMap, BuildingType::ResourceDepot, 0, 8, 8);
+        UpdateBuildingConstruction(site, 0.0f);
+        UpdateBuildingConstruction(site, -1.0f);
+        CC_CHECK(site.Get<Building>(lateId)->state == BuildingState::UnderConstruction);
+        CC_CHECK(site.Get<Building>(lateId)->health == 0.0f);
     }
 
     // --- Phase 5: BuildingEntrances ---

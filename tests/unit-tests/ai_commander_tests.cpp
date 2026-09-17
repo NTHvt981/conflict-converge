@@ -68,6 +68,7 @@ void RunAICommanderTests()
     CC_CHECK(ai.WavesLaunched() == 0);
     CC_CHECK(!ai.HasScouted());
     ai.SetupBase();
+    UpdateBuildingConstruction(registry, 20.0f); // sites -> Operational (game ticks this)
     CC_CHECK(CountBuildings(registry, 1) == 3);
     CC_CHECK(ai.CombatUnitCount() >= 1); // guard: team never starts empty
 
@@ -116,6 +117,7 @@ void RunAICommanderTests()
     for (int i = 0; i < 16 * 60; ++i)
     {
         scout.Update(1.0f / 60.0f);
+        UpdateBuildingConstruction(scoutRegistry, 1.0f / 60.0f);
     }
     CC_CHECK(scout.HasScouted());
     CC_CHECK(scout.LastSeenEnemy() == cc::IVec2(1, 10));
@@ -142,6 +144,7 @@ void RunAICommanderTests()
     {
         left.Update(kDt);
         right.Update(kDt);
+        UpdateBuildingConstruction(simRegistry, kDt); // sites -> Operational, like Game
         simNodes.Update(kDt);
         simNodes.GatherTick(simRegistry, simResources, kDt);
         simRegistry.Each<Unit>([&](Entity id, Unit &unit) {

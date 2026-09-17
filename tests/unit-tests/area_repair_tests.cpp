@@ -33,6 +33,7 @@ Entity SpawnBuilding(Registry &registry, TileMap &map, BuildingType type, int te
     if (entity != kInvalidEntity)
     {
         Building *building = registry.Get<Building>(entity);
+        building->state = BuildingState::Operational; // repair needs a standing structure
         building->health = building->maxHealth * hpFrac;
     }
     return entity;

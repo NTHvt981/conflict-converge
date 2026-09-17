@@ -270,6 +270,7 @@ void RunOrdersTests()
         const Entity baseId =
             PlaceBuilding(registry, map, BuildingType::Base, 0, 5, 5);
         CC_CHECK(baseId != kInvalidEntity);
+        UpdateBuildingConstruction(registry, 20.0f); // Operational before wounding
         CC_CHECK(registry.Get<Building>(baseId)->health == 400.0f);
         CC_CHECK(BuildingMaxHealth(BuildingType::ResourceDepot) == 200.0f);
         CC_CHECK(BuildingMaxHealth(BuildingType::Factory) == 350.0f);
@@ -296,6 +297,7 @@ void RunOrdersTests()
             PlaceBuilding(registry, map, BuildingType::ResourceDepot, 1, 5, 2);
         const Entity ownFactory =
             PlaceBuilding(registry, map, BuildingType::Factory, 0, 2, 5);
+        UpdateBuildingConstruction(registry, 20.0f); // targets must be Operational
         CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) == nearDepot);
         // Own structures are never targets.
         CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) != ownFactory);
@@ -316,6 +318,7 @@ void RunOrdersTests()
         TileMap map(20, 15);
         const Entity depotId =
             PlaceBuilding(registry, map, BuildingType::ResourceDepot, 1, 5, 2);
+        UpdateBuildingConstruction(registry, 20.0f); // raidable only when Operational
         const Entity raiderId = AddUnit(registry, Soldier(0, UnitType::LightTank, 3, 2));
         Unit *raider = registry.Get<Unit>(raiderId);
         raider->sightRange = 512.0f;
@@ -333,6 +336,7 @@ void RunOrdersTests()
         EventDispatcher events;
         AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 10, 10 }, { 2, 2 });
         ai.SetupBase();
+        UpdateBuildingConstruction(registry, 20.0f); // factory must be Operational
         CC_CHECK(ai.HasFactory());
         Entity factoryId = kInvalidEntity;
         registry.Each<Building>([&](Entity id, const Building &b) {

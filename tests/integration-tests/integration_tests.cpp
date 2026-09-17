@@ -93,6 +93,7 @@ int RunAISoak(Registry &registry, TileMap &map, ResourceNodes &nodes, AICommande
     {
         first.Update(kDt);
         second.Update(kDt);
+        UpdateBuildingConstruction(registry, kDt); // sites -> Operational, like Game
         nodes.Update(kDt);
         registry.Each<Unit>([&](Entity id, Unit &unit) {
             UpdateUnit(id, registry, map, kDt);
@@ -190,6 +191,7 @@ void RunIntegrationTests()
 
         for (int i = 0; i < 1200; ++i) // 20 simulated seconds
         {
+            UpdateBuildingConstruction(registry, kDt); // site -> Operational, like Game
             UpdateBaseIncome(registry, resources, kDt, 0);
             nodes.Update(kDt);
             nodes.GatherTick(registry, resources, kDt);

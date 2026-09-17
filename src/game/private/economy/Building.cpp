@@ -156,12 +156,12 @@ Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int te
     const cc::IVec2 size = Footprint(type);
     Building building;
     building.type = type;
-    building.state = BuildingState::Operational;
+    building.state = BuildingState::UnderConstruction; // ramps via UpdateBuildingConstruction
     building.teamID = teamID;
     building.tileX = tileX;
     building.tileY = tileY;
-    building.health = BuildingMaxHealth(type);
-    building.maxHealth = building.health;
+    building.health = 0.0f; // construction ramps 0 -> max (reads as "being built")
+    building.maxHealth = BuildingMaxHealth(type);
 
     const Entity id = registry.Create();
     registry.Add(id, building);
@@ -245,6 +245,45 @@ void UpdateBuildingAutoRepair(Registry &registry, ResourceSystem &resources, flo
         }
         building.health += take;
         building.repairCarry -= take;
+    });
+}
+
+float BuildingBuildTime(BuildingType type)
+{
+    switch (type)
+    {
+    case BuildingType::Base:
+        return 3.0f;
+    case BuildingType::ResourceDepot:
+        return 2.0f;
+    case BuildingType::Factory:
+        return 4.0f;
+    case BuildingType::Count:
+        return 3.0f;
+    }
+    return 3.0f;
+}
+
+void UpdateBuildingConstruction(Registry &registry, float dt)
+{
+    if (dt <= 0.0f)
+    {
+        return;
+    }
+    registry.Each<Building>([&](Entity, Building &building) {
+        if (building.state != BuildingState::UnderConstruction)
+        {
+            return;
+        }
+        building.constructionTime += dt;
+        const float total = BuildingBuildTime(building.type);
+        if (building.constructionTime >= total)
+        {
+            building.state = BuildingState::Operational;
+            building.health = building.maxHealth; // exact, never overshoots
+            return;
+        }
+        building.health = building.maxHealth * (building.constructionTime / total);
     });
 }
 

@@ -67,6 +67,7 @@ void RunSaveGameTests()
     src.map.Set({ 6, 3 }, TerrainType::Water);
     PlaceBuilding(src.registry, src.map, BuildingType::Base, 0, 1, 10);
     PlaceBuilding(src.registry, src.map, BuildingType::Factory, 1, 10, 10);
+    UpdateBuildingConstruction(src.registry, 20.0f); // save Operational structures
     src.nodes.SpawnNode(src.map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
     src.nodes.SpawnNode(src.map, ResourceKind::Oil, { 15, 12 }, 150.0f, 10.0f);
 
