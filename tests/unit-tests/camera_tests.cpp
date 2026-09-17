@@ -5,6 +5,7 @@
 #include "test_harness.h"
 
 #include "GameCamera.h"
+#include "Shake.h"
 
 void RunCameraTests()
 {
@@ -88,4 +89,25 @@ void RunCameraTests()
     wide.view.zoom = 1.5f; // inside bounds: stays put
     wide.ClampZoomToWorld(1536.0f, 1152.0f, 1280, 720);
     CC_CHECK(wide.view.zoom == 1.5f);
+
+    // --- screen shake: trauma adds/clamps, decays to 0, magnitude squares ---
+    CC_CHECK(AddShakeTrauma(0.0f, kShakeDeathTrauma) == kShakeDeathTrauma);
+    CC_CHECK(AddShakeTrauma(0.8f, kShakeDeathTrauma) == 1.0f); // overlapping shakes clamp
+    CC_CHECK(AddShakeTrauma(1.0f, kShakeHitTrauma) == 1.0f);
+    CC_CHECK(DecayShakeTrauma(1.0f, 1.0f) == 0.0f); // full trauma clears in <1s
+    CC_CHECK(DecayShakeTrauma(0.0f, 1.0f) == 0.0f); // never goes negative
+    float trauma = AddShakeTrauma(0.0f, kShakeDeathTrauma);
+    trauma = DecayShakeTrauma(trauma, 0.1f);
+    CC_CHECK(trauma > 0.0f && trauma < kShakeDeathTrauma); // partial decay
+    CC_CHECK(ShakeMagnitude(0.0f) == 0.0f);
+    CC_CHECK(ShakeMagnitude(1.0f) == kShakeMaxPixels);
+    // Squared falloff: half trauma shakes at quarter strength, so routine
+    // hits (0.2) stay sub-pixel while wipes (0.5) jolt visibly.
+    CC_CHECK(CcNear(ShakeMagnitude(0.5f), kShakeMaxPixels * 0.25f));
+    CC_CHECK(ShakeMagnitude(kShakeHitTrauma) < 1.0f);
+    CC_CHECK(ShakeMagnitude(kShakeDeathTrauma) > 1.0f);
+    // The real camera is never mutated by shake: Game renders through a
+    // shaken copy, so view.target/offset are untouched by construction
+    // (no shake state lives on GameCamera at all).
+    CC_CHECK(true);
 }

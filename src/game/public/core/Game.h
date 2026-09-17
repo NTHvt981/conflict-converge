@@ -23,6 +23,7 @@
 #include "Registry.h"
 #include "ResourceSystem.h"
 #include "SaveGame.h"
+#include "Shake.h" // trauma-pattern screen shake (pure helpers, header-only)
 #include "Skirmish.h"
 #include "TileMap.h"
 #include "UnitFactory.h"
@@ -185,6 +186,7 @@ private:
     int lastQueueSize = 0;
     float attackSfxTimer = 0.0f;
     HoverTooltipState hoverTip; // unit hover-tooltip debounce (Playing only)
+    float shakeTrauma = 0.0f; // screen-shake trauma 0..1 (render copy only)
     MenuState lastOutcomeState = MenuState::MainMenu;
     bool hasFactory = false;
 };

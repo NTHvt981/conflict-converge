@@ -1685,6 +1685,7 @@ void Game::Update()
         if (!dead.empty())
         {
             audio.Play(SfxId::Explosion);
+            shakeTrauma = AddShakeTrauma(shakeTrauma, kShakeDeathTrauma);
         }
         // M12: impact sparks on fresh hits + muzzle sparks while telegraphing.
         registry.Each<Unit>([&](Entity, const Unit &unit) {
@@ -1692,6 +1693,7 @@ void Game::Update()
             if (unit.hitFlashTime > 0.20f)
             {
                 art.ParticlesPool().SpawnBurst(center, YELLOW, 6, 90.0f, 0.25f);
+                shakeTrauma = AddShakeTrauma(shakeTrauma, kShakeHitTrauma);
                 // QoL pings: same "just got hit" detector, no Combat.h
                 // changes (per-kind floor inside Pings stops spam).
                 // Team 0 is the player.
@@ -1914,6 +1916,7 @@ void Game::Update()
         }
     }
     pings.Update(GetFrameTime()); // QoL: UI clock — ages in menus/viewer too
+    shakeTrauma = DecayShakeTrauma(shakeTrauma, GetFrameTime());
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
@@ -1963,7 +1966,17 @@ void Game::Update()
         }
     }
 
-    BeginMode2D(camera.view);
+    // Screen shake: jitter a COPY of the camera. camera.view itself stays
+    // untouched so ClampToMap/Pan and the post-EndMode2D HUD math (world-
+    // to-screen, minimap viewport) keep seeing the real camera.
+    Camera2D shaken = camera.view;
+    if (shakeTrauma > 0.0f)
+    {
+        const float amount = ShakeMagnitude(shakeTrauma);
+        shaken.offset.x += static_cast<float>(GetRandomValue(-1000, 1000)) / 1000.0f * amount;
+        shaken.offset.y += static_cast<float>(GetRandomValue(-1000, 1000)) / 1000.0f * amount;
+    }
+    BeginMode2D(shaken);
 
     // Tile grid: water/forest/rock filled, grass outlined.
     for (int y = 0; y < map.Height(); ++y)
