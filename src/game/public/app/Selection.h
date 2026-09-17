@@ -59,6 +59,11 @@ int CountIdle(const Registry &registry, int teamID, bool workersOnly);
 // QoL select-all-of-type: every same-team unit of `type`. add=false
 // replaces (like SelectInRect), true extends. Returns picked count.
 int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add);
+// QoL double-click: same team/type filter as SelectAllOfType, additionally
+// restricted to the world-space viewport rect (body-center containment,
+// exactly like SelectInRect, so both agree on "in this rect").
+int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType type,
+                          int teamID, bool add);
 // QoL select-all-buildings: every same-team building of `type` (minimal
 // building-selection groundwork for the production hotkey and future
 // per-building UI). Replaces building selection; returns picked count.

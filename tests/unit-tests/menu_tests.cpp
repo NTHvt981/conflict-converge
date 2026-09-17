@@ -124,10 +124,12 @@ void RunMenuTests()
     saved.cameraSpeed = 512.5f;
     saved.showMinimap = false;
     saved.rightDragPan = true;
+    saved.colorBlindMode = true;
     saved.masterVolume = 0.5f;
     saved.musicVolume = 0.25f;
     saved.sfxVolume = 0.75f;
     saved.mute = true;
+    saved.hotkeyOverrides = { { "ToggleHints", KEY_F2 }, { "Halt", KEY_H } };
     const std::string settingsPath =
         (std::filesystem::temp_directory_path() / "cc_settings_test.cfg").string();
     CC_CHECK(SaveSettings(saved, settingsPath));
@@ -136,28 +138,48 @@ void RunMenuTests()
     CC_CHECK(loaded.cameraSpeed == 512.5f);
     CC_CHECK(!loaded.showMinimap);
     CC_CHECK(loaded.rightDragPan);
+    CC_CHECK(loaded.colorBlindMode);
     CC_CHECK(loaded.masterVolume == 0.5f);
     CC_CHECK(loaded.musicVolume == 0.25f);
     CC_CHECK(loaded.sfxVolume == 0.75f);
     CC_CHECK(loaded.mute);
+    CC_CHECK(loaded.hotkeyOverrides.size() == 2);
+    CC_CHECK(loaded.hotkeyOverrides[0].first == "ToggleHints");
+    CC_CHECK(loaded.hotkeyOverrides[0].second == KEY_F2);
+    CC_CHECK(loaded.hotkeyOverrides[1].first == "Halt");
+    CC_CHECK(loaded.hotkeyOverrides[1].second == KEY_H);
     CC_CHECK(!LoadSettings(loaded, settingsPath + ".missing")); // untouched
     CC_CHECK(loaded.mute); // still the loaded values
     {
         std::ofstream junk(settingsPath, std::ios::trunc);
         junk << "cameraSpeed=banana\nmasterVolume=7\nshowMinimap=2\nmute=1\nunknownKey=9\n";
         junk << "rightDragPan=maybe\n";
+        junk << "colorBlindMode=maybe\n";
+        junk << "hotkey.ToggleHints=" << KEY_F2 << "\n"; // valid override
+        junk << "hotkey.Spaceship=294\n";     // unknown action: skipped
+        junk << "hotkey.Halt=banana\n";       // malformed key: skipped
+        junk << "hotkey.Halt=0\n";            // non-positive key: skipped
+        junk << "hotkey.Halt=" << KEY_H << "\n"; // valid, later line wins
     }
     MenuSettings strict;
     strict.cameraSpeed = 400.0f;
     strict.masterVolume = 1.0f;
     strict.showMinimap = true;
     strict.rightDragPan = true;
+    strict.colorBlindMode = true;
+    strict.hotkeyOverrides = { { "Halt", KEY_SPACE } }; // replaced below
     strict.mute = false;
     CC_CHECK(LoadSettings(strict, settingsPath));
     CC_CHECK(strict.cameraSpeed == 400.0f); // garbage kept the old value
     CC_CHECK(strict.masterVolume == 1.0f);  // out-of-range clamped
     CC_CHECK(strict.showMinimap);           // "2" rejected
     CC_CHECK(strict.rightDragPan);          // "maybe" rejected
+    CC_CHECK(strict.colorBlindMode);        // "maybe" rejected
+    CC_CHECK(strict.hotkeyOverrides.size() == 2); // Spaceship/banana/0 skipped
+    CC_CHECK(strict.hotkeyOverrides[0].first == "Halt");
+    CC_CHECK(strict.hotkeyOverrides[0].second == KEY_H); // replaced, not appended
+    CC_CHECK(strict.hotkeyOverrides[1].first == "ToggleHints");
+    CC_CHECK(strict.hotkeyOverrides[1].second == KEY_F2); // new entry appended
     CC_CHECK(strict.mute);
     std::remove(settingsPath.c_str());
 }

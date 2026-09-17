@@ -339,6 +339,97 @@ bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity targ
     return RepairAim(registry, engineer, target, aim);
 }
 
+void CollectAreaRepairCandidates(Registry &registry, Rectangle worldArea, int teamID,
+                                 std::vector<Entity> &out)
+{
+    std::vector<Entity> units;
+    QueryUnitsInRect(registry, worldArea, teamID, units);
+    for (const Entity id : units)
+    {
+        const Unit *unit = registry.Get<Unit>(id);
+        if (unit != nullptr && IsRepairableUnit(*unit) &&
+            unit->health < BaseStats(unit->type).health)
+        {
+            out.push_back(id);
+        }
+    }
+    std::vector<Entity> buildings;
+    QueryBuildingsInRect(registry, worldArea, teamID, buildings);
+    for (const Entity id : buildings)
+    {
+        const Building *building = registry.Get<Building>(id);
+        if (building != nullptr && building->state == BuildingState::Operational &&
+            building->health < building->maxHealth)
+        {
+            out.push_back(id);
+        }
+    }
+}
+
+namespace
+{
+
+// Repair-work position of a candidate: unit tile corner, building center
+// (matches RepairAim's own destinations, so "nearest" means nearest to
+// where the Engineer would actually drive).
+Vector2 RepairCandidatePos(const Registry &registry, Entity candidate)
+{
+    if (const Unit *unit = registry.Get<Unit>(candidate))
+    {
+        return unit->position;
+    }
+    if (const Building *building = registry.Get<Building>(candidate))
+    {
+        return BuildingCenter(*building);
+    }
+    return { 0.0f, 0.0f };
+}
+
+} // namespace
+
+int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engineers,
+                     const std::vector<Entity> &candidates,
+                     std::vector<RepairAssignment> &out)
+{
+    std::vector<bool> claimed(candidates.size(), false);
+    int assigned = 0;
+    for (const Entity engineerId : engineers)
+    {
+        const Unit *engineer = registry.Get<Unit>(engineerId);
+        if (engineer == nullptr)
+        {
+            continue;
+        }
+        float bestDistSq = -1.0f;
+        std::size_t bestIndex = 0;
+        bool found = false;
+        for (std::size_t i = 0; i < candidates.size(); ++i)
+        {
+            if (claimed[i] || !CanRepairTarget(registry, *engineer, candidates[i]))
+            {
+                continue;
+            }
+            const Vector2 goal = RepairCandidatePos(registry, candidates[i]);
+            const float dx = goal.x - engineer->position.x;
+            const float dy = goal.y - engineer->position.y;
+            const float distSq = dx * dx + dy * dy;
+            if (!found || distSq < bestDistSq)
+            {
+                bestDistSq = distSq;
+                bestIndex = i;
+                found = true;
+            }
+        }
+        if (found)
+        {
+            claimed[bestIndex] = true;
+            out.push_back({ engineerId, candidates[bestIndex] });
+            ++assigned;
+        }
+    }
+    return assigned;
+}
+
 // Shared clear: exactly one order active at a time. Called by every
 // Issue*Order below (including the pre-existing ones, which previously
 // each cleared only a subset) and by the queued-order dispatch. Also

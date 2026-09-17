@@ -253,6 +253,27 @@ void IssueRepairOrder(Unit &engineer, Entity target);
 // driver runs, without starting the order).
 bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity target);
 
+// QoL area repair: one greedy assignment (issuing Engineer + target).
+struct RepairAssignment
+{
+    Entity engineer = kInvalidEntity;
+    Entity target = kInvalidEntity;
+};
+
+// QoL area repair candidate sweep (pure query, no orders): damaged
+// same-team repairable mechanical units below max HP + Operational
+// buildings below maxHealth whose footprint overlaps worldArea.
+void CollectAreaRepairCandidates(Registry &registry, Rectangle worldArea, int teamID,
+                                 std::vector<Entity> &out);
+
+// QoL area repair assignment (pure, no orders issued): each engineer takes
+// its nearest still-unclaimed candidate passing CanRepairTarget (greedy
+// bestDistSq scan against a mutable claimed set). Excess engineers keep
+// their current orders; excess candidates wait for the next drag.
+int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engineers,
+                     const std::vector<Entity> &candidates,
+                     std::vector<RepairAssignment> &out);
+
 // QoL attack-ground order: shell `worldPos` continuously until cancelled.
 // Out of range, the unit marches there first (footprint-aware variant
 // available); in range it fires through the normal windup/cooldown machine,

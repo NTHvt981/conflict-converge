@@ -84,6 +84,8 @@ void Game::Init()
     // M14: boots at MainMenu; persisted settings load here (Q86), ignored
     // when the file is missing.
     LoadSettings(menu.settings, kSettingsPath);
+    art.SetColorBlindMode(menu.settings.colorBlindMode); // QoL: persisted palette
+    ApplyHotkeyOverrides(); // QoL: persisted remaps, before BindShortcuts below
 
     // M6 Goal 1: minimap texture (top-right, 4:3 like the 20x15 map).
     minimap.Init({ static_cast<float>(kInitialWidth) - 170.0f, 10.0f,
@@ -271,13 +273,128 @@ bool Game::WatchLastReplay()
     return true;
 }
 
+void Game::ApplyHotkeyOverrides()
+{
+    hotkeys.ClearOverrides();
+    for (const auto &override : menu.settings.hotkeyOverrides)
+    {
+        hotkeys.Rebind(override.first, override.second);
+    }
+}
+
+void Game::SyncHotkeySettings()
+{
+    menu.settings.hotkeyOverrides = hotkeys.Overrides();
+}
+
+void Game::DrawHotkeyRemap(float cx)
+{
+    // QoL remappable hotkeys (Tier 1): click a key, press the new one.
+    // Stealing a claimed key needs a second click to confirm.
+    DrawText("Remap hotkeys", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
+    GuiLabel({ cx - 200.0f, 70.0f, 600.0f, 20.0f },
+             remapArming >= 0 ? "Press a key for the armed action (Esc cancels)"
+                              : "Click a key to rebind it. Digits/Alt (Tier 2) are fixed.");
+    for (int i = 0; i < NumHotkeyDefs(); ++i)
+    {
+        const HotkeyDef &def = kHotkeyDefs[i];
+        const float rx = cx - 380.0f + static_cast<float>(i / 13) * 380.0f;
+        const float ry = 100.0f + static_cast<float>(i % 13) * 24.0f;
+        GuiLabel({ rx, ry, 220.0f, 20.0f }, def.label);
+        const int effective = hotkeys.KeyFor(def.action);
+        std::string keyText = effective <= 0 ? "-" : GetKeyName(effective);
+        if (def.chord)
+        {
+            keyText = "Shift+" + keyText;
+        }
+        if (remapArming == i)
+        {
+            keyText = "press a key...";
+        }
+        if (GuiButton({ rx + 225.0f, ry, 130.0f, 20.0f }, keyText.c_str()))
+        {
+            if (!remapConflictAction.empty() && remapConflictAction == def.action)
+            {
+                // Second click confirms the steal.
+                hotkeys.Rebind(def.action, remapConflictKey);
+                BindShortcuts();
+                SyncHotkeySettings();
+                SaveSettings(menu.settings, kSettingsPath);
+                remapConflictAction.clear();
+                remapArming = -1;
+            }
+            else
+            {
+                remapArming = (remapArming == i) ? -1 : i; // click again cancels
+                remapConflictAction.clear();
+            }
+        }
+    }
+    // Drain this frame's pressed-key queue into the armed capture.
+    // Esc/modifiers never bind (Esc cancels via the Back binding).
+    if (remapArming >= 0)
+    {
+        int pressed = 0;
+        int candidate = 0;
+        while ((pressed = GetKeyPressed()) != 0)
+        {
+            if (pressed != KEY_ESCAPE && pressed != KEY_LEFT_SHIFT &&
+                pressed != KEY_RIGHT_SHIFT && pressed != KEY_LEFT_CONTROL &&
+                pressed != KEY_RIGHT_CONTROL && pressed != KEY_LEFT_ALT &&
+                pressed != KEY_RIGHT_ALT)
+            {
+                candidate = pressed;
+                break;
+            }
+        }
+        if (candidate != 0)
+        {
+            const std::string action = kHotkeyDefs[remapArming].action;
+            const std::optional<std::string> owner = hotkeys.ActionForKey(candidate);
+            if (owner.has_value() && *owner != action)
+            {
+                remapConflictAction = action;
+                remapConflictKey = candidate;
+            }
+            else
+            {
+                hotkeys.Rebind(action, candidate);
+                BindShortcuts();
+                SyncHotkeySettings();
+                SaveSettings(menu.settings, kSettingsPath);
+                remapArming = -1;
+            }
+        }
+    }
+    if (!remapConflictAction.empty())
+    {
+        const std::optional<std::string> owner = hotkeys.ActionForKey(remapConflictKey);
+        GuiLabel({ cx - 200.0f, 424.0f, 700.0f, 20.0f },
+                 TextFormat("'%s' already fires '%s' — click the row again to steal it.",
+                            GetKeyName(remapConflictKey),
+                            owner.has_value() ? owner->c_str() : "?"));
+    }
+    if (GuiButton({ cx - 200.0f, 450.0f, 400.0f, 40.0f }, "Back"))
+    {
+        remapArming = -1;
+        remapConflictAction.clear();
+        Announce(EventType::MenuAction);
+        menu.state = remapReturn;
+    }
+}
+
 void Game::BindShortcuts()
 {
+    // Idempotent rebuild: Clear first so rebound-away keys leave no stale
+    // binding behind (Bind overwrites same-key slots but never clears the
+    // old key). Every literal goes through hotkeys.KeyFor — the remap
+    // screen + settings file own the effective keys, not these defaults.
+    input.shortcuts.Clear();
     // M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
     // deselects, Space halts selected units, P pauses (M6 Goal 3),
     // F1 toggles the shortcut overlay (M6 Goal 4).
-    input.shortcuts.Bind(KEY_F1, [&] { showHints = !showHints; });
-    input.shortcuts.Bind(KEY_P, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("ToggleHints"), [&] { showHints = !showHints; });
+    input.shortcuts.Bind(hotkeys.KeyFor("TogglePause"), [&] {
         if (menu.state == MenuState::Playing)
         {
             menu.TogglePause();
@@ -290,14 +407,14 @@ void Game::BindShortcuts()
             Announce(EventType::MenuAction);
         }
     });
-    input.shortcuts.Bind(KEY_F5, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("Quicksave"), [&] {
         if (!worldActive || menu.state != MenuState::Playing)
         {
             return;
         }
         SaveWorld({ &registry, &resources, &map, &camera, &nodes, &fog, &occ }, "data/quicksave.ccpb");
     });
-    input.shortcuts.Bind(KEY_F9, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("Quickload"), [&] {
         if (!worldActive || menu.state != MenuState::Playing)
         {
             return;
@@ -305,37 +422,37 @@ void Game::BindShortcuts()
         LoadWorld({ &registry, &resources, &map, &camera, &nodes, &fog, &occ }, "data/quicksave.ccpb");
     });
     // M13: named save slots (F6-8 store, Shift+F6-8 recall).
-    input.shortcuts.Bind(KEY_F6, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("SaveSlot1"), [&] {
         if (worldActive && menu.state == MenuState::Playing)
         {
             SaveWorld(worldState, SaveSlotPath(1));
         }
     });
-    input.shortcuts.Bind(KEY_F7, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("SaveSlot2"), [&] {
         if (worldActive && menu.state == MenuState::Playing)
         {
             SaveWorld(worldState, SaveSlotPath(2));
         }
     });
-    input.shortcuts.Bind(KEY_F8, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("SaveSlot3"), [&] {
         if (worldActive && menu.state == MenuState::Playing)
         {
             SaveWorld(worldState, SaveSlotPath(3));
         }
     });
-    input.shortcuts.BindChord(KEY_F6, [&] {
+    input.shortcuts.BindChord(hotkeys.KeyFor("LoadSlot1"), [&] {
         if (worldActive && menu.state == MenuState::Playing)
         {
             LoadWorld(worldState, SaveSlotPath(1));
         }
     });
-    input.shortcuts.BindChord(KEY_F7, [&] {
+    input.shortcuts.BindChord(hotkeys.KeyFor("LoadSlot2"), [&] {
         if (worldActive && menu.state == MenuState::Playing)
         {
             LoadWorld(worldState, SaveSlotPath(2));
         }
     });
-    input.shortcuts.BindChord(KEY_F8, [&] {
+    input.shortcuts.BindChord(hotkeys.KeyFor("LoadSlot3"), [&] {
         if (worldActive && menu.state == MenuState::Playing)
         {
             LoadWorld(worldState, SaveSlotPath(3));
@@ -344,7 +461,7 @@ void Game::BindShortcuts()
     // M13: order keys act on the current selection. A attack-moves to the
     // cursor, H/G switch stances, V patrols cursor-and-back, R toggles
     // rally-point placement. M14: world keys are dead outside a live match.
-    input.shortcuts.Bind(KEY_A, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("AttackMove"), [&] {
         if (!worldActive || menu.state != MenuState::Playing)
         {
             return;
@@ -367,7 +484,7 @@ void Game::BindShortcuts()
             audio.Play(SfxId::Confirm);
         }
     });
-    input.shortcuts.Bind(KEY_H, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("StanceHold"), [&] {
         if (!worldActive || menu.state != MenuState::Playing)
         {
             return;
@@ -378,7 +495,7 @@ void Game::BindShortcuts()
             SetStance(*unit, Stance::Hold);
         }
     });
-    input.shortcuts.Bind(KEY_G, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("StanceGuard"), [&] {
         if (!worldActive || menu.state != MenuState::Playing)
         {
             return;
@@ -389,7 +506,7 @@ void Game::BindShortcuts()
             SetStance(*unit, Stance::Guard);
         }
     });
-    input.shortcuts.Bind(KEY_V, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("Patrol"), [&] {
         if (!worldActive || menu.state != MenuState::Playing)
         {
             return;
@@ -411,13 +528,13 @@ void Game::BindShortcuts()
             audio.Play(SfxId::Confirm);
         }
     });
-    input.shortcuts.Bind(KEY_R, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("Rally"), [&] {
         if (worldActive && menu.state == MenuState::Playing)
         {
             settingRally = !settingRally;
         }
     });
-    input.shortcuts.Bind(KEY_C, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("SelectType"), [&] {
         // QoL select-all-of-type: everything of the selected unit's type.
         if (!worldActive || menu.state != MenuState::Playing)
         {
@@ -430,7 +547,7 @@ void Game::BindShortcuts()
             SelectAllOfType(registry, unit->type, 0, false); // team 0 is the player
         }
     });
-    input.shortcuts.Bind(KEY_F, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("SelectFactories"), [&] {
         // QoL select-all-production: every owned Factory (minimal building
         // selection — highlight ring + panel count, no command UI yet).
         if (!worldActive || menu.state != MenuState::Playing)
@@ -439,7 +556,7 @@ void Game::BindShortcuts()
         }
         SelectAllBuildings(registry, BuildingType::Factory, 0); // team 0 is the player
     });
-    input.shortcuts.Bind(KEY_B, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("SlowestSpeed"), [&] {
         // QoL move-at-slowest-speed: formation marches stop outrunning
         // their slowest unit while armed.
         if (worldActive && menu.state == MenuState::Playing)
@@ -447,7 +564,7 @@ void Game::BindShortcuts()
             moveAtSlowestSpeed = !moveAtSlowestSpeed;
         }
     });
-    input.shortcuts.Bind(KEY_Z, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("AreaBuild"), [&] {
         // QoL area-build placement flow: toggle, defaulting to Base.
         // While engaged, 1/2/3 picks the type (see the group loop guard),
         // left-click/drag places, right-click or Esc cancels.
@@ -464,7 +581,16 @@ void Game::BindShortcuts()
             placeDragActive = false;
         }
     });
-    input.shortcuts.Bind(KEY_X, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("AreaRepair"), [&] {
+        // QoL area-repair mode: toggle, then left-drag a repair zone
+        // (mirrors area-build's toggle-then-drag shape).
+        if (worldActive && menu.state == MenuState::Playing)
+        {
+            areaRepairMode = !areaRepairMode;
+            repairDragActive = false;
+        }
+    });
+    input.shortcuts.Bind(hotkeys.KeyFor("AttackGround"), [&] {
         // QoL attack-ground mode: arm shelling; the next right-click fires
         // it (one-shot, see the RightPressed block), Escape cancels.
         if (worldActive && menu.state == MenuState::Playing)
@@ -472,7 +598,7 @@ void Game::BindShortcuts()
             attackGroundMode = !attackGroundMode;
         }
     });
-    input.shortcuts.Bind(KEY_T, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("AutoRetreat"), [&] {
         // QoL auto-retreat opt-in: per-unit, so glass cannons can retreat
         // while tanks hold. Sets the whole selection uniformly (all on
         // unless all are already on, then all off).
@@ -494,7 +620,7 @@ void Game::BindShortcuts()
             }
         });
     });
-    input.shortcuts.Bind(KEY_J, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("JumpPing"), [&] {
         // QoL: jump the camera to the most recent attack/loss ping.
         if (!worldActive || menu.state != MenuState::Playing)
         {
@@ -506,23 +632,38 @@ void Game::BindShortcuts()
             camera.view.target = pingPos;
         }
     });
-    input.shortcuts.Bind(KEY_LEFT, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("ReplayBack"), [&] {
         // QoL replay viewer: step one frame back (auto-play resumes after).
         if (menu.state == MenuState::ReplayViewer)
         {
             StepReplay(-1);
         }
     });
-    input.shortcuts.Bind(KEY_RIGHT, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("ReplayFwd"), [&] {
         // QoL replay viewer: step one frame forward.
         if (menu.state == MenuState::ReplayViewer)
         {
             StepReplay(1);
         }
     });
-    input.shortcuts.Bind(KEY_ESCAPE, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("Back"), [&] {
         // M14: Esc backs out of menu screens; in-match it keeps the M2
         // deselect behavior (Paused resumes).
+        if (menu.state == MenuState::HotkeyRemap)
+        {
+            // Esc never rebinds: it cancels an armed capture, else backs
+            // out to wherever the remap screen was entered from.
+            if (remapArming >= 0)
+            {
+                remapArming = -1;
+            }
+            else
+            {
+                remapConflictAction.clear();
+                menu.state = remapReturn;
+            }
+            return;
+        }
         if (menu.state == MenuState::ReplayViewer)
         {
             QuitToMenu(); // viewer teardown (world was a loaded snapshot)
@@ -546,6 +687,8 @@ void Game::BindShortcuts()
             rightDragDist = 0.0f;
             placingType.reset(); // QoL: Esc also exits placement mode
             placeDragActive = false;
+            areaRepairMode = false; // QoL: Esc also stands down repair mode
+            repairDragActive = false;
             DeselectAll(registry);
             dragging = false;
         }
@@ -555,7 +698,7 @@ void Game::BindShortcuts()
             Announce(EventType::MenuAction);
         }
     });
-    input.shortcuts.Bind(KEY_SPACE, [&] {
+    input.shortcuts.Bind(hotkeys.KeyFor("Halt"), [&] {
         if (!worldActive || menu.state != MenuState::Playing)
         {
             return;
@@ -741,12 +884,28 @@ void Game::Update()
             GuiCheckBox({ cx - 200.0f, 340.0f, 20.0f, 20.0f }, "Mute", &menu.settings.mute);
             GuiCheckBox({ cx - 200.0f, 365.0f, 20.0f, 20.0f }, "Right-drag pan",
                         &menu.settings.rightDragPan);
-            if (GuiButton({ cx - 200.0f, 400.0f, 400.0f, 40.0f }, "Back"))
+            GuiCheckBox({ cx - 200.0f, 390.0f, 20.0f, 20.0f }, "Color-blind mode",
+                        &menu.settings.colorBlindMode);
+            art.SetColorBlindMode(menu.settings.colorBlindMode); // live, no reopen needed
+            if (GuiButton({ cx - 200.0f, 425.0f, 400.0f, 40.0f }, "Back"))
             {
+                SyncHotkeySettings(); // QoL: remaps ride the settings file too
                 SaveSettings(menu.settings, kSettingsPath); // M14: Q86 persistence
                 Announce(EventType::MenuAction);
                 menu.OpenMainMenu();
             }
+            if (GuiButton({ cx - 200.0f, 475.0f, 400.0f, 30.0f }, "Remap hotkeys..."))
+            {
+                remapArming = -1;
+                remapConflictAction.clear();
+                remapReturn = MenuState::Settings;
+                Announce(EventType::MenuAction);
+                menu.state = MenuState::HotkeyRemap;
+            }
+        }
+        else if (menu.state == MenuState::HotkeyRemap)
+        {
+            DrawHotkeyRemap(cx);
         }
         else if (menu.state == MenuState::LoadGame)
         {
@@ -952,6 +1111,14 @@ void Game::Update()
                 placeDragActive = true;
                 placeDragStart = input.MouseScreen();
             }
+            else if (areaRepairMode)
+            {
+                // QoL area-repair: press starts a repair-zone drag (click =
+                // tiny rect, drag = repair zone on release). Checked ahead
+                // of box-select, same as placingType above.
+                repairDragActive = true;
+                repairDragStart = input.MouseScreen();
+            }
             else if (minimap.Contains(input.MouseScreen()))
             {
                 camera.view.target =
@@ -978,7 +1145,25 @@ void Game::Update()
                 const Entity hit = PickUnitAt(registry, world);
                 if (hit != kInvalidEntity)
                 {
-                    SelectOnly(registry, hit);
+                    const Unit *hitUnit = registry.Get<Unit>(hit);
+                    // QoL double-click: same type + team across the viewport
+                    // instead of the single pick. PickUnitAt has no team
+                    // filter, so double-clicking an enemy resolves here but
+                    // the team-0 filter below selects nothing (acceptable:
+                    // enemy units aren't commandable anyway).
+                    if (hitUnit != nullptr && input.DoubleClicked())
+                    {
+                        SelectAllOfTypeInRect(
+                            registry,
+                            DraggedWorldBox(camera, { 0.0f, 0.0f },
+                                            { static_cast<float>(GetScreenWidth()),
+                                              static_cast<float>(GetScreenHeight()) }),
+                            hitUnit->type, 0, false);
+                    }
+                    else
+                    {
+                        SelectOnly(registry, hit);
+                    }
                     audio.Play(SfxId::Select); // M11: selection blip
                 }
                 else
@@ -1044,6 +1229,44 @@ void Game::Update()
                 }
             }
         }
+        // QoL area-repair release: collect damaged candidates in the zone,
+        // greedily assign each selected Engineer its nearest unclaimed one.
+        // Click-sized drags resolve as a tiny rect (usually a silent no-op).
+        // The mode stays engaged for repeat drags; right-click/Esc exits.
+        if (repairDragActive && !input.LeftDown())
+        {
+            repairDragActive = false;
+            if (areaRepairMode)
+            {
+                const Rectangle zone =
+                    DraggedWorldBox(camera, repairDragStart, input.MouseScreen());
+                std::vector<Entity> engineers;
+                registry.Each<Unit>([&](Entity id, const Unit &unit) {
+                    if (unit.isSelected && unit.type == UnitType::Engineer)
+                    {
+                        engineers.push_back(id);
+                    }
+                });
+                std::vector<Entity> candidates;
+                CollectAreaRepairCandidates(registry, zone, 0, candidates);
+                std::vector<RepairAssignment> assignments;
+                AssignAreaRepair(registry, engineers, candidates, assignments);
+                for (const RepairAssignment &job : assignments)
+                {
+                    if (Unit *engineer = registry.Get<Unit>(job.engineer))
+                    {
+                        IssueOrEnqueue(*engineer, map, &occ, job.engineer,
+                                       registry.Generation(job.engineer), input.ShiftDown(),
+                                       QueuedOrder{ QueuedOrderKind::Repair, {}, {},
+                                                    job.target });
+                    }
+                }
+                if (!assignments.empty())
+                {
+                    audio.Play(SfxId::Confirm);
+                }
+            }
+        }
         const bool altDown = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
         // QoL right-drag pan (opt-in setting): accumulate held distance
         // every frame; past the click-vs-drag threshold the camera grabs
@@ -1059,7 +1282,7 @@ void Game::Update()
             }
         }
         // Whether this press cancelled placement (orders stay silent then).
-        const bool wasPlacing = placingType.has_value();
+        const bool wasPlacing = placingType.has_value() || areaRepairMode;
         if (input.RightPressed())
         {
             // QoL area-build: right-click cancels placement (no order).
@@ -1067,6 +1290,14 @@ void Game::Update()
             {
                 placingType.reset();
                 placeDragActive = false;
+            }
+            // QoL area-repair: right-click stands the mode down (no order).
+            // Chained (not separate) so Alt+right-drag can't arm a line
+            // while either mode cancels, exactly like placement before it.
+            else if (areaRepairMode)
+            {
+                areaRepairMode = false;
+                repairDragActive = false;
             }
             // QoL line formation: Alt+right-drag draws a placement line
             // (Ctrl is groups, Shift is queueing — Alt stays unambiguous).
@@ -1132,10 +1363,12 @@ void Game::Update()
                                 {
                                     return;
                                 }
-                                const cc::IVec2 fp = Footprint(building.type);
-                                if (tile.x >= building.tileX &&
-                                    tile.x < building.tileX + fp.x &&
-                                    tile.y >= building.tileY && tile.y < building.tileY + fp.y &&
+                                // Shared footprint-rect helper (also feeds
+                                // area repair) instead of inline tile math.
+                                const Rectangle footprint = BuildingFootprintRect(building);
+                                const Vector2 tileCenter = cc::ToRaylib(
+                                    cc::TileToWorld(tile.x, tile.y) + cc::Vec2(32.0f, 32.0f));
+                                if (CheckCollisionPointRec(tileCenter, footprint) &&
                                     CanRepairTarget(registry, *ordered, id))
                                 {
                                     patient = id;
@@ -1514,7 +1747,7 @@ void Game::Update()
                     minimap.WorldToMinimap(center, map.Width(), map.Height());
                 DrawRectangle(static_cast<int>(dot.x - minimap.screenRect.x) - 1,
                               static_cast<int>(dot.y - minimap.screenRect.y) - 1, 3, 3,
-                              unit.teamID == 0 ? SKYBLUE : RED);
+                              art.TeamTint(unit.teamID));
             });
             EndTextureMode();
         }
@@ -1676,7 +1909,14 @@ void Game::Update()
         const Vector2 center = { body.x + 16.0f, body.y + 16.0f };
         if (art.UseRectangles() && !art.UseAtlas())
         {
-            DrawRectangleRec(body, unit.state == UnitState::Attacking ? ORANGE : BLUE);
+            // Team as the base color (previously attack-state only, which
+            // made teams indistinguishable in this tier); attacking keeps
+            // a separate outline cue so both signals survive.
+            DrawRectangleRec(body, art.TeamTint(unit.teamID));
+            if (unit.state == UnitState::Attacking)
+            {
+                DrawRectangleLinesEx(body, 2.0f, ORANGE);
+            }
         }
         else
         {
@@ -1690,7 +1930,7 @@ void Game::Update()
             const int count = SquadSlots(unit.type, id, UnitHealthFraction(unit), slots, slotScale);
             const bool moving = unit.state == UnitState::Moving;
             const float animTime = static_cast<float>(GetTime());
-            const Color tint = Art::TeamTint(unit.teamID);
+            const Color tint = art.TeamTint(unit.teamID);
             for (int i = 0; i < count; ++i)
             {
                 const Vector2 corner = { unit.position.x + slots[i].x,
@@ -1723,6 +1963,12 @@ void Game::Update()
                           static_cast<int>(body.width), 5, Fade(RED, 0.6f));
             DrawRectangle(static_cast<int>(body.x), static_cast<int>(body.y) - 8,
                           static_cast<int>(body.width * fraction), 5, GREEN);
+            // QoL range preview: attack-radius ring for selected units.
+            if (unit.attackRange > 0)
+            {
+                DrawCircleLinesV(center, static_cast<float>(unit.attackRange),
+                                 Fade(RED, 0.35f));
+            }
         }
         if (unit.controlGroups != 0)
         {
@@ -1780,6 +2026,32 @@ void Game::Update()
     if (dragging && input.LeftDown())
     {
         DrawRectangleLinesEx(NormalizeRect(dragStart, input.MouseScreen()), 1.0f, GREEN);
+    }
+    // QoL area-repair preview (screen space, same layer as drag-box):
+    // live zone rect plus a marker on every damaged candidate that would
+    // be assigned on release.
+    if (repairDragActive && input.LeftDown() && areaRepairMode)
+    {
+        DrawRectangleLinesEx(NormalizeRect(repairDragStart, input.MouseScreen()), 1.0f,
+                             GREEN);
+        std::vector<Entity> preview;
+        CollectAreaRepairCandidates(
+            registry, DraggedWorldBox(camera, repairDragStart, input.MouseScreen()), 0,
+            preview);
+        for (const Entity id : preview)
+        {
+            Vector2 center = { 0.0f, 0.0f };
+            if (const Unit *unit = registry.Get<Unit>(id))
+            {
+                center = { unit->position.x + 32.0f, unit->position.y + 32.0f };
+            }
+            else if (const Building *building = registry.Get<Building>(id))
+            {
+                const Rectangle fp = BuildingFootprintRect(*building);
+                center = { fp.x + fp.width / 2.0f, fp.y + fp.height / 2.0f };
+            }
+            DrawCircleV(GetWorldToScreen2D(center, camera.view), 4.0f, GREEN);
+        }
     }
     // QoL line-formation preview (screen space, same layer as drag-box).
     if (rightDragging && input.RightDown())
@@ -1866,6 +2138,13 @@ void Game::Update()
     }
 
     // M6 Goal 3: menu overlays sit on top of the frame.
+    if (menu.state == MenuState::HotkeyRemap)
+    {
+        // Entered from pause (world stays frozen: the sim only advances in
+        // Playing). Same screen as the Settings-chain branch above.
+        DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));
+        DrawHotkeyRemap(screenWidth / 2.0f);
+    }
     if (menu.state == MenuState::ReplayViewer)
     {
         // QoL replay banner (no window: the world render stays visible).
@@ -1904,13 +2183,24 @@ void Game::Update()
         GuiCheckBox(Rectangle{ 270, 340, 20, 20 }, "Mute", &menu.settings.mute);
         GuiCheckBox(Rectangle{ 270, 365, 20, 20 }, "Right-drag pan",
                     &menu.settings.rightDragPan);
+        GuiCheckBox(Rectangle{ 270, 390, 20, 20 }, "Color-blind mode",
+                    &menu.settings.colorBlindMode);
+        art.SetColorBlindMode(menu.settings.colorBlindMode); // live, no reopen needed
+        if (GuiButton(Rectangle{ 270, 415, 260, 30 }, "Remap hotkeys..."))
+        {
+            remapArming = -1;
+            remapConflictAction.clear();
+            remapReturn = MenuState::Paused;
+            Announce(EventType::MenuAction);
+            menu.state = MenuState::HotkeyRemap;
+        }
         // M14: pause shares MenuSettings with the settings screen; leaving
         // via Back-equivalent persists (Q86), pause buttons apply live.
-        if (GuiButton(Rectangle{ 270, 390, 260, 30 }, "Quit to menu"))
+        if (GuiButton(Rectangle{ 270, 450, 260, 30 }, "Quit to menu"))
         {
             QuitToMenu();
         }
-        if (GuiButton(Rectangle{ 270, 425, 260, 30 }, "Quit to desktop"))
+        if (GuiButton(Rectangle{ 270, 485, 260, 30 }, "Quit to desktop"))
         {
             menu.quitRequested = true;
         }

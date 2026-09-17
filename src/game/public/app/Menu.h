@@ -19,6 +19,7 @@ enum class MenuState
     MainMenu,      // M14: title screen (boot state, not battle)
     SkirmishSetup, // M14: map + difficulty picker (Q85: v1 scope)
     Settings,      // M14: settings screen (shares MenuSettings with pause)
+    HotkeyRemap,   // QoL remappable hotkeys (entered from Settings/pause)
     LoadGame,      // M14: save-slot browser (reuses the M13 slot paths)
     Playing,
     Paused,
@@ -38,6 +39,13 @@ struct MenuSettings
     // QoL right-drag camera pan (opt-in; default keeps right-click purely
     // for orders). Persisted below like the other settings.
     bool rightDragPan = false;
+    // QoL color-blind mode (Okabe-Ito team palette in Art::TeamTint).
+    // Persisted like the other settings; applied live to `art`.
+    bool colorBlindMode = false;
+    // QoL remapped hotkeys: (action id, raylib key) overrides only —
+    // unlisted actions use kHotkeyDefs defaults. Synced from HotkeyMap
+    // before every SaveSettings, applied back after every LoadSettings.
+    std::vector<std::pair<std::string, int>> hotkeyOverrides;
     // M11: audio volumes (0..1) + mute, persisted by the M14 settings file.
     float masterVolume = 1.0f;
     float musicVolume = 0.8f;

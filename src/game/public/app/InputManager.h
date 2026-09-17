@@ -28,7 +28,7 @@ public:
     // Snapshot from explicit values (tests, scripted input).
     void Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool rightPressed, float wheelDelta = 0.0f,
                   bool shiftDown = false, bool leftDown = false, bool rightDown = false,
-                  bool ctrlDown = false);
+                  bool ctrlDown = false, double nowSeconds = 0.0);
 
     Vector2 MouseScreen() const;
     // Frame-to-frame mouse movement in screen px (for drag-pan). Zero on
@@ -41,6 +41,7 @@ public:
     float WheelDelta() const; // mouse wheel steps this frame (M13 zoom)
     bool ShiftDown() const;   // either shift key held (M13 slot load/save combos)
     bool CtrlDown() const;    // either control key held (QoL control groups)
+    bool DoubleClicked() const; // edge: second left press within 0.35s + 8px
 
     // Snapshot mouse position under the given camera view.
     Vector2 MouseWorld(const GameCamera &camera) const;
@@ -57,4 +58,9 @@ private:
     bool leftDown_ = false;
     bool rightDown_ = false;
     bool ctrlDown_ = false;
+    // QoL double-click select-type: last left-press time/pos; set by
+    // Snapshot (PollLive passes the real GetTime, tests pass explicit).
+    double lastLeftClickTime_ = -1.0;
+    Vector2 lastLeftClickPos_ = {};
+    bool doubleClicked_ = false;
 };

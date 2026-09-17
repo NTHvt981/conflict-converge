@@ -450,9 +450,19 @@ std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
     return {};
 }
 
-Color Art::TeamTint(int teamID)
+Color Art::TeamTint(int teamID) const
 {
+    if (colorBlindMode_)
+    {
+        // Okabe-Ito colorblind-safe pair: orange / sky blue.
+        return teamID == 0 ? Color{ 230, 159, 0, 255 } : Color{ 86, 180, 233, 255 };
+    }
     return teamID == 0 ? BLUE : RED;
+}
+
+void Art::SetColorBlindMode(bool enabled)
+{
+    colorBlindMode_ = enabled;
 }
 
 void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,

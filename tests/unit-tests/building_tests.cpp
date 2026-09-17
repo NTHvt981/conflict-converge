@@ -239,4 +239,61 @@ void RunBuildingTests()
         // Reversed range: empty, never negative-stepped.
         CC_CHECK(AreaBuildSlots(BuildingType::Base, { 3, 3 }, { 0, 0 }).empty());
     }
+
+    // --- QoL BuildingFootprintRect: tile footprint as a world rect ---
+    {
+        Building depot;
+        depot.type = BuildingType::ResourceDepot;
+        depot.tileX = 3;
+        depot.tileY = 4;
+        const Rectangle depotRect = BuildingFootprintRect(depot);
+        CC_CHECK(depotRect.x == 3.0f * 64.0f && depotRect.y == 4.0f * 64.0f);
+        CC_CHECK(depotRect.width == 64.0f && depotRect.height == 64.0f);
+
+        Building base;
+        base.type = BuildingType::Base;
+        base.tileX = 1;
+        base.tileY = 1;
+        const Rectangle baseRect = BuildingFootprintRect(base);
+        CC_CHECK(baseRect.x == 64.0f && baseRect.y == 64.0f);
+        CC_CHECK(baseRect.width == 128.0f && baseRect.height == 128.0f);
+    }
+
+    // --- QoL QueryBuildingsInRect: overlap + team filter ---
+    {
+        Registry query;
+        TileMap queryMap(20, 15);
+        const Entity inBase =
+            PlaceBuilding(query, queryMap, BuildingType::Base, 0, 1, 1); // (64,64)-(192,192)
+        const Entity inDepot = PlaceBuilding(query, queryMap, BuildingType::ResourceDepot,
+                                             0, 5, 5); // single tile (5,5)
+        const Entity foeBase =
+            PlaceBuilding(query, queryMap, BuildingType::Base, 1, 10, 10); // far away
+        CC_CHECK(inBase != kInvalidEntity && inDepot != kInvalidEntity &&
+                 foeBase != kInvalidEntity);
+
+        std::vector<Entity> found;
+        // Rect overlapping only the team-0 base.
+        QueryBuildingsInRect(query, { 0.0f, 0.0f, 200.0f, 200.0f }, 0, found);
+        CC_CHECK(found.size() == 1 && found[0] == inBase);
+        // Small rect strictly inside the depot tile.
+        found.clear();
+        QueryBuildingsInRect(query, { 5.0f * 64.0f, 5.0f * 64.0f, 10.0f, 10.0f }, 0,
+                             found);
+        CC_CHECK(found.size() == 1 && found[0] == inDepot);
+        // Rect over nothing.
+        found.clear();
+        QueryBuildingsInRect(query, { 0.0f, 600.0f, 100.0f, 100.0f }, 0, found);
+        CC_CHECK(found.empty());
+        // Negative team: every team.
+        found.clear();
+        QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 64.0f, 15.0f * 64.0f }, -1,
+                             found);
+        CC_CHECK(found.size() == 3);
+        // Team 1 alone.
+        found.clear();
+        QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 64.0f, 15.0f * 64.0f }, 1,
+                             found);
+        CC_CHECK(found.size() == 1 && found[0] == foeBase);
+    }
 }

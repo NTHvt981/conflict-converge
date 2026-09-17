@@ -93,4 +93,30 @@ void RunInputManagerTests()
     input.shortcuts.Bind(32, [&] { ++halts; });
     CC_CHECK(input.shortcuts.Fire(32));
     CC_CHECK(halts == 1);
+
+    // --- DoubleClicked: close press pair in time + space ---
+    InputManager clicks;
+    clicks.Snapshot({ 200.0f, 200.0f }, true, false, 0.0f, false, false, false, false,
+                     10.0);
+    CC_CHECK(!clicks.DoubleClicked()); // first of a potential pair
+    clicks.Snapshot({ 200.0f, 200.0f }, false, false, 0.0f, false, false, false, false,
+                     10.2);
+    CC_CHECK(!clicks.DoubleClicked()); // release: edge fires on press only
+    clicks.Snapshot({ 203.0f, 201.0f }, true, false, 0.0f, false, false, false, false,
+                     10.3);
+    CC_CHECK(clicks.DoubleClicked()); // within 0.35s + 8px
+    clicks.Snapshot({ 203.0f, 201.0f }, false, false, 0.0f, false, false, false,
+                     false, 10.4);
+    CC_CHECK(!clicks.DoubleClicked()); // consumed: edge lasts one frame
+
+    // --- DoubleClicked rejects slow or far pairs ---
+    InputManager slow;
+    slow.Snapshot({ 50.0f, 50.0f }, true, false, 0.0f, false, false, false, false, 1.0);
+    slow.Snapshot({ 50.0f, 50.0f }, true, false, 0.0f, false, false, false, false, 2.0);
+    CC_CHECK(!slow.DoubleClicked()); // 1s apart: too slow
+    InputManager far;
+    far.Snapshot({ 50.0f, 50.0f }, true, false, 0.0f, false, false, false, false, 5.0);
+    far.Snapshot({ 200.0f, 200.0f }, true, false, 0.0f, false, false, false, false,
+                  5.1);
+    CC_CHECK(!far.DoubleClicked()); // too far apart
 }

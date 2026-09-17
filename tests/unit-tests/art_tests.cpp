@@ -148,10 +148,20 @@ void RunArtTests()
         CC_CHECK(!art.UseAtlas());
         CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f).empty());
         art.DrawAtlasFrame("infantry_idle_0_0", { 0.0f, 0.0f }, WHITE); // no crash
-        const Color blue = Art::TeamTint(0);
+        // Default mode: raw BLUE/RED (colorBlindMode_ defaults to false).
+        const Color blue = art.TeamTint(0);
         CC_CHECK(blue.r == BLUE.r && blue.g == BLUE.g && blue.b == BLUE.b);
-        const Color red = Art::TeamTint(1);
+        const Color red = art.TeamTint(1);
         CC_CHECK(red.r == RED.r && red.g == RED.g && red.b == RED.b);
+        // Color-blind mode: Okabe-Ito orange / sky blue.
+        art.SetColorBlindMode(true);
+        const Color cbOrange = art.TeamTint(0);
+        CC_CHECK(cbOrange.r == 230 && cbOrange.g == 159 && cbOrange.b == 0);
+        const Color cbSky = art.TeamTint(1);
+        CC_CHECK(cbSky.r == 86 && cbSky.g == 180 && cbSky.b == 233);
+        art.SetColorBlindMode(false);
+        const Color backToBlue = art.TeamTint(0);
+        CC_CHECK(backToBlue.r == BLUE.r && backToBlue.g == BLUE.g && backToBlue.b == BLUE.b);
     }
 
     // --- atlas: idle sprite + walk cycle from data/sprites.json ---

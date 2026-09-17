@@ -14,11 +14,12 @@ void InputManager::PollLive()
              IsMouseButtonPressed(MOUSE_BUTTON_RIGHT), GetMouseWheelMove(),
              IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT),
              IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsMouseButtonDown(MOUSE_BUTTON_RIGHT),
-             IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL));
+             IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL), GetTime());
 }
 
 void InputManager::Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool rightPressed, float wheelDelta,
-                            bool shiftDown, bool leftDown, bool rightDown, bool ctrlDown)
+                            bool shiftDown, bool leftDown, bool rightDown, bool ctrlDown,
+                            double nowSeconds)
 {
     if (!hasPrevMouse_)
     {
@@ -36,6 +37,27 @@ void InputManager::Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool right
     leftDown_ = leftDown;
     rightDown_ = rightDown;
     ctrlDown_ = ctrlDown;
+    // Double-click edge: fresh left press within the window + tolerance of
+    // the previous press; true for this frame only.
+    doubleClicked_ = false;
+    if (leftPressed)
+    {
+        constexpr double kWindowSeconds = 0.35;
+        constexpr float kTolerancePx = 8.0f;
+        const float dx = mouseScreenPos.x - lastLeftClickPos_.x;
+        const float dy = mouseScreenPos.y - lastLeftClickPos_.y;
+        if (lastLeftClickTime_ >= 0.0 && nowSeconds - lastLeftClickTime_ <= kWindowSeconds &&
+            dx * dx + dy * dy <= kTolerancePx * kTolerancePx)
+        {
+            doubleClicked_ = true;
+            lastLeftClickTime_ = -1.0; // pair consumed: no triple-click chains
+        }
+        else
+        {
+            lastLeftClickTime_ = nowSeconds;
+            lastLeftClickPos_ = mouseScreenPos;
+        }
+    }
 }
 
 Vector2 InputManager::MouseScreen() const
@@ -81,6 +103,11 @@ bool InputManager::ShiftDown() const
 bool InputManager::CtrlDown() const
 {
     return ctrlDown_;
+}
+
+bool InputManager::DoubleClicked() const
+{
+    return doubleClicked_;
 }
 
 Vector2 InputManager::MouseWorld(const GameCamera &camera) const

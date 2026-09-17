@@ -228,6 +228,36 @@ int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add)
     return picked;
 }
 
+int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType type,
+                          int teamID, bool add)
+{
+    const Rectangle box = NormalizeRect({ worldViewport.x, worldViewport.y },
+                                        { worldViewport.x + worldViewport.width,
+                                          worldViewport.y + worldViewport.height });
+    int picked = 0;
+    registry.Each<Unit>([&](Entity, Unit &unit) {
+        // Same body-center containment as SelectInRect.
+        const float cx = unit.position.x + 32.0f;
+        const float cy = unit.position.y + 32.0f;
+        const bool inside = cx >= box.x && cx <= box.x + box.width && cy >= box.y &&
+                            cy <= box.y + box.height;
+        const bool match = inside && unit.teamID == teamID && unit.type == type;
+        if (!add)
+        {
+            unit.isSelected = match;
+        }
+        else if (match)
+        {
+            unit.isSelected = true;
+        }
+        if (unit.isSelected && match)
+        {
+            ++picked;
+        }
+    });
+    return picked;
+}
+
 int SelectAllBuildings(Registry &registry, BuildingType type, int teamID)
 {
     int picked = 0;

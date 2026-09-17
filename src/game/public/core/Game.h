@@ -11,6 +11,7 @@
 #include "Event.h"
 #include "FogOfWar.h"
 #include "GameCamera.h"
+#include "Hotkeys.h"
 #include "InputManager.h"
 #include "MapFile.h"
 #include "Menu.h"
@@ -62,6 +63,14 @@ private:
     void StartMatch(const std::string &mapPath, AIDifficulty difficulty);
     void QuitToMenu();
     void BindShortcuts();
+    // QoL hotkey remap: push settings overrides into `hotkeys` (then
+    // re-run BindShortcuts), and pull live overrides back into settings
+    // before every SaveSettings so the file stays in sync.
+    void ApplyHotkeyOverrides();
+    void SyncHotkeySettings();
+    // QoL remap screen body (shared by the Settings-chain branch and the
+    // paused overlay: same screen, whichever state entered it).
+    void DrawHotkeyRemap(float cx);
     // QoL snapshot replay viewer: step the loaded snapshot cursor
     // (clamped, minimap poked). Enter via WatchLastReplay.
     void StepReplay(int dir);
@@ -93,6 +102,16 @@ private:
     SkirmishWorld skirmish;
     WorldState worldState;
     InputManager input;
+    // QoL remappable hotkeys (Tier 1): effective keys for BindShortcuts.
+    // Loaded from settings at startup, rebound live from the remap screen.
+    HotkeyMap hotkeys;
+    // QoL remap-screen capture state: action index being rebound (-1 =
+    // none), pending conflict (action + key awaiting second-click
+    // confirm), and where Esc returns to (Settings or Paused).
+    int remapArming = -1;
+    std::string remapConflictAction;
+    int remapConflictKey = 0;
+    MenuState remapReturn = MenuState::Settings;
 
     bool worldActive = false;
     // 2v2 overflow commanders tick only in 2v2 matches. NEVER gate them on
@@ -149,6 +168,12 @@ private:
     std::optional<BuildingType> placingType;
     bool placeDragActive = false;
     Vector2 placeDragStart = {};
+    // QoL area repair (toggled with E): drag a zone, every selected
+    // Engineer repairs its nearest damaged target inside it. Left-drag
+    // sibling of area-build (own mode + drag state, never shared).
+    bool areaRepairMode = false;
+    bool repairDragActive = false;
+    Vector2 repairDragStart = {};
 
     // Per-frame poll state (M11 edge-triggered sounds, M14 transitions).
     int lastBuildingCount = 0;

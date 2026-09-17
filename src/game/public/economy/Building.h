@@ -56,6 +56,17 @@ float BuildingMaxHealth(BuildingType type);
 // Tile footprint (w, h) per building type.
 cc::IVec2 Footprint(BuildingType type);
 
+// World-space footprint rect (shared tile-to-rect math for the repair
+// target scan, area repair, and previews — one implementation, not three
+// inline copies).
+Rectangle BuildingFootprintRect(const Building &building);
+
+// Rect-vs-rect building query (mirrors QueryUnitsInRect's teamID
+// convention: same team, or every team when negative). Footprints are
+// rects, not points, so overlap — not containment — is the test.
+void QueryBuildingsInRect(Registry &registry, Rectangle area, int teamID,
+                          std::vector<Entity> &out);
+
 // Validate (in-bounds, all Grass, team stored) and place: creates the entity,
 // attaches the component, marks footprint tiles as Building.
 // Returns kInvalidEntity when any footprint tile is out-of-bounds or not Grass.

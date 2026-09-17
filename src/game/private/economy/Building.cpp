@@ -39,6 +39,29 @@ float BuildingMaxHealth(BuildingType type)
     return 200.0f;
 }
 
+Rectangle BuildingFootprintRect(const Building &building)
+{
+    const cc::IVec2 fp = Footprint(building.type);
+    const cc::Vec2 corner = cc::TileToWorld(building.tileX, building.tileY);
+    return { corner.x, corner.y, static_cast<float>(fp.x) * cc::TILE_SIZE,
+             static_cast<float>(fp.y) * cc::TILE_SIZE };
+}
+
+void QueryBuildingsInRect(Registry &registry, Rectangle area, int teamID,
+                          std::vector<Entity> &out)
+{
+    registry.Each<Building>([&](Entity id, const Building &building) {
+        if (teamID >= 0 && building.teamID != teamID)
+        {
+            return;
+        }
+        if (CheckCollisionRecs(BuildingFootprintRect(building), area))
+        {
+            out.push_back(id);
+        }
+    });
+}
+
 namespace
 {
 

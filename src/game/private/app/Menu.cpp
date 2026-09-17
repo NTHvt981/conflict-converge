@@ -3,6 +3,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "Hotkeys.h" // hotkey.* override validation (known action ids)
+
 void MenuFlow::TogglePause()
 {
     if (state == MenuState::Playing)
@@ -114,6 +116,11 @@ bool SaveSettings(const MenuSettings &settings, const std::string &path)
     file << "cameraSpeed=" << settings.cameraSpeed << "\n";
     file << "showMinimap=" << (settings.showMinimap ? 1 : 0) << "\n";
     file << "rightDragPan=" << (settings.rightDragPan ? 1 : 0) << "\n";
+    file << "colorBlindMode=" << (settings.colorBlindMode ? 1 : 0) << "\n";
+    for (const auto &override : settings.hotkeyOverrides)
+    {
+        file << "hotkey." << override.first << "=" << override.second << "\n";
+    }
     file << "masterVolume=" << settings.masterVolume << "\n";
     file << "musicVolume=" << settings.musicVolume << "\n";
     file << "sfxVolume=" << settings.sfxVolume << "\n";
@@ -169,6 +176,13 @@ bool LoadSettings(MenuSettings &settings, const std::string &path)
                 parsed.rightDragPan = value == "1";
             }
         }
+        else if (key == "colorBlindMode")
+        {
+            if (value == "0" || value == "1")
+            {
+                parsed.colorBlindMode = value == "1";
+            }
+        }
         else if (key == "masterVolume")
         {
             if (ParseFloat(value, number))
@@ -195,6 +209,39 @@ bool LoadSettings(MenuSettings &settings, const std::string &path)
             if (value == "0" || value == "1")
             {
                 parsed.mute = value == "1";
+            }
+        }
+        else if (key.rfind("hotkey.", 0) == 0)
+        {
+            // QoL remap persistence: known action + positive int key only;
+            // unknown actions and malformed keys are skipped (same tolerant
+            // posture as every other setting above). Later lines win.
+            const std::string action = key.substr(7);
+            if (IsKnownHotkeyAction(action))
+            {
+                try
+                {
+                    const int code = std::stoi(value);
+                    if (code > 0)
+                    {
+                        bool replaced = false;
+                        for (auto &override : parsed.hotkeyOverrides)
+                        {
+                            if (override.first == action)
+                            {
+                                override.second = code;
+                                replaced = true;
+                            }
+                        }
+                        if (!replaced)
+                        {
+                            parsed.hotkeyOverrides.emplace_back(action, code);
+                        }
+                    }
+                }
+                catch (const std::exception &)
+                {
+                }
             }
         }
     }

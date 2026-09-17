@@ -114,8 +114,10 @@ public:
                            float timeSeconds) const;
     // Team color for atlas mask tinting: BLUE/RED, matching the
     // rectangle-fallback body colors. Applies to the mask layer only; base
-    // art keeps its baked colors.
-    static Color TeamTint(int teamID);
+    // art keeps its baked colors. Color-blind mode swaps in the Okabe-Ito
+    // orange/sky-blue pair (see SetColorBlindMode).
+    Color TeamTint(int teamID) const;
+    void SetColorBlindMode(bool enabled);
 
     Particles &ParticlesPool();
     const Particles &ParticlesPool() const;
@@ -129,6 +131,7 @@ private:
     bool fallback_ = true;
     bool atlasReady_ = false;
     bool sheetLoaded_ = false;
+    bool colorBlindMode_ = false; // Okabe-Ito team palette when true
     SpriteSheetData sheet_;
     std::unordered_map<int, Texture2D> atlas_; // SpriteTextureInfo.id -> sheet
     Particles particles_;
