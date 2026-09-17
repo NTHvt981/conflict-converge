@@ -120,6 +120,10 @@ private:
     int replayCount = 0; // frames available for the viewer
     int replayCursor = 0; // currently shown frame
     float replayPlayTimer = 0.0f; // auto-advance clock in the viewer
+    // QoL map editor scratch state (24x18 canvas, never the live match).
+    MapData editorMap;
+    char editorBrush = '.';
+    std::string editorStatus;
     bool showHints = true;
     int setupScroll = 0;
     // QoL control groups: production auto-joins this group bit when >= 0

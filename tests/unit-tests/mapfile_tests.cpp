@@ -348,4 +348,90 @@ void RunMapFileTests()
         }
     }
     CC_CHECK(ListMaps(TempMap("cc_no_such_dir_xyz")).empty()); // missing dir
+
+    // --- QoL editor: WriteMapFile round-trips through ParseMapFile ---
+    {
+        MapData draft;
+        draft.name = "Probe";
+        draft.author = "test";
+        draft.width = 4;
+        draft.height = 3;
+        draft.terrain.assign(12, TerrainType::Grass);
+        draft.terrain[2] = TerrainType::Water;
+        draft.terrain[9] = TerrainType::Rock;
+        draft.nodes.push_back({ ResourceKind::Iron, { 1, 1 } });
+        draft.playerSpawns.push_back({ 0, 0 });
+        draft.aiSpawns.push_back({ 3, 2 });
+        const std::string outPath = TempMap("cc_editor_roundtrip.map");
+        CC_CHECK(WriteMapFile(draft, outPath));
+        MapData back;
+        CC_CHECK(ParseMapFile(outPath, back));
+        CC_CHECK(back.name == "Probe" && back.author == "test");
+        CC_CHECK(back.width == 4 && back.height == 3);
+        CC_CHECK(back.terrain == draft.terrain);
+        CC_CHECK(back.nodes.size() == 1 && back.nodes[0].tile == cc::IVec2(1, 1));
+        CC_CHECK(back.playerSpawns.size() == 1 && back.playerSpawns[0] == cc::IVec2(0, 0));
+        CC_CHECK(back.aiSpawns.size() == 1 && back.aiSpawns[0] == cc::IVec2(3, 2));
+        std::remove(outPath.c_str());
+    }
+
+    // --- QoL editor: oversize/empty writes fail without touching disk ---
+    {
+        MapData huge;
+        huge.name = "Huge";
+        huge.width = 2048;
+        huge.height = 2048;
+        huge.terrain.assign(static_cast<std::size_t>(2048) * 2048, TerrainType::Grass);
+        const std::string outPath = TempMap("cc_editor_huge.map");
+        CC_CHECK(!WriteMapFile(huge, outPath));
+        std::error_code ec;
+        CC_CHECK(!std::filesystem::exists(outPath, ec));
+        MapData noname;
+        noname.width = 4;
+        noname.height = 4;
+        noname.terrain.assign(16, TerrainType::Grass);
+        CC_CHECK(!WriteMapFile(noname, TempMap("cc_editor_noname.map")));
+    }
+
+    // --- QoL editor: PaintEditorCell marker bookkeeping ---
+    {
+        MapData canvas;
+        canvas.name = "Paint";
+        canvas.width = 4;
+        canvas.height = 4;
+        canvas.terrain.assign(16, TerrainType::Grass);
+        PaintEditorCell(canvas, 'I', { 1, 1 });
+        PaintEditorCell(canvas, '1', { 0, 0 });
+        PaintEditorCell(canvas, '~', { 2, 2 });
+        PaintEditorCell(canvas, 'X', { 3, 3 }); // unknown brush: grass, ignored
+        PaintEditorCell(canvas, 'I', { 9, 9 }); // out of bounds: ignored
+        CC_CHECK(canvas.nodes.size() == 1 && canvas.playerSpawns.size() == 1);
+        CC_CHECK(canvas.terrain[1 * 4 + 1] == TerrainType::Grass); // marker sits on grass
+        CC_CHECK(canvas.terrain[2 * 4 + 2] == TerrainType::Water);
+        // Repainting the node tile with grass clears the marker entry.
+        PaintEditorCell(canvas, '.', { 1, 1 });
+        CC_CHECK(canvas.nodes.empty());
+    }
+
+    // --- QoL editor: ValidateMapPlayable names the first problem ---
+    {
+        MapData empty;
+        empty.name = "Empty";
+        empty.width = 8;
+        empty.height = 8;
+        empty.terrain.assign(64, TerrainType::Grass);
+        std::string warning;
+        CC_CHECK(!ValidateMapPlayable(empty, &warning)); // no spawns
+        CC_CHECK(!warning.empty());
+        empty.playerSpawns.push_back({ 0, 0 });
+        empty.aiSpawns.push_back({ 7, 7 });
+        CC_CHECK(ValidateMapPlayable(empty, nullptr)); // open map connects
+        // A rock wall across the middle disconnects the halves.
+        for (int x = 0; x < 8; ++x)
+        {
+            empty.terrain[static_cast<std::size_t>(4) * 8 + x] = TerrainType::Rock;
+        }
+        CC_CHECK(!ValidateMapPlayable(empty, &warning));
+        CC_CHECK(warning.find("connect") != std::string::npos);
+    }
 }

@@ -55,6 +55,27 @@ bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes);
 bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes,
                   OccupancyGrid *occ);
 
+// QoL map editor: inverse of ParseMapFile. Emits the documented format
+// exactly (5-line header + grid rows). Nodes/spawns overlay their legend
+// characters onto grass tiles; `B` comes from Building terrain. False (and
+// writes nothing) on dimension overflow or terrain/node/spawn lists that
+// don't fit the declared dims — editor output must never fail to load.
+bool WriteMapFile(const MapData &data, const std::string &path);
+
+// QoL map editor: playability check (does NOT gate WriteMapFile — the
+// editor warns instead of blocking). True when the dims parse, at least one
+// player and one AI spawn exist, every node is reachable on foot from the
+// first player spawn, and both homes connect. On false, *warning (when
+// non-null) names the first failed check.
+bool ValidateMapPlayable(const MapData &data, std::string *warning);
+
+// QoL map editor painter: stamps one legend character ('.', '~', 'T',
+// '^', 'B', 'I', 'O', '1', '2'; anything else ignored) onto a tile.
+// Markers ('I'/'O'/'1'/'2') sit on grass with an entry appended to the
+// matching list; painting anything else first clears that tile's marker
+// entries. Out-of-bounds tiles are ignored.
+void PaintEditorCell(MapData &map, char brush, cc::IVec2 tile);
+
 // M14: skirmish-setup map entry — header metadata plus the file path.
 // ListMaps enumerates dir/*.map, keeping only files that parse (header
 // gives name/author/dimensions for the setup screen). Sorted by path so

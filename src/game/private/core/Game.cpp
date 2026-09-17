@@ -513,7 +513,7 @@ void Game::BindShortcuts()
         if (!worldActive)
         {
             if (menu.state == MenuState::SkirmishSetup || menu.state == MenuState::Settings ||
-                menu.state == MenuState::LoadGame)
+                menu.state == MenuState::LoadGame || menu.state == MenuState::MapEditor)
             {
                 Announce(EventType::MenuAction);
                 menu.OpenMainMenu();
@@ -617,7 +617,25 @@ void Game::Update()
                 menu.OpenSettings();
                 Announce(EventType::MenuAction);
             }
-            if (GuiButton({ cx - 130.0f, 395.0f, 260.0f, 40.0f }, "Quit"))
+            if (GuiButton({ cx - 130.0f, 395.0f, 260.0f, 40.0f }, "Map Editor"))
+            {
+                // QoL editor: blank 24x18 scratch canvas (shipped-map size),
+                // never the live match map (MainMenu implies no live world).
+                editorMap.name = "Custom";
+                editorMap.author = "";
+                editorMap.width = 24;
+                editorMap.height = 18;
+                editorMap.terrain.assign(static_cast<std::size_t>(24 * 18),
+                                         TerrainType::Grass);
+                editorMap.nodes.clear();
+                editorMap.playerSpawns.clear();
+                editorMap.aiSpawns.clear();
+                editorBrush = '.';
+                editorStatus = "";
+                menu.state = MenuState::MapEditor;
+                Announce(EventType::MenuAction);
+            }
+            if (GuiButton({ cx - 130.0f, 445.0f, 260.0f, 40.0f }, "Quit"))
             {
                 Announce(EventType::MenuAction);
                 menu.quitRequested = true;
@@ -782,6 +800,109 @@ void Game::Update()
                 WatchLastReplay();
             }
             GuiEnable();
+        }
+        else if (menu.state == MenuState::MapEditor)
+        {
+            // QoL tile painter on scratch state (never the live match).
+            // Left-drag paints the brush, right-click erases to grass,
+            // keys 1-9 switch brush. Save validates + warns, never blocks
+            // on playability (see ValidateMapPlayable).
+            constexpr float kCell = 24.0f, kOx = 20.0f, kOy = 100.0f;
+            DrawText("Map Editor - data/maps/custom.map", 20, 40, 24, DARKGRAY);
+            const char kBrushes[9] = { '.', '~', 'T', '^', 'B', 'I', 'O', '1', '2' };
+            const int kPaletteKeys[9] = { KEY_ONE, KEY_TWO,   KEY_THREE, KEY_FOUR, KEY_FIVE,
+                                          KEY_SIX, KEY_SEVEN, KEY_EIGHT, KEY_NINE };
+            for (int i = 0; i < 9; ++i)
+            {
+                if (IsKeyPressed(kPaletteKeys[i]))
+                {
+                    editorBrush = kBrushes[i];
+                }
+            }
+            const Vector2 mouse = input.MouseScreen();
+            const cc::IVec2 hover{ static_cast<int>((mouse.x - kOx) / kCell),
+                                   static_cast<int>((mouse.y - kOy) / kCell) };
+            if (input.LeftDown())
+            {
+                PaintEditorCell(editorMap, editorBrush, hover);
+            }
+            if (input.RightPressed())
+            {
+                PaintEditorCell(editorMap, '.', hover);
+            }
+            for (int y = 0; y < editorMap.height; ++y)
+            {
+                for (int x = 0; x < editorMap.width; ++x)
+                {
+                    const TerrainType terrain = editorMap
+                                                    .terrain[static_cast<std::size_t>(y) *
+                                                                 editorMap.width +
+                                                             x];
+                    Color fill = { 20, 60, 20, 255 };
+                    if (terrain == TerrainType::Water)
+                    {
+                        fill = BLUE;
+                    }
+                    else if (terrain == TerrainType::Forest)
+                    {
+                        fill = DARKGREEN;
+                    }
+                    else if (terrain == TerrainType::Rock)
+                    {
+                        fill = GRAY;
+                    }
+                    else if (terrain == TerrainType::Building)
+                    {
+                        fill = BROWN;
+                    }
+                    DrawRectangle(static_cast<int>(kOx + x * kCell),
+                                  static_cast<int>(kOy + y * kCell), static_cast<int>(kCell),
+                                  static_cast<int>(kCell), fill);
+                    DrawRectangleLinesEx(
+                        { kOx + x * kCell, kOy + y * kCell, kCell, kCell }, 1.0f,
+                        Fade(LIGHTGRAY, 0.4f));
+                }
+            }
+            // Marker letters over their tiles.
+            for (const MapNodeSpawn &spawn : editorMap.nodes)
+            {
+                DrawText(spawn.kind == ResourceKind::Iron ? "I" : "O",
+                         static_cast<int>(kOx + spawn.tile.x * kCell) + 7,
+                         static_cast<int>(kOy + spawn.tile.y * kCell) + 3, 16, WHITE);
+            }
+            for (const cc::IVec2 &tile : editorMap.playerSpawns)
+            {
+                DrawText("1", static_cast<int>(kOx + tile.x * kCell) + 7,
+                         static_cast<int>(kOy + tile.y * kCell) + 3, 16, WHITE);
+            }
+            for (const cc::IVec2 &tile : editorMap.aiSpawns)
+            {
+                DrawText("2", static_cast<int>(kOx + tile.x * kCell) + 7,
+                         static_cast<int>(kOy + tile.y * kCell) + 3, 16, WHITE);
+            }
+            DrawText(TextFormat("Brush: %c (keys 1-9)", editorBrush), 660, 100, 16,
+                     DARKGRAY);
+            DrawText("Left-drag paints, right-click erases", 660, 124, 14, GRAY);
+            DrawText("Maps need '1', '2' and a connecting path", 660, 142, 14, GRAY);
+            if (GuiButton({ 660.0f, 200.0f, 200.0f, 40.0f }, "Save"))
+            {
+                if (WriteMapFile(editorMap, "data/maps/custom.map"))
+                {
+                    std::string warning;
+                    editorStatus = ValidateMapPlayable(editorMap, &warning)
+                                       ? "Saved to data/maps/custom.map"
+                                       : "Saved with warnings: " + warning;
+                }
+                else
+                {
+                    editorStatus = "Save failed (invalid dims)";
+                }
+            }
+            if (GuiButton({ 660.0f, 250.0f, 200.0f, 40.0f }, "Back"))
+            {
+                menu.OpenMainMenu();
+            }
+            DrawText(editorStatus.c_str(), 660, 300, 14, DARKGREEN);
         }
         else
         {
