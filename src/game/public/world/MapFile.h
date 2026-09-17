@@ -76,6 +76,12 @@ bool ValidateMapPlayable(const MapData &data, std::string *warning);
 // entries. Out-of-bounds tiles are ignored.
 void PaintEditorCell(MapData &map, char brush, cc::IVec2 tile);
 
+// QoL map editor Save-As: filename guard before WriteMapFile. True for a
+// bare stem ("custom", "my_map-2") — non-empty, no separators, no drive
+// colon, no parent-directory escape. The game prefixes "data/maps/" and
+// appends ".map" itself, so anything else is rejected.
+bool IsValidMapSaveName(const std::string &name);
+
 // M14: skirmish-setup map entry — header metadata plus the file path.
 // ListMaps enumerates dir/*.map, keeping only files that parse (header
 // gives name/author/dimensions for the setup screen). Sorted by path so

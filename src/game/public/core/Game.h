@@ -150,6 +150,9 @@ private:
     MapData editorMap;
     char editorBrush = '.';
     std::string editorStatus;
+    char editorSaveName[64] = "custom"; // Save-As buffer (raw char* for raygui)
+    bool editorSaveAsOpen = false;
+    int editorSaveAsBtn = 0;
     bool showHints = true;
     int setupScroll = 0;
     // QoL control groups: production auto-joins this group bit when >= 0

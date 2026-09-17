@@ -1102,10 +1102,25 @@ void Game::Update()
         {
             // QoL tile painter on scratch state (never the live match).
             // Left-drag paints the brush, right-click erases to grass,
-            // keys 1-9 switch brush. Save validates + warns, never blocks
-            // on playability (see ValidateMapPlayable).
+            // keys 1-9 or the toggle row switch brush. Save validates +
+            // warns, never blocks on playability (see ValidateMapPlayable).
             constexpr float kCell = 24.0f, kOx = 20.0f, kOy = 100.0f;
-            DrawText("Map Editor - data/maps/custom.map", 20, 40, 24, DARKGRAY);
+            auto saveEditor = [&](const std::string &name) -> std::string {
+                if (!IsValidMapSaveName(name))
+                {
+                    return "Save refused (bad name)";
+                }
+                const std::string path = "data/maps/" + name + ".map";
+                if (!WriteMapFile(editorMap, path))
+                {
+                    return "Save failed (invalid dims)";
+                }
+                std::string warning;
+                return ValidateMapPlayable(editorMap, &warning) ? "Saved to " + path
+                                                                : "Saved with warnings: " + warning;
+            };
+            GuiLabel({ 20.0f, 36.0f, 600.0f, 28.0f },
+                     TextFormat("Map Editor - data/maps/%s.map", editorSaveName));
             const char kBrushes[9] = { '.', '~', 'T', '^', 'B', 'I', 'O', '1', '2' };
             const int kPaletteKeys[9] = { KEY_ONE, KEY_TWO,   KEY_THREE, KEY_FOUR, KEY_FIVE,
                                           KEY_SIX, KEY_SEVEN, KEY_EIGHT, KEY_NINE };
@@ -1116,6 +1131,18 @@ void Game::Update()
                     editorBrush = kBrushes[i];
                 }
             }
+            int brushIndex = 0;
+            for (int i = 0; i < 9; ++i)
+            {
+                if (kBrushes[i] == editorBrush)
+                {
+                    brushIndex = i;
+                }
+            }
+            GuiLabel({ 660.0f, 96.0f, 200.0f, 20.0f }, "Brush (keys 1-9)");
+            GuiToggleGroup({ 660.0f, 118.0f, 252.0f, 24.0f }, ".;~;T;^;B;I;O;1;2",
+                           &brushIndex);
+            editorBrush = kBrushes[brushIndex];
             const Vector2 mouse = input.MouseScreen();
             const cc::IVec2 hover{ static_cast<int>((mouse.x - kOx) / kCell),
                                    static_cast<int>((mouse.y - kOy) / kCell) };
@@ -1177,29 +1204,41 @@ void Game::Update()
                 DrawText("2", static_cast<int>(kOx + tile.x * kCell) + 7,
                          static_cast<int>(kOy + tile.y * kCell) + 3, 16, WHITE);
             }
-            DrawText(TextFormat("Brush: %c (keys 1-9)", editorBrush), 660, 100, 16,
-                     DARKGRAY);
-            DrawText("Left-drag paints, right-click erases", 660, 124, 14, GRAY);
-            DrawText("Maps need '1', '2' and a connecting path", 660, 142, 14, GRAY);
+            GuiLabel({ 660.0f, 150.0f, 260.0f, 20.0f }, "Left-drag paints, right-click erases");
+            GuiLabel({ 660.0f, 170.0f, 260.0f, 20.0f },
+                     "Maps need '1', '2' and a connecting path");
             if (GuiButton({ 660.0f, 200.0f, 200.0f, 40.0f }, "Save"))
             {
-                if (WriteMapFile(editorMap, "data/maps/custom.map"))
-                {
-                    std::string warning;
-                    editorStatus = ValidateMapPlayable(editorMap, &warning)
-                                       ? "Saved to data/maps/custom.map"
-                                       : "Saved with warnings: " + warning;
-                }
-                else
-                {
-                    editorStatus = "Save failed (invalid dims)";
-                }
+                editorStatus = saveEditor(editorSaveName);
             }
-            if (GuiButton({ 660.0f, 250.0f, 200.0f, 40.0f }, "Back"))
+            if (GuiButton({ 660.0f, 248.0f, 200.0f, 30.0f }, "Save As..."))
             {
+                editorSaveAsOpen = true;
+                editorSaveAsBtn = 0;
+            }
+            if (GuiButton({ 660.0f, 286.0f, 200.0f, 40.0f }, "Back"))
+            {
+                editorSaveAsOpen = false;
                 menu.OpenMainMenu();
             }
-            DrawText(editorStatus.c_str(), 660, 300, 14, DARKGREEN);
+            GuiLabel({ 660.0f, 334.0f, 260.0f, 20.0f }, editorStatus.c_str());
+            if (editorSaveAsOpen)
+            {
+                const int pressed = GuiTextInputBox(
+                    { cx - 150.0f, 220.0f, 300.0f, 170.0f }, "Save As",
+                    "Map name (data/maps/):", editorSaveName,
+                    static_cast<int>(sizeof(editorSaveName)), "Save;Cancel", &editorSaveAsBtn,
+                    nullptr);
+                if (pressed != 0)
+                {
+                    if (editorSaveAsBtn == 1)
+                    {
+                        editorStatus = saveEditor(editorSaveName);
+                    }
+                    editorSaveAsOpen = false;
+                    editorSaveAsBtn = 0;
+                }
+            }
         }
         else
         {

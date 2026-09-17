@@ -349,6 +349,37 @@ void RunMapFileTests()
     }
     CC_CHECK(ListMaps(TempMap("cc_no_such_dir_xyz")).empty()); // missing dir
 
+    // --- QoL editor Save-As: name guard + derived-path roundtrip ---
+    {
+        CC_CHECK(IsValidMapSaveName("custom"));
+        CC_CHECK(IsValidMapSaveName("my_map-2"));
+        CC_CHECK(IsValidMapSaveName("My Map"));
+        CC_CHECK(!IsValidMapSaveName(""));
+        CC_CHECK(!IsValidMapSaveName("."));
+        CC_CHECK(!IsValidMapSaveName(".."));
+        CC_CHECK(!IsValidMapSaveName("../evil"));
+        CC_CHECK(!IsValidMapSaveName("sub/dir"));
+        CC_CHECK(!IsValidMapSaveName("back\\slash"));
+        CC_CHECK(!IsValidMapSaveName("C:drive"));
+        CC_CHECK(!IsValidMapSaveName("semi;colon"));
+        CC_CHECK(!IsValidMapSaveName(std::string(49, 'a'))); // over the length cap
+        // A name straight out of the Save-As box round-trips: derive the
+        // path exactly like the game does and confirm it parses back.
+        MapData draft;
+        draft.name = "SaveAs";
+        draft.width = 4;
+        draft.height = 3;
+        draft.terrain.assign(12, TerrainType::Grass);
+        const std::string stem = "probe_save_as";
+        CC_CHECK(IsValidMapSaveName(stem));
+        const std::string outPath = TempMap(stem + ".map");
+        CC_CHECK(WriteMapFile(draft, outPath));
+        MapData back;
+        CC_CHECK(ParseMapFile(outPath, back));
+        CC_CHECK(back.name == "SaveAs");
+        std::remove(outPath.c_str());
+    }
+
     // --- QoL editor: WriteMapFile round-trips through ParseMapFile ---
     {
         MapData draft;

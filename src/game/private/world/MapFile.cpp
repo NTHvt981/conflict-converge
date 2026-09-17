@@ -426,6 +426,28 @@ void PaintEditorCell(MapData &map, char brush, cc::IVec2 tile)
     }
 }
 
+bool IsValidMapSaveName(const std::string &name)
+{
+    if (name.empty() || name.size() > 48)
+    {
+        return false;
+    }
+    if (name == "." || name == ".." || name.find("..") != std::string::npos)
+    {
+        return false;
+    }
+    for (char c : name)
+    {
+        const bool ok = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                        (c >= '0' && c <= '9') || c == '_' || c == '-' || c == ' ';
+        if (!ok)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 cc::IVec2 NearestFreeTile(const TileMap &map, int tileX, int tileY)
 {
     const cc::IVec2 want{ tileX, tileY };
