@@ -6,6 +6,12 @@
       "origin": { "x": 8, "y": 16 } },
     { "texture": "rifle_infantry_run", "prefix": "infantry_walk", "startId": 100,
       "rows": 4, "cols": 8, "cellW": 16, "cellH": 32,
+      "origin": { "x": 8, "y": 16 } },
+    { "texture": "prototype_infantry_idle", "prefix": "prototypeinfantry_idle", "startId": 200,
+      "rows": 1, "cols": 8, "cellW": 16, "cellH": 32,
+      "origin": { "x": 8, "y": 16 } },
+    { "texture": "prototype_infantry_run", "prefix": "prototypeinfantry_walk", "startId": 300,
+      "rows": 4, "cols": 8, "cellW": 16, "cellH": 32,
       "origin": { "x": 8, "y": 16 } }
   ]
 }

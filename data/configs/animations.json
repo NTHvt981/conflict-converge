@@ -55,6 +55,62 @@
         { "sprite": 115, "durationMs": 120 },
         { "sprite": 123, "durationMs": 120 },
         { "sprite": 131, "durationMs": 120 }
+      ] },
+    { "name": "prototypeinfantry_walk_0", "id": 20, "loop": true,
+      "frames": [
+        { "sprite": 300, "durationMs": 120 },
+        { "sprite": 308, "durationMs": 120 },
+        { "sprite": 316, "durationMs": 120 },
+        { "sprite": 324, "durationMs": 120 }
+      ] },
+    { "name": "prototypeinfantry_walk_1", "id": 21, "loop": true,
+      "frames": [
+        { "sprite": 301, "durationMs": 120 },
+        { "sprite": 309, "durationMs": 120 },
+        { "sprite": 317, "durationMs": 120 },
+        { "sprite": 325, "durationMs": 120 }
+      ] },
+    { "name": "prototypeinfantry_walk_2", "id": 22, "loop": true,
+      "frames": [
+        { "sprite": 302, "durationMs": 120 },
+        { "sprite": 310, "durationMs": 120 },
+        { "sprite": 318, "durationMs": 120 },
+        { "sprite": 326, "durationMs": 120 }
+      ] },
+    { "name": "prototypeinfantry_walk_3", "id": 23, "loop": true,
+      "frames": [
+        { "sprite": 303, "durationMs": 120 },
+        { "sprite": 311, "durationMs": 120 },
+        { "sprite": 319, "durationMs": 120 },
+        { "sprite": 327, "durationMs": 120 }
+      ] },
+    { "name": "prototypeinfantry_walk_4", "id": 24, "loop": true,
+      "frames": [
+        { "sprite": 304, "durationMs": 120 },
+        { "sprite": 312, "durationMs": 120 },
+        { "sprite": 320, "durationMs": 120 },
+        { "sprite": 328, "durationMs": 120 }
+      ] },
+    { "name": "prototypeinfantry_walk_5", "id": 25, "loop": true,
+      "frames": [
+        { "sprite": 305, "durationMs": 120 },
+        { "sprite": 313, "durationMs": 120 },
+        { "sprite": 321, "durationMs": 120 },
+        { "sprite": 329, "durationMs": 120 }
+      ] },
+    { "name": "prototypeinfantry_walk_6", "id": 26, "loop": true,
+      "frames": [
+        { "sprite": 306, "durationMs": 120 },
+        { "sprite": 314, "durationMs": 120 },
+        { "sprite": 322, "durationMs": 120 },
+        { "sprite": 330, "durationMs": 120 }
+      ] },
+    { "name": "prototypeinfantry_walk_7", "id": 27, "loop": true,
+      "frames": [
+        { "sprite": 307, "durationMs": 120 },
+        { "sprite": 315, "durationMs": 120 },
+        { "sprite": 323, "durationMs": 120 },
+        { "sprite": 331, "durationMs": 120 }
       ] }
   ]
 }

@@ -192,12 +192,14 @@ void RunSpriteDataTests()
         CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
     }
 
-    // --- real data/configs atlas files: 2 prototype sheets, 40 sprites, 2 anims ---
+    // --- real data/configs atlas files: 4 sheets, 80 sprites, 16 anims ---
+    // Rifle and prototype families share geometry (8 idle + 8 dirs x 4);
+    // PrototypeInfantry resolves its own namespace, not infantry's.
     {
         SpriteSheetData sheet;
         CC_CHECK(LoadSpriteSheet(sheet));
-        CC_CHECK(sheet.textures.size() == 2);
-        CC_CHECK(sheet.sprites.size() == 40); // 8 idle + 32 walk (8 dirs x 4)
+        CC_CHECK(sheet.textures.size() == 4);
+        CC_CHECK(sheet.sprites.size() == 80);
         const SpriteDefInfo *first = FindSpriteByName(sheet, "infantry_idle_0_0");
         CC_CHECK(first != nullptr && first->id == 0 &&
                  first->texture == "rifle_infantry_idle");
@@ -219,5 +221,15 @@ void RunSpriteDataTests()
         CC_CHECK(walkTop->frames[0].sprite == 100 && walkTop->frames[3].sprite == 124);
         CC_CHECK(FindAnimByName(sheet, "infantry_walk") == nullptr); // split by direction
         CC_CHECK(FindAnimByName(sheet, "infantry_idle") == nullptr); // idle is sprite-direct
+        // Prototype namespace mirrors it (own textures, ids 200+/300+).
+        const SpriteDefInfo *protoIdle = FindSpriteByName(sheet, "prototypeinfantry_idle_0_0");
+        CC_CHECK(protoIdle != nullptr && protoIdle->id == 200 &&
+                 protoIdle->texture == "prototype_infantry_idle");
+        const SpriteDefInfo *protoWalk = FindSpriteByName(sheet, "prototypeinfantry_walk_3_6");
+        CC_CHECK(protoWalk != nullptr && protoWalk->id == 330 &&
+                 protoWalk->texture == "prototype_infantry_run");
+        const SpriteAnimInfo *protoAnim = FindAnimByName(sheet, "prototypeinfantry_walk_6");
+        CC_CHECK(protoAnim != nullptr && protoAnim->frames.size() == 4);
+        CC_CHECK(protoAnim->frames[0].sprite == 306 && protoAnim->frames[3].sprite == 330);
     }
 }

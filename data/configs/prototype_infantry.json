@@ -15,8 +15,8 @@
     "origin": { "x": 0, "y": 0 }
   },
   "art": {
-    "spritePrefix": "infantry",
-    "atlasIdlePrefix": "infantry_idle",
-    "atlasWalkPrefix": "infantry_walk"
+    "spritePrefix": "prototypeinfantry",
+    "atlasIdlePrefix": "prototypeinfantry_idle",
+    "atlasWalkPrefix": "prototypeinfantry_walk"
   }
 }

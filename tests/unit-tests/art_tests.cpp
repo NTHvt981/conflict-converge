@@ -193,6 +193,13 @@ void RunArtTests()
         // Out-of-range facing clamps to Right (column 6).
         CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.0f, 9) == "infantry_walk_0_6");
         CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f, -1) == "infantry_idle_0_6");
+        // PrototypeInfantry resolves its own namespace, not infantry's.
+        CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, false, 1, 0.0f, 0) ==
+                 "prototypeinfantry_idle_0_0");
+        CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, true, 1, 0.0f, 6) ==
+                 "prototypeinfantry_walk_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, true, 1, 0.13f, 6) ==
+                 "prototypeinfantry_walk_1_6");
         // Deterministic: same args -> same frame.
         CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f, 6) ==
                  art.UnitSprite(UnitType::Infantry, true, 1, 0.13f, 6));

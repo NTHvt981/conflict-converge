@@ -182,7 +182,7 @@ const char *UnitFile(UnitType type)
     case UnitType::HeavyTank:
         return "heavytank";
     case UnitType::PrototypeInfantry:
-        return "infantry"; // prototype shares the infantry atlas entries
+        return "prototypeinfantry"; // own atlas namespace (own flat PNGs too)
     }
     return "infantry"; // unreachable; keeps MSVC from warning
 }

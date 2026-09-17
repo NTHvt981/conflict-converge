@@ -77,7 +77,7 @@
     },
     {
       "id": "prototype-infantry-idle",
-      "role": "SUPERSEDED as wired art by rifle-infantry-idle; kept as style reference + fallback source",
+      "role": "wired PrototypeInfantry idle poses, 8 facings (own atlas namespace)",
       "path": "data/sprites/units/prototype_infantry_idle.png",
       "status": "approved",
       "technical": {
@@ -113,7 +113,7 @@
     },
     {
       "id": "prototype-infantry-run",
-      "role": "SUPERSEDED as wired art by rifle-infantry-run; kept as style reference + fallback source",
+      "role": "wired PrototypeInfantry run cycles, 8 facing columns x 4 frames (own atlas namespace)",
       "path": "data/sprites/units/prototype_infantry_run.png",
       "status": "approved",
       "technical": {
