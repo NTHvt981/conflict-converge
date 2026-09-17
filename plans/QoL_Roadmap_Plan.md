@@ -17,6 +17,10 @@ soak trajectories byte-identical unless noted):
   (economy/combat timing) each get an isolated full-suite run — the
   Medium-vs-Hard soak margin is ~2% and one attempted change there
   (ScoutTick fast-retry) flipped it and was reverted (see `ea2b6d7`).
+- Post-ship audit (2026-09-17) found two real bugs not covered by any
+  existing test — a stale order-flag interaction and a broken
+  "nearest base" retreat fallback. See
+  [Bugfix_Order_Flags_And_Retreat_Fallback_Plan.md](Bugfix_Order_Flags_And_Retreat_Fallback_Plan.md).
 
 Source list: `missing_features.md` (repo root; verified absent against
 `src/game` as of its writing). This roadmap splits that list into
