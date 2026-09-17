@@ -373,12 +373,30 @@ void Game::DrawHotkeyRemap(float cx)
     GuiLabel({ cx - 200.0f, 70.0f, 600.0f, 20.0f },
              remapArming >= 0 ? "Press a key for the armed action (Esc cancels)"
                               : "Click a key to rebind it. Digits/Alt (Tier 2) are fixed.");
-    for (int i = 0; i < NumHotkeyDefs(); ++i)
+    // Two balanced halves (self-maintaining as actions are added) sized
+    // to the widest label, so rows can never overwrite each other at any
+    // font size or window width the min size allows.
+    const int defCount = NumHotkeyDefs();
+    const int perCol = (defCount + 1) / 2;
+    const int fontSize = GuiGetStyle(DEFAULT, TEXT_SIZE);
+    int labelW = 0;
+    for (int i = 0; i < defCount; ++i)
+    {
+        labelW = std::max(labelW, MeasureText(kHotkeyDefs[i].label, fontSize));
+    }
+    labelW += 8;
+    constexpr int kKeyBtnW = 130;
+    constexpr int kColGap = 32;
+    const int colW = labelW + 8 + kKeyBtnW;
+    const float listX = cx - static_cast<float>(colW * 2 + kColGap) / 2.0f;
+    const float rowsEnd = 100.0f + static_cast<float>(perCol - 1) * 24.0f + 20.0f;
+    for (int i = 0; i < defCount; ++i)
     {
         const HotkeyDef &def = kHotkeyDefs[i];
-        const float rx = cx - 380.0f + static_cast<float>(i / 13) * 380.0f;
-        const float ry = 100.0f + static_cast<float>(i % 13) * 24.0f;
-        GuiLabel({ rx, ry, 220.0f, 20.0f }, def.label);
+        const float rx =
+            listX + static_cast<float>(i / perCol) * static_cast<float>(colW + kColGap);
+        const float ry = 100.0f + static_cast<float>(i % perCol) * 24.0f;
+        GuiLabel({ rx, ry, static_cast<float>(labelW), 20.0f }, def.label);
         const int effective = hotkeys.KeyFor(def.action);
         std::string keyText = effective <= 0 ? "-" : GetKeyName(effective);
         if (def.chord)
@@ -389,7 +407,9 @@ void Game::DrawHotkeyRemap(float cx)
         {
             keyText = "press a key...";
         }
-        if (GuiButton({ rx + 225.0f, ry, 130.0f, 20.0f }, keyText.c_str()))
+        if (GuiButton({ rx + static_cast<float>(labelW) + 8.0f, ry,
+                        static_cast<float>(kKeyBtnW), 20.0f },
+                      keyText.c_str()))
         {
             if (!remapConflictAction.empty() && remapConflictAction == def.action)
             {
@@ -447,12 +467,12 @@ void Game::DrawHotkeyRemap(float cx)
     if (!remapConflictAction.empty())
     {
         const std::optional<std::string> owner = hotkeys.ActionForKey(remapConflictKey);
-        GuiLabel({ cx - 200.0f, 424.0f, 700.0f, 20.0f },
+        GuiLabel({ cx - 350.0f, rowsEnd + 6.0f, 700.0f, 20.0f },
                  TextFormat("'%s' already fires '%s' — click the row again to steal it.",
                             GetKeyName(remapConflictKey),
                             owner.has_value() ? owner->c_str() : "?"));
     }
-    if (GuiButton({ cx - 200.0f, 450.0f, 400.0f, 40.0f }, "Back"))
+    if (GuiButton({ cx - 200.0f, rowsEnd + 32.0f, 400.0f, 40.0f }, "Back"))
     {
         remapArming = -1;
         remapConflictAction.clear();

@@ -321,7 +321,6 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
 
 void DrawSaveSlots()
 {
-    GuiPanel({ 300.0f, 8.0f, 200.0f, 40.0f }, "Slots");
     char line[96];
     char marks[3][8];
     for (int i = 0; i < 3; ++i)
@@ -333,5 +332,10 @@ void DrawSaveSlots()
     }
     std::snprintf(line, sizeof(line), "%s %s %s  (F6-8 save, S+F6-8 load)", marks[0], marks[1],
                   marks[2]);
-    GuiLabel({ 312.0f, 26.0f, 180.0f, 16.0f }, line);
+    // Size to the measured text: the fixed 180px label let this line spill
+    // over the rows below it.
+    const int textW = MeasureText(line, GuiGetStyle(DEFAULT, TEXT_SIZE));
+    const float panelW = static_cast<float>(textW + 32);
+    GuiPanel({ 300.0f, 8.0f, panelW, 40.0f }, "Slots");
+    GuiLabel({ 312.0f, 26.0f, static_cast<float>(textW + 8), 16.0f }, line);
 }
