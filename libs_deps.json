@@ -29,5 +29,11 @@
         "dest": "deps/protobuf",
         "git_tag": "v21.12",
         "depth": 1
+    },
+    {
+        "name": "reasings",
+        "git_repo": "https://github.com/raylib-extras/reasings.git",
+        "dest": "deps/reasings",
+        "git_tag": "main"
     }
 ]
