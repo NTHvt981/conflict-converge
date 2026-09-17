@@ -449,9 +449,13 @@ void DrawSaveSlots()
     }
     std::snprintf(line, sizeof(line), "%s %s %s  (F6-8 save, S+F6-8 load)", marks[0], marks[1],
                   marks[2]);
-    // Size to the measured text: the fixed 180px label let this line spill
-    // over the rows below it.
-    const int textW = MeasureText(line, GuiGetStyle(DEFAULT, TEXT_SIZE));
+    // Size to the rendered text: raygui draws the label with its own
+    // metric (GetLineWidth: TEXT_SPACING per glyph), NOT raylib's
+    // MeasureText (fontSize/10 per glyph) — the two agree only at
+    // TEXT_SIZE=10 and diverge at any other UI scale, which clipped this
+    // panel. GuiGetTextWidth is the exact width GuiDrawText positions
+    // from, so sizing from it matches at every scale by construction.
+    const int textW = GuiGetTextWidth(line);
     const float panelW = static_cast<float>(textW + 32);
     GuiPanel({ 300.0f, 8.0f, panelW, 40.0f }, "Slots");
     GuiLabel({ 312.0f, 26.0f, static_cast<float>(textW + 8), 16.0f }, line);

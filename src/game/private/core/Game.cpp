@@ -378,14 +378,15 @@ void Game::DrawHotkeyRemap(float cx)
                               : "Click a key to rebind it. Digits/Alt (Tier 2) are fixed.");
     // Two balanced halves (self-maintaining as actions are added) sized
     // to the widest label, so rows can never overwrite each other at any
-    // font size or window width the min size allows.
+    // font size or window width the min size allows. Measured with
+    // GuiGetTextWidth (raygui's own metric, the one GuiLabel draws with),
+    // not MeasureText (different per-glyph spacing — diverges off size 10).
     const int defCount = NumHotkeyDefs();
     const int perCol = (defCount + 1) / 2;
-    const int fontSize = GuiGetStyle(DEFAULT, TEXT_SIZE);
     int labelW = 0;
     for (int i = 0; i < defCount; ++i)
     {
-        labelW = std::max(labelW, MeasureText(kHotkeyDefs[i].label, fontSize));
+        labelW = std::max(labelW, GuiGetTextWidth(kHotkeyDefs[i].label));
     }
     labelW += 8;
     constexpr int kKeyBtnW = 130;
