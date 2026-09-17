@@ -2057,12 +2057,16 @@ void Game::Update()
                 {
                     DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, GRAY);
                 }
+                // Fallback only: flat fills (and fill-less grass) need the
+                // grid to read as tiles. Textured tiles cover their full
+                // 64px, so lines would just slice the art.
+                DrawRectangleLinesEx({ corner.x, corner.y, cc::TILE_SIZE, cc::TILE_SIZE }, 1.0f,
+                                     LIGHTGRAY);
             }
             else
             {
                 art.DrawTerrain(terrain, corner);
             }
-            DrawRectangleLinesEx({ corner.x, corner.y, cc::TILE_SIZE, cc::TILE_SIZE }, 1.0f, LIGHTGRAY);
         }
     }
 
