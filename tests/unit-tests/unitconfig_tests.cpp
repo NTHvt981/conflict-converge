@@ -54,7 +54,7 @@ void RunUnitConfigTests()
         const std::string json = UnitConfigToJson(heavy);
         CC_CHECK(!json.empty());
         UnitConfig reloaded;
-        CC_CHECK(ParseUnitConfigJson(json, "heavytank", reloaded));
+        CC_CHECK(ParseUnitConfigJson(json, "heavy_tank", reloaded));
         CC_CHECK(ConfigsEqual(heavy, reloaded));
     }
 
@@ -71,6 +71,25 @@ void RunUnitConfigTests()
         UnitConfig reloaded;
         CC_CHECK(ParseUnitConfigJson(json, "infantry", reloaded));
         CC_CHECK(ConfigsEqual(edited, reloaded));
+    }
+
+    // --- canonical filenames: snake_case stems, underscore-tolerant match ---
+    {
+        CC_CHECK(std::string(UnitConfigFilename(UnitType::Infantry)) == "infantry");
+        CC_CHECK(std::string(UnitConfigFilename(UnitType::AntiArmorInfantry)) ==
+                 "antiarmor_infantry");
+        CC_CHECK(std::string(UnitConfigFilename(UnitType::Engineer)) == "engineer");
+        CC_CHECK(std::string(UnitConfigFilename(UnitType::IFV)) == "ifv");
+        CC_CHECK(std::string(UnitConfigFilename(UnitType::Artillery)) == "artillery");
+        CC_CHECK(std::string(UnitConfigFilename(UnitType::LightTank)) == "light_tank");
+        CC_CHECK(std::string(UnitConfigFilename(UnitType::HeavyTank)) == "heavy_tank");
+
+        // Underscored stems validate; a genuinely different type still fails.
+        UnitConfig config;
+        const std::string heavy = UnitConfigToJson(DefaultUnitConfig(UnitType::HeavyTank));
+        CC_CHECK(ParseUnitConfigJson(heavy, "heavy_tank", config));
+        CC_CHECK(ParseUnitConfigJson(heavy, "HEAVY_TANK", config)); // case-insensitive
+        CC_CHECK(!ParseUnitConfigJson(heavy, "light_tank", config));
     }
 
     // --- shipped seed files load with the compiled-in values ---
@@ -174,7 +193,7 @@ void RunUnitConfigTests()
             "{\"type\":\"LightTank\",\"stats\":{\"health\":-5,\"armorType\":\"WOOD\","
             "\"damageType\":\"\",\"attackPower\":21},\"collision\":{\"footprintWidth\":0,"
             "\"footprintHeight\":3},\"art\":{\"spritePrefix\":\"\",\"atlasIdlePrefix\":\"x\"}}",
-            "lighttank", config));
+            "light_tank", config));
         const UnitConfig tankBase = DefaultUnitConfig(UnitType::LightTank);
         CC_CHECK(config.stats.health == tankBase.stats.health); // -5 rejected
         CC_CHECK(config.stats.armorType == tankBase.stats.armorType); // WOOD rejected

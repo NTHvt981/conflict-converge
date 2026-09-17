@@ -54,8 +54,8 @@ struct SpriteOriginDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 SpriteOriginDefaultTypeInternal _SpriteOrigin_default_instance_;
 PROTOBUF_CONSTEXPR SpriteTexture::SpriteTexture(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.file_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
-  , /*decltype(_impl_.id_)*/0
+    /*decltype(_impl_.id_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.file_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.width_)*/0
   , /*decltype(_impl_.height_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
@@ -71,10 +71,10 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORIT
 PROTOBUF_CONSTEXPR SpriteDef::SpriteDef(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.name_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.texture_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.bounds_)*/nullptr
   , /*decltype(_impl_.origin_)*/nullptr
   , /*decltype(_impl_.id_)*/0
-  , /*decltype(_impl_.texture_)*/0
   , /*decltype(_impl_.mask_sprite_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct SpriteDefDefaultTypeInternal {
@@ -88,9 +88,9 @@ struct SpriteDefDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 SpriteDefDefaultTypeInternal _SpriteDef_default_instance_;
 PROTOBUF_CONSTEXPR SpriteGrid::SpriteGrid(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.prefix_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+    /*decltype(_impl_.texture_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.prefix_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.origin_)*/nullptr
-  , /*decltype(_impl_.texture_)*/0
   , /*decltype(_impl_.start_id_)*/0
   , /*decltype(_impl_.rows_)*/0
   , /*decltype(_impl_.cols_)*/0
@@ -271,13 +271,13 @@ const char descriptor_table_protodef_spritedata_2eproto[] PROTOBUF_SECTION_VARIA
   "Bounds\022\014\n\004left\030\001 \001(\005\022\013\n\003top\030\002 \001(\005\022\r\n\005rig"
   "ht\030\003 \001(\005\022\016\n\006bottom\030\004 \001(\005\"$\n\014SpriteOrigin"
   "\022\t\n\001x\030\001 \001(\005\022\t\n\001y\030\002 \001(\005\"H\n\rSpriteTexture\022"
-  "\n\n\002id\030\001 \001(\005\022\014\n\004file\030\002 \001(\t\022\r\n\005width\030\003 \001(\005"
+  "\n\n\002id\030\001 \001(\t\022\014\n\004file\030\002 \001(\t\022\r\n\005width\030\003 \001(\005"
   "\022\016\n\006height\030\004 \001(\005\"\237\001\n\tSpriteDef\022\014\n\004name\030\001"
-  " \001(\t\022\n\n\002id\030\002 \001(\005\022\017\n\007texture\030\003 \001(\005\022(\n\006bou"
+  " \001(\t\022\n\n\002id\030\002 \001(\005\022\017\n\007texture\030\003 \001(\t\022(\n\006bou"
   "nds\030\004 \001(\0132\030.cc.sprites.SpriteBounds\022(\n\006o"
   "rigin\030\005 \001(\0132\030.cc.sprites.SpriteOrigin\022\023\n"
   "\013mask_sprite\030\006 \001(\005\"\301\001\n\nSpriteGrid\022\017\n\007tex"
-  "ture\030\001 \001(\005\022\016\n\006prefix\030\002 \001(\t\022\020\n\010start_id\030\003"
+  "ture\030\001 \001(\t\022\016\n\006prefix\030\002 \001(\t\022\020\n\010start_id\030\003"
   " \001(\005\022\014\n\004rows\030\004 \001(\005\022\014\n\004cols\030\005 \001(\005\022\016\n\006cell"
   "_w\030\006 \001(\005\022\016\n\006cell_h\030\007 \001(\005\022(\n\006origin\030\010 \001(\013"
   "2\030.cc.sprites.SpriteOrigin\022\032\n\022mask_grid_"
@@ -795,13 +795,21 @@ SpriteTexture::SpriteTexture(const SpriteTexture& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   SpriteTexture* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.file_){}
-    , decltype(_impl_.id_){}
+      decltype(_impl_.id_){}
+    , decltype(_impl_.file_){}
     , decltype(_impl_.width_){}
     , decltype(_impl_.height_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_id().empty()) {
+    _this->_impl_.id_.Set(from._internal_id(), 
+      _this->GetArenaForAllocation());
+  }
   _impl_.file_.InitDefault();
   #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
     _impl_.file_.Set("", GetArenaForAllocation());
@@ -810,9 +818,9 @@ SpriteTexture::SpriteTexture(const SpriteTexture& from)
     _this->_impl_.file_.Set(from._internal_file(), 
       _this->GetArenaForAllocation());
   }
-  ::memcpy(&_impl_.id_, &from._impl_.id_,
+  ::memcpy(&_impl_.width_, &from._impl_.width_,
     static_cast<size_t>(reinterpret_cast<char*>(&_impl_.height_) -
-    reinterpret_cast<char*>(&_impl_.id_)) + sizeof(_impl_.height_));
+    reinterpret_cast<char*>(&_impl_.width_)) + sizeof(_impl_.height_));
   // @@protoc_insertion_point(copy_constructor:cc.sprites.SpriteTexture)
 }
 
@@ -821,12 +829,16 @@ inline void SpriteTexture::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.file_){}
-    , decltype(_impl_.id_){0}
+      decltype(_impl_.id_){}
+    , decltype(_impl_.file_){}
     , decltype(_impl_.width_){0}
     , decltype(_impl_.height_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
+  _impl_.id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
   _impl_.file_.InitDefault();
   #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
     _impl_.file_.Set("", GetArenaForAllocation());
@@ -844,6 +856,7 @@ SpriteTexture::~SpriteTexture() {
 
 inline void SpriteTexture::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.id_.Destroy();
   _impl_.file_.Destroy();
 }
 
@@ -857,10 +870,11 @@ void SpriteTexture::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  _impl_.id_.ClearToEmpty();
   _impl_.file_.ClearToEmpty();
-  ::memset(&_impl_.id_, 0, static_cast<size_t>(
+  ::memset(&_impl_.width_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&_impl_.height_) -
-      reinterpret_cast<char*>(&_impl_.id_)) + sizeof(_impl_.height_));
+      reinterpret_cast<char*>(&_impl_.width_)) + sizeof(_impl_.height_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -870,11 +884,13 @@ const char* SpriteTexture::_InternalParse(const char* ptr, ::_pbi::ParseContext*
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // int32 id = 1;
+      // string id = 1;
       case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
-          _impl_.id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          auto str = _internal_mutable_id();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "cc.sprites.SpriteTexture.id"));
         } else
           goto handle_unusual;
         continue;
@@ -933,10 +949,14 @@ uint8_t* SpriteTexture::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int32 id = 1;
-  if (this->_internal_id() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_id(), target);
+  // string id = 1;
+  if (!this->_internal_id().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_id().data(), static_cast<int>(this->_internal_id().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "cc.sprites.SpriteTexture.id");
+    target = stream->WriteStringMaybeAliased(
+        1, this->_internal_id(), target);
   }
 
   // string file = 2;
@@ -977,16 +997,18 @@ size_t SpriteTexture::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  // string id = 1;
+  if (!this->_internal_id().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_id());
+  }
+
   // string file = 2;
   if (!this->_internal_file().empty()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
         this->_internal_file());
-  }
-
-  // int32 id = 1;
-  if (this->_internal_id() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_id());
   }
 
   // int32 width = 3;
@@ -1017,11 +1039,11 @@ void SpriteTexture::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (!from._internal_id().empty()) {
+    _this->_internal_set_id(from._internal_id());
+  }
   if (!from._internal_file().empty()) {
     _this->_internal_set_file(from._internal_file());
-  }
-  if (from._internal_id() != 0) {
-    _this->_internal_set_id(from._internal_id());
   }
   if (from._internal_width() != 0) {
     _this->_internal_set_width(from._internal_width());
@@ -1049,15 +1071,19 @@ void SpriteTexture::InternalSwap(SpriteTexture* other) {
   auto* rhs_arena = other->GetArenaForAllocation();
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.id_, lhs_arena,
+      &other->_impl_.id_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &_impl_.file_, lhs_arena,
       &other->_impl_.file_, rhs_arena
   );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(SpriteTexture, _impl_.height_)
       + sizeof(SpriteTexture::_impl_.height_)
-      - PROTOBUF_FIELD_OFFSET(SpriteTexture, _impl_.id_)>(
-          reinterpret_cast<char*>(&_impl_.id_),
-          reinterpret_cast<char*>(&other->_impl_.id_));
+      - PROTOBUF_FIELD_OFFSET(SpriteTexture, _impl_.width_)>(
+          reinterpret_cast<char*>(&_impl_.width_),
+          reinterpret_cast<char*>(&other->_impl_.width_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata SpriteTexture::GetMetadata() const {
@@ -1093,10 +1119,10 @@ SpriteDef::SpriteDef(const SpriteDef& from)
   SpriteDef* const _this = this; (void)_this;
   new (&_impl_) Impl_{
       decltype(_impl_.name_){}
+    , decltype(_impl_.texture_){}
     , decltype(_impl_.bounds_){nullptr}
     , decltype(_impl_.origin_){nullptr}
     , decltype(_impl_.id_){}
-    , decltype(_impl_.texture_){}
     , decltype(_impl_.mask_sprite_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
@@ -1107,6 +1133,14 @@ SpriteDef::SpriteDef(const SpriteDef& from)
   #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
   if (!from._internal_name().empty()) {
     _this->_impl_.name_.Set(from._internal_name(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.texture_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.texture_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_texture().empty()) {
+    _this->_impl_.texture_.Set(from._internal_texture(), 
       _this->GetArenaForAllocation());
   }
   if (from._internal_has_bounds()) {
@@ -1127,16 +1161,20 @@ inline void SpriteDef::SharedCtor(
   (void)is_message_owned;
   new (&_impl_) Impl_{
       decltype(_impl_.name_){}
+    , decltype(_impl_.texture_){}
     , decltype(_impl_.bounds_){nullptr}
     , decltype(_impl_.origin_){nullptr}
     , decltype(_impl_.id_){0}
-    , decltype(_impl_.texture_){0}
     , decltype(_impl_.mask_sprite_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.name_.InitDefault();
   #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
     _impl_.name_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.texture_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.texture_.Set("", GetArenaForAllocation());
   #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 }
 
@@ -1152,6 +1190,7 @@ SpriteDef::~SpriteDef() {
 inline void SpriteDef::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
   _impl_.name_.Destroy();
+  _impl_.texture_.Destroy();
   if (this != internal_default_instance()) delete _impl_.bounds_;
   if (this != internal_default_instance()) delete _impl_.origin_;
 }
@@ -1167,6 +1206,7 @@ void SpriteDef::Clear() {
   (void) cached_has_bits;
 
   _impl_.name_.ClearToEmpty();
+  _impl_.texture_.ClearToEmpty();
   if (GetArenaForAllocation() == nullptr && _impl_.bounds_ != nullptr) {
     delete _impl_.bounds_;
   }
@@ -1205,11 +1245,13 @@ const char* SpriteDef::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx
         } else
           goto handle_unusual;
         continue;
-      // int32 texture = 3;
+      // string texture = 3;
       case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
-          _impl_.texture_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+          auto str = _internal_mutable_texture();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "cc.sprites.SpriteDef.texture"));
         } else
           goto handle_unusual;
         continue;
@@ -1282,10 +1324,14 @@ uint8_t* SpriteDef::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_id(), target);
   }
 
-  // int32 texture = 3;
-  if (this->_internal_texture() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt32ToArray(3, this->_internal_texture(), target);
+  // string texture = 3;
+  if (!this->_internal_texture().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_texture().data(), static_cast<int>(this->_internal_texture().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "cc.sprites.SpriteDef.texture");
+    target = stream->WriteStringMaybeAliased(
+        3, this->_internal_texture(), target);
   }
 
   // .cc.sprites.SpriteBounds bounds = 4;
@@ -1331,6 +1377,13 @@ size_t SpriteDef::ByteSizeLong() const {
         this->_internal_name());
   }
 
+  // string texture = 3;
+  if (!this->_internal_texture().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_texture());
+  }
+
   // .cc.sprites.SpriteBounds bounds = 4;
   if (this->_internal_has_bounds()) {
     total_size += 1 +
@@ -1348,11 +1401,6 @@ size_t SpriteDef::ByteSizeLong() const {
   // int32 id = 2;
   if (this->_internal_id() != 0) {
     total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_id());
-  }
-
-  // int32 texture = 3;
-  if (this->_internal_texture() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_texture());
   }
 
   // int32 mask_sprite = 6;
@@ -1381,6 +1429,9 @@ void SpriteDef::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROT
   if (!from._internal_name().empty()) {
     _this->_internal_set_name(from._internal_name());
   }
+  if (!from._internal_texture().empty()) {
+    _this->_internal_set_texture(from._internal_texture());
+  }
   if (from._internal_has_bounds()) {
     _this->_internal_mutable_bounds()->::cc::sprites::SpriteBounds::MergeFrom(
         from._internal_bounds());
@@ -1391,9 +1442,6 @@ void SpriteDef::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROT
   }
   if (from._internal_id() != 0) {
     _this->_internal_set_id(from._internal_id());
-  }
-  if (from._internal_texture() != 0) {
-    _this->_internal_set_texture(from._internal_texture());
   }
   if (from._internal_mask_sprite() != 0) {
     _this->_internal_set_mask_sprite(from._internal_mask_sprite());
@@ -1420,6 +1468,10 @@ void SpriteDef::InternalSwap(SpriteDef* other) {
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &_impl_.name_, lhs_arena,
       &other->_impl_.name_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.texture_, lhs_arena,
+      &other->_impl_.texture_, rhs_arena
   );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(SpriteDef, _impl_.mask_sprite_)
@@ -1456,9 +1508,9 @@ SpriteGrid::SpriteGrid(const SpriteGrid& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   SpriteGrid* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.prefix_){}
+      decltype(_impl_.texture_){}
+    , decltype(_impl_.prefix_){}
     , decltype(_impl_.origin_){nullptr}
-    , decltype(_impl_.texture_){}
     , decltype(_impl_.start_id_){}
     , decltype(_impl_.rows_){}
     , decltype(_impl_.cols_){}
@@ -1468,6 +1520,14 @@ SpriteGrid::SpriteGrid(const SpriteGrid& from)
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.texture_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.texture_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_texture().empty()) {
+    _this->_impl_.texture_.Set(from._internal_texture(), 
+      _this->GetArenaForAllocation());
+  }
   _impl_.prefix_.InitDefault();
   #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
     _impl_.prefix_.Set("", GetArenaForAllocation());
@@ -1479,9 +1539,9 @@ SpriteGrid::SpriteGrid(const SpriteGrid& from)
   if (from._internal_has_origin()) {
     _this->_impl_.origin_ = new ::cc::sprites::SpriteOrigin(*from._impl_.origin_);
   }
-  ::memcpy(&_impl_.texture_, &from._impl_.texture_,
+  ::memcpy(&_impl_.start_id_, &from._impl_.start_id_,
     static_cast<size_t>(reinterpret_cast<char*>(&_impl_.mask_grid_start_id_) -
-    reinterpret_cast<char*>(&_impl_.texture_)) + sizeof(_impl_.mask_grid_start_id_));
+    reinterpret_cast<char*>(&_impl_.start_id_)) + sizeof(_impl_.mask_grid_start_id_));
   // @@protoc_insertion_point(copy_constructor:cc.sprites.SpriteGrid)
 }
 
@@ -1490,9 +1550,9 @@ inline void SpriteGrid::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.prefix_){}
+      decltype(_impl_.texture_){}
+    , decltype(_impl_.prefix_){}
     , decltype(_impl_.origin_){nullptr}
-    , decltype(_impl_.texture_){0}
     , decltype(_impl_.start_id_){0}
     , decltype(_impl_.rows_){0}
     , decltype(_impl_.cols_){0}
@@ -1501,6 +1561,10 @@ inline void SpriteGrid::SharedCtor(
     , decltype(_impl_.mask_grid_start_id_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
+  _impl_.texture_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.texture_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
   _impl_.prefix_.InitDefault();
   #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
     _impl_.prefix_.Set("", GetArenaForAllocation());
@@ -1518,6 +1582,7 @@ SpriteGrid::~SpriteGrid() {
 
 inline void SpriteGrid::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.texture_.Destroy();
   _impl_.prefix_.Destroy();
   if (this != internal_default_instance()) delete _impl_.origin_;
 }
@@ -1532,14 +1597,15 @@ void SpriteGrid::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  _impl_.texture_.ClearToEmpty();
   _impl_.prefix_.ClearToEmpty();
   if (GetArenaForAllocation() == nullptr && _impl_.origin_ != nullptr) {
     delete _impl_.origin_;
   }
   _impl_.origin_ = nullptr;
-  ::memset(&_impl_.texture_, 0, static_cast<size_t>(
+  ::memset(&_impl_.start_id_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&_impl_.mask_grid_start_id_) -
-      reinterpret_cast<char*>(&_impl_.texture_)) + sizeof(_impl_.mask_grid_start_id_));
+      reinterpret_cast<char*>(&_impl_.start_id_)) + sizeof(_impl_.mask_grid_start_id_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1549,11 +1615,13 @@ const char* SpriteGrid::_InternalParse(const char* ptr, ::_pbi::ParseContext* ct
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // int32 texture = 1;
+      // string texture = 1;
       case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
-          _impl_.texture_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          auto str = _internal_mutable_texture();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "cc.sprites.SpriteGrid.texture"));
         } else
           goto handle_unusual;
         continue;
@@ -1652,10 +1720,14 @@ uint8_t* SpriteGrid::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int32 texture = 1;
-  if (this->_internal_texture() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_texture(), target);
+  // string texture = 1;
+  if (!this->_internal_texture().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_texture().data(), static_cast<int>(this->_internal_texture().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "cc.sprites.SpriteGrid.texture");
+    target = stream->WriteStringMaybeAliased(
+        1, this->_internal_texture(), target);
   }
 
   // string prefix = 2;
@@ -1727,6 +1799,13 @@ size_t SpriteGrid::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  // string texture = 1;
+  if (!this->_internal_texture().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_texture());
+  }
+
   // string prefix = 2;
   if (!this->_internal_prefix().empty()) {
     total_size += 1 +
@@ -1739,11 +1818,6 @@ size_t SpriteGrid::ByteSizeLong() const {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
         *_impl_.origin_);
-  }
-
-  // int32 texture = 1;
-  if (this->_internal_texture() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_texture());
   }
 
   // int32 start_id = 3;
@@ -1794,15 +1868,15 @@ void SpriteGrid::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PRO
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (!from._internal_texture().empty()) {
+    _this->_internal_set_texture(from._internal_texture());
+  }
   if (!from._internal_prefix().empty()) {
     _this->_internal_set_prefix(from._internal_prefix());
   }
   if (from._internal_has_origin()) {
     _this->_internal_mutable_origin()->::cc::sprites::SpriteOrigin::MergeFrom(
         from._internal_origin());
-  }
-  if (from._internal_texture() != 0) {
-    _this->_internal_set_texture(from._internal_texture());
   }
   if (from._internal_start_id() != 0) {
     _this->_internal_set_start_id(from._internal_start_id());
@@ -1841,6 +1915,10 @@ void SpriteGrid::InternalSwap(SpriteGrid* other) {
   auto* lhs_arena = GetArenaForAllocation();
   auto* rhs_arena = other->GetArenaForAllocation();
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.texture_, lhs_arena,
+      &other->_impl_.texture_, rhs_arena
+  );
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &_impl_.prefix_, lhs_arena,
       &other->_impl_.prefix_, rhs_arena

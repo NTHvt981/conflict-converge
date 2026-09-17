@@ -13,13 +13,19 @@
 namespace
 {
 
-std::string Lower(std::string s)
+// Underscore-insensitive stem compare ("heavy_tank" matches "HeavyTank").
+std::string NormalizedStem(std::string s)
 {
+    std::string out;
     for (char &c : s)
     {
-        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        if (c == '_')
+        {
+            continue;
+        }
+        out += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     }
-    return s;
+    return out;
 }
 
 bool ReadWholeFile(const std::string &path, std::string &out)
@@ -97,6 +103,30 @@ const char *UnitTypeConfigName(UnitType type)
 }
 
 } // namespace
+
+const char *UnitConfigFilename(UnitType type)
+{
+    switch (type)
+    {
+    case UnitType::Infantry:
+        return "infantry";
+    case UnitType::AntiArmorInfantry:
+        return "antiarmor_infantry";
+    case UnitType::Engineer:
+        return "engineer";
+    case UnitType::IFV:
+        return "ifv";
+    case UnitType::Artillery:
+        return "artillery";
+    case UnitType::LightTank:
+        return "light_tank";
+    case UnitType::HeavyTank:
+        return "heavy_tank";
+    case UnitType::Count:
+        break;
+    }
+    return "";
+}
 
 UnitConfig DefaultUnitConfig(UnitType type)
 {
@@ -242,7 +272,7 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
     {
         return false; // missing or unrecognized UnitType
     }
-    if (Lower(proto.type()) != Lower(filenameStem))
+    if (NormalizedStem(proto.type()) != NormalizedStem(filenameStem))
     {
         return false; // type doesn't match its own filename
     }

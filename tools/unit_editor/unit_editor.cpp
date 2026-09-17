@@ -1,6 +1,5 @@
 #include "unit_editor.h"
 
-#include <cctype>
 #include <cstdio>
 
 #include "raylib.h"
@@ -16,49 +15,11 @@ const char *kTypeList = "Infantry;AntiArmorInfantry;Engineer;IFV;Artillery;Light
 const char *kArmorList = "STEEL;RUBBER;COMPOSITE";
 const char *kDamageList = "KINETIC;EXPLOSIVE;ENERGY";
 
-std::string LowerName(const std::string &s)
-{
-    std::string out = s;
-    for (char &c : out)
-    {
-        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    }
-    return out;
-}
-
-std::string ConfigPath(UnitType type);
-
-// Local spelling mirror (unit_editor TU only): the editor never includes
-// Hud.h, and UnitConfig::type already carries the exact spelling.
-const char *UnitTypeConfigNameLocal(UnitType type);
-
+// Canonical save path (snake_case stems live in UnitConfigFilename — the
+// single copy, so the editor can never drift from the loader).
 std::string ConfigPath(UnitType type)
 {
-    return "data/configs/" + LowerName(UnitTypeConfigNameLocal(type)) + ".json";
-}
-
-const char *UnitTypeConfigNameLocal(UnitType type)
-{
-    switch (type)
-    {
-    case UnitType::Infantry:
-        return "Infantry";
-    case UnitType::AntiArmorInfantry:
-        return "AntiArmorInfantry";
-    case UnitType::Engineer:
-        return "Engineer";
-    case UnitType::IFV:
-        return "IFV";
-    case UnitType::Artillery:
-        return "Artillery";
-    case UnitType::LightTank:
-        return "LightTank";
-    case UnitType::HeavyTank:
-        return "HeavyTank";
-    case UnitType::Count:
-        break;
-    }
-    return "";
+    return std::string("data/configs/") + UnitConfigFilename(type) + ".json";
 }
 
 int ArmorIndex(ArmorType armor)

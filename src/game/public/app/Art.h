@@ -133,7 +133,7 @@ private:
     bool sheetLoaded_ = false;
     bool colorBlindMode_ = false; // Okabe-Ito team palette when true
     SpriteSheetData sheet_;
-    std::unordered_map<int, Texture2D> atlas_; // SpriteTextureInfo.id -> sheet
+    std::unordered_map<std::string, Texture2D> atlas_; // SpriteTextureInfo.id -> sheet
     Particles particles_;
     Texture2D units_[7][2][2] = {}; // [type][team][frame]
     Texture2D buildings_[3][2] = {}; // [type][team]

@@ -36,10 +36,15 @@ bool ParseDamageTypeName(const std::string &name, DamageType &out);
 const char *ArmorTypeName(ArmorType type);
 const char *DamageTypeName(DamageType type);
 
-// Parse one file's contents; `filenameStem` is the lowercased type name
-// from the file's own name ("infantry"). Unknown/mismatched type, or JSON
-// that doesn't parse, returns false (caller skips the file with a
-// warning). Missing fields fall back to DefaultUnitConfig(type);
+// Canonical file stem for `type` in data/configs/ ("antiarmor_infantry",
+// not a mechanical lowercasing of "AntiArmorInfantry" — multi-word types
+// use snake_case). The editor saves through this; the loader accepts it.
+const char *UnitConfigFilename(UnitType type);
+
+// Parse one file's contents; `filenameStem` is the file's own stem
+// ("heavy_tank" — underscores ignored when matching, so the stem just
+// needs to spell the type). Unknown/mismatched type, or JSON that doesn't
+// parse, returns false (caller skips the file with a warning). Missing fields fall back to DefaultUnitConfig(type);
 // out-of-range numerics (health <= 0, footprint < 1) and unknown
 // armor/damage names fall back per-field the same way.
 bool ParseUnitConfigJson(const std::string &json, const std::string &filenameStem,

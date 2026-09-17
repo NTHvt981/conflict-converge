@@ -24,7 +24,7 @@ message SpriteOrigin
 
 message SpriteTexture
 {
-    int32 id = 1;
+    string id = 1;  // human-readable key, e.g. "infantry_idle_base"
     string file = 2; // relative to data/sprites/
     int32 width = 3;
     int32 height = 4;
@@ -34,12 +34,12 @@ message SpriteDef
 {
     string name = 1;
     int32 id = 2;
-    int32 texture = 3; // SpriteTexture.id
+    string texture = 3; // SpriteTexture.id
     SpriteBounds bounds = 4;
     SpriteOrigin origin = 5;
     int32 mask_sprite = 6; // SpriteDef.id of the paired team-color mask
-                           // sprite; 0 = none (full-sprite tint, correct
-                           // for all-white placeholder art).
+                            // sprite; 0 = none (full-sprite tint, correct
+                            // for all-white placeholder art).
 }
 
 // Uniform-sheet shorthand: expands to cols*rows SpriteDefs named
@@ -47,7 +47,7 @@ message SpriteDef
 // [c*cell_w, r*cell_h, (c+1)*cell_w, (r+1)*cell_h).
 message SpriteGrid
 {
-    int32 texture = 1;
+    string texture = 1; // SpriteTexture.id
     string prefix = 2;
     int32 start_id = 3;
     int32 rows = 4;

@@ -49,11 +49,11 @@ bool ValidateSpriteSheet(const cc::sprites::SpriteSheet &proto, SpriteSheetData 
 {
     SpriteSheetData sheet;
 
-    // --- textures: unique ids, non-empty files, positive dims ---
-    std::unordered_set<int> textureIds;
+    // --- textures: unique non-empty ids, non-empty files, positive dims ---
+    std::unordered_set<std::string> textureIds;
     for (const cc::sprites::SpriteTexture &t : proto.textures())
     {
-        if (t.file().empty() || t.width() <= 0 || t.height() <= 0 ||
+        if (t.id().empty() || t.file().empty() || t.width() <= 0 || t.height() <= 0 ||
             !textureIds.insert(t.id()).second)
         {
             return false;
@@ -66,7 +66,7 @@ bool ValidateSpriteSheet(const cc::sprites::SpriteSheet &proto, SpriteSheetData 
         sheet.textures.push_back(info);
     }
 
-    auto findTexture = [&](int id) -> const SpriteTextureInfo * {
+    auto findTexture = [&](const std::string &id) -> const SpriteTextureInfo * {
         for (const SpriteTextureInfo &t : sheet.textures)
         {
             if (t.id == id)
@@ -80,9 +80,9 @@ bool ValidateSpriteSheet(const cc::sprites::SpriteSheet &proto, SpriteSheetData 
     std::unordered_set<int> spriteIds;
     std::unordered_set<std::string> spriteNames;
 
-    auto pushSprite = [&](const std::string &name, int id, int texture,
-                          const SpriteRect &bounds, const SpriteOriginPx &origin,
-                          int maskSprite) -> bool {
+    auto pushSprite = [&](const std::string &name, int id, const std::string &texture,
+                           const SpriteRect &bounds, const SpriteOriginPx &origin,
+                           int maskSprite) -> bool {
         if (name.empty() || !spriteIds.insert(id).second || !spriteNames.insert(name).second)
         {
             return false;

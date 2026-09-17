@@ -26,7 +26,7 @@ struct SpriteOriginPx
 
 struct SpriteTextureInfo
 {
-    int id = 0;
+    std::string id;   // human-readable key, e.g. "infantry_idle_base"
     std::string file; // relative to data/sprites/
     int width = 0;
     int height = 0;
@@ -36,7 +36,7 @@ struct SpriteDefInfo
 {
     std::string name;
     int id = 0;
-    int texture = 0; // SpriteTextureInfo.id
+    std::string texture; // SpriteTextureInfo.id
     SpriteRect bounds;
     SpriteOriginPx origin;
     // Team-color mask (base+mask convention): SpriteDefInfo.id of the paired

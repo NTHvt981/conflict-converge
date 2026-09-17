@@ -1,16 +1,16 @@
 {
   "sprites": [],
   "grids": [
-    { "texture": 0, "prefix": "infantry_idle", "startId": 0,
+    { "texture": "infantry_idle_base", "prefix": "infantry_idle", "startId": 0,
       "rows": 8, "cols": 8, "cellW": 32, "cellH": 32,
       "origin": { "x": 16, "y": 16 }, "maskGridStartId": 1000 },
-    { "texture": 1, "prefix": "infantry_idle_mask", "startId": 1000,
+    { "texture": "infantry_idle_mask", "prefix": "infantry_idle_mask", "startId": 1000,
       "rows": 8, "cols": 8, "cellW": 32, "cellH": 32,
       "origin": { "x": 16, "y": 16 } },
-    { "texture": 2, "prefix": "infantry_walk", "startId": 2000,
+    { "texture": "infantry_walk_base", "prefix": "infantry_walk", "startId": 2000,
       "rows": 8, "cols": 8, "cellW": 32, "cellH": 32,
       "origin": { "x": 16, "y": 16 }, "maskGridStartId": 3000 },
-    { "texture": 3, "prefix": "infantry_walk_mask", "startId": 3000,
+    { "texture": "infantry_walk_mask", "prefix": "infantry_walk_mask", "startId": 3000,
       "rows": 8, "cols": 8, "cellW": 32, "cellH": 32,
       "origin": { "x": 16, "y": 16 } }
   ]

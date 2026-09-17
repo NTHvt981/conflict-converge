@@ -548,11 +548,25 @@ class SpriteTexture final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kFileFieldNumber = 2,
     kIdFieldNumber = 1,
+    kFileFieldNumber = 2,
     kWidthFieldNumber = 3,
     kHeightFieldNumber = 4,
   };
+  // string id = 1;
+  void clear_id();
+  const std::string& id() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_id(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_id();
+  PROTOBUF_NODISCARD std::string* release_id();
+  void set_allocated_id(std::string* id);
+  private:
+  const std::string& _internal_id() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_id(const std::string& value);
+  std::string* _internal_mutable_id();
+  public:
+
   // string file = 2;
   void clear_file();
   const std::string& file() const;
@@ -565,15 +579,6 @@ class SpriteTexture final :
   const std::string& _internal_file() const;
   inline PROTOBUF_ALWAYS_INLINE void _internal_set_file(const std::string& value);
   std::string* _internal_mutable_file();
-  public:
-
-  // int32 id = 1;
-  void clear_id();
-  int32_t id() const;
-  void set_id(int32_t value);
-  private:
-  int32_t _internal_id() const;
-  void _internal_set_id(int32_t value);
   public:
 
   // int32 width = 3;
@@ -602,8 +607,8 @@ class SpriteTexture final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr id_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr file_;
-    int32_t id_;
     int32_t width_;
     int32_t height_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -735,10 +740,10 @@ class SpriteDef final :
 
   enum : int {
     kNameFieldNumber = 1,
+    kTextureFieldNumber = 3,
     kBoundsFieldNumber = 4,
     kOriginFieldNumber = 5,
     kIdFieldNumber = 2,
-    kTextureFieldNumber = 3,
     kMaskSpriteFieldNumber = 6,
   };
   // string name = 1;
@@ -753,6 +758,20 @@ class SpriteDef final :
   const std::string& _internal_name() const;
   inline PROTOBUF_ALWAYS_INLINE void _internal_set_name(const std::string& value);
   std::string* _internal_mutable_name();
+  public:
+
+  // string texture = 3;
+  void clear_texture();
+  const std::string& texture() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_texture(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_texture();
+  PROTOBUF_NODISCARD std::string* release_texture();
+  void set_allocated_texture(std::string* texture);
+  private:
+  const std::string& _internal_texture() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_texture(const std::string& value);
+  std::string* _internal_mutable_texture();
   public:
 
   // .cc.sprites.SpriteBounds bounds = 4;
@@ -800,15 +819,6 @@ class SpriteDef final :
   void _internal_set_id(int32_t value);
   public:
 
-  // int32 texture = 3;
-  void clear_texture();
-  int32_t texture() const;
-  void set_texture(int32_t value);
-  private:
-  int32_t _internal_texture() const;
-  void _internal_set_texture(int32_t value);
-  public:
-
   // int32 mask_sprite = 6;
   void clear_mask_sprite();
   int32_t mask_sprite() const;
@@ -827,10 +837,10 @@ class SpriteDef final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr texture_;
     ::cc::sprites::SpriteBounds* bounds_;
     ::cc::sprites::SpriteOrigin* origin_;
     int32_t id_;
-    int32_t texture_;
     int32_t mask_sprite_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -960,9 +970,9 @@ class SpriteGrid final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kTextureFieldNumber = 1,
     kPrefixFieldNumber = 2,
     kOriginFieldNumber = 8,
-    kTextureFieldNumber = 1,
     kStartIdFieldNumber = 3,
     kRowsFieldNumber = 4,
     kColsFieldNumber = 5,
@@ -970,6 +980,20 @@ class SpriteGrid final :
     kCellHFieldNumber = 7,
     kMaskGridStartIdFieldNumber = 9,
   };
+  // string texture = 1;
+  void clear_texture();
+  const std::string& texture() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_texture(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_texture();
+  PROTOBUF_NODISCARD std::string* release_texture();
+  void set_allocated_texture(std::string* texture);
+  private:
+  const std::string& _internal_texture() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_texture(const std::string& value);
+  std::string* _internal_mutable_texture();
+  public:
+
   // string prefix = 2;
   void clear_prefix();
   const std::string& prefix() const;
@@ -1001,15 +1025,6 @@ class SpriteGrid final :
   void unsafe_arena_set_allocated_origin(
       ::cc::sprites::SpriteOrigin* origin);
   ::cc::sprites::SpriteOrigin* unsafe_arena_release_origin();
-
-  // int32 texture = 1;
-  void clear_texture();
-  int32_t texture() const;
-  void set_texture(int32_t value);
-  private:
-  int32_t _internal_texture() const;
-  void _internal_set_texture(int32_t value);
-  public:
 
   // int32 start_id = 3;
   void clear_start_id();
@@ -1073,9 +1088,9 @@ class SpriteGrid final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr texture_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr prefix_;
     ::cc::sprites::SpriteOrigin* origin_;
-    int32_t texture_;
     int32_t start_id_;
     int32_t rows_;
     int32_t cols_;
@@ -1797,24 +1812,54 @@ inline void SpriteOrigin::set_y(int32_t value) {
 
 // SpriteTexture
 
-// int32 id = 1;
+// string id = 1;
 inline void SpriteTexture::clear_id() {
-  _impl_.id_ = 0;
+  _impl_.id_.ClearToEmpty();
 }
-inline int32_t SpriteTexture::_internal_id() const {
-  return _impl_.id_;
-}
-inline int32_t SpriteTexture::id() const {
+inline const std::string& SpriteTexture::id() const {
   // @@protoc_insertion_point(field_get:cc.sprites.SpriteTexture.id)
   return _internal_id();
 }
-inline void SpriteTexture::_internal_set_id(int32_t value) {
-  
-  _impl_.id_ = value;
-}
-inline void SpriteTexture::set_id(int32_t value) {
-  _internal_set_id(value);
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void SpriteTexture::set_id(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.id_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
   // @@protoc_insertion_point(field_set:cc.sprites.SpriteTexture.id)
+}
+inline std::string* SpriteTexture::mutable_id() {
+  std::string* _s = _internal_mutable_id();
+  // @@protoc_insertion_point(field_mutable:cc.sprites.SpriteTexture.id)
+  return _s;
+}
+inline const std::string& SpriteTexture::_internal_id() const {
+  return _impl_.id_.Get();
+}
+inline void SpriteTexture::_internal_set_id(const std::string& value) {
+  
+  _impl_.id_.Set(value, GetArenaForAllocation());
+}
+inline std::string* SpriteTexture::_internal_mutable_id() {
+  
+  return _impl_.id_.Mutable(GetArenaForAllocation());
+}
+inline std::string* SpriteTexture::release_id() {
+  // @@protoc_insertion_point(field_release:cc.sprites.SpriteTexture.id)
+  return _impl_.id_.Release();
+}
+inline void SpriteTexture::set_allocated_id(std::string* id) {
+  if (id != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.id_.SetAllocated(id, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.id_.IsDefault()) {
+    _impl_.id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:cc.sprites.SpriteTexture.id)
 }
 
 // string file = 2;
@@ -1981,24 +2026,54 @@ inline void SpriteDef::set_id(int32_t value) {
   // @@protoc_insertion_point(field_set:cc.sprites.SpriteDef.id)
 }
 
-// int32 texture = 3;
+// string texture = 3;
 inline void SpriteDef::clear_texture() {
-  _impl_.texture_ = 0;
+  _impl_.texture_.ClearToEmpty();
 }
-inline int32_t SpriteDef::_internal_texture() const {
-  return _impl_.texture_;
-}
-inline int32_t SpriteDef::texture() const {
+inline const std::string& SpriteDef::texture() const {
   // @@protoc_insertion_point(field_get:cc.sprites.SpriteDef.texture)
   return _internal_texture();
 }
-inline void SpriteDef::_internal_set_texture(int32_t value) {
-  
-  _impl_.texture_ = value;
-}
-inline void SpriteDef::set_texture(int32_t value) {
-  _internal_set_texture(value);
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void SpriteDef::set_texture(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.texture_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
   // @@protoc_insertion_point(field_set:cc.sprites.SpriteDef.texture)
+}
+inline std::string* SpriteDef::mutable_texture() {
+  std::string* _s = _internal_mutable_texture();
+  // @@protoc_insertion_point(field_mutable:cc.sprites.SpriteDef.texture)
+  return _s;
+}
+inline const std::string& SpriteDef::_internal_texture() const {
+  return _impl_.texture_.Get();
+}
+inline void SpriteDef::_internal_set_texture(const std::string& value) {
+  
+  _impl_.texture_.Set(value, GetArenaForAllocation());
+}
+inline std::string* SpriteDef::_internal_mutable_texture() {
+  
+  return _impl_.texture_.Mutable(GetArenaForAllocation());
+}
+inline std::string* SpriteDef::release_texture() {
+  // @@protoc_insertion_point(field_release:cc.sprites.SpriteDef.texture)
+  return _impl_.texture_.Release();
+}
+inline void SpriteDef::set_allocated_texture(std::string* texture) {
+  if (texture != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.texture_.SetAllocated(texture, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.texture_.IsDefault()) {
+    _impl_.texture_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:cc.sprites.SpriteDef.texture)
 }
 
 // .cc.sprites.SpriteBounds bounds = 4;
@@ -2205,24 +2280,54 @@ inline void SpriteDef::set_mask_sprite(int32_t value) {
 
 // SpriteGrid
 
-// int32 texture = 1;
+// string texture = 1;
 inline void SpriteGrid::clear_texture() {
-  _impl_.texture_ = 0;
+  _impl_.texture_.ClearToEmpty();
 }
-inline int32_t SpriteGrid::_internal_texture() const {
-  return _impl_.texture_;
-}
-inline int32_t SpriteGrid::texture() const {
+inline const std::string& SpriteGrid::texture() const {
   // @@protoc_insertion_point(field_get:cc.sprites.SpriteGrid.texture)
   return _internal_texture();
 }
-inline void SpriteGrid::_internal_set_texture(int32_t value) {
-  
-  _impl_.texture_ = value;
-}
-inline void SpriteGrid::set_texture(int32_t value) {
-  _internal_set_texture(value);
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void SpriteGrid::set_texture(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.texture_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
   // @@protoc_insertion_point(field_set:cc.sprites.SpriteGrid.texture)
+}
+inline std::string* SpriteGrid::mutable_texture() {
+  std::string* _s = _internal_mutable_texture();
+  // @@protoc_insertion_point(field_mutable:cc.sprites.SpriteGrid.texture)
+  return _s;
+}
+inline const std::string& SpriteGrid::_internal_texture() const {
+  return _impl_.texture_.Get();
+}
+inline void SpriteGrid::_internal_set_texture(const std::string& value) {
+  
+  _impl_.texture_.Set(value, GetArenaForAllocation());
+}
+inline std::string* SpriteGrid::_internal_mutable_texture() {
+  
+  return _impl_.texture_.Mutable(GetArenaForAllocation());
+}
+inline std::string* SpriteGrid::release_texture() {
+  // @@protoc_insertion_point(field_release:cc.sprites.SpriteGrid.texture)
+  return _impl_.texture_.Release();
+}
+inline void SpriteGrid::set_allocated_texture(std::string* texture) {
+  if (texture != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.texture_.SetAllocated(texture, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.texture_.IsDefault()) {
+    _impl_.texture_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:cc.sprites.SpriteGrid.texture)
 }
 
 // string prefix = 2;
