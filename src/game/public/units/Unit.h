@@ -217,6 +217,15 @@ inline float EffectiveSpeed(const Unit &unit)
 // UpdateUnitMovement (called per frame) walks the unit there.
 void IssueMoveOrder(Unit &unit, Vector2 worldTarget);
 
+// Shared clear: exactly one order active at a time. Every Issue*Order
+// wrapper calls this before setting its own flag. Call it directly
+// (before IssuePathOrderFootprint / formation::Issue*FormationMoveFP)
+// wherever a fresh, non-queued order bypasses those wrappers -- e.g. the
+// direct mouse-order dispatch in Game.cpp -- so a leftover repair/
+// attack-ground/patrol flag can't silently swallow the new order (see
+// plans/Bugfix_Order_Flags_And_Retreat_Fallback_Plan.md).
+void ClearOrders(Unit &unit);
+
 // M13: attack-move order. Like a move order, but the driver engages enemies
 // on contact and resumes the march when the target is lost.
 void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget);
@@ -256,6 +265,15 @@ void IssueAttackGroundOrderFootprint(Unit &unit, const TileMap &map, const Occup
 // damaged units fall back. Hoisted from AICommander::RetreatTick so both
 // call sites reference one named constant (tune here, not inline).
 inline constexpr float kRetreatHealthFraction = 0.3f;
+
+// QoL player auto-retreat fallback: the rally point when one was ever
+// placed, otherwise the owned Operational Base nearest the centroid of
+// the player's own living units -- never nearest the map's center (see
+// plans/Bugfix_Order_Flags_And_Retreat_Fallback_Plan.md). Pure
+// home-resolution for the Game.cpp retreat pass, so the multi-base case
+// is unit-testable; RetreatIfLowHP stays the shared per-unit driver for
+// both player and AI (its signature is untouched).
+Vector2 ResolvePlayerRetreatHome(Registry &registry, Vector2 rallyPos);
 
 // Orders sub-threshold, non-Engineer, alive units of teamID to fall back
 // toward `home` via fighting withdrawal (attack-move, never plain move —

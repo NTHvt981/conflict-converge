@@ -15,13 +15,6 @@
 
 #include "UnitStats.h" // M13: max-health lookup for repair validation.
 
-namespace
-{
-
-void ClearOrders(Unit &unit); // defined beside IssueRepairOrder below
-
-} // namespace
-
 void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
 {
     unit.moveTarget = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldTarget)));
@@ -346,12 +339,11 @@ bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity targ
     return RepairAim(registry, engineer, target, aim);
 }
 
-namespace
-{
-
 // Shared clear: exactly one order active at a time. Called by every
 // Issue*Order below (including the pre-existing ones, which previously
-// each cleared only a subset) and by the queued-order dispatch.
+// each cleared only a subset) and by the queued-order dispatch. Also
+// called directly by fresh-order dispatch that bypasses the Issue*Order
+// wrappers (see ClearOrders' declaration in Unit.h).
 void ClearOrders(Unit &unit)
 {
     unit.attackMove = false;
@@ -361,8 +353,6 @@ void ClearOrders(Unit &unit)
     unit.hasAttackGroundOrder = false;
     unit.speedCapPixelsPerSec = -1.0f; // QoL: caps never leak across orders
 }
-
-} // namespace
 
 void IssueAttackGroundOrder(Unit &unit, const TileMap &map, Vector2 worldPos)
 {
@@ -379,6 +369,57 @@ void IssueAttackGroundOrderFootprint(Unit &unit, const TileMap &map, const Occup
     unit.hasAttackGroundOrder = true;
     unit.attackGroundPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
     IssuePathOrderFootprint(unit, map, occ, unit.attackGroundPos, self, selfGen);
+}
+
+Vector2 ResolvePlayerRetreatHome(Registry &registry, Vector2 rallyPos)
+{
+    if (rallyPos.x != 0.0f || rallyPos.y != 0.0f)
+    {
+        return rallyPos;
+    }
+    // Reference point for "nearest owned Base": the centroid of the
+    // player's own living units, not the map's center (see
+    // plans/Bugfix_Order_Flags_And_Retreat_Fallback_Plan.md -- measuring
+    // from the map's center picked whichever Base happened to sit closest
+    // to the map's midpoint, unrelated to where the player's army was).
+    // No living units degrades to {0,0} (harmless: nothing left to retreat
+    // anyway).
+    Vector2 armyCentroid = { 0.0f, 0.0f };
+    int aliveCount = 0;
+    registry.Each<Unit>([&](Entity, const Unit &unit) {
+        if (unit.teamID == 0 && unit.health > 0.0f)
+        {
+            armyCentroid.x += unit.position.x;
+            armyCentroid.y += unit.position.y;
+            ++aliveCount;
+        }
+    });
+    if (aliveCount > 0)
+    {
+        armyCentroid.x /= static_cast<float>(aliveCount);
+        armyCentroid.y /= static_cast<float>(aliveCount);
+    }
+
+    Vector2 home = { 0.0f, 0.0f };
+    float bestDistSq = -1.0f;
+    registry.Each<Building>([&](Entity, const Building &building) {
+        if (building.teamID != 0 || building.type != BuildingType::Base ||
+            building.state != BuildingState::Operational)
+        {
+            return;
+        }
+        const cc::Vec2 corner = cc::TileToWorld(building.tileX, building.tileY);
+        const Vector2 center = { corner.x + 32.0f, corner.y + 32.0f };
+        const float dx = center.x - armyCentroid.x;
+        const float dy = center.y - armyCentroid.y;
+        const float distSq = dx * dx + dy * dy;
+        if (bestDistSq < 0.0f || distSq < bestDistSq)
+        {
+            bestDistSq = distSq;
+            home = center;
+        }
+    });
+    return home;
 }
 
 void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector2 home, int teamID,

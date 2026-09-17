@@ -1163,10 +1163,11 @@ void Game::Update()
                         else
                         {
                             ordered->orderQueue.clear();
-                            // Fresh single order (not formation): drop any
-                            // stale group cap — IssuePathOrder* doesn't route
-                            // through ClearOrders like the Issue* wrappers.
-                            ordered->speedCapPixelsPerSec = -1.0f;
+                            // Fresh single order (not formation): ClearOrders
+                            // resets every order-type flag — IssuePathOrder*
+                            // doesn't route through ClearOrders like the
+                            // Issue* wrappers (see ClearOrders in Unit.h).
+                            ClearOrders(*ordered);
                             IssuePathOrderFootprint(*ordered, map, occ,
                                                     input.MouseWorld(camera), squad[0],
                                                     registry.Generation(squad[0]));
@@ -1194,13 +1195,9 @@ void Game::Update()
                 }
                 else
                 {
-                    for (const Entity id : squad)
-                    {
-                        if (Unit *unit = registry.Get<Unit>(id))
-                        {
-                            unit->orderQueue.clear();
-                        }
-                    }
+                    // IssueFormationMoveFP does its own fresh-order
+                    // bookkeeping (flag + queue clear), like the
+                    // line-formation variant.
                     formation::IssueFormationMoveFP(registry, squad, map, occ,
                                                     input.MouseWorld(camera),
                                                     moveAtSlowestSpeed);
@@ -1470,28 +1467,7 @@ void Game::Update()
         // to the rally point (or the nearest owned Base when no rally was
         // ever placed). Shared RetreatIfLowHP with the AI's RetreatTick.
         {
-            Vector2 home = rallyPos;
-            if (home.x == 0.0f && home.y == 0.0f)
-            {
-                float bestDistSq = -1.0f;
-                registry.Each<Building>([&](Entity, const Building &building) {
-                    if (building.teamID != 0 || building.type != BuildingType::Base ||
-                        building.state != BuildingState::Operational)
-                    {
-                        return;
-                    }
-                    const cc::Vec2 corner = cc::TileToWorld(building.tileX, building.tileY);
-                    const Vector2 center = { corner.x + 32.0f, corner.y + 32.0f };
-                    const float dx = center.x - static_cast<float>(map.Width()) * 32.0f;
-                    const float dy = center.y - static_cast<float>(map.Height()) * 32.0f;
-                    const float distSq = dx * dx + dy * dy;
-                    if (bestDistSq < 0.0f || distSq < bestDistSq)
-                    {
-                        bestDistSq = distSq;
-                        home = center;
-                    }
-                });
-            }
+            const Vector2 home = ResolvePlayerRetreatHome(registry, rallyPos);
             RetreatIfLowHP(registry, map, &occ, home, 0, kRetreatHealthFraction, true);
         }
         ai.Update(dt); // M8: enemy build order, waves, scouting, retreat

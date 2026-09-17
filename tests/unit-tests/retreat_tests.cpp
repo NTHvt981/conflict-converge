@@ -3,6 +3,7 @@
 
 #include "test_harness.h"
 
+#include "Building.h"
 #include "TileMap.h"
 #include "Unit.h"
 #include "UnitStats.h"
@@ -26,6 +27,19 @@ Entity SpawnTeam(Registry &registry, UnitType type, int team, int tileX, int til
 Vector2 HomeTile(int tileX, int tileY)
 {
     return cc::ToRaylib(cc::TileToWorld(tileX, tileY));
+}
+
+Entity SpawnBase(Registry &registry, int tileX, int tileY)
+{
+    Entity entity = registry.Create();
+    Building base;
+    base.teamID = 0;
+    base.type = BuildingType::Base;
+    base.state = BuildingState::Operational;
+    base.tileX = tileX;
+    base.tileY = tileY;
+    registry.Add(entity, base);
+    return entity;
 }
 
 } // namespace
@@ -101,5 +115,38 @@ void RunRetreatTests()
         RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), 0, kRetreatHealthFraction,
                        false);
         CC_CHECK(!unit.attackMove);
+    }
+
+    // --- Bugfix: no-rally fallback prefers the Base nearest the army ---
+    {
+        Registry registry;
+        TileMap map(20, 15); // center ~(10, 7): Base B is nearer the center,
+        SpawnBase(registry, 16, 12); // ...but Base A is nearer the unit.
+        SpawnBase(registry, 2, 2);
+        const Entity id = SpawnTeam(registry, UnitType::Infantry, 0, 2, 5, 0.2f);
+        Unit &unit = *registry.Get<Unit>(id);
+        unit.autoRetreat = true;
+
+        // Single retreating unit: army centroid == its own position, so the
+        // "nearest to centroid" and "nearest to the unit" answers agree and
+        // both disagree with the old "nearest to map center" (Base B).
+        const Vector2 home = ResolvePlayerRetreatHome(registry, { 0.0f, 0.0f });
+        CC_CHECK(cc::WorldToTile(cc::ToGlm(home)) == cc::IVec2(2, 2));
+
+        RetreatIfLowHP(registry, map, nullptr, home, 0, kRetreatHealthFraction, true);
+        CC_CHECK(unit.attackMove);
+        CC_CHECK(cc::WorldToTile(cc::ToGlm(unit.attackMoveDest)) == cc::IVec2(2, 2));
+    }
+
+    // --- Bugfix: a placed rally still beats every Base ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        SpawnBase(registry, 2, 2);
+        SpawnBase(registry, 16, 12);
+        SpawnTeam(registry, UnitType::Infantry, 0, 2, 5, 0.2f);
+
+        const Vector2 home = ResolvePlayerRetreatHome(registry, HomeTile(10, 3));
+        CC_CHECK(cc::WorldToTile(cc::ToGlm(home)) == cc::IVec2(10, 3));
     }
 }

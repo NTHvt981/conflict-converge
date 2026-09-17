@@ -3,6 +3,8 @@
 
 #include "test_harness.h"
 
+#include "Formation.h"
+#include "Pathfinder.h" // OccupancyGrid for the footprint-aware order paths
 #include "TileMap.h"
 #include "Unit.h"
 #include "UnitStats.h"
@@ -172,5 +174,88 @@ void RunOrderQueueTests()
         }
         CC_CHECK(!engineer.hasRepairOrder); // healed to full: order done
         CC_CHECK(patient->health == maxHp);
+    }
+
+    // --- Bugfix: fresh single move clears a stale repair order ---
+    {
+        Registry registry;
+        TileMap map(10, 10);
+        OccupancyGrid occ(10, 10);
+        const Entity eng = SpawnInfantry(registry, 1, 1);
+        registry.Get<Unit>(eng)->type = UnitType::Engineer;
+        const Entity tank = SpawnInfantry(registry, 2, 1);
+        Unit *patient = registry.Get<Unit>(tank);
+        patient->type = UnitType::LightTank;
+        patient->health = BaseStats(UnitType::LightTank).health - 30.0f;
+        Unit &engineer = *registry.Get<Unit>(eng);
+        IssueRepairOrder(engineer, tank);
+        CC_CHECK(engineer.hasRepairOrder);
+
+        // Same sequence as Game.cpp's single-unit right-click branch.
+        engineer.orderQueue.clear();
+        ClearOrders(engineer);
+        IssuePathOrderFootprint(engineer, map, occ, TilePos(8, 8), eng,
+                                registry.Generation(eng));
+        CC_CHECK(!engineer.hasRepairOrder);
+        CC_CHECK(engineer.repairTarget == kInvalidEntity);
+        CC_CHECK(engineer.hasMoveOrder || engineer.hasPath);
+    }
+
+    // --- Bugfix: squad formation move clears a stale attack-ground order ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        OccupancyGrid occ(20, 15);
+        std::vector<Entity> squad;
+        for (int i = 0; i < 2; ++i)
+        {
+            squad.push_back(SpawnInfantry(registry, i, 0));
+        }
+        Unit &lead = *registry.Get<Unit>(squad[0]);
+        IssueAttackGroundOrder(lead, map, TilePos(5, 5));
+        CC_CHECK(lead.hasAttackGroundOrder);
+
+        formation::IssueFormationMoveFP(registry, squad, map, occ, TilePos(15, 10),
+                                        false);
+        CC_CHECK(!lead.hasAttackGroundOrder);
+        CC_CHECK(lead.hasMoveOrder || lead.hasPath);
+    }
+
+    // --- Bugfix: line formation move clears a stale patrol (no resume) ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        OccupancyGrid occ(20, 15);
+        const Entity id = SpawnInfantry(registry, 1, 1);
+        const std::vector<Entity> squad = { id };
+        Unit &unit = *registry.Get<Unit>(id);
+        IssuePatrolOrder(unit, map, TilePos(1, 1), TilePos(3, 1));
+        CC_CHECK(unit.hasPatrol);
+
+        formation::IssueLineFormationMoveFP(registry, squad, map, occ, TilePos(10, 10),
+                                            TilePos(12, 10), false);
+        CC_CHECK(!unit.hasPatrol);
+        CC_CHECK(unit.hasMoveOrder || unit.hasPath);
+        // Walk to arrival: must stop, not resume the old patrol route.
+        for (int i = 0; i < 60; ++i)
+        {
+            UpdateUnit(id, registry, map, 1.0f);
+        }
+        CC_CHECK(!unit.hasPatrol);
+    }
+
+    // --- Bugfix: line formation move drops a queued backlog ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        OccupancyGrid occ(20, 15);
+        const Entity id = SpawnInfantry(registry, 1, 1);
+        const std::vector<Entity> squad = { id };
+        Unit &unit = *registry.Get<Unit>(id);
+        unit.orderQueue.push_back(QueuedOrder{ QueuedOrderKind::Move, TilePos(8, 8) });
+
+        formation::IssueLineFormationMoveFP(registry, squad, map, occ, TilePos(10, 10),
+                                            TilePos(12, 10), false);
+        CC_CHECK(unit.orderQueue.empty());
     }
 }

@@ -96,6 +96,14 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
         {
             continue;
         }
+        // Fresh squad order: drop any stale order-type flag (repair/
+        // attack-ground/patrol) so it can't swallow this move — see
+        // ClearOrders in Unit.h. The cap line below then overwrites with
+        // the real value; the queue clear below keeps this function
+        // self-contained (same as IssueLineFormationMoveFP) so a future
+        // caller can't reintroduce the gap.
+        ClearOrders(*unit);
+        unit->orderQueue.clear();
         // QoL slowest-speed: the whole squad marches at the minimum, set
         // before the path order goes out (cleared: every other path assigns
         // -1 explicitly so a stale cap never survives a fresh order).
@@ -164,6 +172,13 @@ void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &uni
         {
             continue; // destroyed/missing IDs don't shift the surviving slots
         }
+        // Fresh line order: same flag + queue clear as above, but
+        // self-contained — this function's callers don't clear the queue
+        // (unlike the squad-formation call site), so it does its own
+        // bookkeeping and can't have the gap reintroduced (see
+        // plans/Bugfix_Order_Flags_And_Retreat_Fallback_Plan.md).
+        ClearOrders(*unit);
+        unit->orderQueue.clear();
         unit->speedCapPixelsPerSec = slowestSpeed ? minSpeed : -1.0f;
         const cc::IVec2 want = cc::WorldToTile(positions[i]);
         const cc::IVec2 slot = NearestEnterableTile(
