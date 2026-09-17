@@ -169,6 +169,48 @@ void RunSkirmishTests()
     CC_CHECK(TeamHasUnits(game.registry, 0));
     CC_CHECK(TeamHasUnits(game.registry, 1));
 
+    // --- BuildSandbox: terrain + one player Infantry, nothing else ---
+    const std::string proto = ShippedMap("prototype.map");
+    CC_CHECK(!proto.empty());
+    if (!proto.empty())
+    {
+        MapData protoData;
+        CC_CHECK(ParseMapFile(proto, protoData));
+        CC_CHECK(!protoData.playerSpawns.empty());
+        CC_CHECK(protoData.aiSpawns.empty()); // no '2' marker: sandbox signal
+        CC_CHECK(protoData.width == 32 && protoData.height == 32);
+
+        Harness sand;
+        CC_CHECK(BuildSandbox(sand.world, proto));
+        CC_CHECK(sand.map.Width() == 32 && sand.map.Height() == 32);
+        // Exactly one unit: a team-0 Infantry (full squad logic).
+        int units = 0;
+        bool infantryFound = false;
+        sand.registry.Each<Unit>([&](Entity, const Unit &unit) {
+            ++units;
+            infantryFound = infantryFound || (unit.type == UnitType::Infantry &&
+                                              unit.teamID == 0);
+        });
+        CC_CHECK(units == 1);
+        CC_CHECK(infantryFound);
+        // No buildings, no enemy side, no funds, no queue.
+        int buildings = 0;
+        sand.registry.Each<Building>([&](Entity, const Building &) { ++buildings; });
+        CC_CHECK(buildings == 0);
+        CC_CHECK(!TeamHasUnits(sand.registry, 1));
+        CC_CHECK(sand.resources.iron == 0 && sand.resources.oil == 0);
+        CC_CHECK(sand.queue.Empty());
+        // The squad parks on walkable ground at the marker.
+        CC_CHECK(sand.map.Get({ 5, 16 }) != TerrainType::Water);
+    }
+
+    // --- BuildSandbox refuses maps without a player spawn ---
+    {
+        Harness sand;
+        CC_CHECK(!BuildSandbox(sand.world, "data/does-not-exist.map"));
+        CC_CHECK(!TeamHasUnits(sand.registry, 0));
+    }
+
     // --- 2v2: twin-falls markers arm the allied + second enemy commanders ---
     const std::string falls = ShippedMap("twin_falls_2v2.map");
     CC_CHECK(!falls.empty());

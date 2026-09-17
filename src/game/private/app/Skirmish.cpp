@@ -285,3 +285,45 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
         cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) + cc::Vec2(32.0f, 32.0f));
     return true;
 }
+
+bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath)
+{
+    if (world.registry == nullptr || world.resources == nullptr || world.map == nullptr ||
+        world.occ == nullptr || world.fog == nullptr || world.nodes == nullptr ||
+        world.queue == nullptr || world.factory == nullptr || world.camera == nullptr ||
+        world.rallyPos == nullptr)
+    {
+        return false;
+    }
+    ResetSkirmish(world);
+
+    Registry &registry = *world.registry;
+    TileMap &map = *world.map;
+    OccupancyGrid &occ = *world.occ;
+    FogOfWar &fog = *world.fog;
+    ResourceNodes &nodes = *world.nodes;
+    UnitFactory &factory = *world.factory;
+
+    MapData data;
+    if (!ParseMapFile(mapPath, data) || data.playerSpawns.empty())
+    {
+        return false;
+    }
+    ApplyMapData(data, map, nodes, &occ);
+    fog.Resize(map.Width(), map.Height());
+    occ.Resize(map.Width(), map.Height());
+
+    // One prototype squad, same Infantry logic as every match (squad
+    // visuals, driver, orders — only the level around it is special).
+    // No bases, no funds, no queue, no AI: parked commanders stay parked.
+    // Prepaid, not cost-validated: the sandbox has no economy to charge.
+    const cc::IVec2 home = data.playerSpawns[0];
+    const cc::IVec2 free = NearestFreeTile(map, home.x, home.y);
+    factory.SpawnPrepaid(UnitType::Infantry, 0,
+                         cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
+
+    *world.rallyPos = cc::ToRaylib(cc::TileToWorld(free.x, free.y));
+    world.camera->view.target = cc::ToRaylib(cc::TileToWorld(free.x, free.y) +
+                                             cc::Vec2(32.0f, 32.0f));
+    return true;
+}

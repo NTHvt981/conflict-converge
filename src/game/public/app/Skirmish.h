@@ -66,3 +66,10 @@ void ResetSkirmish(SkirmishWorld &world);
 // bases, starting units, factory queue, AI Reset + SetupBase, camera and
 // rally aimed at the player home. False only on a null bundle member.
 bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficulty difficulty);
+
+// Reset + seed a prototype sandbox: map terrain only, no funds, no bases,
+// no production, no AI — just one player Infantry squad (full squad logic:
+// same UnitType, driver, and renderer as every match) at the '1' marker.
+// For maps with a player spawn but no AI spawn. False on a null bundle
+// member, an unreadable map, or a missing player spawn.
+bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath);

@@ -7,6 +7,7 @@
 #include "Building.h" // M5 Goal 2: demo base/placement on the tile grid
 #include "Formation.h" // drag-select squads fan out through formation moves
 #include "Hud.h" // M6 Goal 2: raygui resource + selection panels
+#include "MapFile.h" // sandbox detection (player spawn without AI spawn)
 #include "Pathfinder.h" // M3 Goal 3: right-click orders route around blocks
 #include "Selection.h" // M2 Goal 4: mouse selection helpers
 #include "Shortcuts.h" // M6 Goal 4: shortcut overlay lines
@@ -173,11 +174,23 @@ void Game::E2EQuitToMenu()
 
 void Game::StartMatch(const std::string &mapPath, AIDifficulty difficulty)
 {
-    BuildSkirmish(skirmish, mapPath, difficulty);
+    // Prototype sandbox: player spawn without an AI spawn means terrain
+    // plus one squad — no bases, no AI, no win/lose (see BuildSandbox).
+    MapData startData;
+    sandboxMode = ParseMapFile(mapPath, startData) && !startData.playerSpawns.empty() &&
+                  startData.aiSpawns.empty();
+    if (sandboxMode)
+    {
+        BuildSandbox(skirmish, mapPath);
+    }
+    else
+    {
+        BuildSkirmish(skirmish, mapPath, difficulty);
+    }
     worldMapPath = mapPath;
     worldDifficulty = difficulty;
     worldActive = true;
-    worldIs2v2 = SpotsForMap(mapPath).is2v2;
+    worldIs2v2 = !sandboxMode && SpotsForMap(mapPath).is2v2;
     settingRally = false;
     dragging = false;
     lastBuildingCount = 0;
@@ -214,6 +227,7 @@ void Game::QuitToMenu()
     ResetSkirmish(skirmish);
     worldActive = false;
     worldIs2v2 = false;
+    sandboxMode = false;
     replayRecording = false; // QoL: keep this match's frames for the viewer
     Announce(EventType::MenuAction);
     menu.OpenMainMenu();
@@ -1703,7 +1717,10 @@ void Game::Update()
             const Vector2 home = ResolvePlayerRetreatHome(registry, rallyPos);
             RetreatIfLowHP(registry, map, &occ, home, 0, kRetreatHealthFraction, true);
         }
-        ai.Update(dt); // M8: enemy build order, waves, scouting, retreat
+        if (!sandboxMode)
+        {
+            ai.Update(dt); // M8: enemy build order, waves, scouting, retreat
+        }
         // 2v2 overflow commanders tick only in 2v2 matches (see worldIs2v2:
         // count-gating wakes parked commanders in 1v1 via shared teams).
         if (worldIs2v2)
@@ -1752,7 +1769,11 @@ void Game::Update()
             EndTextureMode();
         }
         // M6 Goal 3: decide terminal states from the living rosters.
-        menu.ShowOutcome(TeamHasUnits(registry, 0), TeamHasUnits(registry, 1));
+        // Skipped in sandbox mode (no enemy side: instant Victory otherwise).
+        if (!sandboxMode)
+        {
+            menu.ShowOutcome(TeamHasUnits(registry, 0), TeamHasUnits(registry, 1));
+        }
         // M11: fanfare on the transition frame only.
         // M14: Q57 game-state events ride the same transition.
         if (menu.state != lastOutcomeState)

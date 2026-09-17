@@ -120,6 +120,9 @@ private:
     // the ally would then order the player's army and spawn free units at
     // the origin (found by e2e: phantom scouts at (0,3), hijacked mop-up).
     bool worldIs2v2 = false;
+    // Prototype sandbox: no AI, no bases, no win/lose — one player squad
+    // on terrain. Set when the started map has a '1' but no '2' marker.
+    bool sandboxMode = false;
     AIDifficulty worldDifficulty = AIDifficulty::Medium;
     std::string worldMapPath;
 
