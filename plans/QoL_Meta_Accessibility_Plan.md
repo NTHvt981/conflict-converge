@@ -1,13 +1,20 @@
 # Plan: Meta & Accessibility QoL
 
-## Implementation status: PARTIAL (updated 2026-09-17)
+## Implementation status: FULLY SHIPPED (corrected 2026-09-17)
 
-- Shipped: snapshot replays (`c887ede`, 2s recording + ReplayViewer),
-  map editor (`56d57be`, WriteMapFile + painter + warnings).
-- NOT shipped: hotkey remap, color-blind mode. Note: the doc's claim that
-  the rectangle fallback "ignores teamID" is stale — `Game.cpp` draws it
-  with `TeamTint`, so a `TeamTint`-level color-blind palette would cover
-  that path for free.
+- Snapshot replays (`c887ede`, 2s recording + ReplayViewer) and map editor
+  (`56d57be`, WriteMapFile + painter + warnings) — shipped, as previously noted.
+- **Correction**: this status block previously said hotkey remap and color-blind
+  mode were NOT shipped — that was stale. Both are implemented and live:
+  - Hotkey remap: a full HotkeyRemap screen in `Menu.cpp` (list UI ~1021-1075,
+    Paused/Settings entry point ~1000-1075 and 2305), backed by `Hotkeys.cpp`.
+  - Color-blind mode: `Art::SetColorBlindMode`/`Art::TeamTint` swap to the
+    Okabe-Ito orange/sky-blue pair (`Art.cpp:476-486`), toggled via a Settings
+    checkbox (`Menu.cpp:985`, `Menu.cpp:2302`) — matching Path A's design below
+    essentially as written.
+  - Note: the doc's claim that the rectangle fallback "ignores teamID" is
+    stale too — `Game.cpp` draws it with `TeamTint`, so the `TeamTint`-level
+    color-blind palette covers that path for free, no separate work needed.
 
 Covers, from `missing_features.md` § "Meta & accessibility":
 - Fully remappable hotkeys
