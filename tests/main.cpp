@@ -13,6 +13,7 @@ void RunTileMapTests();
 void RunUnitSnapTests();
 void RunCameraTests();
 void RunSelectionTests();
+void RunCursorTests();
 void RunControlGroupTests();
 void RunOrderQueueTests();
 void RunAreaRepairTests();
@@ -71,6 +72,7 @@ int main()
     RunUnitSnapTests();
     RunCameraTests();
     RunSelectionTests();
+    RunCursorTests();
     RunControlGroupTests();
     RunOrderQueueTests();
     RunAreaRepairTests();

@@ -5,6 +5,7 @@
 
 #include "raygui.h" // M1 Goal 4: raygui UI framework (impl TU: src/thirdparty/raygui_impl.c)
 #include "Building.h" // M5 Goal 2: demo base/placement on the tile grid
+#include "Cursor.h" // context-cursor intent prediction (per-frame, pre-draw)
 #include "Formation.h" // drag-select squads fan out through formation moves
 #include "Hud.h" // M6 Goal 2: raygui resource + selection panels
 #include "MapFile.h" // sandbox detection (player spawn without AI spawn)
@@ -1900,6 +1901,51 @@ void Game::Update()
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
+
+    // Context cursors: predict right-click intent once per frame from live
+    // state (placement validity, attack-ground mode, hovered unit) and push
+    // the matching system cursor. Runs before BeginMode2D so the frame's
+    // input handling is fully settled.
+    {
+        CursorIntent intent = CursorIntent::Default;
+        if (placingType.has_value())
+        {
+            const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(input.MouseWorld(camera)));
+            intent = CanPlaceBuilding(map, &nodes, *placingType, tile.x, tile.y)
+                         ? CursorIntent::Default
+                         : CursorIntent::InvalidPlacement;
+        }
+        else if (attackGroundMode)
+        {
+            intent = CursorIntent::Attack; // next right-click shells the point
+        }
+        else
+        {
+            const Entity selectedId = SelectedUnit(registry);
+            const Unit *selected =
+                selectedId != kInvalidEntity ? registry.Get<Unit>(selectedId) : nullptr;
+            intent = PredictCursorIntent(registry, selected, input.MouseWorld(camera));
+        }
+        switch (intent)
+        {
+        case CursorIntent::Attack:
+            SetMouseCursor(MOUSE_CURSOR_CROSSHAIR);
+            break;
+        case CursorIntent::Repair:
+            SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+            break;
+        case CursorIntent::InvalidPlacement:
+            SetMouseCursor(MOUSE_CURSOR_NOT_ALLOWED);
+            break;
+        case CursorIntent::Move:
+            SetMouseCursor(MOUSE_CURSOR_ARROW);
+            break;
+        case CursorIntent::Default:
+        default:
+            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+            break;
+        }
+    }
 
     BeginMode2D(camera.view);
 

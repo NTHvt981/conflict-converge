@@ -1,0 +1,78 @@
+// Unit tests for context-sensitive cursor intent prediction (Cursor.h).
+// Pure function, no window: hovering enemies/repair patients/ground maps
+// to Attack/Repair/Move; empty selection always yields Default.
+
+#include "test_harness.h"
+
+#include "Cursor.h"
+#include "Unit.h"
+#include "UnitStats.h"
+
+namespace
+{
+
+Entity SpawnUnit(Registry &registry, UnitType type, int team, float x, float y, float healthFrac = 1.0f)
+{
+    Entity entity = registry.Create();
+    Unit unit;
+    unit.type = type;
+    unit.teamID = team;
+    unit.position = { x, y };
+    SnapUnitToTile(unit);
+    unit.health = BaseStats(type).health * healthFrac;
+    registry.Add(entity, unit);
+    return entity;
+}
+
+Vector2 UnitCenter(const Registry &registry, Entity id)
+{
+    const Unit *unit = registry.Get<Unit>(id);
+    return { unit->position.x + 32.0f, unit->position.y + 32.0f };
+}
+
+} // namespace
+
+void RunCursorTests()
+{
+    Registry registry;
+    Entity attacker = SpawnUnit(registry, UnitType::Infantry, 0, 64.0f, 64.0f);
+    Entity enemy = SpawnUnit(registry, UnitType::Infantry, 1, 256.0f, 128.0f);
+    Entity engineer = SpawnUnit(registry, UnitType::Engineer, 0, 64.0f, 320.0f);
+    Entity wounded = SpawnUnit(registry, UnitType::LightTank, 0, 320.0f, 320.0f, 0.5f);
+    Entity healthy = SpawnUnit(registry, UnitType::LightTank, 0, 448.0f, 320.0f);
+    Entity enemyTank = SpawnUnit(registry, UnitType::LightTank, 1, 512.0f, 320.0f, 0.5f);
+    const Unit *sel = registry.Get<Unit>(attacker);
+    const Unit *eng = registry.Get<Unit>(engineer);
+
+    // --- empty selection never predicts an order cursor ---
+    CC_CHECK(PredictCursorIntent(registry, nullptr, UnitCenter(registry, enemy)) ==
+             CursorIntent::Default);
+    CC_CHECK(PredictCursorIntent(registry, nullptr, { 800.0f, 800.0f }) == CursorIntent::Default);
+
+    // --- enemy unit under an attack-capable selection: Attack ---
+    CC_CHECK(PredictCursorIntent(registry, sel, UnitCenter(registry, enemy)) ==
+             CursorIntent::Attack);
+
+    // --- empty ground: Move ---
+    CC_CHECK(PredictCursorIntent(registry, sel, { 800.0f, 800.0f }) == CursorIntent::Move);
+
+    // --- friendly unit that needs nothing: Move (no repair, no attack) ---
+    CC_CHECK(PredictCursorIntent(registry, sel, UnitCenter(registry, healthy)) ==
+             CursorIntent::Move);
+
+    // --- non-Engineer over a damaged friendly vehicle: still Move ---
+    CC_CHECK(PredictCursorIntent(registry, sel, UnitCenter(registry, wounded)) ==
+             CursorIntent::Move);
+
+    // --- Engineer over a damaged friendly vehicle: Repair ---
+    CC_CHECK(PredictCursorIntent(registry, eng, UnitCenter(registry, wounded)) ==
+             CursorIntent::Repair);
+
+    // --- Engineer over a healthy friendly vehicle: Move ---
+    CC_CHECK(PredictCursorIntent(registry, eng, UnitCenter(registry, healthy)) ==
+             CursorIntent::Move);
+
+    // --- Engineer over a damaged ENEMY vehicle: Attack wins over repair ---
+    CC_CHECK(PredictCursorIntent(registry, eng, UnitCenter(registry, enemyTank)) ==
+             CursorIntent::Attack);
+}
