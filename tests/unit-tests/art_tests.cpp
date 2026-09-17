@@ -5,6 +5,7 @@
 #include "test_harness.h"
 
 #include "Art.h"
+#include "TileMap.h" // TerrainType for the terrain tile mapping
 
 void RunArtTests()
 {
@@ -240,5 +241,25 @@ void RunArtTests()
         CC_CHECK(Art::BaseArtScale(UnitType::PrototypeInfantry) == 2.0f);
         CC_CHECK(Art::BaseArtScale(UnitType::Infantry) == 1.0f);
         CC_CHECK(Art::BaseArtScale(UnitType::HeavyTank) == 1.0f);
+    }
+
+    // --- terrain tiles: stem + slot per type, none for Building ---
+    {
+        CC_CHECK(std::string(Art::TerrainFile(TerrainType::Grass)) == "grass");
+        CC_CHECK(std::string(Art::TerrainFile(TerrainType::Water)) == "water");
+        CC_CHECK(std::string(Art::TerrainFile(TerrainType::Forest)) == "forest");
+        CC_CHECK(std::string(Art::TerrainFile(TerrainType::Rock)) == "rock");
+        CC_CHECK(Art::TerrainFile(TerrainType::Building) == nullptr);
+        CC_CHECK(Art::TerrainSlot(TerrainType::Grass) == 0);
+        CC_CHECK(Art::TerrainSlot(TerrainType::Water) == 1);
+        CC_CHECK(Art::TerrainSlot(TerrainType::Forest) == 2);
+        CC_CHECK(Art::TerrainSlot(TerrainType::Rock) == 3);
+        CC_CHECK(Art::TerrainSlot(TerrainType::Building) == -1);
+        // Headless no-op: rectangles path never touches the GPU.
+        Art art;
+        CC_CHECK(!art.Init(false));
+        art.DrawTerrain(TerrainType::Grass, { 0.0f, 0.0f });
+        art.DrawTerrain(TerrainType::Building, { 0.0f, 0.0f });
+        CC_CHECK(true);
     }
 }

@@ -5,6 +5,7 @@
 #include <cstdlib>
 
 #include "MathUtils.h" // cc::TILE_SIZE
+#include "TileMap.h"   // TerrainType for the terrain tile set
 
 UnitFrame FrameForPhase(AttackPhase phase)
 {
@@ -265,6 +266,44 @@ const char *TeamName(int teamID)
 
 } // namespace
 
+const char *Art::TerrainFile(TerrainType type)
+{
+    switch (type)
+    {
+    case TerrainType::Grass:
+        return "grass";
+    case TerrainType::Water:
+        return "water";
+    case TerrainType::Forest:
+        return "forest";
+    case TerrainType::Rock:
+        return "rock";
+    case TerrainType::Building:
+    case TerrainType::Count:
+        return nullptr; // no blit: footprints cover Building tiles
+    }
+    return nullptr;
+}
+
+int Art::TerrainSlot(TerrainType type)
+{
+    switch (type)
+    {
+    case TerrainType::Grass:
+        return 0;
+    case TerrainType::Water:
+        return 1;
+    case TerrainType::Forest:
+        return 2;
+    case TerrainType::Rock:
+        return 3;
+    case TerrainType::Building:
+    case TerrainType::Count:
+        return -1;
+    }
+    return -1;
+}
+
 int Art::TeamSlot(int teamID)
 {
     return teamID == 0 ? 0 : 1;
@@ -318,6 +357,22 @@ bool Art::Init(bool withDevice)
                       NodeFile(static_cast<ResourceKind>(k)));
         icons_[k] = LoadTexture(path);
         if (nodes_[k].id == 0 || icons_[k].id == 0)
+        {
+            fallback_ = true;
+        }
+    }
+    // Terrain tiles: team-neutral 64px blits (grass/water/forest/rock —
+    // Building has no tile: footprints cover those tiles).
+    for (int s = 0; s < 4; ++s)
+    {
+        const TerrainType type = s == 0   ? TerrainType::Grass
+                                 : s == 1 ? TerrainType::Water
+                                 : s == 2 ? TerrainType::Forest
+                                          : TerrainType::Rock;
+        std::snprintf(path, sizeof(path), "data/sprites/terrain_tiles/%s_64px.png",
+                      TerrainFile(type));
+        terrain_[s] = LoadTexture(path);
+        if (terrain_[s].id == 0)
         {
             fallback_ = true;
         }
@@ -391,6 +446,14 @@ void Art::Shutdown()
         {
             UnloadTexture(icons_[k]);
             icons_[k] = {};
+        }
+    }
+    for (int s = 0; s < 4; ++s)
+    {
+        if (terrain_[s].id != 0)
+        {
+            UnloadTexture(terrain_[s]);
+            terrain_[s] = {};
         }
     }
     for (const auto &entry : atlas_)
@@ -600,6 +663,16 @@ void Art::DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) cons
     }
     const Vector2 corner = cc::ToRaylib(cc::TileToWorld(tileX, tileY));
     DrawTextureV(buildings_[static_cast<int>(type)][TeamSlot(teamID)], corner, WHITE);
+}
+
+void Art::DrawTerrain(TerrainType type, Vector2 corner) const
+{
+    const int slot = TerrainSlot(type);
+    if (fallback_ || slot < 0)
+    {
+        return;
+    }
+    DrawTextureV(terrain_[slot], corner, WHITE);
 }
 
 void Art::DrawNode(ResourceKind kind, Vector2 center) const

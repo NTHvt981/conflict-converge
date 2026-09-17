@@ -2033,24 +2033,33 @@ void Game::Update()
     }
     BeginMode2D(shaken);
 
-    // Tile grid: water/forest/rock filled, grass outlined.
+    // Tile grid: textured blits when art is up, flat fills on fallback.
+    // (Building tiles draw no terrain either way — structure footprints
+    // cover them, so there is no building tile to wire.)
     for (int y = 0; y < map.Height(); ++y)
     {
         for (int x = 0; x < map.Width(); ++x)
         {
             const Vector2 corner = cc::ToRaylib(cc::TileToWorld(x, y));
             const TerrainType terrain = map.Get({ x, y });
-            if (terrain == TerrainType::Water)
+            if (art.UseRectangles())
             {
-                DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, SKYBLUE);
+                if (terrain == TerrainType::Water)
+                {
+                    DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, SKYBLUE);
+                }
+                else if (terrain == TerrainType::Forest)
+                {
+                    DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, DARKGREEN);
+                }
+                else if (terrain == TerrainType::Rock)
+                {
+                    DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, GRAY);
+                }
             }
-            else if (terrain == TerrainType::Forest)
+            else
             {
-                DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, DARKGREEN);
-            }
-            else if (terrain == TerrainType::Rock)
-            {
-                DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, GRAY);
+                art.DrawTerrain(terrain, corner);
             }
             DrawRectangleLinesEx({ corner.x, corner.y, cc::TILE_SIZE, cc::TILE_SIZE }, 1.0f, LIGHTGRAY);
         }

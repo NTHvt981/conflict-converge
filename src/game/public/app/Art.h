@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -12,11 +13,14 @@
 #include "SpriteData.h" // SpriteSheetData for the JSON atlas
 #include "Unit.h"     // UnitType, AttackPhase
 
+enum class TerrainType : std::uint8_t; // fwd-decl (Art.cpp includes TileMap.h)
+
 // M12: sprite art + particles. Filenames under data/sprites/ are the
 // contract (tools/gen_sprites.py produces them; AI-generated sheets drop in
 // later): units/<type>_<blue|red>_<idle|attack>.png (32px),
 // buildings/<base|factory|depot>_<blue|red>.png (64/64/32px),
-// nodes/<iron|oil>.png (32px), icons/<iron|oil>.png (16px).
+// nodes/<iron|oil>.png (32px), icons/<iron|oil>.png (16px),
+// terrain_tiles/<grass|water|forest|rock>_64px.png (64px, no teams).
 // Atlas override: data/configs atlas JSON (schema in proto/spritedata.proto)
 // names source-rects inside sheet PNGs (e.g. placeholder infantry 8x8
 // grids). Types with atlas entries render from the atlas; types without
@@ -127,6 +131,9 @@ public:
     void DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const;
     void DrawNode(ResourceKind kind, Vector2 center) const;
     void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon
+    // Terrain tile blit (64px, team-neutral). No-op when rectangles are up
+    // or the type has no tile (Building/Count — headless-safe).
+    void DrawTerrain(TerrainType type, Vector2 corner) const;
 
     // Atlas status: true once the atlas JSON parsed AND every sheet texture
     // loaded (Init(true) path). Headless-safe query.
@@ -148,6 +155,12 @@ public:
     // Everything else renders 1:1. Multiplied with the squad slotScale at
     // the call sites (game loop, editor preview). Pure, unit-tested.
     static float BaseArtScale(UnitType type);
+    // Terrain filename stem + tile slot per type (`<stem>_64px.png`).
+    // Pure, unit-tested. Building/Count have no tile (stem nullptr, slot
+    // -1): structure footprints cover those tiles, so no terrain blit
+    // exists for them.
+    static const char *TerrainFile(TerrainType type);
+    static int TerrainSlot(TerrainType type);
     // Team color for atlas mask tinting: BLUE/RED, matching the
     // rectangle-fallback body colors. Applies to the mask layer only; base
     // art keeps its baked colors. Color-blind mode swaps in the Okabe-Ito
@@ -175,4 +188,5 @@ private:
     Texture2D buildings_[3][2] = {}; // [type][team]
     Texture2D nodes_[2] = {};        // [kind]
     Texture2D icons_[2] = {};        // [kind]
+    Texture2D terrain_[4] = {};      // [TerrainSlot]: grass/water/forest/rock (no teams)
 };
