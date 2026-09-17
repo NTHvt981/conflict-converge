@@ -5,6 +5,7 @@
 
 #include "Art.h"        // M12 resource icons (optional, may be fallback)
 #include "Building.h"   // BuildingTypeName + selected-building summary
+#include "Hotkeys.h"    // live key bindings for the hint overlay
 #include "raygui.h"   // panels/labels
 #include "SaveGame.h" // M13 slot paths
 #include "Selection.h" // SelectedUnit
@@ -80,40 +81,66 @@ float UnitHealthFraction(const Unit &unit)
     return fraction >= 1.0f ? 1.0f : fraction;
 }
 
-std::vector<std::string> ShortcutHintLines()
+namespace
 {
-    return {
+// Live key label for a Tier-1 action, mirroring Game::DrawHotkeyRemap:
+// effective key name with a "Shift+" prefix when the def is chorded.
+std::string HintKey(const HotkeyMap &hotkeys, const char *action, bool applyChord = true)
+{
+    const HotkeyDef *def = HotkeyDefFor(action);
+    const int key = hotkeys.KeyFor(action != nullptr ? action : "");
+    std::string name = key <= 0 ? "-" : HotkeyDisplayName(key);
+    if (applyChord && def != nullptr && def->chord)
+    {
+        name = "Shift+" + name;
+    }
+    return name;
+}
+} // namespace
+
+// Live hotkey hint overlay: Tier-1 lines resolve through HotkeyMap so a
+// rebind shows up immediately; Tier-2/mouse lines have no live source and
+// stay hardcoded literals. Line order matches the pre-live list.
+std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys)
+{
+    std::vector<std::string> lines = {
         "WASD Camera",
         "Left Select",
         "Right Order",
-        "Esc Deselect",
-        "Space Halt",
-        "P Pause",
-        "F1 Hints",
-        "F5 Save",
-        "F9 Load",
-        "A AttackMove",
-        "H Hold",
-        "G Guard",
-        "V Patrol",
-        "R Rally",
-        "C SelectType",
-        "F Factories",
-        "Z Place",
-        "B SlowMove",
-        "Alt+RDrag Line",
-        "X AttackGnd",
-        "T AutoRetreat",
-        "J JumpPing",
-        "Shift Queues",
-        "Wheel Zoom",
-        "F6-8 SaveSlot",
-        "Shift+F6-8 Load",
-        "Ctrl+1-0 Group",
-        "Shift+1-0 AddGrp",
-        "1-0 Recall",
-        "C+S+1-0 AutoAdd",
     };
+    lines.push_back(HintKey(hotkeys, "Back") + " Deselect");
+    lines.push_back(HintKey(hotkeys, "Halt") + " Halt");
+    lines.push_back(HintKey(hotkeys, "TogglePause") + " Pause");
+    lines.push_back(HintKey(hotkeys, "ToggleHints") + " Hints");
+    lines.push_back(HintKey(hotkeys, "Quicksave") + " Save");
+    lines.push_back(HintKey(hotkeys, "Quickload") + " Load");
+    lines.push_back(HintKey(hotkeys, "AttackMove") + " AttackMove");
+    lines.push_back(HintKey(hotkeys, "StanceHold") + " Hold");
+    lines.push_back(HintKey(hotkeys, "StanceGuard") + " Guard");
+    lines.push_back(HintKey(hotkeys, "Patrol") + " Patrol");
+    lines.push_back(HintKey(hotkeys, "Rally") + " Rally");
+    lines.push_back(HintKey(hotkeys, "SelectType") + " SelectType");
+    lines.push_back(HintKey(hotkeys, "SelectFactories") + " Factories");
+    lines.push_back(HintKey(hotkeys, "SlowestSpeed") + " SlowMove");
+    lines.push_back(HintKey(hotkeys, "AreaBuild") + " Place");
+    lines.push_back("Alt+RDrag Line");
+    lines.push_back(HintKey(hotkeys, "AttackGround") + " AttackGnd");
+    lines.push_back(HintKey(hotkeys, "AutoRetreat") + " AutoRetreat");
+    lines.push_back(HintKey(hotkeys, "JumpPing") + " JumpPing");
+    lines.push_back("Shift Queues");
+    lines.push_back("Wheel Zoom");
+    // Slot ranges combine three actions; join the effective keys so a
+    // rebind of any one slot stays truthful (defaults: F6/F7/F8).
+    lines.push_back(HintKey(hotkeys, "SaveSlot1") + "/" + HintKey(hotkeys, "SaveSlot2") + "/" +
+                    HintKey(hotkeys, "SaveSlot3") + " SaveSlot");
+    lines.push_back("Shift+" + HintKey(hotkeys, "LoadSlot1", false) + "/" +
+                    HintKey(hotkeys, "LoadSlot2", false) + "/" +
+                    HintKey(hotkeys, "LoadSlot3", false) + " Load");
+    lines.push_back("Ctrl+1-0 Group");
+    lines.push_back("Shift+1-0 AddGrp");
+    lines.push_back("1-0 Recall");
+    lines.push_back("C+S+1-0 AutoAdd");
+    return lines;
 }
 
 void DrawResourcePanel(const ResourceSystem &resources, const Art *art)

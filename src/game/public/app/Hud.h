@@ -10,6 +10,7 @@
 
 class Art; // fwd-decl (Hud.cpp includes Art.h for icons)
 enum class BuildingType; // fwd-decl (Hud.cpp includes Building.h)
+class HotkeyMap; // fwd-decl (Hud.cpp includes Hotkeys.h for live bindings)
 
 // M6 Goal 2: HUD panels. Text content is built by pure functions (tested);
 // the Draw* wrappers below are thin raygui calls owned by main.cpp.
@@ -20,7 +21,7 @@ std::string FormatResources(const ResourceSystem &resources);
 std::string SelectionSummary(const Unit &unit);
 // M6 Goal 4: selection visuals + shortcut overlay builders.
 float UnitHealthFraction(const Unit &unit); // hp / max, clamped to [0, 1]
-std::vector<std::string> ShortcutHintLines();
+std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys);
 
 // Screen-space panels (call after EndMode2D).
 // M12: optional art draws 16px resource icons; nullptr keeps text-only

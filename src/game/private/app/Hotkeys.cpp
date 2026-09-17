@@ -1,5 +1,7 @@
 #include "Hotkeys.h"
 
+#include <cstdio>
+
 const HotkeyDef kHotkeyDefs[] = {
     { "ToggleHints", "Shortcut hints", KEY_F1, false },
     { "TogglePause", "Pause / resume", KEY_P, false },
@@ -50,6 +52,65 @@ const HotkeyDef *HotkeyDefFor(const std::string &action)
 bool IsKnownHotkeyAction(const std::string &action)
 {
     return HotkeyDefFor(action) != nullptr;
+}
+
+const char *HotkeyDisplayName(int key)
+{
+    // Letters and digits render as their uppercase glyph; named keys use
+    // the overlay's historical labels ("Esc", "Space", ...). Anything else
+    // falls back to a "Key<n>" label rather than crashing or going blank.
+    static char fallback[32];
+    if (key >= KEY_A && key <= KEY_Z)
+    {
+        fallback[0] = static_cast<char>('A' + (key - KEY_A));
+        fallback[1] = '\0';
+        return fallback;
+    }
+    if (key >= KEY_ZERO && key <= KEY_NINE)
+    {
+        fallback[0] = static_cast<char>('0' + (key - KEY_ZERO));
+        fallback[1] = '\0';
+        return fallback;
+    }
+    if (key >= KEY_F1 && key <= KEY_F12)
+    {
+        std::snprintf(fallback, sizeof(fallback), "F%d", key - KEY_F1 + 1);
+        return fallback;
+    }
+    switch (key)
+    {
+    case KEY_SPACE:
+        return "Space";
+    case KEY_ESCAPE:
+        return "Esc";
+    case KEY_ENTER:
+        return "Enter";
+    case KEY_BACKSPACE:
+        return "Backspace";
+    case KEY_TAB:
+        return "Tab";
+    case KEY_LEFT:
+        return "Left";
+    case KEY_RIGHT:
+        return "Right";
+    case KEY_UP:
+        return "Up";
+    case KEY_DOWN:
+        return "Down";
+    case KEY_LEFT_SHIFT:
+    case KEY_RIGHT_SHIFT:
+        return "Shift";
+    case KEY_LEFT_CONTROL:
+    case KEY_RIGHT_CONTROL:
+        return "Ctrl";
+    case KEY_LEFT_ALT:
+    case KEY_RIGHT_ALT:
+        return "Alt";
+    default:
+        break;
+    }
+    std::snprintf(fallback, sizeof(fallback), "Key%d", key);
+    return fallback;
 }
 
 int HotkeyMap::KeyFor(const std::string &action) const

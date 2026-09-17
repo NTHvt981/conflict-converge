@@ -25,6 +25,10 @@ extern const HotkeyDef kHotkeyDefs[];
 int NumHotkeyDefs();
 const HotkeyDef *HotkeyDefFor(const std::string &action);
 bool IsKnownHotkeyAction(const std::string &action);
+// Stable display name for a raylib key code ("A", "F1", "Space", "Esc").
+// Unlike raylib's GetKeyName (GLFW-backed, layout-dependent, crashes without
+// an initialized window), this is a pure table lookup, safe headless.
+const char *HotkeyDisplayName(int key);
 
 class HotkeyMap
 {

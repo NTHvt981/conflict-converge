@@ -2246,7 +2246,7 @@ void Game::Update()
     // M6 Goal 4: shortcut overlay, bottom-left, toggled with F1.
     if (showHints)
     {
-        const std::vector<std::string> hints = ShortcutHintLines();
+        const std::vector<std::string> hints = ShortcutHintLines(hotkeys);
         for (std::size_t i = 0; i < hints.size(); ++i)
         {
             DrawText(hints[i].c_str(), 8, 250 + static_cast<int>(i) * 18, 14, Fade(DARKGRAY, 0.8f));

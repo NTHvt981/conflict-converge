@@ -2,6 +2,7 @@
 
 #include "test_harness.h"
 
+#include "Hotkeys.h"
 #include "Hud.h"
 #include "UnitStats.h"
 
@@ -32,7 +33,8 @@ void RunSelectionVisualTests()
     CC_CHECK(UnitHealthFraction(overheal) == 1.0f);
 
     // --- shortcut hints: one line per binding, no duplicates ---
-    const std::vector<std::string> hints = ShortcutHintLines();
+    const HotkeyMap defaultHotkeys;
+    const std::vector<std::string> hints = ShortcutHintLines(defaultHotkeys);
     CC_CHECK(!hints.empty());
     std::set<std::string> unique(hints.begin(), hints.end());
     CC_CHECK(unique.size() == hints.size());
@@ -45,4 +47,18 @@ void RunSelectionVisualTests()
     }
     CC_CHECK(hasPause);
     CC_CHECK(hasHintsToggle);
+    // --- live overlay: rebinding an action updates its hint line ---
+    HotkeyMap rebound = defaultHotkeys;
+    rebound.Rebind("AttackMove", KEY_Q);
+    const std::vector<std::string> reboundHints = ShortcutHintLines(rebound);
+    CC_CHECK(reboundHints.size() == hints.size());
+    bool hasNewBinding = false;
+    bool hasOldBinding = false;
+    for (const std::string &line : reboundHints)
+    {
+        hasNewBinding = hasNewBinding || line == "Q AttackMove";
+        hasOldBinding = hasOldBinding || line == "A AttackMove";
+    }
+    CC_CHECK(hasNewBinding);
+    CC_CHECK(!hasOldBinding);
 }
