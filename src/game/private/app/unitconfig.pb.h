@@ -46,6 +46,12 @@ struct TableStruct_unitconfig_2eproto {
 extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_unitconfig_2eproto;
 namespace cc {
 namespace unitconfig {
+class CollisionBounds;
+struct CollisionBoundsDefaultTypeInternal;
+extern CollisionBoundsDefaultTypeInternal _CollisionBounds_default_instance_;
+class CollisionOrigin;
+struct CollisionOriginDefaultTypeInternal;
+extern CollisionOriginDefaultTypeInternal _CollisionOrigin_default_instance_;
 class UnitArtConfig;
 struct UnitArtConfigDefaultTypeInternal;
 extern UnitArtConfigDefaultTypeInternal _UnitArtConfig_default_instance_;
@@ -61,6 +67,8 @@ extern UnitStatsConfigDefaultTypeInternal _UnitStatsConfig_default_instance_;
 }  // namespace unitconfig
 }  // namespace cc
 PROTOBUF_NAMESPACE_OPEN
+template<> ::cc::unitconfig::CollisionBounds* Arena::CreateMaybeMessage<::cc::unitconfig::CollisionBounds>(Arena*);
+template<> ::cc::unitconfig::CollisionOrigin* Arena::CreateMaybeMessage<::cc::unitconfig::CollisionOrigin>(Arena*);
 template<> ::cc::unitconfig::UnitArtConfig* Arena::CreateMaybeMessage<::cc::unitconfig::UnitArtConfig>(Arena*);
 template<> ::cc::unitconfig::UnitCollisionConfig* Arena::CreateMaybeMessage<::cc::unitconfig::UnitCollisionConfig>(Arena*);
 template<> ::cc::unitconfig::UnitConfig* Arena::CreateMaybeMessage<::cc::unitconfig::UnitConfig>(Arena*);
@@ -331,6 +339,346 @@ class UnitStatsConfig final :
 };
 // -------------------------------------------------------------------
 
+class CollisionBounds final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:cc.unitconfig.CollisionBounds) */ {
+ public:
+  inline CollisionBounds() : CollisionBounds(nullptr) {}
+  ~CollisionBounds() override;
+  explicit PROTOBUF_CONSTEXPR CollisionBounds(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  CollisionBounds(const CollisionBounds& from);
+  CollisionBounds(CollisionBounds&& from) noexcept
+    : CollisionBounds() {
+    *this = ::std::move(from);
+  }
+
+  inline CollisionBounds& operator=(const CollisionBounds& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline CollisionBounds& operator=(CollisionBounds&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const CollisionBounds& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const CollisionBounds* internal_default_instance() {
+    return reinterpret_cast<const CollisionBounds*>(
+               &_CollisionBounds_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    1;
+
+  friend void swap(CollisionBounds& a, CollisionBounds& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(CollisionBounds* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(CollisionBounds* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  CollisionBounds* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<CollisionBounds>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const CollisionBounds& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const CollisionBounds& from) {
+    CollisionBounds::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(CollisionBounds* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "cc.unitconfig.CollisionBounds";
+  }
+  protected:
+  explicit CollisionBounds(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kLeftFieldNumber = 1,
+    kTopFieldNumber = 2,
+    kRightFieldNumber = 3,
+    kBottomFieldNumber = 4,
+  };
+  // int32 left = 1;
+  void clear_left();
+  int32_t left() const;
+  void set_left(int32_t value);
+  private:
+  int32_t _internal_left() const;
+  void _internal_set_left(int32_t value);
+  public:
+
+  // int32 top = 2;
+  void clear_top();
+  int32_t top() const;
+  void set_top(int32_t value);
+  private:
+  int32_t _internal_top() const;
+  void _internal_set_top(int32_t value);
+  public:
+
+  // int32 right = 3;
+  void clear_right();
+  int32_t right() const;
+  void set_right(int32_t value);
+  private:
+  int32_t _internal_right() const;
+  void _internal_set_right(int32_t value);
+  public:
+
+  // int32 bottom = 4;
+  void clear_bottom();
+  int32_t bottom() const;
+  void set_bottom(int32_t value);
+  private:
+  int32_t _internal_bottom() const;
+  void _internal_set_bottom(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:cc.unitconfig.CollisionBounds)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int32_t left_;
+    int32_t top_;
+    int32_t right_;
+    int32_t bottom_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_unitconfig_2eproto;
+};
+// -------------------------------------------------------------------
+
+class CollisionOrigin final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:cc.unitconfig.CollisionOrigin) */ {
+ public:
+  inline CollisionOrigin() : CollisionOrigin(nullptr) {}
+  ~CollisionOrigin() override;
+  explicit PROTOBUF_CONSTEXPR CollisionOrigin(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  CollisionOrigin(const CollisionOrigin& from);
+  CollisionOrigin(CollisionOrigin&& from) noexcept
+    : CollisionOrigin() {
+    *this = ::std::move(from);
+  }
+
+  inline CollisionOrigin& operator=(const CollisionOrigin& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline CollisionOrigin& operator=(CollisionOrigin&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const CollisionOrigin& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const CollisionOrigin* internal_default_instance() {
+    return reinterpret_cast<const CollisionOrigin*>(
+               &_CollisionOrigin_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    2;
+
+  friend void swap(CollisionOrigin& a, CollisionOrigin& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(CollisionOrigin* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(CollisionOrigin* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  CollisionOrigin* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<CollisionOrigin>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const CollisionOrigin& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const CollisionOrigin& from) {
+    CollisionOrigin::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(CollisionOrigin* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "cc.unitconfig.CollisionOrigin";
+  }
+  protected:
+  explicit CollisionOrigin(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kXFieldNumber = 1,
+    kYFieldNumber = 2,
+  };
+  // int32 x = 1;
+  void clear_x();
+  int32_t x() const;
+  void set_x(int32_t value);
+  private:
+  int32_t _internal_x() const;
+  void _internal_set_x(int32_t value);
+  public:
+
+  // int32 y = 2;
+  void clear_y();
+  int32_t y() const;
+  void set_y(int32_t value);
+  private:
+  int32_t _internal_y() const;
+  void _internal_set_y(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:cc.unitconfig.CollisionOrigin)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int32_t x_;
+    int32_t y_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_unitconfig_2eproto;
+};
+// -------------------------------------------------------------------
+
 class UnitCollisionConfig final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:cc.unitconfig.UnitCollisionConfig) */ {
  public:
@@ -379,7 +727,7 @@ class UnitCollisionConfig final :
                &_UnitCollisionConfig_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    1;
+    3;
 
   friend void swap(UnitCollisionConfig& a, UnitCollisionConfig& b) {
     a.Swap(&b);
@@ -452,26 +800,44 @@ class UnitCollisionConfig final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kFootprintWidthFieldNumber = 1,
-    kFootprintHeightFieldNumber = 2,
+    kBoundsFieldNumber = 1,
+    kOriginFieldNumber = 2,
   };
-  // int32 footprint_width = 1;
-  void clear_footprint_width();
-  int32_t footprint_width() const;
-  void set_footprint_width(int32_t value);
+  // .cc.unitconfig.CollisionBounds bounds = 1;
+  bool has_bounds() const;
   private:
-  int32_t _internal_footprint_width() const;
-  void _internal_set_footprint_width(int32_t value);
+  bool _internal_has_bounds() const;
   public:
+  void clear_bounds();
+  const ::cc::unitconfig::CollisionBounds& bounds() const;
+  PROTOBUF_NODISCARD ::cc::unitconfig::CollisionBounds* release_bounds();
+  ::cc::unitconfig::CollisionBounds* mutable_bounds();
+  void set_allocated_bounds(::cc::unitconfig::CollisionBounds* bounds);
+  private:
+  const ::cc::unitconfig::CollisionBounds& _internal_bounds() const;
+  ::cc::unitconfig::CollisionBounds* _internal_mutable_bounds();
+  public:
+  void unsafe_arena_set_allocated_bounds(
+      ::cc::unitconfig::CollisionBounds* bounds);
+  ::cc::unitconfig::CollisionBounds* unsafe_arena_release_bounds();
 
-  // int32 footprint_height = 2;
-  void clear_footprint_height();
-  int32_t footprint_height() const;
-  void set_footprint_height(int32_t value);
+  // .cc.unitconfig.CollisionOrigin origin = 2;
+  bool has_origin() const;
   private:
-  int32_t _internal_footprint_height() const;
-  void _internal_set_footprint_height(int32_t value);
+  bool _internal_has_origin() const;
   public:
+  void clear_origin();
+  const ::cc::unitconfig::CollisionOrigin& origin() const;
+  PROTOBUF_NODISCARD ::cc::unitconfig::CollisionOrigin* release_origin();
+  ::cc::unitconfig::CollisionOrigin* mutable_origin();
+  void set_allocated_origin(::cc::unitconfig::CollisionOrigin* origin);
+  private:
+  const ::cc::unitconfig::CollisionOrigin& _internal_origin() const;
+  ::cc::unitconfig::CollisionOrigin* _internal_mutable_origin();
+  public:
+  void unsafe_arena_set_allocated_origin(
+      ::cc::unitconfig::CollisionOrigin* origin);
+  ::cc::unitconfig::CollisionOrigin* unsafe_arena_release_origin();
 
   // @@protoc_insertion_point(class_scope:cc.unitconfig.UnitCollisionConfig)
  private:
@@ -481,8 +847,8 @@ class UnitCollisionConfig final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    int32_t footprint_width_;
-    int32_t footprint_height_;
+    ::cc::unitconfig::CollisionBounds* bounds_;
+    ::cc::unitconfig::CollisionOrigin* origin_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -538,7 +904,7 @@ class UnitArtConfig final :
                &_UnitArtConfig_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    4;
 
   friend void swap(UnitArtConfig& a, UnitArtConfig& b) {
     a.Swap(&b);
@@ -723,7 +1089,7 @@ class UnitConfig final :
                &_UnitConfig_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    5;
 
   friend void swap(UnitConfig& a, UnitConfig& b) {
     a.Swap(&b);
@@ -1167,46 +1533,314 @@ inline void UnitStatsConfig::set_sight_range(float value) {
 
 // -------------------------------------------------------------------
 
+// CollisionBounds
+
+// int32 left = 1;
+inline void CollisionBounds::clear_left() {
+  _impl_.left_ = 0;
+}
+inline int32_t CollisionBounds::_internal_left() const {
+  return _impl_.left_;
+}
+inline int32_t CollisionBounds::left() const {
+  // @@protoc_insertion_point(field_get:cc.unitconfig.CollisionBounds.left)
+  return _internal_left();
+}
+inline void CollisionBounds::_internal_set_left(int32_t value) {
+  
+  _impl_.left_ = value;
+}
+inline void CollisionBounds::set_left(int32_t value) {
+  _internal_set_left(value);
+  // @@protoc_insertion_point(field_set:cc.unitconfig.CollisionBounds.left)
+}
+
+// int32 top = 2;
+inline void CollisionBounds::clear_top() {
+  _impl_.top_ = 0;
+}
+inline int32_t CollisionBounds::_internal_top() const {
+  return _impl_.top_;
+}
+inline int32_t CollisionBounds::top() const {
+  // @@protoc_insertion_point(field_get:cc.unitconfig.CollisionBounds.top)
+  return _internal_top();
+}
+inline void CollisionBounds::_internal_set_top(int32_t value) {
+  
+  _impl_.top_ = value;
+}
+inline void CollisionBounds::set_top(int32_t value) {
+  _internal_set_top(value);
+  // @@protoc_insertion_point(field_set:cc.unitconfig.CollisionBounds.top)
+}
+
+// int32 right = 3;
+inline void CollisionBounds::clear_right() {
+  _impl_.right_ = 0;
+}
+inline int32_t CollisionBounds::_internal_right() const {
+  return _impl_.right_;
+}
+inline int32_t CollisionBounds::right() const {
+  // @@protoc_insertion_point(field_get:cc.unitconfig.CollisionBounds.right)
+  return _internal_right();
+}
+inline void CollisionBounds::_internal_set_right(int32_t value) {
+  
+  _impl_.right_ = value;
+}
+inline void CollisionBounds::set_right(int32_t value) {
+  _internal_set_right(value);
+  // @@protoc_insertion_point(field_set:cc.unitconfig.CollisionBounds.right)
+}
+
+// int32 bottom = 4;
+inline void CollisionBounds::clear_bottom() {
+  _impl_.bottom_ = 0;
+}
+inline int32_t CollisionBounds::_internal_bottom() const {
+  return _impl_.bottom_;
+}
+inline int32_t CollisionBounds::bottom() const {
+  // @@protoc_insertion_point(field_get:cc.unitconfig.CollisionBounds.bottom)
+  return _internal_bottom();
+}
+inline void CollisionBounds::_internal_set_bottom(int32_t value) {
+  
+  _impl_.bottom_ = value;
+}
+inline void CollisionBounds::set_bottom(int32_t value) {
+  _internal_set_bottom(value);
+  // @@protoc_insertion_point(field_set:cc.unitconfig.CollisionBounds.bottom)
+}
+
+// -------------------------------------------------------------------
+
+// CollisionOrigin
+
+// int32 x = 1;
+inline void CollisionOrigin::clear_x() {
+  _impl_.x_ = 0;
+}
+inline int32_t CollisionOrigin::_internal_x() const {
+  return _impl_.x_;
+}
+inline int32_t CollisionOrigin::x() const {
+  // @@protoc_insertion_point(field_get:cc.unitconfig.CollisionOrigin.x)
+  return _internal_x();
+}
+inline void CollisionOrigin::_internal_set_x(int32_t value) {
+  
+  _impl_.x_ = value;
+}
+inline void CollisionOrigin::set_x(int32_t value) {
+  _internal_set_x(value);
+  // @@protoc_insertion_point(field_set:cc.unitconfig.CollisionOrigin.x)
+}
+
+// int32 y = 2;
+inline void CollisionOrigin::clear_y() {
+  _impl_.y_ = 0;
+}
+inline int32_t CollisionOrigin::_internal_y() const {
+  return _impl_.y_;
+}
+inline int32_t CollisionOrigin::y() const {
+  // @@protoc_insertion_point(field_get:cc.unitconfig.CollisionOrigin.y)
+  return _internal_y();
+}
+inline void CollisionOrigin::_internal_set_y(int32_t value) {
+  
+  _impl_.y_ = value;
+}
+inline void CollisionOrigin::set_y(int32_t value) {
+  _internal_set_y(value);
+  // @@protoc_insertion_point(field_set:cc.unitconfig.CollisionOrigin.y)
+}
+
+// -------------------------------------------------------------------
+
 // UnitCollisionConfig
 
-// int32 footprint_width = 1;
-inline void UnitCollisionConfig::clear_footprint_width() {
-  _impl_.footprint_width_ = 0;
+// .cc.unitconfig.CollisionBounds bounds = 1;
+inline bool UnitCollisionConfig::_internal_has_bounds() const {
+  return this != internal_default_instance() && _impl_.bounds_ != nullptr;
 }
-inline int32_t UnitCollisionConfig::_internal_footprint_width() const {
-  return _impl_.footprint_width_;
+inline bool UnitCollisionConfig::has_bounds() const {
+  return _internal_has_bounds();
 }
-inline int32_t UnitCollisionConfig::footprint_width() const {
-  // @@protoc_insertion_point(field_get:cc.unitconfig.UnitCollisionConfig.footprint_width)
-  return _internal_footprint_width();
+inline void UnitCollisionConfig::clear_bounds() {
+  if (GetArenaForAllocation() == nullptr && _impl_.bounds_ != nullptr) {
+    delete _impl_.bounds_;
+  }
+  _impl_.bounds_ = nullptr;
 }
-inline void UnitCollisionConfig::_internal_set_footprint_width(int32_t value) {
+inline const ::cc::unitconfig::CollisionBounds& UnitCollisionConfig::_internal_bounds() const {
+  const ::cc::unitconfig::CollisionBounds* p = _impl_.bounds_;
+  return p != nullptr ? *p : reinterpret_cast<const ::cc::unitconfig::CollisionBounds&>(
+      ::cc::unitconfig::_CollisionBounds_default_instance_);
+}
+inline const ::cc::unitconfig::CollisionBounds& UnitCollisionConfig::bounds() const {
+  // @@protoc_insertion_point(field_get:cc.unitconfig.UnitCollisionConfig.bounds)
+  return _internal_bounds();
+}
+inline void UnitCollisionConfig::unsafe_arena_set_allocated_bounds(
+    ::cc::unitconfig::CollisionBounds* bounds) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.bounds_);
+  }
+  _impl_.bounds_ = bounds;
+  if (bounds) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:cc.unitconfig.UnitCollisionConfig.bounds)
+}
+inline ::cc::unitconfig::CollisionBounds* UnitCollisionConfig::release_bounds() {
   
-  _impl_.footprint_width_ = value;
+  ::cc::unitconfig::CollisionBounds* temp = _impl_.bounds_;
+  _impl_.bounds_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
 }
-inline void UnitCollisionConfig::set_footprint_width(int32_t value) {
-  _internal_set_footprint_width(value);
-  // @@protoc_insertion_point(field_set:cc.unitconfig.UnitCollisionConfig.footprint_width)
+inline ::cc::unitconfig::CollisionBounds* UnitCollisionConfig::unsafe_arena_release_bounds() {
+  // @@protoc_insertion_point(field_release:cc.unitconfig.UnitCollisionConfig.bounds)
+  
+  ::cc::unitconfig::CollisionBounds* temp = _impl_.bounds_;
+  _impl_.bounds_ = nullptr;
+  return temp;
+}
+inline ::cc::unitconfig::CollisionBounds* UnitCollisionConfig::_internal_mutable_bounds() {
+  
+  if (_impl_.bounds_ == nullptr) {
+    auto* p = CreateMaybeMessage<::cc::unitconfig::CollisionBounds>(GetArenaForAllocation());
+    _impl_.bounds_ = p;
+  }
+  return _impl_.bounds_;
+}
+inline ::cc::unitconfig::CollisionBounds* UnitCollisionConfig::mutable_bounds() {
+  ::cc::unitconfig::CollisionBounds* _msg = _internal_mutable_bounds();
+  // @@protoc_insertion_point(field_mutable:cc.unitconfig.UnitCollisionConfig.bounds)
+  return _msg;
+}
+inline void UnitCollisionConfig::set_allocated_bounds(::cc::unitconfig::CollisionBounds* bounds) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.bounds_;
+  }
+  if (bounds) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(bounds);
+    if (message_arena != submessage_arena) {
+      bounds = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, bounds, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.bounds_ = bounds;
+  // @@protoc_insertion_point(field_set_allocated:cc.unitconfig.UnitCollisionConfig.bounds)
 }
 
-// int32 footprint_height = 2;
-inline void UnitCollisionConfig::clear_footprint_height() {
-  _impl_.footprint_height_ = 0;
+// .cc.unitconfig.CollisionOrigin origin = 2;
+inline bool UnitCollisionConfig::_internal_has_origin() const {
+  return this != internal_default_instance() && _impl_.origin_ != nullptr;
 }
-inline int32_t UnitCollisionConfig::_internal_footprint_height() const {
-  return _impl_.footprint_height_;
+inline bool UnitCollisionConfig::has_origin() const {
+  return _internal_has_origin();
 }
-inline int32_t UnitCollisionConfig::footprint_height() const {
-  // @@protoc_insertion_point(field_get:cc.unitconfig.UnitCollisionConfig.footprint_height)
-  return _internal_footprint_height();
+inline void UnitCollisionConfig::clear_origin() {
+  if (GetArenaForAllocation() == nullptr && _impl_.origin_ != nullptr) {
+    delete _impl_.origin_;
+  }
+  _impl_.origin_ = nullptr;
 }
-inline void UnitCollisionConfig::_internal_set_footprint_height(int32_t value) {
+inline const ::cc::unitconfig::CollisionOrigin& UnitCollisionConfig::_internal_origin() const {
+  const ::cc::unitconfig::CollisionOrigin* p = _impl_.origin_;
+  return p != nullptr ? *p : reinterpret_cast<const ::cc::unitconfig::CollisionOrigin&>(
+      ::cc::unitconfig::_CollisionOrigin_default_instance_);
+}
+inline const ::cc::unitconfig::CollisionOrigin& UnitCollisionConfig::origin() const {
+  // @@protoc_insertion_point(field_get:cc.unitconfig.UnitCollisionConfig.origin)
+  return _internal_origin();
+}
+inline void UnitCollisionConfig::unsafe_arena_set_allocated_origin(
+    ::cc::unitconfig::CollisionOrigin* origin) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.origin_);
+  }
+  _impl_.origin_ = origin;
+  if (origin) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:cc.unitconfig.UnitCollisionConfig.origin)
+}
+inline ::cc::unitconfig::CollisionOrigin* UnitCollisionConfig::release_origin() {
   
-  _impl_.footprint_height_ = value;
+  ::cc::unitconfig::CollisionOrigin* temp = _impl_.origin_;
+  _impl_.origin_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
 }
-inline void UnitCollisionConfig::set_footprint_height(int32_t value) {
-  _internal_set_footprint_height(value);
-  // @@protoc_insertion_point(field_set:cc.unitconfig.UnitCollisionConfig.footprint_height)
+inline ::cc::unitconfig::CollisionOrigin* UnitCollisionConfig::unsafe_arena_release_origin() {
+  // @@protoc_insertion_point(field_release:cc.unitconfig.UnitCollisionConfig.origin)
+  
+  ::cc::unitconfig::CollisionOrigin* temp = _impl_.origin_;
+  _impl_.origin_ = nullptr;
+  return temp;
+}
+inline ::cc::unitconfig::CollisionOrigin* UnitCollisionConfig::_internal_mutable_origin() {
+  
+  if (_impl_.origin_ == nullptr) {
+    auto* p = CreateMaybeMessage<::cc::unitconfig::CollisionOrigin>(GetArenaForAllocation());
+    _impl_.origin_ = p;
+  }
+  return _impl_.origin_;
+}
+inline ::cc::unitconfig::CollisionOrigin* UnitCollisionConfig::mutable_origin() {
+  ::cc::unitconfig::CollisionOrigin* _msg = _internal_mutable_origin();
+  // @@protoc_insertion_point(field_mutable:cc.unitconfig.UnitCollisionConfig.origin)
+  return _msg;
+}
+inline void UnitCollisionConfig::set_allocated_origin(::cc::unitconfig::CollisionOrigin* origin) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.origin_;
+  }
+  if (origin) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(origin);
+    if (message_arena != submessage_arena) {
+      origin = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, origin, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.origin_ = origin;
+  // @@protoc_insertion_point(field_set_allocated:cc.unitconfig.UnitCollisionConfig.origin)
 }
 
 // -------------------------------------------------------------------
@@ -1690,6 +2324,10 @@ inline void UnitConfig::set_allocated_art(::cc::unitconfig::UnitArtConfig* art) 
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

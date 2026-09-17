@@ -313,13 +313,27 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
     {
         config.stats.sightRange = stats.sight_range();
     }
-    if (proto.collision().footprint_width() >= 1)
+    // Collision bounds: well-formed rects derive the footprint size;
+    // anything else keeps the compiled-in baseline for this type.
+    if (proto.has_collision() && proto.collision().has_bounds())
     {
-        config.footprintWidth = proto.collision().footprint_width();
+        const int left = proto.collision().bounds().left();
+        const int top = proto.collision().bounds().top();
+        const int right = proto.collision().bounds().right();
+        const int bottom = proto.collision().bounds().bottom();
+        if (left >= 0 && top >= 0 && right > left && bottom > top)
+        {
+            config.boundLeft = left;
+            config.boundTop = top;
+            config.footprintWidth = right - left;
+            config.footprintHeight = bottom - top;
+        }
     }
-    if (proto.collision().footprint_height() >= 1)
+    // Origin is stored as-is (no gameplay effect yet — see the schema doc).
+    if (proto.has_collision() && proto.collision().has_origin())
     {
-        config.footprintHeight = proto.collision().footprint_height();
+        config.originX = proto.collision().origin().x();
+        config.originY = proto.collision().origin().y();
     }
     if (!proto.art().sprite_prefix().empty())
     {
@@ -357,8 +371,13 @@ std::string UnitConfigToJson(const UnitConfig &config)
     stats->set_cooldown_time(config.stats.cooldownTime);
     stats->set_speed(config.stats.speed);
     stats->set_sight_range(config.stats.sightRange);
-    proto.mutable_collision()->set_footprint_width(config.footprintWidth);
-    proto.mutable_collision()->set_footprint_height(config.footprintHeight);
+    cc::unitconfig::UnitCollisionConfig *collision = proto.mutable_collision();
+    collision->mutable_bounds()->set_left(config.boundLeft);
+    collision->mutable_bounds()->set_top(config.boundTop);
+    collision->mutable_bounds()->set_right(config.boundLeft + config.footprintWidth);
+    collision->mutable_bounds()->set_bottom(config.boundTop + config.footprintHeight);
+    collision->mutable_origin()->set_x(config.originX);
+    collision->mutable_origin()->set_y(config.originY);
     proto.mutable_art()->set_sprite_prefix(config.spritePrefix);
     proto.mutable_art()->set_atlas_idle_prefix(config.atlasIdlePrefix);
     proto.mutable_art()->set_atlas_walk_prefix(config.atlasWalkPrefix);

@@ -35,10 +35,20 @@ struct EditorState
     int attackRangeBox = 0;
     bool attackPowerEdit = false;
     bool attackRangeEdit = false;
-    int footprintWBox = 1;
-    int footprintHBox = 1;
-    bool footprintWEdit = false;
-    bool footprintHEdit = false;
+    // Collision-tab boxes: bounds L/T/R/B + origin X/Y (footprint derives
+    // as R-L x B-T; see the schema doc in proto/unitconfig.proto).
+    int boundLBox = 0;
+    int boundTBox = 0;
+    int boundRBox = 1;
+    int boundBBox = 1;
+    int originXBox = 0;
+    int originYBox = 0;
+    bool boundLEdit = false;
+    bool boundTEdit = false;
+    bool boundREdit = false;
+    bool boundBEdit = false;
+    bool originXEdit = false;
+    bool originYEdit = false;
     bool showCollision = true;
     bool animatePreview = true;
     int listScroll = 0;

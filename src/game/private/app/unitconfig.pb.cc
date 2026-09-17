@@ -43,10 +43,40 @@ struct UnitStatsConfigDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 UnitStatsConfigDefaultTypeInternal _UnitStatsConfig_default_instance_;
+PROTOBUF_CONSTEXPR CollisionBounds::CollisionBounds(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.left_)*/0
+  , /*decltype(_impl_.top_)*/0
+  , /*decltype(_impl_.right_)*/0
+  , /*decltype(_impl_.bottom_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct CollisionBoundsDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR CollisionBoundsDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~CollisionBoundsDefaultTypeInternal() {}
+  union {
+    CollisionBounds _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 CollisionBoundsDefaultTypeInternal _CollisionBounds_default_instance_;
+PROTOBUF_CONSTEXPR CollisionOrigin::CollisionOrigin(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.x_)*/0
+  , /*decltype(_impl_.y_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct CollisionOriginDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR CollisionOriginDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~CollisionOriginDefaultTypeInternal() {}
+  union {
+    CollisionOrigin _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 CollisionOriginDefaultTypeInternal _CollisionOrigin_default_instance_;
 PROTOBUF_CONSTEXPR UnitCollisionConfig::UnitCollisionConfig(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.footprint_width_)*/0
-  , /*decltype(_impl_.footprint_height_)*/0
+    /*decltype(_impl_.bounds_)*/nullptr
+  , /*decltype(_impl_.origin_)*/nullptr
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct UnitCollisionConfigDefaultTypeInternal {
   PROTOBUF_CONSTEXPR UnitCollisionConfigDefaultTypeInternal()
@@ -90,7 +120,7 @@ struct UnitConfigDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 UnitConfigDefaultTypeInternal _UnitConfig_default_instance_;
 }  // namespace unitconfig
 }  // namespace cc
-static ::_pb::Metadata file_level_metadata_unitconfig_2eproto[4];
+static ::_pb::Metadata file_level_metadata_unitconfig_2eproto[6];
 static constexpr ::_pb::EnumDescriptor const** file_level_enum_descriptors_unitconfig_2eproto = nullptr;
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_unitconfig_2eproto = nullptr;
 
@@ -118,13 +148,31 @@ const uint32_t TableStruct_unitconfig_2eproto::offsets[] PROTOBUF_SECTION_VARIAB
   4,
   5,
   ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::CollisionBounds, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::CollisionBounds, _impl_.left_),
+  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::CollisionBounds, _impl_.top_),
+  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::CollisionBounds, _impl_.right_),
+  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::CollisionBounds, _impl_.bottom_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::CollisionOrigin, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::CollisionOrigin, _impl_.x_),
+  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::CollisionOrigin, _impl_.y_),
+  ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::cc::unitconfig::UnitCollisionConfig, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::UnitCollisionConfig, _impl_.footprint_width_),
-  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::UnitCollisionConfig, _impl_.footprint_height_),
+  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::UnitCollisionConfig, _impl_.bounds_),
+  PROTOBUF_FIELD_OFFSET(::cc::unitconfig::UnitCollisionConfig, _impl_.origin_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::cc::unitconfig::UnitArtConfig, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -147,13 +195,17 @@ const uint32_t TableStruct_unitconfig_2eproto::offsets[] PROTOBUF_SECTION_VARIAB
 };
 static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, 14, -1, sizeof(::cc::unitconfig::UnitStatsConfig)},
-  { 22, -1, -1, sizeof(::cc::unitconfig::UnitCollisionConfig)},
-  { 30, -1, -1, sizeof(::cc::unitconfig::UnitArtConfig)},
-  { 39, -1, -1, sizeof(::cc::unitconfig::UnitConfig)},
+  { 22, -1, -1, sizeof(::cc::unitconfig::CollisionBounds)},
+  { 32, -1, -1, sizeof(::cc::unitconfig::CollisionOrigin)},
+  { 40, -1, -1, sizeof(::cc::unitconfig::UnitCollisionConfig)},
+  { 48, -1, -1, sizeof(::cc::unitconfig::UnitArtConfig)},
+  { 57, -1, -1, sizeof(::cc::unitconfig::UnitConfig)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
   &::cc::unitconfig::_UnitStatsConfig_default_instance_._instance,
+  &::cc::unitconfig::_CollisionBounds_default_instance_._instance,
+  &::cc::unitconfig::_CollisionOrigin_default_instance_._instance,
   &::cc::unitconfig::_UnitCollisionConfig_default_instance_._instance,
   &::cc::unitconfig::_UnitArtConfig_default_instance_._instance,
   &::cc::unitconfig::_UnitConfig_default_instance_._instance,
@@ -168,22 +220,26 @@ const char descriptor_table_protodef_unitconfig_2eproto[] PROTOBUF_SECTION_VARIA
   "\005speed\030\007 \001(\002H\004\210\001\001\022\030\n\013sight_range\030\010 \001(\002H\005"
   "\210\001\001B\t\n\007_healthB\017\n\r_attack_powerB\017\n\r_atta"
   "ck_rangeB\020\n\016_cooldown_timeB\010\n\006_speedB\016\n\014"
-  "_sight_range\"H\n\023UnitCollisionConfig\022\027\n\017f"
-  "ootprint_width\030\001 \001(\005\022\030\n\020footprint_height"
-  "\030\002 \001(\005\"\\\n\rUnitArtConfig\022\025\n\rsprite_prefix"
-  "\030\001 \001(\t\022\031\n\021atlas_idle_prefix\030\002 \001(\t\022\031\n\021atl"
-  "as_walk_prefix\030\003 \001(\t\"\253\001\n\nUnitConfig\022\014\n\004t"
-  "ype\030\001 \001(\t\022-\n\005stats\030\002 \001(\0132\036.cc.unitconfig"
-  ".UnitStatsConfig\0225\n\tcollision\030\003 \001(\0132\".cc"
-  ".unitconfig.UnitCollisionConfig\022)\n\003art\030\004"
-  " \001(\0132\034.cc.unitconfig.UnitArtConfigb\006prot"
-  "o3"
+  "_sight_range\"K\n\017CollisionBounds\022\014\n\004left\030"
+  "\001 \001(\005\022\013\n\003top\030\002 \001(\005\022\r\n\005right\030\003 \001(\005\022\016\n\006bot"
+  "tom\030\004 \001(\005\"\'\n\017CollisionOrigin\022\t\n\001x\030\001 \001(\005\022"
+  "\t\n\001y\030\002 \001(\005\"u\n\023UnitCollisionConfig\022.\n\006bou"
+  "nds\030\001 \001(\0132\036.cc.unitconfig.CollisionBound"
+  "s\022.\n\006origin\030\002 \001(\0132\036.cc.unitconfig.Collis"
+  "ionOrigin\"\\\n\rUnitArtConfig\022\025\n\rsprite_pre"
+  "fix\030\001 \001(\t\022\031\n\021atlas_idle_prefix\030\002 \001(\t\022\031\n\021"
+  "atlas_walk_prefix\030\003 \001(\t\"\253\001\n\nUnitConfig\022\014"
+  "\n\004type\030\001 \001(\t\022-\n\005stats\030\002 \001(\0132\036.cc.unitcon"
+  "fig.UnitStatsConfig\0225\n\tcollision\030\003 \001(\0132\""
+  ".cc.unitconfig.UnitCollisionConfig\022)\n\003ar"
+  "t\030\004 \001(\0132\034.cc.unitconfig.UnitArtConfigb\006p"
+  "roto3"
   ;
 static ::_pbi::once_flag descriptor_table_unitconfig_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_unitconfig_2eproto = {
-    false, false, 682, descriptor_table_protodef_unitconfig_2eproto,
+    false, false, 845, descriptor_table_protodef_unitconfig_2eproto,
     "unitconfig.proto",
-    &descriptor_table_unitconfig_2eproto_once, nullptr, 0, 4,
+    &descriptor_table_unitconfig_2eproto_once, nullptr, 0, 6,
     schemas, file_default_instances, TableStruct_unitconfig_2eproto::offsets,
     file_level_metadata_unitconfig_2eproto, file_level_enum_descriptors_unitconfig_2eproto,
     file_level_service_descriptors_unitconfig_2eproto,
@@ -649,10 +705,490 @@ void UnitStatsConfig::InternalSwap(UnitStatsConfig* other) {
 
 // ===================================================================
 
-class UnitCollisionConfig::_Internal {
+class CollisionBounds::_Internal {
  public:
 };
 
+CollisionBounds::CollisionBounds(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:cc.unitconfig.CollisionBounds)
+}
+CollisionBounds::CollisionBounds(const CollisionBounds& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  CollisionBounds* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.left_){}
+    , decltype(_impl_.top_){}
+    , decltype(_impl_.right_){}
+    , decltype(_impl_.bottom_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.left_, &from._impl_.left_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.bottom_) -
+    reinterpret_cast<char*>(&_impl_.left_)) + sizeof(_impl_.bottom_));
+  // @@protoc_insertion_point(copy_constructor:cc.unitconfig.CollisionBounds)
+}
+
+inline void CollisionBounds::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.left_){0}
+    , decltype(_impl_.top_){0}
+    , decltype(_impl_.right_){0}
+    , decltype(_impl_.bottom_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+}
+
+CollisionBounds::~CollisionBounds() {
+  // @@protoc_insertion_point(destructor:cc.unitconfig.CollisionBounds)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void CollisionBounds::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+}
+
+void CollisionBounds::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void CollisionBounds::Clear() {
+// @@protoc_insertion_point(message_clear_start:cc.unitconfig.CollisionBounds)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  ::memset(&_impl_.left_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.bottom_) -
+      reinterpret_cast<char*>(&_impl_.left_)) + sizeof(_impl_.bottom_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* CollisionBounds::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // int32 left = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.left_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // int32 top = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.top_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // int32 right = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
+          _impl_.right_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // int32 bottom = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 32)) {
+          _impl_.bottom_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* CollisionBounds::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:cc.unitconfig.CollisionBounds)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int32 left = 1;
+  if (this->_internal_left() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_left(), target);
+  }
+
+  // int32 top = 2;
+  if (this->_internal_top() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_top(), target);
+  }
+
+  // int32 right = 3;
+  if (this->_internal_right() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(3, this->_internal_right(), target);
+  }
+
+  // int32 bottom = 4;
+  if (this->_internal_bottom() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(4, this->_internal_bottom(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:cc.unitconfig.CollisionBounds)
+  return target;
+}
+
+size_t CollisionBounds::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:cc.unitconfig.CollisionBounds)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // int32 left = 1;
+  if (this->_internal_left() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_left());
+  }
+
+  // int32 top = 2;
+  if (this->_internal_top() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_top());
+  }
+
+  // int32 right = 3;
+  if (this->_internal_right() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_right());
+  }
+
+  // int32 bottom = 4;
+  if (this->_internal_bottom() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_bottom());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData CollisionBounds::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    CollisionBounds::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*CollisionBounds::GetClassData() const { return &_class_data_; }
+
+
+void CollisionBounds::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<CollisionBounds*>(&to_msg);
+  auto& from = static_cast<const CollisionBounds&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:cc.unitconfig.CollisionBounds)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_left() != 0) {
+    _this->_internal_set_left(from._internal_left());
+  }
+  if (from._internal_top() != 0) {
+    _this->_internal_set_top(from._internal_top());
+  }
+  if (from._internal_right() != 0) {
+    _this->_internal_set_right(from._internal_right());
+  }
+  if (from._internal_bottom() != 0) {
+    _this->_internal_set_bottom(from._internal_bottom());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void CollisionBounds::CopyFrom(const CollisionBounds& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:cc.unitconfig.CollisionBounds)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool CollisionBounds::IsInitialized() const {
+  return true;
+}
+
+void CollisionBounds::InternalSwap(CollisionBounds* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(CollisionBounds, _impl_.bottom_)
+      + sizeof(CollisionBounds::_impl_.bottom_)
+      - PROTOBUF_FIELD_OFFSET(CollisionBounds, _impl_.left_)>(
+          reinterpret_cast<char*>(&_impl_.left_),
+          reinterpret_cast<char*>(&other->_impl_.left_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata CollisionBounds::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_unitconfig_2eproto_getter, &descriptor_table_unitconfig_2eproto_once,
+      file_level_metadata_unitconfig_2eproto[1]);
+}
+
+// ===================================================================
+
+class CollisionOrigin::_Internal {
+ public:
+};
+
+CollisionOrigin::CollisionOrigin(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:cc.unitconfig.CollisionOrigin)
+}
+CollisionOrigin::CollisionOrigin(const CollisionOrigin& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  CollisionOrigin* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.x_){}
+    , decltype(_impl_.y_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.x_, &from._impl_.x_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.y_) -
+    reinterpret_cast<char*>(&_impl_.x_)) + sizeof(_impl_.y_));
+  // @@protoc_insertion_point(copy_constructor:cc.unitconfig.CollisionOrigin)
+}
+
+inline void CollisionOrigin::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.x_){0}
+    , decltype(_impl_.y_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+}
+
+CollisionOrigin::~CollisionOrigin() {
+  // @@protoc_insertion_point(destructor:cc.unitconfig.CollisionOrigin)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void CollisionOrigin::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+}
+
+void CollisionOrigin::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void CollisionOrigin::Clear() {
+// @@protoc_insertion_point(message_clear_start:cc.unitconfig.CollisionOrigin)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  ::memset(&_impl_.x_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.y_) -
+      reinterpret_cast<char*>(&_impl_.x_)) + sizeof(_impl_.y_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* CollisionOrigin::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // int32 x = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.x_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // int32 y = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.y_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* CollisionOrigin::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:cc.unitconfig.CollisionOrigin)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int32 x = 1;
+  if (this->_internal_x() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_x(), target);
+  }
+
+  // int32 y = 2;
+  if (this->_internal_y() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_y(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:cc.unitconfig.CollisionOrigin)
+  return target;
+}
+
+size_t CollisionOrigin::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:cc.unitconfig.CollisionOrigin)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // int32 x = 1;
+  if (this->_internal_x() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_x());
+  }
+
+  // int32 y = 2;
+  if (this->_internal_y() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_y());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData CollisionOrigin::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    CollisionOrigin::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*CollisionOrigin::GetClassData() const { return &_class_data_; }
+
+
+void CollisionOrigin::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<CollisionOrigin*>(&to_msg);
+  auto& from = static_cast<const CollisionOrigin&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:cc.unitconfig.CollisionOrigin)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_x() != 0) {
+    _this->_internal_set_x(from._internal_x());
+  }
+  if (from._internal_y() != 0) {
+    _this->_internal_set_y(from._internal_y());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void CollisionOrigin::CopyFrom(const CollisionOrigin& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:cc.unitconfig.CollisionOrigin)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool CollisionOrigin::IsInitialized() const {
+  return true;
+}
+
+void CollisionOrigin::InternalSwap(CollisionOrigin* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(CollisionOrigin, _impl_.y_)
+      + sizeof(CollisionOrigin::_impl_.y_)
+      - PROTOBUF_FIELD_OFFSET(CollisionOrigin, _impl_.x_)>(
+          reinterpret_cast<char*>(&_impl_.x_),
+          reinterpret_cast<char*>(&other->_impl_.x_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata CollisionOrigin::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_unitconfig_2eproto_getter, &descriptor_table_unitconfig_2eproto_once,
+      file_level_metadata_unitconfig_2eproto[2]);
+}
+
+// ===================================================================
+
+class UnitCollisionConfig::_Internal {
+ public:
+  static const ::cc::unitconfig::CollisionBounds& bounds(const UnitCollisionConfig* msg);
+  static const ::cc::unitconfig::CollisionOrigin& origin(const UnitCollisionConfig* msg);
+};
+
+const ::cc::unitconfig::CollisionBounds&
+UnitCollisionConfig::_Internal::bounds(const UnitCollisionConfig* msg) {
+  return *msg->_impl_.bounds_;
+}
+const ::cc::unitconfig::CollisionOrigin&
+UnitCollisionConfig::_Internal::origin(const UnitCollisionConfig* msg) {
+  return *msg->_impl_.origin_;
+}
 UnitCollisionConfig::UnitCollisionConfig(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
   : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
@@ -663,14 +1199,17 @@ UnitCollisionConfig::UnitCollisionConfig(const UnitCollisionConfig& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   UnitCollisionConfig* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.footprint_width_){}
-    , decltype(_impl_.footprint_height_){}
+      decltype(_impl_.bounds_){nullptr}
+    , decltype(_impl_.origin_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  ::memcpy(&_impl_.footprint_width_, &from._impl_.footprint_width_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.footprint_height_) -
-    reinterpret_cast<char*>(&_impl_.footprint_width_)) + sizeof(_impl_.footprint_height_));
+  if (from._internal_has_bounds()) {
+    _this->_impl_.bounds_ = new ::cc::unitconfig::CollisionBounds(*from._impl_.bounds_);
+  }
+  if (from._internal_has_origin()) {
+    _this->_impl_.origin_ = new ::cc::unitconfig::CollisionOrigin(*from._impl_.origin_);
+  }
   // @@protoc_insertion_point(copy_constructor:cc.unitconfig.UnitCollisionConfig)
 }
 
@@ -679,8 +1218,8 @@ inline void UnitCollisionConfig::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.footprint_width_){0}
-    , decltype(_impl_.footprint_height_){0}
+      decltype(_impl_.bounds_){nullptr}
+    , decltype(_impl_.origin_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -696,6 +1235,8 @@ UnitCollisionConfig::~UnitCollisionConfig() {
 
 inline void UnitCollisionConfig::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  if (this != internal_default_instance()) delete _impl_.bounds_;
+  if (this != internal_default_instance()) delete _impl_.origin_;
 }
 
 void UnitCollisionConfig::SetCachedSize(int size) const {
@@ -708,9 +1249,14 @@ void UnitCollisionConfig::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&_impl_.footprint_width_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.footprint_height_) -
-      reinterpret_cast<char*>(&_impl_.footprint_width_)) + sizeof(_impl_.footprint_height_));
+  if (GetArenaForAllocation() == nullptr && _impl_.bounds_ != nullptr) {
+    delete _impl_.bounds_;
+  }
+  _impl_.bounds_ = nullptr;
+  if (GetArenaForAllocation() == nullptr && _impl_.origin_ != nullptr) {
+    delete _impl_.origin_;
+  }
+  _impl_.origin_ = nullptr;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -720,18 +1266,18 @@ const char* UnitCollisionConfig::_InternalParse(const char* ptr, ::_pbi::ParseCo
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // int32 footprint_width = 1;
+      // .cc.unitconfig.CollisionBounds bounds = 1;
       case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
-          _impl_.footprint_width_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          ptr = ctx->ParseMessage(_internal_mutable_bounds(), ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
         continue;
-      // int32 footprint_height = 2;
+      // .cc.unitconfig.CollisionOrigin origin = 2;
       case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
-          _impl_.footprint_height_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          ptr = ctx->ParseMessage(_internal_mutable_origin(), ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -765,16 +1311,18 @@ uint8_t* UnitCollisionConfig::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int32 footprint_width = 1;
-  if (this->_internal_footprint_width() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_footprint_width(), target);
+  // .cc.unitconfig.CollisionBounds bounds = 1;
+  if (this->_internal_has_bounds()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(1, _Internal::bounds(this),
+        _Internal::bounds(this).GetCachedSize(), target, stream);
   }
 
-  // int32 footprint_height = 2;
-  if (this->_internal_footprint_height() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_footprint_height(), target);
+  // .cc.unitconfig.CollisionOrigin origin = 2;
+  if (this->_internal_has_origin()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(2, _Internal::origin(this),
+        _Internal::origin(this).GetCachedSize(), target, stream);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -793,14 +1341,18 @@ size_t UnitCollisionConfig::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // int32 footprint_width = 1;
-  if (this->_internal_footprint_width() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_footprint_width());
+  // .cc.unitconfig.CollisionBounds bounds = 1;
+  if (this->_internal_has_bounds()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.bounds_);
   }
 
-  // int32 footprint_height = 2;
-  if (this->_internal_footprint_height() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_footprint_height());
+  // .cc.unitconfig.CollisionOrigin origin = 2;
+  if (this->_internal_has_origin()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.origin_);
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -821,11 +1373,13 @@ void UnitCollisionConfig::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, co
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_footprint_width() != 0) {
-    _this->_internal_set_footprint_width(from._internal_footprint_width());
+  if (from._internal_has_bounds()) {
+    _this->_internal_mutable_bounds()->::cc::unitconfig::CollisionBounds::MergeFrom(
+        from._internal_bounds());
   }
-  if (from._internal_footprint_height() != 0) {
-    _this->_internal_set_footprint_height(from._internal_footprint_height());
+  if (from._internal_has_origin()) {
+    _this->_internal_mutable_origin()->::cc::unitconfig::CollisionOrigin::MergeFrom(
+        from._internal_origin());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -845,17 +1399,17 @@ void UnitCollisionConfig::InternalSwap(UnitCollisionConfig* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(UnitCollisionConfig, _impl_.footprint_height_)
-      + sizeof(UnitCollisionConfig::_impl_.footprint_height_)
-      - PROTOBUF_FIELD_OFFSET(UnitCollisionConfig, _impl_.footprint_width_)>(
-          reinterpret_cast<char*>(&_impl_.footprint_width_),
-          reinterpret_cast<char*>(&other->_impl_.footprint_width_));
+      PROTOBUF_FIELD_OFFSET(UnitCollisionConfig, _impl_.origin_)
+      + sizeof(UnitCollisionConfig::_impl_.origin_)
+      - PROTOBUF_FIELD_OFFSET(UnitCollisionConfig, _impl_.bounds_)>(
+          reinterpret_cast<char*>(&_impl_.bounds_),
+          reinterpret_cast<char*>(&other->_impl_.bounds_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata UnitCollisionConfig::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_unitconfig_2eproto_getter, &descriptor_table_unitconfig_2eproto_once,
-      file_level_metadata_unitconfig_2eproto[1]);
+      file_level_metadata_unitconfig_2eproto[3]);
 }
 
 // ===================================================================
@@ -1158,7 +1712,7 @@ void UnitArtConfig::InternalSwap(UnitArtConfig* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata UnitArtConfig::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_unitconfig_2eproto_getter, &descriptor_table_unitconfig_2eproto_once,
-      file_level_metadata_unitconfig_2eproto[2]);
+      file_level_metadata_unitconfig_2eproto[4]);
 }
 
 // ===================================================================
@@ -1490,7 +2044,7 @@ void UnitConfig::InternalSwap(UnitConfig* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata UnitConfig::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_unitconfig_2eproto_getter, &descriptor_table_unitconfig_2eproto_once,
-      file_level_metadata_unitconfig_2eproto[3]);
+      file_level_metadata_unitconfig_2eproto[5]);
 }
 
 // @@protoc_insertion_point(namespace_scope)
@@ -1500,6 +2054,14 @@ PROTOBUF_NAMESPACE_OPEN
 template<> PROTOBUF_NOINLINE ::cc::unitconfig::UnitStatsConfig*
 Arena::CreateMaybeMessage< ::cc::unitconfig::UnitStatsConfig >(Arena* arena) {
   return Arena::CreateMessageInternal< ::cc::unitconfig::UnitStatsConfig >(arena);
+}
+template<> PROTOBUF_NOINLINE ::cc::unitconfig::CollisionBounds*
+Arena::CreateMaybeMessage< ::cc::unitconfig::CollisionBounds >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::cc::unitconfig::CollisionBounds >(arena);
+}
+template<> PROTOBUF_NOINLINE ::cc::unitconfig::CollisionOrigin*
+Arena::CreateMaybeMessage< ::cc::unitconfig::CollisionOrigin >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::cc::unitconfig::CollisionOrigin >(arena);
 }
 template<> PROTOBUF_NOINLINE ::cc::unitconfig::UnitCollisionConfig*
 Arena::CreateMaybeMessage< ::cc::unitconfig::UnitCollisionConfig >(Arena* arena) {

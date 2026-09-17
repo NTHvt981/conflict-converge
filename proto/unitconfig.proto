@@ -1,6 +1,7 @@
 // Conflict Converge per-unit-type config (JSON, parsed via protobuf-JSON).
-// One file per UnitType in data/configs/<lowercased-enum>.json (e.g.
-// data/configs/infantry.json). The game keeps its compiled-in defaults
+// One file per UnitType in data/configs/<stem>.json (stems are snake_case:
+// data/configs/infantry.json, antiarmor_infantry.json, ..., heavy_tank.json;
+// see UnitConfigFilename). The game keeps its compiled-in defaults
 // (UnitStats.cpp kTable + the ApplyBaseStats footprint rule); a file only
 // overrides the entries it provides, and a missing directory degrades to
 // all-defaults (see plans/Standalone_Unit_Config_Editor_Plan.md).
@@ -10,7 +11,7 @@
 // truth that drifts when Unit.h gains a value, while strings keep the C++
 // enums canonical with validation at load. Protobuf JSON accepts both
 // camelCase and the original snake_case names on parse; output uses
-// camelCase (attackPower, footprintWidth, ...).
+// camelCase (attackPower, atlasIdlePrefix, ...).
 syntax = "proto3";
 
 package cc.unitconfig;
@@ -31,10 +32,43 @@ message UnitStatsConfig
     optional float sight_range = 8;  // pixels
 }
 
+// Collision bounds: a tile rect relative to the unit's anchor tile, in
+// the same bounds/origin vocabulary as SpriteDef (left/top/right/bottom
+// plus an origin point) — but in TILES, not pixels, because this is what
+// the gameplay occupancy grid reserves, not what the renderer draws.
+//
+// The game marks every tile in [left, right) x [top, bottom) as occupied
+// (OccupancyGrid), blocks pathfinding through them, and draws selection/
+// placement UI from the same rect. Gameplay footprint size is therefore
+// (right - left) x (bottom - top): a 1x1 infantry is bounds {0,0,1,1}, a
+// 2x2 vehicle is bounds {0,0,2,2}. Bounds must satisfy
+// 0 <= left < right and 0 <= top < bottom; anything else falls back to
+// the compiled-in footprint for that type.
+//
+// Origin is the anchor tile within the footprint — the tile the unit's
+// logical position snaps to. (0,0) is the top-left, which is what the
+// game uses today for every type; a nonzero origin is stored, round-trips,
+// and previews, but has no gameplay effect yet (anchor semantics are a
+// section-5 follow-up). Example: a 2x2 footprint anchored on its bottom
+// row would be bounds {0,0,2,2} with origin {0,1}.
+message CollisionBounds
+{
+    int32 left = 1;   // tiles, inclusive
+    int32 top = 2;    // tiles, inclusive
+    int32 right = 3;  // tiles, exclusive
+    int32 bottom = 4; // tiles, exclusive
+}
+
+message CollisionOrigin
+{
+    int32 x = 1; // tiles, anchor tile within the footprint
+    int32 y = 2;
+}
+
 message UnitCollisionConfig
 {
-    int32 footprint_width = 1;  // tiles
-    int32 footprint_height = 2; // tiles
+    CollisionBounds bounds = 1;
+    CollisionOrigin origin = 2;
 }
 
 message UnitArtConfig

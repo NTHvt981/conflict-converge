@@ -13,8 +13,17 @@ struct UnitConfig
 {
     std::string type; // UnitType enum name, e.g. "Infantry"
     UnitStats stats;
-    int footprintWidth = 1;  // tiles
-    int footprintHeight = 1; // tiles
+    // Collision, bounds/origin style (see the schema doc in
+    // proto/unitconfig.proto): gameplay footprint size is derived as
+    // (right-left) x (bottom-top); boundLeft/Top is the footprint offset
+    // from the anchor tile, originX/Y the anchor within the footprint
+    // (today always top-left-anchored: offsets 0, origin 0).
+    int footprintWidth = 1;  // tiles, derived
+    int footprintHeight = 1; // tiles, derived
+    int boundLeft = 0;       // tiles
+    int boundTop = 0;        // tiles
+    int originX = 0;         // tiles
+    int originY = 0;         // tiles
     std::string spritePrefix;
     std::string atlasIdlePrefix; // "" = flat-PNG fallback
     std::string atlasWalkPrefix; // "" = flat-PNG fallback

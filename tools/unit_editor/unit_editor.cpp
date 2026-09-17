@@ -45,12 +45,17 @@ void SyncBuffers(EditorState &editor)
     editor.damageActive = DamageIndex(config.stats.damageType);
     editor.attackPowerBox = config.stats.attackPower;
     editor.attackRangeBox = config.stats.attackRange;
-    editor.footprintWBox = config.footprintWidth;
-    editor.footprintHBox = config.footprintHeight;
+    editor.boundLBox = config.boundLeft;
+    editor.boundTBox = config.boundTop;
+    editor.boundRBox = config.boundLeft + config.footprintWidth;
+    editor.boundBBox = config.boundTop + config.footprintHeight;
+    editor.originXBox = config.originX;
+    editor.originYBox = config.originY;
     editor.spriteEdit = editor.idleEdit = editor.walkEdit = false;
     editor.armorEdit = editor.damageEdit = false;
     editor.attackPowerEdit = editor.attackRangeEdit = false;
-    editor.footprintWEdit = editor.footprintHEdit = false;
+    editor.boundLEdit = editor.boundTEdit = editor.boundREdit = false;
+    editor.boundBEdit = editor.originXEdit = editor.originYEdit = false;
 }
 
 void SaveOne(EditorState &editor, Art &art, int typeIndex)
@@ -222,25 +227,61 @@ void DrawCollisionTab(EditorState &editor, Art &art)
 {
     UnitConfig &config = editor.configs[editor.selected];
     constexpr float kX = 240.0f;
-    GuiLabel({ kX, 84.0f, 150.0f, 20.0f }, "Footprint W (tiles)");
-    if (GuiValueBox({ kX + 155.0f, 84.0f, 120.0f, 20.0f }, nullptr,
-                     &editor.footprintWBox, 1, 4, editor.footprintWEdit))
+    // Bounds L/T/R/B (tiles, R/B exclusive) + origin X/Y. Footprint
+    // derives as R-L x B-T (readout below); the loader rejects
+    // malformed rects back to the type baseline on reload.
+    GuiLabel({ kX, 84.0f, 150.0f, 20.0f }, "Bounds L");
+    if (GuiValueBox({ kX + 155.0f, 84.0f, 100.0f, 20.0f }, nullptr, &editor.boundLBox,
+                     0, 8, editor.boundLEdit))
     {
-        editor.footprintWEdit = !editor.footprintWEdit;
+        editor.boundLEdit = !editor.boundLEdit;
     }
-    config.footprintWidth = editor.footprintWBox;
-    GuiLabel({ kX, 110.0f, 150.0f, 20.0f }, "Footprint H (tiles)");
-    if (GuiValueBox({ kX + 155.0f, 110.0f, 120.0f, 20.0f }, nullptr,
-                     &editor.footprintHBox, 1, 4, editor.footprintHEdit))
+    config.boundLeft = editor.boundLBox;
+    GuiLabel({ kX + 280.0f, 84.0f, 150.0f, 20.0f }, "Bounds T");
+    if (GuiValueBox({ kX + 435.0f, 84.0f, 100.0f, 20.0f }, nullptr, &editor.boundTBox,
+                     0, 8, editor.boundTEdit))
     {
-        editor.footprintHEdit = !editor.footprintHEdit;
+        editor.boundTEdit = !editor.boundTEdit;
     }
-    config.footprintHeight = editor.footprintHBox;
-    GuiCheckBox({ kX, 140.0f, 16.0f, 16.0f }, "Show collision bound",
+    config.boundTop = editor.boundTBox;
+    GuiLabel({ kX, 110.0f, 150.0f, 20.0f }, "Bounds R");
+    if (GuiValueBox({ kX + 155.0f, 110.0f, 100.0f, 20.0f }, nullptr, &editor.boundRBox,
+                     0, 8, editor.boundREdit))
+    {
+        editor.boundREdit = !editor.boundREdit;
+    }
+    config.footprintWidth = editor.boundRBox - config.boundLeft;
+    GuiLabel({ kX + 280.0f, 110.0f, 150.0f, 20.0f }, "Bounds B");
+    if (GuiValueBox({ kX + 435.0f, 110.0f, 100.0f, 20.0f }, nullptr, &editor.boundBBox,
+                     0, 8, editor.boundBEdit))
+    {
+        editor.boundBEdit = !editor.boundBEdit;
+    }
+    config.footprintHeight = editor.boundBBox - config.boundTop;
+    GuiLabel({ kX, 136.0f, 150.0f, 20.0f }, "Origin X");
+    if (GuiValueBox({ kX + 155.0f, 136.0f, 100.0f, 20.0f }, nullptr, &editor.originXBox,
+                     0, 8, editor.originXEdit))
+    {
+        editor.originXEdit = !editor.originXEdit;
+    }
+    config.originX = editor.originXBox;
+    GuiLabel({ kX + 280.0f, 136.0f, 150.0f, 20.0f }, "Origin Y");
+    if (GuiValueBox({ kX + 435.0f, 136.0f, 100.0f, 20.0f }, nullptr, &editor.originYBox,
+                     0, 8, editor.originYEdit))
+    {
+        editor.originYEdit = !editor.originYEdit;
+    }
+    config.originY = editor.originYBox;
+    char footprint[64];
+    std::snprintf(footprint, sizeof(footprint), "Footprint: %dx%d tiles (R-L x B-T)",
+                  config.footprintWidth, config.footprintHeight);
+    GuiLabel({ kX, 162.0f, 380.0f, 20.0f }, footprint);
+    GuiLabel({ kX, 180.0f, 380.0f, 20.0f }, "Origin has no gameplay effect yet.");
+    GuiCheckBox({ kX, 206.0f, 16.0f, 16.0f }, "Show collision bound",
                 &editor.showCollision);
-    GuiLabel({ kX, 166.0f, 380.0f, 20.0f },
+    GuiLabel({ kX, 232.0f, 380.0f, 20.0f },
              "Red = reserved tiles (64px each), not the");
-    GuiLabel({ kX, 184.0f, 380.0f, 20.0f }, "32x32 selection outline.");
+    GuiLabel({ kX, 250.0f, 380.0f, 20.0f }, "32x32 selection outline.");
 
     DrawPreview(editor, art, 640.0f, 84.0f, true);
 }

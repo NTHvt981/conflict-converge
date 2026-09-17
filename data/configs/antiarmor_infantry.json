@@ -11,8 +11,8 @@
     "sightRange": 320
   },
   "collision": {
-    "footprintWidth": 1,
-    "footprintHeight": 1
+    "bounds": { "left": 0, "top": 0, "right": 1, "bottom": 1 },
+    "origin": { "x": 0, "y": 0 }
   },
   "art": {
     "spritePrefix": "antiarmor",
