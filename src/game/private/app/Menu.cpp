@@ -117,6 +117,7 @@ bool SaveSettings(const MenuSettings &settings, const std::string &path)
     file << "showMinimap=" << (settings.showMinimap ? 1 : 0) << "\n";
     file << "rightDragPan=" << (settings.rightDragPan ? 1 : 0) << "\n";
     file << "colorBlindMode=" << (settings.colorBlindMode ? 1 : 0) << "\n";
+    file << "uiScale=" << settings.uiScale << "\n";
     for (const auto &override : settings.hotkeyOverrides)
     {
         file << "hotkey." << override.first << "=" << override.second << "\n";
@@ -181,6 +182,13 @@ bool LoadSettings(MenuSettings &settings, const std::string &path)
             if (value == "0" || value == "1")
             {
                 parsed.colorBlindMode = value == "1";
+            }
+        }
+        else if (key == "uiScale")
+        {
+            if (ParseFloat(value, number))
+            {
+                parsed.uiScale = ClampFloat(number, 0.75f, 2.0f);
             }
         }
         else if (key == "masterVolume")

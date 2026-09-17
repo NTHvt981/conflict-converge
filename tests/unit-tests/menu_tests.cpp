@@ -125,6 +125,7 @@ void RunMenuTests()
     saved.showMinimap = false;
     saved.rightDragPan = true;
     saved.colorBlindMode = true;
+    saved.uiScale = 1.5f;
     saved.masterVolume = 0.5f;
     saved.musicVolume = 0.25f;
     saved.sfxVolume = 0.75f;
@@ -139,6 +140,7 @@ void RunMenuTests()
     CC_CHECK(!loaded.showMinimap);
     CC_CHECK(loaded.rightDragPan);
     CC_CHECK(loaded.colorBlindMode);
+    CC_CHECK(loaded.uiScale == 1.5f);
     CC_CHECK(loaded.masterVolume == 0.5f);
     CC_CHECK(loaded.musicVolume == 0.25f);
     CC_CHECK(loaded.sfxVolume == 0.75f);
@@ -155,6 +157,7 @@ void RunMenuTests()
         junk << "cameraSpeed=banana\nmasterVolume=7\nshowMinimap=2\nmute=1\nunknownKey=9\n";
         junk << "rightDragPan=maybe\n";
         junk << "colorBlindMode=maybe\n";
+        junk << "uiScale=banana\n";
         junk << "hotkey.ToggleHints=" << KEY_F2 << "\n"; // valid override
         junk << "hotkey.Spaceship=294\n";     // unknown action: skipped
         junk << "hotkey.Halt=banana\n";       // malformed key: skipped
@@ -167,6 +170,7 @@ void RunMenuTests()
     strict.showMinimap = true;
     strict.rightDragPan = true;
     strict.colorBlindMode = true;
+    strict.uiScale = 1.0f;
     strict.hotkeyOverrides = { { "Halt", KEY_SPACE } }; // replaced below
     strict.mute = false;
     CC_CHECK(LoadSettings(strict, settingsPath));
@@ -175,11 +179,26 @@ void RunMenuTests()
     CC_CHECK(strict.showMinimap);           // "2" rejected
     CC_CHECK(strict.rightDragPan);          // "maybe" rejected
     CC_CHECK(strict.colorBlindMode);        // "maybe" rejected
+    CC_CHECK(strict.uiScale == 1.0f);       // "banana" rejected
     CC_CHECK(strict.hotkeyOverrides.size() == 2); // Spaceship/banana/0 skipped
     CC_CHECK(strict.hotkeyOverrides[0].first == "Halt");
     CC_CHECK(strict.hotkeyOverrides[0].second == KEY_H); // replaced, not appended
     CC_CHECK(strict.hotkeyOverrides[1].first == "ToggleHints");
     CC_CHECK(strict.hotkeyOverrides[1].second == KEY_F2); // new entry appended
     CC_CHECK(strict.mute);
+    {
+        std::ofstream clamp(settingsPath, std::ios::trunc);
+        clamp << "uiScale=9\n";
+    }
+    MenuSettings hi;
+    CC_CHECK(LoadSettings(hi, settingsPath));
+    CC_CHECK(hi.uiScale == 2.0f); // out-of-range clamps, not garbage
+    {
+        std::ofstream clamp(settingsPath, std::ios::trunc);
+        clamp << "uiScale=0.1\n";
+    }
+    MenuSettings lo;
+    CC_CHECK(LoadSettings(lo, settingsPath));
+    CC_CHECK(lo.uiScale == 0.75f);
     std::remove(settingsPath.c_str());
 }

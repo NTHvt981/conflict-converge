@@ -152,6 +152,7 @@ void Game::Init()
     // when the file is missing.
     LoadSettings(menu.settings, kSettingsPath);
     art.SetColorBlindMode(menu.settings.colorBlindMode); // QoL: persisted palette
+    GuiSetStyle(DEFAULT, TEXT_SIZE, static_cast<int>(10 * menu.settings.uiScale)); // persisted UI scale
     ApplyHotkeyOverrides(); // QoL: persisted remaps, before BindShortcuts below
 
     // M6 Goal 1: minimap texture (top-right, 4:3 like the 20x15 map).
@@ -995,14 +996,20 @@ void Game::Update()
             GuiCheckBox({ cx - 200.0f, 390.0f, 20.0f, 20.0f }, "Color-blind mode",
                         &menu.settings.colorBlindMode);
             art.SetColorBlindMode(menu.settings.colorBlindMode); // live, no reopen needed
-            if (GuiButton({ cx - 200.0f, 425.0f, 400.0f, 40.0f }, "Back"))
+            GuiLabel({ cx - 200.0f, 412.0f, 400.0f, 20.0f }, "UI scale");
+            GuiSetTooltip("Menu/HUD text size (applies live)");
+            GuiSlider({ cx - 200.0f, 434.0f, 400.0f, 20.0f }, "0.75", "2",
+                      &menu.settings.uiScale, 0.75f, 2.0f);
+            GuiSetStyle(DEFAULT, TEXT_SIZE,
+                        static_cast<int>(10 * menu.settings.uiScale)); // live, no reopen needed
+            if (GuiButton({ cx - 200.0f, 470.0f, 400.0f, 40.0f }, "Back"))
             {
                 SyncHotkeySettings(); // QoL: remaps ride the settings file too
                 SaveSettings(menu.settings, kSettingsPath); // M14: Q86 persistence
                 Announce(EventType::MenuAction);
                 menu.OpenMainMenu();
             }
-            if (GuiButton({ cx - 200.0f, 475.0f, 400.0f, 30.0f }, "Remap hotkeys..."))
+            if (GuiButton({ cx - 200.0f, 520.0f, 400.0f, 30.0f }, "Remap hotkeys..."))
             {
                 remapArming = -1;
                 remapConflictAction.clear();

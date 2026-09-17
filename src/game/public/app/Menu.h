@@ -42,6 +42,10 @@ struct MenuSettings
     // QoL color-blind mode (Okabe-Ito team palette in Art::TeamTint).
     // Persisted like the other settings; applied live to `art`.
     bool colorBlindMode = false;
+    // Accessibility UI scale (raygui TEXT_SIZE multiplier, applied live via
+    // GuiSetStyle; raw DrawText sites are out of scope for Phase 1).
+    // Persisted like the other settings; clamped to [0.75, 2.0] on load.
+    float uiScale = 1.0f;
     // QoL remapped hotkeys: (action id, raylib key) overrides only —
     // unlisted actions use kHotkeyDefs defaults. Synced from HotkeyMap
     // before every SaveSettings, applied back after every LoadSettings.
