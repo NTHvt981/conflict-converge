@@ -1961,7 +1961,8 @@ void Game::Update()
                     const std::string sprite = art.UnitSprite(unit.type, moving, id, animTime);
                     if (!sprite.empty())
                     {
-                        art.DrawAtlasFrame(sprite, corner, tint, slotScale);
+                        art.DrawAtlasFrame(sprite, corner, tint,
+                                           slotScale * Art::BaseArtScale(unit.type));
                         continue;
                     }
                 }

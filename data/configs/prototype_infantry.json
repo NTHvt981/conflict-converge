@@ -1,0 +1,22 @@
+{
+  "type": "PrototypeInfantry",
+  "stats": {
+    "health": 100,
+    "armorType": "RUBBER",
+    "damageType": "KINETIC",
+    "attackPower": 10,
+    "attackRange": 128,
+    "cooldownTime": 1,
+    "speed": 64,
+    "sightRange": 320
+  },
+  "collision": {
+    "bounds": { "left": 0, "top": 0, "right": 1, "bottom": 1 },
+    "origin": { "x": 0, "y": 0 }
+  },
+  "art": {
+    "spritePrefix": "infantry",
+    "atlasIdlePrefix": "infantry_idle",
+    "atlasWalkPrefix": "infantry_walk"
+  }
+}

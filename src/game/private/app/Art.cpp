@@ -33,7 +33,9 @@ int SquadSlots(UnitType type, unsigned int id, float healthFraction,
 {
     // Only foot types with multi-soldier visuals get the squad treatment.
     // Engineers render as a single centered sprite (like vehicles).
-    if (type != UnitType::Infantry && type != UnitType::AntiArmorInfantry)
+    // PrototypeInfantry clusters exactly like Infantry (same art, same logic).
+    if (type != UnitType::Infantry && type != UnitType::AntiArmorInfantry &&
+        type != UnitType::PrototypeInfantry)
     {
         outOffsets[0] = { 0.0f, 0.0f };
         outScale = 1.0f;
@@ -41,10 +43,11 @@ int SquadSlots(UnitType type, unsigned int id, float healthFraction,
     }
 
     // Soldier count from health, scaled to each type's max squad size:
-    // Infantry 5 at >80%, 4 at >60%, 3 at >40%, 2 at >20%, 1 otherwise;
-    // AntiArmorInfantry fights as a 2-man team, dropping to 1 below half.
+    // Infantry (and PrototypeInfantry) 5 at >80%, 4 at >60%, 3 at >40%,
+    // 2 at >20%, 1 otherwise; AntiArmorInfantry fights as a 2-man team,
+    // dropping to 1 below half.
     int count;
-    if (type == UnitType::Infantry)
+    if (type == UnitType::Infantry || type == UnitType::PrototypeInfantry)
     {
         if (healthFraction > 0.80f)
             count = 5;
@@ -178,6 +181,8 @@ const char *UnitFile(UnitType type)
         return "lighttank";
     case UnitType::HeavyTank:
         return "heavytank";
+    case UnitType::PrototypeInfantry:
+        return "infantry"; // prototype shares the infantry atlas entries
     }
     return "infantry"; // unreachable; keeps MSVC from warning
 }
@@ -222,7 +227,7 @@ bool Art::Init(bool withDevice)
     }
     fallback_ = false;
     char path[128];
-    for (int t = 0; t < 7; ++t)
+    for (int t = 0; t < static_cast<int>(UnitType::Count); ++t)
     {
         for (int team = 0; team < 2; ++team)
         {
@@ -298,7 +303,7 @@ bool Art::Init(bool withDevice)
 
 void Art::Shutdown()
 {
-    for (int t = 0; t < 7; ++t)
+    for (int t = 0; t < static_cast<int>(UnitType::Count); ++t)
     {
         for (int team = 0; team < 2; ++team)
         {
@@ -463,6 +468,11 @@ Color Art::TeamTint(int teamID) const
 void Art::SetColorBlindMode(bool enabled)
 {
     colorBlindMode_ = enabled;
+}
+
+float Art::BaseArtScale(UnitType type)
+{
+    return type == UnitType::PrototypeInfantry ? 2.0f : 1.0f;
 }
 
 void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,

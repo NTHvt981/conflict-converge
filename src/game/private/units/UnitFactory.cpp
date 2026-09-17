@@ -23,6 +23,8 @@ UnitCost CostOf(UnitType type)
         return { 150, 50 };
     case UnitType::HeavyTank:
         return { 250, 100 };
+    case UnitType::PrototypeInfantry:
+        return { 25, 0 }; // sandbox type; same price as Infantry
     }
     return { 0, 0 };
 }

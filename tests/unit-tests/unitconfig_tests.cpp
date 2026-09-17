@@ -86,6 +86,8 @@ void RunUnitConfigTests()
         CC_CHECK(std::string(UnitConfigFilename(UnitType::Artillery)) == "artillery");
         CC_CHECK(std::string(UnitConfigFilename(UnitType::LightTank)) == "light_tank");
         CC_CHECK(std::string(UnitConfigFilename(UnitType::HeavyTank)) == "heavy_tank");
+        CC_CHECK(std::string(UnitConfigFilename(UnitType::PrototypeInfantry)) ==
+                 "prototype_infantry");
 
         // Underscored stems validate; a genuinely different type still fails.
         UnitConfig config;
@@ -111,7 +113,7 @@ void RunUnitConfigTests()
         CC_CHECK(found != nullptr);
         if (found != nullptr)
         {
-            CC_CHECK(found->size() == 7);
+            CC_CHECK(found->size() == 8);
             bool infantryOk = false;
             bool tankOk = false;
             for (const UnitConfig &config : *found)

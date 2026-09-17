@@ -17,7 +17,8 @@ class FogOfWar;  // M9 visibility gate for acquisition; included in Unit.cpp
 // See plans/MILESTONES.md M3 Unit struct + unit types, M4 damage/armor types.
 // No logic here — M3/M4 will flesh out behavior.
 
-// M3: 7 unit types from milestone spec.
+// M3: 7 unit types from milestone spec, plus the prototype-sandbox type
+// (prototype art at 2x; sandbox levels only, never in factory menus).
 enum class UnitType
 {
     Infantry,
@@ -27,6 +28,7 @@ enum class UnitType
     Artillery,
     LightTank,
     HeavyTank,
+    PrototypeInfantry,
     Count // keep last: save decode validates < Count (see SaveGame.cpp)
 };
 

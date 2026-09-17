@@ -4,7 +4,9 @@ namespace
 {
 
 // Order matches UnitType enum: Infantry, AntiArmorInfantry, Engineer, IFV,
-// Artillery, LightTank, HeavyTank. Placeholder balance (M3G2); M4 retunes.
+// Artillery, LightTank, HeavyTank, PrototypeInfantry (infantry stats;
+// the art differs, the logic is identical). Placeholder balance (M3G2);
+// M4 retunes.
 const UnitStats kTable[] = {
     { 100.0f, ArmorType::RUBBER, DamageType::KINETIC, 10, 128, 1.0f, 64.0f, 320.0f }, // Infantry
     { 90.0f, ArmorType::RUBBER, DamageType::EXPLOSIVE, 25, 128, 1.5f, 64.0f, 320.0f }, // AntiArmorInfantry
@@ -13,9 +15,10 @@ const UnitStats kTable[] = {
     { 150.0f, ArmorType::STEEL, DamageType::EXPLOSIVE, 40, 384, 3.0f, 48.0f, 320.0f }, // Artillery
     { 300.0f, ArmorType::STEEL, DamageType::KINETIC, 20, 192, 1.2f, 96.0f, 320.0f }, // LightTank
     { 500.0f, ArmorType::COMPOSITE, DamageType::EXPLOSIVE, 35, 224, 1.8f, 64.0f, 320.0f }, // HeavyTank
+    { 100.0f, ArmorType::RUBBER, DamageType::KINETIC, 10, 128, 1.0f, 64.0f, 320.0f }, // PrototypeInfantry
 };
 
-static_assert(sizeof(kTable) / sizeof(kTable[0]) == 7, "one stat line per UnitType");
+static_assert(sizeof(kTable) / sizeof(kTable[0]) == 8, "one stat line per UnitType");
 
 } // namespace
 

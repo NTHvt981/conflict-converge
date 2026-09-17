@@ -29,6 +29,8 @@ const char *UnitTypeName(UnitType type)
         return "Light Tank";
     case UnitType::HeavyTank:
         return "Heavy Tank";
+    case UnitType::PrototypeInfantry:
+        return "Prototype Infantry";
     }
     return "Unknown";
 }

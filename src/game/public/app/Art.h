@@ -112,6 +112,11 @@ public:
     // Pure logic (works headless after LoadAtlas, no GPU), unit-tested.
     std::string UnitSprite(UnitType type, bool moving, unsigned int id,
                            float timeSeconds) const;
+    // Base art scale multiplier: prototype infantry's 16px sheets render
+    // at 2x (32px bodies on 64px tiles, matching the old art's footprint).
+    // Everything else renders 1:1. Multiplied with the squad slotScale at
+    // the call sites (game loop, editor preview). Pure, unit-tested.
+    static float BaseArtScale(UnitType type);
     // Team color for atlas mask tinting: BLUE/RED, matching the
     // rectangle-fallback body colors. Applies to the mask layer only; base
     // art keeps its baked colors. Color-blind mode swaps in the Okabe-Ito
@@ -135,7 +140,7 @@ private:
     SpriteSheetData sheet_;
     std::unordered_map<std::string, Texture2D> atlas_; // SpriteTextureInfo.id -> sheet
     Particles particles_;
-    Texture2D units_[7][2][2] = {}; // [type][team][frame]
+    Texture2D units_[static_cast<int>(UnitType::Count)][2][2] = {}; // [type][team][frame]
     Texture2D buildings_[3][2] = {}; // [type][team]
     Texture2D nodes_[2] = {};        // [kind]
     Texture2D icons_[2] = {};        // [kind]

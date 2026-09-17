@@ -8,7 +8,7 @@
 // the selection changes. No game-loop code lives here.
 struct EditorState
 {
-    static constexpr int kTypeCount = 7;
+    static constexpr int kTypeCount = 8;
     static constexpr int kTabStats = 0;
     static constexpr int kTabSprites = 1;
     static constexpr int kTabCollision = 2;

@@ -96,6 +96,8 @@ const char *UnitTypeConfigName(UnitType type)
         return "LightTank";
     case UnitType::HeavyTank:
         return "HeavyTank";
+    case UnitType::PrototypeInfantry:
+        return "PrototypeInfantry";
     case UnitType::Count:
         break;
     }
@@ -122,6 +124,8 @@ const char *UnitConfigFilename(UnitType type)
         return "light_tank";
     case UnitType::HeavyTank:
         return "heavy_tank";
+    case UnitType::PrototypeInfantry:
+        return "prototype_infantry";
     case UnitType::Count:
         break;
     }
@@ -182,6 +186,11 @@ bool ParseUnitTypeName(const std::string &name, UnitType &out)
     if (name == "HeavyTank")
     {
         out = UnitType::HeavyTank;
+        return true;
+    }
+    if (name == "PrototypeInfantry")
+    {
+        out = UnitType::PrototypeInfantry;
         return true;
     }
     return false;

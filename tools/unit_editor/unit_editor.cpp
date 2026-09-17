@@ -10,7 +10,7 @@
 namespace
 {
 
-const char *kTypeList = "Infantry;AntiArmorInfantry;Engineer;IFV;Artillery;LightTank;HeavyTank";
+const char *kTypeList = "Infantry;AntiArmorInfantry;Engineer;IFV;Artillery;LightTank;HeavyTank;PrototypeInfantry";
 const char *kArmorList = "STEEL;RUBBER;COMPOSITE";
 const char *kDamageList = "KINETIC;EXPLOSIVE;ENERGY";
 
@@ -168,7 +168,7 @@ void DrawPreview(EditorState &editor, Art &art, float panelX, float panelY)
         art.UnitSprite(type, editor.animatePreview, 0, static_cast<float>(GetTime()));
     if (!sprite.empty())
     {
-        art.DrawAtlasFrame(sprite, tileCorner, WHITE);
+        art.DrawAtlasFrame(sprite, tileCorner, WHITE, Art::BaseArtScale(type));
     }
     else
     {

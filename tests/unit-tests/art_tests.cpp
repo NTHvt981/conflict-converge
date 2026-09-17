@@ -107,6 +107,13 @@ void RunArtTests()
         CC_CHECK(eOffsets[0].x == 0.0f && eOffsets[0].y == 0.0f);
         CC_CHECK(eScale == 1.0f);
 
+        // PrototypeInfantry clusters exactly like Infantry (5 at full health).
+        std::array<Vector2, 6> pOffsets;
+        float pScale = 0.0f;
+        CC_CHECK(SquadSlots(UnitType::PrototypeInfantry, 10, 1.0f, pOffsets, pScale) == 5);
+        CC_CHECK(pScale == 0.55f);
+        CC_CHECK(SquadSlots(UnitType::PrototypeInfantry, 10, 0.10f, pOffsets, pScale) == 1);
+
         // Non-infantry always returns 1 with offset {0,0}
         std::array<Vector2, 6> vOffsets;
         float vScale = 0.0f;
@@ -183,5 +190,12 @@ void RunArtTests()
         // Types without atlas entries resolve empty (legacy DrawUnit covers).
         CC_CHECK(art.UnitSprite(UnitType::HeavyTank, true, 1, 0.0f).empty());
         CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f).empty());
+    }
+
+    // --- BaseArtScale: prototype infantry renders its 16px art at 2x ---
+    {
+        CC_CHECK(Art::BaseArtScale(UnitType::PrototypeInfantry) == 2.0f);
+        CC_CHECK(Art::BaseArtScale(UnitType::Infantry) == 1.0f);
+        CC_CHECK(Art::BaseArtScale(UnitType::HeavyTank) == 1.0f);
     }
 }

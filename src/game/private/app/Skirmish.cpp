@@ -313,13 +313,14 @@ bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath)
     fog.Resize(map.Width(), map.Height());
     occ.Resize(map.Width(), map.Height());
 
-    // One prototype squad, same Infantry logic as every match (squad
-    // visuals, driver, orders — only the level around it is special).
+    // One prototype squad: the sandbox-only PrototypeInfantry type, which
+    // shares Infantry's stats/driver/squad renderer and adds the prototype
+    // art at 2x (see Art::BaseArtScale). Only the level around it is special.
     // No bases, no funds, no queue, no AI: parked commanders stay parked.
     // Prepaid, not cost-validated: the sandbox has no economy to charge.
     const cc::IVec2 home = data.playerSpawns[0];
     const cc::IVec2 free = NearestFreeTile(map, home.x, home.y);
-    factory.SpawnPrepaid(UnitType::Infantry, 0,
+    factory.SpawnPrepaid(UnitType::PrototypeInfantry, 0,
                          cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
 
     *world.rallyPos = cc::ToRaylib(cc::TileToWorld(free.x, free.y));

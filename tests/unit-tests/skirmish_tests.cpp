@@ -183,16 +183,16 @@ void RunSkirmishTests()
         Harness sand;
         CC_CHECK(BuildSandbox(sand.world, proto));
         CC_CHECK(sand.map.Width() == 32 && sand.map.Height() == 32);
-        // Exactly one unit: a team-0 Infantry (full squad logic).
+        // Exactly one unit: a team-0 PrototypeInfantry (infantry logic).
         int units = 0;
-        bool infantryFound = false;
+        bool protoFound = false;
         sand.registry.Each<Unit>([&](Entity, const Unit &unit) {
             ++units;
-            infantryFound = infantryFound || (unit.type == UnitType::Infantry &&
-                                              unit.teamID == 0);
+            protoFound = protoFound || (unit.type == UnitType::PrototypeInfantry &&
+                                        unit.teamID == 0);
         });
         CC_CHECK(units == 1);
-        CC_CHECK(infantryFound);
+        CC_CHECK(protoFound);
         // No buildings, no enemy side, no funds, no queue.
         int buildings = 0;
         sand.registry.Each<Building>([&](Entity, const Building &) { ++buildings; });
