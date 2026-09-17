@@ -1693,6 +1693,11 @@ void Game::Update()
             if (unit.hitFlashTime > 0.20f)
             {
                 art.ParticlesPool().SpawnBurst(center, YELLOW, 6, 90.0f, 0.25f);
+                // Floating number, once per hit: same edge trigger, spawned
+                // over the body top (the old fixed text's anchor). Kept out
+                // of Draw on purpose — pool mutation belongs in update.
+                damageNumbers.Spawn({ center.x, unit.position.y - 2.0f },
+                                    unit.lastDamageTaken);
                 shakeTrauma = AddShakeTrauma(shakeTrauma, kShakeHitTrauma);
                 // QoL pings: same "just got hit" detector, no Combat.h
                 // changes (per-kind floor inside Pings stops spam).
@@ -1719,6 +1724,7 @@ void Game::Update()
             }
         });
         art.ParticlesPool().Update(dt);
+        damageNumbers.Update(dt);
         attackSfxTimer -= dt;
         bool windingUp = false;
         registry.Each<Unit>([&](Entity, const Unit &unit) {
@@ -2175,8 +2181,6 @@ void Game::Update()
         if (unit.hitFlashTime > 0.0f)
         {
             DrawRectangleRec(body, Fade(WHITE, 0.7f));
-            DrawText(TextFormat("-%.0f", unit.lastDamageTaken), static_cast<int>(body.x),
-                     static_cast<int>(body.y) - 18, 16, RED);
         }
         if (unit.state == UnitState::Attacking)
         {
@@ -2194,6 +2198,7 @@ void Game::Update()
     // M12: particles in world space, under the shroud so hidden battles
     // stay hidden.
     art.ParticlesPool().Draw();
+    damageNumbers.Draw(); // same world-space block, same shroud rule
     // M9 shroud, drawn over the world: unexplored tiles go opaque black,
     // explored-but-unseen tiles get a dim veil (frozen snapshot, Q76).
     for (int y = 0; y < map.Height(); ++y)

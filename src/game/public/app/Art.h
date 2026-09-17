@@ -76,6 +76,35 @@ private:
     std::vector<Particle> live_;
 };
 
+// Floating damage numbers: rise-and-fade text spawned once per hit. Same
+// pool shape as Particles, but the lifetime (~0.7s) is tuned for reading,
+// not tied to the 0.25s hit-flash overlay. Logic is device-independent
+// (tested); Draw needs a live window.
+struct DamageNumber
+{
+    Vector2 pos = {};
+    float value = 0.0f;
+    float life = 0.0f;
+    float maxLife = 1.0f;
+};
+
+class DamageNumbers
+{
+public:
+    static constexpr std::size_t kMax = 256;
+    static constexpr float kLife = 0.7f;
+    static constexpr float kRiseSpeed = 40.0f; // pixels per second, upward
+
+    void Spawn(Vector2 pos, float value);
+    void Update(float dt);
+    void Draw() const; // world-space: call inside BeginMode2D/EndMode2D
+    void Clear();
+    std::size_t Count() const;
+
+private:
+    std::vector<DamageNumber> live_;
+};
+
 class Art
 {
 public:

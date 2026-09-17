@@ -187,6 +187,7 @@ private:
     float attackSfxTimer = 0.0f;
     HoverTooltipState hoverTip; // unit hover-tooltip debounce (Playing only)
     float shakeTrauma = 0.0f; // screen-shake trauma 0..1 (render copy only)
+    DamageNumbers damageNumbers; // floating hit numbers (presentation-only, unsaved)
     MenuState lastOutcomeState = MenuState::MainMenu;
     bool hasFactory = false;
 };

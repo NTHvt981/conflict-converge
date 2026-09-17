@@ -48,6 +48,33 @@ void RunArtTests()
         CC_CHECK(fx.Count() == 0);
     }
 
+    // --- damage numbers: spawn, rise, expiry, clear ---
+    {
+        DamageNumbers dn;
+        CC_CHECK(dn.Count() == 0);
+        dn.Spawn({ 100.0f, 100.0f }, 25.0f);
+        CC_CHECK(dn.Count() == 1);
+        dn.Update(DamageNumbers::kLife / 2.0f);
+        CC_CHECK(dn.Count() == 1); // half-life: still alive (and risen)
+        dn.Update(DamageNumbers::kLife);
+        CC_CHECK(dn.Count() == 0); // expired and compacted
+        dn.Spawn({ 0.0f, 0.0f }, 1.0f);
+        dn.Clear();
+        CC_CHECK(dn.Count() == 0);
+    }
+
+    // --- damage pool cap: spawns beyond kMax are dropped, never grow ---
+    {
+        DamageNumbers dn;
+        for (int i = 0; i < static_cast<int>(DamageNumbers::kMax) + 10; ++i)
+        {
+            dn.Spawn({ 0.0f, 0.0f }, 1.0f);
+        }
+        CC_CHECK(dn.Count() == DamageNumbers::kMax);
+        dn.Update(DamageNumbers::kLife + 1.0f);
+        CC_CHECK(dn.Count() == 0);
+    }
+
     // --- zero-count and zero-life bursts are safe ---
     {
         Particles fx;

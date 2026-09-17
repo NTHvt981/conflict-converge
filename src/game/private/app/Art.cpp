@@ -160,6 +160,58 @@ std::size_t Particles::Count() const
     return live_.size();
 }
 
+void DamageNumbers::Spawn(Vector2 pos, float value)
+{
+    if (live_.size() >= kMax)
+    {
+        return;
+    }
+    DamageNumber n;
+    n.pos = pos;
+    n.value = value;
+    n.life = kLife;
+    n.maxLife = kLife;
+    live_.push_back(n);
+}
+
+void DamageNumbers::Update(float dt)
+{
+    for (std::size_t i = 0; i < live_.size();)
+    {
+        DamageNumber &n = live_[i];
+        n.life -= dt;
+        if (n.life <= 0.0f)
+        {
+            n = live_.back();
+            live_.pop_back();
+            continue;
+        }
+        n.pos.y -= kRiseSpeed * dt;
+        ++i;
+    }
+}
+
+void DamageNumbers::Draw() const
+{
+    for (const DamageNumber &n : live_)
+    {
+        const float alpha = n.life / n.maxLife;
+        const char *text = TextFormat("-%.0f", n.value);
+        const int x = static_cast<int>(n.pos.x) - MeasureText(text, 16) / 2;
+        DrawText(text, x, static_cast<int>(n.pos.y), 16, Fade(RED, alpha > 1.0f ? 1.0f : alpha));
+    }
+}
+
+void DamageNumbers::Clear()
+{
+    live_.clear();
+}
+
+std::size_t DamageNumbers::Count() const
+{
+    return live_.size();
+}
+
 namespace
 {
 
