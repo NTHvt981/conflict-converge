@@ -3,4 +3,5 @@ build/
 deps/
 .opencode/
 AGENTS.md
-data/*.ccpb
+**.ccpb
+test_sandbox/
