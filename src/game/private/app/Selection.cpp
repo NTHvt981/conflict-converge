@@ -44,6 +44,18 @@ Entity SelectedUnit(Registry &registry)
     return found;
 }
 
+int SelectedUnitCount(Registry &registry)
+{
+    int count = 0;
+    registry.Each<Unit>([&](Entity, const Unit &unit) {
+        if (unit.isSelected)
+        {
+            ++count;
+        }
+    });
+    return count;
+}
+
 Rectangle NormalizeRect(Vector2 a, Vector2 b)
 {
     Rectangle box;

@@ -2331,7 +2331,7 @@ void Game::Update()
 
     // M6 Goal 2: raygui HUD (proper panels replace the M5 text counters).
     DrawResourcePanel(resources, &art);
-    DrawSelectionPanel(registry);
+    DrawSelectionPanel(registry, &art);
     DrawIdleButtons(registry, 0); // QoL: team 0 is the player
     DrawRepairPanel(&playerAutoRepair, &autoRepairCap);
     DrawControlGroupStrip(registry, 0, autoAddGroupBit); // QoL: team 0 is the player

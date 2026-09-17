@@ -52,7 +52,8 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
 // M13: named-slot readout (filled/empty via file existence). Pure layout,
 // raygui calls; slot files live at SaveSlotPath().
 void DrawSaveSlots();
-void DrawSelectionPanel(Registry &registry); // non-const: SelectedUnit queries selection
+void DrawSelectionPanel(Registry &registry,
+                        const Art *art = nullptr); // non-const: SelectedUnit queries selection
 // QoL auto-repair panel: global checkbox + rate-cap slider operating
 // directly on the caller's toggle state (immediate-mode, like the factory
 // panel). Call after EndMode2D.

@@ -56,6 +56,17 @@ void RunSelectionTests()
     DeselectAll(empty); // no-op, must not crash
     CC_CHECK(true);
 
+    // --- SelectedUnitCount: 0 / N / mixed selected+unselected ---
+    CC_CHECK(SelectedUnitCount(registry) == 0);
+    SelectOnly(registry, a);
+    CC_CHECK(SelectedUnitCount(registry) == 1);
+    registry.Get<Unit>(b)->isSelected = true; // extend without clearing a
+    CC_CHECK(SelectedUnitCount(registry) == 2);
+    Entity c = SpawnAt(registry, 400.0f, 400.0f);
+    CC_CHECK(SelectedUnitCount(registry) == 2); // unselected c not counted
+    (void)c;
+    CC_CHECK(SelectedUnitCount(empty) == 0);
+
     // --- NormalizeRect: either corner may lead ---
     const Rectangle norm = NormalizeRect({ 5.0f, 9.0f }, { 1.0f, 3.0f });
     CC_CHECK(norm.x == 1.0f && norm.y == 3.0f);

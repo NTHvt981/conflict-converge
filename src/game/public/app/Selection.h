@@ -19,6 +19,8 @@ void DeselectAll(Registry &registry);
 
 // First selected unit, or kInvalidEntity (right-click orders target this).
 Entity SelectedUnit(Registry &registry);
+// How many units are selected (portrait panel shows a count for N > 1).
+int SelectedUnitCount(Registry &registry);
 
 // Normalize a drag box (either corner may lead) to positive width/height.
 Rectangle NormalizeRect(Vector2 a, Vector2 b);

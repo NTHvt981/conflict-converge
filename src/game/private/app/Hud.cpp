@@ -216,7 +216,7 @@ void DrawResourcePanel(const ResourceSystem &resources, const Art *art)
     GuiLabel({ 20.0f, 32.0f, 200.0f, 20.0f }, FormatResources(resources).c_str());
 }
 
-void DrawSelectionPanel(Registry &registry)
+void DrawSelectionPanel(Registry &registry, const Art *art)
 {
     const Entity selected = SelectedUnit(registry);
     const Unit *unit = registry.Get<Unit>(selected);
@@ -226,10 +226,37 @@ void DrawSelectionPanel(Registry &registry)
     GuiPanel({ 8.0f, y, 300.0f, 56.0f }, "Selection");
     const char *text = "No selection";
     std::string summary;
+    float textX = 20.0f;
     if (unit != nullptr)
     {
-        summary = SelectionSummary(*unit);
-        text = summary.c_str();
+        if (SelectedUnitCount(registry) > 1)
+        {
+            char buf[64];
+            std::snprintf(buf, sizeof(buf), "%d units selected", SelectedUnitCount(registry));
+            summary = buf;
+            text = summary.c_str();
+        }
+        else
+        {
+            summary = SelectionSummary(*unit);
+            text = summary.c_str();
+            // Single-selection portrait: front-facing idle frame at 1.25x
+            // (20x40 inside the 56px panel). Gated on atlas art existing —
+            // types without frames keep today's text-only look, and new
+            // atlas types light up with zero further code changes.
+            if (art != nullptr)
+            {
+                const std::string sprite =
+                    art->UnitSprite(unit->type, false, selected, 0.0f,
+                                    static_cast<int>(Facing::Bottom));
+                if (!sprite.empty())
+                {
+                    art->DrawAtlasFrame(sprite, { 4.0f, y - 4.0f },
+                                        art->TeamTint(unit->teamID), 1.25f);
+                    textX = 56.0f;
+                }
+            }
+        }
     }
     else
     {
@@ -255,7 +282,7 @@ void DrawSelectionPanel(Registry &registry)
             text = summary.c_str();
         }
     }
-    GuiLabel({ 20.0f, y + 24.0f, 280.0f, 20.0f }, text);
+    GuiLabel({ textX, y + 24.0f, 308.0f - textX - 8.0f, 20.0f }, text);
 }
 
 void DrawRepairPanel(bool *enabled, float *capFraction)
