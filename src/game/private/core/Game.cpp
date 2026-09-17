@@ -22,12 +22,14 @@ namespace
 // Selection outline box: union of the rendered sprite rects. Atlas
 // clusters (and 2x prototype art) spread past the fixed 32x32 body inset,
 // so the red border follows the sprites instead of slicing through them.
-// Soldier i centers on corner+(16,16) — the 16x32 atlas cell
-// origin-aligned to the 32x32 body center — with half-extents (8s, 16s),
-// s = slotScale * BaseArtScale. Rectangle tier (no per-sprite geometry)
-// keeps the body. For a 1x single unit the union IS the body, so default
-// rendering is pixel-identical to before.
-Rectangle SquadSelectionBox(const Unit &unit, Entity id, bool atlasPath, Rectangle body)
+// Per-slot geometry mirrors the render branch exactly: atlas cells
+// origin-align to tileCorner+32 (the origin lands on the tile center),
+// flat PNGs blit 32x32 at corner+16. Rectangle tier (no per-sprite
+// geometry) keeps the body. Flat-PNG singles reproduce the old body box
+// exactly; atlas singles hug their narrower cell (intended: the border
+// follows sprites, not the inset).
+Rectangle SquadSelectionBox(const Art &art, const Unit &unit, Entity id, bool atlasPath,
+                            Rectangle body)
 {
     if (!atlasPath)
     {
@@ -36,21 +38,48 @@ Rectangle SquadSelectionBox(const Unit &unit, Entity id, bool atlasPath, Rectang
     std::array<Vector2, 6> slots;
     float slotScale = 1.0f;
     const int count = SquadSlots(unit.type, id, UnitHealthFraction(unit), slots, slotScale);
+    // Only the infantry sheets live in the atlas today (16x32 cells);
+    // everything else clusters (AntiArmor) or singles (vehicles) from
+    // 32x32 flat PNGs. Revisit if atlas art diversifies per type.
+    const bool atlasCells =
+        art.UseAtlas() && !art.UnitSprite(unit.type, false, id, 0.0f).empty();
     const float s = slotScale * Art::BaseArtScale(unit.type);
-    const float hx = 8.0f * s;
-    const float hy = 16.0f * s;
-    float x0 = unit.position.x + slots[0].x + 16.0f - hx;
-    float y0 = unit.position.y + slots[0].y + 16.0f - hy;
-    float x1 = unit.position.x + slots[0].x + 16.0f + hx;
-    float y1 = unit.position.y + slots[0].y + 16.0f + hy;
+    float x0, y0, x1, y1;
+    if (atlasCells)
+    {
+        x0 = unit.position.x + slots[0].x + 32.0f - 8.0f * s;
+        y0 = unit.position.y + slots[0].y + 32.0f - 16.0f * s;
+        x1 = unit.position.x + slots[0].x + 32.0f + 8.0f * s;
+        y1 = unit.position.y + slots[0].y + 32.0f + 16.0f * s;
+    }
+    else
+    {
+        x0 = unit.position.x + slots[0].x + 16.0f;
+        y0 = unit.position.y + slots[0].y + 16.0f;
+        x1 = x0 + 32.0f;
+        y1 = y0 + 32.0f;
+    }
     for (int i = 1; i < count; ++i)
     {
-        const float cx = unit.position.x + slots[i].x + 16.0f;
-        const float cy = unit.position.y + slots[i].y + 16.0f;
-        x0 = std::min(x0, cx - hx);
-        y0 = std::min(y0, cy - hy);
-        x1 = std::max(x1, cx + hx);
-        y1 = std::max(y1, cy + hy);
+        float cx0, cy0, cx1, cy1;
+        if (atlasCells)
+        {
+            cx0 = unit.position.x + slots[i].x + 32.0f - 8.0f * s;
+            cy0 = unit.position.y + slots[i].y + 32.0f - 16.0f * s;
+            cx1 = unit.position.x + slots[i].x + 32.0f + 8.0f * s;
+            cy1 = unit.position.y + slots[i].y + 32.0f + 16.0f * s;
+        }
+        else
+        {
+            cx0 = unit.position.x + slots[i].x + 16.0f;
+            cy0 = unit.position.y + slots[i].y + 16.0f;
+            cx1 = cx0 + 32.0f;
+            cy1 = cy0 + 32.0f;
+        }
+        x0 = std::min(x0, cx0);
+        y0 = std::min(y0, cy0);
+        x1 = std::max(x1, cx1);
+        y1 = std::max(y1, cy1);
     }
     return { x0 - 2.0f, y0 - 2.0f, (x1 - x0) + 4.0f, (y1 - y0) + 4.0f };
 }
@@ -2018,7 +2047,7 @@ void Game::Update()
             // past the body); the bar floats above the border with a gap
             // instead of glued to the body top, where tall sprites touched it.
             const Rectangle selBox = SquadSelectionBox(
-                unit, id, !(art.UseRectangles() && !art.UseAtlas()), body);
+                art, unit, id, !(art.UseRectangles() && !art.UseAtlas()), body);
             DrawRectangleLinesEx(selBox, 3.0f, RED);
             const float fraction = UnitHealthFraction(unit);
             const float barY = selBox.y - 7.0f;
@@ -2043,7 +2072,7 @@ void Game::Update()
                 ++lowestBit;
             }
             const Rectangle badgeBox = SquadSelectionBox(
-                unit, id, !(art.UseRectangles() && !art.UseAtlas()), body);
+                art, unit, id, !(art.UseRectangles() && !art.UseAtlas()), body);
             DrawText(TextFormat("%d", (lowestBit + 1) % 10), static_cast<int>(badgeBox.x),
                      static_cast<int>(badgeBox.y) - 14, 12, DARKBLUE);
         }
