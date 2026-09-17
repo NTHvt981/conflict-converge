@@ -6,6 +6,7 @@
 #include "raygui.h" // M1 Goal 4: raygui UI framework (impl TU: src/thirdparty/raygui_impl.c)
 #include "Building.h" // M5 Goal 2: demo base/placement on the tile grid
 #include "Cursor.h" // context-cursor intent prediction (per-frame, pre-draw)
+#include "DataRoot.h" // launch hardening: chdir to the data root when needed
 #include "Formation.h" // drag-select squads fan out through formation moves
 #include "Hud.h" // M6 Goal 2: raygui resource + selection panels
 #include "MapFile.h" // sandbox detection (player spawn without AI spawn)
@@ -119,6 +120,15 @@ Game::Game()
 
 void Game::Init()
 {
+    // Launch hardening first (windowless-safe: pure filesystem + module
+    // path): a foreign CWD breaks every data/ path below, so chdir to the
+    // data root when CWD doesn't resolve it. No-op for F5 + double-click.
+    if (const char *dataRoot =
+            PickDataRoot(DirectoryExists("data"), GetApplicationDirectory(), DirectoryExists))
+    {
+        ChangeDirectory(dataRoot);
+    }
+
     const int kInitialWidth = 1200;
     const int kInitialHeight = 675;
 

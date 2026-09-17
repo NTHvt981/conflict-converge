@@ -35,5 +35,11 @@
         "git_repo": "https://github.com/raylib-extras/reasings.git",
         "dest": "deps/reasings",
         "git_tag": "main"
+    },
+    {
+        "name": "extras-c",
+        "git_repo": "https://github.com/raylib-extras/extras-c.git",
+        "dest": "deps/extras-c",
+        "git_tag": "main"
     }
 ]

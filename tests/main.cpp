@@ -52,6 +52,7 @@ void RunAICommanderTests();
 void RunFogTests();
 void RunFogCombatTests();
 void RunFontMetricsTests();
+void RunDataRootTests();
 void RunMapFileTests();
 void RunAudioTests();
 void RunArtTests();
@@ -112,6 +113,7 @@ int main()
     RunFogTests();
     RunFogCombatTests();
     RunFontMetricsTests();
+    RunDataRootTests();
     RunMapFileTests();
     RunAudioTests();
     RunArtTests();
