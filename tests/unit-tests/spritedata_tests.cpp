@@ -211,8 +211,13 @@ void RunSpriteDataTests()
                  last->texture == "prototype_infantry_run");
         CC_CHECK(last->bounds.left == 96 && last->bounds.top == 96);
         CC_CHECK(last->bounds.right == 112 && last->bounds.bottom == 128);
-        const SpriteAnimInfo *walk = FindAnimByName(sheet, "infantry_walk");
+        const SpriteAnimInfo *walk = FindAnimByName(sheet, "infantry_walk_6");
         CC_CHECK(walk != nullptr && walk->loop && walk->frames.size() == 4);
         CC_CHECK(walk->frames[0].sprite == 106 && walk->frames[3].sprite == 130);
+        const SpriteAnimInfo *walkTop = FindAnimByName(sheet, "infantry_walk_0");
+        CC_CHECK(walkTop != nullptr && walkTop->frames.size() == 4);
+        CC_CHECK(walkTop->frames[0].sprite == 100 && walkTop->frames[3].sprite == 124);
+        CC_CHECK(FindAnimByName(sheet, "infantry_walk") == nullptr); // split by direction
+        CC_CHECK(FindAnimByName(sheet, "infantry_idle") == nullptr); // idle is sprite-direct
     }
 }

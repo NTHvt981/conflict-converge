@@ -153,7 +153,7 @@ void RunArtTests()
     {
         Art art;
         CC_CHECK(!art.UseAtlas());
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f).empty());
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f, 6).empty());
         art.DrawAtlasFrame("infantry_idle_0_0", { 0.0f, 0.0f }, WHITE); // no crash
         // Default mode: raw BLUE/RED (colorBlindMode_ defaults to false).
         const Color blue = art.TeamTint(0);
@@ -176,21 +176,29 @@ void RunArtTests()
         Art art;
         CC_CHECK(art.LoadAtlas());
         CC_CHECK(!art.UseAtlas()); // parsed, but no GPU textures headless
-        // Idle resolves to the first idle cell.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f) == "infantry_idle_0_0");
-        // Walk anim is 4x120ms (run sheet column 6 = right-facing);
+        // Idle resolves to the facing column's pose (column 0 = top).
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f, 0) == "infantry_idle_0_0");
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f, 6) == "infantry_idle_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f, 3) == "infantry_idle_0_3");
+        // Walk anim is 4x120ms per direction column (column 6 = right);
         // id 1 offsets 37ms in: t=0 -> frame 0.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.0f) == "infantry_walk_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.0f, 6) == "infantry_walk_0_6");
         // t=130ms + 37 offset = 167 -> frame 1.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f) == "infantry_walk_1_6");
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f, 6) == "infantry_walk_1_6");
         // Per-entity desync: id 200 offsets 200*37%480=200ms in -> frame 1 at t=0.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 200, 0.0f) == "infantry_walk_1_6");
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 200, 0.0f, 6) == "infantry_walk_1_6");
+        // Direction 0 walks column 0 (sprites 100/108/116/124).
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.0f, 0) == "infantry_walk_0_0");
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f, 0) == "infantry_walk_1_0");
+        // Out-of-range facing clamps to Right (column 6).
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.0f, 9) == "infantry_walk_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f, -1) == "infantry_idle_0_6");
         // Deterministic: same args -> same frame.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f) ==
-                 art.UnitSprite(UnitType::Infantry, true, 1, 0.13f));
+        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f, 6) ==
+                 art.UnitSprite(UnitType::Infantry, true, 1, 0.13f, 6));
         // Types without atlas entries resolve empty (legacy DrawUnit covers).
-        CC_CHECK(art.UnitSprite(UnitType::HeavyTank, true, 1, 0.0f).empty());
-        CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f).empty());
+        CC_CHECK(art.UnitSprite(UnitType::HeavyTank, true, 1, 0.0f, 0).empty());
+        CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f, 0).empty());
     }
 
     // --- BaseArtScale: prototype infantry renders its 16px art at 2x ---

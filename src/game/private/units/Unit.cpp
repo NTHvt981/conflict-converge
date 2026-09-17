@@ -9,6 +9,7 @@
 #include "Building.h"  // M13: repair targets include structures.
 #include "UnitStats.h" // M13: max-health lookup for repair validation.
 
+#include <cmath> // atan2 for FacingFromVelocity
 #include <utility> // std::pair: RunUnitMovementFrame's pre-move position snapshot
 
 // Stub: unit behavior, AI, and factory arrive in M3.
@@ -164,6 +165,21 @@ void LoseTarget(Unit &unit)
 }
 
 } // namespace
+
+Facing FacingFromVelocity(Vector2 velocity)
+{
+    // Nearest octant in y-down screen space, measured clockwise from East;
+    // remapped to sheet columns (East reads column 6, then 5, 4 ...).
+    constexpr float kPi = 3.141592653589793f;
+    float angle = std::atan2(velocity.y, velocity.x);
+    if (angle < 0.0f)
+    {
+        angle += 2.0f * kPi;
+    }
+    const int octant =
+        static_cast<int>((angle + kPi / 8.0f) / (kPi / 4.0f)) % 8;
+    return static_cast<Facing>((6 - octant + 8) % 8);
+}
 
 void IssueRepairOrder(Unit &engineer, Entity target)
 {
@@ -1121,6 +1137,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
             unit.blockedTime = 0.0f; // progress: not stuck
             unit.velocity = cc::ToRaylib((waypoint - cc::ToGlm(unit.position)) /
                                          glm::length(waypoint - cc::ToGlm(unit.position)) * speedPixelsPerSec);
+            unit.facing = FacingFromVelocity(unit.velocity); // render-only, kept on stop
             unit.position = cc::ToRaylib(next);
             return;
         }
@@ -1156,6 +1173,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         unit.velocity = cc::ToRaylib((cc::ToGlm(unit.moveTarget) - cc::ToGlm(unit.position)) /
                                      glm::length(cc::ToGlm(unit.moveTarget) - cc::ToGlm(unit.position)) *
                                      speedPixelsPerSec);
+        unit.facing = FacingFromVelocity(unit.velocity); // render-only, kept on stop
         unit.position = cc::ToRaylib(next);
         return;
     }

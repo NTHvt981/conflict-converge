@@ -71,6 +71,31 @@ void RunMovementTests()
     }
     CC_CHECK(!footprint.IsBlocked(cc::WorldToTile(cc::ToGlm(trapped.position))));
 
+    // --- FacingFromVelocity: screen-space octants, y-down ---
+    CC_CHECK(FacingFromVelocity({ 1.0f, 0.0f }) == Facing::Right);
+    CC_CHECK(FacingFromVelocity({ 0.0f, 1.0f }) == Facing::Bottom);
+    CC_CHECK(FacingFromVelocity({ -1.0f, 0.0f }) == Facing::Left);
+    CC_CHECK(FacingFromVelocity({ 0.0f, -1.0f }) == Facing::Top);
+    CC_CHECK(FacingFromVelocity({ 1.0f, 1.0f }) == Facing::BottomRight);
+    CC_CHECK(FacingFromVelocity({ 1.0f, -1.0f }) == Facing::TopRight);
+    CC_CHECK(FacingFromVelocity({ -1.0f, 1.0f }) == Facing::BottomLeft);
+    CC_CHECK(FacingFromVelocity({ -1.0f, -1.0f }) == Facing::TopLeft);
+    CC_CHECK(FacingFromVelocity({ 0.0f, 0.0f }) == Facing::Right); // degenerate
+    CC_CHECK(FacingFromVelocity({ 10.0f, 4.0f }) == Facing::Right); // ~22deg
+    CC_CHECK(FacingFromVelocity({ 10.0f, 5.0f }) == Facing::BottomRight); // ~27deg
+
+    // --- facing tracks travel direction, persists on stop ---
+    Unit marcher;
+    marcher.position = { 0.0f, 0.0f };
+    CC_CHECK(marcher.facing == Facing::Right); // default matches old rendering
+    IssueMoveOrder(marcher, { 0.0f, 192.0f }); // straight south
+    UpdateUnitMovement(marcher, map, 64.0f, 1.0f);
+    CC_CHECK(marcher.state == UnitState::Moving);
+    CC_CHECK(marcher.facing == Facing::Bottom);
+    UpdateUnitMovement(marcher, map, 10000.0f, 1.0f); // arrive
+    CC_CHECK(marcher.state == UnitState::Idle);
+    CC_CHECK(marcher.facing == Facing::Bottom); // kept on stop
+
     // --- SeparateUnits: overlapping bodies fan out, corpses ignored ---
     Registry crowd;
     auto addBody = [&](float x, float y, float health) {

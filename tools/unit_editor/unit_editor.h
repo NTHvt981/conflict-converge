@@ -50,6 +50,8 @@ struct EditorState
     bool originXEdit = false;
     bool originYEdit = false;
     bool animatePreview = true;
+    int previewFacing = 6; // sheet column previewed (0-7, 6 = right)
+    bool previewFacingEdit = false;
     int listScroll = 0;
 
     char status[128] = {};

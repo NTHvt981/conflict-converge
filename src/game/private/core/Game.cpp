@@ -42,7 +42,7 @@ Rectangle SquadSelectionBox(const Art &art, const Unit &unit, Entity id, bool at
     // everything else clusters (AntiArmor) or singles (vehicles) from
     // 32x32 flat PNGs. Revisit if atlas art diversifies per type.
     const bool atlasCells =
-        art.UseAtlas() && !art.UnitSprite(unit.type, false, id, 0.0f).empty();
+        art.UseAtlas() && !art.UnitSprite(unit.type, false, id, 0.0f, 0).empty();
     const float s = Art::BaseArtScale(unit.type);
     float x0, y0, x1, y1;
     if (atlasCells)
@@ -2022,7 +2022,8 @@ void Game::Update()
                                          unit.position.y + slots[i].y };
                 if (art.UseAtlas())
                 {
-                    const std::string sprite = art.UnitSprite(unit.type, moving, id, animTime);
+                    const std::string sprite = art.UnitSprite(unit.type, moving, id, animTime,
+                                                            static_cast<int>(unit.facing));
                     if (!sprite.empty())
                     {
                         art.DrawAtlasFrame(sprite, corner, tint,

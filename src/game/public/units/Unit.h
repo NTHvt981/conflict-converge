@@ -101,6 +101,28 @@ struct QueuedOrder
     Entity target = kInvalidEntity; // Repair's target
 };
 
+// 8-way facing = prototype sheet column: 0 top, 1 top-left, 2 left,
+// 3 bottom-left, 4 bottom, 5 bottom-right, 6 right, 7 top-right.
+// Stored on Unit, maintained by the movement driver; render-only
+// consumers (atlas lookup, editor preview) read it, nothing else.
+// Transient like controlGroups: not saved, defaults to Right on load.
+enum class Facing : int
+{
+    Top = 0,
+    TopLeft = 1,
+    Left = 2,
+    BottomLeft = 3,
+    Bottom = 4,
+    BottomRight = 5,
+    Right = 6,
+    TopRight = 7,
+    Count
+};
+
+// Screen-space velocity (y down) -> nearest octant column. Zero vector
+// returns Right (deterministic; callers only invoke it while stepping).
+Facing FacingFromVelocity(Vector2 velocity);
+
 struct Unit
 {
     float health = 100.0f;
@@ -134,6 +156,9 @@ struct Unit
     int teamID = 0;
     UnitType type = UnitType::Infantry;
     UnitState state = UnitState::Idle;
+    // Atlas facing (prototype directional sheets). Last travel direction;
+    // idle/attacking units keep it. Render-only: not saved, not simulated.
+    Facing facing = Facing::Right;
     Entity target = kInvalidEntity; // acquired enemy (M3G4); needs Registry.h
     // M2 Goal 4: single pending move order (tile-snapped destination).
     // A full command queue arrives with M3 AI; M2 moves straight toward

@@ -402,55 +402,73 @@ bool Art::LoadAtlas()
 }
 
 std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
-                            float timeSeconds) const
+                            float timeSeconds, int facingDir) const
 {
     if (!sheetLoaded_)
     {
         return {};
     }
+    // Clamp the sheet column; out-of-range input falls back to Right,
+    // matching the sim-side Facing default.
+    const int dir = (facingDir < 0 || facingDir > 7) ? 6 : facingDir;
     const std::string prefix = UnitFile(type);
     if (moving)
     {
-        // "<type>_walk" animation frame at timeSeconds; per-entity offset so
-        // squad soldiers don't march in sync. Falls through to idle when the
-        // type has no walk animation.
-        if (const SpriteAnimInfo *anim = FindAnimByName(sheet_, prefix + "_walk");
-            anim != nullptr && !anim->frames.empty())
+        // Directional "<type>_walk_<dir>" cycle at timeSeconds; per-entity
+        // offset so squad soldiers don't march in sync. Falls through to
+        // the legacy single "<type>_walk" anim, then to idle, when the type
+        // has no directional (or any) walk animation.
+        const std::string names[] = { prefix + "_walk_" + std::to_string(dir),
+                                      prefix + "_walk" };
+        for (const std::string &name : names)
         {
-            int total = 0;
-            for (const SpriteAnimFrame &f : anim->frames)
+            if (const SpriteAnimInfo *anim = FindAnimByName(sheet_, name);
+                anim != nullptr && !anim->frames.empty())
             {
-                total += f.durationMs;
-            }
-            if (total > 0)
-            {
-                int t = static_cast<int>(timeSeconds * 1000.0f) +
-                        static_cast<int>(id * 37u % static_cast<unsigned int>(total));
-                t %= total;
-                if (t < 0)
-                {
-                    t += total;
-                }
+                int total = 0;
                 for (const SpriteAnimFrame &f : anim->frames)
                 {
-                    if (t < f.durationMs)
-                    {
-                        if (const SpriteDefInfo *s = FindSpriteById(sheet_, f.sprite);
-                            s != nullptr)
-                        {
-                            return s->name;
-                        }
-                        break;
-                    }
-                    t -= f.durationMs;
+                    total += f.durationMs;
                 }
+                if (total > 0)
+                {
+                    int t = static_cast<int>(timeSeconds * 1000.0f) +
+                            static_cast<int>(id * 37u % static_cast<unsigned int>(total));
+                    t %= total;
+                    if (t < 0)
+                    {
+                        t += total;
+                    }
+                    for (const SpriteAnimFrame &f : anim->frames)
+                    {
+                        if (t < f.durationMs)
+                        {
+                            if (const SpriteDefInfo *s = FindSpriteById(sheet_, f.sprite);
+                                s != nullptr)
+                            {
+                                return s->name;
+                            }
+                            break;
+                        }
+                        t -= f.durationMs;
+                    }
+                }
+                // Degenerate anim (unreachable for validated sheets):
+                // try the next name, then idle below.
             }
         }
     }
-    if (const SpriteDefInfo *idle = FindSpriteByName(sheet_, prefix + "_idle_0_0");
+    if (const SpriteDefInfo *idle =
+            FindSpriteByName(sheet_, prefix + "_idle_0_" + std::to_string(dir));
         idle != nullptr)
     {
         return idle->name;
+    }
+    if (const SpriteDefInfo *legacy =
+            FindSpriteByName(sheet_, prefix + "_idle_0_0");
+        legacy != nullptr)
+    {
+        return legacy->name;
     }
     return {};
 }

@@ -164,8 +164,9 @@ void DrawPreview(EditorState &editor, Art &art, float panelX, float panelY)
     GuiPanel({ panelX, panelY, 220.0f, 260.0f }, "Preview (1:1)");
     // 32x32 body centered in the panel.
     const Vector2 tileCorner = { panelX + 110.0f - 16.0f, panelY + 90.0f - 16.0f };
-    const std::string sprite =
-        art.UnitSprite(type, editor.animatePreview, 0, static_cast<float>(GetTime()));
+    const std::string sprite = art.UnitSprite(type, editor.animatePreview, 0,
+                                              static_cast<float>(GetTime()),
+                                              editor.previewFacing);
     if (!sprite.empty())
     {
         art.DrawAtlasFrame(sprite, tileCorner, WHITE, Art::BaseArtScale(type));
@@ -209,6 +210,12 @@ void DrawSpritesTab(EditorState &editor, Art &art)
              "Empty atlas prefix = flat PNG fallback (valid).");
     GuiCheckBox({ kX, 188.0f, 16.0f, 16.0f }, "Animate preview",
                 &editor.animatePreview);
+    GuiLabel({ kX, 214.0f, 150.0f, 20.0f }, "Facing (0-7)");
+    if (GuiValueBox({ kX + 155.0f, 214.0f, 100.0f, 20.0f }, nullptr, &editor.previewFacing,
+                     0, 7, editor.previewFacingEdit))
+    {
+        editor.previewFacingEdit = !editor.previewFacingEdit;
+    }
 
     DrawPreview(editor, art, 640.0f, 84.0f);
 }

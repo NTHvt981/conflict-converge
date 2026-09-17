@@ -106,12 +106,14 @@ public:
     // LoadAtlas seam). False when a file is missing or invalid.
     bool LoadAtlas();
     // Sprite name for a unit at timeSeconds (GetTime() at the call site):
-    // "<type>_walk" animation frame while moving (id-offset so squads don't
-    // march in sync), "<type>_idle_0_0" otherwise. Empty when no sheet is
-    // loaded or the type has no entries — caller falls back to DrawUnit.
+    // directional walk cycle "<type>_walk_<dir>" while moving (id-offset so
+    // squads don't march in sync), directional idle pose "<type>_idle_0_<dir>"
+    // otherwise. Legacy fallbacks (<prefix>_walk, <prefix>_idle_0_0) cover
+    // single-anim sheets. Empty when no sheet is loaded or the type has no
+    // entries — caller falls back to DrawUnit.
     // Pure logic (works headless after LoadAtlas, no GPU), unit-tested.
     std::string UnitSprite(UnitType type, bool moving, unsigned int id,
-                           float timeSeconds) const;
+                           float timeSeconds, int facingDir) const;
     // Base art scale multiplier: prototype infantry's 16px sheets render
     // at 2x (32px bodies on 64px tiles, matching the old art's footprint).
     // Everything else renders 1:1. Multiplied with the squad slotScale at
