@@ -1,6 +1,19 @@
 # Plan: Facing Support (directional sprites)
 
-## Implementation status: PROPOSED (2026-09-17) — not yet implemented.
+## Implementation status: SHIPPED (2026-09-17, commit `857d759`)
+
+- As designed: `Facing` enum + `FacingFromVelocity` (`Unit.h/.cpp`),
+  `facing` stored on `Unit` (default Right, maintained at both
+  nonzero-velocity driver sites, deliberately unsaved like
+  `controlGroups`), directional `UnitSprite` with legacy fallbacks, 8
+  walk anims (`infantry_walk_0..7`, ids 10-17) with the dead idle anim
+  removed, editor facing selector.
+- One fix during implementation: the new function initially landed
+  inside an anonymous-namespace block (ambiguous overload with the
+  `Unit.h` declaration) — moved out, no design change.
+- Tests: octant/boundary/zero + driver march/stop cases, directional
+  lookup + clamp cases, real-file block (8 anims). Suite green, soaks
+  frame-identical.
 
 The prototype sheets are directional: 8 columns = top, top-left, left,
 bottom-left, bottom, bottom-right, right, top-right. The run sheet is
