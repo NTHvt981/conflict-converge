@@ -1282,8 +1282,11 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
             const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(unit.position));
             occ.ReleaseFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight, id,
                                       registry.Generation(id));
-            occ.ReserveFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight, id,
-                                      registry.Generation(id));
+            // Count discarded deliberately: overlap is routine in crowds
+            // (see above); a partially reserved unit just goes unreserved
+            // until separation pushes it clear.
+            (void)occ.ReserveFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight, id,
+                                            registry.Generation(id));
         }
         preMovePositions.push_back({ id, unit.position });
     });

@@ -372,6 +372,13 @@ void RunFootprintTests()
         // Fully overlapped reserve takes nothing.
         CC_CHECK(occ.ReserveFootprintOwned({ 4, 4 }, 1, 1, 30, 1) == 0);
         CC_CHECK(occ.GetUnit({ 4, 4 }).entity == 10);
+        // Pre-pass order (release own, then reserve) with a foreign squatter:
+        // own cells re-stamp, the foreign cell stays foreign, count is partial.
+        occ.ReleaseFootprintOwned({ 3, 3 }, 2, 2, 20, 1);
+        CC_CHECK(occ.GetUnit({ 4, 4 }).entity == 10);
+        CC_CHECK(occ.ReserveFootprintOwned({ 3, 3 }, 2, 2, 20, 1) == 3);
+        CC_CHECK(occ.GetUnit({ 3, 3 }).entity == 20);
+        CC_CHECK(occ.GetUnit({ 4, 4 }).entity == 10);
     }
 
     // --- Blocked retry: transient blocker waits, replans, arrives ---

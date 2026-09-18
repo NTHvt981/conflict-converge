@@ -97,6 +97,10 @@ public:
     // release clears only cells holding (entity, generation), reserve stamps
     // only free-or-self cells and never clobbers another unit's anchor.
     // Returns the number of cells reserved (0 when fully overlapped).
+    // Partial reservation is routine in crowds — the movement pre-pass
+    // deliberately ignores the count (an overlapped unit simply goes
+    // unreserved until separation pushes it clear); the count exists for
+    // callers and tests that need all-or-nothing.
     void ReleaseFootprintOwned(cc::IVec2 anchor, int footprintW, int footprintH,
                                Entity entity, std::uint32_t generation);
     int ReserveFootprintOwned(cc::IVec2 anchor, int footprintW, int footprintH,
