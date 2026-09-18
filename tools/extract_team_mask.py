@@ -39,8 +39,9 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import convert_vox_to_sprite as cv
+from team_palette import TEAM_BLUE_RGB
 
-DEFAULT_TEAM_COLOR = (58, 130, 200)  # small_models palette's shared "armor" slot
+DEFAULT_TEAM_COLOR = TEAM_BLUE_RGB  # small_models palette's shared "armor" slot
 DEFAULT_TOLERANCE = 4  # per-channel; shading math is exact, this just absorbs rounding
 
 

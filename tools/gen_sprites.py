@@ -11,10 +11,16 @@ Re-run to regenerate: `python tools/gen_sprites.py`. Output PNGs under
 same layout and `Art` needs no code changes (filenames are the contract).
 """
 
+import os
+import sys
+
 from PIL import Image, ImageDraw
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from team_palette import TEAM_BLUE_RGB, TEAM_RED_RGB
+
 OUT = "data/sprites"
-TEAMS = {"blue": (44, 123, 229), "red": (229, 72, 77)}
+TEAMS = {"blue": TEAM_BLUE_RGB, "red": TEAM_RED_RGB}
 DARK = (26, 28, 44)
 SKIN = (232, 190, 150)
 OLIVE = (110, 124, 78)

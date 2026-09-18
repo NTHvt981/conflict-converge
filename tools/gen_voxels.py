@@ -17,6 +17,8 @@ import struct
 import sys
 from pathlib import Path
 
+from team_palette import TEAM_BLUE_RGBA, TEAM_RED_RGBA
+
 # --------------------------------------------------------------------------
 # Minimal .vox writer (format version 150).
 # File: 'VOX ' + int32 version, then MAIN chunk (id + content + children
@@ -82,8 +84,8 @@ LIGHT = 5
 SKIN = 6
 
 TEAM_BODY = {
-    0: (58, 130, 200, 255),    # ally blue
-    1: (200, 70, 60, 255),     # enemy red
+    0: TEAM_BLUE_RGBA,    # ally blue
+    1: TEAM_RED_RGBA,     # enemy red
 }
 DARK_C = (28, 30, 38, 255)
 TRIM_C = (230, 230, 235, 255)
