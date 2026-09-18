@@ -16,6 +16,7 @@
 #include "InputManager.h"
 #include "MapFile.h"
 #include "Menu.h"
+#include "MenuScreens.h" // out-of-world menu branch (H6 follow-up extraction)
 #include "Minimap.h"
 #include "Nodes.h"
 #include "Pings.h"
@@ -65,24 +66,18 @@ private:
     void Announce(EventType type);
     void StartMatch(const std::string &mapPath, AIDifficulty difficulty);
     void QuitToMenu();
+    // Slot-load apply for the menu load screen (world rebuild over a
+    // fresh shell + commander re-arm; the slot UI lives in MenuScreens).
+    void LoadGameFromSlot(const std::string &slotPath);
     void BindShortcuts();
-    // QoL hotkey remap: push settings overrides into `hotkeys` (then
-    // re-run BindShortcuts), and pull live overrides back into settings
-    // before every SaveSettings so the file stays in sync.
-    void ApplyHotkeyOverrides();
-    void SyncHotkeySettings();
-    // QoL remap screen body (shared by the Settings-chain branch and the
-    // paused overlay: same screen, whichever state entered it).
-    void DrawHotkeyRemap(float cx);
     // QoL snapshot replay viewer: step the loaded snapshot cursor
     // (clamped, minimap poked). Enter via WatchLastReplay.
     void StepReplay(int dir);
     bool WatchLastReplay();
     // H6 decomposition of Update (each verbatim-extracted, no behavior
-    // change): input dispatch, menu-branch draw, world draw, HUD/overlay
-    // draw. The sim tick graduated to Simulation (own class + file).
+    // change): input dispatch, world draw, HUD/overlay draw. The sim tick
+    // graduated to Simulation, the menu branch to MenuScreens (own files).
     void DispatchPlayingInput();
-    void DrawMenuBranch(int screenWidth, int screenHeight);
     void DrawWorld();
     void DrawHudAndOverlays(int screenWidth, int screenHeight);
 
@@ -113,15 +108,9 @@ private:
     WorldState worldState;
     InputManager input;
     // QoL remappable hotkeys (Tier 1): effective keys for BindShortcuts.
-    // Loaded from settings at startup, rebound live from the remap screen.
+    // Loaded from settings at startup, rebound live from the remap screen
+    // (capture state lives in MenuScreens).
     HotkeyMap hotkeys;
-    // QoL remap-screen capture state: action index being rebound (-1 =
-    // none), pending conflict (action + key awaiting second-click
-    // confirm), and where Esc returns to (Settings or Paused).
-    int remapArming = -1;
-    std::string remapConflictAction;
-    int remapConflictKey = 0;
-    MenuState remapReturn = MenuState::Settings;
 
     bool worldActive = false;
     // 2v2 overflow commanders tick only in 2v2 matches. NEVER gate them on
@@ -151,15 +140,7 @@ private:
     // Simulation: only the tick records, the viewer only reads).
     int replayCursor = 0; // currently shown frame
     float replayPlayTimer = 0.0f; // auto-advance clock in the viewer
-    // QoL map editor scratch state (24x18 canvas, never the live match).
-    MapData editorMap;
-    char editorBrush = '.';
-    std::string editorStatus;
-    char editorSaveName[64] = "custom"; // Save-As buffer (raw char* for raygui)
-    bool editorSaveAsOpen = false;
-    int editorSaveAsBtn = 0;
     bool showHints = true;
-    int setupScroll = 0;
     // QoL control groups: production auto-joins this group bit when >= 0
     // (set via Ctrl+Shift+number, cleared by... nothing — persists until
     // rebound; -1 = off).
@@ -195,6 +176,8 @@ private:
     MenuState previousMenuState = MenuState::MainMenu; // transition-fade clock
     float menuStateTime = 0.0f;
     MenuState lastOutcomeState = MenuState::MainMenu;
-    // Match tick (declared last: binds references into the members above).
+    // Match tick (declared after the members it binds; menu screens last:
+    // same ordering rule, binds menu/art/audio/input/hotkeys/events).
     Simulation sim;
+    MenuScreens menuScreens;
 };
