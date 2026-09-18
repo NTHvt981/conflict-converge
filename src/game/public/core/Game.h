@@ -24,6 +24,7 @@
 #include "ResourceSystem.h"
 #include "SaveGame.h"
 #include "Shake.h" // trauma-pattern screen shake (pure helpers, header-only)
+#include "Simulation.h" // per-frame match tick (H6 follow-up extraction)
 #include "Skirmish.h"
 #include "TileMap.h"
 #include "UnitFactory.h"
@@ -78,10 +79,9 @@ private:
     void StepReplay(int dir);
     bool WatchLastReplay();
     // H6 decomposition of Update (each verbatim-extracted, no behavior
-    // change): input dispatch, sim tick, menu-branch draw, world draw,
-    // HUD/overlay draw.
+    // change): input dispatch, menu-branch draw, world draw, HUD/overlay
+    // draw. The sim tick graduated to Simulation (own class + file).
     void DispatchPlayingInput();
-    void StepSimulation(float dt);
     void DrawMenuBranch(int screenWidth, int screenHeight);
     void DrawWorld();
     void DrawHudAndOverlays(int screenWidth, int screenHeight);
@@ -147,11 +147,8 @@ private:
     // release decides click (order) vs. drag (pan), past a pixel threshold.
     bool pendingRightClick = false;
     float rightDragDist = 0.0f;
-    // QoL snapshot replay recording (this match) + viewer cursor.
-    bool replayRecording = false;
-    float replayTimer = 0.0f;
-    int replayIndex = 0;
-    int replayCount = 0; // frames available for the viewer
+    // QoL snapshot replay viewer cursor (recording state lives in
+    // Simulation: only the tick records, the viewer only reads).
     int replayCursor = 0; // currently shown frame
     float replayPlayTimer = 0.0f; // auto-advance clock in the viewer
     // QoL map editor scratch state (24x18 canvas, never the live match).
@@ -191,16 +188,13 @@ private:
     bool repairDragActive = false;
     Vector2 repairDragStart = {};
 
-    // Per-frame poll state (edge-triggered sounds, menu transitions).
-    int lastBuildingCount = 0;
-    int lastDepletedCount = 0;
-    int lastQueueSize = 0;
-    float attackSfxTimer = 0.0f;
+    // Per-frame render state (sim edge-trigger polls moved to Simulation).
     HoverTooltipState hoverTip; // unit hover-tooltip debounce (Playing only)
     float shakeTrauma = 0.0f; // screen-shake trauma 0..1 (render copy only)
     DamageNumbers damageNumbers; // floating hit numbers (presentation-only, unsaved)
     MenuState previousMenuState = MenuState::MainMenu; // transition-fade clock
     float menuStateTime = 0.0f;
     MenuState lastOutcomeState = MenuState::MainMenu;
-    bool hasFactory = false;
+    // Match tick (declared last: binds references into the members above).
+    Simulation sim;
 };

@@ -26,6 +26,7 @@ void RunOrderQueueTests();
 void RunAreaRepairTests();
 void RunAttackGroundTests();
 void RunPingTests();
+void RunSimulationTests();
 void RunRetreatTests();
 void RunMovementTests();
 void RunShortcutTests();
@@ -97,6 +98,7 @@ const Suite kSuites[] = {
     { "AreaRepair", RunAreaRepairTests },
     { "AttackGround", RunAttackGroundTests },
     { "Ping", RunPingTests },
+    { "Simulation", RunSimulationTests },
     { "Retreat", RunRetreatTests },
     { "Movement", RunMovementTests },
     { "Shortcut", RunShortcutTests },
