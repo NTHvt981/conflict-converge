@@ -5,6 +5,15 @@
 `Update` is now a ~70-line orchestrator (pump, camera, menu branch,
 Playing input+sim, audio/replay/pings, world+HUD draw).
 
+## Follow-up (done): Simulation class
+
+`StepSimulation` graduated to `Simulation` (`src/game/public/core/Simulation.h`,
+`src/game/private/core/Simulation.cpp`): owns the tick plus edge-trigger
+polls, factory gate (`RefreshFactory`, shared with the paused HUD), and
+replay recording (`ResetForMatch`/`StopRecording`/`SetReplayCount`).
+`Game` keeps the viewer cursor, `shakeTrauma`, and `lastOutcomeState`
+(shared by ref). New headless `Simulation` suite in the test runner.
+
 Finding (v0.1 D1/CA-001, confirmed): one function interleaves menu screens,
 input dispatch, simulation stepping, and world+HUD rendering. Contract for
 every slice below: extract method(s) on `Game`, zero behavior change, full
