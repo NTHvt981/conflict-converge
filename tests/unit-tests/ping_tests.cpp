@@ -53,6 +53,25 @@ void RunPingTests()
         CC_CHECK(!pings.Latest(pos));
     }
 
+    // --- expiry preserves chronological order (no swap-and-pop reorder) ---
+    // RaiseAt evicts from the front and Latest reads the back, so Update
+    // must remove expired pings order-preservingly. A expires here while
+    // B and C survive: survivors must stay [B, C] with C latest.
+    {
+        Pings ordered;
+        ordered.RaiseAt({ 1.0f, 1.0f }, PingKind::UnderAttack, 0.0);
+        ordered.Update(4.0f); // A = 4.0s
+        ordered.RaiseAt({ 2.0f, 2.0f }, PingKind::UnitLost, 4.0);
+        ordered.RaiseAt({ 3.0f, 3.0f }, PingKind::UnderAttack, 4.0);
+        ordered.Update(1.1f); // A = 5.1s expired; B = C = 1.1s survive
+        CC_CHECK(ordered.Active().size() == 2);
+        CC_CHECK(ordered.Active()[0].worldPos.x == 2.0f);
+        CC_CHECK(ordered.Active()[1].worldPos.x == 3.0f);
+        Vector2 latest = {};
+        CC_CHECK(ordered.Latest(latest));
+        CC_CHECK(latest.x == 3.0f && latest.y == 3.0f);
+    }
+
     // --- factory lifecycle events carry position + team ---
     {
         Registry registry;

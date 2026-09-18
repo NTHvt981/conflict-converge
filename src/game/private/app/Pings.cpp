@@ -51,13 +51,16 @@ void Pings::Update(float dt)
     {
         return;
     }
+    // Order-preserving erase: RaiseAt evicts from the front (oldest) and
+    // Latest reads the back (newest), so survivors must stay chronological.
+    // Swap-and-pop would be O(1) per removal but breaks both assumptions;
+    // at kMaxPings (32) the linear erase is negligible.
     for (std::size_t i = 0; i < pings_.size();)
     {
         pings_[i].age += dt;
         if (pings_[i].age > kPingLifetimeSeconds)
         {
-            pings_[i] = pings_.back();
-            pings_.pop_back();
+            pings_.erase(pings_.begin() + i);
             continue;
         }
         ++i;
