@@ -1,6 +1,9 @@
 # H6 Plan: Decompose `Game::Update` (Game.cpp:845-2563, ~1700 lines)
 
-## Status: plan only, no code changed
+## Status: IMPLEMENTED (slices 1-4, commits 07add71/b2ec043/fd166a0/+slice4)
+
+`Update` is now a ~70-line orchestrator (pump, camera, menu branch,
+Playing input+sim, audio/replay/pings, world+HUD draw).
 
 Finding (v0.1 D1/CA-001, confirmed): one function interleaves menu screens,
 input dispatch, simulation stepping, and world+HUD rendering. Contract for

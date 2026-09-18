@@ -842,6 +842,448 @@ void Game::BindShortcuts()
     });
 }
 
+// Playing input dispatch (H6 slice 4 of Update): drag-box select,
+// area-build/repair gestures, right-click orders (+deferred pan
+// release), line formation, control groups, placement-type keys.
+// Runs only while Playing (the gate stays at the call site).
+void Game::DispatchPlayingInput()
+{
+    // Mouse inputs: press starts a drag-box gesture,
+    // release resolves it (click = pick, box = SelectInRect).
+    // Orders pathfind around water/buildings via IssuePathOrder.
+    // Routes minimap clicks to the camera and rally-mode clicks
+    // to the factory rally point before unit selection.
+    if (input.LeftPressed())
+    {
+        if (placingType.has_value())
+        {
+            // QoL area-build: press starts a placement drag (click =
+            // single footprint, drag = tiled pattern on release).
+            placeDragActive = true;
+            placeDragStart = input.MouseScreen();
+        }
+        else if (areaRepairMode)
+        {
+            // QoL area-repair: press starts a repair-zone drag (click =
+            // tiny rect, drag = repair zone on release). Checked ahead
+            // of box-select, same as placingType above.
+            repairDragActive = true;
+            repairDragStart = input.MouseScreen();
+        }
+        else if (minimap.Contains(input.MouseScreen()))
+        {
+            camera.view.target =
+                minimap.MinimapToWorld(input.MouseScreen(), map.Width(), map.Height());
+        }
+        else if (settingRally)
+        {
+            rallyPos = input.MouseWorld(camera);
+            settingRally = false;
+        }
+        else
+        {
+            dragging = true;
+            dragStart = input.MouseScreen();
+        }
+    }
+    if (dragging && !input.LeftDown())
+    {
+        dragging = false;
+        const Rectangle box = NormalizeRect(dragStart, input.MouseScreen());
+        if (box.width < 6.0f && box.height < 6.0f)
+        {
+            const Vector2 world = input.MouseWorld(camera);
+            const Entity hit = PickUnitAt(registry, world);
+            if (hit != kInvalidEntity)
+            {
+                const Unit *hitUnit = registry.Get<Unit>(hit);
+                // QoL double-click: same type + team across the viewport
+                // instead of the single pick. PickUnitAt has no team
+                // filter, so double-clicking an enemy resolves here but
+                // the team-0 filter below selects nothing (acceptable:
+                // enemy units aren't commandable anyway).
+                if (hitUnit != nullptr && input.DoubleClicked())
+                {
+                    SelectAllOfTypeInRect(
+                        registry,
+                        DraggedWorldBox(camera, { 0.0f, 0.0f },
+                                        { static_cast<float>(GetScreenWidth()),
+                                          static_cast<float>(GetScreenHeight()) }),
+                        hitUnit->type, 0, false);
+                }
+                else
+                {
+                    SelectOnly(registry, hit);
+                }
+                audio.Play(SfxId::Select); // Selection blip
+            }
+            else
+            {
+                DeselectAll(registry);
+            }
+        }
+        else
+        {
+            // Screen box corners back to world space (Shift extends).
+            if (SelectInRect(registry,
+                             DraggedWorldBox(camera, { box.x, box.y },
+                                             { box.x + box.width, box.y + box.height }),
+                             input.ShiftDown()) > 0)
+            {
+                audio.Play(SfxId::Select);
+            }
+        }
+    }
+    // QoL area-build release: click places one footprint, a drag tiles
+    // the footprint across the box (invalid slots skipped silently).
+    // The mode stays engaged for rows of structures; right-click/Esc
+    // exits (see the RightPressed block and the Esc binding).
+    if (placeDragActive && !input.LeftDown())
+    {
+        placeDragActive = false;
+        if (placingType.has_value())
+        {
+            const Rectangle box =
+                DraggedWorldBox(camera, placeDragStart, input.MouseScreen());
+            if (box.width < 6.0f && box.height < 6.0f)
+            {
+                const cc::IVec2 tile =
+                    cc::WorldToTile(cc::ToGlm(input.MouseWorld(camera)));
+                if (PlaceBuilding(registry, map, *placingType, 0, tile.x, tile.y,
+                                  &nodes) != kInvalidEntity)
+                {
+                    audio.Play(SfxId::Place);
+                }
+            }
+            else
+            {
+                const cc::IVec2 a =
+                    cc::WorldToTile(cc::ToGlm({ box.x, box.y }));
+                const cc::IVec2 b = cc::WorldToTile(
+                    cc::ToGlm({ box.x + box.width, box.y + box.height }));
+                int placed = 0;
+                for (const cc::IVec2 &slot :
+                     AreaBuildSlots(*placingType, { std::min(a.x, b.x),
+                                                    std::min(a.y, b.y) },
+                                    { std::max(a.x, b.x), std::max(a.y, b.y) }))
+                {
+                    if (PlaceBuilding(registry, map, *placingType, 0, slot.x, slot.y,
+                                      &nodes) != kInvalidEntity)
+                    {
+                        ++placed;
+                    }
+                }
+                if (placed > 0)
+                {
+                    audio.Play(SfxId::Place);
+                }
+            }
+        }
+    }
+    // QoL area-repair release: collect damaged candidates in the zone,
+    // greedily assign each selected Engineer its nearest unclaimed one.
+    // Click-sized drags resolve as a tiny rect (usually a silent no-op).
+    // The mode stays engaged for repeat drags; right-click/Esc exits.
+    if (repairDragActive && !input.LeftDown())
+    {
+        repairDragActive = false;
+        if (areaRepairMode)
+        {
+            const Rectangle zone =
+                DraggedWorldBox(camera, repairDragStart, input.MouseScreen());
+            std::vector<Entity> engineers;
+            registry.Each<Unit>([&](Entity id, const Unit &unit) {
+                if (unit.isSelected && unit.type == UnitType::Engineer)
+                {
+                    engineers.push_back(id);
+                }
+            });
+            std::vector<Entity> candidates;
+            CollectAreaRepairCandidates(registry, zone, 0, candidates);
+            std::vector<RepairAssignment> assignments;
+            AssignAreaRepair(registry, engineers, candidates, assignments);
+            for (const RepairAssignment &job : assignments)
+            {
+                if (Unit *engineer = registry.Get<Unit>(job.engineer))
+                {
+                    IssueOrEnqueue(*engineer, map, &occ, job.engineer,
+                                   registry.Generation(job.engineer), input.ShiftDown(),
+                                   QueuedOrder{ QueuedOrderKind::Repair, {}, {},
+                                                job.target });
+                }
+            }
+            if (!assignments.empty())
+            {
+                audio.Play(SfxId::Confirm);
+            }
+        }
+    }
+    const bool altDown = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
+    // QoL right-drag pan (opt-in setting): accumulate held distance
+    // every frame; past the click-vs-drag threshold the camera grabs
+    // the world (mirrors left-click's 6px click-vs-box rule).
+    if (input.RightDown() && !altDown)
+    {
+        const Vector2 panDelta = input.MouseDeltaScreen();
+        rightDragDist += std::sqrt(panDelta.x * panDelta.x + panDelta.y * panDelta.y);
+        if (menu.settings.rightDragPan && rightDragDist > 6.0f)
+        {
+            const float zoom = camera.view.zoom <= 0.0f ? 1.0f : camera.view.zoom;
+            camera.Pan({ -panDelta.x / zoom, -panDelta.y / zoom });
+        }
+    }
+    // Whether this press cancelled placement (orders stay silent then).
+    const bool wasPlacing = placingType.has_value() || areaRepairMode;
+    if (input.RightPressed())
+    {
+        // QoL area-build: right-click cancels placement (no order).
+        if (placingType.has_value())
+        {
+            placingType.reset();
+            placeDragActive = false;
+        }
+        // QoL area-repair: right-click stands the mode down (no order).
+        // Chained (not separate) so Alt+right-drag can't arm a line
+        // while either mode cancels, exactly like placement before it.
+        else if (areaRepairMode)
+        {
+            areaRepairMode = false;
+            repairDragActive = false;
+        }
+        // QoL line formation: Alt+right-drag draws a placement line
+        // (Ctrl is groups, Shift is queueing — Alt stays unambiguous).
+        // No order fires on the press itself; the release dispatches.
+        else if (altDown)
+        {
+            rightDragging = true;
+            rightDragStart = input.MouseScreen();
+        }
+    }
+    const bool cancelledPlacement = input.RightPressed() && wasPlacing;
+    // and the deferred release path (option on: click-vs-drag is only
+    // known on release, where the mouse still sits ~at the press point).
+    auto dispatchRightClickOrders = [&]() {
+        // QoL attack-ground mode (toggled with X): the next right-click
+        // shells the clicked point instead of moving there. One-shot:
+        // the mode clears after a single use.
+        if (attackGroundMode)
+        {
+            attackGroundMode = false;
+            const Vector2 target = input.MouseWorld(camera);
+            const bool queued = input.ShiftDown();
+            registry.Each<Unit>([&](Entity id, Unit &unit) {
+                if (unit.isSelected)
+                {
+                    IssueOrEnqueue(unit, map, &occ, id, registry.Generation(id), queued,
+                                   QueuedOrder{ QueuedOrderKind::AttackGround, target });
+                }
+            });
+            audio.Play(SfxId::Confirm);
+        }
+        else
+        {
+        // Single selection keeps the direct path order; groups fan
+        // out through the formation move.
+        std::vector<Entity> squad;
+        registry.Each<Unit>([&](Entity id, const Unit &unit) {
+            if (unit.isSelected)
+            {
+                squad.push_back(id);
+            }
+        });
+        if (squad.size() == 1)
+        {
+            if (Unit *ordered = registry.Get<Unit>(squad[0]))
+            {
+                // QoL single-target repair: a lone selected Engineer
+                // right-clicked onto a damaged same-team unit/building
+                // repairs instead of moving (Shift queues it behind the
+                // current order via the same path as other orders).
+                bool repaired = false;
+                if (ordered->type == UnitType::Engineer)
+                {
+                    const Vector2 world = input.MouseWorld(camera);
+                    Entity patient = PickUnitAt(registry, world);
+                    if (patient == kInvalidEntity ||
+                        !CanRepairTarget(registry, *ordered, patient))
+                    {
+                        patient = kInvalidEntity;
+                        const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(world));
+                        registry.Each<Building>([&](Entity id, const Building &building) {
+                            if (patient != kInvalidEntity)
+                            {
+                                return;
+                            }
+                            // Shared footprint-rect helper (also feeds
+                            // area repair) instead of inline tile math.
+                            const Rectangle footprint = BuildingFootprintRect(building);
+                            const Vector2 tileCenter = cc::ToRaylib(
+                                cc::TileToWorld(tile.x, tile.y) + cc::Vec2(32.0f, 32.0f));
+                            if (CheckCollisionPointRec(tileCenter, footprint) &&
+                                CanRepairTarget(registry, *ordered, id))
+                            {
+                                patient = id;
+                            }
+                        });
+                    }
+                    if (patient != kInvalidEntity)
+                    {
+                        IssueOrEnqueue(*ordered, map, &occ, squad[0],
+                                       registry.Generation(squad[0]), input.ShiftDown(),
+                                       QueuedOrder{ QueuedOrderKind::Repair, {}, {}, patient });
+                        repaired = true;
+                    }
+                }
+                if (!repaired)
+                {
+                    if (input.ShiftDown())
+                    {
+                        // QoL: queue behind the current order.
+                        IssueOrEnqueue(*ordered, map, &occ, squad[0],
+                                       registry.Generation(squad[0]), true,
+                                       QueuedOrder{ QueuedOrderKind::Move,
+                                                    input.MouseWorld(camera) });
+                    }
+                    else
+                    {
+                        ordered->orderQueue.clear();
+                        // Fresh single order (not formation): ClearOrders
+                        // resets every order-type flag — IssuePathOrder*
+                        // doesn't route through ClearOrders like the
+                        // Issue* wrappers (see ClearOrders in Unit.h).
+                        ClearOrders(*ordered);
+                        IssuePathOrderFootprint(*ordered, map, occ,
+                                                input.MouseWorld(camera), squad[0],
+                                                registry.Generation(squad[0]));
+                    }
+                }
+                audio.Play(SfxId::Confirm); // Order acknowledged
+            }
+        }
+        else if (!squad.empty())
+        {
+            if (input.ShiftDown())
+            {
+                // QoL: queue the same destination per unit (no fan-out
+                // for queued legs — formation applies to live orders).
+                const Vector2 dest = input.MouseWorld(camera);
+                for (const Entity id : squad)
+                {
+                    if (Unit *unit = registry.Get<Unit>(id))
+                    {
+                        IssueOrEnqueue(*unit, map, &occ, id, registry.Generation(id),
+                                       true,
+                                       QueuedOrder{ QueuedOrderKind::Move, dest });
+                    }
+                }
+            }
+            else
+            {
+                // IssueFormationMoveFP does its own fresh-order
+                // bookkeeping (flag + queue clear), like the
+                // line-formation variant.
+                formation::IssueFormationMoveFP(registry, squad, map, occ,
+                                                input.MouseWorld(camera),
+                                                moveAtSlowestSpeed);
+            }
+            audio.Play(SfxId::Confirm);
+        }
+        }
+    };
+    if (input.RightPressed() && !rightDragging && !cancelledPlacement)
+    {
+        if (menu.settings.rightDragPan && !altDown)
+        {
+            pendingRightClick = true; // decided on release, below
+        }
+        else
+        {
+            dispatchRightClickOrders();
+        }
+    }
+    if (!input.RightDown())
+    {
+        // Release with the option on: a sub-threshold press was a click
+        // after all — run the deferred order now (~at the press point).
+        if (pendingRightClick && rightDragDist < 6.0f)
+        {
+            dispatchRightClickOrders();
+        }
+        pendingRightClick = false;
+        rightDragDist = 0.0f;
+    }
+    // QoL line formation release: order the current squad along the
+    // drawn line, then stand down the gesture.
+    if (rightDragging && !input.RightDown())
+    {
+        rightDragging = false;
+        std::vector<Entity> squad;
+        registry.Each<Unit>([&](Entity id, const Unit &unit) {
+            if (unit.isSelected)
+            {
+                squad.push_back(id);
+            }
+        });
+        if (!squad.empty())
+        {
+            const auto [lineStart, lineEnd] =
+                DraggedWorldLine(camera, rightDragStart, input.MouseScreen());
+            formation::IssueLineFormationMoveFP(registry, squad, map, occ, lineStart,
+                                                lineEnd, moveAtSlowestSpeed);
+            audio.Play(SfxId::Confirm);
+        }
+    }
+    // QoL control groups: number keys recall, Ctrl+number assigns the
+    // current selection (replacing), Shift+number adds to it,
+    // Ctrl+Shift+number routes future production into it. Polled here
+    // (not via ShortcutRegistry) because one key needs 4-way
+    // modifier disambiguation the registry's plain/Shift-chord model
+    // can't express. Displayed 1-9,0 for bits 0-9.
+    static constexpr int kGroupKeys[10] = { KEY_ONE,   KEY_TWO,   KEY_THREE, KEY_FOUR,
+                                            KEY_FIVE,  KEY_SIX,   KEY_SEVEN, KEY_EIGHT,
+                                            KEY_NINE,  KEY_ZERO };
+    for (int bit = 0; bit < 10; ++bit)
+    {
+        if (!IsKeyPressed(kGroupKeys[bit]) || placingType.has_value())
+        {
+            continue; // 1/2/3 steer the placement type while placing
+        }
+        if (input.CtrlDown() && input.ShiftDown())
+        {
+            autoAddGroupBit = bit;
+        }
+        else if (input.CtrlDown())
+        {
+            AssignControlGroup(registry, bit);
+        }
+        else if (input.ShiftDown())
+        {
+            AddToControlGroup(registry, bit);
+        }
+        else
+        {
+            RecallControlGroup(registry, bit);
+        }
+    }
+    // QoL area-build: 1/2/3 picks the placement type while engaged
+    // (the group loop above stands down for those keys meanwhile).
+    if (placingType.has_value())
+    {
+        if (IsKeyPressed(KEY_ONE))
+        {
+            placingType = BuildingType::Base;
+        }
+        else if (IsKeyPressed(KEY_TWO))
+        {
+            placingType = BuildingType::ResourceDepot;
+        }
+        else if (IsKeyPressed(KEY_THREE))
+        {
+            placingType = BuildingType::Factory;
+        }
+    }
+}
+
 // Menu branch (H6 slice 2 of Update): no world simulates or renders
 // until Start (or a slot load). Owns its Begin/EndDrawing pair; the
 // early return stays at the call site.
@@ -2122,441 +2564,7 @@ void Game::Update()
     // Playing; rendering below always runs so menus overlay a live frame.
     if (menu.state == MenuState::Playing)
     {
-
-        // Mouse inputs: press starts a drag-box gesture,
-        // release resolves it (click = pick, box = SelectInRect).
-        // Orders pathfind around water/buildings via IssuePathOrder.
-        // Routes minimap clicks to the camera and rally-mode clicks
-        // to the factory rally point before unit selection.
-        if (input.LeftPressed())
-        {
-            if (placingType.has_value())
-            {
-                // QoL area-build: press starts a placement drag (click =
-                // single footprint, drag = tiled pattern on release).
-                placeDragActive = true;
-                placeDragStart = input.MouseScreen();
-            }
-            else if (areaRepairMode)
-            {
-                // QoL area-repair: press starts a repair-zone drag (click =
-                // tiny rect, drag = repair zone on release). Checked ahead
-                // of box-select, same as placingType above.
-                repairDragActive = true;
-                repairDragStart = input.MouseScreen();
-            }
-            else if (minimap.Contains(input.MouseScreen()))
-            {
-                camera.view.target =
-                    minimap.MinimapToWorld(input.MouseScreen(), map.Width(), map.Height());
-            }
-            else if (settingRally)
-            {
-                rallyPos = input.MouseWorld(camera);
-                settingRally = false;
-            }
-            else
-            {
-                dragging = true;
-                dragStart = input.MouseScreen();
-            }
-        }
-        if (dragging && !input.LeftDown())
-        {
-            dragging = false;
-            const Rectangle box = NormalizeRect(dragStart, input.MouseScreen());
-            if (box.width < 6.0f && box.height < 6.0f)
-            {
-                const Vector2 world = input.MouseWorld(camera);
-                const Entity hit = PickUnitAt(registry, world);
-                if (hit != kInvalidEntity)
-                {
-                    const Unit *hitUnit = registry.Get<Unit>(hit);
-                    // QoL double-click: same type + team across the viewport
-                    // instead of the single pick. PickUnitAt has no team
-                    // filter, so double-clicking an enemy resolves here but
-                    // the team-0 filter below selects nothing (acceptable:
-                    // enemy units aren't commandable anyway).
-                    if (hitUnit != nullptr && input.DoubleClicked())
-                    {
-                        SelectAllOfTypeInRect(
-                            registry,
-                            DraggedWorldBox(camera, { 0.0f, 0.0f },
-                                            { static_cast<float>(GetScreenWidth()),
-                                              static_cast<float>(GetScreenHeight()) }),
-                            hitUnit->type, 0, false);
-                    }
-                    else
-                    {
-                        SelectOnly(registry, hit);
-                    }
-                    audio.Play(SfxId::Select); // Selection blip
-                }
-                else
-                {
-                    DeselectAll(registry);
-                }
-            }
-            else
-            {
-                // Screen box corners back to world space (Shift extends).
-                if (SelectInRect(registry,
-                                 DraggedWorldBox(camera, { box.x, box.y },
-                                                 { box.x + box.width, box.y + box.height }),
-                                 input.ShiftDown()) > 0)
-                {
-                    audio.Play(SfxId::Select);
-                }
-            }
-        }
-        // QoL area-build release: click places one footprint, a drag tiles
-        // the footprint across the box (invalid slots skipped silently).
-        // The mode stays engaged for rows of structures; right-click/Esc
-        // exits (see the RightPressed block and the Esc binding).
-        if (placeDragActive && !input.LeftDown())
-        {
-            placeDragActive = false;
-            if (placingType.has_value())
-            {
-                const Rectangle box =
-                    DraggedWorldBox(camera, placeDragStart, input.MouseScreen());
-                if (box.width < 6.0f && box.height < 6.0f)
-                {
-                    const cc::IVec2 tile =
-                        cc::WorldToTile(cc::ToGlm(input.MouseWorld(camera)));
-                    if (PlaceBuilding(registry, map, *placingType, 0, tile.x, tile.y,
-                                      &nodes) != kInvalidEntity)
-                    {
-                        audio.Play(SfxId::Place);
-                    }
-                }
-                else
-                {
-                    const cc::IVec2 a =
-                        cc::WorldToTile(cc::ToGlm({ box.x, box.y }));
-                    const cc::IVec2 b = cc::WorldToTile(
-                        cc::ToGlm({ box.x + box.width, box.y + box.height }));
-                    int placed = 0;
-                    for (const cc::IVec2 &slot :
-                         AreaBuildSlots(*placingType, { std::min(a.x, b.x),
-                                                        std::min(a.y, b.y) },
-                                        { std::max(a.x, b.x), std::max(a.y, b.y) }))
-                    {
-                        if (PlaceBuilding(registry, map, *placingType, 0, slot.x, slot.y,
-                                          &nodes) != kInvalidEntity)
-                        {
-                            ++placed;
-                        }
-                    }
-                    if (placed > 0)
-                    {
-                        audio.Play(SfxId::Place);
-                    }
-                }
-            }
-        }
-        // QoL area-repair release: collect damaged candidates in the zone,
-        // greedily assign each selected Engineer its nearest unclaimed one.
-        // Click-sized drags resolve as a tiny rect (usually a silent no-op).
-        // The mode stays engaged for repeat drags; right-click/Esc exits.
-        if (repairDragActive && !input.LeftDown())
-        {
-            repairDragActive = false;
-            if (areaRepairMode)
-            {
-                const Rectangle zone =
-                    DraggedWorldBox(camera, repairDragStart, input.MouseScreen());
-                std::vector<Entity> engineers;
-                registry.Each<Unit>([&](Entity id, const Unit &unit) {
-                    if (unit.isSelected && unit.type == UnitType::Engineer)
-                    {
-                        engineers.push_back(id);
-                    }
-                });
-                std::vector<Entity> candidates;
-                CollectAreaRepairCandidates(registry, zone, 0, candidates);
-                std::vector<RepairAssignment> assignments;
-                AssignAreaRepair(registry, engineers, candidates, assignments);
-                for (const RepairAssignment &job : assignments)
-                {
-                    if (Unit *engineer = registry.Get<Unit>(job.engineer))
-                    {
-                        IssueOrEnqueue(*engineer, map, &occ, job.engineer,
-                                       registry.Generation(job.engineer), input.ShiftDown(),
-                                       QueuedOrder{ QueuedOrderKind::Repair, {}, {},
-                                                    job.target });
-                    }
-                }
-                if (!assignments.empty())
-                {
-                    audio.Play(SfxId::Confirm);
-                }
-            }
-        }
-        const bool altDown = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
-        // QoL right-drag pan (opt-in setting): accumulate held distance
-        // every frame; past the click-vs-drag threshold the camera grabs
-        // the world (mirrors left-click's 6px click-vs-box rule).
-        if (input.RightDown() && !altDown)
-        {
-            const Vector2 panDelta = input.MouseDeltaScreen();
-            rightDragDist += std::sqrt(panDelta.x * panDelta.x + panDelta.y * panDelta.y);
-            if (menu.settings.rightDragPan && rightDragDist > 6.0f)
-            {
-                const float zoom = camera.view.zoom <= 0.0f ? 1.0f : camera.view.zoom;
-                camera.Pan({ -panDelta.x / zoom, -panDelta.y / zoom });
-            }
-        }
-        // Whether this press cancelled placement (orders stay silent then).
-        const bool wasPlacing = placingType.has_value() || areaRepairMode;
-        if (input.RightPressed())
-        {
-            // QoL area-build: right-click cancels placement (no order).
-            if (placingType.has_value())
-            {
-                placingType.reset();
-                placeDragActive = false;
-            }
-            // QoL area-repair: right-click stands the mode down (no order).
-            // Chained (not separate) so Alt+right-drag can't arm a line
-            // while either mode cancels, exactly like placement before it.
-            else if (areaRepairMode)
-            {
-                areaRepairMode = false;
-                repairDragActive = false;
-            }
-            // QoL line formation: Alt+right-drag draws a placement line
-            // (Ctrl is groups, Shift is queueing — Alt stays unambiguous).
-            // No order fires on the press itself; the release dispatches.
-            else if (altDown)
-            {
-                rightDragging = true;
-                rightDragStart = input.MouseScreen();
-            }
-        }
-        const bool cancelledPlacement = input.RightPressed() && wasPlacing;
-        // and the deferred release path (option on: click-vs-drag is only
-        // known on release, where the mouse still sits ~at the press point).
-        auto dispatchRightClickOrders = [&]() {
-            // QoL attack-ground mode (toggled with X): the next right-click
-            // shells the clicked point instead of moving there. One-shot:
-            // the mode clears after a single use.
-            if (attackGroundMode)
-            {
-                attackGroundMode = false;
-                const Vector2 target = input.MouseWorld(camera);
-                const bool queued = input.ShiftDown();
-                registry.Each<Unit>([&](Entity id, Unit &unit) {
-                    if (unit.isSelected)
-                    {
-                        IssueOrEnqueue(unit, map, &occ, id, registry.Generation(id), queued,
-                                       QueuedOrder{ QueuedOrderKind::AttackGround, target });
-                    }
-                });
-                audio.Play(SfxId::Confirm);
-            }
-            else
-            {
-            // Single selection keeps the direct path order; groups fan
-            // out through the formation move.
-            std::vector<Entity> squad;
-            registry.Each<Unit>([&](Entity id, const Unit &unit) {
-                if (unit.isSelected)
-                {
-                    squad.push_back(id);
-                }
-            });
-            if (squad.size() == 1)
-            {
-                if (Unit *ordered = registry.Get<Unit>(squad[0]))
-                {
-                    // QoL single-target repair: a lone selected Engineer
-                    // right-clicked onto a damaged same-team unit/building
-                    // repairs instead of moving (Shift queues it behind the
-                    // current order via the same path as other orders).
-                    bool repaired = false;
-                    if (ordered->type == UnitType::Engineer)
-                    {
-                        const Vector2 world = input.MouseWorld(camera);
-                        Entity patient = PickUnitAt(registry, world);
-                        if (patient == kInvalidEntity ||
-                            !CanRepairTarget(registry, *ordered, patient))
-                        {
-                            patient = kInvalidEntity;
-                            const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(world));
-                            registry.Each<Building>([&](Entity id, const Building &building) {
-                                if (patient != kInvalidEntity)
-                                {
-                                    return;
-                                }
-                                // Shared footprint-rect helper (also feeds
-                                // area repair) instead of inline tile math.
-                                const Rectangle footprint = BuildingFootprintRect(building);
-                                const Vector2 tileCenter = cc::ToRaylib(
-                                    cc::TileToWorld(tile.x, tile.y) + cc::Vec2(32.0f, 32.0f));
-                                if (CheckCollisionPointRec(tileCenter, footprint) &&
-                                    CanRepairTarget(registry, *ordered, id))
-                                {
-                                    patient = id;
-                                }
-                            });
-                        }
-                        if (patient != kInvalidEntity)
-                        {
-                            IssueOrEnqueue(*ordered, map, &occ, squad[0],
-                                           registry.Generation(squad[0]), input.ShiftDown(),
-                                           QueuedOrder{ QueuedOrderKind::Repair, {}, {}, patient });
-                            repaired = true;
-                        }
-                    }
-                    if (!repaired)
-                    {
-                        if (input.ShiftDown())
-                        {
-                            // QoL: queue behind the current order.
-                            IssueOrEnqueue(*ordered, map, &occ, squad[0],
-                                           registry.Generation(squad[0]), true,
-                                           QueuedOrder{ QueuedOrderKind::Move,
-                                                        input.MouseWorld(camera) });
-                        }
-                        else
-                        {
-                            ordered->orderQueue.clear();
-                            // Fresh single order (not formation): ClearOrders
-                            // resets every order-type flag — IssuePathOrder*
-                            // doesn't route through ClearOrders like the
-                            // Issue* wrappers (see ClearOrders in Unit.h).
-                            ClearOrders(*ordered);
-                            IssuePathOrderFootprint(*ordered, map, occ,
-                                                    input.MouseWorld(camera), squad[0],
-                                                    registry.Generation(squad[0]));
-                        }
-                    }
-                    audio.Play(SfxId::Confirm); // Order acknowledged
-                }
-            }
-            else if (!squad.empty())
-            {
-                if (input.ShiftDown())
-                {
-                    // QoL: queue the same destination per unit (no fan-out
-                    // for queued legs — formation applies to live orders).
-                    const Vector2 dest = input.MouseWorld(camera);
-                    for (const Entity id : squad)
-                    {
-                        if (Unit *unit = registry.Get<Unit>(id))
-                        {
-                            IssueOrEnqueue(*unit, map, &occ, id, registry.Generation(id),
-                                           true,
-                                           QueuedOrder{ QueuedOrderKind::Move, dest });
-                        }
-                    }
-                }
-                else
-                {
-                    // IssueFormationMoveFP does its own fresh-order
-                    // bookkeeping (flag + queue clear), like the
-                    // line-formation variant.
-                    formation::IssueFormationMoveFP(registry, squad, map, occ,
-                                                    input.MouseWorld(camera),
-                                                    moveAtSlowestSpeed);
-                }
-                audio.Play(SfxId::Confirm);
-            }
-            }
-        };
-        if (input.RightPressed() && !rightDragging && !cancelledPlacement)
-        {
-            if (menu.settings.rightDragPan && !altDown)
-            {
-                pendingRightClick = true; // decided on release, below
-            }
-            else
-            {
-                dispatchRightClickOrders();
-            }
-        }
-        if (!input.RightDown())
-        {
-            // Release with the option on: a sub-threshold press was a click
-            // after all — run the deferred order now (~at the press point).
-            if (pendingRightClick && rightDragDist < 6.0f)
-            {
-                dispatchRightClickOrders();
-            }
-            pendingRightClick = false;
-            rightDragDist = 0.0f;
-        }
-        // QoL line formation release: order the current squad along the
-        // drawn line, then stand down the gesture.
-        if (rightDragging && !input.RightDown())
-        {
-            rightDragging = false;
-            std::vector<Entity> squad;
-            registry.Each<Unit>([&](Entity id, const Unit &unit) {
-                if (unit.isSelected)
-                {
-                    squad.push_back(id);
-                }
-            });
-            if (!squad.empty())
-            {
-                const auto [lineStart, lineEnd] =
-                    DraggedWorldLine(camera, rightDragStart, input.MouseScreen());
-                formation::IssueLineFormationMoveFP(registry, squad, map, occ, lineStart,
-                                                    lineEnd, moveAtSlowestSpeed);
-                audio.Play(SfxId::Confirm);
-            }
-        }
-        // QoL control groups: number keys recall, Ctrl+number assigns the
-        // current selection (replacing), Shift+number adds to it,
-        // Ctrl+Shift+number routes future production into it. Polled here
-        // (not via ShortcutRegistry) because one key needs 4-way
-        // modifier disambiguation the registry's plain/Shift-chord model
-        // can't express. Displayed 1-9,0 for bits 0-9.
-        static constexpr int kGroupKeys[10] = { KEY_ONE,   KEY_TWO,   KEY_THREE, KEY_FOUR,
-                                                KEY_FIVE,  KEY_SIX,   KEY_SEVEN, KEY_EIGHT,
-                                                KEY_NINE,  KEY_ZERO };
-        for (int bit = 0; bit < 10; ++bit)
-        {
-            if (!IsKeyPressed(kGroupKeys[bit]) || placingType.has_value())
-            {
-                continue; // 1/2/3 steer the placement type while placing
-            }
-            if (input.CtrlDown() && input.ShiftDown())
-            {
-                autoAddGroupBit = bit;
-            }
-            else if (input.CtrlDown())
-            {
-                AssignControlGroup(registry, bit);
-            }
-            else if (input.ShiftDown())
-            {
-                AddToControlGroup(registry, bit);
-            }
-            else
-            {
-                RecallControlGroup(registry, bit);
-            }
-        }
-        // QoL area-build: 1/2/3 picks the placement type while engaged
-        // (the group loop above stands down for those keys meanwhile).
-        if (placingType.has_value())
-        {
-            if (IsKeyPressed(KEY_ONE))
-            {
-                placingType = BuildingType::Base;
-            }
-            else if (IsKeyPressed(KEY_TWO))
-            {
-                placingType = BuildingType::ResourceDepot;
-            }
-            else if (IsKeyPressed(KEY_THREE))
-            {
-                placingType = BuildingType::Factory;
-            }
-        }
+        DispatchPlayingInput();
         // Sim tick: visibility, movement, deaths, economy, production,
         // AI, minimap refresh, outcome (see StepSimulation).
         StepSimulation(GetFrameTime());
