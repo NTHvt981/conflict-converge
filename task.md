@@ -31,7 +31,22 @@ probes) would stay anyway. Reverted everything; `--filter=Menu` back to
 green (83 checks, 0 failures). Settings stay hand-rolled (~150 LOC,
 well-tested, format-stable). Commit: this file (no src/ change).
 
-## Phase 2 — `extras-c/path_utils`: (pending)
+## Phase 2 — `extras-c/path_utils`: NO CODE CHANGE (dead includes removed)
+
+Confirmed against the vendored source (`deps/extras-c/path_utils/`):
+`SearchAndSetResourceDir` chdirs INTO `data/` and takes no injectable
+`dirExists`/`appDir` — it cannot replace `PickDataRoot`
+(`DataRoot.h:19-37`, parent-of-`data` semantics + headless-testable
+injected function pointer) without regressing every `data/`-prefixed
+path and testability. `DataRoot.h` and the `Game.cpp:125-130` call site
+stay untouched.
+
+Cleanup: repo-wide grep shows nothing includes any `extras-c` header
+(only `DataRoot.h` comment mentions), so the 4 dead
+`deps/extras-c/path_utils` includedirs were removed from `premake5.lua`
+(game/test/e2e/editor). `libs_deps.json` keeps the `extras-c` clone
+(`ray_collision_2d.h`, cameras remain available). `DataRoot` tests green
+(6 checks, 0 failures). Commit: `premake5.lua` + this file.
 
 ## Phase 3 — `reasings` sweep: (pending)
 
