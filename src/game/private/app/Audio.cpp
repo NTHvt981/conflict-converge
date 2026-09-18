@@ -21,8 +21,8 @@ const char *kAssetDir = "data/audio/";
 // Minimum seconds between two plays of the same sound. The game loop
 // retriggers combat sounds unconditionally (Explosion on every death-frame,
 // Attack every 0.12s while anything winds up, Confirm per production spawn),
-// so without floors a battle is a 60Hz retrigger roar (recorded playtest:
-// "sound spam"). One-shots and edge-triggered UI sounds stay at 0.
+// so without floors a battle is a 60Hz retrigger roar. One-shots and
+// edge-triggered UI sounds stay at 0.
 double MinIntervalSeconds(SfxId id)
 {
     switch (id)

@@ -392,7 +392,7 @@ void Game::DrawHotkeyRemap(float cx)
                               : "Click a key to rebind it. Digits/Alt (Tier 2) are fixed.");
     // Two balanced halves (self-maintaining as actions are added) sized
     // to the widest label, so rows can never overwrite each other at any
-    // font size or window width the min size allows. Measured with
+    // font size or window width the min size allows. Sized with
     // GuiGetTextWidth (raygui's own metric, the one GuiLabel draws with),
     // not MeasureText (different per-glyph spacing — diverges off size 10).
     const int defCount = NumHotkeyDefs();
@@ -1878,7 +1878,7 @@ void Game::Update()
             }
         }
         // QoL building auto-repair (player team 0 only; AI economy is
-        // soak-tuned and Engineers already repair free — see Building.h).
+        // tuned and Engineers already repair free — see Building.h).
         if (playerAutoRepair)
         {
             UpdateBuildingAutoRepair(registry, resources, dt, 0, autoRepairCap);

@@ -129,7 +129,7 @@ inline float MenuFadeAlpha(float time)
 {
     // Ease-out: content snaps in fast, then settles (linear felt mechanical
     // over 0.2s). Clamped past the duration — Penner easings overshoot
-    // beyond d, so the guard is load-bearing, not cosmetic.
+    // beyond d.
     if (time >= kMenuFadeInDuration)
     {
         return 1.0f;

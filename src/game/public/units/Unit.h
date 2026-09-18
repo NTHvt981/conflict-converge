@@ -319,7 +319,7 @@ Vector2 ResolvePlayerRetreatHome(Registry &registry, Vector2 rallyPos);
 
 // Orders sub-threshold, non-Engineer, alive units of teamID to fall back
 // toward `home` via fighting withdrawal (attack-move, never plain move —
-// plain move forfeits full-DPS units, measured in the Medium-vs-Hard soak).
+// plain move forfeits full-DPS units).
 // onlyAutoRetreat=true additionally requires Unit::autoRetreat (player
 // opt-in); the AI passes false (its units retreat by difficulty instead).
 void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector2 home, int teamID,

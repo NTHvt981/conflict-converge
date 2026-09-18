@@ -13,7 +13,7 @@ struct Building; // fwd-decl (Combat.cpp includes Building.h)
 // ResolveAttack — they never bypass it.
 
 // Multiplier for dealt damage against the given armor (placeholder C&C/CoH
-// flavor; retune pass adjusts after playtesting).
+// flavor; retune pass adjusts).
 float Effectiveness(DamageType dealt, ArmorType armor);
 
 // Apply scaled damage to the defender and restart the attacker's cooldown.

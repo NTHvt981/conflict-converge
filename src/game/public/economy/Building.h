@@ -59,8 +59,7 @@ struct Building
 // Full-health value per type (placement + save-load repair of legacy zeros).
 float BuildingMaxHealth(BuildingType type);
 // Seconds a fresh placement needs to reach Operational (Base 3, Depot 2,
-// Factory 4 — a visible beat without stalling openings or flipping the
-// soak ladder's tuned AI timings).
+// Factory 4 — a visible beat that neither stalls openings nor flips AI outcomes).
 float BuildingBuildTime(BuildingType type);
 // Advance every UnderConstruction building: ramp health proportionally,
 // flip to Operational at exactly maxHealth on completion. UnderConstruction
@@ -120,7 +119,7 @@ void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float
 // Rate scales with capFraction (0 = paused, 1 = full rate); sub-HP budget
 // banks in Building::repairCarry. Player-side v1 is a single global toggle
 // on Game (no per-building selection exists yet); AI is deliberately not
-// wired (its economy is soak-tuned, and Engineers already repair free).
+// wired (its economy is tuned, and Engineers already repair free).
 void UpdateBuildingAutoRepair(Registry &registry, ResourceSystem &resources, float dt, int teamID,
                               float capFraction);
 

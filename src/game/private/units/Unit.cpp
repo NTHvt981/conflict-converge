@@ -814,8 +814,8 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
                 // guarded like the other legs). A guard here makes blocked
                 // chasers stand and wait on the retry budget while the melee
                 // flows around them; the churn-and-replan keeps them sliding
-                // into contact, and the M-vs-H soak is tuned on exactly that
-                // (a tile guard flipped it). Footprint-aware when bound.
+                // into contact (a tile guard here stalls them instead).
+                // Footprint-aware when bound.
                 if (occ != nullptr)
                 {
                     IssuePathOrderFootprint(*unit, map, *occ,
@@ -1237,8 +1237,7 @@ void SeparateUnits(Registry &registry, float dtSeconds)
             // vehicle-on-foot is negated inside ResolveAttack (the
             // documented rule, previously dead code: no production path
             // passed Crush). Gated on each attacker's cooldown so contact
-            // can't machine-gun outside the fire cycle. Proven soak-neutral
-            // (identical Medium-vs-Hard trajectory with and without).
+            // can't machine-gun outside the fire cycle.
             if (items[i].unit->teamID != items[j].unit->teamID)
             {
                 if (items[i].unit->health > 0.0f && IsVehicleHull(items[i].unit->type) &&

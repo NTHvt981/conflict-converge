@@ -311,7 +311,7 @@ void AICommander::MaybeLaunchWave()
     }
     // Waves attack-move (not plain-move): marchers engage defenders on
     // contact instead of walking past them, then resume the advance. Plain
-    // formation orders produced walk-through stalemates (measured in soak).
+    // formation orders produced walk-through stalemates.
     // The march itself routes footprint-aware when occupancy is bound.
     const std::vector<cc::IVec2> offsets = formation::FormationOffsets(army.size());
     for (std::size_t i = 0; i < army.size(); ++i)
@@ -349,7 +349,7 @@ void AICommander::ScoutTick(float dt)
     // NOTE: the full-interval backoff below runs even when the spawn fails.
     // A fast retry here was tried and reverted: refilling scouts ahead of
     // the army re-tunes Hard's economy enough to flip the Medium-vs-Hard
-    // soak (measured). Revisit only with a soak re-tune, not alone.
+    // outcome. Tuned as a set; do not adjust alone.
     scoutTimer_ = params_.scoutInterval;
     if (scout == kInvalidEntity)
     {

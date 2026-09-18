@@ -6,7 +6,7 @@
 
 #include "Building.h"
 #include "Event.h"
-#include "AICommander.h" // Soak: difficulty ladder decides games
+#include "AICommander.h" // Difficulty ladder decides games
 #include "FogOfWar.h" // WorldState carries fog memory
 #include "GameCamera.h" // WorldState carries the camera
 #include "MathUtils.h"
@@ -77,7 +77,7 @@ void DeployFaceoff(Registry &registry, UnitFactory &factory, UnitType type)
     }
 }
 
-// AI-vs-AI soak driver: two commanders build, harvest, wave, and scrap
+// AI-vs-AI driver: two commanders build, harvest, wave, and scrap
 // until one team is wiped or the cap hits. Prints kill/wave telemetry every
 // 20 sim-seconds. Returns frames simulated. Death sweep mirrors the game
 // loop (corpse kill-credit by team, then destroy).
@@ -132,7 +132,7 @@ int RunAISoak(Registry &registry, TileMap &map, ResourceNodes &nodes, AICommande
     return frames;
 }
 
-// Mirror arena factory for soaks: Crossroads-sized (24x18) with corner
+// Mirror arena factory: Crossroads-sized (24x18) with corner
 // homes, so range, scouting, and retreats — Hard's whole kit — actually
 // matter. The old 16x12 phone booth decided by cost-efficiency alone at
 // contact range, which structurally negates artillery/scouts and flattered
@@ -246,7 +246,7 @@ void RunIntegrationTests()
         std::filesystem::remove(path, ec);
     }
 
-    // --- Balance soak: the difficulty ladder decides games, no stalemates ---
+    // --- Balance: the difficulty ladder decides games, no stalemates ---
     // Easy-vs-Medium: Medium wins. Medium-vs-Hard: Hard wins. Same mirror
     // arena and cap for both rungs so the frame counts compare directly.
     {
