@@ -4,6 +4,7 @@
 #include <queue>
 #include <unordered_map>
 #include <utility>
+#include <set>
 
 namespace
 {
@@ -232,20 +233,28 @@ cc::IVec2 NearestEnterableTile(const TileMap &map, const OccupancyGrid &occ,
     {
         return want;
     }
-    for (int ring = 1; ring <= 5; ++ring)
-    {
-        for (int dy = -ring; dy <= ring; ++dy)
-        {
-            for (int dx = -ring; dx <= ring; ++dx)
-            {
-                const cc::IVec2 tile{ want.x + dx, want.y + dy };
-                if (occ.CanEnter(map, tile, footprintW, footprintH, self, selfGen))
-                {
-                    return tile;
-                }
-            }
-        }
-    }
+
+	for (int ring = 1; ring <= 5; ring++)
+	{
+		std::set<std::vector<int>> adjacentTiles;
+		for (int i = 0; i <= ring; i++)
+		{
+			int reverse_i = ring - i;
+			adjacentTiles.insert({ want.x + i, want.y + reverse_i });
+			adjacentTiles.insert({ want.x - i, want.y - reverse_i });
+			adjacentTiles.insert({ want.x - i, want.y + reverse_i });
+			adjacentTiles.insert({ want.x + i, want.y - reverse_i });
+		}
+
+		for (const std::vector<int>& tile : adjacentTiles)
+		{
+			if (occ.CanEnter(map, { tile[0], tile[1] }, footprintW, footprintH, self, selfGen))
+			{
+				return { tile[0], tile[1] };
+			}
+		}
+	}
+
     return want;
 }
 
