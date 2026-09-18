@@ -48,7 +48,16 @@ Cleanup: repo-wide grep shows nothing includes any `extras-c` header
 (`ray_collision_2d.h`, cameras remain available). `DataRoot` tests green
 (6 checks, 0 failures). Commit: `premake5.lua` + this file.
 
-## Phase 3 — `reasings` sweep: (pending)
+## Phase 3 — `reasings` sweep: NO ACTION (verified)
+
+Repo-wide grep: `Ease*` used exactly once (`Menu.h:137` `EaseQuadOut`
+fade); zero `Lerp`/`Vector2Lerp` calls in `src/` (other hits are
+sprite-frame `animations` data and `between` comments). `Shake.h`
+is continuous per-frame linear decay (`trauma -= rate*dt`), not a
+fixed-duration tween — forcing it into `EaseXxx(t,b,c,d)` would change
+feel, not reduce code. `GameCamera` zoom steps instantly (`*1.125`,
+no smoothing to replace); `Pings` has no fade math. No source change.
+Commit: this file.
 
 ## Phase 4 — `rres` packaging: (pending)
 
