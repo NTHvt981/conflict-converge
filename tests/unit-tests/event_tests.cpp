@@ -90,4 +90,43 @@ void RunEventTests()
     CC_CHECK(seen[2] == EventType::MatchPaused);
     CC_CHECK(seen[3] == EventType::ProductionOrdered);
     CC_CHECK(seen[4] == EventType::Victory);
+
+    // --- re-entrant Subscribe during Dispatch is safe ---
+    // A handler that subscribes mid-dispatch reallocates the listener
+    // vector; iterating the live vector would be UB (checked iterators
+    // abort in Debug). Snapshot semantics: the newcomer runs from the
+    // NEXT dispatch, the in-flight one completes untouched.
+    EventDispatcher reentrant;
+    std::vector<std::string> order;
+    reentrant.Subscribe(EventType::MenuAction, [&](const Event &) {
+        order.push_back("host");
+        reentrant.Subscribe(EventType::MenuAction,
+                            [&](const Event &) { order.push_back("guest"); });
+    });
+    Event ping;
+    ping.type = EventType::MenuAction;
+    reentrant.Dispatch(ping);
+    CC_CHECK(order.size() == 1);
+    CC_CHECK(order[0] == "host");
+    reentrant.Dispatch(ping);
+    CC_CHECK(order.size() == 3);
+    CC_CHECK(order[1] == "host");
+    CC_CHECK(order[2] == "guest");
+
+    // --- stress: many mid-dispatch subscriptions force reallocations ---
+    EventDispatcher storm;
+    int fired = 0;
+    storm.Subscribe(EventType::Victory, [&](const Event &) {
+        ++fired;
+        for (int i = 0; i < 64; ++i)
+        {
+            storm.Subscribe(EventType::Victory, [&](const Event &) { ++fired; });
+        }
+    });
+    Event boom;
+    boom.type = EventType::Victory;
+    storm.Dispatch(boom); // must not crash; only the host ran
+    CC_CHECK(fired == 1);
+    storm.Dispatch(boom); // host + 64 guests, each guest adds 64 more (unrun)
+    CC_CHECK(fired == 66);
 }

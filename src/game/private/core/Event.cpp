@@ -14,7 +14,11 @@ void EventDispatcher::Dispatch(const Event &event) const
     {
         return;
     }
-    for (const Handler &handler : it->second)
+    // Snapshot: handlers may re-entrantly Subscribe/Clear, reallocating (or
+    // emptying) the live vector mid-iteration. Re-entrant changes apply to
+    // the next Dispatch, never the in-flight one.
+    const std::vector<Handler> handlers = it->second;
+    for (const Handler &handler : handlers)
     {
         handler(event);
     }

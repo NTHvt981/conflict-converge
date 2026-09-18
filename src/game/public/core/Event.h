@@ -44,6 +44,8 @@ public:
     // Register a handler invoked for every Dispatch of the given type.
     void Subscribe(EventType type, Handler handler);
     // Invoke all handlers registered for event.type, in subscription order.
+    // Snapshot semantics: re-entrant Subscribe/Clear affects the next
+    // Dispatch, never the in-flight one.
     void Dispatch(const Event &event) const;
     // Drop all subscriptions (teardown / test isolation).
     void Clear();
