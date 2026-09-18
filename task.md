@@ -107,4 +107,26 @@ Flips only if the team wants Tiled as a visual authoring tool — then
 `raytilemap` slots in as tile renderer, markers/editor stay custom.
 Commit: this file.
 
-## Phase 6 — `rlImGui` editor-only: (pending)
+## Phase 6 — `rlImGui` editor-only: DECLINED (no requirement, additive)
+
+Inspected `tools/unit_editor` (`main.cpp` 40 lines + `unit_editor.*`
+~330 lines): a working raygui-based tool sharing only data-layer + art
+TUs. The plan names no missing panel ("whatever inspector/debug panel
+is wanted there first") — there is no requirement to implement.
+Cost of proceeding anyway: vendor Dear ImGui (transitive dep, needs
+its own static-lib premake project like `raylib-static`) + `rlImGui`
+bridge + a second UI framework in the tool, all ADDITIVE. Nothing in
+`src/` gets deleted; the in-game HUD (`Hud.cpp` raygui) is explicitly
+out of scope per the plan itself. Marked low-priority/anytime there —
+with no named feature and a reduce-src/ goal, the correct call is not
+now. Revisit if the editor outgrows raygui (docking, complex
+inspectors). Commit: this file.
+
+## Bottom line
+
+All 6 phases executed in order, one commit each. Net `src/` change:
+-4 dead includedirs (`premake5.lua`); `src/` untouched otherwise.
+Finding: the custom code (settings format + hotkey migration, `PickDataRoot`
+semantics, marker-rich map format + editor, trauma-decay shake) is
+load-bearing — the surveyed libs mismatch on format or semantics everywhere
+it matters. Only `extras-c` cleanup survived contact with the code.
