@@ -77,6 +77,14 @@ private:
     // (clamped, minimap poked). Enter via WatchLastReplay.
     void StepReplay(int dir);
     bool WatchLastReplay();
+    // H6 decomposition of Update (each verbatim-extracted, no behavior
+    // change): input dispatch, sim tick, menu-branch draw, world draw,
+    // HUD/overlay draw.
+    void DispatchPlayingInput();
+    void StepSimulation(float dt);
+    void DrawMenuBranch(int screenWidth, int screenHeight);
+    void DrawWorld();
+    void DrawHudAndOverlays(int screenWidth, int screenHeight);
 
     // Former boot-level locals in main, same order.
     Audio audio;
