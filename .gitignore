@@ -5,3 +5,4 @@ deps/
 AGENTS.md
 **.ccpb
 test_sandbox/
+.clean/
