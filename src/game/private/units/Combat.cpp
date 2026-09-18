@@ -16,13 +16,8 @@ float Effectiveness(DamageType dealt, ArmorType armor)
     return kMatrix[static_cast<int>(dealt)][static_cast<int>(armor)];
 }
 
-float ResolveAttack(Unit &attacker, Unit &defender, AttackContext context)
+float ResolveAttack(Unit &attacker, Unit &defender)
 {
-    if (context == AttackContext::Crush && IsCrushNegated(attacker.type, defender.type))
-    {
-        attacker.cooldown = attacker.cooldownTime; // the attempt still cycles
-        return 0.0f;
-    }
     const float effective = static_cast<float>(attacker.attackPower) *
                             Effectiveness(attacker.damageType, defender.armorType);
     defender.health -= effective;
@@ -39,14 +34,6 @@ bool IsVehicleHull(UnitType attackerType)
 {
     return attackerType == UnitType::IFV || attackerType == UnitType::Artillery ||
            attackerType == UnitType::LightTank || attackerType == UnitType::HeavyTank;
-}
-
-bool IsCrushNegated(UnitType attackerType, UnitType defenderType)
-{
-    const bool vehicleAttacker = IsVehicleHull(attackerType);
-    const bool footDefender = defenderType == UnitType::Infantry ||
-                              defenderType == UnitType::AntiArmorInfantry || defenderType == UnitType::Engineer;
-    return vehicleAttacker && footDefender;
 }
 
 float ResolveBuildingAttack(Unit &attacker, Building &building)
@@ -84,7 +71,7 @@ void ResolveGroundAttack(Registry &registry, Unit &attacker, Vector2 pos)
     }
     if (Unit *defender = registry.Get<Unit>(best))
     {
-        ResolveAttack(attacker, *defender, AttackContext::Direct);
+        ResolveAttack(attacker, *defender);
     }
 }
 

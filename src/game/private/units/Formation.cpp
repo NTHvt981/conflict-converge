@@ -3,11 +3,98 @@
 #include "Pathfinder.h" // IssuePathOrder, IssuePathOrderFootprint
 #include "TileMap.h"
 
+#include <algorithm>
 #include <cmath>
 #include <numeric> // std::accumulate
+#include <unordered_map>
 
 namespace formation
 {
+
+namespace
+{
+struct TileHash
+{
+    std::size_t operator()(cc::IVec2 tile) const
+    {
+        return (static_cast<std::size_t>(static_cast<std::uint32_t>(tile.x)) * 73856093u) ^
+               (static_cast<std::size_t>(static_cast<std::uint32_t>(tile.y)) * 19349663u);
+    }
+};
+
+// Deadlock fix (see plans/StackedOrderDeadlock_Plan.md): units that share
+// their CURRENT anchor tile at order-issue time would otherwise all try to
+// step off that tile at once, each blocking the others until the retry
+// budget silently cancels the order. Group units by current anchor tile
+// once, up front, so IssueFormationMoveFP/IssueLineFormationMoveFP can
+// stagger every group member but one.
+std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> GroupByAnchor(
+    Registry &registry, const std::vector<Entity> &units)
+{
+    std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> groups;
+    for (Entity id : units)
+    {
+        if (const Unit *unit = registry.Get<Unit>(id))
+        {
+            groups[cc::WorldToTile(cc::ToGlm(unit->position))].push_back(id);
+        }
+    }
+    return groups;
+}
+
+// If `unit` shares its start tile with another unit in this same order
+// (per `groups`), every member but the lowest-Entity "keeper" gets an
+// immediate escape hop to the nearest enterable tile away from the shared
+// origin, with its real slot queued behind it (OnOrderFinished dispatches
+// the queue entry automatically on arrival) -- so it starts moving this
+// frame instead of contesting the shared tile with its stack-mate and
+// risking a silent cancel a couple seconds later. Returns true if it
+// staggered (caller must not also issue the real order for this unit).
+bool StaggerIfCoLocated(
+    Registry &registry, Unit &unit, Entity self, const TileMap &map, const OccupancyGrid &occ,
+    const std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> &groups,
+    std::vector<cc::IVec2> &claimedEscapeTiles, Vector2 realSlotWorld)
+{
+    const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(unit.position));
+    const auto it = groups.find(anchor);
+    if (it == groups.end() || it->second.size() < 2)
+    {
+        return false; // not sharing a tile with anyone else in this order
+    }
+    Entity keeper = it->second[0];
+    for (Entity id : it->second)
+    {
+        if (id < keeper)
+        {
+            keeper = id;
+        }
+    }
+    if (self == keeper)
+    {
+        return false; // the keeper gets its real order directly, unchanged
+    }
+    const std::uint32_t selfGen = registry.Generation(self);
+    cc::IVec2 escape = NearestEnterableTile(map, occ, anchor, unit.footprintWidth,
+                                            unit.footprintHeight, self, selfGen);
+    // Same-frame guard: a 3rd+ member of this exact stack must not be handed
+    // an escape tile another member already claimed a moment ago in this
+    // same loop (their own occupancy reservations don't exist yet -- none
+    // of them have moved).
+    for (int guard = 0; guard < 8 && std::find(claimedEscapeTiles.begin(),
+                                               claimedEscapeTiles.end(),
+                                               escape) != claimedEscapeTiles.end();
+         ++guard)
+    {
+        escape = NearestEnterableTile(map, occ, escape + cc::IVec2(1, 0), unit.footprintWidth,
+                                      unit.footprintHeight, self, selfGen);
+    }
+    claimedEscapeTiles.push_back(escape);
+    IssuePathOrderFootprint(unit, map, occ, cc::ToRaylib(cc::TileToWorld(escape.x, escape.y)),
+                           self, selfGen);
+    unit.orderQueue.push_back(QueuedOrder{ QueuedOrderKind::Move, realSlotWorld, {}, kInvalidEntity });
+    return true;
+}
+} // namespace
 
 std::vector<cc::IVec2> FormationOffsets(std::size_t count)
 {
@@ -89,6 +176,9 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
     }
     const std::vector<cc::IVec2> offsets = FormationOffsetsFP(units.size(), cellSize);
     const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(worldTarget));
+    const std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> groups =
+        GroupByAnchor(registry, units);
+    std::vector<cc::IVec2> claimedEscapeTiles;
     for (std::size_t i = 0; i < units.size(); ++i)
     {
         Unit *unit = registry.Get<Unit>(units[i]);
@@ -113,9 +203,17 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
         const cc::IVec2 slot = NearestEnterableTile(
             map, occ, anchor + offsets[i], unit->footprintWidth, unit->footprintHeight,
             units[i], registry.Generation(units[i]));
-        IssuePathOrderFootprint(*unit, map, occ,
-                                cc::ToRaylib(cc::TileToWorld(slot.x, slot.y)),
-                                units[i], registry.Generation(units[i]));
+        const Vector2 slotWorld = cc::ToRaylib(cc::TileToWorld(slot.x, slot.y));
+        // Deadlock fix: units still sharing a start tile get staggered
+        // instead of all issued a real order that would contest it (see
+        // StaggerIfCoLocated / plans/StackedOrderDeadlock_Plan.md).
+        if (StaggerIfCoLocated(registry, *unit, units[i], map, occ, groups, claimedEscapeTiles,
+                               slotWorld))
+        {
+            continue;
+        }
+        IssuePathOrderFootprint(*unit, map, occ, slotWorld, units[i],
+                               registry.Generation(units[i]));
     }
 }
 
@@ -165,6 +263,9 @@ void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &uni
             firstSpeed = false;
         }
     }
+    const std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> groups =
+        GroupByAnchor(registry, units);
+    std::vector<cc::IVec2> claimedEscapeTiles;
     for (std::size_t i = 0; i < units.size(); ++i)
     {
         Unit *unit = registry.Get<Unit>(units[i]);
@@ -183,9 +284,15 @@ void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &uni
         const cc::IVec2 slot = NearestEnterableTile(
             map, occ, want, unit->footprintWidth, unit->footprintHeight, units[i],
             registry.Generation(units[i]));
-        IssuePathOrderFootprint(*unit, map, occ,
-                                cc::ToRaylib(cc::TileToWorld(slot.x, slot.y)),
-                                units[i], registry.Generation(units[i]));
+        const Vector2 slotWorld = cc::ToRaylib(cc::TileToWorld(slot.x, slot.y));
+        // Deadlock fix: see IssueFormationMoveFP above.
+        if (StaggerIfCoLocated(registry, *unit, units[i], map, occ, groups, claimedEscapeTiles,
+                               slotWorld))
+        {
+            continue;
+        }
+        IssuePathOrderFootprint(*unit, map, occ, slotWorld, units[i],
+                               registry.Generation(units[i]));
     }
 }
 

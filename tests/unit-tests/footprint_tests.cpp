@@ -449,39 +449,6 @@ void RunFootprintTests()
         CC_CHECK(frames < 600);
     }
 
-    // --- SeparateUnits: 2x2 bodies relax to a 64px gap ---
-    {
-        Registry crowded;
-        for (int i = 0; i < 2; ++i)
-        {
-            const Entity e = crowded.Create();
-            Unit tank;
-            tank.type = UnitType::HeavyTank;
-            ApplyBaseStats(tank);
-            tank.position = cc::ToRaylib(cc::TileToWorld(4, 4));
-            tank.health = 100.0f;
-            crowded.Add(e, tank);
-        }
-        int frames = 0;
-        float dist = 0.0f;
-        while (frames < 300)
-        {
-            SeparateUnits(crowded, 1.0f / 60.0f);
-            ++frames;
-            std::vector<cc::Vec2> centers;
-            crowded.Each<Unit>([&](Entity, const Unit &u) {
-                centers.push_back(cc::ToGlm(u.position) + cc::Vec2(48.0f, 48.0f));
-            });
-            dist = glm::length(centers[0] - centers[1]);
-            if (dist >= 64.0f)
-            {
-                break;
-            }
-        }
-        CC_CHECK(dist >= 64.0f);
-        CC_CHECK(frames < 300);
-    }
-
     // --- Blocked start still paths: units live on building tiles ---
     // Spawns, rally points, and harvesters sit inside/on footprints; the
     // search must route out of them (StepToward's step-out allowance covers

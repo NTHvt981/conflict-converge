@@ -185,16 +185,21 @@ void RunSkirmishTests()
         Harness sand;
         CC_CHECK(BuildSandbox(sand.world, proto));
         CC_CHECK(sand.map.Width() == 32 && sand.map.Height() == 32);
-        // Exactly one unit: a team-0 PrototypeInfantry (infantry logic).
+        // 6 units: all team-0 PrototypeInfantry (infantry logic), stacked at
+        // the same spawn tile (BuildSandbox computes the free tile once and
+        // reuses it for every SpawnPrepaid call -- separation must untangle
+        // them, see PrototypeSandboxMovement tests).
         int units = 0;
-        bool protoFound = false;
+        int protoCount = 0;
         sand.registry.Each<Unit>([&](Entity, const Unit &unit) {
             ++units;
-            protoFound = protoFound || (unit.type == UnitType::PrototypeInfantry &&
-                                        unit.teamID == 0);
+            if (unit.type == UnitType::PrototypeInfantry && unit.teamID == 0)
+            {
+                ++protoCount;
+            }
         });
-        CC_CHECK(units == 1);
-        CC_CHECK(protoFound);
+        CC_CHECK(units == 6);
+        CC_CHECK(protoCount == 6);
         // No buildings, no enemy side, no funds, no queue.
         int buildings = 0;
         sand.registry.Each<Building>([&](Entity, const Building &) { ++buildings; });

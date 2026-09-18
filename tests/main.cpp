@@ -52,7 +52,6 @@ void RunProductionTests();
 void RunCombatTests();
 void RunHitboxTests();
 void RunAttackPhaseTests();
-void RunCrushTests();
 void RunFeedbackTests();
 void RunIntegrationTests();
 void RunPerfTests();
@@ -71,6 +70,10 @@ void RunFootprintTests();
 void RunSpriteDataTests();
 void RunUnitConfigTests();
 void RunMovementStallTests();
+void RunUnitStackResolutionTests();
+void RunPrototypeSandboxMovementTests();
+void RunFormationStackMoveTests();
+void RunFormationDeadlockFixTests();
 
 namespace
 {
@@ -124,7 +127,6 @@ const Suite kSuites[] = {
     { "Combat", RunCombatTests },
     { "Hitbox", RunHitboxTests },
     { "AttackPhase", RunAttackPhaseTests },
-    { "Crush", RunCrushTests },
     { "Feedback", RunFeedbackTests },
     { "Integration", RunIntegrationTests },
     { "Perf", RunPerfTests },
@@ -143,6 +145,10 @@ const Suite kSuites[] = {
     { "SpriteData", RunSpriteDataTests },
     { "UnitConfig", RunUnitConfigTests },
     { "MovementStall", RunMovementStallTests },
+    { "UnitStackResolution", RunUnitStackResolutionTests },
+    { "PrototypeSandboxMovement", RunPrototypeSandboxMovementTests },
+    { "FormationStackMove", RunFormationStackMoveTests },
+    { "FormationDeadlockFix", RunFormationDeadlockFixTests },
 };
 
 bool MatchesFilter(const char *name, const std::vector<std::string> &filters)

@@ -1,11 +1,10 @@
-// Regression tests for the "units stuck when moving" bug report. Both
-// scenarios stress the split between grid occupancy and the continuous-space
-// SeparateUnits pass: two units converging close enough for SeparateUnits to push them apart *before* either crosses
-// a tile boundary can wedge into a stable equilibrium that StepToward's own
-// BlockedUnit check never sees (nothing ever tried to enter an occupied
-// tile), so the existing blocked-retry/cancel budget never engages either.
-// RunUnitMovementFrame's separation-stall detection (Unit.cpp) closes that
-// gap; these tests fail without it.
+// Regression tests for the "units stuck when moving" bug report: converging
+// units must always resolve (arrive or cleanly cancel) within budget, never
+// freeze forever. Both scenarios rely on ordinary occupancy-grid blocking
+// (StepToward's CanEnter -> StepResult::BlockedUnit -> TryBlockedRetry's
+// wait/replan/cancel budget), not on any continuous-space separation pass
+// (removed -- see plans/UnitStackResolution_Plan.md -- stacking is now
+// resolved separately, per exact anchor tile, by ResolveStackedUnits).
 //   1. A head-on corridor swap through a single-tile-wide gap. The corridor
 //      is a dead end (no room to yield), so completing the swap isn't
 //      achievable -- the correct fix outcome is a clean cancel within

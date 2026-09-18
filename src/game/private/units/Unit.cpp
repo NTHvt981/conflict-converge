@@ -9,8 +9,9 @@
 #include "Building.h"  // Repair targets include structures.
 #include "UnitStats.h" // Max-health lookup for repair validation.
 
+#include <algorithm> // std::find: ResolveStackedUnits' same-frame claim guard
 #include <cmath> // atan2 for FacingFromVelocity
-#include <utility> // std::pair: RunUnitMovementFrame's pre-move position snapshot
+#include <unordered_map> // ResolveStackedUnits' group-by-anchor-tile map
 
 // Stub: unit behavior, AI, and factory arrive in.
 
@@ -984,8 +985,6 @@ void Arrive(Unit &unit, cc::Vec2 where)
     unit.state = UnitState::Idle;
     unit.blockedTime = 0.0f;
     unit.blockedRepaths = 0;
-    unit.separationStallTime = 0.0f;
-    unit.separationStallRepaths = 0;
     unit.speedCapPixelsPerSec = -1.0f; // QoL: arrival drops the group cap
 }
 
@@ -999,8 +998,6 @@ void CancelAtBlocked(Unit &unit)
     unit.state = UnitState::Idle;
     unit.blockedTime = 0.0f;
     unit.blockedRepaths = 0;
-    unit.separationStallTime = 0.0f;
-    unit.separationStallRepaths = 0;
     unit.speedCapPixelsPerSec = -1.0f; // QoL: cancel drops the group cap
     SnapUnitToTile(unit);
 }
@@ -1014,10 +1011,10 @@ void CancelAtBlocked(Unit &unit)
 constexpr float kBlockedRetryDelaySeconds = 0.5f;
 constexpr int kMaxBlockedRepaths = 3;
 
-// Shared by both blockedTime/blockedRepaths (StepResult::BlockedUnit) and
-// separationStallTime/separationStallRepaths (ReportSeparationStall) so the
-// two failure modes get the same wait/replan/cancel behavior without
-// sharing a counter (see the field comment on Unit::separationStallTime).
+// Takes the budget counters by reference (rather than reading
+// unit.blockedTime/blockedRepaths directly) so a future second caller with
+// its own counters can reuse this wait/replan/cancel behavior without
+// sharing a counter.
 bool TryBlockedRetryWithBudget(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
                                std::uint32_t selfGen, float dtSeconds, float &blockedTime,
                                int &blockedRepaths)
@@ -1178,91 +1175,165 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
     }
 }
 
-void SeparateUnits(Registry &registry, float dtSeconds)
+namespace
 {
-    // Body half-extent scales with the footprint (16px per tile): 1x1 keeps
-    // the legacy 32px body (hitbox), 2x2 vehicles push as 64px bodies
-    // so crowds of mixed sizes relax instead of interpenetrating. The
-    // per-pair push is capped so crowds relax over frames, not teleport.
-    constexpr float kPushPerSecond = 96.0f;
-    if (dtSeconds <= 0.0f)
+struct TileHash
+{
+    std::size_t operator()(cc::IVec2 tile) const
     {
-        return;
+        return (static_cast<std::size_t>(static_cast<std::uint32_t>(tile.x)) * 73856093u) ^
+               (static_cast<std::size_t>(static_cast<std::uint32_t>(tile.y)) * 19349663u);
     }
-    struct Item
-    {
-        Unit *unit = nullptr;
-        float half = 16.0f;
-    };
-    std::vector<Item> items;
-    registry.Each<Unit>([&](Entity, Unit &unit) {
+};
+} // namespace
+
+void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &occ)
+{
+    // Group living units by anchor tile -- O(n), replacing the O(n^2)
+    // all-pairs scan the old continuous-space push used to run every frame.
+    std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> byTile;
+    registry.Each<Unit>([&](Entity id, Unit &unit) {
         if (unit.health > 0.0f)
         {
-            const int dim = unit.footprintWidth > unit.footprintHeight ? unit.footprintWidth
-                                                                       : unit.footprintHeight;
-            items.push_back({ &unit, 16.0f * static_cast<float>(dim > 0 ? dim : 1) });
+            byTile[cc::WorldToTile(cc::ToGlm(unit.position))].push_back(id);
         }
     });
-    const float cap = kPushPerSecond * dtSeconds;
-    for (std::size_t i = 0; i < items.size(); ++i)
+
+    // Same-frame cross-stack guard: a destination already claimed by an
+    // earlier stack in this same call must not be handed to a later one.
+    // Purely local/ephemeral -- never touches OccupancyGrid's persistent
+    // reservation state.
+    std::vector<cc::IVec2> claimedThisFrame;
+
+    for (auto &[tile, occupants] : byTile)
     {
-        for (std::size_t j = i + 1; j < items.size(); ++j)
+        if (occupants.size() < 2)
         {
-            // Body spans [pos+16, pos+16+2*half]; center accordingly.
-            const cc::Vec2 a = cc::ToGlm(items[i].unit->position) +
-                               cc::Vec2(16.0f + items[i].half, 16.0f + items[i].half);
-            const cc::Vec2 b = cc::ToGlm(items[j].unit->position) +
-                               cc::Vec2(16.0f + items[j].half, 16.0f + items[j].half);
-            const cc::Vec2 delta = a - b;
-            const float dist = glm::length(delta);
-            const float minDist = items[i].half + items[j].half;
-            if (dist >= minDist)
+            continue;
+        }
+        // Per-stack gate. Two, and only two, situations justify touching
+        // this stack (see plans/StackedOrderDeadlock_Plan.md); anything
+        // else -- including a MIX of idle and healthily-ordered occupants,
+        // e.g. one unit that simply already arrived at its own real
+        // destination while another is still healthily marching through
+        // the same tile on its way to somewhere else nearby -- must be left
+        // completely alone, exactly like the pre-Phase-2 code that treated
+        // ANY occupant having an order as reason enough to skip the whole
+        // stack. (An earlier cut of this fix used "anyone idle OR anyone
+        // deadlocked" as the trigger, which wrongly grabbed the
+        // already-arrived idle unit's healthy neighbor and rerouted it away
+        // from its own real destination -- confirmed by
+        // formation_deadlock_fix_tests.cpp catching it.)
+        //   1. Every occupant is idle (no order at all) -- the original
+        //      base case this function was built for (e.g. a freshly
+        //      production-queued squad still sitting on the rally tile).
+        //   2. Not every occupant is idle, but at least one occupant's
+        //      order is deadlocked right now (blockedRepaths maxed out AND
+        //      blockedTime > 0, i.e. currently mid-block with no retries
+        //      left -- blockedRepaths alone isn't enough, since a
+        //      successful repath leaves that counter maxed forever even
+        //      once the unit is moving fine again).
+        //
+        // Whoever currently holds the tile's OccupancyGrid reservation (at
+        // most one of the group, per its single-owner model -- see
+        // ReserveFootprintOwned's partial-reservation contract) must NEVER
+        // be the one picked to relocate, in ANY category: NearestEnterableTile
+        // excludes "self" from its own occupancy check, so relocating the
+        // actual reservation holder would make the tile read as unoccupied
+        // (nobody else is registered as being there, even though other
+        // occupants are physically standing on it) and hand back the same
+        // tile unchanged. Since at most one occupant can ever be the
+        // holder, and this stack has >= 2 occupants, a non-holder always
+        // exists to pick instead.
+        const OccEntry holder = occ.GetUnit(tile);
+        bool allIdle = true;
+        bool anyDeadlockedNow = false;
+        Entity idleNonHolderPick = kInvalidEntity;
+        Entity idleFallbackPick = kInvalidEntity; // idle but is the holder
+        Entity deadlockedNonHolderPick = kInvalidEntity;
+        Entity anyNonHolderPick = kInvalidEntity;
+        for (Entity id : occupants)
+        {
+            const Unit *unit = registry.Get<Unit>(id);
+            if (unit == nullptr)
             {
                 continue;
             }
-            // Exact stacks split along +x (deterministic, no RNG).
-            const cc::Vec2 dir = dist > 0.001f ? delta / dist : cc::Vec2(1.0f, 0.0f);
-            float push = (minDist - dist) / 2.0f;
-            if (push > cap)
+            const bool isHolder =
+                holder.entity == id && holder.generation == registry.Generation(id);
+            const bool hasOrder = unit->hasMoveOrder || unit->hasPath;
+            const bool isDeadlockedNow =
+                hasOrder && unit->blockedRepaths >= kMaxBlockedRepaths && unit->blockedTime > 0.0f;
+            if (hasOrder)
             {
-                push = cap;
+                allIdle = false;
+                if (isDeadlockedNow)
+                {
+                    anyDeadlockedNow = true;
+                }
             }
-            items[i].unit->position =
-                cc::ToRaylib(cc::ToGlm(items[i].unit->position) + dir * push);
-            items[j].unit->position =
-                cc::ToRaylib(cc::ToGlm(items[j].unit->position) - dir * push);
-            // Overrun: enemies in body contact trade crush hits.
-            // Crush is vehicle contact (AttackContext docs): only hulls
-            // attempt it — foot-vs-foot stays bloodless as before, and
-            // vehicle-on-foot is negated inside ResolveAttack (the
-            // documented rule, previously dead code: no production path
-            // passed Crush). Gated on each attacker's cooldown so contact
-            // can't machine-gun outside the fire cycle.
-            if (items[i].unit->teamID != items[j].unit->teamID)
+            if (!isHolder && (anyNonHolderPick == kInvalidEntity || id < anyNonHolderPick))
             {
-                if (items[i].unit->health > 0.0f && IsVehicleHull(items[i].unit->type) &&
-                    items[i].unit->cooldown <= 0.0f)
+                anyNonHolderPick = id;
+            }
+            if (!hasOrder)
+            {
+                if (idleFallbackPick == kInvalidEntity || id < idleFallbackPick)
                 {
-                    ResolveAttack(*items[i].unit, *items[j].unit, AttackContext::Crush);
+                    idleFallbackPick = id;
                 }
-                if (items[j].unit->health > 0.0f && IsVehicleHull(items[j].unit->type) &&
-                    items[j].unit->cooldown <= 0.0f)
+                if (!isHolder && (idleNonHolderPick == kInvalidEntity || id < idleNonHolderPick))
                 {
-                    ResolveAttack(*items[j].unit, *items[i].unit, AttackContext::Crush);
+                    idleNonHolderPick = id;
                 }
+            }
+            if (isDeadlockedNow && !isHolder &&
+                (deadlockedNonHolderPick == kInvalidEntity || id < deadlockedNonHolderPick))
+            {
+                deadlockedNonHolderPick = id;
             }
         }
-    }
-}
+        Entity pick = kInvalidEntity;
+        if (allIdle)
+        {
+            pick = (idleNonHolderPick != kInvalidEntity) ? idleNonHolderPick : idleFallbackPick;
+        }
+        else if (anyDeadlockedNow)
+        {
+            // Prefer relocating the deadlocked unit itself; if it happens
+            // to be the reservation holder, relocate a different non-holder
+            // instead (even one with a healthy order) -- that alone frees
+            // the tile for the deadlocked unit's own next attempt to
+            // succeed, without ever needing to touch its order directly.
+            pick = (deadlockedNonHolderPick != kInvalidEntity) ? deadlockedNonHolderPick
+                                                               : anyNonHolderPick;
+        }
+        if (pick == kInvalidEntity)
+        {
+            continue;
+        }
 
-void ReportSeparationStall(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
-                           std::uint32_t selfGen, float dtSeconds)
-{
-    if (!TryBlockedRetryWithBudget(unit, map, occ, self, selfGen, dtSeconds,
-                                   unit.separationStallTime, unit.separationStallRepaths))
-    {
-        CancelAtBlocked(unit);
-        OnOrderCancelled(unit);
+        Unit *unit = registry.Get<Unit>(pick);
+        cc::IVec2 dest = NearestEnterableTile(map, occ, tile, unit->footprintWidth,
+                                              unit->footprintHeight, pick,
+                                              registry.Generation(pick));
+        // If another stack resolved earlier in this same call already
+        // claimed that tile, perturb the search origin and try again.
+        // Bounded: on repeated collision, accept it -- a resulting overlap
+        // just becomes a new detected stack on a later frame.
+        for (int guard = 0; guard < 8 &&
+                            std::find(claimedThisFrame.begin(), claimedThisFrame.end(), dest) !=
+                                claimedThisFrame.end();
+             ++guard)
+        {
+            dest = NearestEnterableTile(map, occ, dest + cc::IVec2(1, 0), unit->footprintWidth,
+                                        unit->footprintHeight, pick,
+                                        registry.Generation(pick));
+        }
+        claimedThisFrame.push_back(dest);
+
+        IssuePathOrderFootprint(*unit, map, occ, cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)),
+                               pick, registry.Generation(pick));
     }
 }
 
@@ -1272,10 +1343,8 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
     // Reserve each unit's current anchor tile before movement, so
     // StepToward's CanEnter check prevents two units from entering the same
     // tile. Ownership-checked: a shoved unit never wipes or steals another
-    // unit's reservation, it just goes unreserved until separation pushes it
-    // clear. Snapshot pre-move positions in the same pass for the
-    // separation-stall check below.
-    std::vector<std::pair<Entity, Vector2>> preMovePositions;
+    // unit's reservation, it just goes unreserved until ResolveStackedUnits
+    // relocates it clear.
     registry.Each<Unit>([&](Entity id, Unit &unit) {
         if (unit.health > 0.0f)
         {
@@ -1284,11 +1353,10 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
                                       registry.Generation(id));
             // Count discarded deliberately: overlap is routine in crowds
             // (see above); a partially reserved unit just goes unreserved
-            // until separation pushes it clear.
+            // until ResolveStackedUnits relocates it clear.
             (void)occ.ReserveFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight, id,
                                             registry.Generation(id));
         }
-        preMovePositions.push_back({ id, unit.position });
     });
 
     // QoL overkill protection: sum committed damage (mid-WindUp/Recover
@@ -1307,43 +1375,8 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
         UpdateUnit(id, registry, map, dtSeconds, fog, &occ, &reservedDamage);
     });
 
-    // Overlap avoidance: fan out stacked bodies after the AI driver.
-    SeparateUnits(registry, dtSeconds);
-
-    // Separation-stall detection: a unit whose StepToward call this frame
-    // reported real forward progress (Stepped, non-zero velocity) but whose
-    // net displacement for the whole frame came out near zero was pushed
-    // back by SeparateUnits before it ever crossed a tile boundary. That
-    // failure mode never touches CanEnter, so TryBlockedRetry's normal
-    // trigger (StepResult::BlockedUnit) never fires on its own.
-    constexpr float kStallProgressFraction = 0.1f;
-    for (const auto &[id, before] : preMovePositions)
-    {
-        Unit *unit = registry.Get<Unit>(id);
-        if (unit == nullptr || unit->health <= 0.0f)
-        {
-            continue;
-        }
-        if (!unit->hasMoveOrder && !unit->hasPath)
-        {
-            continue;
-        }
-        if (unit->velocity.x == 0.0f && unit->velocity.y == 0.0f)
-        {
-            continue; // arrived this frame, or already caught by the normal block path
-        }
-        const float moved = glm::length(cc::ToGlm(unit->position) - cc::ToGlm(before));
-        const float expectedStep = EffectiveSpeed(*unit) * dtSeconds;
-        if (expectedStep > 0.0f && moved < expectedStep * kStallProgressFraction)
-        {
-            ReportSeparationStall(*unit, map, &occ, id, registry.Generation(id), dtSeconds);
-        }
-        else
-        {
-            // Real progress went through this frame: forgive any partial
-            // stall budget instead of letting it carry over indefinitely.
-            unit->separationStallTime = 0.0f;
-            unit->separationStallRepaths = 0;
-        }
-    }
+    // Exact-tile stacking (spawn/rally-point stacking): relocate one unit
+    // per stack after the AI driver. General adjacent-tile visual overlap is
+    // left alone -- only exact-tile stacks are acted on.
+    ResolveStackedUnits(registry, map, occ);
 }

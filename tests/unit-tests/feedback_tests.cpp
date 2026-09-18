@@ -52,20 +52,6 @@ void RunFeedbackTests()
         CC_CHECK(victim.lastDamageTaken == 5.0f);
     }
 
-    // --- negated crush leaves feedback untouched ---
-    {
-        Unit tank = MakeGun();
-        tank.type = UnitType::HeavyTank;
-        Unit foot;
-        foot.type = UnitType::Infantry;
-        foot.armorType = ArmorType::RUBBER;
-        foot.lastDamageTaken = 7.0f;
-        foot.hitFlashTime = 0.1f;
-        CC_CHECK(ResolveAttack(tank, foot, AttackContext::Crush) == 0.0f);
-        CC_CHECK(foot.lastDamageTaken == 7.0f);
-        CC_CHECK(foot.hitFlashTime == 0.1f);
-    }
-
     // --- zero-power hit cycles cooldown but shows no feedback ---
     {
         Unit gun = MakeGun(0.0f);

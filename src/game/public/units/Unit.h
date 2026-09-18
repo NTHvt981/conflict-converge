@@ -206,15 +206,6 @@ struct Unit
     // order cancels as before. Reset by every new order, arrival, and cancel.
     float blockedTime = 0.0f;
     int blockedRepaths = 0;
-    // Stall-fix: same wait/replan/cancel budget as blockedTime/blockedRepaths
-    // above, but tracked separately for ReportSeparationStall. A unit stuck
-    // in the SeparateUnits equilibrium keeps reporting StepResult::Stepped
-    // every frame (it never crosses a tile boundary), which unconditionally
-    // resets blockedTime to 0 -- sharing counters would erase this budget
-    // before it could ever reach the retry threshold. Reset alongside
-    // blockedTime/blockedRepaths by every new order, arrival, and cancel.
-    float separationStallTime = 0.0f;
-    int separationStallRepaths = 0;
 };
 
 // Snap a unit's world position to its tile's top-left corner
@@ -347,12 +338,6 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
                         OccupancyGrid *occ = nullptr, Entity self = 0,
                         std::uint32_t selfGen = 0);
 
-// Overlap avoidance pass: pushes living units whose footprint-sized bodies
-// intersect apart (half-overlap each, speed-capped per frame).
-// Deterministic (no RNG) so tests can assert exact spreads. Call once per
-// frame after the UpdateUnit loop; corpses are ignored.
-void SeparateUnits(Registry &registry, float dtSeconds);
-
 // Per-frame AI driver — Idle -> Moving -> Attacking with attack
 // cooldowns. Priority: explicit player orders (hasMoveOrder/hasPath) beat AI
 // engagement; otherwise the unit acquires, chases out-of-range
@@ -368,19 +353,20 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
                 const FogOfWar *fog = nullptr, OccupancyGrid *occ = nullptr,
                 const std::unordered_map<Entity, float> *reserved = nullptr);
 
-// Stall-fix: SeparateUnits' continuous-space push can undo a step that
-// StepToward already reported as successful (Stepped, non-zero velocity),
-// wedging two converging units apart just short of the tile boundary that
-// CanEnter would have gated. StepToward/TryBlockedRetry never see this --
-// nothing ever tried to enter an occupied tile -- so it needs its own hook.
-// Applies the same wait/replan/cancel budget as a normal transient
-// unit-block (TryBlockedRetry). No-op unless the unit has an active order.
-void ReportSeparationStall(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
-                           std::uint32_t selfGen, float dtSeconds);
+// Detects units sharing the exact same anchor tile (spawn/rally-point
+// stacking) and relocates one per stack per frame to the nearest tile another
+// unit can actually enter (footprint- and occupancy-aware) via a completely
+// ordinary footprint-aware move order -- no special per-unit state, just an
+// order like any other. Serialized per stack (a stack with a relocation
+// already in flight is left alone) so unrelated stacks elsewhere on the map
+// resolve independently. General adjacent-tile visual overlap (units close
+// but on different tiles) is left alone -- only exact-tile stacks are acted
+// on.
+void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &occ);
 
 // Full per-frame movement pipeline: occupancy pre-pass, per-unit AI/movement
-// driver, continuous-space separation, then separation-stall detection.
-// Extracted so the real game loop and tests drive units through the exact
-// same sequence and can't drift apart on ordering (see ReportSeparationStall).
+// driver, then stacked-unit relocation. Extracted so the real game loop and
+// tests drive units through the exact same sequence and can't drift apart on
+// ordering.
 void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
                           const FogOfWar *fog, float dtSeconds);

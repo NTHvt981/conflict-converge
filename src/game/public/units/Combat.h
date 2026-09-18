@@ -9,27 +9,20 @@ struct Building; // fwd-decl (Combat.cpp includes Building.h)
 
 // Damage resolution. Attackers deal typed damage (DamageType), defenders
 // resist by armor (ArmorType); the matrix scales raw attackPower into
-// effective damage. Anti-crush, phases, and hit feedback layer on top of
-// ResolveAttack — they never bypass it.
+// effective damage. Phases and hit feedback layer on top of ResolveAttack —
+// they never bypass it.
 
 // Multiplier for dealt damage against the given armor (placeholder C&C/CoH
 // flavor; retune pass adjusts).
 float Effectiveness(DamageType dealt, ArmorType armor);
 
 // Apply scaled damage to the defender and restart the attacker's cooldown.
-// Returns the effective damage dealt. Crush hits (contact/overrun, as
-// opposed to Direct fire) are negated against crush-protected foot units.
-// A landed hit (effective > 0) stamps the defender's feedback fields
-// (lastDamageTaken + hitFlashTime); negated/zero hits leave them untouched.
-enum class AttackContext
-{
-    Direct, // ranged/melee fire: full matrix damage
-    Crush   // vehicle contact: negated vs foot, matrix otherwise
-};
-
+// Returns the effective damage dealt. A landed hit (effective > 0) stamps the
+// defender's feedback fields (lastDamageTaken + hitFlashTime); a zero-damage
+// hit leaves them untouched.
 // Seconds a victim flashes after taking a hit (overlay + number).
 inline constexpr float kHitFlashDuration = 0.25f;
-float ResolveAttack(Unit &attacker, Unit &defender, AttackContext context = AttackContext::Direct);
+float ResolveAttack(Unit &attacker, Unit &defender);
 
 // Structural damage. Raw attackPower, no armor matrix (structures are
 // untyped): wrecks production so games terminate. Restarts the cooldown and
@@ -42,18 +35,15 @@ float ResolveBuildingAttack(Unit &attacker, Building &building);
 // ResolveAttack; empty ground is a clean miss (the attacker still cycled).
 void ResolveGroundAttack(Registry &registry, Unit &attacker, Vector2 pos);
 
-// Anti-crush rule. Vehicle hulls (IFV/Artillery/Light/HeavyTank)
-// cannot crush foot units (Infantry/AntiArmor/Engineer) — the overrun deals
-// no damage. Vehicle-vs-vehicle rams and foot-vs-anything crushes still use
-// the matrix.
+// Vehicle-hull classification (IFV/Artillery/Light/HeavyTank). Used by
+// Targeting's priority matrix (armor hunters prefer vehicle targets).
 bool IsVehicleHull(UnitType attackerType);
-bool IsCrushNegated(UnitType attackerType, UnitType defenderType);
 
 // 2D hitbox system. Every unit body is a 32x32 rect centered in its 64x64
 // tile (matches the placeholder art in main.cpp; real sprites' blocking
 // rects stay within the same box). Range checks stay circle-based;
-// hitboxes serve contact/area queries (crush negation, splash later) via
-// raylib's rect collision.
+// hitboxes serve contact/area queries (attack-ground's nearest-impact
+// search, splash later) via raylib's rect collision.
 
 // 32x32 body rect for a unit at its current position.
 Rectangle HitboxOf(const Unit &unit);
