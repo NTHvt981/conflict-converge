@@ -272,9 +272,13 @@ bool Decode(const std::string &payload, SavedWorld &out)
         b.state = static_cast<BuildingState>(in.state());
         // The whole footprint must sit inside the save's own map, not just
         // the anchor — downstream code indexes every footprint tile.
+        // Compared as tile > map - footprint: the old tile + footprint
+        // form signed-overflows on near-INT32_MAX tile_x from a crafted
+        // save, wrapping negative and passing the check. mapWidth/fp are
+        // small validated positives, so the subtraction cannot overflow.
         const cc::IVec2 fp = Footprint(b.type);
-        if (in.tile_x() < 0 || in.tile_y() < 0 || in.tile_x() + fp.x > out.mapWidth ||
-            in.tile_y() + fp.y > out.mapHeight)
+        if (in.tile_x() < 0 || in.tile_y() < 0 || in.tile_x() > out.mapWidth - fp.x ||
+            in.tile_y() > out.mapHeight - fp.y)
         {
             return false;
         }

@@ -14,6 +14,7 @@
 #include "UnitStats.h"
 #include "../../src/game/private/app/savegame.pb.h" // private/ is NOT on the test include path
 
+#include <cstdint> // INT32_MAX crafted-save probe
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -217,6 +218,33 @@ void RunSaveGameTests()
         std::error_code ec;
         std::filesystem::resize_file(path, 20, ec);
         CC_CHECK(!ec);
+    }
+    CC_CHECK(!LoadWorld(victimState, path));
+    CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
+
+    {
+        // Crafted save: building tile_x at INT32_MAX. The old
+        // `tile_x + fp.x > mapWidth` check signed-overflows and wraps
+        // negative, passing validation to smuggle an out-of-range tile.
+        cc::save::SaveGame crafted;
+        crafted.set_save_version(1);
+        crafted.mutable_map()->set_width(20);
+        crafted.mutable_map()->set_height(15);
+        for (int i = 0; i < 20 * 15; ++i)
+        {
+            crafted.mutable_map()->add_terrain(0);
+        }
+        cc::save::Building *evil = crafted.add_buildings();
+        evil->set_type(0);
+        evil->set_state(0);
+        evil->set_team(0);
+        evil->set_tile_x(INT32_MAX);
+        evil->set_tile_y(0);
+        std::string payload;
+        CC_CHECK(crafted.SerializeToString(&payload));
+        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        out.write("CCPB", 4);
+        out.write(payload.data(), static_cast<std::streamsize>(payload.size()));
     }
     CC_CHECK(!LoadWorld(victimState, path));
     CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
