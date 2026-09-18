@@ -842,6 +842,407 @@ void Game::BindShortcuts()
     });
 }
 
+// Menu branch (H6 slice 2 of Update): no world simulates or renders
+// until Start (or a slot load). Owns its Begin/EndDrawing pair; the
+// early return stays at the call site.
+void Game::DrawMenuBranch(int screenWidth, int screenHeight)
+{
+    audio.ApplySettings(menu.settings.masterVolume, menu.settings.musicVolume,
+                        menu.settings.sfxVolume, menu.settings.mute);
+    audio.UpdateMusic();
+
+    BeginDrawing();
+    ClearBackground(RAYWHITE);
+    const float cx = screenWidth / 2.0f;
+    if (menu.state == MenuState::MainMenu)
+    {
+        Art::DrawUiText(&art, "CONFLICT CONVERGE", static_cast<int>(cx) - 290, 110, 52, DARKGRAY);
+        Art::DrawUiText(&art, "real-time strategy demo", static_cast<int>(cx) - 140, 175, 20, GRAY);
+        if (GuiButton({ cx - 130.0f, 245.0f, 260.0f, 40.0f }, "Start Skirmish"))
+        {
+            menu.OpenSetup(ListMaps("data/maps"));
+            Announce(EventType::MenuAction);
+        }
+        if (GuiButton({ cx - 130.0f, 295.0f, 260.0f, 40.0f }, "Load Game"))
+        {
+            menu.OpenLoad();
+            Announce(EventType::MenuAction);
+        }
+        if (GuiButton({ cx - 130.0f, 345.0f, 260.0f, 40.0f }, "Settings"))
+        {
+            menu.OpenSettings();
+            Announce(EventType::MenuAction);
+        }
+        if (GuiButton({ cx - 130.0f, 395.0f, 260.0f, 40.0f }, "Map Editor"))
+        {
+            // QoL editor: blank 24x18 scratch canvas (shipped-map size),
+            // never the live match map (MainMenu implies no live world).
+            editorMap.name = "Custom";
+            editorMap.author = "";
+            editorMap.width = 24;
+            editorMap.height = 18;
+            editorMap.terrain.assign(static_cast<std::size_t>(24 * 18),
+                                     TerrainType::Grass);
+            editorMap.nodes.clear();
+            editorMap.playerSpawns.clear();
+            editorMap.aiSpawns.clear();
+            editorBrush = '.';
+            editorStatus = "";
+            menu.state = MenuState::MapEditor;
+            Announce(EventType::MenuAction);
+        }
+        if (GuiButton({ cx - 130.0f, 445.0f, 260.0f, 40.0f }, "Quit"))
+        {
+            Announce(EventType::MenuAction);
+            menu.quitRequested = true;
+        }
+    }
+    else if (menu.state == MenuState::SkirmishSetup)
+    {
+        Art::DrawUiText(&art, "Skirmish setup", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
+        GuiLabel({ cx - 200.0f, 80.0f, 400.0f, 20.0f }, "Map (from data/*.map)");
+        std::string items;
+        for (const MapEntry &entry : menu.setup.maps)
+        {
+            items += entry.name + " (" + std::to_string(entry.width) + "x" +
+                     std::to_string(entry.height) + ");";
+        }
+        if (items.empty())
+        {
+            items = "<no maps found>;";
+        }
+        int picked = menu.setup.mapIndex;
+        GuiListView({ cx - 200.0f, 105.0f, 400.0f, 200.0f }, items.c_str(),
+                    &setupScroll, &picked);
+        menu.SelectMap(picked);
+        if (const MapEntry *sel = menu.setup.SelectedMap())
+        {
+            Art::DrawUiText(&art, TextFormat("by %s  %s", sel->author.empty() ? "-" : sel->author.c_str(),
+                                sel->path.c_str()),
+                     static_cast<int>(cx) - 200, 312, 14, GRAY);
+        }
+        GuiLabel({ cx - 200.0f, 335.0f, 400.0f, 20.0f }, "AI difficulty");
+        int diffActive = static_cast<int>(menu.setup.difficulty);
+        // raygui GuiToggleGroup bounds.width is per-item unless
+        // GROUP_WIDTH_FULL=1 (default 0): 400px would make each of the
+        // 3 toggles 400px wide (1200px total, overflowing the panel).
+        // Fit 3 items exactly in the 400px panel (local qwen verified: 132).
+        const float diffPad = static_cast<float>(GuiGetStyle(TOGGLE, GROUP_PADDING));
+        const float diffItemW = (400.0f - diffPad * 2.0f) / 3.0f;
+        GuiToggleGroup({ cx - 200.0f, 360.0f, diffItemW, 30.0f }, "Easy;Medium;Hard",
+                       &diffActive);
+        if (diffActive < 0 || diffActive > 2)
+        {
+            diffActive = 1;
+        }
+        menu.SelectDifficulty(static_cast<AIDifficulty>(diffActive));
+        if (!menu.setup.CanStart())
+        {
+            GuiDisable();
+        }
+        if (GuiButton({ cx - 200.0f, 400.0f, 195.0f, 40.0f }, "Start match"))
+        {
+            if (const MapEntry *sel = menu.setup.SelectedMap(); sel != nullptr)
+            {
+                if (menu.StartMatch())
+                {
+                    StartMatch(sel->path, menu.setup.difficulty);
+                }
+            }
+        }
+        GuiEnable();
+        if (GuiButton({ cx + 5.0f, 400.0f, 195.0f, 40.0f }, "Back"))
+        {
+            Announce(EventType::MenuAction);
+            menu.OpenMainMenu();
+        }
+    }
+    else if (menu.state == MenuState::Settings)
+    {
+        Art::DrawUiText(&art, "Settings", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
+        GuiLabel({ cx - 200.0f, 90.0f, 400.0f, 20.0f }, "Camera speed");
+        GuiSetTooltip("WASD / edge-pan speed, pixels per second");
+        GuiSlider({ cx - 200.0f, 115.0f, 400.0f, 20.0f }, "100", "800",
+                  &menu.settings.cameraSpeed, 100.0f, 800.0f);
+        GuiSetTooltip("Show the top-right minimap during matches");
+        GuiCheckBox({ cx - 200.0f, 145.0f, 20.0f, 20.0f }, "Minimap",
+                    &menu.settings.showMinimap);
+        GuiLabel({ cx - 200.0f, 175.0f, 400.0f, 20.0f }, "Master volume");
+        GuiSetTooltip("Scales music and SFX together");
+        GuiSlider({ cx - 200.0f, 200.0f, 400.0f, 20.0f }, "0", "1",
+                  &menu.settings.masterVolume, 0.0f, 1.0f);
+        GuiLabel({ cx - 200.0f, 230.0f, 400.0f, 20.0f }, "Music volume");
+        GuiSetTooltip("Background music level");
+        GuiSlider({ cx - 200.0f, 255.0f, 400.0f, 20.0f }, "0", "1",
+                  &menu.settings.musicVolume, 0.0f, 1.0f);
+        GuiLabel({ cx - 200.0f, 285.0f, 400.0f, 20.0f }, "SFX volume");
+        GuiSetTooltip("Order confirmations, hits, and UI clicks");
+        GuiSlider({ cx - 200.0f, 310.0f, 400.0f, 20.0f }, "0", "1",
+                  &menu.settings.sfxVolume, 0.0f, 1.0f);
+        GuiSetTooltip("Silence all audio (volumes are kept)");
+        GuiCheckBox({ cx - 200.0f, 340.0f, 20.0f, 20.0f }, "Mute", &menu.settings.mute);
+        GuiSetTooltip("Pan the camera by holding right-drag (right-click still orders)");
+        GuiCheckBox({ cx - 200.0f, 365.0f, 20.0f, 20.0f }, "Right-drag pan",
+                    &menu.settings.rightDragPan);
+        GuiSetTooltip("Orange/blue team palette instead of red/blue (applies live)");
+        GuiCheckBox({ cx - 200.0f, 390.0f, 20.0f, 20.0f }, "Color-blind mode",
+                    &menu.settings.colorBlindMode);
+        art.SetColorBlindMode(menu.settings.colorBlindMode); // live, no reopen needed
+        GuiLabel({ cx - 200.0f, 412.0f, 400.0f, 20.0f }, "UI scale");
+        GuiSetTooltip("Menu/HUD text size (applies live)");
+        GuiSlider({ cx - 200.0f, 434.0f, 400.0f, 20.0f }, "0.75", "2",
+                  &menu.settings.uiScale, 0.75f, 2.0f);
+        GuiSetStyle(DEFAULT, TEXT_SIZE,
+                    static_cast<int>(10 * menu.settings.uiScale)); // live, no reopen needed
+        if (GuiButton({ cx - 200.0f, 470.0f, 400.0f, 40.0f }, "Back"))
+        {
+            SyncHotkeySettings(); // QoL: remaps ride the settings file too
+            SaveSettings(menu.settings, kSettingsPath); // Persistence
+            Announce(EventType::MenuAction);
+            menu.OpenMainMenu();
+        }
+        if (GuiButton({ cx - 200.0f, 520.0f, 400.0f, 30.0f }, "Remap hotkeys..."))
+        {
+            remapArming = -1;
+            remapConflictAction.clear();
+            remapReturn = MenuState::Settings;
+            Announce(EventType::MenuAction);
+            menu.state = MenuState::HotkeyRemap;
+        }
+    }
+    else if (menu.state == MenuState::HotkeyRemap)
+    {
+        DrawHotkeyRemap(cx);
+    }
+    else if (menu.state == MenuState::LoadGame)
+    {
+        Art::DrawUiText(&art, "Load game", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
+        const std::string slotPaths[4] = { "data/quicksave.ccpb", SaveSlotPath(1),
+                                           SaveSlotPath(2), SaveSlotPath(3) };
+        const char *slotLabels[4] = { "Quicksave", "Slot 1", "Slot 2", "Slot 3" };
+        for (int i = 0; i < 4; ++i)
+        {
+            std::error_code ec;
+            const bool filled =
+                std::filesystem::exists(slotPaths[i], ec) && !ec;
+            if (!filled)
+            {
+                GuiDisable();
+            }
+            if (GuiButton({ cx - 200.0f, static_cast<float>(90 + i * 50), 400.0f, 40.0f },
+                          slotLabels[i]))
+            {
+                // Load over a fresh shell (LoadWorld clears +
+                // rebuilds). The file already fields the AI side, so
+                // the commander re-arms bare — no second SetupBase.
+                ResetSkirmish(skirmish);
+                if (LoadWorld(worldState, slotPaths[i]))
+                {
+                    const SkirmishSpots spots = SpotsForMap(
+                        worldMapPath.empty() ? "data/maps/crossroads.map" : worldMapPath);
+                    ai.Reset(menu.setup.difficulty, spots.aiHome, spots.playerHome, 1);
+                    if (spots.is2v2)
+                    {
+                        // 2v2 save: the file already fields all three AI
+                        // sides, so all commanders re-arm bare.
+                        allyAI.Reset(menu.setup.difficulty, spots.allyHome, spots.aiHome, 0);
+                        enemyAI2.Reset(menu.setup.difficulty, spots.enemyHome2,
+                                       spots.playerHome, 1);
+                    }
+                    rallyPos = camera.view.target;
+                    worldDifficulty = menu.setup.difficulty;
+                    worldActive = true;
+                    worldIs2v2 = spots.is2v2;
+                    settingRally = false;
+                    dragging = false;
+                    lastBuildingCount = 0;
+                    lastDepletedCount = 0;
+                    lastQueueSize = 0;
+                    attackSfxTimer = 0.0f;
+                    lastOutcomeState = MenuState::Playing;
+                    hasFactory = false;
+                    camera.view.zoom = 1.0f;
+                    minimap.elapsed = minimap.refreshInterval;
+                    menu.state = MenuState::Playing;
+                    Announce(EventType::MenuAction);
+                    Announce(EventType::MatchStarted);
+                }
+            }
+            GuiEnable();
+        }
+        if (GuiButton({ cx - 200.0f, 300.0f, 400.0f, 40.0f }, "Back"))
+        {
+            Announce(EventType::MenuAction);
+            menu.OpenMainMenu();
+        }
+        // QoL snapshot replay entry: enabled when the last match left
+        // frames behind. Loads frame 0 and freezes the sim (viewer).
+        if (ReplayFrameCount(kReplayDir) <= 0)
+        {
+            GuiDisable();
+        }
+        if (GuiButton({ cx - 200.0f, 350.0f, 400.0f, 40.0f }, "Watch last replay"))
+        {
+            WatchLastReplay();
+        }
+        GuiEnable();
+    }
+    else if (menu.state == MenuState::MapEditor)
+    {
+        // QoL tile painter on scratch state (never the live match).
+        // Left-drag paints the brush, right-click erases to grass,
+        // keys 1-9 or the toggle row switch brush. Save validates +
+        // warns, never blocks on playability (see ValidateMapPlayable).
+        constexpr float kCell = 24.0f, kOx = 20.0f, kOy = 100.0f;
+        auto saveEditor = [&](const std::string &name) -> std::string {
+            if (!IsValidMapSaveName(name))
+            {
+                return "Save refused (bad name)";
+            }
+            const std::string path = "data/maps/" + name + ".map";
+            if (!WriteMapFile(editorMap, path))
+            {
+                return "Save failed (invalid dims)";
+            }
+            std::string warning;
+            return ValidateMapPlayable(editorMap, &warning) ? "Saved to " + path
+                                                            : "Saved with warnings: " + warning;
+        };
+        GuiLabel({ 20.0f, 36.0f, 600.0f, 28.0f },
+                 TextFormat("Map Editor - data/maps/%s.map", editorSaveName));
+        const char kBrushes[9] = { '.', '~', 'T', '^', 'B', 'I', 'O', '1', '2' };
+        const int kPaletteKeys[9] = { KEY_ONE, KEY_TWO,   KEY_THREE, KEY_FOUR, KEY_FIVE,
+                                      KEY_SIX, KEY_SEVEN, KEY_EIGHT, KEY_NINE };
+        for (int i = 0; i < 9; ++i)
+        {
+            if (IsKeyPressed(kPaletteKeys[i]))
+            {
+                editorBrush = kBrushes[i];
+            }
+        }
+        int brushIndex = 0;
+        for (int i = 0; i < 9; ++i)
+        {
+            if (kBrushes[i] == editorBrush)
+            {
+                brushIndex = i;
+            }
+        }
+        GuiLabel({ 660.0f, 96.0f, 200.0f, 20.0f }, "Brush (keys 1-9)");
+        GuiToggleGroup({ 660.0f, 118.0f, 252.0f, 24.0f }, ".;~;T;^;B;I;O;1;2",
+                       &brushIndex);
+        editorBrush = kBrushes[brushIndex];
+        const Vector2 mouse = input.MouseScreen();
+        const cc::IVec2 hover{ static_cast<int>((mouse.x - kOx) / kCell),
+                               static_cast<int>((mouse.y - kOy) / kCell) };
+        if (input.LeftDown())
+        {
+            PaintEditorCell(editorMap, editorBrush, hover);
+        }
+        if (input.RightPressed())
+        {
+            PaintEditorCell(editorMap, '.', hover);
+        }
+        for (int y = 0; y < editorMap.height; ++y)
+        {
+            for (int x = 0; x < editorMap.width; ++x)
+            {
+                const TerrainType terrain = editorMap
+                                                .terrain[static_cast<std::size_t>(y) *
+                                                             editorMap.width +
+                                                         x];
+                Color fill = { 20, 60, 20, 255 };
+                if (terrain == TerrainType::Water)
+                {
+                    fill = BLUE;
+                }
+                else if (terrain == TerrainType::Forest)
+                {
+                    fill = DARKGREEN;
+                }
+                else if (terrain == TerrainType::Rock)
+                {
+                    fill = GRAY;
+                }
+                else if (terrain == TerrainType::Building)
+                {
+                    fill = BROWN;
+                }
+                DrawRectangle(static_cast<int>(kOx + x * kCell),
+                              static_cast<int>(kOy + y * kCell), static_cast<int>(kCell),
+                              static_cast<int>(kCell), fill);
+                DrawRectangleLinesEx(
+                    { kOx + x * kCell, kOy + y * kCell, kCell, kCell }, 1.0f,
+                    Fade(LIGHTGRAY, 0.4f));
+            }
+        }
+        // Marker letters over their tiles.
+        for (const MapNodeSpawn &spawn : editorMap.nodes)
+        {
+            Art::DrawUiText(&art, spawn.kind == ResourceKind::Iron ? "I" : "O",
+                     static_cast<int>(kOx + spawn.tile.x * kCell) + 7,
+                     static_cast<int>(kOy + spawn.tile.y * kCell) + 3, 16, WHITE);
+        }
+        for (const cc::IVec2 &tile : editorMap.playerSpawns)
+        {
+            Art::DrawUiText(&art, "1", static_cast<int>(kOx + tile.x * kCell) + 7,
+                     static_cast<int>(kOy + tile.y * kCell) + 3, 16, WHITE);
+        }
+        for (const cc::IVec2 &tile : editorMap.aiSpawns)
+        {
+            Art::DrawUiText(&art, "2", static_cast<int>(kOx + tile.x * kCell) + 7,
+                     static_cast<int>(kOy + tile.y * kCell) + 3, 16, WHITE);
+        }
+        GuiLabel({ 660.0f, 150.0f, 260.0f, 20.0f }, "Left-drag paints, right-click erases");
+        GuiLabel({ 660.0f, 170.0f, 260.0f, 20.0f },
+                 "Maps need '1', '2' and a connecting path");
+        if (GuiButton({ 660.0f, 200.0f, 200.0f, 40.0f }, "Save"))
+        {
+            editorStatus = saveEditor(editorSaveName);
+        }
+        if (GuiButton({ 660.0f, 248.0f, 200.0f, 30.0f }, "Save As..."))
+        {
+            editorSaveAsOpen = true;
+            editorSaveAsBtn = 0;
+        }
+        if (GuiButton({ 660.0f, 286.0f, 200.0f, 40.0f }, "Back"))
+        {
+            editorSaveAsOpen = false;
+            menu.OpenMainMenu();
+        }
+        GuiLabel({ 660.0f, 334.0f, 260.0f, 20.0f }, editorStatus.c_str());
+        if (editorSaveAsOpen)
+        {
+            const int pressed = GuiTextInputBox(
+                { cx - 150.0f, 220.0f, 300.0f, 170.0f }, "Save As",
+                "Map name (data/maps/):", editorSaveName,
+                static_cast<int>(sizeof(editorSaveName)), "Save;Cancel", &editorSaveAsBtn,
+                nullptr);
+            if (pressed != 0)
+            {
+                if (editorSaveAsBtn == 1)
+                {
+                    editorStatus = saveEditor(editorSaveName);
+                }
+                editorSaveAsOpen = false;
+                editorSaveAsBtn = 0;
+            }
+        }
+    }
+    else
+    {
+        // Unreachable (match states always carry a world); recover.
+        menu.OpenMainMenu();
+    }
+    // Transition fade: fullscreen fade-from-black over the first moments
+    // of each screen (uniform across all branches, no per-screen edits).
+    if (const float fade = MenuFadeAlpha(menuStateTime); fade < 1.0f)
+    {
+        DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 1.0f - fade));
+    }
+    EndDrawing();
+}
+
 // Sim tick (H6 slice 1 of Update): visibility rebuild, movement, death
 // sweep, edge-triggered audio, economy, production, replay capture,
 // auto-repair/retreat, AI, minimap refresh, outcome. Runs only while
@@ -1132,400 +1533,7 @@ void Game::Update()
     // slot load). The match code below runs untouched once worldActive.
     if (!worldActive)
     {
-        audio.ApplySettings(menu.settings.masterVolume, menu.settings.musicVolume,
-                            menu.settings.sfxVolume, menu.settings.mute);
-        audio.UpdateMusic();
-
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-        const float cx = screenWidth / 2.0f;
-        if (menu.state == MenuState::MainMenu)
-        {
-            Art::DrawUiText(&art, "CONFLICT CONVERGE", static_cast<int>(cx) - 290, 110, 52, DARKGRAY);
-            Art::DrawUiText(&art, "real-time strategy demo", static_cast<int>(cx) - 140, 175, 20, GRAY);
-            if (GuiButton({ cx - 130.0f, 245.0f, 260.0f, 40.0f }, "Start Skirmish"))
-            {
-                menu.OpenSetup(ListMaps("data/maps"));
-                Announce(EventType::MenuAction);
-            }
-            if (GuiButton({ cx - 130.0f, 295.0f, 260.0f, 40.0f }, "Load Game"))
-            {
-                menu.OpenLoad();
-                Announce(EventType::MenuAction);
-            }
-            if (GuiButton({ cx - 130.0f, 345.0f, 260.0f, 40.0f }, "Settings"))
-            {
-                menu.OpenSettings();
-                Announce(EventType::MenuAction);
-            }
-            if (GuiButton({ cx - 130.0f, 395.0f, 260.0f, 40.0f }, "Map Editor"))
-            {
-                // QoL editor: blank 24x18 scratch canvas (shipped-map size),
-                // never the live match map (MainMenu implies no live world).
-                editorMap.name = "Custom";
-                editorMap.author = "";
-                editorMap.width = 24;
-                editorMap.height = 18;
-                editorMap.terrain.assign(static_cast<std::size_t>(24 * 18),
-                                         TerrainType::Grass);
-                editorMap.nodes.clear();
-                editorMap.playerSpawns.clear();
-                editorMap.aiSpawns.clear();
-                editorBrush = '.';
-                editorStatus = "";
-                menu.state = MenuState::MapEditor;
-                Announce(EventType::MenuAction);
-            }
-            if (GuiButton({ cx - 130.0f, 445.0f, 260.0f, 40.0f }, "Quit"))
-            {
-                Announce(EventType::MenuAction);
-                menu.quitRequested = true;
-            }
-        }
-        else if (menu.state == MenuState::SkirmishSetup)
-        {
-            Art::DrawUiText(&art, "Skirmish setup", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
-            GuiLabel({ cx - 200.0f, 80.0f, 400.0f, 20.0f }, "Map (from data/*.map)");
-            std::string items;
-            for (const MapEntry &entry : menu.setup.maps)
-            {
-                items += entry.name + " (" + std::to_string(entry.width) + "x" +
-                         std::to_string(entry.height) + ");";
-            }
-            if (items.empty())
-            {
-                items = "<no maps found>;";
-            }
-            int picked = menu.setup.mapIndex;
-            GuiListView({ cx - 200.0f, 105.0f, 400.0f, 200.0f }, items.c_str(),
-                        &setupScroll, &picked);
-            menu.SelectMap(picked);
-            if (const MapEntry *sel = menu.setup.SelectedMap())
-            {
-                Art::DrawUiText(&art, TextFormat("by %s  %s", sel->author.empty() ? "-" : sel->author.c_str(),
-                                    sel->path.c_str()),
-                         static_cast<int>(cx) - 200, 312, 14, GRAY);
-            }
-            GuiLabel({ cx - 200.0f, 335.0f, 400.0f, 20.0f }, "AI difficulty");
-            int diffActive = static_cast<int>(menu.setup.difficulty);
-            // raygui GuiToggleGroup bounds.width is per-item unless
-            // GROUP_WIDTH_FULL=1 (default 0): 400px would make each of the
-            // 3 toggles 400px wide (1200px total, overflowing the panel).
-            // Fit 3 items exactly in the 400px panel (local qwen verified: 132).
-            const float diffPad = static_cast<float>(GuiGetStyle(TOGGLE, GROUP_PADDING));
-            const float diffItemW = (400.0f - diffPad * 2.0f) / 3.0f;
-            GuiToggleGroup({ cx - 200.0f, 360.0f, diffItemW, 30.0f }, "Easy;Medium;Hard",
-                           &diffActive);
-            if (diffActive < 0 || diffActive > 2)
-            {
-                diffActive = 1;
-            }
-            menu.SelectDifficulty(static_cast<AIDifficulty>(diffActive));
-            if (!menu.setup.CanStart())
-            {
-                GuiDisable();
-            }
-            if (GuiButton({ cx - 200.0f, 400.0f, 195.0f, 40.0f }, "Start match"))
-            {
-                if (const MapEntry *sel = menu.setup.SelectedMap(); sel != nullptr)
-                {
-                    if (menu.StartMatch())
-                    {
-                        StartMatch(sel->path, menu.setup.difficulty);
-                    }
-                }
-            }
-            GuiEnable();
-            if (GuiButton({ cx + 5.0f, 400.0f, 195.0f, 40.0f }, "Back"))
-            {
-                Announce(EventType::MenuAction);
-                menu.OpenMainMenu();
-            }
-        }
-        else if (menu.state == MenuState::Settings)
-        {
-            Art::DrawUiText(&art, "Settings", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
-            GuiLabel({ cx - 200.0f, 90.0f, 400.0f, 20.0f }, "Camera speed");
-            GuiSetTooltip("WASD / edge-pan speed, pixels per second");
-            GuiSlider({ cx - 200.0f, 115.0f, 400.0f, 20.0f }, "100", "800",
-                      &menu.settings.cameraSpeed, 100.0f, 800.0f);
-            GuiSetTooltip("Show the top-right minimap during matches");
-            GuiCheckBox({ cx - 200.0f, 145.0f, 20.0f, 20.0f }, "Minimap",
-                        &menu.settings.showMinimap);
-            GuiLabel({ cx - 200.0f, 175.0f, 400.0f, 20.0f }, "Master volume");
-            GuiSetTooltip("Scales music and SFX together");
-            GuiSlider({ cx - 200.0f, 200.0f, 400.0f, 20.0f }, "0", "1",
-                      &menu.settings.masterVolume, 0.0f, 1.0f);
-            GuiLabel({ cx - 200.0f, 230.0f, 400.0f, 20.0f }, "Music volume");
-            GuiSetTooltip("Background music level");
-            GuiSlider({ cx - 200.0f, 255.0f, 400.0f, 20.0f }, "0", "1",
-                      &menu.settings.musicVolume, 0.0f, 1.0f);
-            GuiLabel({ cx - 200.0f, 285.0f, 400.0f, 20.0f }, "SFX volume");
-            GuiSetTooltip("Order confirmations, hits, and UI clicks");
-            GuiSlider({ cx - 200.0f, 310.0f, 400.0f, 20.0f }, "0", "1",
-                      &menu.settings.sfxVolume, 0.0f, 1.0f);
-            GuiSetTooltip("Silence all audio (volumes are kept)");
-            GuiCheckBox({ cx - 200.0f, 340.0f, 20.0f, 20.0f }, "Mute", &menu.settings.mute);
-            GuiSetTooltip("Pan the camera by holding right-drag (right-click still orders)");
-            GuiCheckBox({ cx - 200.0f, 365.0f, 20.0f, 20.0f }, "Right-drag pan",
-                        &menu.settings.rightDragPan);
-            GuiSetTooltip("Orange/blue team palette instead of red/blue (applies live)");
-            GuiCheckBox({ cx - 200.0f, 390.0f, 20.0f, 20.0f }, "Color-blind mode",
-                        &menu.settings.colorBlindMode);
-            art.SetColorBlindMode(menu.settings.colorBlindMode); // live, no reopen needed
-            GuiLabel({ cx - 200.0f, 412.0f, 400.0f, 20.0f }, "UI scale");
-            GuiSetTooltip("Menu/HUD text size (applies live)");
-            GuiSlider({ cx - 200.0f, 434.0f, 400.0f, 20.0f }, "0.75", "2",
-                      &menu.settings.uiScale, 0.75f, 2.0f);
-            GuiSetStyle(DEFAULT, TEXT_SIZE,
-                        static_cast<int>(10 * menu.settings.uiScale)); // live, no reopen needed
-            if (GuiButton({ cx - 200.0f, 470.0f, 400.0f, 40.0f }, "Back"))
-            {
-                SyncHotkeySettings(); // QoL: remaps ride the settings file too
-                SaveSettings(menu.settings, kSettingsPath); // Persistence
-                Announce(EventType::MenuAction);
-                menu.OpenMainMenu();
-            }
-            if (GuiButton({ cx - 200.0f, 520.0f, 400.0f, 30.0f }, "Remap hotkeys..."))
-            {
-                remapArming = -1;
-                remapConflictAction.clear();
-                remapReturn = MenuState::Settings;
-                Announce(EventType::MenuAction);
-                menu.state = MenuState::HotkeyRemap;
-            }
-        }
-        else if (menu.state == MenuState::HotkeyRemap)
-        {
-            DrawHotkeyRemap(cx);
-        }
-        else if (menu.state == MenuState::LoadGame)
-        {
-            Art::DrawUiText(&art, "Load game", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
-            const std::string slotPaths[4] = { "data/quicksave.ccpb", SaveSlotPath(1),
-                                               SaveSlotPath(2), SaveSlotPath(3) };
-            const char *slotLabels[4] = { "Quicksave", "Slot 1", "Slot 2", "Slot 3" };
-            for (int i = 0; i < 4; ++i)
-            {
-                std::error_code ec;
-                const bool filled =
-                    std::filesystem::exists(slotPaths[i], ec) && !ec;
-                if (!filled)
-                {
-                    GuiDisable();
-                }
-                if (GuiButton({ cx - 200.0f, static_cast<float>(90 + i * 50), 400.0f, 40.0f },
-                              slotLabels[i]))
-                {
-                    // Load over a fresh shell (LoadWorld clears +
-                    // rebuilds). The file already fields the AI side, so
-                    // the commander re-arms bare — no second SetupBase.
-                    ResetSkirmish(skirmish);
-                    if (LoadWorld(worldState, slotPaths[i]))
-                    {
-                        const SkirmishSpots spots = SpotsForMap(
-                            worldMapPath.empty() ? "data/maps/crossroads.map" : worldMapPath);
-                        ai.Reset(menu.setup.difficulty, spots.aiHome, spots.playerHome, 1);
-                        if (spots.is2v2)
-                        {
-                            // 2v2 save: the file already fields all three AI
-                            // sides, so all commanders re-arm bare.
-                            allyAI.Reset(menu.setup.difficulty, spots.allyHome, spots.aiHome, 0);
-                            enemyAI2.Reset(menu.setup.difficulty, spots.enemyHome2,
-                                           spots.playerHome, 1);
-                        }
-                        rallyPos = camera.view.target;
-                        worldDifficulty = menu.setup.difficulty;
-                        worldActive = true;
-                        worldIs2v2 = spots.is2v2;
-                        settingRally = false;
-                        dragging = false;
-                        lastBuildingCount = 0;
-                        lastDepletedCount = 0;
-                        lastQueueSize = 0;
-                        attackSfxTimer = 0.0f;
-                        lastOutcomeState = MenuState::Playing;
-                        hasFactory = false;
-                        camera.view.zoom = 1.0f;
-                        minimap.elapsed = minimap.refreshInterval;
-                        menu.state = MenuState::Playing;
-                        Announce(EventType::MenuAction);
-                        Announce(EventType::MatchStarted);
-                    }
-                }
-                GuiEnable();
-            }
-            if (GuiButton({ cx - 200.0f, 300.0f, 400.0f, 40.0f }, "Back"))
-            {
-                Announce(EventType::MenuAction);
-                menu.OpenMainMenu();
-            }
-            // QoL snapshot replay entry: enabled when the last match left
-            // frames behind. Loads frame 0 and freezes the sim (viewer).
-            if (ReplayFrameCount(kReplayDir) <= 0)
-            {
-                GuiDisable();
-            }
-            if (GuiButton({ cx - 200.0f, 350.0f, 400.0f, 40.0f }, "Watch last replay"))
-            {
-                WatchLastReplay();
-            }
-            GuiEnable();
-        }
-        else if (menu.state == MenuState::MapEditor)
-        {
-            // QoL tile painter on scratch state (never the live match).
-            // Left-drag paints the brush, right-click erases to grass,
-            // keys 1-9 or the toggle row switch brush. Save validates +
-            // warns, never blocks on playability (see ValidateMapPlayable).
-            constexpr float kCell = 24.0f, kOx = 20.0f, kOy = 100.0f;
-            auto saveEditor = [&](const std::string &name) -> std::string {
-                if (!IsValidMapSaveName(name))
-                {
-                    return "Save refused (bad name)";
-                }
-                const std::string path = "data/maps/" + name + ".map";
-                if (!WriteMapFile(editorMap, path))
-                {
-                    return "Save failed (invalid dims)";
-                }
-                std::string warning;
-                return ValidateMapPlayable(editorMap, &warning) ? "Saved to " + path
-                                                                : "Saved with warnings: " + warning;
-            };
-            GuiLabel({ 20.0f, 36.0f, 600.0f, 28.0f },
-                     TextFormat("Map Editor - data/maps/%s.map", editorSaveName));
-            const char kBrushes[9] = { '.', '~', 'T', '^', 'B', 'I', 'O', '1', '2' };
-            const int kPaletteKeys[9] = { KEY_ONE, KEY_TWO,   KEY_THREE, KEY_FOUR, KEY_FIVE,
-                                          KEY_SIX, KEY_SEVEN, KEY_EIGHT, KEY_NINE };
-            for (int i = 0; i < 9; ++i)
-            {
-                if (IsKeyPressed(kPaletteKeys[i]))
-                {
-                    editorBrush = kBrushes[i];
-                }
-            }
-            int brushIndex = 0;
-            for (int i = 0; i < 9; ++i)
-            {
-                if (kBrushes[i] == editorBrush)
-                {
-                    brushIndex = i;
-                }
-            }
-            GuiLabel({ 660.0f, 96.0f, 200.0f, 20.0f }, "Brush (keys 1-9)");
-            GuiToggleGroup({ 660.0f, 118.0f, 252.0f, 24.0f }, ".;~;T;^;B;I;O;1;2",
-                           &brushIndex);
-            editorBrush = kBrushes[brushIndex];
-            const Vector2 mouse = input.MouseScreen();
-            const cc::IVec2 hover{ static_cast<int>((mouse.x - kOx) / kCell),
-                                   static_cast<int>((mouse.y - kOy) / kCell) };
-            if (input.LeftDown())
-            {
-                PaintEditorCell(editorMap, editorBrush, hover);
-            }
-            if (input.RightPressed())
-            {
-                PaintEditorCell(editorMap, '.', hover);
-            }
-            for (int y = 0; y < editorMap.height; ++y)
-            {
-                for (int x = 0; x < editorMap.width; ++x)
-                {
-                    const TerrainType terrain = editorMap
-                                                    .terrain[static_cast<std::size_t>(y) *
-                                                                 editorMap.width +
-                                                             x];
-                    Color fill = { 20, 60, 20, 255 };
-                    if (terrain == TerrainType::Water)
-                    {
-                        fill = BLUE;
-                    }
-                    else if (terrain == TerrainType::Forest)
-                    {
-                        fill = DARKGREEN;
-                    }
-                    else if (terrain == TerrainType::Rock)
-                    {
-                        fill = GRAY;
-                    }
-                    else if (terrain == TerrainType::Building)
-                    {
-                        fill = BROWN;
-                    }
-                    DrawRectangle(static_cast<int>(kOx + x * kCell),
-                                  static_cast<int>(kOy + y * kCell), static_cast<int>(kCell),
-                                  static_cast<int>(kCell), fill);
-                    DrawRectangleLinesEx(
-                        { kOx + x * kCell, kOy + y * kCell, kCell, kCell }, 1.0f,
-                        Fade(LIGHTGRAY, 0.4f));
-                }
-            }
-            // Marker letters over their tiles.
-            for (const MapNodeSpawn &spawn : editorMap.nodes)
-            {
-                Art::DrawUiText(&art, spawn.kind == ResourceKind::Iron ? "I" : "O",
-                         static_cast<int>(kOx + spawn.tile.x * kCell) + 7,
-                         static_cast<int>(kOy + spawn.tile.y * kCell) + 3, 16, WHITE);
-            }
-            for (const cc::IVec2 &tile : editorMap.playerSpawns)
-            {
-                Art::DrawUiText(&art, "1", static_cast<int>(kOx + tile.x * kCell) + 7,
-                         static_cast<int>(kOy + tile.y * kCell) + 3, 16, WHITE);
-            }
-            for (const cc::IVec2 &tile : editorMap.aiSpawns)
-            {
-                Art::DrawUiText(&art, "2", static_cast<int>(kOx + tile.x * kCell) + 7,
-                         static_cast<int>(kOy + tile.y * kCell) + 3, 16, WHITE);
-            }
-            GuiLabel({ 660.0f, 150.0f, 260.0f, 20.0f }, "Left-drag paints, right-click erases");
-            GuiLabel({ 660.0f, 170.0f, 260.0f, 20.0f },
-                     "Maps need '1', '2' and a connecting path");
-            if (GuiButton({ 660.0f, 200.0f, 200.0f, 40.0f }, "Save"))
-            {
-                editorStatus = saveEditor(editorSaveName);
-            }
-            if (GuiButton({ 660.0f, 248.0f, 200.0f, 30.0f }, "Save As..."))
-            {
-                editorSaveAsOpen = true;
-                editorSaveAsBtn = 0;
-            }
-            if (GuiButton({ 660.0f, 286.0f, 200.0f, 40.0f }, "Back"))
-            {
-                editorSaveAsOpen = false;
-                menu.OpenMainMenu();
-            }
-            GuiLabel({ 660.0f, 334.0f, 260.0f, 20.0f }, editorStatus.c_str());
-            if (editorSaveAsOpen)
-            {
-                const int pressed = GuiTextInputBox(
-                    { cx - 150.0f, 220.0f, 300.0f, 170.0f }, "Save As",
-                    "Map name (data/maps/):", editorSaveName,
-                    static_cast<int>(sizeof(editorSaveName)), "Save;Cancel", &editorSaveAsBtn,
-                    nullptr);
-                if (pressed != 0)
-                {
-                    if (editorSaveAsBtn == 1)
-                    {
-                        editorStatus = saveEditor(editorSaveName);
-                    }
-                    editorSaveAsOpen = false;
-                    editorSaveAsBtn = 0;
-                }
-            }
-        }
-        else
-        {
-            // Unreachable (match states always carry a world); recover.
-            menu.OpenMainMenu();
-        }
-        // Transition fade: fullscreen fade-from-black over the first moments
-        // of each screen (uniform across all branches, no per-screen edits).
-        if (const float fade = MenuFadeAlpha(menuStateTime); fade < 1.0f)
-        {
-            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 1.0f - fade));
-        }
-        EndDrawing();
+        DrawMenuBranch(screenWidth, screenHeight);
         return;
     }
 
