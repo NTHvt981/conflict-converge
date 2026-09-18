@@ -1,13 +1,11 @@
 #pragma once
 
-#include <optional> // QoL placement flow (empty = not placing)
 #include <string>
 
 #include "raylib.h"
 #include "AICommander.h"
 #include "Art.h"
 #include "Audio.h"
-#include "Building.h" // BuildingType for the placement flow
 #include "Event.h"
 #include "FogOfWar.h"
 #include "GameCamera.h"
@@ -20,6 +18,7 @@
 #include "Minimap.h"
 #include "Nodes.h"
 #include "Pings.h"
+#include "PlayingInput.h" // in-match gesture dispatch (H6 follow-up extraction)
 #include "Production.h"
 #include "Registry.h"
 #include "ResourceSystem.h"
@@ -75,9 +74,9 @@ private:
     void StepReplay(int dir);
     bool WatchLastReplay();
     // H6 decomposition of Update (each verbatim-extracted, no behavior
-    // change): input dispatch, world draw, HUD/overlay draw. The sim tick
-    // graduated to Simulation, the menu branch to MenuScreens (own files).
-    void DispatchPlayingInput();
+    // change): world draw, HUD/overlay draw. The sim tick graduated to
+    // Simulation, the menu branch to MenuScreens, the input dispatch to
+    // PlayingInput (own files).
     void DrawWorld();
     void DrawHudAndOverlays(int screenWidth, int screenHeight);
 
@@ -125,50 +124,15 @@ private:
     AIDifficulty worldDifficulty = AIDifficulty::Medium;
     std::string worldMapPath;
 
-    bool settingRally = false;
-    bool dragging = false;
-    Vector2 dragStart = {};
-    // QoL line formation: Alt+right-drag draws a placement line instead of
-    // issuing a point order (mirrors dragging/dragStart for the left button).
-    bool rightDragging = false;
-    Vector2 rightDragStart = {};
-    // QoL right-drag pan (opt-in): press defers the click order until
-    // release decides click (order) vs. drag (pan), past a pixel threshold.
-    bool pendingRightClick = false;
-    float rightDragDist = 0.0f;
     // QoL snapshot replay viewer cursor (recording state lives in
     // Simulation: only the tick records, the viewer only reads).
     int replayCursor = 0; // currently shown frame
     float replayPlayTimer = 0.0f; // auto-advance clock in the viewer
     bool showHints = true;
-    // QoL control groups: production auto-joins this group bit when >= 0
-    // (set via Ctrl+Shift+number, cleared by... nothing — persists until
-    // rebound; -1 = off).
-    int autoAddGroupBit = -1;
-    // QoL attack-ground mode (toggled with X): the next right-click shells
-    // the point instead of moving. One-shot, clears after a single use.
-    bool attackGroundMode = false;
     // QoL building auto-repair (player-global v1: no building selection
     // exists yet for per-building toggles). Cap scales the repair rate.
     bool playerAutoRepair = false;
     float autoRepairCap = 1.0f;
-    // QoL move-at-slowest-speed: formation orders march at the squad
-    // minimum while true (toggled with B).
-    bool moveAtSlowestSpeed = false;
-    // QoL area-build placement flow: some building while engaged (Z
-    // toggles, 1/2/3 picks the type, left-click/drag places, right-click
-    // or Esc cancels). Empty = not placing. Stays engaged across
-    // placements so rows of structures go down fast.
-    std::optional<BuildingType> placingType;
-    bool placeDragActive = false;
-    Vector2 placeDragStart = {};
-    // QoL area repair (toggled with E): drag a zone, every selected
-    // Engineer repairs its nearest damaged target inside it. Left-drag
-    // sibling of area-build (own mode + drag state, never shared).
-    bool areaRepairMode = false;
-    bool repairDragActive = false;
-    Vector2 repairDragStart = {};
-
     // Per-frame render state (sim edge-trigger polls moved to Simulation).
     HoverTooltipState hoverTip; // unit hover-tooltip debounce (Playing only)
     float shakeTrauma = 0.0f; // screen-shake trauma 0..1 (render copy only)
@@ -176,8 +140,9 @@ private:
     MenuState previousMenuState = MenuState::MainMenu; // transition-fade clock
     float menuStateTime = 0.0f;
     MenuState lastOutcomeState = MenuState::MainMenu;
-    // Match tick (declared after the members it binds; menu screens last:
-    // same ordering rule, binds menu/art/audio/input/hotkeys/events).
+    // Input dispatch + match tick (declared after the members they bind;
+    // menu screens last: same ordering rule).
+    PlayingInput playingInput;
     Simulation sim;
     MenuScreens menuScreens;
 };
