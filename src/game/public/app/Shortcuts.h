@@ -25,6 +25,13 @@ public:
     bool Fire(int raylibKey) const;
     // Headless chord path: fires only when a shift-chord is bound.
     bool FireChord(int raylibKey) const;
+    // Fire one key honoring the shift-chord priority PollAndFire uses:
+    // chord when shift is held and bound, else plain (a plain binding
+    // with no chord still fires under Shift). Single live-table lookup
+    // with the action copied before invoke, so re-entrant Bind/Unbind/
+    // Clear — including self-unbinding actions — is safe; the headless-
+    // testable path for poll-time routing.
+    bool FireWithShift(int raylibKey, bool shift) const;
 
     // Fire each binding whose key was pressed this frame.
     void PollAndFire() const;
