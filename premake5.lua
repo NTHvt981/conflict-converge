@@ -37,6 +37,12 @@ filter "configurations:ASan"
 
 filter {}
 
+-- Third-party single-TU implementations use their own idioms (fopen, ...):
+-- silence MSVC's CRT-deprecation warnings for those files only.
+filter { "files:src/thirdparty/rini_impl.cpp" }
+    defines { "_CRT_SECURE_NO_WARNINGS" }
+filter {}
+
 -- Project to build raylib as static library from deps/
 project "raylib-static"
     kind "StaticLib"
@@ -103,6 +109,7 @@ project "conflict-converge"
         "deps/raygui/src",
         "deps/glm",
         "deps/reasings/src",
+        "deps/rini/src",
         "deps/protobuf/src",
         "..",
         "src/game",
@@ -176,7 +183,8 @@ project "conflict-converge-test"
         "tests/**.h",
         "tests/**.inl",
         "src/game/private/**.cpp",
-        "src/game/private/**.cc"
+        "src/game/private/**.cc",
+        "src/thirdparty/rini_impl.cpp"
     }
 
     -- Tier-1 e2e lives in its own binary below (own main + a real window),
@@ -191,6 +199,7 @@ project "conflict-converge-test"
         "deps/raygui/src",
         "deps/glm",
         "deps/reasings/src",
+        "deps/rini/src",
         "deps/protobuf/src",
         "..",
         "src/game/public",
@@ -241,7 +250,8 @@ project "conflict-converge-e2e"
         "tests/e2e/**.h",
         "tests/e2e/**.inl",
         "src/game/private/**.cpp",
-        "src/game/private/**.cc"
+        "src/game/private/**.cc",
+        "src/thirdparty/rini_impl.cpp"
     }
 
     includedirs {
@@ -249,6 +259,7 @@ project "conflict-converge-e2e"
         "deps/raygui/src",
         "deps/glm",
         "deps/reasings/src",
+        "deps/rini/src",
         "deps/protobuf/src",
         "..",
         "src/game/public",

@@ -41,5 +41,11 @@
         "git_repo": "https://github.com/raylib-extras/extras-c.git",
         "dest": "deps/extras-c",
         "git_tag": "main"
+    },
+    {
+        "name": "rini",
+        "git_repo": "https://github.com/raysan5/rini.git",
+        "dest": "deps/rini",
+        "git_tag": "main"
     }
 ]

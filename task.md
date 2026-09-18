@@ -3,33 +3,29 @@
 Execution log for `plans/ReduceSrcThirdPartyLibs_Plan.md` (6 phases, in order,
 commit after each). Standing constraint: no multiplayer/networking work.
 
-## Phase 1 — `raysan5/rini` for `data/settings.cfg`: NO-GO (reverted)
+## Phase 1 — `raysan5/rini` for `data/settings.cfg`: SHIPPED (compat fixed)
 
-Attempted: vendored `deps/rini`, added `src/thirdparty/rini_impl.cpp`
-(`RINI_VALUE_DELIMITER '='` + `RINI_IMPLEMENTATION`), rewrote
-`Save/LoadSettings` (`Menu.cpp`) over rini, wired includes into
-game/test/e2e premake projects.
+First attempt failed: rini with `'='` delimiter only parses spaced pairs
+— its value scanner stops at `' '`, so bare `key=value` (every shipped
+settings.cfg) yielded empty values (proven with a compiled probe:
+`mute=1` -> `text=[]`; menu tests then aborted on vector OOB). Reverted.
 
-Failures found (verified, not speculative):
-1. rini with `'='` delimiter cannot parse unspaced `key=value` — its
-   value scanner only stops at `' '`, overshoots the `'='`, and yields an
-   empty value. Proven with a compiled probe against the vendored header:
-   `mute=1` -> `text=[]`, `cameraSpeed=512.5` -> `text=[]`,
-   `spaced = 42` -> `text=[42]`. Every existing user `settings.cfg`
-   (written unspaced by all shipped versions) would load as defaults,
-   silently dropping hotkey remaps — violating the plan's migration rule.
-2. `menu_tests` then aborts (`0x80000003`, vector OOB at
-   `hotkeyOverrides[1]`) because the remaps never load.
-3. Side warts: `rini_save` emits padded/quoted format unreadable by old
-   game versions; `rini.h` doesn't compile as C under MSVC (`bool`
-   without `<stdbool.h>`); no save-error / missing-file signals
-   (needed `ifstream` probes anyway); first-match getters vs our
-   last-line-wins semantics (worked around, but more glue).
+Fix: `NormalizeSettingsText` (`Menu.cpp`, ~25 lines) rewrites content
+lines to `key = value` before `rini_load_from_memory`, so stock rini
+(with `RINI_VALUE_DELIMITER '='` in the sole `RINI_IMPLEMENTATION` TU,
+`src/thirdparty/rini_impl.cpp`) reads old files with no fork — survives
+bootstrap re-clones. Kept verbatim: clamp ranges, `0`/`1`-only bools,
+known-action + positive-int hotkeys with last-line-wins (via last-match
+`FindEntryText` scan + in-order hotkey loop; rini's own getters return
+first match), missing-file untouched, save-failure signal via probe
+(rini reports no I/O status). New files save in rini's padded/quoted
+shape (downgrade by old versions not preserved — upgrade only, per plan).
 
-Net: ~60% of the custom logic (float/bool validators, hotkey loop,
-probes) would stay anyway. Reverted everything; `--filter=Menu` back to
-green (83 checks, 0 failures). Settings stay hand-rolled (~150 LOC,
-well-tested, format-stable). Commit: this file (no src/ change).
+Wiring: `rini` entry in `libs_deps.json`, `deps/rini/src` includes in
+game/test/e2e projects, `rini_impl.cpp` in test/e2e file lists (game
+picks it up via `src/**` glob), `_CRT_SECURE_NO_WARNINGS` for that TU
+only. Menu 83/83, full suite 4137/0. Net: `Menu.cpp` line-split loop
+replaced by rini load/save; validators stay (they're the semantics).
 
 ## Phase 2 — `extras-c/path_utils`: NO CODE CHANGE (dead includes removed)
 
