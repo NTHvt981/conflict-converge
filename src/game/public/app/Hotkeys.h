@@ -8,10 +8,9 @@
 #include "raylib.h" // KEY_* code defaults for the Tier-1 action table
 
 // QoL fully remappable hotkeys (Tier 1: ShortcutRegistry actions only;
-// Tier 2 raw-polled digits/Alt are explicitly deferred — see
-// plans/HotkeyRemap_Plan.md). Single source of truth for action ids,
-// labels, and default keys: Game::BindShortcuts, the remap screen, and
-// settings persistence all read this table.
+// Tier 2 raw-polled digits/Alt are explicitly deferred). Single source of
+// truth for action ids, labels, and default keys: Game::BindShortcuts,
+// the remap screen, and settings persistence all read this table.
 struct HotkeyDef
 {
     const char *action; // stable id used in settings (hotkey.<action>=<key>)

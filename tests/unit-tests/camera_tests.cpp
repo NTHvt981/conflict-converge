@@ -1,4 +1,4 @@
-// Unit tests for the M2 Goal 3 camera (pan math, screen->world).
+// Unit tests for the camera (pan math, screen->world).
 // UpdateWASD polls live raylib input, so only the key-free Pan and the
 // pure-math ScreenToWorld are covered here (headless-safe).
 

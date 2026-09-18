@@ -2,9 +2,9 @@
 
 #include <cassert>
 
-// M1 Goal 7: central assertion macro. Active in Debug builds, compiled out in
+// Central assertion macro. Active in Debug builds, compiled out in
 // Release (NDEBUG comes from the Release profile in premake5.lua). Use for
-// invariant checks in game code (M2 tile math, M3 unit state, M5 economy);
+// invariant checks in game code ( tile math, unit state, economy);
 // never for validation of external input (save files, user actions).
 //
 // NOTE: this file must NOT be named Assert.h — on Windows' case-insensitive

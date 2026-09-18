@@ -10,7 +10,7 @@
 enum class BuildingType; // fwd-decl (Selection.cpp includes Building.h)
 enum class UnitType; // fwd-decl (Selection.cpp includes Unit.h)
 
-// M2 Goal 4: mouse selection (left-click pick) over the unit registry.
+// Mouse selection (left-click pick) over the unit registry.
 // Hit test is the unit's 64x64 tile box at its snapped position.
 
 Entity PickUnitAt(Registry &registry, Vector2 worldPos);

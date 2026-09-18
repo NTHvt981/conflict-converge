@@ -9,7 +9,7 @@
 
 class TileMap; // fwd-decl (Nodes.cpp includes TileMap.h)
 
-// M5 Goal 3: resource node gathering (Company of Heroes style: units work
+// Resource node gathering (Company of Heroes style: units work
 // nodes in the field). Nodes sit on passable Grass tiles (gatherers stand on
 // them), deplete as Engineers draw from them, and refill after a delay.
 

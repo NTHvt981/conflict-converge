@@ -1,5 +1,4 @@
-// Standalone unit-config editor entry point (see
-// plans/Standalone_Unit_Config_Editor_Plan.md section 2): its own windowed
+// Standalone unit-config editor entry point: its own windowed
 // binary sharing only the data-layer + art TUs, never Game.cpp.
 #include "raylib.h"
 #include "raygui.h"

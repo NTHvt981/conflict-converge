@@ -20,7 +20,7 @@ int Manhattan(cc::IVec2 a, cc::IVec2 b)
     return dx + dy;
 }
 
-// Phase 4: octile distance heuristic for 8-dir A*.
+// Octile distance heuristic for 8-dir A*.
 float OctileDist(cc::IVec2 a, cc::IVec2 b)
 {
     const float dx = static_cast<float>(a.x >= b.x ? a.x - b.x : b.x - a.x);
@@ -44,7 +44,7 @@ bool operator<(const OpenNode &a, const OpenNode &b)
 // Fixed neighbor order keeps routes deterministic for tests.
 const cc::IVec2 kDirs[] = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
 
-// Phase 4: 8 directions (cardinals + diagonals).
+// 8 Directions (cardinals + diagonals).
 const cc::IVec2 kDirs8[] = {
     { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 },   // cardinals
     { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 }    // diagonals
@@ -54,7 +54,7 @@ const cc::IVec2 kDirs8[] = {
 
 float TerrainCost(TerrainType terrain)
 {
-    (void)terrain; // uniform 1.0 per Q55; branch here for costly ground later
+    (void)terrain; // uniform 1.0; branch here for costly ground later
     return 1.0f;
 }
 
@@ -256,7 +256,7 @@ void IssuePathOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
     TilePath path = FindPath(map, start, goal);
     if (path.empty())
     {
-        IssueMoveOrder(unit, worldTarget); // unreachable: M2 straight attempt
+        IssueMoveOrder(unit, worldTarget); // unreachable: straight attempt
         unit.hasPath = false;
         unit.path.clear();
         unit.pathNext = 0;

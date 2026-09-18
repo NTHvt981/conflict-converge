@@ -13,11 +13,11 @@ workspace "ConflictConverge"
     -- Output directory
     location "prj"
 
-    -- M15: /FS serializes PDB writes. The protobuf generated headers are
+    -- /FS serializes PDB writes. The protobuf generated headers are
     -- huge; without this, parallel CL instances lock vc143.pdb (MSVC C1041).
     buildoptions { "/FS" }
 
--- M1 Goal 7: build profiles shared by every project below.
+-- Build profiles shared by every project below.
 -- Debug keeps assertions enabled (no NDEBUG) with full symbols;
 -- Release defines NDEBUG (compiles out CC_ASSERT, see Assert.h) and optimizes.
 filter "configurations:Debug"
@@ -138,7 +138,7 @@ project "conflict-converge"
         "shell32"
     }
 
-    -- M15: CMake-built protobuf static lib (Release: libprotobuf.lib in
+    -- CMake-built protobuf static lib (Release: libprotobuf.lib in
     -- build/Release, Debug: libprotobufd.lib in build/Debug). Shared CRT
     -- (/MD) matches these projects; do not flip protobuf_MSVC_STATIC_RUNTIME.
     filter "configurations:Debug"
@@ -221,7 +221,7 @@ project "conflict-converge-test"
         "shell32"
     }
 
-    -- M15: same CMake-built protobuf lib as the game project (see above).
+    -- Same CMake-built protobuf lib as the game project (see above).
     filter "configurations:Debug"
         libdirs { "deps/protobuf/build/Debug" }
         links { "libprotobufd" }
@@ -301,10 +301,9 @@ project "conflict-converge-e2e"
         "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
     }
 
--- Standalone unit-config editor (plans/Standalone_Unit_Config_Editor_Plan.md
--- section 2): its own windowed binary sharing only the data-layer + art TUs
--- (UnitStats/UnitConfig/SpriteData + Art for the live preview), never
--- Game.cpp or the test runner.
+-- Standalone unit-config editor: its own windowed binary sharing only the
+-- data-layer + art TUs (UnitStats/UnitConfig/SpriteData + Art for the live
+-- preview), never Game.cpp or the test runner.
 project "conflict-converge-editor"
     kind "ConsoleApp"
     cppdialect "C++20"
@@ -346,7 +345,7 @@ project "conflict-converge-editor"
         "shell32"
     }
 
-    -- M15: same CMake-built protobuf lib as the game project (see above).
+    -- Same CMake-built protobuf lib as the game project (see above).
     filter "configurations:Debug"
         libdirs { "deps/protobuf/build/Debug" }
         links { "libprotobufd" }

@@ -13,7 +13,7 @@
 
 #include "Building.h"
 #include "CcAssert.h"
-#include "FogOfWar.h" // M9: per-team explored sets via team_fog
+#include "FogOfWar.h" // Per-team explored sets via team_fog
 #include "GameCamera.h"
 #include "Nodes.h"
 #include "Registry.h"
@@ -281,7 +281,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
         b.teamID = in.team();
         b.tileX = in.tile_x();
         b.tileY = in.tile_y();
-        // M13: legacy saves predate building HP (zeros on the wire) — heal
+        // Legacy saves predate building HP (zeros on the wire) — heal
         // those to full rather than loading rubble. Destroyed buildings
         // legitimately save health=0, so the heal only applies while the
         // structure is still standing.
@@ -337,7 +337,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
     }
     out.nodeIronCarry = msg.node_iron_carry();
     out.nodeOilCarry = msg.node_oil_carry();
-    // msg.explored() is the legacy M15 field: superseded, never read.
+    // msg.explored is the legacy field: superseded, never read.
     if (msg.team_fog_size() > kMaxFogTeams)
     {
         return false;
@@ -378,7 +378,7 @@ bool SaveWorld(const WorldState &world, const std::string &path)
             msg.mutable_map()->add_terrain(static_cast<std::int32_t>(world.map->Get({ x, y })));
         }
     }
-    // Units in Each() order; targets stored as indices into that same order.
+    // Units in Each order; targets stored as indices into that same order.
     std::vector<Entity> order;
     world.registry->Each<Unit>([&](Entity id, const Unit &) { order.push_back(id); });
     for (Entity id : order)

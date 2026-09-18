@@ -1,4 +1,4 @@
-// Unit tests for M3 Goal 2: the 7-type base stat table.
+// Unit tests for the 7-type base stat table.
 
 #include "test_harness.h"
 

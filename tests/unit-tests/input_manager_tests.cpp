@@ -1,4 +1,4 @@
-// Unit tests for the M2 Goal 6 InputManager (snapshot routing).
+// Unit tests for the InputManager (snapshot routing).
 // Update/PollLive read live raylib state; Snapshot covers the same paths.
 
 #include "test_harness.h"

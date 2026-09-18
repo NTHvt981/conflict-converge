@@ -3,21 +3,21 @@
 
 #include "Game.h"
 
-#include "raygui.h" // M1 Goal 4: raygui UI framework (impl TU: src/thirdparty/raygui_impl.c)
-#include "Building.h" // M5 Goal 2: demo base/placement on the tile grid
+#include "raygui.h" // Raygui UI framework (impl TU: src/thirdparty/raygui_impl.c)
+#include "Building.h" // Demo base/placement on the tile grid
 #include "Cursor.h" // context-cursor intent prediction (per-frame, pre-draw)
 #include "DataRoot.h" // launch hardening: chdir to the data root when needed
 #include "Formation.h" // drag-select squads fan out through formation moves
-#include "Hud.h" // M6 Goal 2: raygui resource + selection panels
+#include "Hud.h" // Raygui resource + selection panels
 #include "MapFile.h" // sandbox detection (player spawn without AI spawn)
-#include "Pathfinder.h" // M3 Goal 3: right-click orders route around blocks
-#include "Selection.h" // M2 Goal 4: mouse selection helpers
-#include "Shortcuts.h" // M6 Goal 4: shortcut overlay lines
-#include "Unit.h" // M2 Goal 2/4: snapped units with move orders
+#include "Pathfinder.h" // Right-click orders route around blocks
+#include "Selection.h" // Mouse selection helpers
+#include "Shortcuts.h" // Shortcut overlay lines
+#include "Unit.h" // Snapped units with move orders
 #include <algorithm> // QoL area-build tile-range min/max
-#include <filesystem> // M14: save-slot existence for the load screen
+#include <filesystem> // Save-slot existence for the load screen
 #include <vector>
-#include <cmath> // M12: muzzle direction normalization
+#include <cmath> // Muzzle direction normalization
 
 namespace
 {
@@ -85,7 +85,7 @@ Rectangle SquadSelectionBox(const Art &art, const Unit &unit, Entity id, bool at
     }
     return { x0 - 2.0f, y0 - 2.0f, (x1 - x0) + 4.0f, (y1 - y0) + 4.0f };
 }
-// M14: setup-screen and HUD difficulty label.
+// Setup-screen and HUD difficulty label.
 const char *DifficultyName(AIDifficulty difficulty)
 {
     switch (difficulty)
@@ -105,7 +105,7 @@ Game::Game()
     : map(20, 15)
     , occ(20, 15)
     , factory(registry, resources, events)
-    // M8: enemy commander owns team 1 under fair rules. Parked without a
+    // Enemy commander owns team 1 under fair rules. Parked without a
     // base until the first Start/Load re-arms it (BuildSkirmish runs Reset +
     // SetupBase; the load path runs Reset bare since the file fields the AI).
     , ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
@@ -113,7 +113,7 @@ Game::Game()
     , enemyAI2(registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
     , skirmish{ &registry, &resources, &map, &occ, &fog, &nodes,
                 &queue,   &factory,   &ai, &allyAI, &enemyAI2, &camera, &rallyPos }
-    // M13: shared snapshot for the save-slot bindings.
+    // Shared snapshot for the save-slot bindings.
     , worldState{ &registry, &resources, &map, &camera, &nodes, &fog, &occ }
 {
 }
@@ -132,16 +132,16 @@ void Game::Init()
     const int kInitialWidth = 1200;
     const int kInitialHeight = 675;
 
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE); // M13: user-resizable window
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE); // User-resizable window
     InitWindow(kInitialWidth, kInitialHeight, "raylib basic window");
     SetWindowMinSize(800, 450); // HUD layout assumes at least this
     SetTargetFPS(60);
     GuiEnableTooltip(); // hover tooltips on HUD/menu controls (GuiSetTooltip sites)
 
-    // M11: audio device + asset load. The test binary never inits (headless).
+    // Audio device + asset load. The test binary never inits (headless).
     InitAudioDevice();
     audio.Init(IsAudioDeviceReady());
-    // M12: sprite + particle renderer. Missing files fall back to the
+    // Sprite + particle renderer. Missing files fall back to the
     // rectangle placeholders the tests exercise headless.
     art.Init(true);
     if (art.HasFont())
@@ -152,43 +152,43 @@ void Game::Init()
     // rate limit, outcome transitions).
     lastBuildingCount = 0;
     lastDepletedCount = 0;
-    lastQueueSize = 0; // M14: production-order edge trigger
+    lastQueueSize = 0; // Production-order edge trigger
     attackSfxTimer = 0.0f;
-    lastOutcomeState = MenuState::MainMenu; // M14: boot to title
-    hasFactory = false; // M13: recomputed per frame, gates queue + panel
+    lastOutcomeState = MenuState::MainMenu; // Boot to title
+    hasFactory = false; // Recomputed per frame, gates queue + panel
 
     camera.view.offset = { kInitialWidth / 2.0f, kInitialHeight / 2.0f };
     camera.view.rotation = 0.0f;
     camera.view.zoom = 1.0f;
-    // M6 Goal 3: menu flow (pause/outcome/settings); camera speed is a
+    // Menu flow (pause/outcome/settings); camera speed is a
     // live setting, not a constant, so the settings slider can tune it.
-    // M14: boots at MainMenu; persisted settings load here (Q86), ignored
+    // Boots at MainMenu; persisted settings load here, ignored
     // when the file is missing.
     LoadSettings(menu.settings, kSettingsPath);
     art.SetColorBlindMode(menu.settings.colorBlindMode); // QoL: persisted palette
     GuiSetStyle(DEFAULT, TEXT_SIZE, static_cast<int>(10 * menu.settings.uiScale)); // persisted UI scale
     ApplyHotkeyOverrides(); // QoL: persisted remaps, before BindShortcuts below
 
-    // M6 Goal 1: minimap texture (top-right, 4:3 like the 20x15 map).
+    // Minimap texture (top-right, 4:3 like the 20x15 map).
     minimap.Init({ static_cast<float>(kInitialWidth) - 170.0f, 10.0f,
                    160.0f, 120.0f });
-    // Unit speed now comes from M3 base stats (Unit::speed, ApplyBaseStats).
+    // Unit speed now comes from base stats (Unit::speed, ApplyBaseStats).
 
-    // M14: world objects are boot-level state, but match CONTENT only builds
+    // World objects are boot-level state, but match CONTENT only builds
     // after Start confirms (BuildSkirmish) or a slot loads. Build/Reset refill
     // contents in place, so shortcut lambdas plus the factory/AI reference
     // bindings stay valid across matches.
-    // M14: match session — nothing simulates or renders until Start.
+    // Match session — nothing simulates or renders until Start.
     worldActive = false;
     worldIs2v2 = false;
     worldDifficulty = AIDifficulty::Medium;
     worldMapPath.clear(); // map the active match was seeded from
     settingRally = false;
     dragging = false;
-    showHints = true; // M6 Goal 4: F1 toggles the shortcut overlay
-    setupScroll = 0; // M14: setup-screen map list scroll position
+    showHints = true; // F1 toggles the shortcut overlay
+    setupScroll = 0; // Setup-screen map list scroll position
 
-    // M11: production/spawn confirmations (stateless: survives across matches).
+    // Production/spawn confirmations (stateless: survives across matches).
     events.Subscribe(EventType::UnitSpawned, [&](const Event &) { audio.Play(SfxId::Confirm); });
     // QoL pings: player-unit losses raise a marker (position rides the
     // lifecycle payload; dynamic_cast guards against bare-Event sources).
@@ -206,13 +206,13 @@ void Game::Init()
 
 void Game::Announce(EventType type)
 {
-    // M14: bare-event announcer for the Q57 game-state + UI event types.
+    // Bare-event announcer for the game-state + UI event types.
     Event bare;
     bare.type = type;
     events.Dispatch(bare);
 }
 
-// M14: (re)start a skirmish from the setup screen: seed the world, reset
+// (Re)start a skirmish from the setup screen: seed the world, reset
 // every per-match poll, and announce the match.
 MenuFlow &Game::E2EMenu()
 {
@@ -302,7 +302,7 @@ void Game::StartMatch(const std::string &mapPath, AIDifficulty difficulty)
     Announce(EventType::MatchStarted);
 }
 
-// M14: teardown back to the title (world contents dropped).
+// Teardown back to the title (world contents dropped).
 void Game::QuitToMenu()
 {
     ResetSkirmish(skirmish);
@@ -506,9 +506,9 @@ void Game::BindShortcuts()
     // old key). Every literal goes through hotkeys.KeyFor — the remap
     // screen + settings file own the effective keys, not these defaults.
     input.shortcuts.Clear();
-    // M2 Goal 5 shortcuts, pumped by the M2 Goal 6 InputManager: Esc
-    // deselects, Space halts selected units, P pauses (M6 Goal 3),
-    // F1 toggles the shortcut overlay (M6 Goal 4).
+    // Shortcuts, pumped by the InputManager: Esc
+    // deselects, Space halts selected units, P pauses,
+    // F1 toggles the shortcut overlay.
     input.shortcuts.Bind(hotkeys.KeyFor("ToggleHints"), [&] { showHints = !showHints; });
     input.shortcuts.Bind(hotkeys.KeyFor("TogglePause"), [&] {
         if (menu.state == MenuState::Playing)
@@ -537,7 +537,7 @@ void Game::BindShortcuts()
         }
         LoadWorld({ &registry, &resources, &map, &camera, &nodes, &fog, &occ }, "data/quicksave.ccpb");
     });
-    // M13: named save slots (F6-8 store, Shift+F6-8 recall).
+    // Named save slots (F6-8 store, Shift+F6-8 recall).
     input.shortcuts.Bind(hotkeys.KeyFor("SaveSlot1"), [&] {
         if (worldActive && menu.state == MenuState::Playing)
         {
@@ -574,9 +574,9 @@ void Game::BindShortcuts()
             LoadWorld(worldState, SaveSlotPath(3));
         }
     });
-    // M13: order keys act on the current selection. A attack-moves to the
+    // Order keys act on the current selection. A attack-moves to the
     // cursor, H/G switch stances, V patrols cursor-and-back, R toggles
-    // rally-point placement. M14: world keys are dead outside a live match.
+    // rally-point placement. : world keys are dead outside a live match.
     input.shortcuts.Bind(hotkeys.KeyFor("AttackMove"), [&] {
         if (!worldActive || menu.state != MenuState::Playing)
         {
@@ -763,7 +763,7 @@ void Game::BindShortcuts()
         }
     });
     input.shortcuts.Bind(hotkeys.KeyFor("Back"), [&] {
-        // M14: Esc backs out of menu screens; in-match it keeps the M2
+        // Esc backs out of menu screens; in-match it keeps the
         // deselect behavior (Paused resumes).
         if (menu.state == MenuState::HotkeyRemap)
         {
@@ -826,14 +826,14 @@ void Game::BindShortcuts()
                 unit.hasPath = false;
                 unit.path.clear();
                 unit.pathNext = 0;
-                unit.target = kInvalidEntity; // M3 Goal 5: halt drops combat too
-                unit.attackMove = false; // M13: halt drops attack-move + repair too
+                unit.target = kInvalidEntity; // Halt drops combat too
+                unit.attackMove = false; // Halt drops attack-move + repair too
                 unit.hasRepairOrder = false;
                 unit.repairTarget = kInvalidEntity;
                 unit.hasAttackGroundOrder = false; // QoL: halt drops shelling too
                 unit.speedCapPixelsPerSec = -1.0f; // QoL: halt drops the group cap
                 unit.orderQueue.clear(); // QoL: halt drops queued orders too
-                unit.phase = AttackPhase::Ready; // M4 Goal 3: halt cancels the telegraph
+                unit.phase = AttackPhase::Ready; // Halt cancels the telegraph
                 unit.velocity = { 0.0f, 0.0f };
                 unit.state = UnitState::Idle;
                 SnapUnitToTile(unit);
@@ -844,14 +844,14 @@ void Game::BindShortcuts()
 
 void Game::Update()
 {
-    // M2 Goal 6: single input pump (always runs: P must unpause too).
-    // Camera speed is a live menu setting (M6 Goal 3).
+    // Single input pump (always runs: P must unpause too).
+    // Camera speed is a live menu setting.
     input.Update(camera, menu.settings.cameraSpeed, GetFrameTime());
-    // M13: scroll-wheel zoom (clamped in GameCamera) runs even paused.
+    // Scroll-wheel zoom (clamped in GameCamera) runs even paused.
     // Zoom-out floor follows the world: at min zoom the map exactly fills
     // the screen, so over-zooming can never show void past the edge.
     camera.AdjustZoom(input.WheelDelta());
-    // M13: resizable window — refresh live dims, keep the camera centered
+    // Resizable window — refresh live dims, keep the camera centered
     // and the minimap docked top-right (texture size is fixed).
     const int screenWidth = GetScreenWidth();
     const int screenHeight = GetScreenHeight();
@@ -869,7 +869,7 @@ void Game::Update()
     // overlay (both menu screens and in-world overlays share menu.state).
     TrackMenuTransition(previousMenuState, menuStateTime, menu.state, GetFrameTime());
 
-    // M14: menu branch — no world simulates or renders until Start (or a
+    // Menu branch — no world simulates or renders until Start (or a
     // slot load). The match code below runs untouched once worldActive.
     if (!worldActive)
     {
@@ -1023,7 +1023,7 @@ void Game::Update()
             if (GuiButton({ cx - 200.0f, 470.0f, 400.0f, 40.0f }, "Back"))
             {
                 SyncHotkeySettings(); // QoL: remaps ride the settings file too
-                SaveSettings(menu.settings, kSettingsPath); // M14: Q86 persistence
+                SaveSettings(menu.settings, kSettingsPath); // Persistence
                 Announce(EventType::MenuAction);
                 menu.OpenMainMenu();
             }
@@ -1058,7 +1058,7 @@ void Game::Update()
                 if (GuiButton({ cx - 200.0f, static_cast<float>(90 + i * 50), 400.0f, 40.0f },
                               slotLabels[i]))
                 {
-                    // M14: load over a fresh shell (LoadWorld clears +
+                    // Load over a fresh shell (LoadWorld clears +
                     // rebuilds). The file already fields the AI side, so
                     // the commander re-arms bare — no second SetupBase.
                     ResetSkirmish(skirmish);
@@ -1270,15 +1270,15 @@ void Game::Update()
         return;
     }
 
-    // M6 Goal 3: orders, AI, economy, and minimap only advance while
+    // Orders, AI, economy, and minimap only advance while
     // Playing; rendering below always runs so menus overlay a live frame.
     if (menu.state == MenuState::Playing)
     {
 
-        // M2 Goal 4 mouse inputs: press starts a drag-box gesture,
+        // Mouse inputs: press starts a drag-box gesture,
         // release resolves it (click = pick, box = SelectInRect).
-        // M3 Goal 3: orders pathfind around water/buildings via IssuePathOrder.
-        // M13 routes minimap clicks to the camera and rally-mode clicks
+        // Orders pathfind around water/buildings via IssuePathOrder.
+        // Routes minimap clicks to the camera and rally-mode clicks
         // to the factory rally point before unit selection.
         if (input.LeftPressed())
         {
@@ -1342,7 +1342,7 @@ void Game::Update()
                     {
                         SelectOnly(registry, hit);
                     }
-                    audio.Play(SfxId::Select); // M11: selection blip
+                    audio.Play(SfxId::Select); // Selection blip
                 }
                 else
                 {
@@ -1584,7 +1584,7 @@ void Game::Update()
                                                     registry.Generation(squad[0]));
                         }
                     }
-                    audio.Play(SfxId::Confirm); // M11: order acknowledged
+                    audio.Play(SfxId::Confirm); // Order acknowledged
                 }
             }
             else if (!squad.empty())
@@ -1709,16 +1709,17 @@ void Game::Update()
                 placingType = BuildingType::Factory;
             }
         }
-        // M9: rebuild visibility from current positions before anyone acquires.
+        // Rebuild visibility from current positions before anyone acquires.
         fog.Recompute(registry);
-        // Phase 4 + stall-fix: occupancy pre-pass, per-unit driver (M3G5,
-        // M9 fog gate), overlap separation, and separation-stall detection,
-        // all as one pipeline (see RunUnitMovementFrame) so the game loop
-        // and tests can't drift apart on this sequencing.
+        // Occupancy pre-pass and stall fix: per-unit driver with fog gate,
+        // overlap separation, and separation-stall detection, all as one
+        // pipeline (see RunUnitMovementFrame) so the game loop and tests
+        // can't drift apart on this sequencing.
         RunUnitMovementFrame(registry, map, occ, &fog, GetFrameTime());
-        // M3 Goal 6: collect the fallen, then destroy through the factory so
+        // Collect the fallen, then destroy through the factory so
         // UnitDestroyed is announced (destroying inside Each would invalidate it).
-        // dt is shared by the M11 polls below and the economy tick further down.
+        // dt is shared by the audio edge-trigger polls below and the economy
+        // tick further down.
         const float dt = GetFrameTime();
         std::vector<Entity> dead;
         registry.Each<Unit>([&](Entity id, const Unit &unit) {
@@ -1731,11 +1732,11 @@ void Game::Update()
         {
             if (const Unit *corpse = registry.Get<Unit>(id))
             {
-                // M12: death burst at the corpse before teardown.
+                // Death burst at the corpse before teardown.
                 art.ParticlesPool().SpawnBurst(
                     { corpse->position.x + 32.0f, corpse->position.y + 32.0f }, ORANGE, 24,
                     120.0f, 0.6f);
-                // Phase 4: release occupancy tiles before teardown (owned:
+                // Release occupancy tiles before teardown (owned:
                 // a corpse shoved onto a live unit's tile must not wipe it).
                 const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(corpse->position));
                 occ.ReleaseFootprintOwned(anchor, corpse->footprintWidth,
@@ -1744,13 +1745,13 @@ void Game::Update()
             }
             factory.DestroyUnit(id);
         }
-        // M11: edge-triggered battle sounds (one explosion per wipe, not per corpse).
+        // Edge-triggered battle sounds (one explosion per wipe, not per corpse).
         if (!dead.empty())
         {
             audio.Play(SfxId::Explosion);
             shakeTrauma = AddShakeTrauma(shakeTrauma, kShakeDeathTrauma);
         }
-        // M12: impact sparks on fresh hits + muzzle sparks while telegraphing.
+        // Impact sparks on fresh hits + muzzle sparks while telegraphing.
         registry.Each<Unit>([&](Entity, const Unit &unit) {
             const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
             if (unit.hitFlashTime > 0.20f)
@@ -1823,15 +1824,15 @@ void Game::Update()
         if (depletedCount > lastDepletedCount)
         {
             audio.Play(SfxId::Deplete);
-            Announce(EventType::ResourceDepleted); // M14: Q57 resource event
+            Announce(EventType::ResourceDepleted); // Resource event
         }
         lastDepletedCount = depletedCount;
-        // M5 economy tick: base trickle, node respawn, harvest, production.
-        // (dt is declared up at the death sweep so the M11 polls above share it.)
+        // Economy tick: base trickle, node respawn, harvest, production.
+        // (dt is declared up at the death sweep so the polls above share it.)
         UpdateBaseIncome(registry, resources, dt, 0);
         nodes.Update(dt);
         nodes.GatherTick(registry, resources, dt, 0); // team 0 crew only (AI gathers its own)
-        // M13: production dies with the structure — compute here for the
+        // Production dies with the structure — compute here for the
         // queue gate, reuse for the factory panel below.
         hasFactory = false;
         registry.Each<Building>([&](Entity, const Building &building) {
@@ -1852,8 +1853,8 @@ void Game::Update()
                 }
             }
         }
-        // M14: Q57 production-ordered event on every queue growth (panel
-        // buttons and the M5 seed enqueues both flow through here).
+        // Production-ordered event on every queue growth (panel
+        // buttons and the seed enqueues both flow through here).
         if (queue.Size() > static_cast<std::size_t>(lastQueueSize))
         {
             Announce(EventType::ProductionOrdered);
@@ -1892,7 +1893,7 @@ void Game::Update()
         }
         if (!sandboxMode)
         {
-            ai.Update(dt); // M8: enemy build order, waves, scouting, retreat
+            ai.Update(dt); // Enemy build order, waves, scouting, retreat
         }
         // 2v2 overflow commanders tick only in 2v2 matches (see worldIs2v2:
         // count-gating wakes parked commanders in 1v1 via shared teams).
@@ -1901,7 +1902,7 @@ void Game::Update()
             allyAI.Update(dt);   // allied build order + waves beside the player
             enemyAI2.Update(dt); // second enemy front
         }
-        // M6 Goal 1: periodic minimap refresh (terrain blocks + unit dots).
+        // Periodic minimap refresh (terrain blocks + unit dots).
         if (minimap.PollRefresh(dt))
         {
             BeginTextureMode(minimap.target);
@@ -1926,7 +1927,7 @@ void Game::Update()
                 }
             }
             registry.Each<Unit>([&](Entity, const Unit &unit) {
-                // M9: enemies only appear when a team-0 unit sees their tile.
+                // Enemies only appear when a team-0 unit sees their tile.
                 if (unit.teamID != 0 &&
                     !fog.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit.position))))
                 {
@@ -1941,14 +1942,14 @@ void Game::Update()
             });
             EndTextureMode();
         }
-        // M6 Goal 3: decide terminal states from the living rosters.
+        // Decide terminal states from the living rosters.
         // Skipped in sandbox mode (no enemy side: instant Victory otherwise).
         if (!sandboxMode)
         {
             menu.ShowOutcome(TeamHasUnits(registry, 0), TeamHasUnits(registry, 1));
         }
-        // M11: fanfare on the transition frame only.
-        // M14: Q57 game-state events ride the same transition.
+        // Fanfare on the transition frame only.
+        // Game-state events ride the same transition.
         if (menu.state != lastOutcomeState)
         {
             if (menu.state == MenuState::Victory)
@@ -1965,7 +1966,7 @@ void Game::Update()
         }
     }
 
-    // M11: volumes follow the pause-menu sliders live; the loop streams on.
+    // Volumes follow the pause-menu sliders live; the loop streams on.
     audio.ApplySettings(menu.settings.masterVolume, menu.settings.musicVolume,
                         menu.settings.sfxVolume, menu.settings.mute);
     audio.UpdateMusic();
@@ -2084,10 +2085,10 @@ void Game::Update()
         }
     }
 
-    // M5: buildings as footprint rects with a type letter, nodes as
+    // Buildings as footprint rects with a type letter, nodes as
     // kind-colored discs with remaining amounts.
     registry.Each<Building>([&](Entity, const Building &building) {
-        // M9: enemy structures hide until a team-0 unit sees a footprint tile.
+        // Enemy structures hide until a team-0 unit sees a footprint tile.
         if (building.teamID != 0 &&
             !fog.IsVisible(0, cc::IVec2{ building.tileX, building.tileY }))
         {
@@ -2149,7 +2150,7 @@ void Game::Update()
                  ok ? DARKGREEN : RED);
     }
     nodes.Each([&](const ResourceNode &node) {
-        // M9: static features join the frozen snapshot once explored.
+        // Static features join the frozen snapshot once explored.
         if (!fog.IsExplored(0, node.tile))
         {
             return;
@@ -2169,12 +2170,12 @@ void Game::Update()
                  static_cast<int>(center.y) - 8, 12, DARKGRAY);
     });
 
-    // Units as sprites (M12) or 32x32 placeholder rects (fallback/tests):
-    // red-ringed when selected, tracer to the target when Attacking (M3G5),
-    // white-flashed with a damage number while hitFlashTime runs (M4G5).
-    // Selected units also get a health bar (M6 Goal 4).
+    // Units as sprites or 32x32 placeholder rects (fallback/tests):
+    // red-ringed when selected, tracer to the target when Attacking,
+    // white-flashed with a damage number while hitFlashTime runs.
+    // Selected units also get a health bar.
     registry.Each<Unit>([&](Entity id, Unit &unit) {
-        // M9: enemies render only on tiles team 0 currently sees.
+        // Enemies render only on tiles team 0 currently sees.
         if (unit.teamID != 0 &&
             !fog.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit.position))))
         {
@@ -2195,7 +2196,7 @@ void Game::Update()
         }
         else
         {
-            // Phase 14: infantry draws as a squad cluster; vehicles draw
+            // Infantry draws as a squad cluster; vehicles draw
             // as a single sprite (count == 1, offset {0,0}). Atlas-first:
             // moving units cycle "<type>_walk", everything else idles on
             // "<type>_idle_0_0"; types without atlas entries fall through
@@ -2284,12 +2285,12 @@ void Game::Update()
             DrawCircleV(cc::ToRaylib(cc::ToGlm(unit.moveTarget) + cc::Vec2(32.0f, 32.0f)), 5.0f, GREEN);
         }
     });
-    // M12: particles in world space, under the shroud so hidden battles
+    // Particles in world space, under the shroud so hidden battles
     // stay hidden.
     art.ParticlesPool().Draw();
     damageNumbers.Draw(); // same world-space block, same shroud rule
-    // M9 shroud, drawn over the world: unexplored tiles go opaque black,
-    // explored-but-unseen tiles get a dim veil (frozen snapshot, Q76).
+    // Shroud, drawn over the world: unexplored tiles go opaque black,
+    // explored-but-unseen tiles get a dim veil (frozen snapshot).
     for (int y = 0; y < map.Height(); ++y)
     {
         for (int x = 0; x < map.Width(); ++x)
@@ -2346,8 +2347,8 @@ void Game::Update()
         DrawCircleV(input.MouseScreen(), 3.0f, SKYBLUE);
     }
 
-    // M6 Goal 1: minimap blit (texture is Y-flipped) + viewport box.
-    // Hidden from the settings panel (M6 Goal 3).
+    // Minimap blit (texture is Y-flipped) + viewport box.
+    // Hidden from the settings panel.
     if (menu.settings.showMinimap)
     {
         DrawTextureRec(minimap.target.texture,
@@ -2370,14 +2371,14 @@ void Game::Update()
         }
     }
 
-    // M6 Goal 2: raygui HUD (proper panels replace the M5 text counters).
+    // Raygui HUD (proper panels replace the text counters).
     DrawResourcePanel(resources, &art);
     DrawSelectionPanel(registry, &art);
     DrawIdleButtons(registry, 0); // QoL: team 0 is the player
     DrawRepairPanel(&playerAutoRepair, &autoRepairCap);
     DrawControlGroupStrip(registry, 0, autoAddGroupBit, &art); // QoL: team 0 is the player
     DrawSaveSlots();
-    // M13: factory panel (build buttons, queue, cancel); rally hint
+    // Factory panel (build buttons, queue, cancel); rally hint
     // while placing the rally point. Recomputed here (not just the sim
     // gate above) so the panel stays correct while paused.
     registry.Each<Building>([&](Entity, const Building &building) {
@@ -2405,14 +2406,14 @@ void Game::Update()
         DrawRectangle(static_cast<int>(ppx), screenHeight - 202, static_cast<int>(150.0f * queue.HeadProgress()), 12, DARKGREEN);
     }
 
-    // M7 Goal 3: live frame-rate readout (60 FPS target validation).
+    // Live frame-rate readout (60 FPS target validation).
     DrawFPS(screenWidth - 170, 135);
-    // M8: enemy commander status (M14: difficulty comes from the setup).
+    // Enemy commander status (: difficulty comes from the setup).
     Art::DrawUiText(&art, TextFormat("Enemy: %s  Waves: %d", DifficultyName(worldDifficulty),
                         ai.WavesLaunched()),
              screenWidth - 170, 155, 16, GRAY);
 
-    // M6 Goal 4: shortcut overlay, bottom-left, toggled with F1.
+    // Shortcut overlay, bottom-left, toggled with F1.
     if (showHints)
     {
         const std::vector<std::string> hints = ShortcutHintLines(hotkeys);
@@ -2466,7 +2467,7 @@ void Game::Update()
         hoverTip.time = 0.0f;
     }
 
-    // M6 Goal 3: menu overlays sit on top of the frame.
+    // Menu overlays sit on top of the frame.
     if (menu.state == MenuState::HotkeyRemap)
     {
         // Entered from pause (world stays frozen: the sim only advances in
@@ -2499,7 +2500,7 @@ void Game::Update()
         GuiSlider(Rectangle{ 270, 145, 260, 20 }, "100", "800", &menu.settings.cameraSpeed,
                   100.0f, 800.0f);
         GuiCheckBox(Rectangle{ 270, 170, 20, 20 }, "Minimap", &menu.settings.showMinimap);
-        // M11: volumes (0..1) + mute, persisted by the M14 settings file.
+        // Volumes (0..1) + mute, persisted by the settings file.
         GuiLabel(Rectangle{ 270, 195, 260, 20 }, "Master volume");
         GuiSlider(Rectangle{ 270, 218, 260, 20 }, "0", "1", &menu.settings.masterVolume,
                   0.0f, 1.0f);
@@ -2523,8 +2524,8 @@ void Game::Update()
             Announce(EventType::MenuAction);
             menu.state = MenuState::HotkeyRemap;
         }
-        // M14: pause shares MenuSettings with the settings screen; leaving
-        // via Back-equivalent persists (Q86), pause buttons apply live.
+        // Pause shares MenuSettings with the settings screen; leaving
+        // via Back-equivalent persists, pause buttons apply live.
         if (GuiButton(Rectangle{ 270, 450, 260, 30 }, "Quit to menu"))
         {
             QuitToMenu();
@@ -2565,8 +2566,8 @@ void Game::Update()
 void Game::Shutdown()
 {
     minimap.Unload();
-    art.Shutdown(); // M12: unload sprite textures
-    audio.Shutdown(); // M11: unload sounds + music stream
+    art.Shutdown(); // Unload sprite textures
+    audio.Shutdown(); // Unload sounds + music stream
     CloseAudioDevice();
     CloseWindow();
 }

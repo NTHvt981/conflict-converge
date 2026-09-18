@@ -2,7 +2,7 @@
 
 #include "raylib.h" // Rectangle, Vector2, Camera2D, RenderTexture2D
 
-// M6 Goal 1: minimap. The map is re-rendered into a small texture at a fixed
+// Minimap. The map is re-rendered into a small texture at a fixed
 // cadence (periodic refresh, not per-frame); unit positions are drawn as
 // markers on every refresh. Terrain features are simplified to flat blocks —
 // the minimap shows positions, not detail. All math is render-free and tested;
@@ -28,7 +28,7 @@ struct Minimap
     // World position -> pixel inside screenRect for a map of mapW x mapH tiles.
     Vector2 WorldToMinimap(Vector2 world, int mapW, int mapH) const;
 
-    // M13: minimap pixel -> world position (click-to-move camera). Inverse
+    // Minimap pixel -> world position (click-to-move camera). Inverse
     // of WorldToMinimap; clamps into the map bounds. Degenerate maps
     // (non-positive dims) yield the origin.
     Vector2 MinimapToWorld(Vector2 minimapPx, int mapW, int mapH) const;

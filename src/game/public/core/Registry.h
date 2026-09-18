@@ -8,14 +8,14 @@
 #include <unordered_set>
 #include <vector>
 
-// M1 Goal 6: ECS-lite registry for component management. Entities are plain
-// IDs; components are arbitrary structs stored per type (M2 movement, M3 unit
-// stats, M4 combat state all attach here). Systems iterate by querying the
+// ECS-lite registry for component management. Entities are plain IDs;
+// components are arbitrary structs stored per type (movement, unit stats,
+// combat state all attach here). Systems iterate by querying the
 // component pools they care about. No dependencies beyond the STL.
 
 using Entity = std::uint32_t;
 
-// Reserved sentinel: Create() never returns this value.
+// Reserved sentinel: Create never returns this value.
 inline constexpr Entity kInvalidEntity = 0;
 
 class Registry
@@ -29,7 +29,7 @@ public:
 
     // Generation counter: increments each time an entity ID is recycled.
     // Occupancy grids store (entity, generation) to detect stale references
-    // after destroy+reuse (Phase 4 prerequisite, docs/NOTES.md finding #2).
+    // after destroy+reuse (recycled IDs must never resurrect dead entries).
     std::uint32_t Generation(Entity entity) const;
 
     // --- component access (per-type pools) ---
@@ -40,7 +40,7 @@ public:
     template <typename T> void Remove(Entity entity);
 
     // Visit every component of type T: fn(Entity, T&) (or const T&).
-    // M2 Goal 4: selection, orders, and movement update all iterate units.
+    // Selection, orders, and movement update all iterate units.
     template <typename T, typename Fn> void Each(Fn fn);
     template <typename T, typename Fn> void Each(Fn fn) const;
 

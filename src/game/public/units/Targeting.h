@@ -8,8 +8,8 @@
 class FogOfWar; // fwd-decl (Targeting.cpp includes FogOfWar.h)
 struct Building; // fwd-decl (Targeting.cpp includes Building.h)
 
-// M3 Goal 4: targeting logic. Acquisition scans for the nearest enemy with
-// threat priority; range checks gate attacks (M3G5 state machine, M4 damage).
+// Targeting logic. Acquisition scans for the nearest enemy with
+// threat priority; range checks gate attacks (state machine, damage).
 
 float DistanceBetween(const Unit &a, const Unit &b);
 
@@ -30,19 +30,19 @@ using ReservedDamageMap = std::unordered_map<Entity, float>;
 // Nearest living enemy of a different team within seeker.sightRange.
 // Threat priority: highest attackPower wins, ties broken by distance.
 // Returns kInvalidEntity when the seeker is missing or nothing qualifies.
-// M9: with fog, candidates on tiles unseen by the seeker's team are skipped —
-// except for Artillery, which blind-fires into shroud at no penalty (Q78).
+// With fog, candidates on tiles unseen by the seeker's team are skipped —
+// except for Artillery, which blind-fires into shroud at no penalty.
 // QoL: with reserved, candidates whose health is already covered by
 // committed damage are skipped (overkill protection); nullptr = legacy.
 Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fog = nullptr,
                      const ReservedDamageMap *reserved = nullptr);
 
-// M13: nearest Operational enemy building within sightRange. Same fog gate
+// Nearest Operational enemy building within sightRange. Same fog gate
 // (artillery exempt); wrecked, own-team, and unseen structures are skipped.
 // Lets marches raze production so games terminate (snowball via demolition).
 Entity AcquireBuildingTarget(const Registry &registry, Entity seeker, const FogOfWar *fog = nullptr);
 
-// M13: footprint center in world pixels (raze aim point, repair aim point).
+// Footprint center in world pixels (raze aim point, repair aim point).
 Vector2 BuildingCenter(const Building &building);
 
 // Circle check: target within attacker.attackRange pixels.

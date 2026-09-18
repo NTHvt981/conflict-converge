@@ -1,8 +1,8 @@
 #include "Targeting.h"
 
-#include "Building.h"  // M13: structural targets for raze orders
+#include "Building.h"  // Structural targets for raze orders
 #include "Combat.h"    // IsVehicleHull for the priority matrix
-#include "FogOfWar.h"  // M9 visibility gate (nullptr = ungated, legacy tests)
+#include "FogOfWar.h"  // Visibility gate (nullptr = ungated, legacy tests)
 #include "MathUtils.h" // glm distance via cc::Vec2
 
 float DistanceBetween(const Unit &a, const Unit &b)
@@ -31,7 +31,7 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
     {
         return kInvalidEntity;
     }
-    // Artillery blind-fires into shroud at no penalty (Q78): exempt from fog.
+    // Artillery blind-fires into shroud at no penalty: exempt from fog.
     const bool seesThroughFog = (fog == nullptr) || self->type == UnitType::Artillery;
 
     Entity best = kInvalidEntity;

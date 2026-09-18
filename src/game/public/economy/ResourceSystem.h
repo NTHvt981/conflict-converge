@@ -1,7 +1,7 @@
 #pragma once
 
-// Forward-declared API shape for M5 (Resource & Economy).
-// Tracks iron and oil with no cap. Gathering/production logic lands in M5.
+// Iron and oil ledger, uncapped. Spending and income ticks live here;
+// gathering and production queues live in Nodes/Production/Building.
 
 class ResourceSystem
 {
@@ -13,7 +13,7 @@ public:
     void AddOil(long amount);
     bool TrySpend(long ironCost, long oilCost);
 
-    // M5 Goal 1/4: base income generation. Banks whole units per tick,
+    // Base income generation. Banks whole units per tick,
     // carrying fractions forward; never caps (design: income has no maximum).
     void TickIncome(float ironPerSecond, float oilPerSecond, float dt);
 

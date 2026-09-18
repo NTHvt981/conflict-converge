@@ -1,4 +1,4 @@
-// Unit tests for M6 Goal 1 minimap math (Init/Unload need a GPU window and
+// Unit tests for minimap math (Init/Unload need a GPU window and
 // are exercised live in main.cpp, not here).
 
 #include "test_harness.h"

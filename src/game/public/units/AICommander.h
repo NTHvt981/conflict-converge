@@ -6,7 +6,7 @@
 #include "MathUtils.h" // cc::IVec2
 #include "Production.h" // own build queue (upfront charge, prepaid spawn)
 #include "Registry.h"  // Entity, Registry
-#include "ResourceSystem.h" // own fair-rules economy (Q74: same rules as the player)
+#include "ResourceSystem.h" // own fair-rules economy (same rules as the player)
 #include "Unit.h"      // UnitType
 #include "UnitFactory.h" // cost-validated spawner bound to the AI's resources
 
@@ -15,15 +15,15 @@ class OccupancyGrid;  // fwd-decl: class, not struct (TileMap.h defines it)
 class ResourceNodes;  // fwd-decl (harvest target queries)
 class EventDispatcher; // fwd-decl (factory event routing)
 
-// M8: enemy AI commander. Plays by the same rules as the player — own
+// Enemy AI commander. Plays by the same rules as the player — own
 // ResourceSystem seeded with starting funds, own ProductionQueue, buildings
 // placed through PlaceBuilding, orders through IssuePathOrder/IssueFormationMove.
 // Bind shared occupancy via SetOccupancy and march/harvest/scout/retreat
 // orders route footprint-aware (8-dir A*, occupied-goal sanitization);
 // unbound (headless tests) keeps the legacy blind behavior.
-// Difficulty (Q52) scales build size, wave thresholds, scout cadence, and
+// Difficulty scales build size, wave thresholds, scout cadence, and
 // retreat behavior; handicaps are timer-based on Easy only, never free
-// resources (Q74). Waves launch on army-size thresholds (Q75).
+// resources. Waves launch on army-size thresholds.
 
 enum class AIDifficulty
 {
@@ -77,7 +77,7 @@ public:
     int WavesLaunched() const;
     bool HasScouted() const;
     cc::IVec2 LastSeenEnemy() const;
-    // M13: production requires a standing Factory (razed AI stays down).
+    // Production requires a standing Factory (razed AI stays down).
     bool HasFactory() const;
 
 private:

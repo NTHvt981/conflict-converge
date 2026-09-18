@@ -127,7 +127,7 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
     ProductionQueue &queue = *world.queue;
     UnitFactory &factory = *world.factory;
 
-    // Same starting funds both sides see (Q74 fair rules; the AI seeds its
+    // Same starting funds both sides see ( fair rules; the AI seeds its
     // own 1000/500 inside SetupBase below).
     resources.AddIron(1000);
     resources.AddOil(500);

@@ -1,4 +1,4 @@
-// Unit tests for M4 Goal 5 damage feedback (hit stamp + flash decay).
+// Unit tests for damage feedback (hit stamp + flash decay).
 
 #include "test_harness.h"
 

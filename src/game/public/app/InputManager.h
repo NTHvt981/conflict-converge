@@ -5,8 +5,8 @@
 #include "GameCamera.h" // WASD update + screen->world target
 #include "Shortcuts.h"  // bound-key actions, polled per frame
 
-// M2 Goal 6: input handling framework. Single per-frame polling point for
-// everything M2 gathered piecemeal: WASD camera pan, mouse click edges,
+// Input handling framework. Single per-frame polling point for
+// everything gathered piecemeal: WASD camera pan, mouse click edges,
 // and shortcut actions. Game code binds ShortcutRegistry actions once,
 // calls Update every frame, then reads the snapshot — no raw raylib input
 // calls outside this class.
@@ -38,8 +38,8 @@ public:
     bool LeftDown() const;    // level: button held (drag-box gestures)
     bool RightPressed() const;
     bool RightDown() const;  // level: right button held (line-draw, right-drag pan)
-    float WheelDelta() const; // mouse wheel steps this frame (M13 zoom)
-    bool ShiftDown() const;   // either shift key held (M13 slot load/save combos)
+    float WheelDelta() const; // mouse wheel steps this frame
+    bool ShiftDown() const;   // either shift key held (slot load/save combos)
     bool CtrlDown() const;    // either control key held (QoL control groups)
     bool DoubleClicked() const; // edge: second left press within 0.35s + 8px
 

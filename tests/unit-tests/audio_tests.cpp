@@ -1,4 +1,4 @@
-// Unit tests for M11 audio (headless guard, volume clamps, settings defaults).
+// Unit tests for audio (headless guard, volume clamps, settings defaults).
 // Nothing here touches an audio device: Audio::Init(false) must load nothing
 // and every Play must no-op, so the suite runs on machines without sound.
 

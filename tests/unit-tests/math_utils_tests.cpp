@@ -1,4 +1,4 @@
-// Unit tests for M1 Goal 3 math helpers (cc:: tile grid + raylib interop).
+// Unit tests for math helpers (cc:: tile grid + raylib interop).
 // Tile convention: indices -> world position of the tile's top-left corner.
 
 #include "test_harness.h"

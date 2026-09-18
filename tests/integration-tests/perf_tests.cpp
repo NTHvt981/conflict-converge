@@ -1,4 +1,4 @@
-// M7 Goal 3: simulation performance budget. Headless UpdateUnit sweep over
+// Simulation performance budget. Headless UpdateUnit sweep over
 // 200 mixed units (no rendering) — validates sim cost stays well inside the
 // 16.7ms frame budget at 60 FPS. Prints observed timing for profiling.
 

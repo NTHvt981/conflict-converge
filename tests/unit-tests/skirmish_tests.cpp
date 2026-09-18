@@ -1,4 +1,4 @@
-// Unit tests for the M14 skirmish build/teardown (headless match seeding +
+// Unit tests for the skirmish build/teardown (headless match seeding +
 // a short simulated match proving Start produces a living world).
 
 #include "test_harness.h"

@@ -1,4 +1,4 @@
-// Unit tests for M10 map files (format validation, shipped-map sanity,
+// Unit tests for map files (format validation, shipped-map sanity,
 // save roundtrip on a loaded map).
 
 #include "test_harness.h"
@@ -108,7 +108,7 @@ void RunMapFileTests()
     CC_CHECK(!blocked.IsBlocked({ 0, 0 })); // forest passable
     CC_CHECK(blocked.IsBlocked({ 1, 0 }));  // rock walls
     CC_CHECK(TerrainCost(TerrainType::Grass) == 1.0f);
-    CC_CHECK(TerrainCost(TerrainType::Forest) == 1.0f); // uniform per Q55
+    CC_CHECK(TerrainCost(TerrainType::Forest) == 1.0f); // uniform cost
     CC_CHECK(TerrainCost(TerrainType::Water) == 1.0f);
 
     // --- NearestFreeTile: walkable spawn points around footprints ---
@@ -317,7 +317,7 @@ void RunMapFileTests()
     std::remove(savePath.c_str());
     std::remove(good.c_str());
 
-    // --- M14: ListMaps enumerates the shipped data/maps dir for setup ---
+    // --- ListMaps enumerates the shipped data/maps dir for setup ---
     const std::string dataDirs[] = { "data/maps", "../../data/maps", "../../../data/maps" };
     std::string dataDir;
     for (const std::string &dir : dataDirs)

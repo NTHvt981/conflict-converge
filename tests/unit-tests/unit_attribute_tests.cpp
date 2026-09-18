@@ -1,4 +1,4 @@
-// Unit tests for M3 Goal 1 attributes: defaults, field independence, and
+// Unit tests for attributes: defaults, field independence, and
 // snap preserving the new combat/AI fields.
 
 #include "test_harness.h"
@@ -7,7 +7,7 @@
 
 void RunUnitAttributeTests()
 {
-    // --- defaults: harmless until the M3G2 stat table fills them ---
+    // --- defaults: harmless until the stat table fills them ---
     Unit fresh;
     CC_CHECK(fresh.speed == 0.0f);
     CC_CHECK(fresh.sightRange == 0.0f);

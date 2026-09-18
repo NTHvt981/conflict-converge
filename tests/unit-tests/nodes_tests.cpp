@@ -1,4 +1,4 @@
-// Unit tests for M5 Goal 3 resource nodes (spawn, gather, deplete, respawn).
+// Unit tests for resource nodes (spawn, gather, deplete, respawn).
 
 #include "test_harness.h"
 

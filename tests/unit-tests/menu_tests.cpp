@@ -1,4 +1,4 @@
-// Unit tests for the M6 Goal 3 menu system (state transitions + aliveness).
+// Unit tests for the menu system (state transitions + aliveness).
 
 #include "test_harness.h"
 
@@ -10,7 +10,7 @@
 
 void RunMenuTests()
 {
-    // --- M14: boot lands on the title screen, not in battle ---
+    // --- Boot lands on the title screen, not in battle ---
     MenuFlow menu;
     CC_CHECK(menu.state == MenuState::MainMenu);
     // --- pause toggle only touches Playing/Paused ---
@@ -69,7 +69,7 @@ void RunMenuTests()
     CC_CHECK(TeamHasUnits(registry, 1));
     CC_CHECK(!TeamHasUnits(registry, 0));
 
-    // --- M14: setup validation (no map = Start disabled) ---
+    // --- Setup validation (no map = Start disabled) ---
     MenuFlow boot;
     CC_CHECK(boot.state == MenuState::MainMenu);
     CC_CHECK(!boot.setup.CanStart());
@@ -107,7 +107,7 @@ void RunMenuTests()
     CC_CHECK(boot.state == MenuState::Playing);
     CC_CHECK(!boot.StartMatch()); // only from the setup screen
 
-    // --- M14: navigation between menu screens ---
+    // --- Navigation between menu screens ---
     boot.OpenMainMenu();
     CC_CHECK(boot.state == MenuState::MainMenu);
     boot.OpenSettings();
@@ -119,7 +119,7 @@ void RunMenuTests()
     boot.ShowOutcome(false, true); // terminal states still reachable
     CC_CHECK(boot.state == MenuState::GameOver);
 
-    // --- M14: settings file roundtrip (Q86 standalone file) ---
+    // --- Settings file roundtrip (standalone file) ---
     MenuSettings saved;
     saved.cameraSpeed = 512.5f;
     saved.showMinimap = false;

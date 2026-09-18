@@ -5,8 +5,8 @@ namespace
 
 // Order matches UnitType enum: Infantry, AntiArmorInfantry, Engineer, IFV,
 // Artillery, LightTank, HeavyTank, PrototypeInfantry (infantry stats;
-// the art differs, the logic is identical). Placeholder balance (M3G2);
-// M4 retunes.
+// the art differs, the logic is identical). Placeholder balance; retune
+// against the damage matrix.
 const UnitStats kTable[] = {
     { 100.0f, ArmorType::RUBBER, DamageType::KINETIC, 10, 128, 1.0f, 64.0f, 320.0f }, // Infantry
     { 90.0f, ArmorType::RUBBER, DamageType::EXPLOSIVE, 25, 128, 1.5f, 64.0f, 320.0f }, // AntiArmorInfantry
@@ -39,7 +39,7 @@ void ApplyBaseStats(Unit &unit)
     unit.cooldown = 0.0f;
     unit.speed = stats.speed;
     unit.sightRange = stats.sightRange;
-    // Phase 4: footprint. Infantry types are 1x1; vehicles are 2x2.
+    // Footprint. Infantry types are 1x1; vehicles are 2x2.
     const bool isVehicle = unit.type == UnitType::IFV || unit.type == UnitType::Artillery ||
                            unit.type == UnitType::LightTank || unit.type == UnitType::HeavyTank;
     unit.footprintWidth = isVehicle ? 2 : 1;

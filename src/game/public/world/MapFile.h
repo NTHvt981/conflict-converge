@@ -10,7 +10,7 @@
 class ResourceNodes; // fwd-decl (MapFile.cpp includes Nodes.h)
 class OccupancyGrid; // fwd-decl (TileMap.h defines it; resynced on apply)
 
-// M10: text `.map` format (Q46 text, Q54 header, Q73 data/ loading, Q79 legend).
+// Text `.map` format.
 // Strict layout — comment, name, author, width, height, then exactly
 // height rows of exactly width characters:
 //   # Conflict Converge map v1
@@ -82,7 +82,7 @@ void PaintEditorCell(MapData &map, char brush, cc::IVec2 tile);
 // appends ".map" itself, so anything else is rejected.
 bool IsValidMapSaveName(const std::string &name);
 
-// M14: skirmish-setup map entry — header metadata plus the file path.
+// Skirmish-setup map entry — header metadata plus the file path.
 // ListMaps enumerates dir/*.map, keeping only files that parse (header
 // gives name/author/dimensions for the setup screen). Sorted by path so
 // the list is stable across frames; empty when the dir is missing.

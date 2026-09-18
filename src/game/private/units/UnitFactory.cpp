@@ -6,7 +6,7 @@
 UnitCost CostOf(UnitType type)
 {
     // Placeholder price list: infantry is cheap iron, vehicles mix in oil,
-    // heavies cost both. M4/M5 retune with real balance + income numbers.
+    // heavies cost both. Retune with real balance + income numbers.
     switch (type)
     {
     case UnitType::Infantry:

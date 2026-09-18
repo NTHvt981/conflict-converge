@@ -1,6 +1,6 @@
 #include "Event.h"
 
-// M1 Goal 5: type-routed publish/subscribe dispatcher.
+// Type-routed publish/subscribe dispatcher.
 
 void EventDispatcher::Subscribe(EventType type, Handler handler)
 {

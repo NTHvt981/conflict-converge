@@ -175,8 +175,7 @@ void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &uni
         // Fresh line order: same flag + queue clear as above, but
         // self-contained — this function's callers don't clear the queue
         // (unlike the squad-formation call site), so it does its own
-        // bookkeeping and can't have the gap reintroduced (see
-        // plans/Bugfix_Order_Flags_And_Retreat_Fallback_Plan.md).
+        // bookkeeping and the gap can't be reintroduced.
         ClearOrders(*unit);
         unit->orderQueue.clear();
         unit->speedCapPixelsPerSec = slowestSpeed ? minSpeed : -1.0f;

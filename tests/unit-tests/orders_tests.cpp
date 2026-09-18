@@ -1,4 +1,4 @@
-// Unit tests for M13 orders: attack-move, stances, patrol, repair (+ HP).
+// Unit tests for orders: attack-move, stances, patrol, repair (+ HP).
 
 #include "test_harness.h"
 
@@ -304,7 +304,7 @@ void RunOrdersTests()
         // Wrecks drop out: demolish the depot, the base becomes the target.
         DemolishBuilding(registry, map, nearDepot);
         CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) == farBase);
-        // Fog hides structures from everyone but artillery (Q78).
+        // Fog hides structures from everyone but artillery.
         FogOfWar fog;
         fog.Resize(20, 15); // nothing recomputed: team 0 sees nothing
         CC_CHECK(AcquireBuildingTarget(registry, seekerId, &fog) == kInvalidEntity);

@@ -2,8 +2,7 @@
 
 #include "UnitConfig.h"
 
-// Standalone unit-config editor state (see
-// plans/Standalone_Unit_Config_Editor_Plan.md). The UI edits configs[type]
+// Standalone unit-config editor state. The UI edits configs[type]
 // in place; text-box buffers and dropdown actives are re-synced whenever
 // the selection changes. No game-loop code lives here.
 struct EditorState

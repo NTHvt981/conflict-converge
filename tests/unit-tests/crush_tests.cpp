@@ -1,4 +1,4 @@
-// Unit tests for M4 Goal 4 anti-crush protection (vehicle vs foot contact).
+// Unit tests for anti-crush protection (vehicle vs foot contact).
 
 #include "test_harness.h"
 

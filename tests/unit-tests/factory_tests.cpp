@@ -1,4 +1,4 @@
-// Unit tests for M3 Goal 6 UnitFactory (costs, funds validation, lifecycle events).
+// Unit tests for UnitFactory (costs, funds validation, lifecycle events).
 
 #include "test_harness.h"
 

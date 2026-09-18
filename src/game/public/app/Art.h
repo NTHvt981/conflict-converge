@@ -15,7 +15,7 @@
 
 enum class TerrainType : std::uint8_t; // fwd-decl (Art.cpp includes TileMap.h)
 
-// M12: sprite art + particles. Filenames under data/sprites/ are the
+// Sprite art + particles. Filenames under data/sprites/ are the
 // contract (tools/gen_sprites.py produces them; AI-generated sheets drop in
 // later): units/<type>_<blue|red>_<idle|attack>.png (32px),
 // buildings/<base|factory|depot>_<blue|red>.png (64/64/32px),
@@ -31,7 +31,7 @@ enum class TerrainType : std::uint8_t; // fwd-decl (Art.cpp includes TileMap.h)
 // sprite draws at true colors and its paired mask sprite (armor pixels baked
 // pure white, rest transparent) draws team-tinted on top; sprites without a
 // mask take the full-sprite tint (correct for all-white placeholder art).
-// Headless-safe: Init(false) loads nothing and UseRectangles() reports true,
+// Headless-safe: Init(false) loads nothing and UseRectangles reports true,
 // so tests and the fallback path never touch the GPU.
 
 // AttackPhase -> sprite frame. WindUp telegraphs and Recover follows
@@ -43,7 +43,7 @@ enum class UnitFrame
 };
 UnitFrame FrameForPhase(AttackPhase phase);
 
-// Phase 14: Infantry squad visual. Returns the number of soldier sprites
+// Infantry squad visual. Returns the number of soldier sprites
 // to draw (driven by healthFraction, capped per type: 5 for Infantry, 2 for
 // AntiArmorInfantry, 1 for Engineers and vehicles) and fills outOffsets with
 // that many Vector2 pixel offsets from the unit's tile-corner position.
@@ -116,7 +116,7 @@ class Art
 {
 public:
     // Load every sprite. With withDevice=false (tests) or on any missing
-    // file, loads nothing and UseRectangles() stays true. Returns IsReady().
+    // file, loads nothing and UseRectangles stays true. Returns IsReady.
     bool Init(bool withDevice);
     void Shutdown();
 
@@ -136,7 +136,7 @@ public:
     void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon
     // UI typeface (Porto Buena, baked 64px). HasFont is false on the
     // headless/rectangle path; UiFont is only valid to pass to raygui /
-    // DrawTextEx when HasFont() is true (never call it headless).
+    // DrawTextEx when HasFont is true (never call it headless).
     bool HasFont() const;
     const Font &UiFont() const;
     // Raw-text draw through the UI typeface (raygui owns control text via
@@ -155,7 +155,7 @@ public:
     // Parse the data/configs atlas files without touching the GPU (tests,
     // LoadAtlas seam). False when a file is missing or invalid.
     bool LoadAtlas();
-    // Sprite name for a unit at timeSeconds (GetTime() at the call site):
+    // Sprite name for a unit at timeSeconds (GetTime at the call site):
     // directional walk cycle "<type>_walk_<dir>" while moving (id-offset so
     // squads don't march in sync), directional idle pose "<type>_idle_0_<dir>"
     // otherwise. Legacy fallbacks (<prefix>_walk, <prefix>_idle_0_0) cover

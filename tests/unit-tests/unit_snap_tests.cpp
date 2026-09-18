@@ -1,4 +1,4 @@
-// Unit tests for M2 Goal 2 unit snapping (Unit <-> 64x64 tile grid).
+// Unit tests for unit snapping (Unit <-> 64x64 tile grid).
 
 #include "test_harness.h"
 

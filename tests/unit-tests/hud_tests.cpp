@@ -1,4 +1,4 @@
-// Unit tests for M6 Goal 2 HUD text builders (the raygui Draw* wrappers need
+// Unit tests for HUD text builders (the raygui Draw* wrappers need
 // a window and are exercised live in main.cpp, not here).
 
 #include "test_harness.h"

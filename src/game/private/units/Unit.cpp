@@ -1,20 +1,20 @@
 #include "Unit.h"
 
-#include "Combat.h"     // M4 Goal 1: FireAt routes through the damage matrix.
-#include "FogOfWar.h"   // M9: gate acquisition + chase validation on visibility.
+#include "Combat.h"     // FireAt routes through the damage matrix.
+#include "FogOfWar.h"   // Gate acquisition + chase validation on visibility.
 #include "MathUtils.h" // glm integration check: game TU exercises cc::Vec2 conversions.
-#include "Pathfinder.h" // M3 Goal 5: chase orders route around blocked tiles.
-#include "Targeting.h"  // M3 Goal 5: acquire/validate targets, range checks.
-#include "TileMap.h"   // M2 Goal 4: movement stops at blocked tiles.
-#include "Building.h"  // M13: repair targets include structures.
-#include "UnitStats.h" // M13: max-health lookup for repair validation.
+#include "Pathfinder.h" // Chase orders route around blocked tiles.
+#include "Targeting.h"  // Acquire/validate targets, range checks.
+#include "TileMap.h"   // Movement stops at blocked tiles.
+#include "Building.h"  // Repair targets include structures.
+#include "UnitStats.h" // Max-health lookup for repair validation.
 
 #include <cmath> // atan2 for FacingFromVelocity
 #include <utility> // std::pair: RunUnitMovementFrame's pre-move position snapshot
 
-// Stub: unit behavior, AI, and factory arrive in M3.
+// Stub: unit behavior, AI, and factory arrive in.
 
-#include "UnitStats.h" // M13: max-health lookup for repair validation.
+#include "UnitStats.h" // Max-health lookup for repair validation.
 
 void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
 {
@@ -108,10 +108,10 @@ void IssuePatrolOrder(Unit &unit, const TileMap &map, Vector2 pointA, Vector2 po
 namespace
 {
 
-// M4 Goal 3: strike phasing. Ready + cooled + armed -> WindUp; WindUp expiry
+// Strike phasing. Ready + cooled + armed -> WindUp; WindUp expiry
 // lands the hit via landHit and enters Recover; Recover ends when the
 // cooldown hits zero. Called only while in range of a valid target.
-// M13: templated on the landing blow so structures share the machine.
+// Templated on the landing blow so structures share the machine.
 template <typename LandHit> void UpdateAttackPhases(Unit &attacker, float dtSeconds, LandHit landHit)
 {
     if (attacker.phase == AttackPhase::Ready)
@@ -169,7 +169,7 @@ void LoseTarget(Unit &unit)
 Facing FacingFromVelocity(Vector2 velocity)
 {
     // Nearest octant in y-down screen space, measured clockwise from East;
-    // remapped to sheet columns (East reads column 6, then 5, 4 ...).
+    // remapped to sheet columns (East reads column 6, then 5, 4...).
     constexpr float kPi = 3.141592653589793f;
     float angle = std::atan2(velocity.y, velocity.x);
     if (angle < 0.0f)
@@ -292,15 +292,15 @@ void IssueOrEnqueue(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity s
     unit.orderQueue.push_back(order);
 }
 
-// M9: a set target standing on a tile the unit's team cannot see is dropped —
-// except for Artillery, which blind-fires into shroud at no penalty (Q78).
+// A set target standing on a tile the unit's team cannot see is dropped —
+// except for Artillery, which blind-fires into shroud at no penalty.
 bool LostToFog(const Unit &unit, const Unit &target, const FogOfWar *fog)
 {
     return fog != nullptr && unit.type != UnitType::Artillery &&
            !fog->IsVisible(unit.teamID, cc::WorldToTile(cc::ToGlm(target.position)));
 }
 
-// M13: repair tuning. Channel rate is HP/sec; cost is time only (Q83).
+// Repair tuning. Channel rate is HP/sec; cost is time only.
 constexpr float kRepairRange = 128.0f;
 constexpr float kRepairRate = 15.0f;
 
@@ -485,8 +485,7 @@ Vector2 ResolvePlayerRetreatHome(Registry &registry, Vector2 rallyPos)
         return rallyPos;
     }
     // Reference point for "nearest owned Base": the centroid of the
-    // player's own living units, not the map's center (see
-    // plans/Bugfix_Order_Flags_And_Retreat_Fallback_Plan.md -- measuring
+    // player's own living units, not the map's center (measuring
     // from the map's center picked whichever Base happened to sit closest
     // to the map's midpoint, unrelated to where the player's army was).
     // No living units degrades to {0,0} (harmless: nothing left to retreat
@@ -609,7 +608,7 @@ cc::IVec2 RepairApproachTile(const TileMap &map, cc::IVec2 aimTile)
     return aimTile;
 }
 
-// M13: polymorphic targets (units and structures share Entity IDs).
+// Polymorphic targets (units and structures share Entity IDs).
 // ValidateTarget: living hostile unit or Operational hostile building,
 // visible unless the seeker blind-fires (fog null or artillery).
 bool ValidateTarget(Registry &registry, const Unit &seeker, Entity id, const FogOfWar *fog)
@@ -703,7 +702,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     Unit *unit = registry.Get<Unit>(self);
     if (unit == nullptr || unit->health <= 0.0f)
     {
-        return; // missing, or dead awaiting factory teardown (M3G6)
+        return; // missing, or dead awaiting factory teardown
     }
 
     if (unit->cooldown > 0.0f)
@@ -723,7 +722,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         }
     }
 
-    // M13: repair orders behave like move orders with a job at the end.
+    // Repair orders behave like move orders with a job at the end.
     // Approach out-of-range targets (re-path on tile change, chase-style),
     // channel HP inside 96px, drop the order when there is nothing to fix.
     if (unit->hasRepairOrder)
@@ -794,7 +793,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     // moment its target enters range instead of walking past it.
     if (unit->hasMoveOrder || unit->hasPath)
     {
-        // M13: attack-move scans on the march. Contact -> engage in place
+        // Attack-move scans on the march. Contact -> engage in place
         // (orders intact); contact lost -> resume the recorded destination.
         // Structures are contact too: marches raze production on the way.
         if (unit->attackMove)
@@ -878,7 +877,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     }
     if (unit->target == kInvalidEntity)
     {
-        // M13: patrol loops its legs while idle with no combat to answer.
+        // Patrol loops its legs while idle with no combat to answer.
         if (unit->stance == Stance::Patrol && unit->hasPatrol && !unit->hasMoveOrder &&
             !unit->hasPath)
         {
@@ -907,7 +906,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     }
 
     // Chase: re-path only when the target entered a new tile, then walk.
-    // An unreachable target degrades to an M2 straight-line bump (IssuePathOrder fallback).
+    // An unreachable target degrades to an straight-line bump (IssuePathOrder fallback).
     ReissueDriverOrder(*unit, map, occ, TargetPosition(registry, unit->target), self, registry);
     UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self, registry.Generation(self));
 }
@@ -924,7 +923,7 @@ enum class StepResult
 };
 
 // Advance pos toward target by at most step; reports (not applies) arrival.
-// Phase 4: when occ is non-null, checks footprint occupancy to prevent
+// When occ is non-null, checks footprint occupancy to prevent
 // stepping into tiles occupied by other entities.
 StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &map, cc::Vec2 &outNext,
                       OccupancyGrid *occ = nullptr, Entity self = 0, std::uint32_t selfGen = 0,
@@ -958,7 +957,7 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
     {
         return StepResult::Blocked;
     }
-    // Phase 4: occupancy check — reject moves into tiles occupied by other
+    // Occupancy check — reject moves into tiles occupied by other
     // entities (full footprint check for multi-tile units). Transient by
     // nature (units move), so the caller waits and replans instead of
     // cancelling like it does for permanent terrain blocks.
@@ -973,7 +972,7 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
     return StepResult::Stepped;
 }
 
-// Shared stop states so path and straight-line arrivals match M2 behavior.
+// Shared stop states so path and straight-line arrivals match behavior.
 void Arrive(Unit &unit, cc::Vec2 where)
 {
     unit.position = cc::ToRaylib(where);
@@ -1083,10 +1082,10 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
 
     const float step = speedPixelsPerSec * dtSeconds;
     unit.state = UnitState::Moving;
-    // M4 Goal 3: stepping cancels any telegraph — a mover never lands a hit.
+    // Stepping cancels any telegraph — a mover never lands a hit.
     unit.phase = AttackPhase::Ready;
 
-    // M3 Goal 3: walk the A* waypoints (tile top-left corners, so every
+    // Walk the A* waypoints (tile top-left corners, so every
     // stop stays snapped). A consumed path (cursor past the end, e.g. a
     // start == goal order) arrives immediately at the snapped moveTarget.
     if (unit.hasPath)
@@ -1118,7 +1117,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
             }
             return;
         case StepResult::Blocked:
-            // Terrain blocks are permanent: cancel immediately (M2 legacy).
+            // Terrain blocks are permanent: cancel immediately.
             CancelAtBlocked(unit);
             OnOrderCancelled(unit);
             return;
@@ -1143,7 +1142,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         }
     }
 
-    // M2 straight-line fallback (no path, or path exhausted its order).
+    // Straight-line fallback (no path, or path exhausted its order).
     cc::Vec2 next = cc::ToGlm(unit.position);
     switch (StepToward(cc::ToGlm(unit.position), cc::ToGlm(unit.moveTarget), step, map, next,
                        occ, self, selfGen, unit.footprintWidth, unit.footprintHeight))
@@ -1154,7 +1153,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         OnOrderFinished(unit, map, occ, self, selfGen);
         return;
     case StepResult::Blocked:
-        // Terrain: hold position, snapped, order cancelled (M2 legacy).
+        // Terrain: hold position, snapped, order cancelled.
         CancelAtBlocked(unit);
         OnOrderCancelled(unit);
         return;
@@ -1182,7 +1181,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
 void SeparateUnits(Registry &registry, float dtSeconds)
 {
     // Body half-extent scales with the footprint (16px per tile): 1x1 keeps
-    // the legacy 32px body (M4G2 hitbox), 2x2 vehicles push as 64px bodies
+    // the legacy 32px body (hitbox), 2x2 vehicles push as 64px bodies
     // so crowds of mixed sizes relax instead of interpenetrating. The
     // per-pair push is capped so crowds relax over frames, not teleport.
     constexpr float kPushPerSecond = 96.0f;
@@ -1232,7 +1231,7 @@ void SeparateUnits(Registry &registry, float dtSeconds)
                 cc::ToRaylib(cc::ToGlm(items[i].unit->position) + dir * push);
             items[j].unit->position =
                 cc::ToRaylib(cc::ToGlm(items[j].unit->position) - dir * push);
-            // M4G4 overrun: enemies in body contact trade crush hits.
+            // Overrun: enemies in body contact trade crush hits.
             // Crush is vehicle contact (AttackContext docs): only hulls
             // attempt it — foot-vs-foot stays bloodless as before, and
             // vehicle-on-foot is negated inside ResolveAttack (the
@@ -1271,7 +1270,7 @@ void ReportSeparationStall(Unit &unit, const TileMap &map, OccupancyGrid *occ, E
 void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
                           const FogOfWar *fog, float dtSeconds)
 {
-    // Phase 4: reserve each unit's current anchor tile before movement, so
+    // Reserve each unit's current anchor tile before movement, so
     // StepToward's CanEnter check prevents two units from entering the same
     // tile. Ownership-checked: a shoved unit never wipes or steals another
     // unit's reservation, it just goes unreserved until separation pushes it

@@ -1,4 +1,4 @@
-// Unit tests for M4 Goal 2 hitbox system (geometry, overlap, area query).
+// Unit tests for hitbox system (geometry, overlap, area query).
 
 #include "test_harness.h"
 

@@ -41,12 +41,12 @@ public:
     Game(const Game &) = delete;
     Game &operator=(const Game &) = delete;
 
-    // Lifecycle (previously the sections of main()).
+    // Lifecycle (previously the sections of main).
     void Init();     // window, audio/art, state, shortcut bindings
     void Update();   // exactly one frame (input pump + sim + render)
     void Shutdown(); // unload + CloseWindow
     bool IsRunning() const;
-    // Convenience for main(): Init + loop + Shutdown.
+    // Convenience for main: Init + loop + Shutdown.
     int Run();
 
     // E2E driver seam (tests/e2e only): the hidden-window harness drives
@@ -78,7 +78,7 @@ private:
     void StepReplay(int dir);
     bool WatchLastReplay();
 
-    // Former boot-level locals in main(), same order.
+    // Former boot-level locals in main, same order.
     Audio audio;
     Art art;
     GameCamera camera;
@@ -89,7 +89,7 @@ private:
     ResourceSystem resources;
     EventDispatcher events;
     TileMap map;
-    OccupancyGrid occ; // Phase 4: unit/building tile occupancy
+    OccupancyGrid occ; // Unit/building tile occupancy
     FogOfWar fog;
     ResourceNodes nodes;
     ProductionQueue queue;
@@ -183,7 +183,7 @@ private:
     bool repairDragActive = false;
     Vector2 repairDragStart = {};
 
-    // Per-frame poll state (M11 edge-triggered sounds, M14 transitions).
+    // Per-frame poll state (edge-triggered sounds, menu transitions).
     int lastBuildingCount = 0;
     int lastDepletedCount = 0;
     int lastQueueSize = 0;

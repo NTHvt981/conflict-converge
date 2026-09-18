@@ -1,8 +1,6 @@
 // Regression tests for the "units stuck when moving" bug report. Both
 // scenarios stress the split between grid occupancy and the continuous-space
-// SeparateUnits pass flagged in
-// plans/RTS_Grid_Movement_&_Unit_Footprint_Plan.md: two units converging
-// close enough for SeparateUnits to push them apart *before* either crosses
+// SeparateUnits pass: two units converging close enough for SeparateUnits to push them apart *before* either crosses
 // a tile boundary can wedge into a stable equilibrium that StepToward's own
 // BlockedUnit check never sees (nothing ever tried to enter an occupied
 // tile), so the existing blocked-retry/cancel budget never engages either.

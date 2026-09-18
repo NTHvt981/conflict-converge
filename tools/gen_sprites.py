@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Generate placeholder pixel-art sprites for Conflict Converge (M12).
+"""Generate placeholder pixel-art sprites for Conflict Converge.
 
-Q81 chose AI-generated art, but no image model is available in this
+AI-generated art was chosen, but no image model is available in this
 environment, so this script procedurally synthesizes the equivalent:
 32x32 unit sprites (idle + attack frames, blue/red team variants),
 building sprites, resource node icons, and 16x16 HUD icons — all with a

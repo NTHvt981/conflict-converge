@@ -84,7 +84,7 @@ int SelectInRect(Registry &registry, Rectangle worldBox, bool add)
                                           worldBox.y + worldBox.height });
     int picked = 0;
     registry.Each<Unit>([&](Entity, Unit &unit) {
-        // Body center (32x32 hitbox inset, matches the M4 selection visual).
+        // Body center (32x32 hitbox inset, matches the selection visual).
         const float cx = unit.position.x + 32.0f;
         const float cy = unit.position.y + 32.0f;
         const bool inside = cx >= box.x && cx <= box.x + box.width && cy >= box.y &&

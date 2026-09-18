@@ -6,9 +6,9 @@
 #include "CcAssert.h"
 #include "MathUtils.h" // cc::IVec2, cc::TILE_SIZE
 
-// M2 Goal 1: tile-based movement system. TileMap owns the 64x64 grid:
-// dimensions, per-tile terrain, and blocked queries for movement (M2),
-// pathfinding (M3), and building placement (M5). World/tile conversion
+// Tile-based movement system. TileMap owns the 64x64 grid:
+// dimensions, per-tile terrain, and blocked queries for movement,
+// pathfinding, and building placement. World/tile conversion
 // lives in MathUtils.h; this class only stores and answers about tiles.
 
 enum class TerrainType : std::uint8_t
@@ -16,8 +16,8 @@ enum class TerrainType : std::uint8_t
     Grass,    // passable, default fill
     Water,    // blocked (impassable)
     Building, // blocked (occupied by a structure)
-    // M10: appended AFTER Building so old saves (values 0-2) still decode.
-    Forest, // passable, cost multiplier ready (uniform 1.0 per Q55)
+    // Appended AFTER Building so old saves (values 0-2) still decode.
+    Forest, // passable, cost multiplier ready (uniform 1.0)
     Rock,    // blocked (impassable wall tile for choke points)
     Count // keep last: save decode validates < Count
 };
@@ -54,7 +54,7 @@ private:
     std::vector<TerrainType> tiles_;
 };
 
-// Phase 4: grid occupancy for multi-tile units and buildings.
+// Grid occupancy for multi-tile units and buildings.
 // Stores per-tile entity references (unit or building) with generation
 // counters so stale IDs from recycled entities are detected. Buildings
 // use a separate buildingId map since they persist across unit lifetimes.

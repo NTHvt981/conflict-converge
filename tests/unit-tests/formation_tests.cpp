@@ -1,4 +1,4 @@
-// Unit tests for M3 Goal 6 formation movement (offsets + group orders).
+// Unit tests for formation movement (offsets + group orders).
 
 #include "test_harness.h"
 
@@ -81,7 +81,7 @@ void RunFormationTests()
     });
     CC_CHECK(reordered == 3);
 
-    // --- Phase 7: FormationOffsetsFP ---
+    // --- : FormationOffsetsFP ---
     {
         // cellSize=1 matches legacy FormationOffsets
         const std::vector<cc::IVec2> fp1 = formation::FormationOffsetsFP(4, 1);
@@ -123,7 +123,7 @@ void RunFormationTests()
         }
     }
 
-    // --- Phase 7: IssueFormationMoveFP with 2x2 vehicles ---
+    // --- : IssueFormationMoveFP with 2x2 vehicles ---
     {
         Registry fpRegistry;
         TileMap fpMap(20, 15);

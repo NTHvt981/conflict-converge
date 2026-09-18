@@ -1,4 +1,4 @@
-// Unit tests for M7 Goal 1 save/load (binary roundtrip + rejection paths).
+// Unit tests for save/load (binary roundtrip + rejection paths).
 
 #include "test_harness.h"
 
@@ -162,7 +162,7 @@ void RunSaveGameTests()
     dst.registry.Each<Building>([&](Entity, const Building &b) {
         bases += (b.type == BuildingType::Base) ? 1 : 0;
         factories += (b.type == BuildingType::Factory) ? 1 : 0;
-        CC_CHECK(b.health > 0.0f && b.health <= b.maxHealth); // M13 HP roundtrips
+        CC_CHECK(b.health > 0.0f && b.health <= b.maxHealth); // HP roundtrips
     });
     CC_CHECK(bases == 1 && factories == 1);
 

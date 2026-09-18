@@ -1,7 +1,7 @@
-// Conflict Converge save format (M15: protobuf migration, Q84).
+// Conflict Converge save format.
 // Covers the full WorldState: resources (+fractional carry), camera, map,
 // units (stats, orders, paths, attack phases, hit-flash), buildings, nodes
-// (+carry). `explored` is reserved for M9 fog-of-war visibility sets.
+// (+carry). `explored` is reserved for fog-of-war visibility sets.
 // Enum-typed fields stay int32 with explicit range checks on decode (proto3
 // accepts any value on the wire; garbage must still be rejected).
 syntax = "proto3";
@@ -80,7 +80,7 @@ message Building
     int32 team = 3;
     int32 tile_x = 4;
     int32 tile_y = 5;
-    float health = 6;     // M13 structural HP
+    float health = 6;     // structural HP
     float max_health = 7;
 }
 
@@ -106,10 +106,10 @@ message SaveGame
     float node_iron_carry = 8;
     float node_oil_carry = 9;
     bytes explored = 10; // legacy: superseded by team_fog, never written
-    repeated TeamFog team_fog = 11; // M9: per-team explored sets
+    repeated TeamFog team_fog = 11; // per-team explored sets
 }
 
-// M9: one team's frozen explored memory, row-major bytes, map w*h long.
+// One team's frozen explored memory, row-major bytes, map w*h long.
 message TeamFog
 {
     int32 team = 1;

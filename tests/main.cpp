@@ -1,5 +1,5 @@
 // Test runner: calls every unit-tests TU entry point, reports failures.
-// Real integration coverage (game loop, combat, economy, save/load) arrives in M7.
+// Multi-system scenarios driven headless live in integration-tests/.
 // Usage: conflict-converge-test.exe [--filter=Sub [--filter=...]] [--list]
 // No args runs everything; --filter runs suites whose short name contains
 // the substring (e.g. --filter=Art runs Art; --filter=Selection runs

@@ -9,19 +9,19 @@
 #include "Unit.h"     // health aliveness check
 #include "reasings.h" // EaseQuadOut for the transition fade (pure, headless-safe)
 
-// M6 Goal 3: menu system. MenuFlow owns the top-level game state; main.cpp
+// Menu system. MenuFlow owns the top-level game state; main.cpp
 // skips the sim while paused and draws outcome/settings windows. Text and
 // transitions are pure (tested); the raygui windows live in main.cpp.
-// M14: boot-to-menu flow — the game starts at MainMenu and the world only
+// Boot-to-menu flow — the game starts at MainMenu and the world only
 // builds after Start confirms (setup map + difficulty) or a slot loads.
 
 enum class MenuState
 {
-    MainMenu,      // M14: title screen (boot state, not battle)
-    SkirmishSetup, // M14: map + difficulty picker (Q85: v1 scope)
-    Settings,      // M14: settings screen (shares MenuSettings with pause)
+    MainMenu,      // Title screen (boot state, not battle)
+    SkirmishSetup, // Map + difficulty picker (v1 scope)
+    Settings,      // Settings screen (shares MenuSettings with pause)
     HotkeyRemap,   // QoL remappable hotkeys (entered from Settings/pause)
-    LoadGame,      // M14: save-slot browser (reuses the M13 slot paths)
+    LoadGame,      // Save-slot browser (reuses the slot paths)
     Playing,
     Paused,
     GameOver,
@@ -44,21 +44,21 @@ struct MenuSettings
     // Persisted like the other settings; applied live to `art`.
     bool colorBlindMode = false;
     // Accessibility UI scale (raygui TEXT_SIZE multiplier, applied live via
-    // GuiSetStyle; raw DrawText sites are out of scope for Phase 1).
+    // GuiSetStyle; raw DrawText sites are explicitly out of scope).
     // Persisted like the other settings; clamped to [0.75, 2.0] on load.
     float uiScale = 1.0f;
     // QoL remapped hotkeys: (action id, raylib key) overrides only —
     // unlisted actions use kHotkeyDefs defaults. Synced from HotkeyMap
     // before every SaveSettings, applied back after every LoadSettings.
     std::vector<std::pair<std::string, int>> hotkeyOverrides;
-    // M11: audio volumes (0..1) + mute, persisted by the M14 settings file.
+    // Audio volumes (0..1) + mute, persisted by the settings file.
     float masterVolume = 1.0f;
     float musicVolume = 0.8f;
     float sfxVolume = 1.0f;
     bool mute = false;
 };
 
-// M14: skirmish setup. The map list is injected (main passes
+// Skirmish setup. The map list is injected (main passes
 // ListMaps("data/"), tests pass fakes); nothing here touches the
 // filesystem or raygui, so the whole flow stays headless-testable.
 struct SkirmishSetup
@@ -89,7 +89,7 @@ struct MenuFlow
     // Decide terminal states from team aliveness (call each frame while Playing).
     // Player loss takes priority when both sides are wiped.
     void ShowOutcome(bool playerAlive, bool enemyAlive);
-    // M14 navigation (pure; main.cpp dispatches MenuAction alongside each).
+    // Navigation (pure; main.cpp dispatches MenuAction alongside each).
     void OpenMainMenu(); // any state -> MainMenu (world teardown is the caller's job)
     void OpenSetup(const std::vector<MapEntry> &maps); // -> SkirmishSetup, selection cleared
     void OpenSettings(); // -> Settings
@@ -100,7 +100,7 @@ struct MenuFlow
     bool StartMatch();
 };
 
-// M14: standalone settings file (Q86: settings survive without a save).
+// Standalone settings file (settings survive without a save).
 inline const char *kSettingsPath = "data/settings.cfg";
 // Save returns false on I/O errors. Load returns false (leaving settings
 // untouched) on missing/unreadable files; malformed lines are skipped and

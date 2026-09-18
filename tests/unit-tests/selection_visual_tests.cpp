@@ -1,4 +1,4 @@
-// Unit tests for M6 Goal 4 selection visuals + shortcut overlay builders.
+// Unit tests for selection visuals + shortcut overlay builders.
 
 #include "test_harness.h"
 

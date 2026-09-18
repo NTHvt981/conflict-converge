@@ -1,4 +1,4 @@
-// Unit tests for the M1 Goal 5 EventDispatcher (routing, order, isolation).
+// Unit tests for the EventDispatcher (routing, order, isolation).
 
 #include "test_harness.h"
 
@@ -62,7 +62,7 @@ void RunEventTests()
     CC_CHECK(calls.size() == 2);
     CC_CHECK(seenTeam == 7);
 
-    // --- M14 (Q57): game-state + UI categories ride the same dispatcher ---
+    // --- Game-state + UI categories ride the same dispatcher ---
     EventDispatcher flow;
     std::vector<EventType> seen;
     flow.Subscribe(EventType::MatchStarted,

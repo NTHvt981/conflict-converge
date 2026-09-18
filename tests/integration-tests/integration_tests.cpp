@@ -1,4 +1,4 @@
-// M7 integration tests: multi-system scenarios driven headless through the
+// Integration tests: multi-system scenarios driven headless through the
 // same per-frame calls main.cpp makes (UpdateUnit, death sweep, economy,
 // production, save/load). Unit suites cover components; these cover play.
 
@@ -6,7 +6,7 @@
 
 #include "Building.h"
 #include "Event.h"
-#include "AICommander.h" // M13 soak: difficulty ladder decides games
+#include "AICommander.h" // Soak: difficulty ladder decides games
 #include "FogOfWar.h" // WorldState carries fog memory
 #include "GameCamera.h" // WorldState carries the camera
 #include "MathUtils.h"
@@ -246,7 +246,7 @@ void RunIntegrationTests()
         std::filesystem::remove(path, ec);
     }
 
-    // --- M13 balance soak: the difficulty ladder decides games, no stalemates ---
+    // --- Balance soak: the difficulty ladder decides games, no stalemates ---
     // Easy-vs-Medium: Medium wins. Medium-vs-Hard: Hard wins. Same mirror
     // arena and cap for both rungs so the frame counts compare directly.
     {

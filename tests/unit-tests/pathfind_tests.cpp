@@ -1,4 +1,4 @@
-// Unit tests for M3 Goal 3: A* pathfinding and waypoint following.
+// Unit tests for A* pathfinding and waypoint following.
 
 #include "test_harness.h"
 
@@ -118,7 +118,7 @@ void RunPathfindTests()
     CC_CHECK(unit.position.y == 1 * 64.0f);
     CC_CHECK(frames < 60 * 60); // arrived, did not time out
 
-    // --- unreachable target falls back to a straight M2 order ---
+    // --- unreachable target falls back to a straight order ---
     Unit stuck;
     stuck.position = cc::ToRaylib(cc::TileToWorld(0, 0));
     IssuePathOrder(stuck, pocket, cc::ToRaylib(cc::TileToWorld(4, 4)));

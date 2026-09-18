@@ -5,7 +5,7 @@
 #include "Nodes.h"
 #include "TileMap.h"
 
-// Placeholder base trickle (per Operational Base); M5 balance pass tunes these.
+// Placeholder base trickle (per Operational Base); balance pass tunes these.
 inline constexpr float kBaseIronPerSecond = 2.0f;
 inline constexpr float kBaseOilPerSecond = 1.0f;
 
@@ -25,7 +25,7 @@ cc::IVec2 Footprint(BuildingType type)
 
 float BuildingMaxHealth(BuildingType type)
 {
-    // M13 pacing tune: demolition must end games faster than production
+    // Pacing tune: demolition must end games faster than production
     // replaces (soak evidence). A LightTank levels a Base in ~20s now.
     switch (type)
     {
@@ -287,7 +287,7 @@ void UpdateBuildingConstruction(Registry &registry, float dt)
     });
 }
 
-// Phase 5: entrance tiles (walkable tiles just outside the building footprint).
+// Entrance tiles (walkable tiles just outside the building footprint).
 std::vector<cc::IVec2> BuildingEntrances(const TileMap &map, int tileX, int tileY,
                                           int fpW, int fpH)
 {
@@ -316,7 +316,7 @@ std::vector<cc::IVec2> BuildingEntrances(const TileMap &map, int tileX, int tile
     return result;
 }
 
-// Phase 5: attack positions around the building perimeter.
+// Attack positions around the building perimeter.
 // Returns up to maxPositions evenly-spaced walkable tiles.
 std::vector<cc::IVec2> BuildingAttackPositions(const TileMap &map, int tileX, int tileY,
                                                 int fpW, int fpH, int maxPositions)

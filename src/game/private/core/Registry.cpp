@@ -1,6 +1,6 @@
 #include "Registry.h"
 
-// M1 Goal 6: non-template entity lifecycle. Component pools live in the header.
+// Non-template entity lifecycle. Component pools live in the header.
 
 Entity Registry::Create()
 {
@@ -10,7 +10,7 @@ Entity Registry::Create()
         entity = free_.back();
         free_.pop_back();
         // Bump generation so stale (entity, gen) pairs in occupancy grids
-        // are detected after recycle (docs/NOTES.md finding #2).
+        // are detected after recycle.
         generations_[entity] = nextGen_++;
     }
     else

@@ -1,4 +1,4 @@
-// Unit tests for M5 Goal 6 production queue (costs, progress, prepaid spawn).
+// Unit tests for production queue (costs, progress, prepaid spawn).
 
 #include "test_harness.h"
 

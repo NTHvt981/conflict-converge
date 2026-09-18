@@ -1,4 +1,4 @@
-// Unit tests for the M2 Goal 5 shortcut registry (bind, route, unbind).
+// Unit tests for the shortcut registry (bind, route, unbind).
 // PollAndFire polls live raylib input; routing is covered via Fire.
 
 #include "test_harness.h"

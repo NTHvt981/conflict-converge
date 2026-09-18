@@ -1,4 +1,4 @@
-// Unit tests for M13 command UI: zoom limits, minimap inverse, shift
+// Unit tests for command UI: zoom limits, minimap inverse, shift
 // chords, production menu order, save-slot paths, input snapshot fields.
 
 #include "test_harness.h"
@@ -12,7 +12,7 @@
 
 void RunCommandUiTests()
 {
-    // --- zoom clamps to [0.5, 2.0] (Q53) ---
+    // --- zoom clamps to [0.5, 2.0] ---
     {
         GameCamera camera;
         camera.view.zoom = 1.0f;

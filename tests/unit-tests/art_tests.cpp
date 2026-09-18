@@ -1,4 +1,4 @@
-// Unit tests for M12 art (phase→frame mapping, particle pool logic,
+// Unit tests for art (phase→frame mapping, particle pool logic,
 // rectangle-fallback flag). Nothing here needs a GPU or audio device:
 // Art::Init(false) loads nothing and draw calls are never made headless.
 
@@ -99,7 +99,7 @@ void RunArtTests()
         CC_CHECK(!art.HasFont());
     }
 
-    // --- Phase 14: SquadSlots ---
+    // --- : SquadSlots ---
     {
         std::array<Vector2, 6> offsets;
         float scale = 1.0f;

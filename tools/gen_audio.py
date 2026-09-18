@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate placeholder audio assets for Conflict Converge (M11).
+"""Generate placeholder audio assets for Conflict Converge.
 
 rfxgen (the referenced tool) is an interactive GUI app with no scriptable
 interface, so this script synthesizes the equivalent rfxgen-style SFX

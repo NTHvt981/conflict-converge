@@ -3,7 +3,7 @@
 #include <functional>
 #include <unordered_map>
 
-// M2 Goal 5: keyboard shortcut registry. Keys are raylib key codes
+// Keyboard shortcut registry. Keys are raylib key codes
 // (KEY_ESCAPE, KEY_SPACE, ...); actions are nullary callbacks bound by
 // game code. PollAndFire polls live input (edge-triggered IsKeyPressed);
 // Fire invokes one binding directly so tests cover routing headless.
@@ -15,7 +15,7 @@ public:
 
     // Bind (or rebind) a key to an action.
     void Bind(int raylibKey, Action action);
-    // Bind a Shift+key chord (M13 save-slot loading). Plain Bind never
+    // Bind a Shift+key chord ( save-slot loading). Plain Bind never
     // requires shift.
     void BindChord(int raylibKey, Action action);
     void Unbind(int raylibKey);

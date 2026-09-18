@@ -1,4 +1,4 @@
-// Unit tests for M5 Goal 1 base income (TickIncome carry, no cap).
+// Unit tests for base income (TickIncome carry, no cap).
 
 #include "test_harness.h"
 

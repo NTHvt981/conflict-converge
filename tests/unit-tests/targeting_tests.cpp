@@ -1,4 +1,4 @@
-// Unit tests for M3 Goal 4: threat-priority acquisition and range checks.
+// Unit tests for threat-priority acquisition and range checks.
 
 #include "test_harness.h"
 

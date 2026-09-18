@@ -138,7 +138,7 @@ void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 e
 
 void AICommander::SetupBase()
 {
-    // Same starting funds as the demo player: fair rules (Q74).
+    // Same starting funds as the demo player: fair rules.
     resources_.AddIron(1000);
     resources_.AddOil(500);
 
@@ -195,7 +195,7 @@ void AICommander::Update(float dt)
     nodes_.GatherTick(registry_, resources_, dt, teamID_); // own crew, own ledger
     if (HasFactory())
     {
-        // M13: production dies with the structure — razed AI stays down.
+        // Production dies with the structure — razed AI stays down.
         queue_.Update(factory_, resources_, teamID_,
                       cc::ToRaylib(cc::TileToWorld(rallyTile_.x, rallyTile_.y)), dt);
     }
@@ -309,7 +309,7 @@ void AICommander::MaybeLaunchWave()
     {
         return;
     }
-    // M13: waves attack-move (not plain-move): marchers engage defenders on
+    // Waves attack-move (not plain-move): marchers engage defenders on
     // contact instead of walking past them, then resume the advance. Plain
     // formation orders produced walk-through stalemates (measured in soak).
     // The march itself routes footprint-aware when occupancy is bound.

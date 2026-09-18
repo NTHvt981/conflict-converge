@@ -7,7 +7,7 @@
 namespace
 {
 
-// Scout-role types reveal further without stat changes (M9 goal 5).
+// Scout-role types reveal further without stat changes.
 bool IsScout(UnitType type)
 {
     return type == UnitType::Infantry || type == UnitType::IFV;

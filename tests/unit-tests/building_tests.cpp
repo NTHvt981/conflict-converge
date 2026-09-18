@@ -1,4 +1,4 @@
-// Unit tests for M5 Goal 2 buildings (placement validation, demolish, income).
+// Unit tests for buildings (placement validation, demolish, income).
 
 #include "test_harness.h"
 
@@ -170,7 +170,7 @@ void RunBuildingTests()
         CC_CHECK(site.Get<Building>(lateId)->health == 0.0f);
     }
 
-    // --- Phase 5: BuildingEntrances ---
+    // --- : BuildingEntrances ---
     {
         // 20x15 map, base at (5,5) footprint 2x2 → tiles (5,5)(6,5)(5,6)(6,6)
         TileMap map2(20, 15);
@@ -202,7 +202,7 @@ void RunBuildingTests()
         CC_CHECK(static_cast<int>(entrances.size()) == 10);
     }
 
-    // --- Phase 5: BuildingAttackPositions ---
+    // --- : BuildingAttackPositions ---
     {
         TileMap map2(20, 15);
         auto positions = BuildingAttackPositions(map2, 5, 5, 2, 2, 8);

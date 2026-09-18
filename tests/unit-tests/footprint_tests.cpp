@@ -1,4 +1,4 @@
-// Unit tests for Phase 4: multi-tile footprints, OccupancyGrid, and
+// Unit tests for multi-tile footprints, OccupancyGrid, and
 // footprint-aware pathfinding (8-dir A*, corner-cutting prevention).
 
 #include "test_harness.h"

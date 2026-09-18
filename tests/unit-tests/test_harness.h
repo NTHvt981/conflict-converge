@@ -2,8 +2,9 @@
 
 #include <cstdio>
 
-// Minimal test harness: no external framework (full suite conventions in M7).
-// Each unit-tests TU defines a Run*Tests() entry point; tests/main.cpp calls
+// Minimal test harness: no external framework (integration-tests/ holds the
+// multi-system suites).
+// Each unit-tests TU defines a Run*Tests entry point; tests/main.cpp calls
 // them all and returns non-zero on any failure.
 
 struct TestStats

@@ -9,11 +9,11 @@
 class ResourceSystem; // fwd-decl (Production.cpp includes ResourceSystem.h)
 class UnitFactory;    // fwd-decl (Production.cpp includes UnitFactory.h)
 
-// M5 Goal 6: unit production queue. Costs are charged upfront at Enqueue
+// Unit production queue. Costs are charged upfront at Enqueue
 // (Command & Conquer style), so completion spawns prepaid: pass a UnitFactory
 // to Update and finished items roll out at the rally point with full events.
 
-// Placeholder build times (seconds); M5 balance pass tunes these.
+// Placeholder build times (seconds); balance pass tunes these.
 float BuildTime(UnitType type);
 
 class ProductionQueue

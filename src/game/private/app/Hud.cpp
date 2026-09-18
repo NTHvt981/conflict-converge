@@ -3,13 +3,13 @@
 #include <cstdio>
 #include <filesystem>
 
-#include "Art.h"        // M12 resource icons (optional, may be fallback)
+#include "Art.h"        // Resource icons (optional, may be fallback)
 #include "Building.h"   // BuildingTypeName + selected-building summary
 #include "Hotkeys.h"    // live key bindings for the hint overlay
 #include "raygui.h"   // panels/labels
-#include "SaveGame.h" // M13 slot paths
+#include "SaveGame.h" // Slot paths
 #include "Selection.h" // SelectedUnit
-#include "UnitFactory.h" // M13 CostOf for the build menu
+#include "UnitFactory.h" // CostOf for the build menu
 #include "UnitStats.h" // max-health lookup for the summary
 
 const char *UnitTypeName(UnitType type)

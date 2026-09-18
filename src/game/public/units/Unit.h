@@ -2,22 +2,18 @@
 
 #include <cstddef> // std::size_t
 #include <unordered_map> // QoL reserved-damage map (see Targeting.h alias)
-#include <vector>  // M3 Goal 3: Unit::path waypoint list
+#include <vector>  // Unit::path waypoint list
 
 #include "raylib.h" // Vector2
 
-#include "MathUtils.h" // cc:: tile-grid snapping (M2 Goal 2)
+#include "MathUtils.h" // cc:: tile-grid snapping helpers
 #include "Registry.h" // Entity / kInvalidEntity for Unit::target
 
 class TileMap; // movement queries blocked tiles; included in Unit.cpp
-class OccupancyGrid; // Phase 4: footprint-aware movement; included in Unit.cpp
-class FogOfWar;  // M9 visibility gate for acquisition; included in Unit.cpp
+class OccupancyGrid; // Footprint-aware movement; included in Unit.cpp
+class FogOfWar;  // Visibility gate for acquisition; included in Unit.cpp
 
-// Forward-declared API shapes for M3 (Unit System) and M4 (Combat System).
-// See plans/MILESTONES.md M3 Unit struct + unit types, M4 damage/armor types.
-// No logic here — M3/M4 will flesh out behavior.
-
-// M3: 7 unit types from milestone spec, plus the prototype-sandbox type
+// 7 unit types plus the prototype-sandbox type
 // (prototype art at 2x; sandbox levels only, never in factory menus).
 enum class UnitType
 {
@@ -32,7 +28,7 @@ enum class UnitType
     Count // keep last: save decode validates < Count (see SaveGame.cpp)
 };
 
-// M4: damage/armor types (inspired by C&C, CoH).
+// Damage/armor types (inspired by C&C, CoH).
 enum class DamageType
 {
     KINETIC,
@@ -49,7 +45,7 @@ enum class ArmorType
     Count // keep last: save decode validates < Count
 };
 
-// M3: unit state machine — Idle -> Moving -> Attacking.
+// Unit state machine — Idle -> Moving -> Attacking.
 enum class UnitState
 {
     Idle,
@@ -58,7 +54,7 @@ enum class UnitState
     Count // keep last: save decode validates < Count
 };
 
-// M4: attack phases within a single strike. Ready -> WindUp (telegraph, then
+// Attack phases within a single strike. Ready -> WindUp (telegraph, then
 // the hit lands through ResolveAttack) -> Recover (rides the cooldown) ->
 // Ready. Moving cancels back to Ready (see UpdateUnitMovement).
 enum class AttackPhase
@@ -69,7 +65,7 @@ enum class AttackPhase
     Count // keep last: save decode validates < Count
 };
 
-// M13: combat stances. Guard is the legacy behavior (acquire + chase);
+// Combat stances. Guard is the legacy behavior (acquire + chase);
 // Hold stands still but fires at in-range enemies; Patrol loops waypoints
 // when no combat interrupts.
 enum class Stance
@@ -127,25 +123,25 @@ struct Unit
 {
     float health = 100.0f;
     ArmorType armorType = ArmorType::STEEL;
-    DamageType damageType = DamageType::KINETIC; // dealt by this unit (M4 matrix)
+    DamageType damageType = DamageType::KINETIC; // dealt by this unit (damage matrix)
     int attackPower = 0;
-    int attackRange = 0; // pixels (circle/radius check, M3G4/M4)
-    float cooldown = 0.0f; // live attack timer: seconds until next strike (M3G5)
+    int attackRange = 0; // pixels (circle/radius check)
+    float cooldown = 0.0f; // live attack timer: seconds until next strike
     float cooldownTime = 0.0f; // seconds between attacks (reset value)
-    AttackPhase phase = AttackPhase::Ready; // strike telegraph state (M4G3)
-    float phaseTime = 0.0f; // live WindUp countdown (M4G3)
-    float windupTime = 0.15f; // telegraph duration before the hit lands (M4G3)
-    float lastDamageTaken = 0.0f; // most recent effective hit, for the M4G5 number
-    float hitFlashTime = 0.0f;    // live overlay countdown, decayed in UpdateUnit (M4G5)
-    float speed = 0.0f; // pixels per second (M3G2 stat table)
-    float sightRange = 0.0f; // pixels: targeting acquisition radius (M3G4)
+    AttackPhase phase = AttackPhase::Ready; // strike telegraph state
+    float phaseTime = 0.0f; // live WindUp countdown
+    float windupTime = 0.15f; // telegraph duration before the hit lands
+    float lastDamageTaken = 0.0f; // most recent effective hit, for the number
+    float hitFlashTime = 0.0f;    // live overlay countdown, decayed in UpdateUnit
+    float speed = 0.0f; // pixels per second (stat table)
+    float sightRange = 0.0f; // pixels: targeting acquisition radius
     // QoL move-at-slowest-speed: caps effective speed below Unit::speed for
     // the current order so fast units don't outrun slow ones in formation.
     // -1 = uncapped. Reset on every new order, arrival, and cancel (see
     // ClearOrders/Arrive/CancelAtBlocked/Space) so it never leaks into an
     // unrelated later order.
     float speedCapPixelsPerSec = -1.0f;
-    Vector2 position = {}; // snapped to 64x64 grid (M2)
+    Vector2 position = {}; // snapped to 64x64 grid
     Vector2 velocity = {};
     bool isSelected = false;
     // QoL control groups: bit N = member of group N (10 groups, 0-9).
@@ -159,24 +155,24 @@ struct Unit
     // Atlas facing (prototype directional sheets). Last travel direction;
     // idle/attacking units keep it. Render-only: not saved, not simulated.
     Facing facing = Facing::Right;
-    Entity target = kInvalidEntity; // acquired enemy (M3G4); needs Registry.h
-    // M2 Goal 4: single pending move order (tile-snapped destination).
-    // A full command queue arrives with M3 AI; M2 moves straight toward
+    Entity target = kInvalidEntity; // acquired enemy ; needs Registry.h
+    // Single pending move order (tile-snapped destination).
+    // A full command queue arrives with AI; moves straight toward
     // the target and stops at the first blocked tile.
     Vector2 moveTarget = {};
     bool hasMoveOrder = false;
-    // M3 Goal 3: A* waypoint list (tile indices) with a consumption cursor.
+    // A* waypoint list (tile indices) with a consumption cursor.
     // Empty/inactive unless hasPath; UpdateUnitMovement walks it waypoint by
-    // waypoint and keeps the M2 straight-line behavior otherwise.
+    // waypoint and keeps the straight-line behavior otherwise.
     std::vector<cc::IVec2> path;
     std::size_t pathNext = 0;
     bool hasPath = false;
-    // M13: attack-move (engage on contact, resume path after). moveTarget
+    // Attack-move (engage on contact, resume path after). moveTarget
     // carries the march goal while attackMoveDest remembers it across
     // chase detours; the driver re-issues when the two diverge.
     bool attackMove = false;
     Vector2 attackMoveDest = {};
-    // M13: stance + patrol route (looping waypoint pair while idle).
+    // Stance + patrol route (looping waypoint pair while idle).
     Stance stance = Stance::Guard;
     // QoL auto-retreat opt-in (player side; AI retreats by difficulty and
     // ignores this flag — see RetreatIfLowHP's onlyAutoRetreat parameter).
@@ -185,7 +181,7 @@ struct Unit
     Vector2 patrolA = {};
     Vector2 patrolB = {};
     bool patrolToB = true;
-    // M13: Engineer repair order (channeled, time cost only — Q83).
+    // Engineer repair order (channeled, time cost only — ).
     bool hasRepairOrder = false;
     Entity repairTarget = kInvalidEntity;
     // QoL attack-ground (standing shell-at-position order until cancelled).
@@ -198,7 +194,7 @@ struct Unit
     // state: not saved. Patrol never completes (loops), so anything queued
     // behind a patrol runs only if the patrol is explicitly overwritten.
     std::vector<QueuedOrder> orderQueue;
-    // Phase 4: multi-tile footprint. 1x1 for infantry, 2x2 for vehicles.
+    // Multi-tile footprint. 1x1 for infantry, 2x2 for vehicles.
     // Anchor tile is the unit's logical position; the footprint extends
     // toward +x/+y from the anchor. Occupancy and CanEnter check all tiles.
     int footprintWidth = 1;
@@ -221,8 +217,8 @@ struct Unit
     int separationStallRepaths = 0;
 };
 
-// M2 Goal 2: snap a unit's world position to its tile's top-left corner
-// (64x64 grid). Units rest on tile corners; pathfinding (M3) moves them
+// Snap a unit's world position to its tile's top-left corner
+// (64x64 grid). Units rest on tile corners; pathfinding moves them
 // tile-to-tile, so every stop lands pre-snapped.
 inline void SnapUnitToTile(Unit &unit)
 {
@@ -240,7 +236,7 @@ inline float EffectiveSpeed(const Unit &unit)
     return unit.speedCapPixelsPerSec;
 }
 
-// M2 Goal 4: right-click command input. Stores a tile-snapped destination;
+// Right-click command input. Stores a tile-snapped destination;
 // UpdateUnitMovement (called per frame) walks the unit there.
 void IssueMoveOrder(Unit &unit, Vector2 worldTarget);
 
@@ -249,11 +245,10 @@ void IssueMoveOrder(Unit &unit, Vector2 worldTarget);
 // (before IssuePathOrderFootprint / formation::Issue*FormationMoveFP)
 // wherever a fresh, non-queued order bypasses those wrappers -- e.g. the
 // direct mouse-order dispatch in Game.cpp -- so a leftover repair/
-// attack-ground/patrol flag can't silently swallow the new order (see
-// plans/Bugfix_Order_Flags_And_Retreat_Fallback_Plan.md).
+// attack-ground/patrol flag can't silently swallow the new order.
 void ClearOrders(Unit &unit);
 
-// M13: attack-move order. Like a move order, but the driver engages enemies
+// Attack-move order. Like a move order, but the driver engages enemies
 // on contact and resumes the march when the target is lost.
 void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget);
 
@@ -263,15 +258,15 @@ void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget);
 void IssueAttackMoveOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
                                    Vector2 worldTarget, Entity self, std::uint32_t selfGen);
 
-// M13: stance switch. Leaving Patrol drops the route; orders are untouched.
+// Stance switch. Leaving Patrol drops the route; orders are untouched.
 void SetStance(Unit &unit, Stance stance);
 
-// M13: patrol route between two world points (snapped). The driver loops
+// Patrol route between two world points (snapped). The driver loops
 // the legs while idle with no combat to answer.
 void IssuePatrolOrder(Unit &unit, const TileMap &map, Vector2 pointA, Vector2 pointB);
 
-// M13: Engineer repair order on a same-team mechanical unit or Operational
-// building. Heals over time while in range; costs time, not resources (Q83).
+// Engineer repair order on a same-team mechanical unit or Operational
+// building. Heals over time while in range; costs time, not resources.
 // No-op unless the issuer is an Engineer.
 void IssueRepairOrder(Unit &engineer, Entity target);
 
@@ -316,8 +311,7 @@ inline constexpr float kRetreatHealthFraction = 0.3f;
 
 // QoL player auto-retreat fallback: the rally point when one was ever
 // placed, otherwise the owned Operational Base nearest the centroid of
-// the player's own living units -- never nearest the map's center (see
-// plans/Bugfix_Order_Flags_And_Retreat_Fallback_Plan.md). Pure
+// the player's own living units -- never nearest the map's center. Pure
 // home-resolution for the Game.cpp retreat pass, so the multi-base case
 // is unit-testable; RetreatIfLowHP stays the shared per-unit driver for
 // both player and AI (its signature is untouched).
@@ -344,10 +338,10 @@ void IssueOrEnqueue(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity s
                     std::uint32_t selfGen, bool shiftQueue, QueuedOrder order);
 
 // Advance one frame toward the pending order; stops snapped on arrival.
-// Terrain-blocked steps cancel the order immediately (M2 legacy); steps
+// Terrain-blocked steps cancel the order immediately; steps
 // blocked by another unit wait and replan a few times first, cancelling
 // only when the retry budget runs out.
-// Phase 4: when occ is non-null, checks footprint occupancy to prevent
+// When occ is non-null, checks footprint occupancy to prevent
 // stepping into occupied tiles; entity/generation identify self.
 void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec, float dtSeconds,
                         OccupancyGrid *occ = nullptr, Entity self = 0,
@@ -359,15 +353,15 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
 // frame after the UpdateUnit loop; corpses are ignored.
 void SeparateUnits(Registry &registry, float dtSeconds);
 
-// M3 Goal 5: per-frame AI driver — Idle -> Moving -> Attacking with attack
+// Per-frame AI driver — Idle -> Moving -> Attacking with attack
 // cooldowns. Priority: explicit player orders (hasMoveOrder/hasPath) beat AI
-// engagement; otherwise the unit acquires (M3G4), chases out-of-range
-// targets via path orders, and fires through the M4 damage matrix on
-// cooldown when in range. Dead or missing units are skipped (the M3G6
+// engagement; otherwise the unit acquires, chases out-of-range
+// targets via path orders, and fires through the damage matrix on
+// cooldown when in range. Dead or missing units are skipped (the
 // factory destroys and announces them).
-// M9: pass fog to gate acquisition + chase validation on visibility
+// Pass fog to gate acquisition + chase validation on visibility
 // (nullptr = ungated legacy behavior, keeps old call sites working).
-// Phase 4: pass occ for footprint-aware movement (nullptr = legacy behavior).
+// Pass occ for footprint-aware movement (nullptr = legacy behavior).
 // QoL: pass the frame's reserved-damage map for overkill protection
 // (Targeting.h's ReservedDamageMap; nullptr = legacy, tests keep working).
 void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,

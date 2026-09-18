@@ -1,4 +1,4 @@
-// Unit tests for M2 Goal 4 selection (pick, exclusive select, deselect).
+// Unit tests for selection (pick, exclusive select, deselect).
 
 #include "test_harness.h"
 

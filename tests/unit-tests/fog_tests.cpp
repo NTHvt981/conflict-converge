@@ -1,10 +1,10 @@
-// Unit tests for M9 FogOfWar (visibility circles, explored memory,
+// Unit tests for FogOfWar (visibility circles, explored memory,
 // team isolation, scout bonus, save/load byte roundtrip).
 
 #include "test_harness.h"
 
 #include "FogOfWar.h"
-#include "Targeting.h" // M9 fog-gated acquisition
+#include "Targeting.h" // Fog-gated acquisition
 #include "TileMap.h"   // UpdateUnit chase validation under fog
 
 namespace
@@ -51,7 +51,7 @@ void RunFogTests()
     AddWatcher(registry, 0, UnitType::LightTank, 128.0f, 15, 12);
     fog.Recompute(registry);
     CC_CHECK(!fog.IsVisible(0, { 5, 5 }));
-    CC_CHECK(fog.IsExplored(0, { 5, 5 })); // frozen snapshot (Q76)
+    CC_CHECK(fog.IsExplored(0, { 5, 5 })); // frozen snapshot
     CC_CHECK(fog.IsVisible(0, { 15, 12 }));
 
     // --- the blind and the dead reveal nothing ---
@@ -139,7 +139,7 @@ void RunFogCombatTests()
     fog.Recompute(registry);
     CC_CHECK(AcquireTarget(registry, seekerId, &fog) == foeId);
 
-    // --- artillery blind-fires into shroud at no penalty (Q78) ---
+    // --- artillery blind-fires into shroud at no penalty ---
     Registry artyRegistry;
     FogOfWar artyFog;
     artyFog.Resize(20, 15);

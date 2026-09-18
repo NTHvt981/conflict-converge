@@ -1,10 +1,10 @@
-// Unit tests for M3 Goal 5: the Idle -> Moving -> Attacking driver.
+// Unit tests for the Idle -> Moving -> Attacking driver.
 
 #include "test_harness.h"
 
 #include "Unit.h"
 
-#include "Combat.h"    // expected damage via Effectiveness (M4 matrix)
+#include "Combat.h"    // expected damage via the Effectiveness matrix
 #include "Targeting.h" // InAttackRange sanity in chase expectations
 #include "TileMap.h"   // UpdateUnit needs the full map type (Unit.h fwd-declares)
 #include "UnitStats.h" // ApplyBaseStats for real power/range/cooldowns
@@ -59,7 +59,7 @@ void RunStateMachineTests()
         const Unit *unit = registry.Get<Unit>(attacker);
         CC_CHECK(unit->target == victim);
         CC_CHECK(unit->state == UnitState::Attacking);
-        CC_CHECK(unit->phase == AttackPhase::WindUp); // M4: telegraph first, no instant hit
+        CC_CHECK(unit->phase == AttackPhase::WindUp); // Telegraph first, no instant hit
         CC_CHECK(registry.Get<Unit>(victim)->health == 100.0f);
 
         // Windup (0.15s) completes: the hit lands matrix-scaled, cooldown restarts.

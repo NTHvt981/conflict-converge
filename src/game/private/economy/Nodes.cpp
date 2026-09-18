@@ -3,7 +3,7 @@
 #include "TileMap.h"
 #include "Unit.h" // Engineer gatherers
 
-// Placeholder harvest rates (units/second); M5 balance pass tunes these.
+// Placeholder harvest rates (units/second); balance pass tunes these.
 inline constexpr float kGatherIronPerSecond = 10.0f;
 inline constexpr float kGatherOilPerSecond = 8.0f;
 
@@ -66,7 +66,7 @@ void ResourceNodes::GatherTick(const Registry &registry, ResourceSystem &resourc
         }
         if (teamID >= 0 && unit.teamID != teamID)
         {
-            return; // this crew works another ledger (M8 fair-rules harvest)
+            return; // this crew works another ledger ( fair-rules harvest)
         }
         const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
         for (ResourceNode &node : nodes_)

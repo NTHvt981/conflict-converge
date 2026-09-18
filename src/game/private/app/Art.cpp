@@ -20,7 +20,7 @@ UnitFrame FrameForPhase(AttackPhase phase)
     return UnitFrame::Idle;
 }
 
-// Phase 14: deterministic hash for per-entity jitter (no RNG, no save state).
+// Deterministic hash for per-entity jitter (no RNG, no save state).
 static unsigned int HashId(unsigned int id)
 {
     id = ((id >> 16) ^ id) * 0x45d9f3b;

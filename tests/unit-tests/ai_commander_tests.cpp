@@ -1,4 +1,4 @@
-// Unit tests for the M8 AICommander (params, setup, waves, scouting,
+// Unit tests for the AICommander (params, setup, waves, scouting,
 // headless skirmish). The commander drives the same per-frame calls as
 // main.cpp; the skirmish below mirrors tests/integration-tests battle setup.
 
@@ -44,7 +44,7 @@ void SweepDead(Registry &registry, UnitFactory &factory)
 
 void RunAICommanderTests()
 {
-    // --- difficulty params scale monotonically (Q52 Easy/Medium/Hard) ---
+    // --- difficulty params scale monotonically (Easy/Medium/Hard) ---
     const AIDifficultyParams easy = ParamsFor(AIDifficulty::Easy);
     const AIDifficultyParams medium = ParamsFor(AIDifficulty::Medium);
     const AIDifficultyParams hard = ParamsFor(AIDifficulty::Hard);
@@ -80,7 +80,7 @@ void RunAICommanderTests()
     }
     CC_CHECK(ai.HarvesterCount() == medium.harvesters);
 
-    // --- wave launches on army-size threshold (Q75), ordering the army ---
+    // --- wave launches on army-size threshold, ordering the army ---
     Registry warRegistry;
     TileMap warMap(20, 15);
     ResourceNodes warNodes;

@@ -1,7 +1,7 @@
 #include "ResourceSystem.h"
 
-// Minimal ledger so the M3 UnitFactory can validate costs. Gathering,
-// buildings, and the production queue arrive in M5.
+// Minimal ledger so UnitFactory can validate costs. Gathering, buildings,
+// and the production queue live in their own modules.
 void ResourceSystem::AddIron(long amount)
 {
     iron += amount;

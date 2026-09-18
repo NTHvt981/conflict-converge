@@ -1,4 +1,4 @@
-// Unit tests for M2 Goal 4 move orders (snap, step, arrival, blocking).
+// Unit tests for move orders (snap, step, arrival, blocking).
 
 #include "test_harness.h"
 

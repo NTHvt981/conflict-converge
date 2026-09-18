@@ -4,8 +4,8 @@
 
 #include "raylib.h" // Vector2 (raylib interop)
 
-// M1 Goal 3: central math header. All game-side math goes through glm types;
-// raylib Vector2 conversions live here so M2 (tile grid) and M3 (units)
+// Central math header. All game-side math goes through glm types;
+// raylib Vector2 conversions live here so (tile grid) and (units)
 // don't scatter reinterpret casts across the codebase.
 //
 // NOTE: this file must NOT be named Math.h — on Windows' case-insensitive
@@ -18,14 +18,14 @@ namespace cc
 using Vec2 = glm::vec2;
 using IVec2 = glm::ivec2;
 
-// 64x64 tile grid (see M2 Core Movement System).
+// 64x64 tile grid (see Core Movement System).
 inline constexpr float TILE_SIZE = 64.0f;
 
 // --- raylib interop ---
 Vec2 ToGlm(Vector2 v);
 Vector2 ToRaylib(Vec2 v);
 
-// --- tile grid helpers (M2) ---
+// --- tile grid helpers ---
 // Tile indices -> world position of the tile's top-left corner.
 Vec2 TileToWorld(int tileX, int tileY);
 // World position -> containing tile indices.

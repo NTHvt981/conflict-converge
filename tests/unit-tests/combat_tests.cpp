@@ -1,4 +1,4 @@
-// Unit tests for M4 Goal 1 damage matrix + ResolveAttack.
+// Unit tests for damage matrix + ResolveAttack.
 
 #include "test_harness.h"
 

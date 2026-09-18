@@ -1,6 +1,6 @@
 #include "Combat.h"
 
-#include "Building.h" // M13: structural damage targets
+#include "Building.h" // Structural damage targets
 
 float Effectiveness(DamageType dealt, ArmorType armor)
 {
@@ -8,7 +8,7 @@ float Effectiveness(DamageType dealt, ArmorType armor)
     // KINETIC is baseline; EXPLOSIVE cracks STEEL but COMPOSITE shrugs it;
     // ENERGY melts RUBBER but bounces off STEEL.
     static constexpr float kMatrix[3][3] = {
-        // STEEL  RUBBER  COMPOSITE
+        // STEEL RUBBER COMPOSITE
         { 1.00f, 0.75f, 0.50f }, // KINETIC
         { 1.25f, 1.00f, 0.75f }, // EXPLOSIVE
         { 0.50f, 1.25f, 1.00f }, // ENERGY
@@ -88,7 +88,7 @@ void ResolveGroundAttack(Registry &registry, Unit &attacker, Vector2 pos)
     }
 }
 
-// M4 Goal 2: the body fills the center 32x32 of the unit's 64x64 tile.
+// The body fills the center 32x32 of the unit's 64x64 tile.
 Rectangle HitboxOf(const Unit &unit)
 {
     return { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };

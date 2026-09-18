@@ -12,14 +12,14 @@ class Art; // fwd-decl (Hud.cpp includes Art.h for icons)
 enum class BuildingType; // fwd-decl (Hud.cpp includes Building.h)
 class HotkeyMap; // fwd-decl (Hud.cpp includes Hotkeys.h for live bindings)
 
-// M6 Goal 2: HUD panels. Text content is built by pure functions (tested);
+// HUD panels. Text content is built by pure functions (tested);
 // the Draw* wrappers below are thin raygui calls owned by main.cpp.
 
 const char *UnitTypeName(UnitType type);
 const char *BuildingTypeName(BuildingType type);
 std::string FormatResources(const ResourceSystem &resources);
 std::string SelectionSummary(const Unit &unit);
-// M6 Goal 4: selection visuals + shortcut overlay builders.
+// Selection visuals + shortcut overlay builders.
 float UnitHealthFraction(const Unit &unit); // hp / max, clamped to [0, 1]
 std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys);
 // Hover tooltip (world-space unit info): debounce state + pure updater.
@@ -37,10 +37,10 @@ bool UpdateHoverTooltip(HoverTooltipState &state, Entity hovered, float dt, floa
 std::vector<std::string> UnitTooltipLines(const Unit &unit);
 
 // Screen-space panels (call after EndMode2D).
-// M12: optional art draws 16px resource icons; nullptr keeps text-only
+// Optional art draws 16px resource icons; nullptr keeps text-only
 // (headless tests, rectangle fallback).
 void DrawResourcePanel(const ResourceSystem &resources, const Art *art = nullptr);
-// M13: factory production UI. Display order for the 7 buildable types
+// Factory production UI. Display order for the 7 buildable types
 // (pure, tested); the panel below is immediate-mode raygui owned by main.
 std::vector<UnitType> ProductionMenuOrder();
 // Factory panel with per-type cost buttons (unaffordable disabled), queue
@@ -49,8 +49,8 @@ std::vector<UnitType> ProductionMenuOrder();
 // Call after EndMode2D.
 constexpr int kNoProductionClick = -1;
 int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool hasFactory);
-// M13: named-slot readout (filled/empty via file existence). Pure layout,
-// raygui calls; slot files live at SaveSlotPath().
+// Named-slot readout (filled/empty via file existence). Pure layout,
+// raygui calls; slot files live at SaveSlotPath.
 void DrawSaveSlots();
 void DrawSelectionPanel(Registry &registry,
                         const Art *art = nullptr); // non-const: SelectedUnit queries selection

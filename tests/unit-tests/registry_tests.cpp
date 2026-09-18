@@ -1,9 +1,9 @@
-// Unit tests for the M1 Goal 6 ECS-lite Registry (lifecycle + component pools).
+// Unit tests for the ECS-lite Registry (lifecycle + component pools).
 
 #include "test_harness.h"
 
 #include "Registry.h"
-#include "Unit.h" // real M3 component type
+#include "Unit.h" // real component type
 
 namespace
 {

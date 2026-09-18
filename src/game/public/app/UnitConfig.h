@@ -5,8 +5,7 @@
 
 #include "UnitStats.h" // UnitStats baseline + ArmorType/DamageType/UnitType
 
-// Standalone unit-config editor data layer (see
-// plans/Standalone_Unit_Config_Editor_Plan.md section 1): one UnitConfig
+// Standalone unit-config editor data layer: one UnitConfig
 // per data/configs/<type>.json file. Pure logic, no raylib — the editor
 // UI, the game-side follow-up, and the unit tests all share this.
 struct UnitConfig

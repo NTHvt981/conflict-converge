@@ -1,4 +1,4 @@
-// Unit tests for M4 Goal 3 attack phases (Ready/WindUp/Recover + move cancel).
+// Unit tests for attack phases (Ready/WindUp/Recover + move cancel).
 
 #include "test_harness.h"
 

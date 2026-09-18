@@ -2,10 +2,9 @@
 
 #include "Unit.h" // UnitType, Unit, ArmorType, DamageType
 
-// M3 Goal 2: base stats per unit type (milestone: "Define base stats
-// for each type"). Numbers are conservative C&C/CoH-inspired placeholders —
-// see MILESTONES.md blockings; M4 tuning will adjust them against the damage
-// matrix. Ranges and sight are in pixels (64px tiles).
+// Base stats per unit type. Numbers are conservative C&C/CoH-inspired
+// placeholders; tuning adjusts them against the damage matrix. Ranges and
+// sight are in pixels (64px tiles).
 
 struct UnitStats
 {

@@ -1,4 +1,4 @@
-// Unit tests for the M2 Goal 1 TileMap (terrain storage, bounds, blocking).
+// Unit tests for the TileMap (terrain storage, bounds, blocking).
 
 #include "test_harness.h"
 

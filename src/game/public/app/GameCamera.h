@@ -2,17 +2,16 @@
 
 #include "raylib.h" // Camera2D, Vector2
 
-// M2 Goal 3: manual panning camera. Wraps raylib's Camera2D with WASD
-// polling (live game) plus a key-free Pan for tests and scripted moves.
-// Named GameCamera: raylib already defines Camera (Camera3D alias).
-// Zoom/scroll and drag-pan arrive with the M2 input goals; selection (M2
-// Goal 4) and the minimap (M6) consume ScreenToWorld.
+// Manual panning camera. Wraps raylib's Camera2D with WASD polling (live
+// game) plus a key-free Pan for tests and scripted moves. Named GameCamera:
+// raylib already defines Camera (Camera3D alias). Zoom/scroll, drag-pan,
+// selection, and the minimap consume ScreenToWorld.
 
 class GameCamera
 {
 public:
-    static constexpr float kMinZoom = 0.5f; // absolute floor (Q53)
-    static constexpr float kMaxZoom = 2.0f; // absolute ceiling (Q53)
+    static constexpr float kMinZoom = 0.5f; // absolute floor
+    static constexpr float kMaxZoom = 2.0f; // absolute ceiling
 
     Camera2D view = {};
 
@@ -28,7 +27,7 @@ public:
     // Key-free pan by a raw screen-space delta (tests, scripted moves).
     void Pan(Vector2 delta);
 
-    // M13: scroll-wheel zoom with limits (Q53). Each wheel step scales by
+    // Scroll-wheel zoom with limits. Each wheel step scales by
     // 1.125x, clamped to [kMinZoom, kMaxZoom]; zoom anchors on the view
     // target (raylib handles the offset math in ScreenToWorld).
     void AdjustZoom(float wheelSteps);

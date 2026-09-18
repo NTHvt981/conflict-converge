@@ -9,10 +9,10 @@
 #include "Registry.h"  // Entity iteration for vision sources
 #include "Unit.h"      // sightRange, scout-role types
 
-// M9: fog of war. Per-team visibility over the TileMap: `visible` is
+// Fog of war. Per-team visibility over the TileMap: `visible` is
 // recomputed from living units' sightRange circles every Recompute call,
-// `explored` latches forever (frozen StarCraft-style snapshot, Q76).
-// Sight is pure radius — terrain never blocks (Q77). Infantry and IFV are
+// `explored` latches forever (frozen StarCraft-style snapshot).
+// Sight is pure radius — terrain never blocks. Infantry and IFV are
 // scout-role and reveal at 1.5x range without touching BaseStats.
 
 class FogOfWar
@@ -31,7 +31,7 @@ public:
     bool IsVisible(int teamID, cc::IVec2 tile) const;
     bool IsExplored(int teamID, cc::IVec2 tile) const;
 
-    // Save/load support (M15 team_fog): row-major explored bytes, w*h long.
+    // Save/load support (team_fog): row-major explored bytes, w*h long.
     std::vector<std::uint8_t> ExploredBytes(int teamID) const;
     void SetExplored(int teamID, const std::uint8_t *bytes, std::size_t size);
     // Teams currently tracked (have had at least one living unit).

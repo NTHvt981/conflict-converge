@@ -10,7 +10,7 @@
 class TileMap; // fwd-decl (Building.cpp includes TileMap.h)
 class ResourceNodes; // fwd-decl (node-occupancy guard, Building.cpp includes Nodes.h)
 
-// M5 Goals 2/5: base building mechanics. Buildings occupy a tile footprint
+// Base building mechanics. Buildings occupy a tile footprint
 // (marked TerrainType::Building, hence blocked + overlap-proof) and go
 // through a small state machine: UnderConstruction -> Operational ->
 // Destroyed. UnderConstruction is appended after Destroyed (not before
@@ -20,7 +20,7 @@ enum class BuildingType
 {
     Base,         // 2x2, generates base income (see UpdateBaseIncome)
     ResourceDepot, // 1x1, drop-off marker for future harvester routes
-    Factory,       // 2x2, owns a unit production queue (M5 Goal 6)
+    Factory,       // 2x2, owns a unit production queue
     Count // keep last: save decode validates < Count
 };
 
@@ -42,7 +42,7 @@ struct Building
     bool isSelected = false;
     int tileX = 0; // top-left of the footprint
     int tileY = 0;
-    // M13: structural HP so Engineers have something to repair. Nothing
+    // Structural HP so Engineers have something to repair. Nothing
     // damages buildings yet (combat is unit-vs-unit); tests wound them
     // directly until building attacks arrive. Defaults match Base (the
     // default type); PlaceBuilding stamps the real per-type max anyway.
@@ -109,7 +109,7 @@ std::vector<cc::IVec2> AreaBuildSlots(BuildingType type, cc::IVec2 minTile,
 // Returns false for missing/non-building IDs (no-op).
 bool DemolishBuilding(Registry &registry, TileMap &map, Entity entity);
 
-// Base income generation (M5 Goal 4): every Operational Base trickles
+// Base income generation: every Operational Base trickles
 // resources. teamID filters ownership (-1 = every team, test/demo default).
 void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float dt,
                       int teamID = -1);
@@ -124,13 +124,13 @@ void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float
 void UpdateBuildingAutoRepair(Registry &registry, ResourceSystem &resources, float dt, int teamID,
                               float capFraction);
 
-// Phase 5: Walkable entrance tiles adjacent to a building's footprint.
+// Walkable entrance tiles adjacent to a building's footprint.
 // Returns tiles outside the footprint that are in-bounds and not blocked
 // (grass/forest). Suitable for units to stand on when entering/repairing.
 std::vector<cc::IVec2> BuildingEntrances(const TileMap &map, int tileX, int tileY,
                                           int fpW, int fpH);
 
-// Phase 5: Attack positions around a building. Returns up to maxPositions
+// Attack positions around a building. Returns up to maxPositions
 // perimeter tiles distributed around the footprint. Units are spread
 // evenly across available positions so they don't all converge on one tile.
 std::vector<cc::IVec2> BuildingAttackPositions(const TileMap &map, int tileX, int tileY,

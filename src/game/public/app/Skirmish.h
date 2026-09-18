@@ -16,7 +16,7 @@ class ProductionQueue;
 class UnitFactory;
 class GameCamera;
 
-// M14: skirmish world build/teardown shared by Game and headless tests.
+// Skirmish world build/teardown shared by Game and headless tests.
 // The bundle is non-owning: Game owns the objects as members and Build/Reset
 // only refills their contents, so shortcut lambdas plus the factory/AI
 // reference bindings stay valid across matches.
@@ -44,7 +44,7 @@ struct SkirmishWorld
     Registry *registry = nullptr;
     ResourceSystem *resources = nullptr;
     TileMap *map = nullptr;
-    OccupancyGrid *occ = nullptr; // Phase 4: tile occupancy
+    OccupancyGrid *occ = nullptr; // Tile occupancy
     FogOfWar *fog = nullptr;
     ResourceNodes *nodes = nullptr;
     ProductionQueue *queue = nullptr;

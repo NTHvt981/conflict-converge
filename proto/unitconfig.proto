@@ -4,7 +4,7 @@
 // see UnitConfigFilename). The game keeps its compiled-in defaults
 // (UnitStats.cpp kTable + the ApplyBaseStats footprint rule); a file only
 // overrides the entries it provides, and a missing directory degrades to
-// all-defaults (see plans/Standalone_Unit_Config_Editor_Plan.md).
+// all-defaults.
 //
 // armor_type/damage_type are strings holding the C++ enum names ("RUBBER",
 // "KINETIC"), NOT proto enums: a proto enum would be a second source of
@@ -73,7 +73,7 @@ message UnitCollisionConfig
 
 message UnitArtConfig
 {
-    string sprite_prefix = 1;     // replaces the UnitFile() switch
+    string sprite_prefix = 1;     // replaces the UnitFile switch
     string atlas_idle_prefix = 2; // SpriteAnim name in data/configs/animations.json, or "" = flat-PNG fallback
     string atlas_walk_prefix = 3; // same, for the moving state
 }
