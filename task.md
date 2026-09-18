@@ -59,7 +59,31 @@ feel, not reduce code. `GameCamera` zoom steps instantly (`*1.125`,
 no smoothing to replace); `Pings` has no fade math. No source change.
 Commit: this file.
 
-## Phase 4 — `rres` packaging: (pending)
+## Phase 4 — `rres` packaging: DEFERRED (evaluated, no change)
+
+Verified against the upstream repo (shallow clone): `rres.h` (reader,
+C-clean with guarded `stdbool`) + `rres-raylib.h` (`LoadDataFromResource`/
+`LoadImageFromResource`/`LoadWaveFromResource`/...) exist as documented,
+and `examples/rres_create_file.c` gives an authoritative pack path. So
+integration is possible — but declined for now, with reasons:
+1. Wrong payoff shape for this goal: wiring adds ~50-80 LOC of loader
+   glue + fallback branches to `Art::Init` (`Art.cpp:312-417`, ~40
+   individual `LoadTexture` calls) and `Audio.cpp:93` to save 3
+   near-identical `{COPYDIR}` postbuild lines. That GROWS `src/`.
+2. Needs a pack step that doesn't exist in-repo (no `rrespacker`; options
+   are a hand-rolled Python packer risking format drift, or building the
+   C writer example as a one-off tool) — new tooling surface for a
+   release-time optimization.
+3. Cannot validate here: the packed path only runs in the device branch
+   (`Init(true)`, GPU upload via `LoadTextureFromImage`), headless tests
+   take the early-out (`Init(false)`), and this environment has no GPU
+   context for the game/e2e binaries. Shipping GPU-only glue with zero
+   runtime verification would be reckless; committing it inactive behind
+   the loose-file fallback adds dead code (the thing Phase 2 just
+   removed elsewhere).
+Revisit when: release packaging hurts (many-file deploys) AND a GPU
+ rig can validate the packed path. Loose `data/` + postbuild copy stays:
+ tested, fast for dev iteration. Commit: this file.
 
 ## Phase 5 — `raytilemap` migration: (pending)
 
