@@ -85,6 +85,26 @@ Revisit when: release packaging hurts (many-file deploys) AND a GPU
  rig can validate the packed path. Loose `data/` + postbuild copy stays:
  tested, fast for dev iteration. Commit: this file.
 
-## Phase 5 — `raytilemap` migration: (pending)
+## Phase 5 — `raytilemap` migration: NO-GO (measured, no change)
+
+Measured `MapFile.cpp` (485 lines): the pure text parser
+(`ParseDim`/`ParseValue`/`ParseMapFile`, ~135 lines) is the ONLY part
+`raytilemap` (Tiled TMX tile-layer reader/renderer) could replace. The
+remaining ~350 lines are format-agnostic game logic with no
+third-party equivalent and stay regardless: `ApplyMapData`,
+`WriteMapFile` (editor save), `ValidateMapPlayable` (reachability
+check), `PaintEditorCell`, `NearestFreeTile`.
+Worse, the `.map` format's real content is markers, not terrain:
+`I`/`O` resource nodes, `1`/`2` spawns (incl. 2v2 twin maps),
+`B` pre-placed buildings across 6 shipped maps — all needing custom
+Tiled object-layer conventions + custom parsing, plus a `.map`→TMX
+converter, dual-format transition, editor TMX-write support, and
+`TerrainType` value preservation (`TileMap.h:19`, old saves decode
+0-2). Net src/ change ≈ zero or positive, for real regression
+surface across maps, saves, editor, and skirmish setup.
+Per the plan's own gate (adopt only with Tiled commitment): declined.
+Flips only if the team wants Tiled as a visual authoring tool — then
+`raytilemap` slots in as tile renderer, markers/editor stay custom.
+Commit: this file.
 
 ## Phase 6 — `rlImGui` editor-only: (pending)
