@@ -1,6 +1,6 @@
 #include "Building.h"
 
-#include <cmath> // floor/ceil for repair quanta
+#include <cmath>
 
 #include "Nodes.h"
 #include "TileMap.h"

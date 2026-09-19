@@ -1,6 +1,6 @@
 #include "MathUtils.h"
 
-#include <glm/gtc/round.hpp> // glm::floor
+#include <glm/gtc/round.hpp>
 
 namespace cc
 {

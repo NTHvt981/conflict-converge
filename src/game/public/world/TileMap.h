@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "CcAssert.h"
-#include "MathUtils.h" // cc::IVec2, cc::TILE_SIZE
+#include "MathUtils.h"
 
 // Tile-based movement system. TileMap owns the 64x64 grid:
 // dimensions, per-tile terrain, and blocked queries for movement,

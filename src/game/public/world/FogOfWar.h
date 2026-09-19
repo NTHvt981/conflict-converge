@@ -5,9 +5,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "MathUtils.h" // cc::IVec2
-#include "Registry.h"  // Entity iteration for vision sources
-#include "Unit.h"      // sightRange, scout-role types
+#include "MathUtils.h"
+#include "Registry.h"
+#include "Unit.h"
 
 // Fog of war. Per-team visibility over the TileMap: `visible` is
 // recomputed from living units' sightRange circles every Recompute call,

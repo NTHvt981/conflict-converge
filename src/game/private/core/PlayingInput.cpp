@@ -2,10 +2,10 @@
 
 #include "PlayingInput.h"
 
-#include "Formation.h" // squad fan-out + line formation orders
-#include "Pathfinder.h" // single-unit direct path orders
-#include "Selection.h" // pick, drag-box, control groups, repair zones
-#include "Unit.h" // orders, repair targets, retreat homes
+#include "Formation.h"
+#include "Pathfinder.h"
+#include "Selection.h"
+#include "Unit.h"
 #include <algorithm>
 #include <cmath>
 #include <vector>

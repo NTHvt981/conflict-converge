@@ -1,7 +1,7 @@
 #include "UnitConfig.h"
 
-#include <algorithm> // LoadAllUnitConfigs sorted-by-path order
-#include <cctype> // tolerant filename/type comparison
+#include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <sstream>

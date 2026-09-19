@@ -3,9 +3,9 @@
 #include <functional>
 #include <vector>
 
-#include "MathUtils.h" // cc::IVec2
-#include "Registry.h"  // Entity iteration for gatherers
-#include "ResourceSystem.h" // gather destination
+#include "MathUtils.h"
+#include "Registry.h"
+#include "ResourceSystem.h"
 
 class TileMap; // fwd-decl (Nodes.cpp includes TileMap.h)
 

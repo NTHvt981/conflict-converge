@@ -3,10 +3,10 @@
 #include <optional>
 
 #include "Audio.h"
-#include "Building.h" // BuildingType for the area-build placement flow
+#include "Building.h"
 #include "GameCamera.h"
 #include "InputManager.h"
-#include "Menu.h" // MenuSettings (right-drag-pan live setting)
+#include "Menu.h"
 #include "Minimap.h"
 #include "Nodes.h"
 #include "Registry.h"

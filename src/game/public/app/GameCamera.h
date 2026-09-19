@@ -1,6 +1,6 @@
 #pragma once
 
-#include "raylib.h" // Camera2D, Vector2
+#include "raylib.h"
 
 // Manual panning camera. Wraps raylib's Camera2D with WASD polling (live
 // game) plus a key-free Pan for tests and scripted moves. Named GameCamera:

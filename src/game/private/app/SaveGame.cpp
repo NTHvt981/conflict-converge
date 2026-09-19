@@ -1,7 +1,7 @@
 #include "SaveGame.h"
 
 #include <cstdint>
-#include <cstdio> // snprintf for replay frame names
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -13,7 +13,7 @@
 
 #include "Building.h"
 #include "CcAssert.h"
-#include "FogOfWar.h" // Per-team explored sets via team_fog
+#include "FogOfWar.h"
 #include "GameCamera.h"
 #include "Nodes.h"
 #include "Registry.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Unit.h" // UnitType, Unit, ArmorType, DamageType
+#include "Unit.h"
 
 // Base stats per unit type. Numbers are conservative C&C/CoH-inspired
 // placeholders; tuning adjusts them against the damage matrix. Ranges and

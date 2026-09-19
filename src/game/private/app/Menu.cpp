@@ -1,12 +1,12 @@
 #include "Menu.h"
 
-#include <cstdio> // snprintf for float formatting into rini text values
+#include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <sstream>
 
-#include "Hotkeys.h" // hotkey.* override validation (known action ids)
-#include "rini.h"    // raysan5/rini settings reader/writer (RINI_VALUE_DELIMITER
+#include "Hotkeys.h"
+#include "rini.h"
                      // '=' is set in src/thirdparty/rini_impl.cpp, the sole
                      // RINI_IMPLEMENTATION TU; the declarations used here don't
                      // depend on it)

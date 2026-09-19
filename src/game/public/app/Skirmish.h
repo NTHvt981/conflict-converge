@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include "AICommander.h" // AIDifficulty
-#include "MathUtils.h"   // cc::IVec2
-#include "raylib.h"      // Vector2
+#include "AICommander.h"
+#include "MathUtils.h"
+#include "raylib.h"
 
 class Registry;
 class ResourceSystem;

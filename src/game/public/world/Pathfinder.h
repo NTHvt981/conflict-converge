@@ -2,9 +2,9 @@
 
 #include <vector>
 
-#include "MathUtils.h" // cc::IVec2, tile helpers
-#include "TileMap.h"   // blocked queries, OccupancyGrid
-#include "Unit.h"      // Unit, Vector2
+#include "MathUtils.h"
+#include "TileMap.h"
+#include "Unit.h"
 
 // Tile-grid A* pathfinding. orders walked straight lines and
 // stopped at the first blocked tile; paths route around Water/Building and

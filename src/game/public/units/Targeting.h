@@ -2,8 +2,8 @@
 
 #include <unordered_map>
 
-#include "Registry.h" // Registry, Entity, kInvalidEntity
-#include "Unit.h"     // Unit
+#include "Registry.h"
+#include "Unit.h"
 
 class FogOfWar; // fwd-decl (Targeting.cpp includes FogOfWar.h)
 struct Building; // fwd-decl (Targeting.cpp includes Building.h)

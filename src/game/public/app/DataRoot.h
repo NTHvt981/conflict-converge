@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdio> // snprintf for candidate paths
+#include <cstdio>
 
 // Launch hardening: the game resolves data/ relative to CWD (repo root
 // under F5, exe dir for direct runs thanks to the postbuild copy). A

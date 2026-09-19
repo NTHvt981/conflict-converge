@@ -1,7 +1,7 @@
 #include "Cursor.h"
 
-#include "Selection.h" // PickUnitAt (pure, per-frame-safe hover query)
-#include "Unit.h"      // teamID/type + CanRepairTarget
+#include "Selection.h"
+#include "Unit.h"
 
 CursorIntent PredictCursorIntent(Registry &registry, const Unit *selected, Vector2 worldPos)
 {

@@ -3,12 +3,12 @@
 #include <cstddef>
 #include <vector>
 
-#include "MathUtils.h" // cc::IVec2
-#include "Production.h" // own build queue (upfront charge, prepaid spawn)
-#include "Registry.h"  // Entity, Registry
-#include "ResourceSystem.h" // own fair-rules economy (same rules as the player)
-#include "Unit.h"      // UnitType
-#include "UnitFactory.h" // cost-validated spawner bound to the AI's resources
+#include "MathUtils.h"
+#include "Production.h"
+#include "Registry.h"
+#include "ResourceSystem.h"
+#include "Unit.h"
+#include "UnitFactory.h"
 
 class TileMap;        // fwd-decl (AICommander.cpp includes TileMap.h)
 class OccupancyGrid;  // fwd-decl: class, not struct (TileMap.h defines it)

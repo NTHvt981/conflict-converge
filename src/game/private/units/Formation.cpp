@@ -1,11 +1,11 @@
 #include "Formation.h"
 
-#include "Pathfinder.h" // IssuePathOrder, IssuePathOrderFootprint
+#include "Pathfinder.h"
 #include "TileMap.h"
 
 #include <algorithm>
 #include <cmath>
-#include <numeric> // std::accumulate
+#include <numeric>
 #include <unordered_map>
 
 namespace formation

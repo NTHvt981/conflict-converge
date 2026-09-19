@@ -1,16 +1,16 @@
 #include "Skirmish.h"
 
-#include "Building.h"      // PlaceBuilding, BuildingType
-#include "FogOfWar.h"      // Resize
-#include "GameCamera.h"    // view target
-#include "MapFile.h"       // ParseMapFile, ApplyMapData, NearestFreeTile
-#include "Nodes.h"         // SpawnNode, ResourceKind
-#include "Production.h"    // Enqueue
-#include "Registry.h"      // Clear
-#include "ResourceSystem.h" // starting funds
-#include "TileMap.h"       // Resize, Set, OccupancyGrid
-#include "Unit.h"          // UnitType
-#include "UnitFactory.h"   // Spawn
+#include "Building.h"
+#include "FogOfWar.h"
+#include "GameCamera.h"
+#include "MapFile.h"
+#include "Nodes.h"
+#include "Production.h"
+#include "Registry.h"
+#include "ResourceSystem.h"
+#include "TileMap.h"
+#include "Unit.h"
+#include "UnitFactory.h"
 
 SkirmishSpots SpotsForMap(const std::string &mapPath)
 {

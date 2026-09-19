@@ -10,21 +10,21 @@
 #include "FogOfWar.h"
 #include "GameCamera.h"
 #include "Hotkeys.h"
-#include "Hud.h" // hover-tooltip debounce state (pure, headless-safe)
+#include "Hud.h"
 #include "InputManager.h"
 #include "MapFile.h"
 #include "Menu.h"
-#include "MenuScreens.h" // out-of-world menu branch (H6 follow-up extraction)
+#include "MenuScreens.h"
 #include "Minimap.h"
 #include "Nodes.h"
 #include "Pings.h"
-#include "PlayingInput.h" // in-match gesture dispatch (H6 follow-up extraction)
+#include "PlayingInput.h"
 #include "Production.h"
 #include "Registry.h"
 #include "ResourceSystem.h"
 #include "SaveGame.h"
-#include "Shake.h" // trauma-pattern screen shake (pure helpers, header-only)
-#include "Simulation.h" // per-frame match tick (H6 follow-up extraction)
+#include "Shake.h"
+#include "Simulation.h"
 #include "Skirmish.h"
 #include "TileMap.h"
 #include "UnitFactory.h"

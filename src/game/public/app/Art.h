@@ -7,11 +7,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "raylib.h" // Texture2D, Vector2, Color (device-independent types)
-#include "Building.h" // BuildingType for DrawBuilding
-#include "Nodes.h"    // ResourceKind for DrawNode/DrawIcon
-#include "SpriteData.h" // SpriteSheetData for the JSON atlas
-#include "Unit.h"     // UnitType, AttackPhase
+#include "raylib.h"
+#include "Building.h"
+#include "Nodes.h"
+#include "SpriteData.h"
+#include "Unit.h"
 
 enum class TerrainType : std::uint8_t; // fwd-decl (Art.cpp includes TileMap.h)
 

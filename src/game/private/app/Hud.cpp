@@ -3,14 +3,14 @@
 #include <cstdio>
 #include <filesystem>
 
-#include "Art.h"        // Resource icons (optional, may be fallback)
-#include "Building.h"   // BuildingTypeName + selected-building summary
-#include "Hotkeys.h"    // live key bindings for the hint overlay
-#include "raygui.h"   // panels/labels
-#include "SaveGame.h" // Slot paths
-#include "Selection.h" // SelectedUnit
-#include "UnitFactory.h" // CostOf for the build menu
-#include "UnitStats.h" // max-health lookup for the summary
+#include "Art.h"
+#include "Building.h"
+#include "Hotkeys.h"
+#include "raygui.h"
+#include "SaveGame.h"
+#include "Selection.h"
+#include "UnitFactory.h"
+#include "UnitStats.h"
 
 const char *UnitTypeName(UnitType type)
 {

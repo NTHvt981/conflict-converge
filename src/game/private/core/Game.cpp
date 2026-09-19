@@ -3,21 +3,21 @@
 
 #include "Game.h"
 
-#include "raygui.h" // Raygui UI framework (impl TU: src/thirdparty/raygui_impl.c)
-#include "Building.h" // Demo base/placement on the tile grid
-#include "Cursor.h" // context-cursor intent prediction (per-frame, pre-draw)
-#include "DataRoot.h" // launch hardening: chdir to the data root when needed
-#include "Formation.h" // drag-select squads fan out through formation moves
-#include "Hud.h" // Raygui resource + selection panels
-#include "MapFile.h" // sandbox detection (player spawn without AI spawn)
-#include "Pathfinder.h" // Right-click orders route around blocks
-#include "Selection.h" // Mouse selection helpers
-#include "Shortcuts.h" // Shortcut overlay lines
-#include "Unit.h" // Snapped units with move orders
-#include <algorithm> // QoL area-build tile-range min/max
-#include <filesystem> // Save-slot existence for the load screen
+#include "raygui.h"
+#include "Building.h"
+#include "Cursor.h"
+#include "DataRoot.h"
+#include "Formation.h"
+#include "Hud.h"
+#include "MapFile.h"
+#include "Pathfinder.h"
+#include "Selection.h"
+#include "Shortcuts.h"
+#include "Unit.h"
+#include <algorithm>
+#include <filesystem>
 #include <vector>
-#include <cmath> // Muzzle direction normalization
+#include <cmath>
 
 namespace
 {

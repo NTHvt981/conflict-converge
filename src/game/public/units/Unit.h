@@ -1,13 +1,13 @@
 #pragma once
 
-#include <cstddef> // std::size_t
-#include <unordered_map> // QoL reserved-damage map (see Targeting.h alias)
-#include <vector>  // Unit::path waypoint list
+#include <cstddef>
+#include <unordered_map>
+#include <vector>
 
-#include "raylib.h" // Vector2
+#include "raylib.h"
 
-#include "MathUtils.h" // cc:: tile-grid snapping helpers
-#include "Registry.h" // Entity / kInvalidEntity for Unit::target
+#include "MathUtils.h"
+#include "Registry.h"
 
 class TileMap; // movement queries blocked tiles; included in Unit.cpp
 class OccupancyGrid; // Footprint-aware movement; included in Unit.cpp

@@ -1,21 +1,21 @@
 #include "Unit.h"
 
-#include "Combat.h"     // FireAt routes through the damage matrix.
-#include "FogOfWar.h"   // Gate acquisition + chase validation on visibility.
-#include "MathUtils.h" // glm integration check: game TU exercises cc::Vec2 conversions.
-#include "Pathfinder.h" // Chase orders route around blocked tiles.
-#include "Targeting.h"  // Acquire/validate targets, range checks.
-#include "TileMap.h"   // Movement stops at blocked tiles.
-#include "Building.h"  // Repair targets include structures.
-#include "UnitStats.h" // Max-health lookup for repair validation.
+#include "Combat.h"
+#include "FogOfWar.h"
+#include "MathUtils.h"
+#include "Pathfinder.h"
+#include "Targeting.h"
+#include "TileMap.h"
+#include "Building.h"
+#include "UnitStats.h"
 
-#include <algorithm> // std::find: ResolveStackedUnits' same-frame claim guard
-#include <cmath> // atan2 for FacingFromVelocity
-#include <unordered_map> // ResolveStackedUnits' group-by-anchor-tile map
+#include <algorithm>
+#include <cmath>
+#include <unordered_map>
 
 // Stub: unit behavior, AI, and factory arrive in.
 
-#include "UnitStats.h" // Max-health lookup for repair validation.
+#include "UnitStats.h"
 
 void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
 {

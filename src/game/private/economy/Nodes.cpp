@@ -1,7 +1,7 @@
 #include "Nodes.h"
 
 #include "TileMap.h"
-#include "Unit.h" // Engineer gatherers
+#include "Unit.h"
 
 // Placeholder harvest rates (units/second); balance pass tunes these.
 inline constexpr float kGatherIronPerSecond = 10.0f;

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <vector> // Hitbox query results
+#include <vector>
 
-#include "Registry.h" // Entity, Registry::Each for area queries
-#include "Unit.h" // DamageType, ArmorType, Unit (no cycle: Unit.h never includes Combat.h)
+#include "Registry.h"
+#include "Unit.h"
 
 struct Building; // fwd-decl (Combat.cpp includes Building.h)
 

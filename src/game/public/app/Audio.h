@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "raylib.h" // Sound, Music (device-independent types)
+#include "raylib.h"
 
 // Audio. SFX + music loop live as .wav assets under data/audio/,
 // synthesized by tools/gen_audio.py (rfxgen is interactive-only, so the

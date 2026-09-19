@@ -1,7 +1,7 @@
 #include "Production.h"
 
 #include "ResourceSystem.h"
-#include "UnitFactory.h" // CostOf + SpawnPrepaid
+#include "UnitFactory.h"
 
 float BuildTime(UnitType type)
 {

@@ -1,6 +1,6 @@
 #include "Combat.h"
 
-#include "Building.h" // Structural damage targets
+#include "Building.h"
 
 float Effectiveness(DamageType dealt, ArmorType armor)
 {

@@ -1,6 +1,6 @@
 #include "SpriteData.h"
 
-#include <cstdio> // snprintf for grid sprite names
+#include <cstdio>
 #include <fstream>
 #include <sstream>
 #include <unordered_set>

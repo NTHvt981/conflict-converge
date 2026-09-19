@@ -3,11 +3,11 @@
 #include <string>
 #include <vector>
 
-#include "AICommander.h" // AIDifficulty for the skirmish setup
-#include "MapFile.h"     // MapEntry for the setup map list
-#include "Registry.h" // TeamHasUnits query
-#include "Unit.h"     // health aliveness check
-#include "reasings.h" // EaseQuadOut for the transition fade (pure, headless-safe)
+#include "AICommander.h"
+#include "MapFile.h"
+#include "Registry.h"
+#include "Unit.h"
+#include "reasings.h"
 
 // Menu system. MenuFlow owns the top-level game state; main.cpp
 // skips the sim while paused and draws outcome/settings windows. Text and

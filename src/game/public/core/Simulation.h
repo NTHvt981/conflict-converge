@@ -1,18 +1,18 @@
 #pragma once
 
 #include "AICommander.h"
-#include "Art.h" // DamageNumbers live here
+#include "Art.h"
 #include "Audio.h"
 #include "Event.h"
 #include "FogOfWar.h"
-#include "Menu.h" // MenuFlow + TeamHasUnits
+#include "Menu.h"
 #include "Minimap.h"
 #include "Nodes.h"
 #include "Pings.h"
 #include "Production.h"
 #include "Registry.h"
 #include "ResourceSystem.h"
-#include "SaveGame.h" // WorldState bundle + replay-frame helpers
+#include "SaveGame.h"
 #include "TileMap.h"
 #include "UnitFactory.h"
 

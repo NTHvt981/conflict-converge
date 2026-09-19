@@ -1,6 +1,6 @@
 #pragma once
 
-#include "raylib.h" // Rectangle, Vector2, Camera2D, RenderTexture2D
+#include "raylib.h"
 
 // Minimap. The map is re-rendered into a small texture at a fixed
 // cadence (periodic refresh, not per-frame); unit positions are drawn as

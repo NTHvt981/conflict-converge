@@ -1,7 +1,7 @@
 #include "UnitFactory.h"
 
-#include "MathUtils.h" // SnapToTile
-#include "UnitStats.h" // ApplyBaseStats
+#include "MathUtils.h"
+#include "UnitStats.h"
 
 UnitCost CostOf(UnitType type)
 {

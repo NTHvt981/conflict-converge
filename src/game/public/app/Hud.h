@@ -3,10 +3,10 @@
 #include <string>
 #include <vector>
 
-#include "Registry.h"      // SelectedUnit lookup
-#include "ResourceSystem.h" // stockpile counters
-#include "Unit.h"          // selection summary
-#include "Production.h"    // ProductionQueue for the factory panel
+#include "Registry.h"
+#include "ResourceSystem.h"
+#include "Unit.h"
+#include "Production.h"
 
 class Art; // fwd-decl (Hud.cpp includes Art.h for icons)
 enum class BuildingType; // fwd-decl (Hud.cpp includes Building.h)
@@ -37,7 +37,7 @@ bool UpdateHoverTooltip(HoverTooltipState &state, Entity hovered, float dt, floa
 std::vector<std::string> UnitTooltipLines(const Unit &unit);
 
 // Screen-space panels (call after EndMode2D).
-// Optional art draws 16px resource icons; nullptr keeps text-only
+// Optional art draw 16px resource icons; nullptr keeps text-only
 // (headless tests, rectangle fallback).
 void DrawResourcePanel(const ResourceSystem &resources, const Art *art = nullptr);
 // Factory production UI. Display order for the 7 buildable types

@@ -3,8 +3,8 @@
 #include <cstddef>
 #include <vector>
 
-#include "Unit.h" // UnitType
-#include "raylib.h" // Vector2 rally point
+#include "Unit.h"
+#include "raylib.h"
 
 class ResourceSystem; // fwd-decl (Production.cpp includes ResourceSystem.h)
 class UnitFactory;    // fwd-decl (Production.cpp includes UnitFactory.h)

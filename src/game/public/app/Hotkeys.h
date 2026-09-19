@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "raylib.h" // KEY_* code defaults for the Tier-1 action table
+#include "raylib.h"
 
 // QoL fully remappable hotkeys (Tier 1: ShortcutRegistry actions only;
 // Tier 2 raw-polled digits/Alt are explicitly deferred). Single source of

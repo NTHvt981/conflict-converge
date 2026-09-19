@@ -1,8 +1,8 @@
 #include "Shortcuts.h"
 
-#include <vector> // PollAndFire key snapshot
+#include <vector>
 
-#include "raylib.h" // IsKeyPressed (live polling only in PollAndFire)
+#include "raylib.h"
 
 void ShortcutRegistry::Bind(int raylibKey, Action action)
 {

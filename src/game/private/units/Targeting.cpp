@@ -1,9 +1,9 @@
 #include "Targeting.h"
 
-#include "Building.h"  // Structural targets for raze orders
-#include "Combat.h"    // IsVehicleHull for the priority matrix
-#include "FogOfWar.h"  // Visibility gate (nullptr = ungated, legacy tests)
-#include "MathUtils.h" // glm distance via cc::Vec2
+#include "Building.h"
+#include "Combat.h"
+#include "FogOfWar.h"
+#include "MathUtils.h"
 
 float DistanceBetween(const Unit &a, const Unit &b)
 {

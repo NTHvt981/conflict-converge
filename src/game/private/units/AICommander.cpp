@@ -1,11 +1,11 @@
 #include "AICommander.h"
 
-#include "Building.h"   // PlaceBuilding, UpdateBaseIncome
-#include "Formation.h"  // formation::FormationOffsets (wave slots)
-#include "Nodes.h"      // iron node queries
-#include "Pathfinder.h" // IssuePathOrder (harvesters, scouts, retreat)
+#include "Building.h"
+#include "Formation.h"
+#include "Nodes.h"
+#include "Pathfinder.h"
 #include "TileMap.h"
-#include "UnitStats.h" // BaseStats max-health for retreat checks
+#include "UnitStats.h"
 
 AIDifficultyParams ParamsFor(AIDifficulty difficulty)
 {

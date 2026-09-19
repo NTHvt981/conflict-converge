@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-#include "raylib.h" // Vector2 (raylib interop)
+#include "raylib.h"
 
 // Central math header. All game-side math goes through glm types;
 // raylib Vector2 conversions live here so (tile grid) and (units)

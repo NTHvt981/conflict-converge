@@ -1,7 +1,7 @@
 #include "Selection.h"
 
-#include "Building.h" // SelectAllBuildings
-#include "MathUtils.h" // cc::TILE_SIZE hit box
+#include "Building.h"
+#include "MathUtils.h"
 #include "Unit.h"
 
 Entity PickUnitAt(Registry &registry, Vector2 worldPos)

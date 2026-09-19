@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "UnitStats.h" // UnitStats baseline + ArmorType/DamageType/UnitType
+#include "UnitStats.h"
 
 // Standalone unit-config editor data layer: one UnitConfig
 // per data/configs/<type>.json file. Pure logic, no raylib — the editor

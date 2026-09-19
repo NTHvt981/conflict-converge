@@ -3,9 +3,9 @@
 
 #include "Simulation.h"
 
-#include "Building.h" // auto-repair, construction, factory gate
-#include "Shake.h"    // hit/death trauma
-#include "Unit.h"     // movement frame, retreat, death sweep types
+#include "Building.h"
+#include "Shake.h"
+#include "Unit.h"
 #include <cmath>
 #include <vector>
 

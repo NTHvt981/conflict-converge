@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "raylib.h" // Vector2, GetTime (Raise timestamps)
+#include "raylib.h"
 
 // QoL attack/event pings: short-lived world-space markers ("your base is
 // under attack") drawn as minimap blips, with camera-jump support. Pure

@@ -1,6 +1,6 @@
 #include "Minimap.h"
 
-#include "MathUtils.h" // cc::TILE_SIZE
+#include "MathUtils.h"
 
 void Minimap::Init(Rectangle rect)
 {

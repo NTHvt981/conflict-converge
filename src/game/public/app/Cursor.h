@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Registry.h" // Registry, Entity
+#include "Registry.h"
 
-#include "raylib.h" // Vector2 (world-space cursor position)
+#include "raylib.h"
 
 struct Unit; // fwd-decl (Cursor.cpp includes Unit.h for team/type checks)
 

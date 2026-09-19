@@ -3,9 +3,9 @@
 #include <array>
 #include <vector>
 
-#include "MathUtils.h" // cc::IVec2
-#include "Registry.h"  // Entity, Registry
-#include "ResourceSystem.h" // UpdateBaseIncome destination
+#include "MathUtils.h"
+#include "Registry.h"
+#include "ResourceSystem.h"
 
 class TileMap; // fwd-decl (Building.cpp includes TileMap.h)
 class ResourceNodes; // fwd-decl (node-occupancy guard, Building.cpp includes Nodes.h)

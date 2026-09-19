@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Event.h"         // EventDispatcher, UnitSpawned/UnitDestroyed routing
-#include "Registry.h"      // Entity, Registry
-#include "ResourceSystem.h" // cost validation ( economy hooks here later)
-#include "Unit.h"          // UnitType
-#include "raylib.h"        // Vector2
+#include "Event.h"
+#include "Registry.h"
+#include "ResourceSystem.h"
+#include "Unit.h"
+#include "raylib.h"
 
 // Unit production costs (placeholder balance; retunes combat
 // values, owns income/gathering — the factory only spends).

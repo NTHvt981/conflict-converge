@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 
-#include "MathUtils.h" // cc::IVec2
-#include "Nodes.h"     // ResourceKind for node markers
-#include "TileMap.h"   // TerrainType grid
+#include "MathUtils.h"
+#include "Nodes.h"
+#include "TileMap.h"
 
 class ResourceNodes; // fwd-decl (MapFile.cpp includes Nodes.h)
 class OccupancyGrid; // fwd-decl (TileMap.h defines it; resynced on apply)

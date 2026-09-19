@@ -1,11 +1,11 @@
 #include "Art.h"
 
 #include <cmath>
-#include <cstdio> // snprintf for sprite paths
+#include <cstdio>
 #include <cstdlib>
 
-#include "MathUtils.h" // cc::TILE_SIZE
-#include "TileMap.h"   // TerrainType for the terrain tile set
+#include "MathUtils.h"
+#include "TileMap.h"
 
 UnitFrame FrameForPhase(AttackPhase phase)
 {

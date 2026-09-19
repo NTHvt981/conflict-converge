@@ -2,9 +2,9 @@
 
 #include "MenuScreens.h"
 
-#include "raygui.h" // Raygui UI framework (impl TU: src/thirdparty/raygui_impl.c)
-#include "Nodes.h"  // ResourceKind for the editor marker letters
-#include "SaveGame.h" // SaveSlotPath + replay-frame entry
+#include "raygui.h"
+#include "Nodes.h"
+#include "SaveGame.h"
 
 #include <filesystem>
 

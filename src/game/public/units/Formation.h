@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <vector>
 
-#include "MathUtils.h" // cc::IVec2
-#include "Registry.h"  // Entity, Registry
-#include "raylib.h"    // Vector2
+#include "MathUtils.h"
+#include "Registry.h"
+#include "raylib.h"
 
 class TileMap; // fwd-decl (Formation.cpp includes TileMap.h)
 class OccupancyGrid; // fwd-decl: class, not struct (TileMap.h defines it as

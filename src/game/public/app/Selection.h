@@ -1,11 +1,11 @@
 #pragma once
 
-#include <utility> // std::pair for DraggedWorldLine
+#include <utility>
 
-#include "raylib.h" // Vector2, Rectangle
+#include "raylib.h"
 
-#include "GameCamera.h" // ScreenToWorld for drag conversion
-#include "Registry.h" // Entity, kInvalidEntity
+#include "GameCamera.h"
+#include "Registry.h"
 
 enum class BuildingType; // fwd-decl (Selection.cpp includes Building.h)
 enum class UnitType; // fwd-decl (Selection.cpp includes Unit.h)

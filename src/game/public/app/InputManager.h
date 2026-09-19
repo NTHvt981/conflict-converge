@@ -1,9 +1,9 @@
 #pragma once
 
-#include "raylib.h" // Vector2
+#include "raylib.h"
 
-#include "GameCamera.h" // WASD update + screen->world target
-#include "Shortcuts.h"  // bound-key actions, polled per frame
+#include "GameCamera.h"
+#include "Shortcuts.h"
 
 // Input handling framework. Single per-frame polling point for
 // everything gathered piecemeal: WASD camera pan, mouse click edges,

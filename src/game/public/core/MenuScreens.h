@@ -3,13 +3,13 @@
 #include <functional>
 #include <string>
 
-#include "AICommander.h" // AIDifficulty for the start-match callback
+#include "AICommander.h"
 #include "Art.h"
 #include "Audio.h"
 #include "Event.h"
 #include "Hotkeys.h"
 #include "InputManager.h"
-#include "MapFile.h" // MapData scratch state + MapEntry setup list
+#include "MapFile.h"
 #include "Menu.h"
 
 // World-transition callbacks: MenuScreens owns every menu pixel, Game
