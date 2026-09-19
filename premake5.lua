@@ -269,8 +269,6 @@ project "conflict-converge-editor"
         "src/game/private/units/UnitStats.cpp",
         "src/game/private/app/UnitConfig.cpp",
         "src/game/private/app/SpriteData.cpp",
-        "src/game/private/app/spritedata.pb.cc",
-        "src/game/private/app/unitconfig.pb.cc",
         "src/game/private/app/Art.cpp"
     }
 
