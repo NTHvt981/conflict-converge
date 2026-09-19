@@ -2,6 +2,15 @@
 Do not use CMake to build or generate project files
 Use premake to generate project files, then run msbuild to build project
 
+## Cereal migration step 0 decisions (2026-09-19)
+- Go: migrate protobuf → cereal per `plans/CerealMigration_Plan.md`.
+- Save compat: break it. Cereal binary layout can't read old `.ccpb` saves;
+  bump magic + version (CCSV-rejection precedent). No back-compat shim.
+- Facts confirmed: cereal latest tag is v1.3.2; `bootstrap.py:44` rmtree verified;
+  `data/configs/*.json` all camelCase (no snake_case fallback needed);
+  CI protobuf steps are `ci.yml:39-49`, README protobuf lines 5/17/26-28/35/39;
+  suite baseline is 4261 checks.
+
 ## Pre-existing test failures (2026-09-19)
 Found while verifying the include-comment cleanup (that change was comment-only,
 so these fail without it too):

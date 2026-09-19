@@ -31,6 +31,12 @@
         "depth": 1
     },
     {
+        "name": "cereal",
+        "git_repo": "https://github.com/USCiLab/cereal.git",
+        "dest": "deps/cereal",
+        "git_tag": "v1.3.2"
+    },
+    {
         "name": "reasings",
         "git_repo": "https://github.com/raylib-extras/reasings.git",
         "dest": "deps/reasings",
