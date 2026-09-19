@@ -10,7 +10,7 @@
 
 #include "../unit-tests/test_harness.h"
 
-#include "Game.h"
+#include "E2EGame.h"
 #include "Building.h" // RazeTeamBuildings arranges demolition-first outcomes
 #include "MapFile.h"
 #include "MathUtils.h" // TileToWorld for the mop-up march
@@ -93,7 +93,7 @@ int FindMap(MenuFlow &menu, const std::string &name)
 // Boot -> menu -> setup -> start -> 600 live frames, no instant outcome.
 void ScenarioStartAndSimulate()
 {
-    Game game;
+    E2EGame game;
     game.Init();
     MenuFlow &menu = game.E2EMenu();
     CC_CHECK(menu.state == MenuState::MainMenu);
@@ -118,7 +118,7 @@ void ScenarioStartAndSimulate()
 // restart, GameOver. Also exercises teardown/rebuild reference stability.
 void ScenarioOutcomes()
 {
-    Game game;
+    E2EGame game;
     game.Init();
     MenuFlow &menu = game.E2EMenu();
     menu.OpenSetup(ListMaps("data/maps"));
@@ -175,7 +175,7 @@ void ScenarioOutcomes()
 // (team 0) and both enemy guards (team 1) fielded from frame one.
 void ScenarioAlliedAI()
 {
-    Game game;
+    E2EGame game;
     game.Init();
     MenuFlow &menu = game.E2EMenu();
     menu.OpenSetup(ListMaps("data/maps"));

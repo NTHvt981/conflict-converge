@@ -181,44 +181,6 @@ void Game::Announce(EventType type)
     events.Dispatch(bare);
 }
 
-MenuFlow &Game::E2EMenu()
-{
-    return menu;
-}
-
-Registry &Game::E2ERegistry()
-{
-    return registry;
-}
-
-TileMap &Game::E2EMap()
-{
-    return map;
-}
-
-bool Game::IsWorldActive() const
-{
-    return worldActive;
-}
-
-bool Game::E2EStartSelectedMatch()
-{
-    if (const MapEntry *sel = menu.setup.SelectedMap(); sel != nullptr)
-    {
-        if (menu.StartMatch())
-        {
-            StartMatch(sel->path, menu.setup.difficulty);
-            return true;
-        }
-    }
-    return false;
-}
-
-void Game::E2EQuitToMenu()
-{
-    QuitToMenu();
-}
-
 void Game::StartMatch(const std::string &mapPath, AIDifficulty difficulty)
 {
     MapData startData;

@@ -45,19 +45,14 @@ public:
     // Convenience for main: Init + loop + Shutdown.
     int Run();
 
-    // E2E driver seam (tests/e2e only): drives the real loop headlessly.
-    MenuFlow &E2EMenu();
-    Registry &E2ERegistry();
-    TileMap &E2EMap();
-    bool IsWorldActive() const;
-    // SelectedMap + difficulty -> StartMatch; false when nothing selected.
-    bool E2EStartSelectedMatch();
-    void E2EQuitToMenu();
-
 private:
     void Announce(EventType type);
+protected:
+    // Test-seam access for E2EGame (tests/e2e): the match lifecycle the
+    // headless harness drives directly. Everything else stays private.
     void StartMatch(const std::string &mapPath, AIDifficulty difficulty);
     void QuitToMenu();
+private:
     void LoadGameFromSlot(const std::string &slotPath);
     void BindShortcuts();
     void StepReplay(int dir);
@@ -72,13 +67,19 @@ private:
     Audio audio;
     Art art;
     GameCamera camera;
-    MenuFlow menu;
+protected:
+    MenuFlow menu;    // E2EGame seam
+private:
     Minimap minimap;
     Pings pings; // attack/event pings (minimap blips + camera jump)
-    Registry registry;
+protected:
+    Registry registry; // E2EGame seam
+private:
     ResourceSystem resources;
     EventDispatcher events;
-    TileMap map;
+protected:
+    TileMap map; // E2EGame seam
+private:
     OccupancyGrid occ; // unit/building tile occupancy
     FogOfWar fog;
     ResourceNodes nodes;
@@ -94,7 +95,9 @@ private:
     InputManager input;
     HotkeyMap hotkeys; // remappable Tier-1 keys
 
-    bool worldActive = false;
+protected:
+    bool worldActive = false; // E2EGame seam
+private:
     // Gates the allyAI/enemyAI2 ticks; 2v2 only (see Game.h.context.md).
     bool worldIs2v2 = false;
     bool sandboxMode = false;
