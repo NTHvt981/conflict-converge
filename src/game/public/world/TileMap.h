@@ -6,20 +6,18 @@
 #include "CcAssert.h"
 #include "MathUtils.h"
 
-// Tile-based movement system. TileMap owns the 64x64 grid:
-// dimensions, per-tile terrain, and blocked queries for movement,
-// pathfinding, and building placement. World/tile conversion
-// lives in MathUtils.h; this class only stores and answers about tiles.
+// Tile-based movement system. TileMap owns the 64x64 grid: dimensions,
+// per-tile terrain, and blocked queries for movement, pathfinding, and
+// building placement.
 
 enum class TerrainType : std::uint8_t
 {
     Grass,    // passable, default fill
     Water,    // blocked (impassable)
     Building, // blocked (occupied by a structure)
-    // Appended AFTER Building so old saves (values 0-2) still decode.
-    Forest, // passable, cost multiplier ready (uniform 1.0)
-    Rock,    // blocked (impassable wall tile for choke points)
-    Count // keep last: save decode validates < Count
+    Forest,   // passable, cost multiplier ready (uniform 1.0)
+    Rock,     // blocked (impassable wall tile for choke points)
+    Count
 };
 
 class TileMap
@@ -36,9 +34,7 @@ public:
     TerrainType Get(cc::IVec2 tile) const;
     void Set(cc::IVec2 tile, TerrainType terrain);
 
-    // Blocked = Water, Building, or Rock. Forest is passable. Out-of-bounds
-    // counts as blocked so movement stays inside the map without extra
-    // edge checks.
+    // Blocked = Water, Building, or Rock; out-of-bounds counts as blocked.
     bool IsBlocked(cc::IVec2 tile) const;
 
     void Clear(TerrainType fill = TerrainType::Grass);
@@ -54,10 +50,8 @@ private:
     std::vector<TerrainType> tiles_;
 };
 
-// Grid occupancy for multi-tile units and buildings.
-// Stores per-tile entity references (unit or building) with generation
-// counters so stale IDs from recycled entities are detected. Buildings
-// use a separate buildingId map since they persist across unit lifetimes.
+// Grid occupancy for multi-tile units and buildings, with generation
+// counters so stale IDs from recycled entities are detected.
 
 using Entity = std::uint32_t;
 inline constexpr Entity kOccEmpty = 0;
@@ -85,22 +79,13 @@ public:
     Entity GetBuilding(cc::IVec2 tile) const;
     void SetBuilding(cc::IVec2 tile, Entity building);
 
-    // Reserve all tiles in a rectangular footprint for a unit.
-    // anchor is the top-left tile; extends toward +x/+y.
+    // Reserve/release a rectangular footprint (anchor = top-left tile).
     void ReserveFootprint(cc::IVec2 anchor, int footprintW, int footprintH,
                           Entity entity, std::uint32_t generation);
-
-    // Release all tiles in a rectangular footprint.
     void ReleaseFootprint(cc::IVec2 anchor, int footprintW, int footprintH);
 
-    // Ownership-checked variants for the per-frame pre-pass and teardown:
-    // release clears only cells holding (entity, generation), reserve stamps
-    // only free-or-self cells and never clobbers another unit's anchor.
-    // Returns the number of cells reserved (0 when fully overlapped).
-    // Partial reservation is routine in crowds — the movement pre-pass
-    // deliberately ignores the count (an overlapped unit simply goes
-    // unreserved until separation pushes it clear); the count exists for
-    // callers and tests that need all-or-nothing.
+    // Ownership-checked variants: release clears only cells holding
+    // (entity, generation), reserve stamps only free-or-self cells.
     void ReleaseFootprintOwned(cc::IVec2 anchor, int footprintW, int footprintH,
                                Entity entity, std::uint32_t generation);
     int ReserveFootprintOwned(cc::IVec2 anchor, int footprintW, int footprintH,
@@ -108,9 +93,7 @@ public:
 
 	void ReleaseAllUnitFootprints();
 
-    // Check whether a unit's entire footprint can enter at anchor.
-    // Returns true only if every tile in the footprint is in-bounds,
-    // not terrain-blocked, and not occupied by another entity.
+    // True only if every footprint tile is in-bounds, unblocked, and unoccupied.
     bool CanEnter(const TileMap &map, cc::IVec2 anchor, int footprintW, int footprintH,
                   Entity self, std::uint32_t selfGen) const;
 

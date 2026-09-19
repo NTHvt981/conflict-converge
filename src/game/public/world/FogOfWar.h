@@ -9,23 +9,18 @@
 #include "Registry.h"
 #include "Unit.h"
 
-// Fog of war. Per-team visibility over the TileMap: `visible` is
-// recomputed from living units' sightRange circles every Recompute call,
-// `explored` latches forever (frozen StarCraft-style snapshot).
-// Sight is pure radius — terrain never blocks. Infantry and IFV are
-// scout-role and reveal at 1.5x range without touching BaseStats.
+// Fog of war. Per-team visibility: `visible` is recomputed from living units'
+// sightRange circles every Recompute; `explored` latches forever.
 
 class FogOfWar
 {
 public:
-    // Size the grids; clears all vision memory. Width/height must be positive.
+    // Size the grids; clears all vision memory.
     void Resize(int width, int height);
     int Width() const;
     int Height() const;
 
-    // Rebuild every team's visible set from current unit positions, then
-    // fold into explored. Cheap at this scale; stagger teams across frames
-    // if unit counts ever make it show up in profiles.
+    // Rebuild every team's visible set from unit positions, then fold into explored.
     void Recompute(const Registry &registry);
 
     bool IsVisible(int teamID, cc::IVec2 tile) const;

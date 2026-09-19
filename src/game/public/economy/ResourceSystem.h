@@ -13,11 +13,10 @@ public:
     void AddOil(long amount);
     bool TrySpend(long ironCost, long oilCost);
 
-    // Base income generation. Banks whole units per tick,
-    // carrying fractions forward; never caps (design: income has no maximum).
+    // Base income generation; banks whole units, carrying fractions forward.
     void TickIncome(float ironPerSecond, float oilPerSecond, float dt);
 
-    // Save/load support: fractional income banks (not visible in balances).
+    // Save/load support for the fractional income carry.
     float IronCarry() const;
     float OilCarry() const;
     void SetCarry(float ironCarry, float oilCarry);

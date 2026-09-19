@@ -7,17 +7,16 @@
 #include "Registry.h"
 #include "ResourceSystem.h"
 
-class TileMap; // fwd-decl (Nodes.cpp includes TileMap.h)
+class TileMap;
 
-// Resource node gathering (Company of Heroes style: units work
-// nodes in the field). Nodes sit on passable Grass tiles (gatherers stand on
-// them), deplete as Engineers draw from them, and refill after a delay.
+// Resource node gathering: nodes sit on passable Grass tiles (gatherers stand
+// on them), deplete as Engineers draw, and refill after a delay.
 
 enum class ResourceKind
 {
     Iron,
     Oil,
-    Count // keep last: save decode validates < Count
+    Count
 };
 
 struct ResourceNode
@@ -35,15 +34,12 @@ struct ResourceNode
 class ResourceNodes
 {
 public:
-    // Place a node on a Grass tile (one node per tile). Returns false for
-    // water/building/out-of-bounds/occupied tiles, leaving storage untouched.
+    // Place a node on a Grass tile (one per tile); false leaves storage untouched.
     bool SpawnNode(const TileMap &map, ResourceKind kind, cc::IVec2 tile, float amount,
                    float respawnDelay);
     // Count down depleted nodes; refill when their timer expires.
     void Update(float dt);
-    // Engineers standing on live nodes transfer to resources (whole units
-    // banked, fractions carried). Non-Engineers and the dead never gather.
-    // teamID filters whose Engineers work (-1 = every team, legacy default).
+    // Engineers standing on live nodes transfer to resources (teamID < 0 = all).
     void GatherTick(const Registry &registry, ResourceSystem &resources, float dt, int teamID = -1);
 
     std::size_t Count() const;
@@ -51,8 +47,7 @@ public:
     // Read-only iteration (rendering, HUD).
     void Each(const std::function<void(const ResourceNode &)> &fn) const;
 
-    // Save/load support: restore a node verbatim (no placement validation;
-    // the loader has already validated the map) and round-trip gather carry.
+    // Save/load: restore a node verbatim (loader already validated the map).
     void RestoreNode(ResourceKind kind, cc::IVec2 tile, float amount, float maxAmount,
                      float respawnDelay, float respawnTimer);
     float IronCarry() const;
