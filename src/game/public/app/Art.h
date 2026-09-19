@@ -13,26 +13,11 @@
 #include "SpriteData.h"
 #include "Unit.h"
 
-enum class TerrainType : std::uint8_t; // fwd-decl (Art.cpp includes TileMap.h)
+enum class TerrainType : std::uint8_t;
 
-// Sprite art + particles. Filenames under data/sprites/ are the
-// contract (tools/gen_sprites.py produces them; AI-generated sheets drop in
-// later): units/<type>_<blue|red>_<idle|attack>.png (32px),
-// buildings/<base|factory|depot>_<blue|red>.png (64/64/32px),
-// nodes/<iron|oil>.png (32px), icons/<iron|oil>.png (16px),
-// terrain_tiles/<grass|water|forest|rock>_64px.png (64px, no teams).
-// UI typeface: data/fonts/font.otf (Porto Buena, OFL — see data/fonts/OFL.txt),
-// baked at 64px for crisp DrawTextEx down to HUD sizes; missing file joins
-// the rectangle fallback (default font + flat fills, as before).
-// Atlas override: data/configs atlas JSON (schema in proto/spritedata.proto)
-// names source-rects inside sheet PNGs (e.g. placeholder infantry 8x8
-// grids). Types with atlas entries render from the atlas; types without
-// fall through to the filename path. Team coloring is base+mask: the base
-// sprite draws at true colors and its paired mask sprite (armor pixels baked
-// pure white, rest transparent) draws team-tinted on top; sprites without a
-// mask take the full-sprite tint (correct for all-white placeholder art).
-// Headless-safe: Init(false) loads nothing and UseRectangles reports true,
-// so tests and the fallback path never touch the GPU.
+// Sprite art + particles + floating damage numbers. Assets live under
+// data/sprites/ and data/fonts/ (see Art.h.context.md for the contract);
+// Init(false) is the headless rectangle-fallback path.
 
 // AttackPhase -> sprite frame. WindUp telegraphs and Recover follows
 // through on the attack frame; everything else idles. Pure: unit-tested.
@@ -43,16 +28,11 @@ enum class UnitFrame
 };
 UnitFrame FrameForPhase(AttackPhase phase);
 
-// Infantry squad visual. Returns the number of soldier sprites
-// to draw (driven by healthFraction, capped per type: 5 for Infantry, 2 for
-// AntiArmorInfantry, 1 for Engineers and vehicles) and fills outOffsets with
-// that many Vector2 pixel offsets from the unit's tile-corner position.
-// Deterministic per-entity (same id always produces the same layout) so it
-// doesn't need to be stored or included in save data.
-// Returns count=1 with outOffsets[0]={0,0} for non-infantry types.
-// outScale shrinks with the count so clustered soldiers don't overlap:
-// adjacent centers stay >= scale * 32px apart (see the per-count table in
-// Art.cpp). The caller passes it to DrawAtlasFrame.
+// Infantry squad visual. Returns the number of soldier sprites to draw
+// (driven by healthFraction, capped per type) and fills outOffsets with that
+// many pixel offsets from the unit's tile-corner position. Deterministic
+// per-entity. outScale shrinks with the count so clustered soldiers don't
+// overlap; pass it to DrawAtlasFrame.
 int SquadSlots(UnitType type, unsigned int id, float healthFraction,
                std::array<Vector2, 6> &outOffsets, float &outScale);
 
@@ -84,9 +64,7 @@ private:
 };
 
 // Floating damage numbers: rise-and-fade text spawned once per hit. Same
-// pool shape as Particles, but the lifetime (~0.7s) is tuned for reading,
-// not tied to the 0.25s hit-flash overlay. Logic is device-independent
-// (tested); Draw needs a live window.
+// pool shape as Particles; logic is device-independent, Draw needs a window.
 struct DamageNumber
 {
     Vector2 pos = {};
@@ -115,8 +93,8 @@ private:
 class Art
 {
 public:
-    // Load every sprite. With withDevice=false (tests) or on any missing
-    // file, loads nothing and UseRectangles stays true. Returns IsReady.
+    // Load every sprite. With withDevice=false or on a missing file, loads
+    // nothing and UseRectangles stays true. Returns IsReady.
     bool Init(bool withDevice);
     void Shutdown();
 
@@ -125,60 +103,40 @@ public:
 
     // tileCorner = unit.position (snapped); sprite fills the 32x32 body inset.
     void DrawUnit(UnitType type, int teamID, UnitFrame frame, Vector2 tileCorner) const;
-    // Atlas override: source-rect blit of a named sprite from the atlas,
-    // origin-aligned to the 32x32 body center. No-op when the atlas is down
-    // or the name is unknown (headless-safe). scale shrinks the blit around
-    // the same anchor (squad clusters); default 1.0 keeps other callers.
+    // Atlas blit of a named sprite, origin-aligned to the 32x32 body center;
+    // no-op when the atlas is down or the name is unknown.
     void DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
                         float scale = 1.0f) const;
     void DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const;
     void DrawNode(ResourceKind kind, Vector2 center) const;
     void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon
-    // UI typeface (Porto Buena, baked 64px). HasFont is false on the
-    // headless/rectangle path; UiFont is only valid to pass to raygui /
-    // DrawTextEx when HasFont is true (never call it headless).
+    // UI typeface; HasFont is false on the headless/rectangle path.
     bool HasFont() const;
     const Font &UiFont() const;
-    // Raw-text draw through the UI typeface (raygui owns control text via
-    // GuiSetFont; this covers the hand-drawn labels). Falls back to plain
-    // DrawText when art is null or down, so call sites stay one-token
-    // conversions and headless-safe. Spacing matches DrawText (size/10).
+    // Raw-text draw through the UI typeface; falls back to DrawText when art
+    // is down. Spacing matches DrawText (size/10).
     static void DrawUiText(const Art *art, const char *text, int x, int y, int size,
                            Color color);
-    // Terrain tile blit (64px, team-neutral). No-op when rectangles are up
-    // or the type has no tile (Building/Count — headless-safe).
+    // Terrain tile blit (64px, team-neutral); no-op when rectangles are up
+    // or the type has no tile.
     void DrawTerrain(TerrainType type, Vector2 corner) const;
 
-    // Atlas status: true once the atlas JSON parsed AND every sheet texture
-    // loaded (Init(true) path). Headless-safe query.
+    // True once the atlas JSON parsed AND every sheet texture loaded.
     bool UseAtlas() const;
-    // Parse the data/configs atlas files without touching the GPU (tests,
-    // LoadAtlas seam). False when a file is missing or invalid.
+    // Parse the atlas files without touching the GPU (tests). False on
+    // missing/invalid files.
     bool LoadAtlas();
-    // Sprite name for a unit at timeSeconds (GetTime at the call site):
-    // directional walk cycle "<type>_walk_<dir>" while moving (id-offset so
-    // squads don't march in sync), directional idle pose "<type>_idle_0_<dir>"
-    // otherwise. Legacy fallbacks (<prefix>_walk, <prefix>_idle_0_0) cover
-    // single-anim sheets. Empty when no sheet is loaded or the type has no
-    // entries — caller falls back to DrawUnit.
-    // Pure logic (works headless after LoadAtlas, no GPU), unit-tested.
+    // Sprite name for a unit at timeSeconds: directional walk/idle, with
+    // legacy fallbacks. Empty when no sheet or no entries.
     std::string UnitSprite(UnitType type, bool moving, unsigned int id,
                            float timeSeconds, int facingDir) const;
-    // Base art scale multiplier: prototype infantry's 16px sheets render
-    // at 2x (32px bodies on 64px tiles, matching the old art's footprint).
-    // Everything else renders 1:1. Multiplied with the squad slotScale at
-    // the call sites (game loop, editor preview). Pure, unit-tested.
+    // Base art scale multiplier (prototype infantry renders at 2x).
     static float BaseArtScale(UnitType type);
     // Terrain filename stem + tile slot per type (`<stem>_64px.png`).
-    // Pure, unit-tested. Building/Count have no tile (stem nullptr, slot
-    // -1): structure footprints cover those tiles, so no terrain blit
-    // exists for them.
     static const char *TerrainFile(TerrainType type);
     static int TerrainSlot(TerrainType type);
-    // Team color for atlas mask tinting: BLUE/RED, matching the
-    // rectangle-fallback body colors. Applies to the mask layer only; base
-    // art keeps its baked colors. Color-blind mode swaps in the Okabe-Ito
-    // orange/sky-blue pair (see SetColorBlindMode).
+    // Team color for atlas mask tinting (mask layer only); color-blind mode
+    // swaps in the Okabe-Ito pair.
     Color TeamTint(int teamID) const;
     void SetColorBlindMode(bool enabled);
 
@@ -187,7 +145,6 @@ public:
 
 private:
     static int TeamSlot(int teamID); // 0 -> blue, anything else -> red
-    // Single scaled atlas blit shared by both DrawAtlasFrame branches.
     void DrawOneAtlasSprite(const SpriteDefInfo &sprite, Vector2 tileCorner, Color tint,
                             float scale) const;
     bool ready_ = false;
@@ -202,7 +159,7 @@ private:
     Texture2D buildings_[3][2] = {}; // [type][team]
     Texture2D nodes_[2] = {};        // [kind]
     Texture2D icons_[2] = {};        // [kind]
-    Texture2D terrain_[4] = {};      // [TerrainSlot]: grass/water/forest/rock (no teams)
+    Texture2D terrain_[4] = {};      // [TerrainSlot]: grass/water/forest/rock
     Font uiFont_ = {};               // Porto Buena (valid only when fontReady_)
     bool fontReady_ = false;
 };

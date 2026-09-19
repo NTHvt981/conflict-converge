@@ -4,10 +4,9 @@
 
 #include "raylib.h"
 
-// QoL attack/event pings: short-lived world-space markers ("your base is
-// under attack") drawn as minimap blips, with camera-jump support. Pure
-// logic (Raise/Update/expiry), headless-testable; Game.cpp owns the draw
-// calls and the damage/spawn/death triggers.
+// Attack/event pings: short-lived world-space markers drawn as minimap blips
+// with camera-jump support. Pure logic, headless-testable; Game owns draw
+// calls and triggers.
 
 enum class PingKind
 {
@@ -28,8 +27,8 @@ class Pings
 public:
     Pings();
 
-    // Raise a ping stamped with live time. Swallowed when the same kind
-    // raised less than the retrigger floor ago (combat spam guard).
+    // Raise a ping stamped with live time; swallowed within the same kind's
+    // retrigger floor (combat spam guard).
     void Raise(Vector2 worldPos, PingKind kind);
     // Same, with an explicit clock (tests drive this directly).
     void RaiseAt(Vector2 worldPos, PingKind kind, double nowSeconds);

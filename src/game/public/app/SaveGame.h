@@ -10,14 +10,8 @@ class GameCamera;
 class ResourceNodes;
 class FogOfWar;
 
-// Versioned binary save/load. Payload is cereal-binary (wire structs in
-// ../private/app/SaveWire.h):
-//   "CCB2" magic, then one serialized SaveGameData.
-// Entity IDs are session-local: unit targets are stored as indices into the
-// saved unit array (-1 = none) and remapped to fresh IDs on load. Production
-// queues, menu state, and UI toggles are session-only and NOT saved.
-// Old "CCSV" custom-binary and v1 "CCPB" protobuf-era files are rejected by
-// the magic check.
+// Versioned binary save/load. Payload is cereal-binary ("CCB2" magic, then
+// one SaveGameData; wire structs in ../private/app/SaveWire.h).
 inline constexpr unsigned int kSaveVersion = 2;
 
 struct WorldState
@@ -27,29 +21,22 @@ struct WorldState
     TileMap *map = nullptr;
     GameCamera *camera = nullptr;
     ResourceNodes *nodes = nullptr;
-    FogOfWar *fog = nullptr; // Per-team explored memory (saved via team_fog)
-    // Tile occupancy. Optional (defaults null for bare tests):
-    // LoadWorld resyncs it to the save's dims when present so a stale
-    // width can't corrupt footprint reservations across a load.
+    FogOfWar *fog = nullptr; // per-team explored memory (saved via team_fog)
+    // Tile occupancy; optional (null for bare tests). LoadWorld resyncs it to
+    // the save's dims when present.
     OccupancyGrid *occ = nullptr;
 };
 
 // Every WorldState pointer must be non-null. Save returns false on I/O
 // errors. Load returns false (leaving the destination world untouched) on
-// I/O errors, bad magic, unsupported versions, or truncated/garbage data.
+// I/O errors, bad magic, unsupported versions, or garbage data.
 bool SaveWorld(const WorldState &world, const std::string &path);
 bool LoadWorld(const WorldState &world, const std::string &path);
 
-// Named save slots (1..3, clamped) under data/. The F5 quicksave path
-// stays separate.
+// Named save slots (1..3, clamped) under data/.
 std::string SaveSlotPath(int slot);
 
-// QoL snapshot replays: periodic full-state SaveWorld captures, one file
-// per frame (replay_NNNN.ccpb in dir), played back by loading snapshots in
-// order. Reuses the save pipeline verbatim — NOT deterministic lockstep
-// (variable-dt sim can't re-simulate bit-identically), so expect a
-// full-state slideshow, not a re-simulation. Production queues aren't
-// saved (existing format limitation): units appear at snapshot boundaries.
+// QoL snapshot replays: periodic full-state captures, one file per frame.
 inline const char *kReplayDir = "data/replays";
 inline constexpr int kReplayMaxFrames = 300; // 10 min at the 2s cadence
 // Frame file path (zero-padded, sorts lexically = chronologically).

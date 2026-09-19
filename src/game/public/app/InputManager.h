@@ -5,14 +5,10 @@
 #include "GameCamera.h"
 #include "Shortcuts.h"
 
-// Input handling framework. Single per-frame polling point for
-// everything gathered piecemeal: WASD camera pan, mouse click edges,
-// and shortcut actions. Game code binds ShortcutRegistry actions once,
-// calls Update every frame, then reads the snapshot — no raw raylib input
-// calls outside this class.
-//
-// Snapshot is injectable so tests cover routing headless: PollLive reads
-// raylib state, Update = WASD + shortcuts + PollLive.
+// Single per-frame polling point for input: WASD camera pan, mouse click
+// edges, and shortcut actions. Game code binds actions once, calls Update
+// every frame, then reads the snapshot — no raw raylib input calls outside
+// this class. Snapshot is injectable so tests cover routing headless.
 
 class InputManager
 {
@@ -22,7 +18,7 @@ public:
     // Full per-frame pump: camera WASD, shortcut actions, mouse snapshot.
     void Update(GameCamera &camera, float cameraSpeedPixelsPerSec, float dtSeconds);
 
-    // Snapshot from live raylib state (mouse position + click edges).
+    // Snapshot from live raylib state.
     void PollLive();
 
     // Snapshot from explicit values (tests, scripted input).
@@ -31,16 +27,16 @@ public:
                   bool ctrlDown = false, double nowSeconds = 0.0);
 
     Vector2 MouseScreen() const;
-    // Frame-to-frame mouse movement in screen px (for drag-pan). Zero on
-    // the first snapshot (no previous position yet).
+    // Frame-to-frame mouse movement in screen px (for drag-pan); zero on the
+    // first snapshot.
     Vector2 MouseDeltaScreen() const;
     bool LeftPressed() const; // edge: button went down this frame
     bool LeftDown() const;    // level: button held (drag-box gestures)
     bool RightPressed() const;
-    bool RightDown() const;  // level: right button held (line-draw, right-drag pan)
+    bool RightDown() const;  // level: right button held
     float WheelDelta() const; // mouse wheel steps this frame
-    bool ShiftDown() const;   // either shift key held (slot load/save combos)
-    bool CtrlDown() const;    // either control key held (QoL control groups)
+    bool ShiftDown() const;   // either shift key held
+    bool CtrlDown() const;    // either control key held
     bool DoubleClicked() const; // edge: second left press within 0.35s + 8px
 
     // Snapshot mouse position under the given camera view.
@@ -58,8 +54,7 @@ private:
     bool leftDown_ = false;
     bool rightDown_ = false;
     bool ctrlDown_ = false;
-    // QoL double-click select-type: last left-press time/pos; set by
-    // Snapshot (PollLive passes the real GetTime, tests pass explicit).
+    // Last left-press time/pos for double-click; set by Snapshot.
     double lastLeftClickTime_ = -1.0;
     Vector2 lastLeftClickPos_ = {};
     bool doubleClicked_ = false;

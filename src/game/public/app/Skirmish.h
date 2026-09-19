@@ -16,15 +16,10 @@ class ProductionQueue;
 class UnitFactory;
 class GameCamera;
 
-// Skirmish world build/teardown shared by Game and headless tests.
-// The bundle is non-owning: Game owns the objects as members and Build/Reset
-// only refills their contents, so shortcut lambdas plus the factory/AI
-// reference bindings stay valid across matches.
+// Skirmish world build/teardown shared by Game and headless tests. The
+// bundle is non-owning: Game owns the objects as members.
 
 // Marker-derived start spots (player + AI homes, first iron node).
-// 2v2 maps carry two markers per side: allyHome is the second '1', enemyHome2
-// the second '2'. is2v2 is true only when both sides field a pair; otherwise
-// the extra homes fall back near the primary ones and no extra commander runs.
 struct SkirmishSpots
 {
     cc::IVec2 playerHome{ 2, 2 };
@@ -44,32 +39,26 @@ struct SkirmishWorld
     Registry *registry = nullptr;
     ResourceSystem *resources = nullptr;
     TileMap *map = nullptr;
-    OccupancyGrid *occ = nullptr; // Tile occupancy
+    OccupancyGrid *occ = nullptr; // tile occupancy
     FogOfWar *fog = nullptr;
     ResourceNodes *nodes = nullptr;
     ProductionQueue *queue = nullptr;
     UnitFactory *factory = nullptr;
     AICommander *ai = nullptr;
-    // 2v2 overflow: allied commander (team 0) + second enemy (team 1).
-    // Null in 1v1 builds; BuildSkirmish only touches non-null commanders.
+    // 2v2 overflow: allied (team 0) + second enemy (team 1). Null in 1v1.
     AICommander *allyAI = nullptr;
     AICommander *enemyAI2 = nullptr;
     GameCamera *camera = nullptr;
     Vector2 *rallyPos = nullptr;
 };
 
-// Drop all match content (units, buildings, nodes, queues, AI state). Safe
-// on an empty world; map/fog dims are left for Build (or LoadWorld) to set.
+// Drop all match content (units, buildings, nodes, queues, AI state).
 void ResetSkirmish(SkirmishWorld &world);
 
-// Reset + seed a full match: starting funds, map terrain + nodes, both
-// bases, starting units, factory queue, AI Reset + SetupBase, camera and
-// rally aimed at the player home. False only on a null bundle member.
+// Reset + seed a full match. False only on a null bundle member.
 bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficulty difficulty);
 
-// Reset + seed a prototype sandbox: map terrain only, no funds, no bases,
-// no production, no AI — just one player Infantry squad (full squad logic:
-// same UnitType, driver, and renderer as every match) at the '1' marker.
-// For maps with a player spawn but no AI spawn. False on a null bundle
-// member, an unreadable map, or a missing player spawn.
+// Reset + seed a prototype sandbox: map terrain + one player Infantry squad,
+// no funds/bases/production/AI. False on a null member, unreadable map, or
+// missing player spawn.
 bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath);

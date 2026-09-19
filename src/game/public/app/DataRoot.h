@@ -2,20 +2,8 @@
 
 #include <cstdio>
 
-// Launch hardening: the game resolves data/ relative to CWD (repo root
-// under F5, exe dir for direct runs thanks to the postbuild copy). A
-// foreign CWD (terminal elsewhere, bare shortcut) breaks every data path.
-// PickDataRoot finds the directory to chdir to so data/ resolves again,
-// mirroring extras-c/path_utils' search locations (CWD, exe dir, up to 3
-// above it) but with parent-of-data semantics: upstream's
-// SearchAndSetResourceDir chdirs INTO data/, which would break our
-// data/-prefixed paths, so it cannot be called directly.
-//
-// Pure and headless-tested: existence checks are injected, raylib's
-// DirectoryExists/ChangeDirectory/GetApplicationDirectory only run at the
-// Game::Init call site. Returns nullptr when CWD already resolves data/
-// (no change needed); otherwise a pointer to an internal static buffer
-// holding the target dir (use immediately, like TextFormat).
+// Launch hardening: pick the directory to chdir to so data/ resolves again
+// when launched from a foreign CWD (see DataRoot.h.context.md).
 inline const char *PickDataRoot(bool cwdHasData, const char *appDir,
                                 bool (*dirExists)(const char *))
 {

@@ -4,11 +4,7 @@
 #include <vector>
 
 // Sprite-atlas data (JSON in data/configs/: textures.json, sprites.json,
-// animations.json — one SpriteSheet section each, merged at load; parsed via
-// cereal-JSON with key names matching proto/spritedata.proto). Mirrors the
-// GameFramework Textures/Sprites/Animations trio: textures name the atlas
-// images, sprites name source-rects (explicit or grid-expanded), animations
-// sequence sprites with per-frame durations. Pure logic, headless-safe.
+// animations.json — one section each, merged at load; parsed via cereal-JSON).
 
 struct SpriteRect
 {
@@ -39,10 +35,8 @@ struct SpriteDefInfo
     std::string texture; // SpriteTextureInfo.id
     SpriteRect bounds;
     SpriteOriginPx origin;
-    // Team-color mask (base+mask convention): SpriteDefInfo.id of the paired
-    // mask sprite (armor pixels baked pure white, rest transparent), drawn
-    // team-tinted over the base drawn at true colors. 0 = no mask: the whole
-    // sprite is tinted (correct for all-white placeholder art).
+    // Team-color mask: SpriteDefInfo.id of the paired mask sprite; 0 = no
+    // mask (whole sprite tinted).
     int maskSprite = 0;
 };
 
@@ -67,15 +61,12 @@ struct SpriteSheetData
     std::vector<SpriteAnimInfo> animations;
 };
 
-// Load the three data/configs atlas files merged as one sheet. False when
-// any file is missing/unreadable or malformed, or when the merged sheet
-// fails validation (duplicate ids/names, dangling texture, sprite, or mask
-// refs, mask/base size mismatch, out-of-bounds or degenerate rects, empty
-// animations, non-positive durations/dims); `out` untouched then.
+// Load the three atlas files merged as one sheet. False when any file is
+// missing/unreadable/malformed or the merged sheet fails validation; `out`
+// untouched then.
 bool LoadSpriteSheet(SpriteSheetData &out);
 
 // Parse sprite JSON from memory (same validation as LoadSpriteSheet).
-// False on malformed JSON or validation failures; `out` untouched then.
 bool ParseSpriteSheetJson(const std::string &json, SpriteSheetData &out);
 
 // Lookups by name/id. Null when absent.

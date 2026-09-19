@@ -2,11 +2,9 @@
 
 #include "raylib.h"
 
-// Minimap. The map is re-rendered into a small texture at a fixed
-// cadence (periodic refresh, not per-frame); unit positions are drawn as
-// markers on every refresh. Terrain features are simplified to flat blocks —
-// the minimap shows positions, not detail. All math is render-free and tested;
-// main.cpp owns the actual refresh drawing.
+// Minimap: the map re-renders into a small texture at a fixed cadence
+// (periodic refresh, not per-frame); unit positions draw as markers. All
+// math is render-free and tested; Game owns the refresh drawing.
 
 struct Minimap
 {
@@ -25,12 +23,11 @@ struct Minimap
     // Advance the timer; returns true when a refresh is due (and rearms).
     bool PollRefresh(float dt);
 
-    // World position -> pixel inside screenRect for a map of mapW x mapH tiles.
+    // World position -> pixel inside screenRect for a mapW x mapH tile map.
     Vector2 WorldToMinimap(Vector2 world, int mapW, int mapH) const;
 
-    // Minimap pixel -> world position (click-to-move camera). Inverse
-    // of WorldToMinimap; clamps into the map bounds. Degenerate maps
-    // (non-positive dims) yield the origin.
+    // Minimap pixel -> world position (click-to-move); inverse of
+    // WorldToMinimap, clamped into map bounds.
     Vector2 MinimapToWorld(Vector2 minimapPx, int mapW, int mapH) const;
 
     // Point-in-box test for click routing (edges inclusive).
