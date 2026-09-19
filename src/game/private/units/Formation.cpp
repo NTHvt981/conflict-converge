@@ -179,6 +179,9 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
     const std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> groups =
         GroupByAnchor(registry, units);
     std::vector<cc::IVec2> claimedEscapeTiles;
+
+	OccupancyGrid formationOcc = occ;
+
     for (std::size_t i = 0; i < units.size(); ++i)
     {
         Unit *unit = registry.Get<Unit>(units[i]);
@@ -201,19 +204,22 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
         // Slots landing on units sanitize to the nearest enterable anchor
         // so squadmates don't all cancel against the same blocker.
         const cc::IVec2 slot = NearestEnterableTile(
-            map, occ, anchor + offsets[i], unit->footprintWidth, unit->footprintHeight,
+            map, formationOcc, anchor + offsets[i], unit->footprintWidth, unit->footprintHeight,
             units[i], registry.Generation(units[i]));
         const Vector2 slotWorld = cc::ToRaylib(cc::TileToWorld(slot.x, slot.y));
+
         // Deadlock fix: units still sharing a start tile get staggered
-        // instead of all issued a real order that would contest it (see
-        // StaggerIfCoLocated / plans/StackedOrderDeadlock_Plan.md).
-        if (StaggerIfCoLocated(registry, *unit, units[i], map, occ, groups, claimedEscapeTiles,
+        // instead of all issued a real order that would contest it
+        if (StaggerIfCoLocated(registry, *unit, units[i], map, formationOcc, groups, claimedEscapeTiles,
                                slotWorld))
         {
             continue;
         }
-        IssuePathOrderFootprint(*unit, map, occ, slotWorld, units[i],
+        IssuePathOrderFootprint(*unit, map, formationOcc, slotWorld, units[i],
                                registry.Generation(units[i]));
+
+		// to make sure no unit in formation overlap each other
+		formationOcc.ReserveFootprintOwned(slot, unit->footprintWidth, unit->footprintHeight, units[i], registry.Generation(units[i]));
     }
 }
 
