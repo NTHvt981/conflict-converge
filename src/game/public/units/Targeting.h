@@ -5,44 +5,31 @@
 #include "Registry.h"
 #include "Unit.h"
 
-class FogOfWar; // fwd-decl (Targeting.cpp includes FogOfWar.h)
-struct Building; // fwd-decl (Targeting.cpp includes Building.h)
+class FogOfWar;
+struct Building;
 
-// Targeting logic. Acquisition scans for the nearest enemy with
-// threat priority; range checks gate attacks (state machine, damage).
+// Targeting: nearest-enemy acquisition with threat priority; range checks
+// gate attacks.
 
 float DistanceBetween(const Unit &a, const Unit &b);
 
-// QoL target priority: multiplier on a candidate's threat score based on
-// the seeker's type — armored seekers and AntiArmorInfantry prefer engaging
-// vehicles over infantry. 1.0 = neutral. Mirrors Effectiveness's matrix
-// shape (Combat.cpp). Conservative first cut; retune without touching
-// call sites.
+// Priority multiplier on a candidate's threat score: armored seekers and
+// AntiArmorInfantry prefer vehicles. 1.0 = neutral.
 float TargetPriorityWeight(UnitType seekerType, UnitType candidateType);
 
-// QoL overkill protection: frame-scoped "reserved lethal damage" — the sum
-// of attackPower from every unit currently mid-WindUp/Recover against each
-// target entity. Built once per frame (see RunUnitMovementFrame) and passed
-// to AcquireTarget so new attackers skip targets that already have enough
-// committed to kill them, spreading fire instead of piling on.
+// Frame-scoped reserved lethal damage per target (overkill protection).
 using ReservedDamageMap = std::unordered_map<Entity, float>;
 
-// Nearest living enemy of a different team within seeker.sightRange.
-// Threat priority: highest attackPower wins, ties broken by distance.
-// Returns kInvalidEntity when the seeker is missing or nothing qualifies.
-// With fog, candidates on tiles unseen by the seeker's team are skipped —
-// except for Artillery, which blind-fires into shroud at no penalty.
-// QoL: with reserved, candidates whose health is already covered by
-// committed damage are skipped (overkill protection); nullptr = legacy.
+// Nearest living enemy within seeker.sightRange, highest attackPower first.
+// fog gates on visibility (Artillery blind-fires exempt); reserved skips
+// already-doomed candidates; nullptr = legacy.
 Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fog = nullptr,
                      const ReservedDamageMap *reserved = nullptr);
 
-// Nearest Operational enemy building within sightRange. Same fog gate
-// (artillery exempt); wrecked, own-team, and unseen structures are skipped.
-// Lets marches raze production so games terminate (snowball via demolition).
+// Nearest Operational enemy building within sightRange (same fog gate).
 Entity AcquireBuildingTarget(const Registry &registry, Entity seeker, const FogOfWar *fog = nullptr);
 
-// Footprint center in world pixels (raze aim point, repair aim point).
+// Footprint center in world pixels (raze/repair aim point).
 Vector2 BuildingCenter(const Building &building);
 
 // Circle check: target within attacker.attackRange pixels.

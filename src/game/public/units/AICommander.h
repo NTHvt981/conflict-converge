@@ -10,20 +10,14 @@
 #include "Unit.h"
 #include "UnitFactory.h"
 
-class TileMap;        // fwd-decl (AICommander.cpp includes TileMap.h)
-class OccupancyGrid;  // fwd-decl: class, not struct (TileMap.h defines it)
-class ResourceNodes;  // fwd-decl (harvest target queries)
-class EventDispatcher; // fwd-decl (factory event routing)
+class TileMap;
+class OccupancyGrid;
+class ResourceNodes;
+class EventDispatcher;
 
-// Enemy AI commander. Plays by the same rules as the player — own
-// ResourceSystem seeded with starting funds, own ProductionQueue, buildings
-// placed through PlaceBuilding, orders through IssuePathOrder/IssueFormationMove.
-// Bind shared occupancy via SetOccupancy and march/harvest/scout/retreat
-// orders route footprint-aware (8-dir A*, occupied-goal sanitization);
-// unbound (headless tests) keeps the legacy blind behavior.
-// Difficulty scales build size, wave thresholds, scout cadence, and
-// retreat behavior; handicaps are timer-based on Easy only, never free
-// resources. Waves launch on army-size thresholds.
+// Enemy AI commander: own fair-rules economy, production, building placement,
+// and orders. Difficulty scales build size, wave thresholds, scout cadence,
+// and retreat behavior.
 
 enum class AIDifficulty
 {
@@ -51,23 +45,14 @@ public:
     AICommander(Registry &registry, TileMap &map, ResourceNodes &nodes, EventDispatcher &events,
                 int teamID, AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile);
 
-    // Seed funds + place Base/Depot/Factory around homeTile + spawn one
-    // starting guard (so the team is never trivially wiped at frame one).
+    // Seed funds + place Base/Depot/Factory around homeTile + one starting guard.
     void SetupBase();
-    // Restart for a new match on a fresh world: team, difficulty, homes,
-    // timers, tracked harvesters, and the owned economy/queue reset.
-    // Reference members (registry/map/nodes/factory bindings) are untouched,
-    // so the commander's world objects must outlive it across matches.
-    // The team is resettable because nothing team-bound lives in the
-    // commander: factory spawns and building placement take teamID_ per call.
+    // Restart for a new match: team, difficulty, homes, timers, harvesters,
+    // and the owned economy/queue. Reference members are untouched.
     void Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile, int teamID);
-    // One decision tick: income, harvesters, production, waves, scouting,
-    // retreat. Safe to call every frame (cheap guards inside).
+    // One decision tick: income, harvesters, production, waves, scouting, retreat.
     void Update(float dt);
-    // Bind shared unit occupancy for footprint-aware orders (nullable:
-    // null keeps legacy blind orders). The grid must outlive the commander;
-    // identity is stable across matches (Resize preserves the object), so
-    // binding once per world setup suffices — Reset never clears it.
+    // Bind shared unit occupancy for footprint-aware orders (null = legacy).
     void SetOccupancy(OccupancyGrid *occ);
 
     int TeamID() const;
@@ -77,7 +62,6 @@ public:
     int WavesLaunched() const;
     bool HasScouted() const;
     cc::IVec2 LastSeenEnemy() const;
-    // Production requires a standing Factory (razed AI stays down).
     bool HasFactory() const;
 
 private:
@@ -88,15 +72,14 @@ private:
     void RetreatTick();
     void OrderHarvesterToIron(Entity harvester);
     bool FindLiveIron(cc::IVec2 &outTile) const;
-    // Single-unit point order: footprint-aware when occupancy is bound,
-    // legacy blind otherwise. Waves use the attack-move FP variant inline.
+    // Single-unit point order: footprint-aware when occupancy is bound.
     void OrderMove(Unit &unit, Entity id, Vector2 dest);
 
     Registry &registry_;
     TileMap &map_;
     ResourceNodes &nodes_;
-    OccupancyGrid *occ_ = nullptr; // bound shared grid (null = legacy orders)
-    ResourceSystem resources_; // owned: fair-rules economy, seeded like the player
+    OccupancyGrid *occ_ = nullptr;
+    ResourceSystem resources_; // owned fair-rules economy
     UnitFactory factory_;      // bound to resources_ above
     ProductionQueue queue_;
     AIDifficultyParams params_;

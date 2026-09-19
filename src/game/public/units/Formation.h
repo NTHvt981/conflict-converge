@@ -7,50 +7,35 @@
 #include "Registry.h"
 #include "raylib.h"
 
-class TileMap; // fwd-decl (Formation.cpp includes TileMap.h)
-class OccupancyGrid; // fwd-decl: class, not struct (TileMap.h defines it as
-                     // a class; struct here mangles a different symbol and
-                     // breaks the link the moment a class-first TU calls in).
+class TileMap;
+class OccupancyGrid;
 
-// Formation movement. A group ordered to a point fans out over
-// neighboring tiles (row-major grid from the anchor) so units don't stack.
-// Single-unit orders are unchanged: one offset, the anchor tile itself.
-// Footprint-aware — 2x2 vehicles get 2-tile spacing in the grid.
+// Formation movement: a group ordered to a point fans out over neighbouring
+// tiles so units don't stack; footprint-aware (2x2 vehicles get 2-tile spacing).
 
 namespace formation
 {
 
-// Tile offsets from the anchor for `count` units: row-major over
-// ceil(sqrt(count)) columns. Deterministic: slot i always maps to the same tile.
+// Row-major tile offsets from the anchor for `count` units.
 std::vector<cc::IVec2> FormationOffsets(std::size_t count);
 
-// Footprint-aware formation offsets. `cellSize` is the maximum
-// footprint dimension (max(fpW, fpH)) among the units. Offsets are
-// multiplied by cellSize so 2x2 vehicles get 2-tile spacing.
+// Footprint-aware offsets; `cellSize` is the max footprint dimension.
 std::vector<cc::IVec2> FormationOffsetsFP(std::size_t count, int cellSize);
 
-// Order each unit to its formation slot around the snapped target tile
-// (slot i -> anchor + offsets[i]), routed via IssuePathOrder.
+// Order each unit to its formation slot around the snapped target tile.
 void IssueFormationMove(Registry &registry, const std::vector<Entity> &units, const TileMap &map,
                         Vector2 worldTarget);
 
-// Footprint-aware variant. Uses IssuePathOrderFootprint and
-// offsets scaled by each unit's footprint so vehicles don't collide
-// in formation. Reads fpW/fpH from each Unit component.
+// Footprint-aware variant using IssuePathOrderFootprint.
 void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
                           const TileMap &map, const OccupancyGrid &occ,
                           Vector2 worldTarget, bool slowestSpeed = false);
 
-// QoL line formation: evenly spaces `count` points along the segment
-// lineStart->lineEnd (inclusive ends when count > 1; the midpoint for a
-// single unit). Pure geometry, unit-testable without a Registry (mirrors
-// FormationOffsetsFP's shape).
+// Evenly spaced points along a segment (inclusive ends; midpoint for one unit).
 std::vector<cc::Vec2> LineFormationPositions(std::size_t count, cc::Vec2 lineStart,
                                              cc::Vec2 lineEnd);
 
-// Orders `units` into a line between lineStart/lineEnd (world space),
-// each snapped to its nearest enterable tile exactly like
-// IssueFormationMoveFP. Same per-unit dispatch, different slot source.
+// Order units into a line between two world points.
 void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
                               const TileMap &map, const OccupancyGrid &occ,
                               Vector2 lineStartWorld, Vector2 lineEndWorld,
