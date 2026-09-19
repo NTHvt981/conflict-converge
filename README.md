@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/NTHvt981/conflict-converge/actions/workflows/ci.yml/badge.svg)](https://github.com/NTHvt981/conflict-converge/actions/workflows/ci.yml)
 
-A 2D real-time strategy demo built with [raylib](https://www.raylib.com/) (+ glm, raygui, protobuf).
+A 2D real-time strategy demo built with [raylib](https://www.raylib.com/) (+ glm, raygui, cereal).
 Tile-grid movement and A\* orders, 7 unit types, damage-matrix combat, iron/oil economy with
 bases and factory queues, fog of war, map files, an AI commander (Easy/Medium/Hard), synthesized
 audio, sprite art with a rectangle fallback, and a boot-to-menu shell with skirmish setup,
@@ -14,7 +14,6 @@ settings persistence, and save slots. All milestones M1–M15 are complete — s
 - Visual Studio 2022 (Community or newer) with C++ desktop workload
 - [premake5](https://premake.github.io/) on `PATH`
 - Python 3 (for `bootstrap.py`)
-- CMake (the VS-bundled one works)
 
 ## Setup
 
@@ -23,21 +22,11 @@ python bootstrap.py
 ```
 
 ```bat
-"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -S deps/protobuf/cmake -B deps/protobuf/build -G "Visual Studio 17 2022" -A Win32 -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -Dprotobuf_WITH_ZLIB=OFF -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
-cmake --build deps/protobuf/build --config Release --target libprotobuf protoc
-cmake --build deps/protobuf/build --config Debug --target libprotobuf
-```
-
-```bat
 premake5 vs2022
 ```
 
-Re-run `premake5 vs2022` after adding or removing any source file. Re-run protoc codegen
-after editing the schema (generated code is checked in, CI verifies it is current):
-
-```bat
-deps/protobuf/build/Release/protoc.exe --proto_path=proto --cpp_out=src/game/private/app proto/savegame.proto
-```
+Re-run `premake5 vs2022` after adding or removing any source file. Serialization
+is header-only (cereal) — there is no codegen step.
 
 ## Build
 

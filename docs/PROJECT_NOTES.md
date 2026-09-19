@@ -2,6 +2,15 @@
 Do not use CMake to build or generate project files
 Use premake to generate project files, then run msbuild to build project
 
+## Cereal migration Phase 4 done (2026-09-19)
+Protobuf fully removed: 3 protos + 6 generated files deleted, `libs_deps`
+entry + all premake include/lib blocks + CI CMake/verify steps + README
+Setup/CMake lines + AGENTS.md setup/protoc/ASan references stripped.
+Full solution rebuilds + links all 4 binaries with `deps/protobuf/` deleted
+from disk; suite 4262 green. Remaining `protobuf` mentions are historical
+prose only (code comments, plan doc, these notes). `.ccpb` extension kept
+(magic bytes carry format identity; avoids touching slots/replays/HUD).
+
 ## Cereal migration Phase 3 done (2026-09-19)
 `UnitConfig.cpp` ported; UnitConfig suite 82/82, full runner 4262 green.
 Presence via `std::optional` + tolerant `load()` (explicit 0 survives, as

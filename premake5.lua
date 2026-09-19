@@ -13,8 +13,8 @@ workspace "ConflictConverge"
     -- Output directory
     location "prj"
 
-    -- /FS serializes PDB writes. The protobuf generated headers are
-    -- huge; without this, parallel CL instances lock vc143.pdb (MSVC C1041).
+    -- /FS serializes PDB writes. The header-heavy TUs (cereal templates)
+    -- are huge; without this, parallel CL instances lock vc143.pdb (MSVC C1041).
     buildoptions { "/FS" }
 
 -- Build profiles shared by every project below.
@@ -110,7 +110,6 @@ project "conflict-converge"
         "deps/glm",
         "deps/reasings/src",
         "deps/rini/src",
-        "deps/protobuf/src",
         "deps/cereal/include",
         "..",
         "src/game",
@@ -138,23 +137,6 @@ project "conflict-converge"
         "winmm",
         "shell32"
     }
-
-    -- CMake-built protobuf static lib (Release: libprotobuf.lib in
-    -- build/Release, Debug: libprotobufd.lib in build/Debug). Shared CRT
-    -- (/MD) matches these projects; do not flip protobuf_MSVC_STATIC_RUNTIME.
-    filter "configurations:Debug"
-        libdirs { "deps/protobuf/build/Debug" }
-        links { "libprotobufd" }
-    filter "configurations:Release"
-        libdirs { "deps/protobuf/build/Release" }
-        links { "libprotobuf" }
-    -- ASan links its own instrumented Debug protobuf (deps/protobuf/build/ASan):
-    -- /fsanitize=address disables STL container annotations, so the stock
-    -- Debug lib LNK2038s on annotate_string/annotate_vector.
-    filter "configurations:ASan"
-        libdirs { "deps/protobuf/build/ASan/Debug" }
-        links { "libprotobufd" }
-    filter {}
 
     -- Runtime data staging (game project only): the game resolves data/,
     -- settings, and quicksaves relative to CWD, which under VS F5 is the
@@ -201,7 +183,6 @@ project "conflict-converge-test"
         "deps/glm",
         "deps/reasings/src",
         "deps/rini/src",
-        "deps/protobuf/src",
         "deps/cereal/include",
         "..",
         "src/game/public",
@@ -222,21 +203,6 @@ project "conflict-converge-test"
         "winmm",
         "shell32"
     }
-
-    -- Same CMake-built protobuf lib as the game project (see above).
-    filter "configurations:Debug"
-        libdirs { "deps/protobuf/build/Debug" }
-        links { "libprotobufd" }
-    filter "configurations:Release"
-        libdirs { "deps/protobuf/build/Release" }
-        links { "libprotobuf" }
-    -- ASan links its own instrumented Debug protobuf (deps/protobuf/build/ASan):
-    -- /fsanitize=address disables STL container annotations, so the stock
-    -- Debug lib LNK2038s on annotate_string/annotate_vector.
-    filter "configurations:ASan"
-        libdirs { "deps/protobuf/build/ASan/Debug" }
-        links { "libprotobufd" }
-    filter {}
 
 -- Tier-1 end-to-end project: the real Game loop in a hidden window
 -- (tests/e2e/e2e_main.cpp). Own binary, excluded from the default test run:
@@ -262,7 +228,6 @@ project "conflict-converge-e2e"
         "deps/glm",
         "deps/reasings/src",
         "deps/rini/src",
-        "deps/protobuf/src",
         "deps/cereal/include",
         "..",
         "src/game/public",
@@ -282,20 +247,6 @@ project "conflict-converge-e2e"
         "winmm",
         "shell32"
     }
-
-    filter "configurations:Debug"
-        libdirs { "deps/protobuf/build/Debug" }
-        links { "libprotobufd" }
-    filter "configurations:Release"
-        libdirs { "deps/protobuf/build/Release" }
-        links { "libprotobuf" }
-    -- ASan links its own instrumented Debug protobuf (deps/protobuf/build/ASan):
-    -- /fsanitize=address disables STL container annotations, so the stock
-    -- Debug lib LNK2038s on annotate_string/annotate_vector.
-    filter "configurations:ASan"
-        libdirs { "deps/protobuf/build/ASan/Debug" }
-        links { "libprotobufd" }
-    filter {}
 
     -- Same staging as the game: data/ beside the exe for direct runs,
     -- repo root as the VS debugger working dir.
@@ -328,7 +279,6 @@ project "conflict-converge-editor"
         "deps/raygui/src",
         "deps/glm",
         "deps/reasings/src",
-        "deps/protobuf/src",
         "deps/cereal/include",
         "..",
         "src/game/public",
@@ -348,21 +298,6 @@ project "conflict-converge-editor"
         "winmm",
         "shell32"
     }
-
-    -- Same CMake-built protobuf lib as the game project (see above).
-    filter "configurations:Debug"
-        libdirs { "deps/protobuf/build/Debug" }
-        links { "libprotobufd" }
-    filter "configurations:Release"
-        libdirs { "deps/protobuf/build/Release" }
-        links { "libprotobuf" }
-    -- ASan links its own instrumented Debug protobuf (deps/protobuf/build/ASan):
-    -- /fsanitize=address disables STL container annotations, so the stock
-    -- Debug lib LNK2038s on annotate_string/annotate_vector.
-    filter "configurations:ASan"
-        libdirs { "deps/protobuf/build/ASan/Debug" }
-        links { "libprotobufd" }
-    filter {}
 
     -- Same staging as the game: data/configs resolves beside the exe for
     -- direct runs, repo root as the VS debugger working dir.

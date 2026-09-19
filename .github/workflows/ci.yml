@@ -1,5 +1,4 @@
-# Conflict Converge CI: bootstrap deps, build protobuf (pinned v21.12, Win32),
-# verify checked-in protoc output, generate projects, build Debug+Release,
+# Conflict Converge CI: bootstrap deps, generate projects, build Debug+Release,
 # run the headless test suite. See AGENTS.md (Setup/Commands) for the local
 # equivalents of every step below.
 name: CI
@@ -25,7 +24,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Restore deps cache (third-party sources + protobuf build)
+      - name: Restore deps cache (third-party sources)
         id: deps-cache
         uses: actions/cache@v4
         with:
@@ -35,18 +34,6 @@ jobs:
       - name: Bootstrap third-party deps
         if: steps.deps-cache.outputs.cache-hit != 'true'
         run: python bootstrap.py
-
-      - name: Build protobuf (Win32, shared CRT to match /MD)
-        if: steps.deps-cache.outputs.cache-hit != 'true'
-        run: |
-          cmake -S deps/protobuf/cmake -B deps/protobuf/build -G "Visual Studio 17 2022" -A Win32 -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -Dprotobuf_WITH_ZLIB=OFF -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
-          cmake --build deps/protobuf/build --config Release --target libprotobuf protoc
-          cmake --build deps/protobuf/build --config Debug --target libprotobuf
-
-      - name: Verify checked-in protoc output is current
-        run: |
-          deps/protobuf/build/Release/protoc.exe --proto_path=proto --cpp_out=src/game/private/app proto/savegame.proto
-          git diff --exit-code -- src/game/private
 
       - name: Install premake5
         shell: powershell
