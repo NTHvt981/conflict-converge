@@ -1,4 +1,6 @@
-# Conflict Converge - Project Planning Q&A
+# Conflict Converge - Decision Log
+
+Converted from the planning Q&A 2026-09-19: entries are kept verbatim as the decision record, with superseded answers annotated in place (Q48, Q84: protobuf era → cereal).
 
 ## Project Overview
 - **Name**: Conflict Converge
@@ -204,7 +206,7 @@
     - Custom binary (packed structs) - fastest but no human readability
     - Flatbuffer - Google's protocol buffer system
     - Protocol Buffers (protobuf) - well-established with schema definition
-   Answer: Protocol Buffers (protobuf)
+   Answer: Protocol Buffers (protobuf) — later superseded: migrated protobuf → header-only cereal 2026-09-19 (`CCB2`, v2, wire structs in `src/game/private/app/SaveWire.h`; see `docs/features/serialization.md`).
 
 ### Unit Balance Numbers
 49. For Command & Conquer / Company of Heroes inspired balance numbers, should we:
@@ -359,7 +361,7 @@
 
 ### Plan Deviation Note
 84. Q48 chose Protocol Buffers for serialization, but M7 shipped a custom versioned binary format (`CCSV` v1, now v2 with fog sets) for zero-dependency builds. Migrate to protobuf later, or ratify the custom format as final?
-    Answer: Migrate to Protocol Buffers now
+    Answer: Migrate to Protocol Buffers now — later superseded again: protobuf → header-only cereal 2026-09-19 (`CCB2`, v2; old `CCSV` and `CCPB` saves rejected, no back-compat shim).
 
 ---
 

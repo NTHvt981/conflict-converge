@@ -28,7 +28,8 @@
 | M12 | Art & Animation | M7 | 🟢 Complete |
 | M13 | Command Depth & Balance | M8 | 🟢 Complete |
 | M14 | Main Menu & Game Shell | M7 | 🟢 Complete |
-| M15 | Protobuf Serialization Migration | M7 | 🟢 Complete |
+| M15 | Cereal Serialization Migration (supersedes protobuf plan) | M7 | 🟢 Complete |
+| M16 | 2v2 Skirmish + Allied AI | M14 | 🟢 Complete |
 
 ---
 
@@ -331,7 +332,7 @@
    - Optimize rendering batch operations
 
 ### Blockings
-- ⚠️ Need binary serialization format decision
+- None (format decision long settled: `CCSV` → protobuf `CCPB` → cereal `CCB2`)
 - ⚠️ Test framework setup time
 
 ---
@@ -540,9 +541,9 @@ Rationale: there is no main menu — the game boots straight into the demo skirm
 
 ---
 
-## Milestone M15: Protobuf Serialization Migration
+## Milestone M15: Cereal Serialization Migration
 
-Rationale: Q48 chose Protocol Buffers but M7 shipped a custom `CCSV` binary for zero-dependency builds; Q84 decided to migrate now. Do this before M9 so fog explored-sets land directly in the final format instead of a throwaway v2.
+Rationale: Q48 chose Protocol Buffers and M7 shipped a custom `CCSV` binary; the protobuf migration shipped first, then 2026-09-19 migrated protobuf → header-only cereal (no CMake step, no codegen, no per-config native libs). Old `CCSV` and v1 `CCPB` files are rejected by the magic check (`CCB2`, v2). See `docs/features/serialization.md`.
 
 ### Goals
 - [x] Add protobuf dependency via `libs_deps.json` + bootstrap (pinned version, Windows static link)
@@ -562,7 +563,8 @@ Rationale: Q48 chose Protocol Buffers but M7 shipped a custom `CCSV` binary for 
    - Schema unit tests: required-field validation, corrupt-buffer rejection, version/unknown-field tolerance
 
 ### Blockings
-- ⚠️ protoc codegen approach (checked-in generated code vs generate step) to decide during implementation
+- None (codegen approach settled on checked-in output then; the whole
+  protobuf layer is since removed by the cereal migration above)
 
 ---
 
@@ -595,7 +597,7 @@ victory, and fog were already team-based, so no combat/outcome changes.
 | AI-generated sprite sheets | M12 | Generate unit/building/node sheets (verify licensing before shipping) |
 | Unit balance numbers | M13 | Resolved by the balance pass (docs/BALANCE.md Pass 2) |
 | AI difficulty tuning | M8 | Resolved by the balance pass (ladder soaks green) |
-| protoc codegen approach | M15 | Decide checked-in code vs generate step during implementation |
+| protoc codegen approach | M15 | Settled on checked-in output at the time; moot since the cereal migration removed protobuf entirely |
 
 ---
 

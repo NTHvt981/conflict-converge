@@ -7,7 +7,7 @@ Tile-grid movement and A\* orders, 7 unit types, damage-matrix combat, iron/oil 
 bases and factory queues, fog of war, map files, an AI commander (Easy/Medium/Hard), synthesized
 audio, sprite art with a rectangle fallback, and a boot-to-menu shell with skirmish setup,
 settings persistence, and save slots. All milestones M1–M15 are complete — see
-[`plans/MILESTONES.md`](plans/MILESTONES.md) and [`plans/Q_AND_A.md`](plans/Q_AND_A.md).
+[`docs/history/milestones.md`](docs/history/milestones.md) and [`docs/history/decisions.md`](docs/history/decisions.md).
 
 ## Prerequisites
 
