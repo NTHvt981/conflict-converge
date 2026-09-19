@@ -1,5 +1,3 @@
-// Simulation.cpp - the per-frame match tick, extracted from Game::Update
-// (H6 slice 1) into its own class so the tick is headless-drivable.
 
 #include "Simulation.h"
 
@@ -56,7 +54,6 @@ void Simulation::ResetForMatch()
     lastQueueSize_ = 0;
     attackSfxTimer_ = 0.0f;
     hasFactory_ = false;
-    // Fresh replay recording for this match (last match only).
     replayRecording_ = true;
     replayTimer_ = 0.0f;
     replayIndex_ = 0;
@@ -89,8 +86,6 @@ int Simulation::ReplayCount() const
 
 void Simulation::RefreshFactory()
 {
-    // Production dies with the structure — the queue gate and the HUD
-    // panel share this recompute so the panel stays correct while paused.
     hasFactory_ = false;
     registry_.Each<Building>([&](Entity, const Building &building) {
         if (building.teamID == 0 && building.type == BuildingType::Factory &&
@@ -108,7 +103,6 @@ bool Simulation::HasFactory() const
 
 void Simulation::Announce(EventType type)
 {
-    // Bare-event announcer for the game-state + UI event types.
     Event bare;
     bare.type = type;
     events_.Dispatch(bare);
@@ -116,15 +110,8 @@ void Simulation::Announce(EventType type)
 
 void Simulation::Step(float dt)
 {
-    // Rebuild visibility from current positions before anyone acquires.
     fog_.Recompute(registry_);
-    // Occupancy pre-pass and stall fix: per-unit driver with fog gate,
-    // overlap separation, and separation-stall detection, all as one
-    // pipeline (see RunUnitMovementFrame) so the game loop and tests
-    // can't drift apart on this sequencing.
     RunUnitMovementFrame(registry_, map_, occ_, &fog_, dt);
-    // Collect the fallen, then destroy through the factory so
-    // UnitDestroyed is announced (destroying inside Each would invalidate it).
     std::vector<Entity> dead;
     registry_.Each<Unit>([&](Entity id, const Unit &unit) {
         if (unit.health <= 0.0f)
@@ -136,12 +123,9 @@ void Simulation::Step(float dt)
     {
         if (const Unit *corpse = registry_.Get<Unit>(id))
         {
-            // Death burst at the corpse before teardown.
             art_.ParticlesPool().SpawnBurst(
                 { corpse->position.x + 32.0f, corpse->position.y + 32.0f }, ORANGE, 24,
                 120.0f, 0.6f);
-            // Release occupancy tiles before teardown (owned:
-            // a corpse shoved onto a live unit's tile must not wipe it).
             const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(corpse->position));
             occ_.ReleaseFootprintOwned(anchor, corpse->footprintWidth,
                                        corpse->footprintHeight, id,
@@ -149,27 +133,19 @@ void Simulation::Step(float dt)
         }
         factory_.DestroyUnit(id);
     }
-    // Edge-triggered battle sounds (one explosion per wipe, not per corpse).
     if (!dead.empty())
     {
         audio_.Play(SfxId::Explosion);
         shakeTrauma_ = AddShakeTrauma(shakeTrauma_, kShakeDeathTrauma);
     }
-    // Impact sparks on fresh hits + muzzle sparks while telegraphing.
     registry_.Each<Unit>([&](Entity, const Unit &unit) {
         const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
         if (unit.hitFlashTime > 0.20f)
         {
             art_.ParticlesPool().SpawnBurst(center, YELLOW, 6, 90.0f, 0.25f);
-            // Floating number, once per hit: same edge trigger, spawned
-            // over the body top (the old fixed text's anchor). Kept out
-            // of Draw on purpose — pool mutation belongs in update.
             damageNumbers_.Spawn({ center.x, unit.position.y - 2.0f },
                                  unit.lastDamageTaken);
             shakeTrauma_ = AddShakeTrauma(shakeTrauma_, kShakeHitTrauma);
-            // QoL pings: same "just got hit" detector, no Combat.h
-            // changes (per-kind floor inside Pings stops spam).
-            // Team 0 is the player.
             if (unit.teamID == 0)
             {
                 pings_.Raise(center, PingKind::UnderAttack);
@@ -228,13 +204,12 @@ void Simulation::Step(float dt)
     if (depletedCount > lastDepletedCount_)
     {
         audio_.Play(SfxId::Deplete);
-        Announce(EventType::ResourceDepleted); // Resource event
+        Announce(EventType::ResourceDepleted);
     }
     lastDepletedCount_ = depletedCount;
-    // Economy tick: base trickle, node respawn, harvest, production.
     UpdateBaseIncome(registry_, resources_, dt, 0);
     nodes_.Update(dt);
-    nodes_.GatherTick(registry_, resources_, dt, 0); // team 0 crew only (AI gathers its own)
+    nodes_.GatherTick(registry_, resources_, dt, 0);
     RefreshFactory();
     if (hasFactory_)
     {
@@ -247,16 +222,11 @@ void Simulation::Step(float dt)
             }
         }
     }
-    // Production-ordered event on every queue growth (panel
-    // buttons and the seed enqueues both flow through here).
     if (queue_.Size() > static_cast<std::size_t>(lastQueueSize_))
     {
         Announce(EventType::ProductionOrdered);
     }
     lastQueueSize_ = static_cast<int>(queue_.Size());
-    // QoL snapshot replay: capture a full-state frame every 2s while
-    // the match runs (best-effort: a failed write retries next tick
-    // without consuming the frame number; stops at the frame cap).
     if (replayRecording_)
     {
         replayTimer_ += dt;
@@ -271,36 +241,28 @@ void Simulation::Step(float dt)
             }
         }
     }
-    // QoL building auto-repair (player team 0 only; AI economy is
-    // tuned and Engineers already repair free — see Building.h).
     if (playerAutoRepair_)
     {
         UpdateBuildingAutoRepair(registry_, resources_, dt, 0, autoRepairCap_);
     }
-    UpdateBuildingConstruction(registry_, dt); // sites -> Operational, all teams
-    // QoL player auto-retreat: opted-in units below threshold fall back
-    // to the rally point (or the nearest owned Base when no rally was
-    // ever placed). Shared RetreatIfLowHP with the AI's RetreatTick.
+    UpdateBuildingConstruction(registry_, dt);
     {
         const Vector2 home = ResolvePlayerRetreatHome(registry_, rallyPos_);
         RetreatIfLowHP(registry_, map_, &occ_, home, 0, kRetreatHealthFraction, true);
     }
     if (!sandboxMode_)
     {
-        ai_.Update(dt); // Enemy build order, waves, scouting, retreat
+        ai_.Update(dt);
     }
-    // 2v2 overflow commanders tick only in 2v2 matches (see worldIs2v2:
-    // count-gating wakes parked commanders in 1v1 via shared teams).
     if (worldIs2v2_)
     {
-        allyAI_.Update(dt);   // allied build order + waves beside the player
-        enemyAI2_.Update(dt); // second enemy front
+        allyAI_.Update(dt);
+        enemyAI2_.Update(dt);
     }
-    // Periodic minimap refresh (terrain blocks + unit dots).
     if (minimap_.PollRefresh(dt))
     {
         BeginTextureMode(minimap_.target);
-        ClearBackground(Color{ 20, 60, 20, 255 }); // dark grass base
+        ClearBackground(Color{ 20, 60, 20, 255 });
         for (int y = 0; y < map_.Height(); ++y)
         {
             for (int x = 0; x < map_.Width(); ++x)
@@ -321,7 +283,6 @@ void Simulation::Step(float dt)
             }
         }
         registry_.Each<Unit>([&](Entity, const Unit &unit) {
-            // Enemies only appear when a team-0 unit sees their tile.
             if (unit.teamID != 0 &&
                 !fog_.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit.position))))
             {
@@ -336,14 +297,10 @@ void Simulation::Step(float dt)
         });
         EndTextureMode();
     }
-    // Decide terminal states from the living rosters.
-    // Skipped in sandbox mode (no enemy side: instant Victory otherwise).
     if (!sandboxMode_)
     {
         menu_.ShowOutcome(TeamHasUnits(registry_, 0), TeamHasUnits(registry_, 1));
     }
-    // Fanfare on the transition frame only.
-    // Game-state events ride the same transition.
     if (menu_.state != lastOutcomeState_)
     {
         if (menu_.state == MenuState::Victory)

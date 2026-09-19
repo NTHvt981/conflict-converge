@@ -1,4 +1,3 @@
-// PlayingInput.cpp - the in-match input dispatch, extracted from Game.
 
 #include "PlayingInput.h"
 
@@ -149,25 +148,15 @@ const int &PlayingInput::AutoAddGroupBit() const
 
 void PlayingInput::Dispatch()
 {
-    // Mouse inputs: press starts a drag-box gesture,
-    // release resolves it (click = pick, box = SelectInRect).
-    // Orders pathfind around water/buildings via IssuePathOrder.
-    // Routes minimap clicks to the camera and rally-mode clicks
-    // to the factory rally point before unit selection.
     if (input_.LeftPressed())
     {
         if (placingType_.has_value())
         {
-            // QoL area-build: press starts a placement drag (click =
-            // single footprint, drag = tiled pattern on release).
             placeDragActive_ = true;
             placeDragStart_ = input_.MouseScreen();
         }
         else if (areaRepairMode_)
         {
-            // QoL area-repair: press starts a repair-zone drag (click =
-            // tiny rect, drag = repair zone on release). Checked ahead
-            // of box-select, same as placingType above.
             repairDragActive_ = true;
             repairDragStart_ = input_.MouseScreen();
         }
@@ -198,11 +187,6 @@ void PlayingInput::Dispatch()
             if (hit != kInvalidEntity)
             {
                 const Unit *hitUnit = registry_.Get<Unit>(hit);
-                // QoL double-click: same type + team across the viewport
-                // instead of the single pick. PickUnitAt has no team
-                // filter, so double-clicking an enemy resolves here but
-                // the team-0 filter below selects nothing (acceptable:
-                // enemy units aren't commandable anyway).
                 if (hitUnit != nullptr && input_.DoubleClicked())
                 {
                     SelectAllOfTypeInRect(
@@ -216,7 +200,7 @@ void PlayingInput::Dispatch()
                 {
                     SelectOnly(registry_, hit);
                 }
-                audio_.Play(SfxId::Select); // Selection blip
+                audio_.Play(SfxId::Select);
             }
             else
             {
@@ -225,7 +209,6 @@ void PlayingInput::Dispatch()
         }
         else
         {
-            // Screen box corners back to world space (Shift extends).
             if (SelectInRect(registry_,
                              DraggedWorldBox(camera_, { box.x, box.y },
                                              { box.x + box.width, box.y + box.height }),
@@ -235,10 +218,6 @@ void PlayingInput::Dispatch()
             }
         }
     }
-    // QoL area-build release: click places one footprint, a drag tiles
-    // the footprint across the box (invalid slots skipped silently).
-    // The mode stays engaged for rows of structures; right-click/Esc
-    // exits (see the RightPressed block and the Esc binding).
     if (placeDragActive_ && !input_.LeftDown())
     {
         placeDragActive_ = false;
@@ -281,10 +260,6 @@ void PlayingInput::Dispatch()
             }
         }
     }
-    // QoL area-repair release: collect damaged candidates in the zone,
-    // greedily assign each selected Engineer its nearest unclaimed one.
-    // Click-sized drags resolve as a tiny rect (usually a silent no-op).
-    // The mode stays engaged for repeat drags; right-click/Esc exits.
     if (repairDragActive_ && !input_.LeftDown())
     {
         repairDragActive_ = false;
@@ -320,9 +295,6 @@ void PlayingInput::Dispatch()
         }
     }
     const bool altDown = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
-    // QoL right-drag pan (opt-in setting): accumulate held distance
-    // every frame; past the click-vs-drag threshold the camera grabs
-    // the world (mirrors left-click's 6px click-vs-box rule).
     if (input_.RightDown() && !altDown)
     {
         const Vector2 panDelta = input_.MouseDeltaScreen();
@@ -333,27 +305,19 @@ void PlayingInput::Dispatch()
             camera_.Pan({ -panDelta.x / zoom, -panDelta.y / zoom });
         }
     }
-    // Whether this press cancelled placement (orders stay silent then).
     const bool wasPlacing = placingType_.has_value() || areaRepairMode_;
     if (input_.RightPressed())
     {
-        // QoL area-build: right-click cancels placement (no order).
         if (placingType_.has_value())
         {
             placingType_.reset();
             placeDragActive_ = false;
         }
-        // QoL area-repair: right-click stands the mode down (no order).
-        // Chained (not separate) so Alt+right-drag can't arm a line
-        // while either mode cancels, exactly like placement before it.
         else if (areaRepairMode_)
         {
             areaRepairMode_ = false;
             repairDragActive_ = false;
         }
-        // QoL line formation: Alt+right-drag draws a placement line
-        // (Ctrl is groups, Shift is queueing — Alt stays unambiguous).
-        // No order fires on the press itself; the release dispatches.
         else if (altDown)
         {
             rightDragging_ = true;
@@ -361,12 +325,7 @@ void PlayingInput::Dispatch()
         }
     }
     const bool cancelledPlacement = input_.RightPressed() && wasPlacing;
-    // and the deferred release path (option on: click-vs-drag is only
-    // known on release, where the mouse still sits ~at the press point).
     auto dispatchRightClickOrders = [&]() {
-        // QoL attack-ground mode (toggled with X): the next right-click
-        // shells the clicked point instead of moving there. One-shot:
-        // the mode clears after a single use.
         if (attackGroundMode_)
         {
             attackGroundMode_ = false;
@@ -383,8 +342,6 @@ void PlayingInput::Dispatch()
         }
         else
         {
-        // Single selection keeps the direct path order; groups fan
-        // out through the formation move.
         std::vector<Entity> squad;
         registry_.Each<Unit>([&](Entity id, const Unit &unit) {
             if (unit.isSelected)
@@ -396,10 +353,6 @@ void PlayingInput::Dispatch()
         {
             if (Unit *ordered = registry_.Get<Unit>(squad[0]))
             {
-                // QoL single-target repair: a lone selected Engineer
-                // right-clicked onto a damaged same-team unit/building
-                // repairs instead of moving (Shift queues it behind the
-                // current order via the same path as other orders).
                 bool repaired = false;
                 if (ordered->type == UnitType::Engineer)
                 {
@@ -415,8 +368,6 @@ void PlayingInput::Dispatch()
                             {
                                 return;
                             }
-                            // Shared footprint-rect helper (also feeds
-                            // area repair) instead of inline tile math.
                             const Rectangle footprint = BuildingFootprintRect(building);
                             const Vector2 tileCenter = cc::ToRaylib(
                                 cc::TileToWorld(tile.x, tile.y) + cc::Vec2(32.0f, 32.0f));
@@ -439,7 +390,6 @@ void PlayingInput::Dispatch()
                 {
                     if (input_.ShiftDown())
                     {
-                        // QoL: queue behind the current order.
                         IssueOrEnqueue(*ordered, map_, &occ_, squad[0],
                                        registry_.Generation(squad[0]), true,
                                        QueuedOrder{ QueuedOrderKind::Move,
@@ -448,25 +398,19 @@ void PlayingInput::Dispatch()
                     else
                     {
                         ordered->orderQueue.clear();
-                        // Fresh single order (not formation): ClearOrders
-                        // resets every order-type flag — IssuePathOrder*
-                        // doesn't route through ClearOrders like the
-                        // Issue* wrappers (see ClearOrders in Unit.h).
                         ClearOrders(*ordered);
                         IssuePathOrderFootprint(*ordered, map_, occ_,
                                                 input_.MouseWorld(camera_), squad[0],
                                                 registry_.Generation(squad[0]));
                     }
                 }
-                audio_.Play(SfxId::Confirm); // Order acknowledged
+                audio_.Play(SfxId::Confirm);
             }
         }
         else if (!squad.empty())
         {
             if (input_.ShiftDown())
             {
-                // QoL: queue the same destination per unit (no fan-out
-                // for queued legs — formation applies to live orders).
                 const Vector2 dest = input_.MouseWorld(camera_);
                 for (const Entity id : squad)
                 {
@@ -480,9 +424,6 @@ void PlayingInput::Dispatch()
             }
             else
             {
-                // IssueFormationMoveFP does its own fresh-order
-                // bookkeeping (flag + queue clear), like the
-                // line-formation variant.
                 formation::IssueFormationMoveFP(registry_, squad, map_, occ_,
                                                 input_.MouseWorld(camera_),
                                                 moveAtSlowestSpeed_);
@@ -495,7 +436,7 @@ void PlayingInput::Dispatch()
     {
         if (settings_.rightDragPan && !altDown)
         {
-            pendingRightClick_ = true; // decided on release, below
+            pendingRightClick_ = true;
         }
         else
         {
@@ -504,8 +445,6 @@ void PlayingInput::Dispatch()
     }
     if (!input_.RightDown())
     {
-        // Release with the option on: a sub-threshold press was a click
-        // after all — run the deferred order now (~at the press point).
         if (pendingRightClick_ && rightDragDist_ < 6.0f)
         {
             dispatchRightClickOrders();
@@ -513,8 +452,6 @@ void PlayingInput::Dispatch()
         pendingRightClick_ = false;
         rightDragDist_ = 0.0f;
     }
-    // QoL line formation release: order the current squad along the
-    // drawn line, then stand down the gesture.
     if (rightDragging_ && !input_.RightDown())
     {
         rightDragging_ = false;
@@ -534,12 +471,6 @@ void PlayingInput::Dispatch()
             audio_.Play(SfxId::Confirm);
         }
     }
-    // QoL control groups: number keys recall, Ctrl+number assigns the
-    // current selection (replacing), Shift+number adds to it,
-    // Ctrl+Shift+number routes future production into it. Polled here
-    // (not via ShortcutRegistry) because one key needs 4-way
-    // modifier disambiguation the registry's plain/Shift-chord model
-    // can't express. Displayed 1-9,0 for bits 0-9.
     static constexpr int kGroupKeys[10] = { KEY_ONE,   KEY_TWO,   KEY_THREE, KEY_FOUR,
                                             KEY_FIVE,  KEY_SIX,   KEY_SEVEN, KEY_EIGHT,
                                             KEY_NINE,  KEY_ZERO };
@@ -547,7 +478,7 @@ void PlayingInput::Dispatch()
     {
         if (!IsKeyPressed(kGroupKeys[bit]) || placingType_.has_value())
         {
-            continue; // 1/2/3 steer the placement type while placing
+            continue;
         }
         if (input_.CtrlDown() && input_.ShiftDown())
         {
@@ -566,8 +497,6 @@ void PlayingInput::Dispatch()
             RecallControlGroup(registry_, bit);
         }
     }
-    // QoL area-build: 1/2/3 picks the placement type while engaged
-    // (the group loop above stands down for those keys meanwhile).
     if (placingType_.has_value())
     {
         if (IsKeyPressed(KEY_ONE))

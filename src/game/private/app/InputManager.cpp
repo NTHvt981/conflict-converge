@@ -37,8 +37,6 @@ void InputManager::Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool right
     leftDown_ = leftDown;
     rightDown_ = rightDown;
     ctrlDown_ = ctrlDown;
-    // Double-click edge: fresh left press within the window + tolerance of
-    // the previous press; true for this frame only.
     doubleClicked_ = false;
     if (leftPressed)
     {
@@ -50,7 +48,7 @@ void InputManager::Snapshot(Vector2 mouseScreenPos, bool leftPressed, bool right
             dx * dx + dy * dy <= kTolerancePx * kTolerancePx)
         {
             doubleClicked_ = true;
-            lastLeftClickTime_ = -1.0; // pair consumed: no triple-click chains
+            lastLeftClickTime_ = -1.0;
         }
         else
         {

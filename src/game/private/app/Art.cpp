@@ -20,7 +20,6 @@ UnitFrame FrameForPhase(AttackPhase phase)
     return UnitFrame::Idle;
 }
 
-// Deterministic hash for per-entity jitter (no RNG, no save state).
 static unsigned int HashId(unsigned int id)
 {
     id = ((id >> 16) ^ id) * 0x45d9f3b;
@@ -32,9 +31,6 @@ static unsigned int HashId(unsigned int id)
 int SquadSlots(UnitType type, unsigned int id, float healthFraction,
                std::array<Vector2, 6> &outOffsets, float &outScale)
 {
-    // Only foot types with multi-soldier visuals get the squad treatment.
-    // Engineers render as a single centered sprite (like vehicles).
-    // PrototypeInfantry clusters exactly like Infantry (same art, same logic).
     if (type != UnitType::Infantry && type != UnitType::AntiArmorInfantry &&
         type != UnitType::PrototypeInfantry)
     {
@@ -43,10 +39,6 @@ int SquadSlots(UnitType type, unsigned int id, float healthFraction,
         return 1;
     }
 
-    // Soldier count from health, scaled to each type's max squad size:
-    // Infantry (and PrototypeInfantry) 5 at >80%, 4 at >60%, 3 at >40%,
-    // 2 at >20%, 1 otherwise; AntiArmorInfantry fights as a 2-man team,
-    // dropping to 1 below half.
     int count;
     if (type == UnitType::Infantry || type == UnitType::PrototypeInfantry)
     {
@@ -66,12 +58,6 @@ int SquadSlots(UnitType type, unsigned int id, float healthFraction,
         count = (healthFraction > 0.50f) ? 2 : 1;
     }
 
-    // Per-count (scale, offsets): a 64x64 tile cannot fit multiple native
-    // 32px soldiers side by side (the old single 8px-spaced table overlapped
-    // ~75% per sprite), so each row shrinks the blit and spreads the slots
-    // so adjacent centers stay >= scale * 32px apart while the cluster stays
-    // near the tile's half-size. Index by count - 1; rows sized for the
-    // count (unused tail slots stay {0,0}).
     struct SquadLayout
     {
         float scale;
@@ -90,12 +76,9 @@ int SquadSlots(UnitType type, unsigned int id, float healthFraction,
     outScale = layout.scale;
 
     const unsigned int h = HashId(id);
-    // Jitter scales down with the blit so it can't eat the thinner margins
-    // at higher counts (was a fixed ±2px against 16px sprites).
     const float jitterPx = 2.0f * layout.scale;
     for (int i = 0; i < count; ++i)
     {
-        // Deterministic jitter derived from id + slot index.
         const unsigned int jitter = HashId(h + static_cast<unsigned int>(i));
         const float jx = (static_cast<float>(jitter & 0x7) / 7.0f - 0.5f) * 2.0f * jitterPx;
         const float jy =
@@ -235,9 +218,9 @@ const char *UnitFile(UnitType type)
     case UnitType::HeavyTank:
         return "heavytank";
     case UnitType::PrototypeInfantry:
-        return "prototypeinfantry"; // own atlas namespace (own flat PNGs too)
+        return "prototypeinfantry";
     }
-    return "infantry"; // unreachable; keeps MSVC from warning
+    return "infantry";
 }
 
 const char *BuildingFile(BuildingType type)
@@ -251,7 +234,7 @@ const char *BuildingFile(BuildingType type)
     case BuildingType::Factory:
         return "factory";
     }
-    return "depot"; // unreachable
+    return "depot";
 }
 
 const char *NodeFile(ResourceKind kind)
@@ -264,7 +247,7 @@ const char *TeamName(int teamID)
     return teamID == 0 ? "blue" : "red";
 }
 
-} // namespace
+}
 
 const char *Art::TerrainFile(TerrainType type)
 {
@@ -280,7 +263,7 @@ const char *Art::TerrainFile(TerrainType type)
         return "rock";
     case TerrainType::Building:
     case TerrainType::Count:
-        return nullptr; // no blit: footprints cover Building tiles
+        return nullptr;
     }
     return nullptr;
 }
@@ -314,7 +297,7 @@ bool Art::Init(bool withDevice)
     Shutdown();
     if (!withDevice)
     {
-        return false; // headless/test path: rectangles forever
+        return false;
     }
     fallback_ = false;
     char path[128];
@@ -361,8 +344,6 @@ bool Art::Init(bool withDevice)
             fallback_ = true;
         }
     }
-    // Terrain tiles: team-neutral 64px blits (grass/water/forest/rock —
-    // Building has no tile: footprints cover those tiles).
     for (int s = 0; s < 4; ++s)
     {
         const TerrainType type = s == 0   ? TerrainType::Grass
@@ -377,16 +358,12 @@ bool Art::Init(bool withDevice)
             fallback_ = true;
         }
     }
-    // UI typeface: missing file joins the rectangle fallback (default font
-    // + flat fills, exactly as before — no half-wired state).
     uiFont_ = LoadFontEx("data/fonts/font.otf", 64, nullptr, 0);
     fontReady_ = uiFont_.texture.id != 0;
     if (!fontReady_)
     {
         fallback_ = true;
     }
-    // Atlas override: data/configs atlas JSON + sheet PNGs. Missing files
-    // just leave the atlas down (legacy/rectangle paths are unaffected).
     atlasReady_ = LoadAtlas();
     if (atlasReady_)
     {
@@ -537,16 +514,10 @@ std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
     {
         return {};
     }
-    // Clamp the sheet column; out-of-range input falls back to Right,
-    // matching the sim-side Facing default.
     const int dir = (facingDir < 0 || facingDir > 7) ? 6 : facingDir;
     const std::string prefix = UnitFile(type);
     if (moving)
     {
-        // Directional "<type>_walk_<dir>" cycle at timeSeconds; per-entity
-        // offset so squad soldiers don't march in sync. Falls through to
-        // the legacy single "<type>_walk" anim, then to idle, when the type
-        // has no directional (or any) walk animation.
         const std::string names[] = { prefix + "_walk_" + std::to_string(dir),
                                       prefix + "_walk" };
         for (const std::string &name : names)
@@ -582,8 +553,6 @@ std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
                         t -= f.durationMs;
                     }
                 }
-                // Degenerate anim (unreachable for validated sheets):
-                // try the next name, then idle below.
             }
         }
     }
@@ -606,7 +575,6 @@ Color Art::TeamTint(int teamID) const
 {
     if (colorBlindMode_)
     {
-        // Okabe-Ito colorblind-safe pair: orange / sky blue.
         return teamID == 0 ? Color{ 230, 159, 0, 255 } : Color{ 86, 180, 233, 255 };
     }
     return teamID == 0 ? BLUE : RED;
@@ -636,11 +604,9 @@ void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Colo
     }
     if (s->maskSprite == 0)
     {
-        // No mask: full-sprite multiply tint (correct for all-white art).
         DrawOneAtlasSprite(*s, tileCorner, tint, scale);
         return;
     }
-    // Base layer at true colors, mask layer team-tinted on top.
     DrawOneAtlasSprite(*s, tileCorner, WHITE, scale);
     if (const SpriteDefInfo *mask = FindSpriteById(sheet_, s->maskSprite); mask != nullptr)
     {
@@ -660,8 +626,6 @@ void Art::DrawOneAtlasSprite(const SpriteDefInfo &s, Vector2 tileCorner, Color t
     const float h = static_cast<float>(s.bounds.bottom - s.bounds.top);
     const Rectangle src = { static_cast<float>(s.bounds.left), static_cast<float>(s.bounds.top),
                             w, h };
-    // The sprite origin lands on the 32x32 body center (tileCorner + 32);
-    // scale shrinks the blit around that anchor so squad clusters separate.
     const Vector2 anchor = { tileCorner.x + 32.0f, tileCorner.y + 32.0f };
     const Rectangle dest = { anchor.x - static_cast<float>(s.origin.x) * scale,
                              anchor.y - static_cast<float>(s.origin.y) * scale, w * scale,

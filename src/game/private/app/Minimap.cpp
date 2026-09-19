@@ -7,7 +7,7 @@ void Minimap::Init(Rectangle rect)
     Unload();
     screenRect = rect;
     target = LoadRenderTexture(static_cast<int>(rect.width), static_cast<int>(rect.height));
-    elapsed = refreshInterval; // first frame refreshes immediately
+    elapsed = refreshInterval;
     ready = true;
 }
 
@@ -79,7 +79,6 @@ bool Minimap::Contains(Vector2 screenPx) const
 
 Rectangle Minimap::ViewportRect(const Camera2D &view, int screenW, int screenH, int mapW, int mapH) const
 {
-    // Visible world corners: screen origin and far corner through the camera.
     const Vector2 topLeft = GetScreenToWorld2D({ 0.0f, 0.0f }, view);
     const Vector2 bottomRight =
         GetScreenToWorld2D({ static_cast<float>(screenW), static_cast<float>(screenH) }, view);

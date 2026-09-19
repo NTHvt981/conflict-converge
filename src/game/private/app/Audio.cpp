@@ -18,11 +18,6 @@ float Clamp01(float v)
 
 const char *kAssetDir = "data/audio/";
 
-// Minimum seconds between two plays of the same sound. The game loop
-// retriggers combat sounds unconditionally (Explosion on every death-frame,
-// Attack every 0.12s while anything winds up, Confirm per production spawn),
-// so without floors a battle is a 60Hz retrigger roar. One-shots and
-// edge-triggered UI sounds stay at 0.
 double MinIntervalSeconds(SfxId id)
 {
     switch (id)
@@ -32,21 +27,21 @@ double MinIntervalSeconds(SfxId id)
     case SfxId::Confirm:
         return 0.20;
     case SfxId::Attack:
-        return 0.10; // backstop under the caller's 0.12s gate
+        return 0.10;
     case SfxId::Select:
         return 0.05;
     default:
-        return 0.0; // Place/Deplete/Victory/Defeat: rare by construction
+        return 0.0;
     }
 }
 
-} // namespace
+}
 
 Audio::Audio()
 {
     for (int i = 0; i < static_cast<int>(SfxId::Count); ++i)
     {
-        lastPlay_[i] = -1.0e9; // first play of each sound always lands
+        lastPlay_[i] = -1.0e9;
     }
 }
 
@@ -73,7 +68,7 @@ const char *Audio::FileFor(SfxId id)
     case SfxId::Count:
         break;
     }
-    return "select.wav"; // unreachable; keeps MSVC from warning
+    return "select.wav";
 }
 
 bool Audio::Init(bool withDevice)
@@ -81,11 +76,11 @@ bool Audio::Init(bool withDevice)
     Shutdown();
     for (int i = 0; i < static_cast<int>(SfxId::Count); ++i)
     {
-        lastPlay_[i] = -1.0e9; // (re)arm on every Init, headless path included
+        lastPlay_[i] = -1.0e9;
     }
     if (!withDevice)
     {
-        return false; // headless/test path: nothing loaded, plays no-op
+        return false;
     }
     for (int i = 0; i < static_cast<int>(SfxId::Count); ++i)
     {
@@ -116,7 +111,7 @@ void Audio::Shutdown()
     ready_ = false;
     for (int i = 0; i < static_cast<int>(SfxId::Count); ++i)
     {
-        lastPlay_[i] = -1.0e9; // next Init/ShouldPlay starts from first-play
+        lastPlay_[i] = -1.0e9;
     }
 }
 
@@ -138,7 +133,7 @@ void Audio::Play(SfxId id)
     }
     if (!ShouldPlay(id, GetTime()))
     {
-        return; // retrigger floor: swallowed, not stacked
+        return;
     }
     SetSoundVolume(sounds_[i], sfx_);
     PlaySound(sounds_[i]);

@@ -1,4 +1,3 @@
-// MenuScreens.cpp - the out-of-world menu branch, extracted from Game.
 
 #include "MenuScreens.h"
 
@@ -22,7 +21,6 @@ MenuScreens::MenuScreens(MenuFlow &menu, Art &art, Audio &audio, InputManager &i
 
 void MenuScreens::Announce(EventType type)
 {
-    // Bare-event announcer for MenuAction.
     Event bare;
     bare.type = type;
     events_.Dispatch(bare);
@@ -43,8 +41,6 @@ bool MenuScreens::CancelRemapCapture()
     {
         return false;
     }
-    // Esc never rebinds: it cancels an armed capture, else backs
-    // out to wherever the remap screen was entered from.
     if (remapArming_ >= 0)
     {
         remapArming_ = -1;
@@ -103,8 +99,6 @@ void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
         }
         if (GuiButton({ cx - 130.0f, 395.0f, 260.0f, 40.0f }, "Map Editor"))
         {
-            // QoL editor: blank 24x18 scratch canvas (shipped-map size),
-            // never the live match map (MainMenu implies no live world).
             editorMap_.name = "Custom";
             editorMap_.author = "";
             editorMap_.width = 24;
@@ -150,10 +144,6 @@ void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
         }
         GuiLabel({ cx - 200.0f, 335.0f, 400.0f, 20.0f }, "AI difficulty");
         int diffActive = static_cast<int>(menu_.setup.difficulty);
-        // raygui GuiToggleGroup bounds.width is per-item unless
-        // GROUP_WIDTH_FULL=1 (default 0): 400px would make each of the
-        // 3 toggles 400px wide (1200px total, overflowing the panel).
-        // Fit 3 items exactly in the 400px panel (local qwen verified: 132).
         const float diffPad = static_cast<float>(GuiGetStyle(TOGGLE, GROUP_PADDING));
         const float diffItemW = (400.0f - diffPad * 2.0f) / 3.0f;
         GuiToggleGroup({ cx - 200.0f, 360.0f, diffItemW, 30.0f }, "Easy;Medium;Hard",
@@ -214,17 +204,17 @@ void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
         GuiSetTooltip("Orange/blue team palette instead of red/blue (applies live)");
         GuiCheckBox({ cx - 200.0f, 390.0f, 20.0f, 20.0f }, "Color-blind mode",
                     &menu_.settings.colorBlindMode);
-        art_.SetColorBlindMode(menu_.settings.colorBlindMode); // live, no reopen needed
+        art_.SetColorBlindMode(menu_.settings.colorBlindMode);
         GuiLabel({ cx - 200.0f, 412.0f, 400.0f, 20.0f }, "UI scale");
         GuiSetTooltip("Menu/HUD text size (applies live)");
         GuiSlider({ cx - 200.0f, 434.0f, 400.0f, 20.0f }, "0.75", "2",
                   &menu_.settings.uiScale, 0.75f, 2.0f);
         GuiSetStyle(DEFAULT, TEXT_SIZE,
-                    static_cast<int>(10 * menu_.settings.uiScale)); // live, no reopen needed
+                    static_cast<int>(10 * menu_.settings.uiScale));
         if (GuiButton({ cx - 200.0f, 470.0f, 400.0f, 40.0f }, "Back"))
         {
-            SyncHotkeySettings(); // QoL: remaps ride the settings file too
-            SaveSettings(menu_.settings, kSettingsPath); // Persistence
+            SyncHotkeySettings();
+            SaveSettings(menu_.settings, kSettingsPath);
             Announce(EventType::MenuAction);
             menu_.OpenMainMenu();
         }
@@ -264,8 +254,6 @@ void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
             Announce(EventType::MenuAction);
             menu_.OpenMainMenu();
         }
-        // QoL snapshot replay entry: enabled when the last match left
-        // frames behind. Loads frame 0 and freezes the sim (viewer).
         if (ReplayFrameCount(kReplayDir) <= 0)
         {
             GuiDisable();
@@ -278,10 +266,6 @@ void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
     }
     else if (menu_.state == MenuState::MapEditor)
     {
-        // QoL tile painter on scratch state (never the live match).
-        // Left-drag paints the brush, right-click erases to grass,
-        // keys 1-9 or the toggle row switch brush. Save validates +
-        // warns, never blocks on playability (see ValidateMapPlayable).
         constexpr float kCell = 24.0f, kOx = 20.0f, kOy = 100.0f;
         auto saveEditor = [&](const std::string &name) -> std::string {
             if (!IsValidMapSaveName(name))
@@ -365,7 +349,6 @@ void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
                     Fade(LIGHTGRAY, 0.4f));
             }
         }
-        // Marker letters over their tiles.
         for (const MapNodeSpawn &spawn : editorMap_.nodes)
         {
             Art::DrawUiText(&art_, spawn.kind == ResourceKind::Iron ? "I" : "O",
@@ -420,11 +403,8 @@ void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
     }
     else
     {
-        // Unreachable (match states always carry a world); recover.
         menu_.OpenMainMenu();
     }
-    // Transition fade: fullscreen fade-from-black over the first moments
-    // of each screen (uniform across all branches, no per-screen edits).
     if (const float fade = MenuFadeAlpha(menuStateTime); fade < 1.0f)
     {
         DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 1.0f - fade));
@@ -434,17 +414,10 @@ void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
 
 void MenuScreens::DrawRemap(float cx)
 {
-    // QoL remappable hotkeys (Tier 1): click a key, press the new one.
-    // Stealing a claimed key needs a second click to confirm.
     Art::DrawUiText(&art_, "Remap hotkeys", static_cast<int>(cx) - 200, 40, 28, DARKGRAY);
     GuiLabel({ cx - 200.0f, 70.0f, 600.0f, 20.0f },
              remapArming_ >= 0 ? "Press a key for the armed action (Esc cancels)"
                                : "Click a key to rebind it. Digits/Alt (Tier 2) are fixed.");
-    // Two balanced halves (self-maintaining as actions are added) sized
-    // to the widest label, so rows can never overwrite each other at any
-    // font size or window width the min size allows. Sized with
-    // GuiGetTextWidth (raygui's own metric, the one GuiLabel draws with),
-    // not MeasureText (different per-glyph spacing — diverges off size 10).
     const int defCount = NumHotkeyDefs();
     const int perCol = (defCount + 1) / 2;
     int labelW = 0;
@@ -481,7 +454,6 @@ void MenuScreens::DrawRemap(float cx)
         {
             if (!remapConflictAction_.empty() && remapConflictAction_ == def.action)
             {
-                // Second click confirms the steal.
                 hotkeys_.Rebind(def.action, remapConflictKey_);
                 callbacks_.hotkeysRebound();
                 SyncHotkeySettings();
@@ -491,13 +463,11 @@ void MenuScreens::DrawRemap(float cx)
             }
             else
             {
-                remapArming_ = (remapArming_ == i) ? -1 : i; // click again cancels
+                remapArming_ = (remapArming_ == i) ? -1 : i;
                 remapConflictAction_.clear();
             }
         }
     }
-    // Drain this frame's pressed-key queue into the armed capture.
-    // Esc/modifiers never bind (Esc cancels via the Back binding).
     if (remapArming_ >= 0)
     {
         int pressed = 0;

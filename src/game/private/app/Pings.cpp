@@ -7,13 +7,13 @@ constexpr float kPingLifetimeSeconds = 5.0f;
 constexpr double kPingRetriggerFloorSeconds = 2.0;
 constexpr std::size_t kMaxPings = 32;
 
-} // namespace
+}
 
 Pings::Pings()
 {
     for (double &last : lastRaise_)
     {
-        last = -1.0e9; // first raise of each kind always lands
+        last = -1.0e9;
     }
 }
 
@@ -31,12 +31,12 @@ void Pings::RaiseAt(Vector2 worldPos, PingKind kind, double nowSeconds)
     }
     if (nowSeconds - lastRaise_[i] < kPingRetriggerFloorSeconds)
     {
-        return; // same-kind spam guard (a unit under continuous fire)
+        return;
     }
     lastRaise_[i] = nowSeconds;
     if (pings_.size() >= kMaxPings)
     {
-        pings_.erase(pings_.begin()); // drop oldest, keep the list bounded
+        pings_.erase(pings_.begin());
     }
     Ping ping;
     ping.worldPos = worldPos;
@@ -51,10 +51,6 @@ void Pings::Update(float dt)
     {
         return;
     }
-    // Order-preserving erase: RaiseAt evicts from the front (oldest) and
-    // Latest reads the back (newest), so survivors must stay chronological.
-    // Swap-and-pop would be O(1) per removal but breaks both assumptions;
-    // at kMaxPings (32) the linear erase is negligible.
     for (std::size_t i = 0; i < pings_.size();)
     {
         pings_[i].age += dt;

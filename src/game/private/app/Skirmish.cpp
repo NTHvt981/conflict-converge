@@ -28,8 +28,6 @@ SkirmishSpots SpotsForMap(const std::string &mapPath)
 	{
 		spots.aiHome = data.aiSpawns[0];
 	}
-	// 2v2: second markers per side arm the allied + second enemy commanders.
-	// Fallbacks keep single-pair maps on the 1v1 path (is2v2 false).
 	if (data.playerSpawns.size() >= 2 && data.aiSpawns.size() >= 2)
 	{
 		spots.allyHome = data.playerSpawns[1];
@@ -76,9 +74,6 @@ void ResetSkirmish(SkirmishWorld &world)
 	}
 	if (world.ai != nullptr)
 	{
-		// Park the commander without a base: the next Build re-arms it via
-		// Reset + SetupBase, while the load path re-arms it bare (the loaded
-		// world already fields the AI side).
 		world.ai->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, 1);
 	}
 	if (world.allyAI != nullptr)
@@ -89,10 +84,6 @@ void ResetSkirmish(SkirmishWorld &world)
 	{
 		world.enemyAI2->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, 1);
 	}
-	// Bind shared occupancy so AI orders route footprint-aware. Identity is
-	// stable across matches (members, never reallocated), so binding here
-	// covers Build, menu Start, and the load path — all funnel through this
-	// reset. Null grid (bare tests) keeps legacy blind orders.
 	if (world.ai != nullptr)
 	{
 		world.ai->SetOccupancy(world.occ);
@@ -127,8 +118,6 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 	ProductionQueue &queue = *world.queue;
 	UnitFactory &factory = *world.factory;
 
-	// Same starting funds both sides see ( fair rules; the AI seeds its
-	// own 1000/500 inside SetupBase below).
 	resources.AddIron(1000);
 	resources.AddOil(500);
 
@@ -140,7 +129,6 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 	}
 	else
 	{
-		// Legacy hardcoded layout when the file is missing.
 		map.Resize(20, 15);
 		map.Set({ 6, 3 }, TerrainType::Water);
 		map.Set({ 7, 3 }, TerrainType::Water);
@@ -152,18 +140,14 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 	occ.Resize(map.Width(), map.Height());
 
 	auto spawnDemo = [&](UnitType type, int tileX, int tileY, int team) {
-		// Spawn on walkable ground: the marker itself may sit inside the
-		// freshly placed base footprint (trapped units otherwise).
 		const cc::IVec2 free = NearestFreeTile(map, tileX, tileY);
 		factory.Spawn(type, team, cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
 	};
 	auto placeBase = [&](int team, cc::IVec2 anchor) {
-		// Reserve a fresh footprint in the occupancy grid.
 		auto reserve = [&](cc::IVec2 at, BuildingType type, Entity entity) {
 			const cc::IVec2 fp = Footprint(type);
 			occ.ReserveFootprint(at, fp.x, fp.y, entity, registry.Generation(entity));
 		};
-		// Try one candidate site; returns kInvalidEntity when blocked.
 		auto trySite = [&](BuildingType type, cc::IVec2 at) -> Entity {
 			const Entity e =
 				PlaceBuilding(registry, map, type, team, at.x, at.y, &nodes);
@@ -173,9 +157,6 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 			}
 			return e;
 		};
-		// Spiral fallback (rings 1..6) when every preferred spot is
-		// blocked: an adversarial map must not silently leave a side
-		// without production.
 		auto trySpiral = [&](BuildingType type, cc::IVec2 center) -> Entity {
 			for (int ring = 1; ring <= 6; ++ring)
 			{
@@ -193,8 +174,6 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 			}
 			return kInvalidEntity;
 		};
-		// Base first at the preferred anchor, else wherever fits nearby.
-		// Depot/factory cluster around wherever the base actually landed.
 		cc::IVec2 home = anchor;
 		bool basePlaced = trySite(BuildingType::Base, home) != kInvalidEntity;
 		for (int ring = 1; !basePlaced && ring <= 6; ++ring)
@@ -244,32 +223,21 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 			trySpiral(BuildingType::Factory, home);
 		}
 	};
-	// NOTE: bases go down BEFORE units spawn, so NearestFreeTile routes
-	// around footprints instead of trapping units inside them.
 	placeBase(0, spots.playerHome);
 	spawnDemo(UnitType::Infantry, spots.playerHome.x, spots.playerHome.y, 0);
 	spawnDemo(UnitType::LightTank, spots.playerHome.x + 2, spots.playerHome.y, 0);
 	spawnDemo(UnitType::Artillery, spots.playerHome.x + 1, spots.playerHome.y + 3, 0);
-	spawnDemo(UnitType::Engineer, spots.harvest.x, spots.harvest.y, 0); // harvester on iron
+	spawnDemo(UnitType::Engineer, spots.harvest.x, spots.harvest.y, 0);
 	queue.Enqueue(resources, UnitType::Infantry);
 	queue.Enqueue(resources, UnitType::LightTank);
 
-	// Enemy commander owns team 1 under fair rules. Its starting guard keeps
-	// team 1 fielded from frame one so the outcome check never fires instantly.
 	world.ai->Reset(difficulty, spots.aiHome, spots.playerHome, 1);
 	world.ai->SetupBase();
 
-	// 2v2: the allied commander plays team 0 beside the player, and a second
-	// enemy holds the far side for team 1. Same difficulty all around; each
-	// side's guards keep both teams fielded from frame one. Shared-team
-	// economy: base income and harvest ticks are credited per team, so both
-	// ledgers on a side benefit (allies genuinely share the pool).
 	if (spots.is2v2)
 	{
 		if (world.allyAI != nullptr)
 		{
-			// SetupBase places the ally's own Base/Depot/Factory (no
-			// placeBase: that would double-place on the same anchor).
 			world.allyAI->Reset(difficulty, spots.allyHome, spots.aiHome, 0);
 			world.allyAI->SetupBase();
 		}
@@ -313,11 +281,6 @@ bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath)
 	fog.Resize(map.Width(), map.Height());
 	occ.Resize(map.Width(), map.Height());
 
-	// One prototype squad: the sandbox-only PrototypeInfantry type, which
-	// shares Infantry's stats/driver/squad renderer and adds the prototype
-	// art at 2x (see Art::BaseArtScale). Only the level around it is special.
-	// No bases, no funds, no queue, no AI: parked commanders stay parked.
-	// Prepaid, not cost-validated: the sandbox has no economy to charge.
 	const cc::IVec2 home = data.playerSpawns[0];
 	const cc::IVec2 free = NearestFreeTile(map, home.x, home.y);
 	factory.SpawnPrepaid(UnitType::PrototypeInfantry, 0,

@@ -31,22 +31,14 @@ namespace
 {
 
 constexpr char kMagic[4] = { 'C', 'C', 'B', '2' };
-// Garbage-input guards: saves violating these are rejected, never trusted.
 constexpr std::int32_t kMaxMapTiles = 1024 * 1024;
 constexpr std::int32_t kMaxUnits = 100000;
 constexpr std::int32_t kMaxBuildings = 100000;
 constexpr std::int32_t kMaxNodes = 100000;
 constexpr std::uint32_t kMaxPathNodes = 100000;
 constexpr std::int32_t kMaxFogTeams = 16;
-// Playable sides: teams are 0 (player/allies) and 1 (enemies) in every mode
-// (2v2 shares teams, it never adds new ones). Anything else on the wire is
-// corruption, never a future extension — reject it.
 constexpr int kMaxTeamID = 1;
 
-// Wire-range pins: every enum validated below ends in a Count sentinel, and
-// the decode checks accept [0, Count). Appending a variant bumps Count and
-// trips these asserts on purpose — extend the decode handling deliberately
-// (defaults? migration?), never silently.
 static_assert(static_cast<int>(ArmorType::Count) == 3, "ArmorType grew: review save decode");
 static_assert(static_cast<int>(DamageType::Count) == 3, "DamageType grew: review save decode");
 static_assert(static_cast<int>(UnitType::Count) == 8, "UnitType grew: review save decode");
@@ -55,9 +47,6 @@ static_assert(static_cast<int>(AttackPhase::Count) == 3, "AttackPhase grew: revi
 static_assert(static_cast<int>(TerrainType::Count) == 5, "TerrainType grew: review save decode");
 static_assert(static_cast<int>(BuildingType::Count) == 3, "BuildingType grew: review save decode");
 static_assert(static_cast<int>(BuildingState::Count) == 3, "BuildingState grew: review save decode");
-// Reviewed: UnderConstruction appended AFTER Destroyed, so wire values 0/1
-// decode exactly like legacy saves; 2 loads as UnderConstruction with a
-// restarted timer (constructionTime is not serialized — see below).
 static_assert(static_cast<int>(ResourceKind::Count) == 2, "ResourceKind grew: review save decode");
 
 void FillVec2(SaveVec2 &out, Vector2 v)
@@ -107,8 +96,6 @@ void FillUnit(SaveUnit &out, const Unit &u, std::int32_t targetIndex)
     out.hasPath = u.hasPath;
 }
 
-// Decoded snapshot: LoadWorld parses the whole message into these first and
-// only touches the live world when every field checks out.
 struct SavedUnit
 {
     Unit unit;
@@ -130,7 +117,7 @@ struct SavedWorld
     std::vector<ResourceNode> nodes;
     float nodeIronCarry = 0.0f;
     float nodeOilCarry = 0.0f;
-    std::vector<std::pair<int, std::string>> teamFog; // (teamID, explored bytes)
+    std::vector<std::pair<int, std::string>> teamFog;
 };
 
 bool InRange(std::int64_t value)
@@ -195,7 +182,7 @@ bool DecodeUnit(const SaveUnit &in, SavedUnit &out, std::int32_t mapWidth,
     }
     u.pathNext = static_cast<std::size_t>(in.pathNext);
     u.hasPath = in.hasPath;
-    u.target = kInvalidEntity; // remapped to fresh IDs at commit time
+    u.target = kInvalidEntity;
     return true;
 }
 
@@ -210,8 +197,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
     }
     catch (const std::exception &)
     {
-        return false; // truncated or garbage payload (bad_alloc included:
-                      // a crafted size prefix cannot exhaust memory here)
+        return false;
     }
     if (msg.saveVersion != kSaveVersion)
     {
@@ -284,12 +270,6 @@ bool Decode(const std::string &payload, SavedWorld &out)
         Building b;
         b.type = static_cast<BuildingType>(in.type);
         b.state = static_cast<BuildingState>(in.state);
-        // The whole footprint must sit inside the save's own map, not just
-        // the anchor — downstream code indexes every footprint tile.
-        // Compared as tile > map - footprint: the old tile + footprint
-        // form signed-overflows on near-INT32_MAX tile_x from a crafted
-        // save, wrapping negative and passing the check. mapWidth/fp are
-        // small validated positives, so the subtraction cannot overflow.
         const cc::IVec2 fp = Footprint(b.type);
         if (in.tileX < 0 || in.tileY < 0 || in.tileX > out.mapWidth - fp.x ||
             in.tileY > out.mapHeight - fp.y)
@@ -299,10 +279,6 @@ bool Decode(const std::string &payload, SavedWorld &out)
         b.teamID = in.team;
         b.tileX = in.tileX;
         b.tileY = in.tileY;
-        // Legacy saves predate building HP (zeros on the wire) — heal
-        // those to full rather than loading rubble. Destroyed buildings
-        // legitimately save health=0, so the heal only applies while the
-        // structure is still standing.
         const float full = BuildingMaxHealth(b.type);
         b.maxHealth = in.maxHealth > 0.0f ? in.maxHealth : full;
         if (b.state == BuildingState::Destroyed)
@@ -311,9 +287,6 @@ bool Decode(const std::string &payload, SavedWorld &out)
         }
         else if (b.state == BuildingState::UnderConstruction)
         {
-            // Timer isn't serialized: restart construction from 0 rather
-            // than resuming mid-ramp (also dodges the legacy zero-heal
-            // above, which would load a fresh site at full health).
             b.constructionTime = 0.0f;
             b.health = 0.0f;
         }
@@ -355,8 +328,6 @@ bool Decode(const std::string &payload, SavedWorld &out)
     }
     out.nodeIronCarry = msg.nodeIronCarry;
     out.nodeOilCarry = msg.nodeOilCarry;
-    // The legacy explored field is gone with the protobuf format: per-team
-    // memory arrives only via team_fog below.
     if (msg.teamFog.size() > static_cast<std::uint32_t>(kMaxFogTeams))
     {
         return false;
@@ -369,7 +340,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
     return true;
 }
 
-} // namespace
+}
 
 bool SaveWorld(const WorldState &world, const std::string &path)
 {
@@ -397,7 +368,6 @@ bool SaveWorld(const WorldState &world, const std::string &path)
             msg.map.terrain.push_back(static_cast<std::int32_t>(world.map->Get({ x, y })));
         }
     }
-    // Units in Each order; targets stored as indices into that same order.
     std::vector<Entity> order;
     world.registry->Each<Unit>([&](Entity id, const Unit &) { order.push_back(id); });
     for (Entity id : order)
@@ -484,7 +454,7 @@ bool LoadWorld(const WorldState &world, const std::string &path)
     char magic[sizeof(kMagic)] = {};
     if (!file.read(magic, sizeof(magic)) || std::memcmp(magic, kMagic, sizeof(kMagic)) != 0)
     {
-        return false; // rejects old CCSV/CCPB files and garbage alike
+        return false;
     }
     std::string payload(static_cast<std::size_t>(size) - sizeof(kMagic), '\0');
     if (!file.read(payload.data(), static_cast<std::streamsize>(payload.size())))
@@ -494,10 +464,9 @@ bool LoadWorld(const WorldState &world, const std::string &path)
     SavedWorld saved;
     if (!Decode(payload, saved))
     {
-        return false; // destination world untouched
+        return false;
     }
 
-    // Commit: every field validated, apply in dependency order.
     world.registry->Clear();
     world.resources->iron = saved.iron;
     world.resources->oil = saved.oil;
@@ -536,9 +505,8 @@ bool LoadWorld(const WorldState &world, const std::string &path)
     }
     for (const Building &b : saved.buildings)
     {
-        world.registry->Add(world.registry->Create(), b); // tiles already marked by map data
+        world.registry->Add(world.registry->Create(), b);
     }
-    // Fresh node storage: same default state a new ResourceNodes starts in.
     *world.nodes = ResourceNodes();
     for (const ResourceNode &node : saved.nodes)
     {
@@ -546,8 +514,6 @@ bool LoadWorld(const WorldState &world, const std::string &path)
                                  node.respawnTimer);
     }
     world.nodes->SetCarry(saved.nodeIronCarry, saved.nodeOilCarry);
-    // Fog memory follows the map: resize first, then restore each team's
-    // explored set (size mismatches are ignored inside SetExplored).
     world.fog->Resize(saved.mapWidth, saved.mapHeight);
     for (const auto &entry : saved.teamFog)
     {

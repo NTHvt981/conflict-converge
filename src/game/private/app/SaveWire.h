@@ -1,16 +1,5 @@
 #pragma once
 
-// Cereal wire structs for the save format (replaces proto/savegame.proto).
-// Kept separate from the live gameplay structs on purpose: the wire shape
-// must stay independently versionable and must tolerate garbage without
-// touching live game state until fully validated (Decode parses into
-// SavedWorld snapshots first, in SaveGame.cpp). Symmetric serialize() is
-// enough — unlike the JSON configs, the binary archive always reads back
-// exactly what was written, so no presence tracking is needed.
-// Field order is the on-disk order: appending a field is backward-readable
-// only if Decode never assumes a length, so treat any shape change as a
-// new save_version (see kSaveVersion in SaveGame.h).
-
 #include <cstdint>
 #include <string>
 #include <vector>

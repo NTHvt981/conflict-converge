@@ -1,12 +1,5 @@
 #include "UnitConfig.h"
 
-// Fail-closed JSON parsing, same arrangement as SpriteData.cpp: cereal
-// throws on absent keys (handled per-field below), but mistyped scalars
-// and malformed documents trip rapidjson's C assert — the documented
-// override turns those into exceptions the parse boundary catches, so
-// malformed input returns false like the protobuf-JSON path did. TU-local:
-// must precede every cereal include, and UnitConfig.h must stay cereal-free.
-
 #define CEREAL_RAPIDJSON_ASSERT(x) \
     do { if (!(x)) throw std::runtime_error("malformed unit-config JSON"); } while (0)
 
@@ -26,7 +19,6 @@
 namespace
 {
 
-// Underscore-insensitive stem compare ("heavy_tank" matches "HeavyTank").
 std::string NormalizedStem(std::string s)
 {
     std::string out;
@@ -54,8 +46,6 @@ bool ReadWholeFile(const std::string &path, std::string &out)
     return true;
 }
 
-// Canonical-until-section-5 duplicates (each points at its live source):
-// the game still hardcodes these, so the no-file baseline mirrors them.
 const char *BaselineSpritePrefix(UnitType type)
 {
     switch (type)
@@ -77,20 +67,15 @@ const char *BaselineSpritePrefix(UnitType type)
     case UnitType::Count:
         break;
     }
-    return "infantry"; // unreachable; mirrors Art.cpp's UnitFile fallback
+    return "infantry";
 }
 
 bool BaselineIsVehicle(UnitType type)
 {
-    // Mirrors ApplyBaseStats' inline split (UnitStats.cpp) until the
-    // section-5 follow-up replaces both with a config lookup.
     return type == UnitType::IFV || type == UnitType::Artillery ||
            type == UnitType::LightTank || type == UnitType::HeavyTank;
 }
 
-// Exact enumerator spellings for the config "type" field ("AntiArmorInfantry",
-// not Hud.h UnitTypeName's display text "Anti-Armor" — the schema requires
-// the enum name so filenames and the type field validate against each other).
 const char *UnitTypeConfigName(UnitType type)
 {
     switch (type)
@@ -117,15 +102,6 @@ const char *UnitTypeConfigName(UnitType type)
     return "";
 }
 
-// Wire structs mirroring proto/unitconfig.proto (key names are the shipped
-// camelCase JSON). Loading is tolerant: single-name TryLoadValue keeps the
-// default when a key is absent (protobuf default-instance semantics), and
-// the two-name form additionally accepts the proto's original snake_case
-// spellings, mirroring protobuf-JSON's dual-casing input exactly. A present
-// but mistyped value throws past TryLoadValue (only cereal::Exception is
-// caught) so the whole file is rejected, also like protobuf-JSON. Only
-// load() is tolerant — save() writes every field unconditionally from a
-// fully populated struct (see UnitConfigToJson), unwrapping the optionals.
 template <class Archive, class T>
 bool TryLoadKey(Archive &ar, const char *name, T &out)
 {
@@ -284,17 +260,13 @@ struct JsonArt
 
 struct JsonConfig
 {
-    // Plain aggregate, no load()/save(): like SpriteData's JsonSheet, an
-    // unnamed root struct misaligns the archive a full level — on input the
-    // lookups all miss, on output cereal wraps it in a "value0" object.
-    // Both directions drive the four named members directly instead.
     std::string type;
     JsonStats stats;
     JsonCollision collision;
     JsonArt art;
 };
 
-} // namespace
+}
 
 const char *UnitConfigFilename(UnitType type)
 {
@@ -330,9 +302,6 @@ UnitConfig DefaultUnitConfig(UnitType type)
     config.footprintWidth = BaselineIsVehicle(type) ? 2 : 1;
     config.footprintHeight = BaselineIsVehicle(type) ? 2 : 1;
     config.spritePrefix = BaselineSpritePrefix(type);
-    // Only Infantry resolves atlas names in the game today
-    // (data/configs/animations.json has no other entries); the rest fall
-    // back to flat PNGs, represented here as empty prefixes.
     if (type == UnitType::Infantry)
     {
         config.atlasIdlePrefix = "infantry_idle";
@@ -478,11 +447,11 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
     UnitType type = UnitType::Infantry;
     if (!ParseUnitTypeName(cfg.type, type))
     {
-        return false; // missing or unrecognized UnitType
+        return false;
     }
     if (NormalizedStem(cfg.type) != NormalizedStem(filenameStem))
     {
-        return false; // type doesn't match its own filename
+        return false;
     }
 
     UnitConfig config = DefaultUnitConfig(type);
@@ -521,8 +490,6 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
     {
         config.stats.sightRange = *stats.sightRange;
     }
-    // Collision bounds: well-formed rects derive the footprint size;
-    // anything else keeps the compiled-in baseline for this type.
     if (cfg.collision.bounds.has_value())
     {
         const int left = cfg.collision.bounds->left;
@@ -537,7 +504,6 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
             config.footprintHeight = bottom - top;
         }
     }
-    // Origin is stored as-is (no gameplay effect yet — see the schema doc).
     if (cfg.collision.origin.has_value())
     {
         config.originX = cfg.collision.origin->x;
@@ -547,7 +513,6 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
     {
         config.spritePrefix = cfg.art.spritePrefix;
     }
-    // Atlas prefixes: empty is the valid "flat-PNG fallback" state.
     config.atlasIdlePrefix = cfg.art.atlasIdlePrefix;
     config.atlasWalkPrefix = cfg.art.atlasWalkPrefix;
 
@@ -624,7 +589,7 @@ std::vector<UnitConfig> LoadAllUnitConfigs(const std::string &dir)
     std::filesystem::directory_iterator it(dir, ec);
     if (ec)
     {
-        return configs; // missing/unreadable dir: editor falls back to defaults
+        return configs;
     }
     const std::filesystem::directory_iterator end;
     for (; it != end; it.increment(ec))
@@ -636,7 +601,7 @@ std::vector<UnitConfig> LoadAllUnitConfigs(const std::string &dir)
         UnitConfig config;
         if (!LoadUnitConfig(it->path().string(), config))
         {
-            continue; // unparseable files never reach the editor list
+            continue;
         }
         configs.push_back(std::move(config));
     }

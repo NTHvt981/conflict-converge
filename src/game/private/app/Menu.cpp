@@ -7,9 +7,6 @@
 
 #include "Hotkeys.h"
 #include "rini.h"
-                     // '=' is set in src/thirdparty/rini_impl.cpp, the sole
-                     // RINI_IMPLEMENTATION TU; the declarations used here don't
-                     // depend on it)
 
 void MenuFlow::TogglePause()
 {
@@ -109,14 +106,11 @@ float ClampFloat(float value, float lo, float hi)
     return value;
 }
 
-} // namespace
+}
 
 bool SaveSettings(const MenuSettings &settings, const std::string &path)
 {
-    // rini-backed writer: scalars as int/text entries, hotkey remaps as
-    // individual hotkey.<action> int entries (same key shape as the old
-    // hand-rolled format).
-    rini_data data = rini_load(NULL); // empty object, RINI_MAX_ENTRY_CAPACITY slots
+    rini_data data = rini_load(NULL);
     char number[64];
     rini_set_comment_line(&data, " Conflict Converge settings v1");
     std::snprintf(number, sizeof(number), "%g", settings.cameraSpeed);
@@ -140,8 +134,6 @@ bool SaveSettings(const MenuSettings &settings, const std::string &path)
     rini_set_value(&data, "mute", settings.mute ? 1 : 0, NULL);
     rini_save(data, path.c_str());
     rini_unload(&data);
-    // rini_save reports no status, so probe the file like the old
-    // std::ofstream-truthiness check did (missing dir -> false).
     std::ifstream probe(path);
     return probe.good();
 }
@@ -149,14 +141,6 @@ bool SaveSettings(const MenuSettings &settings, const std::string &path)
 namespace
 {
 
-// rini's '=' value delimiter only takes effect for spaced pairs: its value
-// scanner stops at ' ', so a bare `key=value` (the format every shipped
-// settings.cfg uses) overshoots the '=' and parses an empty value (verified
-// against the vendored header with a compiled probe: `mute=1` -> text="").
-// Rewriting content lines to `key = value` before rini_load_from_memory
-// keeps old files readable with stock rini — no fork, survives bootstrap
-// re-clones. Comment/empty/delimiter-less lines pass through untouched
-// (rini skips them, same as the old loader).
 std::string NormalizeSettingsText(const std::string &text)
 {
     std::istringstream lines(text);
@@ -179,10 +163,6 @@ std::string NormalizeSettingsText(const std::string &text)
     return out;
 }
 
-// Last-match lookup over the loaded entries (mirrors the old line-by-line
-// loader where later lines overwrote earlier ones; rini's own getters
-// return the FIRST match). Returns nullptr when the key is absent so
-// callers leave the current value untouched.
 const char *FindEntryText(const rini_data &data, const char *key)
 {
     const char *found = NULL;
@@ -196,20 +176,20 @@ const char *FindEntryText(const rini_data &data, const char *key)
     return found;
 }
 
-} // namespace
+}
 
 bool LoadSettings(MenuSettings &settings, const std::string &path)
 {
     std::ifstream file(path);
     if (!file)
     {
-        return false; // missing/unreadable: leave settings untouched
+        return false;
     }
     std::ostringstream raw;
     raw << file.rdbuf();
     const std::string normalized = NormalizeSettingsText(raw.str());
     rini_data data = rini_load_from_memory(normalized.c_str());
-    MenuSettings parsed = settings; // malformed values keep current values
+    MenuSettings parsed = settings;
     float number = 0.0f;
     const char *text = NULL;
     if ((text = FindEntryText(data, "cameraSpeed")) != NULL)
@@ -275,9 +255,6 @@ bool LoadSettings(MenuSettings &settings, const std::string &path)
             parsed.mute = std::strcmp(text, "1") == 0;
         }
     }
-    // QoL remap persistence: scan every entry in file order so later
-    // hotkey.<action> lines win, exactly like the old loader. Known action
-    // + positive int key only; unknown/malformed entries are skipped.
     for (unsigned int i = 0; i < data.count; ++i)
     {
         const char *key = data.entries[i].key;

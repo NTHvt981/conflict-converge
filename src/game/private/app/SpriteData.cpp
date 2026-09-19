@@ -1,13 +1,5 @@
 #include "SpriteData.h"
 
-// Fail-closed JSON parsing: cereal signals missing keys via exception, but
-// mistyped scalars and malformed documents trip rapidjson's C assert
-// (abort in Debug, garbage in Release). The documented override below turns
-// every rapidjson complaint into an exception the parse boundary catches,
-// so malformed input returns false exactly like the protobuf-JSON path did.
-// TU-local by necessity (preprocessor): must precede every cereal include,
-// and SpriteData.h must stay cereal-free.
-
 #define CEREAL_RAPIDJSON_ASSERT(x) \
     do { if (!(x)) throw std::runtime_error("malformed sprite JSON"); } while (0)
 
@@ -44,12 +36,6 @@ bool RectInside(int left, int top, int right, int bottom, int width, int height)
            bottom <= height;
 }
 
-// Wire structs mirroring proto/spritedata.proto field-for-field (key names
-// match the shipped camelCase JSON). Loading is tolerant by design: every
-// member goes through TryLoadValue, so an absent key keeps its default —
-// exactly protobuf-JSON's default-instance semantics, which the validation
-// below (and its tests) rely on. Only load() is defined: the game never
-// writes these files back.
 template <class Archive, class T>
 void TryLoadValue(Archive &ar, const char *name, T &out)
 {
@@ -182,20 +168,12 @@ struct JsonAnim
 
 struct JsonSheet
 {
-    // Plain aggregate, deliberately NO load(): cereal's JSON archive enters
-    // every struct processed through ar() via startNode(), so an unnamed
-    // root struct would consume one iterator level too many and every member
-    // lookup would miss. The four members are loaded directly off the
-    // archive instead (see ParseJsonSheet).
     std::vector<JsonTexture> textures;
     std::vector<JsonSprite> sprites;
     std::vector<JsonGrid> grids;
     std::vector<JsonAnim> animations;
 };
 
-// Broad catch is the point: syntax errors, missing keys that some other
-// layer requires, mistyped scalars (via the assert override above) — any
-// failure means malformed input, and every caller maps false to reject.
 bool ParseJsonSheet(const std::string &json, JsonSheet &out)
 {
     try
@@ -216,7 +194,7 @@ bool ParseJsonSheet(const std::string &json, JsonSheet &out)
     }
 }
 
-} // namespace
+}
 
 bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out);
 
@@ -234,7 +212,6 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 {
     SpriteSheetData sheet;
 
-    // --- textures: unique non-empty ids, non-empty files, positive dims ---
     std::unordered_set<std::string> textureIds;
     for (const JsonTexture &t : proto.textures)
     {
@@ -285,14 +262,11 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
         info.texture = texture;
         info.bounds = bounds;
         info.origin = origin;
-        // Stored unvalidated: the mask sprite may be pushed later in load
-        // order (a later grid), so refs resolve in the pass after both loops.
         info.maskSprite = maskSprite;
         sheet.sprites.push_back(info);
         return true;
     };
 
-    // --- explicit sprites ---
     for (const JsonSprite &s : proto.sprites)
     {
         const SpriteRect bounds{ s.bounds.left, s.bounds.top, s.bounds.right, s.bounds.bottom };
@@ -303,7 +277,6 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
         }
     }
 
-    // --- grids: expand to "<prefix>_<r>_<c>", ids start_id + r*cols + c ---
     for (const JsonGrid &g : proto.grids)
     {
         if (g.prefix.empty() || g.rows <= 0 || g.cols <= 0 || g.cellW <= 0 || g.cellH <= 0)
@@ -335,10 +308,6 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
         }
     }
 
-    // --- mask refs: must resolve to a same-sized sprite (pixel-aligned
-    // composite). Runs after both loops since a mask may be declared later
-    // in load order than its base (same reason animation frames validate
-    // late).
     for (const SpriteDefInfo &s : sheet.sprites)
     {
         if (s.maskSprite == 0)
@@ -348,7 +317,7 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
         const SpriteDefInfo *mask = FindSpriteById(sheet, s.maskSprite);
         if (mask == nullptr)
         {
-            return false; // dangling mask ref
+            return false;
         }
         const int w = s.bounds.right - s.bounds.left;
         const int h = s.bounds.bottom - s.bounds.top;
@@ -356,11 +325,10 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
         const int mh = mask->bounds.bottom - mask->bounds.top;
         if (w != mw || h != mh)
         {
-            return false; // base/mask must composite pixel-aligned
+            return false;
         }
     }
 
-    // --- animations: unique names/ids, >= 1 frame, live sprite refs ---
     std::unordered_set<int> animIds;
     std::unordered_set<std::string> animNames;
     for (const JsonAnim &a : proto.animations)
@@ -394,11 +362,6 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 
 bool LoadSpriteSheet(SpriteSheetData &out)
 {
-    // Atlas data lives split across data/configs/ (one SpriteSheet section
-    // per file); the parts merge before the single validation pass, so
-    // cross-file refs (animations -> grid sprites) resolve and duplicate
-    // ids across files are still rejected. All-or-nothing: any missing or
-    // malformed part fails the whole load, like the old single file did.
     static const char *kAtlasFiles[] = {
         "data/configs/textures.json",
         "data/configs/sprites.json",

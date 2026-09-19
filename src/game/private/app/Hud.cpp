@@ -83,8 +83,6 @@ float UnitHealthFraction(const Unit &unit)
 
 namespace
 {
-// Live key label for a Tier-1 action, mirroring Game::DrawHotkeyRemap:
-// effective key name with a "Shift+" prefix when the def is chorded.
 std::string HintKey(const HotkeyMap &hotkeys, const char *action, bool applyChord = true)
 {
     const HotkeyDef *def = HotkeyDefFor(action);
@@ -96,11 +94,8 @@ std::string HintKey(const HotkeyMap &hotkeys, const char *action, bool applyChor
     }
     return name;
 }
-} // namespace
+}
 
-// Live hotkey hint overlay: Tier-1 lines resolve through HotkeyMap so a
-// rebind shows up immediately; Tier-2/mouse lines have no live source and
-// stay hardcoded literals. Line order matches the pre-live list.
 std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys)
 {
     std::vector<std::string> lines = {
@@ -129,8 +124,6 @@ std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys)
     lines.push_back(HintKey(hotkeys, "JumpPing") + " JumpPing");
     lines.push_back("Shift Queues");
     lines.push_back("Wheel Zoom");
-    // Slot ranges combine three actions; join the effective keys so a
-    // rebind of any one slot stays truthful (defaults: F6/F7/F8).
     lines.push_back(HintKey(hotkeys, "SaveSlot1") + "/" + HintKey(hotkeys, "SaveSlot2") + "/" +
                     HintKey(hotkeys, "SaveSlot3") + " SaveSlot");
     lines.push_back("Shift+" + HintKey(hotkeys, "LoadSlot1", false) + "/" +
@@ -189,7 +182,7 @@ const char *UnitStateName(UnitState state)
     }
 }
 
-} // namespace
+}
 
 std::vector<std::string> UnitTooltipLines(const Unit &unit)
 {
@@ -220,8 +213,6 @@ void DrawSelectionPanel(Registry &registry, const Art *art)
 {
     const Entity selected = SelectedUnit(registry);
     const Unit *unit = registry.Get<Unit>(selected);
-    // Bottom-left anchored (follows window height; identical to the old
-    // fixed y on a 450px window).
     const float y = static_cast<float>(GetScreenHeight()) - 64.0f;
     GuiPanel({ 8.0f, y, 300.0f, 56.0f }, "Selection");
     const char *text = "No selection";
@@ -240,10 +231,6 @@ void DrawSelectionPanel(Registry &registry, const Art *art)
         {
             summary = SelectionSummary(*unit);
             text = summary.c_str();
-            // Single-selection portrait: front-facing idle frame at 1.25x
-            // (20x40 inside the 56px panel). Gated on atlas art existing —
-            // types without frames keep today's text-only look, and new
-            // atlas types light up with zero further code changes.
             if (art != nullptr)
             {
                 const std::string sprite =
@@ -260,7 +247,6 @@ void DrawSelectionPanel(Registry &registry, const Art *art)
     }
     else
     {
-        // QoL: building selection summary (no unit selected).
         int count = 0;
         BuildingType firstType = BuildingType::Base;
         registry.Each<Building>([&](Entity, const Building &building) {
@@ -333,9 +319,6 @@ void DrawIdleButtons(Registry &registry, int teamID)
     }
 }
 
-// QoL control-group strip: 10 numbered boxes under the stockpile panel.
-// Filled green when the group has members (sky-blue when fully selected),
-// dimmed when empty; gold border marks the auto-add group for production.
 void DrawControlGroupStrip(Registry &registry, int teamID, int autoAddGroupBit, const Art *art)
 {
     const float boxW = 26.0f, boxH = 20.0f, gap = 2.0f;
@@ -411,8 +394,6 @@ int DrawProductionPanel(ResourceSystem &resources, ProductionQueue &queue, bool 
         {
             GuiEnable();
         }
-        // QoL repeat toggle: arms the next build of this type to rebuild
-        // forever until cancelled. R = one-shot, R* = repeating.
         const char *repLabel = queue.RepeatArmed(order[i]) ? "R*" : "R";
         GuiSetTooltip("Repeat this entry indefinitely until cancelled");
         if (GuiButton({ px + 132.0f, y, 30.0f, 16.0f }, repLabel))
@@ -449,12 +430,6 @@ void DrawSaveSlots()
     }
     std::snprintf(line, sizeof(line), "%s %s %s  (F6-8 save, S+F6-8 load)", marks[0], marks[1],
                   marks[2]);
-    // Size to the rendered text: raygui draws the label with its own
-    // metric (GetLineWidth: TEXT_SPACING per glyph), NOT raylib's
-    // MeasureText (fontSize/10 per glyph) — the two agree only at
-    // TEXT_SIZE=10 and diverge at any other UI scale, which clipped this
-    // panel. GuiGetTextWidth is the exact width GuiDrawText positions
-    // from, so sizing from it matches at every scale by construction.
     const int textW = GuiGetTextWidth(line);
     const float panelW = static_cast<float>(textW + 32);
     GuiPanel({ 300.0f, 8.0f, panelW, 40.0f }, "Slots");

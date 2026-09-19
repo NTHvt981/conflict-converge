@@ -56,9 +56,6 @@ bool IsKnownHotkeyAction(const std::string &action)
 
 const char *HotkeyDisplayName(int key)
 {
-    // Letters and digits render as their uppercase glyph; named keys use
-    // the overlay's historical labels ("Esc", "Space", ...). Anything else
-    // falls back to a "Key<n>" label rather than crashing or going blank.
     static char fallback[32];
     if (key >= KEY_A && key <= KEY_Z)
     {

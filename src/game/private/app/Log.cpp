@@ -35,8 +35,6 @@ const char *LevelPrefix(int level)
     }
 }
 
-// Installing any callback replaces raylib's default stdout sink, so this
-// re-emits to the console itself to keep both outputs.
 void RouteToFileAndConsole(int level, const char *text, va_list args)
 {
     char message[512];
@@ -50,7 +48,7 @@ void RouteToFileAndConsole(int level, const char *text, va_list args)
     }
 }
 
-} // namespace
+}
 
 bool Init(const char *path)
 {
@@ -93,4 +91,4 @@ void Fatal(const char *format, ...)
     TraceLog(LOG_FATAL, "%s", message);
 }
 
-} // namespace Log
+}

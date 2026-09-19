@@ -1,7 +1,5 @@
 #include "Registry.h"
 
-// Non-template entity lifecycle. Component pools live in the header.
-
 Entity Registry::Create()
 {
     Entity entity;
@@ -9,8 +7,6 @@ Entity Registry::Create()
     {
         entity = free_.back();
         free_.pop_back();
-        // Bump generation so stale (entity, gen) pairs in occupancy grids
-        // are detected after recycle.
         generations_[entity] = nextGen_++;
     }
     else
@@ -26,7 +22,7 @@ void Registry::Destroy(Entity entity)
 {
     if (alive_.erase(entity) == 0)
     {
-        return; // destroying a dead/unknown entity is a no-op
+        return;
     }
     for (auto &[type, pool] : pools_)
     {

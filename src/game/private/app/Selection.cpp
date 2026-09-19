@@ -84,7 +84,6 @@ int SelectInRect(Registry &registry, Rectangle worldBox, bool add)
                                           worldBox.y + worldBox.height });
     int picked = 0;
     registry.Each<Unit>([&](Entity, Unit &unit) {
-        // Body center (32x32 hitbox inset, matches the selection visual).
         const float cx = unit.position.x + 32.0f;
         const float cy = unit.position.y + 32.0f;
         const bool inside = cx >= box.x && cx <= box.x + box.width && cy >= box.y &&
@@ -118,7 +117,7 @@ unsigned int GroupMask(int groupBit)
     return 1u << static_cast<unsigned int>(groupBit);
 }
 
-} // namespace
+}
 
 int AssignControlGroup(Registry &registry, int groupBit)
 {
@@ -192,7 +191,7 @@ bool IsIdleWorker(const Unit &unit, int teamID, bool workersOnly)
     return workersOnly ? isEngineer : !isEngineer;
 }
 
-} // namespace
+}
 
 int SelectIdle(Registry &registry, int teamID, bool workersOnly)
 {
@@ -248,7 +247,6 @@ int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType 
                                           worldViewport.y + worldViewport.height });
     int picked = 0;
     registry.Each<Unit>([&](Entity, Unit &unit) {
-        // Same body-center containment as SelectInRect.
         const float cx = unit.position.x + 32.0f;
         const float cy = unit.position.y + 32.0f;
         const bool inside = cx >= box.x && cx <= box.x + box.width && cy >= box.y &&
