@@ -8,3 +8,4 @@ AGENTS.md
 test_sandbox/
 .clean/
 .agents/
+**.log
