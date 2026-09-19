@@ -31,8 +31,7 @@ AIDifficultyParams ParamsFor(AIDifficulty difficulty)
     case AIDifficulty::Hard:
         params.harvesters = 3;
         params.waveThreshold = 4;
-        params.reserveUnits = 2; // mass up: pipeline 8 vs Medium's 7, so the
-                                 // lower threshold attacks sooner AND heavier
+        params.reserveUnits = 2;
         params.scoutInterval = 15.0f;
         params.relaunchCooldown = 15.0f;
         params.retreats = true;
@@ -51,7 +50,7 @@ AICommander::AICommander(Registry &registry, TileMap &map, ResourceNodes &nodes,
       enemyTile_(enemyTile), rallyTile_(homeTile + cc::IVec2(0, 3)), lastSeenEnemy_(enemyTile)
 {
     scoutTimer_ = params_.scoutInterval;
-    timeSinceLaunch_ = params_.relaunchCooldown; // first wave may launch on threshold
+    timeSinceLaunch_ = params_.relaunchCooldown;
 }
 
 int AICommander::TeamID() const
@@ -138,7 +137,6 @@ void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 e
 
 void AICommander::SetupBase()
 {
-    // Same starting funds as the demo player: fair rules.
     resources_.AddIron(1000);
     resources_.AddOil(500);
 
@@ -162,8 +160,6 @@ void AICommander::SetupBase()
             break;
         }
     }
-    // Starting guard: the team must field a living unit from frame one, or
-    // the menu outcome declares the match over before it begins.
     factory_.Spawn(UnitType::Infantry, teamID_,
                    cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
 }
@@ -192,10 +188,9 @@ void AICommander::Update(float dt)
         return;
     }
     UpdateBaseIncome(registry_, resources_, dt, teamID_);
-    nodes_.GatherTick(registry_, resources_, dt, teamID_); // own crew, own ledger
+    nodes_.GatherTick(registry_, resources_, dt, teamID_);
     if (HasFactory())
     {
-        // Production dies with the structure — razed AI stays down.
         queue_.Update(factory_, resources_, teamID_,
                       cc::ToRaylib(cc::TileToWorld(rallyTile_.x, rallyTile_.y)), dt);
     }
@@ -245,7 +240,6 @@ void AICommander::OrderHarvesterToIron(Entity harvester)
 
 void AICommander::MaintainHarvesters()
 {
-    // Prune the dead, then top up to the difficulty's harvester count.
     std::vector<Entity> alive;
     alive.reserve(harvesters_.size());
     for (Entity id : harvesters_)
@@ -263,7 +257,7 @@ void AICommander::MaintainHarvesters()
                                          cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
         if (id == kInvalidEntity)
         {
-            break; // broke: retry next tick when income lands
+            break;
         }
         OrderHarvesterToIron(id);
         harvesters_.push_back(id);
@@ -276,10 +270,6 @@ void AICommander::MaintainProduction()
     {
         return;
     }
-    // Keep the pipeline (fielded combat units + queued builds) at threshold.
-    // Queue charges upfront, so this naturally paces itself on income.
-    // Hard masses above the line via reserveUnits (its threshold stays low
-    // per spec: sooner waves, but heavier ones).
     const int desired = params_.waveThreshold + 2 + params_.reserveUnits;
     int pipeline = CombatUnitCount() + static_cast<int>(queue_.Size());
     int guard = 0;
@@ -288,7 +278,7 @@ void AICommander::MaintainProduction()
         ++guard;
         if (!queue_.Enqueue(resources_, params_.composition[compIndex_ % params_.composition.size()]))
         {
-            break; // insufficient funds: income will retry next tick
+            break;
         }
         ++compIndex_;
         ++pipeline;
@@ -309,10 +299,6 @@ void AICommander::MaybeLaunchWave()
     {
         return;
     }
-    // Waves attack-move (not plain-move): marchers engage defenders on
-    // contact instead of walking past them, then resume the advance. Plain
-    // formation orders produced walk-through stalemates.
-    // The march itself routes footprint-aware when occupancy is bound.
     const std::vector<cc::IVec2> offsets = formation::FormationOffsets(army.size());
     for (std::size_t i = 0; i < army.size(); ++i)
     {
@@ -346,10 +332,6 @@ void AICommander::ScoutTick(float dt)
     }
     const Entity scout = factory_.Spawn(UnitType::Infantry, teamID_,
                                         cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
-    // NOTE: the full-interval backoff below runs even when the spawn fails.
-    // A fast retry here was tried and reverted: refilling scouts ahead of
-    // the army re-tunes Hard's economy enough to flip the Medium-vs-Hard
-    // outcome. Tuned as a set; do not adjust alone.
     scoutTimer_ = params_.scoutInterval;
     if (scout == kInvalidEntity)
     {
@@ -360,13 +342,11 @@ void AICommander::ScoutTick(float dt)
         OrderMove(*unit, scout, cc::ToRaylib(cc::TileToWorld(enemyTile_.x, enemyTile_.y)));
     }
     scouted_ = true;
-    lastSeenEnemy_ = enemyTile_; // waves rally on latest intel
+    lastSeenEnemy_ = enemyTile_;
 }
 
 void AICommander::RetreatTick()
 {
-    // Fighting withdrawal (attack-move, never plain move) toward the home
-    // tile; shared implementation with the player-facing auto-retreat.
     const Vector2 home = cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y));
     RetreatIfLowHP(registry_, map_, occ_, home, teamID_, kRetreatHealthFraction, false);
 }

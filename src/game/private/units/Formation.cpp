@@ -22,12 +22,6 @@ struct TileHash
     }
 };
 
-// Deadlock fix (see plans/StackedOrderDeadlock_Plan.md): units that share
-// their CURRENT anchor tile at order-issue time would otherwise all try to
-// step off that tile at once, each blocking the others until the retry
-// budget silently cancels the order. Group units by current anchor tile
-// once, up front, so IssueFormationMoveFP/IssueLineFormationMoveFP can
-// stagger every group member but one.
 std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> GroupByAnchor(
     Registry &registry, const std::vector<Entity> &units)
 {
@@ -42,14 +36,6 @@ std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> GroupByAnchor(
     return groups;
 }
 
-// If `unit` shares its start tile with another unit in this same order
-// (per `groups`), every member but the lowest-Entity "keeper" gets an
-// immediate escape hop to the nearest enterable tile away from the shared
-// origin, with its real slot queued behind it (OnOrderFinished dispatches
-// the queue entry automatically on arrival) -- so it starts moving this
-// frame instead of contesting the shared tile with its stack-mate and
-// risking a silent cancel a couple seconds later. Returns true if it
-// staggered (caller must not also issue the real order for this unit).
 bool StaggerIfCoLocated(
     Registry &registry, Unit &unit, Entity self, const TileMap &map, const OccupancyGrid &occ,
     const std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> &groups,
@@ -59,7 +45,7 @@ bool StaggerIfCoLocated(
     const auto it = groups.find(anchor);
     if (it == groups.end() || it->second.size() < 2)
     {
-        return false; // not sharing a tile with anyone else in this order
+        return false;
     }
     Entity keeper = it->second[0];
     for (Entity id : it->second)
@@ -71,15 +57,11 @@ bool StaggerIfCoLocated(
     }
     if (self == keeper)
     {
-        return false; // the keeper gets its real order directly, unchanged
+        return false;
     }
     const std::uint32_t selfGen = registry.Generation(self);
     cc::IVec2 escape = NearestEnterableTile(map, occ, anchor, unit.footprintWidth,
                                             unit.footprintHeight, self, selfGen);
-    // Same-frame guard: a 3rd+ member of this exact stack must not be handed
-    // an escape tile another member already claimed a moment ago in this
-    // same loop (their own occupancy reservations don't exist yet -- none
-    // of them have moved).
     for (int guard = 0; guard < 8 && std::find(claimedEscapeTiles.begin(),
                                                claimedEscapeTiles.end(),
                                                escape) != claimedEscapeTiles.end();
@@ -94,7 +76,7 @@ bool StaggerIfCoLocated(
     unit.orderQueue.push_back(QueuedOrder{ QueuedOrderKind::Move, realSlotWorld, {}, kInvalidEntity });
     return true;
 }
-} // namespace
+}
 
 std::vector<cc::IVec2> FormationOffsets(std::size_t count)
 {
@@ -140,7 +122,7 @@ void IssueFormationMove(Registry &registry, const std::vector<Entity> &units, co
         Unit *unit = registry.Get<Unit>(units[i]);
         if (unit == nullptr)
         {
-            continue; // destroyed/missing IDs don't shift the surviving slots
+            continue;
         }
         const cc::IVec2 slot = anchor + offsets[i];
         IssuePathOrder(*unit, map, cc::ToRaylib(cc::TileToWorld(slot.x, slot.y)));
@@ -151,7 +133,6 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
                           const TileMap &map, const OccupancyGrid &occ,
                           Vector2 worldTarget, bool slowestSpeed)
 {
-    // Determine the maximum footprint dimension for cell sizing.
     int cellSize = 1;
     float minSpeed = 0.0f;
     bool firstSpeed = true;
@@ -189,27 +170,14 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
         {
             continue;
         }
-        // Fresh squad order: drop any stale order-type flag (repair/
-        // attack-ground/patrol) so it can't swallow this move — see
-        // ClearOrders in Unit.h. The cap line below then overwrites with
-        // the real value; the queue clear below keeps this function
-        // self-contained (same as IssueLineFormationMoveFP) so a future
-        // caller can't reintroduce the gap.
         ClearOrders(*unit);
         unit->orderQueue.clear();
-        // QoL slowest-speed: the whole squad marches at the minimum, set
-        // before the path order goes out (cleared: every other path assigns
-        // -1 explicitly so a stale cap never survives a fresh order).
         unit->speedCapPixelsPerSec = slowestSpeed ? minSpeed : -1.0f;
-        // Slots landing on units sanitize to the nearest enterable anchor
-        // so squadmates don't all cancel against the same blocker.
         const cc::IVec2 slot = NearestEnterableTile(
             map, formationOcc, anchor + offsets[i], unit->footprintWidth, unit->footprintHeight,
             units[i], registry.Generation(units[i]));
         const Vector2 slotWorld = cc::ToRaylib(cc::TileToWorld(slot.x, slot.y));
 
-        // Deadlock fix: units still sharing a start tile get staggered
-        // instead of all issued a real order that would contest it
         if (StaggerIfCoLocated(registry, *unit, units[i], map, formationOcc, groups, claimedEscapeTiles,
                                slotWorld))
         {
@@ -218,7 +186,6 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
         IssuePathOrderFootprint(*unit, map, formationOcc, slotWorld, units[i],
                                registry.Generation(units[i]));
 
-		// to make sure no unit in formation overlap each other
 		formationOcc.ReserveFootprintOwned(slot, unit->footprintWidth, unit->footprintHeight, units[i], registry.Generation(units[i]));
     }
 }
@@ -277,12 +244,8 @@ void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &uni
         Unit *unit = registry.Get<Unit>(units[i]);
         if (unit == nullptr)
         {
-            continue; // destroyed/missing IDs don't shift the surviving slots
+            continue;
         }
-        // Fresh line order: same flag + queue clear as above, but
-        // self-contained — this function's callers don't clear the queue
-        // (unlike the squad-formation call site), so it does its own
-        // bookkeeping and the gap can't be reintroduced.
         ClearOrders(*unit);
         unit->orderQueue.clear();
         unit->speedCapPixelsPerSec = slowestSpeed ? minSpeed : -1.0f;
@@ -291,7 +254,6 @@ void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &uni
             map, occ, want, unit->footprintWidth, unit->footprintHeight, units[i],
             registry.Generation(units[i]));
         const Vector2 slotWorld = cc::ToRaylib(cc::TileToWorld(slot.x, slot.y));
-        // Deadlock fix: see IssueFormationMoveFP above.
         if (StaggerIfCoLocated(registry, *unit, units[i], map, occ, groups, claimedEscapeTiles,
                                slotWorld))
         {
@@ -302,4 +264,4 @@ void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &uni
     }
 }
 
-} // namespace formation
+}

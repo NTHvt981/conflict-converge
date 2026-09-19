@@ -3,7 +3,6 @@
 #include "TileMap.h"
 #include "Unit.h"
 
-// Placeholder harvest rates (units/second); balance pass tunes these.
 inline constexpr float kGatherIronPerSecond = 10.0f;
 inline constexpr float kGatherOilPerSecond = 8.0f;
 
@@ -62,11 +61,11 @@ void ResourceNodes::GatherTick(const Registry &registry, ResourceSystem &resourc
     registry.Each<Unit>([&](Entity, const Unit &unit) {
         if (unit.type != UnitType::Engineer || unit.health <= 0.0f)
         {
-            return; // only living Engineers work nodes
+            return;
         }
         if (teamID >= 0 && unit.teamID != teamID)
         {
-            return; // this crew works another ledger ( fair-rules harvest)
+            return;
         }
         const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
         for (ResourceNode &node : nodes_)
@@ -97,7 +96,7 @@ void ResourceNodes::GatherTick(const Registry &registry, ResourceSystem &resourc
                     resources.AddOil(whole);
                 }
                 carry -= static_cast<float>(whole);
-                break; // one node per tile
+                break;
             }
         }
     });

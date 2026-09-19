@@ -13,8 +13,6 @@
 #include <cmath>
 #include <unordered_map>
 
-// Stub: unit behavior, AI, and factory arrive in.
-
 #include "UnitStats.h"
 
 void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
@@ -23,15 +21,13 @@ void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
     unit.hasMoveOrder = true;
     unit.blockedTime = 0.0f;
     unit.blockedRepaths = 0;
-    // A plain move replaces fancier orders (attack-move, patrol, repair,
-    // attack-ground).
     ClearOrders(unit);
 }
 
 void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
 {
     ClearOrders(unit);
-    IssuePathOrder(unit, map, worldTarget); // A* (or straight fallback)
+    IssuePathOrder(unit, map, worldTarget);
     unit.attackMove = true;
     unit.attackMoveDest = unit.moveTarget;
 }
@@ -48,13 +44,8 @@ void IssueAttackMoveOrderFootprint(Unit &unit, const TileMap &map, const Occupan
 namespace
 {
 
-void LoseTarget(Unit &unit); // defined beside StopMoving below
+void LoseTarget(Unit &unit);
 
-// Driver-issued leg (chase, remarch, repair approach, patrol): re-issue only
-// when no path is active or the sanitized goal tile changed — this bounds
-// footprint A* to tile changes instead of every frame while chasing (the
-// old detour re-pathed unconditionally). Footprint-aware when occ is
-// present, legacy blind otherwise. Returns true when an order was issued.
 bool ReissueDriverOrder(Unit &unit, TileMap &map, OccupancyGrid *occ, Vector2 dest,
                         Entity self, Registry &registry)
 {
@@ -79,7 +70,7 @@ bool ReissueDriverOrder(Unit &unit, TileMap &map, OccupancyGrid *occ, Vector2 de
     return true;
 }
 
-} // namespace
+}
 
 void SetStance(Unit &unit, Stance stance)
 {
@@ -90,7 +81,6 @@ void SetStance(Unit &unit, Stance stance)
     }
     if (stance == Stance::Hold)
     {
-        // Stand down immediately; firing in range resumes below.
         LoseTarget(unit);
     }
 }
@@ -109,10 +99,6 @@ void IssuePatrolOrder(Unit &unit, const TileMap &map, Vector2 pointA, Vector2 po
 namespace
 {
 
-// Strike phasing. Ready + cooled + armed -> WindUp; WindUp expiry
-// lands the hit via landHit and enters Recover; Recover ends when the
-// cooldown hits zero. Called only while in range of a valid target.
-// Templated on the landing blow so structures share the machine.
 template <typename LandHit> void UpdateAttackPhases(Unit &attacker, float dtSeconds, LandHit landHit)
 {
     if (attacker.phase == AttackPhase::Ready)
@@ -157,20 +143,14 @@ void StopMoving(Unit &unit)
 void LoseTarget(Unit &unit)
 {
     unit.target = kInvalidEntity;
-    // Dropping a target cancels any telegraph: the next engagement must run
-    // the full windup. Otherwise a mid-WindUp unit whose target dies carries
-    // residual phaseTime into a freshly acquired target and lands early,
-    // bypassing part of the intended telegraph window.
     unit.phase = AttackPhase::Ready;
     unit.phaseTime = 0.0f;
 }
 
-} // namespace
+}
 
 Facing FacingFromVelocity(Vector2 velocity)
 {
-    // Nearest octant in y-down screen space, measured clockwise from East;
-    // remapped to sheet columns (East reads column 6, then 5, 4...).
     constexpr float kPi = 3.141592653589793f;
     float angle = std::atan2(velocity.y, velocity.x);
     if (angle < 0.0f)
@@ -197,11 +177,6 @@ void IssueRepairOrder(Unit &engineer, Entity target)
 namespace
 {
 
-// Dispatches one queued order through the same Issue* functions as live
-// orders. Clears every other order's fields first so exactly one is active
-// (queued dispatch always starts clean, unlike some live paths that only
-// clear a subset). AttackGround has no order type yet — ignored until it
-// lands (enqueue sites must not produce it before then).
 void DispatchQueuedOrder(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
                          std::uint32_t selfGen, const QueuedOrder &order)
 {
@@ -249,10 +224,6 @@ void DispatchQueuedOrder(Unit &unit, const TileMap &map, OccupancyGrid *occ, Ent
     }
 }
 
-// Runs the next queued order after the current one genuinely finishes
-// (arrival, repair-target lost). Skipped for patrol (loops forever —
-// anything queued behind one runs only if the patrol is overwritten) and
-// when the queue is empty. One dispatch per call, so chains terminate.
 void OnOrderFinished(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
                      std::uint32_t selfGen)
 {
@@ -265,15 +236,12 @@ void OnOrderFinished(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity 
     DispatchQueuedOrder(unit, map, occ, self, selfGen, next);
 }
 
-// A cancelled order (blocked-budget exhausted) drops the rest of the queue
-// too: a stuck unit blindly marching into queued orders it also can't reach
-// is worse UX than stopping for a new player command.
 void OnOrderCancelled(Unit &unit)
 {
     unit.orderQueue.clear();
 }
 
-} // namespace
+}
 
 void IssueOrEnqueue(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
                     std::uint32_t selfGen, bool shiftQueue, QueuedOrder order)
@@ -293,28 +261,21 @@ void IssueOrEnqueue(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity s
     unit.orderQueue.push_back(order);
 }
 
-// A set target standing on a tile the unit's team cannot see is dropped —
-// except for Artillery, which blind-fires into shroud at no penalty.
 bool LostToFog(const Unit &unit, const Unit &target, const FogOfWar *fog)
 {
     return fog != nullptr && unit.type != UnitType::Artillery &&
            !fog->IsVisible(unit.teamID, cc::WorldToTile(cc::ToGlm(target.position)));
 }
 
-// Repair tuning. Channel rate is HP/sec; cost is time only.
 constexpr float kRepairRange = 128.0f;
 constexpr float kRepairRate = 15.0f;
 
-// Only mechanical units take wrenches; infantry flesh is left alone.
 bool IsRepairableUnit(const Unit &unit)
 {
     return unit.type == UnitType::IFV || unit.type == UnitType::Artillery ||
            unit.type == UnitType::LightTank || unit.type == UnitType::HeavyTank;
 }
 
-// Validate a repair order and report where to work. False (order dies) for
-// non-Engineers, dead/foreign/healthy targets, flesh units, and wrecked
-// (non-Operational) buildings.
 bool RepairAim(const Registry &registry, const Unit &engineer, Entity target, Vector2 &outPos)
 {
     if (engineer.type != UnitType::Engineer)
@@ -386,9 +347,6 @@ void CollectAreaRepairCandidates(Registry &registry, Rectangle worldArea, int te
 namespace
 {
 
-// Repair-work position of a candidate: unit tile corner, building center
-// (matches RepairAim's own destinations, so "nearest" means nearest to
-// where the Engineer would actually drive).
 Vector2 RepairCandidatePos(const Registry &registry, Entity candidate)
 {
     if (const Unit *unit = registry.Get<Unit>(candidate))
@@ -402,7 +360,7 @@ Vector2 RepairCandidatePos(const Registry &registry, Entity candidate)
     return { 0.0f, 0.0f };
 }
 
-} // namespace
+}
 
 int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engineers,
                      const std::vector<Entity> &candidates,
@@ -447,11 +405,6 @@ int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engine
     return assigned;
 }
 
-// Shared clear: exactly one order active at a time. Called by every
-// Issue*Order below (including the pre-existing ones, which previously
-// each cleared only a subset) and by the queued-order dispatch. Also
-// called directly by fresh-order dispatch that bypasses the Issue*Order
-// wrappers (see ClearOrders' declaration in Unit.h).
 void ClearOrders(Unit &unit)
 {
     unit.attackMove = false;
@@ -459,7 +412,7 @@ void ClearOrders(Unit &unit)
     unit.hasRepairOrder = false;
     unit.repairTarget = kInvalidEntity;
     unit.hasAttackGroundOrder = false;
-    unit.speedCapPixelsPerSec = -1.0f; // QoL: caps never leak across orders
+    unit.speedCapPixelsPerSec = -1.0f;
 }
 
 void IssueAttackGroundOrder(Unit &unit, const TileMap &map, Vector2 worldPos)
@@ -485,12 +438,6 @@ Vector2 ResolvePlayerRetreatHome(Registry &registry, Vector2 rallyPos)
     {
         return rallyPos;
     }
-    // Reference point for "nearest owned Base": the centroid of the
-    // player's own living units, not the map's center (measuring
-    // from the map's center picked whichever Base happened to sit closest
-    // to the map's midpoint, unrelated to where the player's army was).
-    // No living units degrades to {0,0} (harmless: nothing left to retreat
-    // anyway).
     Vector2 armyCentroid = { 0.0f, 0.0f };
     int aliveCount = 0;
     registry.Each<Unit>([&](Entity, const Unit &unit) {
@@ -546,10 +493,6 @@ void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector
         {
             return;
         }
-        // Guarded like ReissueDriverOrder: only re-path when the goal tile
-        // changed, so retreating units through a chokepoint get the
-        // hold-and-retry grace period instead of a full footprint A*
-        // replan every frame.
         const cc::IVec2 wantTile = cc::WorldToTile(cc::ToGlm(home));
         const cc::IVec2 goalTile =
             (occ != nullptr)
@@ -572,9 +515,6 @@ void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector
     });
 }
 
-// Approach tile for repair work: the aim tile itself when walkable (units),
-// else the nearest passable ring (building footprints are blocked, so the
-// engineer parks beside the structure instead of pushing into it).
 cc::IVec2 RepairApproachTile(const TileMap &map, cc::IVec2 aimTile)
 {
     if (!map.InBounds(aimTile))
@@ -585,9 +525,6 @@ cc::IVec2 RepairApproachTile(const TileMap &map, cc::IVec2 aimTile)
     {
         return aimTile;
     }
-    // Rings 1..6 (not 1..3): wide obstructions (large footprints, rubble
-    // fields, lake edges) need the extra reach before giving up, and the
-    // scan is a few hundred tile checks on repair orders only.
     for (int ring = 1; ring <= 6; ++ring)
     {
         for (int dy = -ring; dy <= ring; ++dy)
@@ -609,9 +546,6 @@ cc::IVec2 RepairApproachTile(const TileMap &map, cc::IVec2 aimTile)
     return aimTile;
 }
 
-// Polymorphic targets (units and structures share Entity IDs).
-// ValidateTarget: living hostile unit or Operational hostile building,
-// visible unless the seeker blind-fires (fog null or artillery).
 bool ValidateTarget(Registry &registry, const Unit &seeker, Entity id, const FogOfWar *fog)
 {
     const bool seesThroughFog =
@@ -638,7 +572,6 @@ bool ValidateTarget(Registry &registry, const Unit &seeker, Entity id, const Fog
     return false;
 }
 
-// Aim point for either kind: unit position or structure center.
 Vector2 TargetPosition(Registry &registry, Entity id)
 {
     if (Unit *target = registry.Get<Unit>(id))
@@ -652,9 +585,6 @@ Vector2 TargetPosition(Registry &registry, Entity id)
     return { 0.0f, 0.0f };
 }
 
-// Fire when a validated target is in range (phase machine + demolish at
-// zero HP). Sets Attacking state. True only when a shot cycle ran —
-// out-of-range or invalid targets return false for the caller to chase.
 bool EngageTarget(Unit &attacker, Registry &registry, TileMap &map, Entity id,
                   const FogOfWar *fog, float dtSeconds)
 {
@@ -687,7 +617,6 @@ bool EngageTarget(Unit &attacker, Registry &registry, TileMap &map, Entity id,
             ResolveBuildingAttack(attacker, *building);
             if (building->health <= 0.0f)
             {
-                // Safe mid-iteration: structures live in their own pool.
                 DemolishBuilding(registry, map, id);
             }
         });
@@ -703,7 +632,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     Unit *unit = registry.Get<Unit>(self);
     if (unit == nullptr || unit->health <= 0.0f)
     {
-        return; // missing, or dead awaiting factory teardown
+        return;
     }
 
     if (unit->cooldown > 0.0f)
@@ -723,9 +652,6 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         }
     }
 
-    // Repair orders behave like move orders with a job at the end.
-    // Approach out-of-range targets (re-path on tile change, chase-style),
-    // channel HP inside 96px, drop the order when there is nothing to fix.
     if (unit->hasRepairOrder)
     {
         Vector2 aim = {};
@@ -764,11 +690,6 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         }
     }
 
-    // QoL attack-ground: deliberate shell-at-position order, priority just
-    // below repair (also a deliberate player order). Out of range it marches
-    // there like any other approach leg; in range it keeps firing through
-    // the normal windup/cooldown machine until cancelled, hitting nothing
-    // when the impact area is empty.
     if (unit->hasAttackGroundOrder)
     {
         const float dist =
@@ -789,14 +710,8 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         return;
     }
 
-    // Explicit player orders win over acquiring NEW targets — but a unit
-    // already engaging (chase path with a set target) stops to fire the
-    // moment its target enters range instead of walking past it.
     if (unit->hasMoveOrder || unit->hasPath)
     {
-        // Attack-move scans on the march. Contact -> engage in place
-        // (orders intact); contact lost -> resume the recorded destination.
-        // Structures are contact too: marches raze production on the way.
         if (unit->attackMove)
         {
             unit->target = AcquireTarget(registry, self, fog, reserved);
@@ -809,14 +724,8 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
             {
                 if (EngageTarget(*unit, registry, map, unit->target, fog, dtSeconds))
                 {
-                    return; // orders intact: the march resumes after the kill
+                    return;
                 }
-                // Chase detour: re-issued every frame while closing (NOT tile-
-                // guarded like the other legs). A guard here makes blocked
-                // chasers stand and wait on the retry budget while the melee
-                // flows around them; the churn-and-replan keeps them sliding
-                // into contact (a tile guard here stalls them instead).
-                // Footprint-aware when bound.
                 if (occ != nullptr)
                 {
                     IssuePathOrderFootprint(*unit, map, *occ,
@@ -825,15 +734,13 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
                 }
                 else
                 {
-                    IssuePathOrder(*unit, map, TargetPosition(registry, unit->target)); // detour
+                    IssuePathOrder(*unit, map, TargetPosition(registry, unit->target));
                 }
                 UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self, registry.Generation(self));
                 unit->state = UnitState::Moving;
                 return;
             }
             unit->target = kInvalidEntity;
-            // (re)march: resumes the recorded destination (re-sanitized: the
-            // tile may have filled since the order was issued).
             ReissueDriverOrder(*unit, map, occ, unit->attackMoveDest, self, registry);
         }
         if (unit->target != kInvalidEntity)
@@ -852,8 +759,6 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         return;
     }
 
-    // Drop stale targets of either kind (destroyed, dead/wrecked, friendly,
-    // or fog-hidden for non-artillery).
     if (unit->target != kInvalidEntity && !ValidateTarget(registry, *unit, unit->target, fog))
     {
         LoseTarget(*unit);
@@ -863,7 +768,6 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         unit->target = AcquireTarget(registry, self, fog, reserved);
         if (unit->target != kInvalidEntity && unit->stance == Stance::Hold)
         {
-            // Hold: stand still, firing only at what is already in range.
             const Unit *sighting = registry.Get<Unit>(unit->target);
             if (sighting == nullptr || !InAttackRange(*unit, *sighting))
             {
@@ -873,12 +777,10 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     }
     if (unit->target == kInvalidEntity && unit->stance != Stance::Hold)
     {
-        // No troops to fight: raze nearby hostile structures instead.
         unit->target = AcquireBuildingTarget(registry, self, fog);
     }
     if (unit->target == kInvalidEntity)
     {
-        // Patrol loops its legs while idle with no combat to answer.
         if (unit->stance == Stance::Patrol && unit->hasPatrol && !unit->hasMoveOrder &&
             !unit->hasPath)
         {
@@ -899,15 +801,12 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     }
     if (unit->stance == Stance::Hold)
     {
-        // Out of range and holding: stand down instead of chasing.
         LoseTarget(*unit);
         unit->state = UnitState::Idle;
         unit->velocity = { 0.0f, 0.0f };
         return;
     }
 
-    // Chase: re-path only when the target entered a new tile, then walk.
-    // An unreachable target degrades to an straight-line bump (IssuePathOrder fallback).
     ReissueDriverOrder(*unit, map, occ, TargetPosition(registry, unit->target), self, registry);
     UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self, registry.Generation(self));
 }
@@ -917,26 +816,18 @@ namespace
 
 enum class StepResult
 {
-    Arrived,    // within one step: caller snaps to target
-    Blocked,    // next position enters terrain-blocked tile: caller cancels
-    BlockedUnit,// next position enters a unit-occupied tile: caller retries
-    Stepped,    // advanced one step toward the target
+    Arrived,
+    Blocked,
+    BlockedUnit,
+    Stepped,
 };
 
-// Advance pos toward target by at most step; reports (not applies) arrival.
-// When occ is non-null, checks footprint occupancy to prevent
-// stepping into tiles occupied by other entities.
 StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &map, cc::Vec2 &outNext,
                       OccupancyGrid *occ = nullptr, Entity self = 0, std::uint32_t selfGen = 0,
                       int footprintW = 1, int footprintH = 1)
 {
     if (step <= 0.0f)
     {
-        // No movement budget (degenerate dt): hold position without
-        // touching outNext. BlockedUnit waits and retries rather than
-        // cancelling (terrain) or snapping (arrival), and — unlike the
-        // dist <= step check below — it can't divide by zero when a
-        // negative step meets dist == 0.
         return StepResult::BlockedUnit;
     }
     const cc::Vec2 diff = target - pos;
@@ -950,18 +841,10 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
     const cc::Vec2 next = pos + diff / dist * step;
     const cc::IVec2 from = cc::WorldToTile(pos);
     const cc::IVec2 to = cc::WorldToTile(next);
-    // Blocked only when stepping INTO a blocked tile from open ground. A
-    // unit caught on a blocked tile (spawned inside a fresh footprint) may
-    // always step out — otherwise the first step cancels the order and the
-    // unit is trapped forever.
     if (map.IsBlocked(to) && to != from)
     {
         return StepResult::Blocked;
     }
-    // Occupancy check — reject moves into tiles occupied by other
-    // entities (full footprint check for multi-tile units). Transient by
-    // nature (units move), so the caller waits and replans instead of
-    // cancelling like it does for permanent terrain blocks.
     if (occ != nullptr && to != from)
     {
         if (!occ->CanEnter(map, to, footprintW, footprintH, self, selfGen))
@@ -973,7 +856,6 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
     return StepResult::Stepped;
 }
 
-// Shared stop states so path and straight-line arrivals match behavior.
 void Arrive(Unit &unit, cc::Vec2 where)
 {
     unit.position = cc::ToRaylib(where);
@@ -985,7 +867,7 @@ void Arrive(Unit &unit, cc::Vec2 where)
     unit.state = UnitState::Idle;
     unit.blockedTime = 0.0f;
     unit.blockedRepaths = 0;
-    unit.speedCapPixelsPerSec = -1.0f; // QoL: arrival drops the group cap
+    unit.speedCapPixelsPerSec = -1.0f;
 }
 
 void CancelAtBlocked(Unit &unit)
@@ -998,23 +880,13 @@ void CancelAtBlocked(Unit &unit)
     unit.state = UnitState::Idle;
     unit.blockedTime = 0.0f;
     unit.blockedRepaths = 0;
-    unit.speedCapPixelsPerSec = -1.0f; // QoL: cancel drops the group cap
+    unit.speedCapPixelsPerSec = -1.0f;
     SnapUnitToTile(unit);
 }
 
-// Blocked-move retry: a transient unit blocker shouldn't kill the order.
-// Holds position while blockedTime accrues; every retry interval the route
-// to moveTarget is replanned (footprint-aware when occ is present).
-// Returns true when the order survives (waiting, arrived via replan, or
-// replanned), false when the repath budget is spent and the caller should
-// cancel as before.
 constexpr float kBlockedRetryDelaySeconds = 0.5f;
 constexpr int kMaxBlockedRepaths = 3;
 
-// Takes the budget counters by reference (rather than reading
-// unit.blockedTime/blockedRepaths directly) so a future second caller with
-// its own counters can reuse this wait/replan/cancel behavior without
-// sharing a counter.
 bool TryBlockedRetryWithBudget(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
                                std::uint32_t selfGen, float dtSeconds, float &blockedTime,
                                int &blockedRepaths)
@@ -1023,11 +895,11 @@ bool TryBlockedRetryWithBudget(Unit &unit, const TileMap &map, OccupancyGrid *oc
     blockedTime += dtSeconds;
     if (blockedTime < kBlockedRetryDelaySeconds)
     {
-        return true; // hold position, keep the order
+        return true;
     }
     if (blockedRepaths >= kMaxBlockedRepaths)
     {
-        return false; // budget spent: caller cancels
+        return false;
     }
     ++blockedRepaths;
     blockedTime = 0.0f;
@@ -1045,11 +917,11 @@ bool TryBlockedRetryWithBudget(Unit &unit, const TileMap &map, OccupancyGrid *oc
     }
     if (fresh.empty())
     {
-        return true; // no route yet: keep waiting on the old waypoints
+        return true;
     }
     if (fresh.size() == 1)
     {
-        Arrive(unit, cc::ToGlm(unit.moveTarget)); // replanned onto our own tile
+        Arrive(unit, cc::ToGlm(unit.moveTarget));
         OnOrderFinished(unit, map, occ, self, selfGen);
         return true;
     }
@@ -1067,7 +939,7 @@ bool TryBlockedRetry(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity 
                                      unit.blockedRepaths);
 }
 
-} // namespace
+}
 
 void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec, float dtSeconds,
                         OccupancyGrid *occ, Entity self, std::uint32_t selfGen)
@@ -1079,12 +951,8 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
 
     const float step = speedPixelsPerSec * dtSeconds;
     unit.state = UnitState::Moving;
-    // Stepping cancels any telegraph — a mover never lands a hit.
     unit.phase = AttackPhase::Ready;
 
-    // Walk the A* waypoints (tile top-left corners, so every
-    // stop stays snapped). A consumed path (cursor past the end, e.g. a
-    // start == goal order) arrives immediately at the snapped moveTarget.
     if (unit.hasPath)
     {
         if (unit.pathNext >= unit.path.size())
@@ -1114,14 +982,10 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
             }
             return;
         case StepResult::Blocked:
-            // Terrain blocks are permanent: cancel immediately.
             CancelAtBlocked(unit);
             OnOrderCancelled(unit);
             return;
         case StepResult::BlockedUnit:
-            // Paths avoid occupied tiles by construction; a block here means
-            // a unit crossed mid-walk, so wait and replan a few times before
-            // cancelling rather than dying on the first transient contact.
             if (TryBlockedRetry(unit, map, occ, self, selfGen, dtSeconds))
             {
                 return;
@@ -1130,33 +994,28 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
             OnOrderCancelled(unit);
             return;
         case StepResult::Stepped:
-            unit.blockedTime = 0.0f; // progress: not stuck
+            unit.blockedTime = 0.0f;
             unit.velocity = cc::ToRaylib((waypoint - cc::ToGlm(unit.position)) /
                                          glm::length(waypoint - cc::ToGlm(unit.position)) * speedPixelsPerSec);
-            unit.facing = FacingFromVelocity(unit.velocity); // render-only, kept on stop
+            unit.facing = FacingFromVelocity(unit.velocity);
             unit.position = cc::ToRaylib(next);
             return;
         }
     }
 
-    // Straight-line fallback (no path, or path exhausted its order).
     cc::Vec2 next = cc::ToGlm(unit.position);
     switch (StepToward(cc::ToGlm(unit.position), cc::ToGlm(unit.moveTarget), step, map, next,
                        occ, self, selfGen, unit.footprintWidth, unit.footprintHeight))
     {
     case StepResult::Arrived:
-        // Arrival: land exactly on the snapped destination.
         Arrive(unit, cc::ToGlm(unit.moveTarget));
         OnOrderFinished(unit, map, occ, self, selfGen);
         return;
     case StepResult::Blocked:
-        // Terrain: hold position, snapped, order cancelled.
         CancelAtBlocked(unit);
         OnOrderCancelled(unit);
         return;
     case StepResult::BlockedUnit:
-        // Units: wait and replan first; only cancel when the budget runs
-        // out (see the path branch above).
         if (TryBlockedRetry(unit, map, occ, self, selfGen, dtSeconds))
         {
             return;
@@ -1165,11 +1024,11 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         OnOrderCancelled(unit);
         return;
     case StepResult::Stepped:
-        unit.blockedTime = 0.0f; // progress: not stuck
+        unit.blockedTime = 0.0f;
         unit.velocity = cc::ToRaylib((cc::ToGlm(unit.moveTarget) - cc::ToGlm(unit.position)) /
                                      glm::length(cc::ToGlm(unit.moveTarget) - cc::ToGlm(unit.position)) *
                                      speedPixelsPerSec);
-        unit.facing = FacingFromVelocity(unit.velocity); // render-only, kept on stop
+        unit.facing = FacingFromVelocity(unit.velocity);
         unit.position = cc::ToRaylib(next);
         return;
     }
@@ -1185,12 +1044,10 @@ struct TileHash
                (static_cast<std::size_t>(static_cast<std::uint32_t>(tile.y)) * 19349663u);
     }
 };
-} // namespace
+}
 
 void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &occ)
 {
-    // Group living units by anchor tile -- O(n), replacing the O(n^2)
-    // all-pairs scan the old continuous-space push used to run every frame.
     std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> byTile;
     registry.Each<Unit>([&](Entity id, Unit &unit) {
         if (unit.health > 0.0f)
@@ -1199,10 +1056,6 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
         }
     });
 
-    // Same-frame cross-stack guard: a destination already claimed by an
-    // earlier stack in this same call must not be handed to a later one.
-    // Purely local/ephemeral -- never touches OccupancyGrid's persistent
-    // reservation state.
     std::vector<cc::IVec2> claimedThisFrame;
 
     for (auto &[tile, occupants] : byTile)
@@ -1211,45 +1064,11 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
         {
             continue;
         }
-        // Per-stack gate. Two, and only two, situations justify touching
-        // this stack (see plans/StackedOrderDeadlock_Plan.md); anything
-        // else -- including a MIX of idle and healthily-ordered occupants,
-        // e.g. one unit that simply already arrived at its own real
-        // destination while another is still healthily marching through
-        // the same tile on its way to somewhere else nearby -- must be left
-        // completely alone, exactly like the pre-Phase-2 code that treated
-        // ANY occupant having an order as reason enough to skip the whole
-        // stack. (An earlier cut of this fix used "anyone idle OR anyone
-        // deadlocked" as the trigger, which wrongly grabbed the
-        // already-arrived idle unit's healthy neighbor and rerouted it away
-        // from its own real destination -- confirmed by
-        // formation_deadlock_fix_tests.cpp catching it.)
-        //   1. Every occupant is idle (no order at all) -- the original
-        //      base case this function was built for (e.g. a freshly
-        //      production-queued squad still sitting on the rally tile).
-        //   2. Not every occupant is idle, but at least one occupant's
-        //      order is deadlocked right now (blockedRepaths maxed out AND
-        //      blockedTime > 0, i.e. currently mid-block with no retries
-        //      left -- blockedRepaths alone isn't enough, since a
-        //      successful repath leaves that counter maxed forever even
-        //      once the unit is moving fine again).
-        //
-        // Whoever currently holds the tile's OccupancyGrid reservation (at
-        // most one of the group, per its single-owner model -- see
-        // ReserveFootprintOwned's partial-reservation contract) must NEVER
-        // be the one picked to relocate, in ANY category: NearestEnterableTile
-        // excludes "self" from its own occupancy check, so relocating the
-        // actual reservation holder would make the tile read as unoccupied
-        // (nobody else is registered as being there, even though other
-        // occupants are physically standing on it) and hand back the same
-        // tile unchanged. Since at most one occupant can ever be the
-        // holder, and this stack has >= 2 occupants, a non-holder always
-        // exists to pick instead.
         const OccEntry holder = occ.GetUnit(tile);
         bool allIdle = true;
         bool anyDeadlockedNow = false;
         Entity idleNonHolderPick = kInvalidEntity;
-        Entity idleFallbackPick = kInvalidEntity; // idle but is the holder
+        Entity idleFallbackPick = kInvalidEntity;
         Entity deadlockedNonHolderPick = kInvalidEntity;
         Entity anyNonHolderPick = kInvalidEntity;
         for (Entity id : occupants)
@@ -1300,11 +1119,6 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
         }
         else if (anyDeadlockedNow)
         {
-            // Prefer relocating the deadlocked unit itself; if it happens
-            // to be the reservation holder, relocate a different non-holder
-            // instead (even one with a healthy order) -- that alone frees
-            // the tile for the deadlocked unit's own next attempt to
-            // succeed, without ever needing to touch its order directly.
             pick = (deadlockedNonHolderPick != kInvalidEntity) ? deadlockedNonHolderPick
                                                                : anyNonHolderPick;
         }
@@ -1317,10 +1131,6 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
         cc::IVec2 dest = NearestEnterableTile(map, occ, tile, unit->footprintWidth,
                                               unit->footprintHeight, pick,
                                               registry.Generation(pick));
-        // If another stack resolved earlier in this same call already
-        // claimed that tile, perturb the search origin and try again.
-        // Bounded: on repeated collision, accept it -- a resulting overlap
-        // just becomes a new detected stack on a later frame.
         for (int guard = 0; guard < 8 &&
                             std::find(claimedThisFrame.begin(), claimedThisFrame.end(), dest) !=
                                 claimedThisFrame.end();
@@ -1340,28 +1150,18 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
 void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
                           const FogOfWar *fog, float dtSeconds)
 {
-	// Release then Re reserve all unit footprints to avoid hanging footprint from pathfinding bug
 	occ.ReleaseAllUnitFootprints();
 
-    // Reserve each unit's current anchor tile before movement, so
-    // StepToward's CanEnter check prevents two units from entering the same tile.
-    // Ownership-checked: a shoved unit never wipes or steals another
-    // unit's reservation, it just goes unreserved until ResolveStackedUnits
-    // relocates it clear.
     registry.Each<Unit>([&](Entity id, Unit &unit) {
         if (unit.health > 0.0f)
         {
             const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(unit.position));
 
-			// Re reserve footprint after clear all command above
             (void)occ.ReserveFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight, id,
                                             registry.Generation(id));
         }
     });
 
-    // QoL overkill protection: sum committed damage (mid-WindUp/Recover
-    // attackers) per target once, so acquisition spreads fire instead of
-    // piling onto already-doomed targets.
     ReservedDamageMap reservedDamage;
     registry.Each<Unit>([&](Entity, const Unit &unit) {
         if (unit.health > 0.0f && unit.target != kInvalidEntity &&
@@ -1375,8 +1175,5 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
         UpdateUnit(id, registry, map, dtSeconds, fog, &occ, &reservedDamage);
     });
 
-    // Exact-tile stacking (spawn/rally-point stacking): relocate one unit
-    // per stack after the AI driver. General adjacent-tile visual overlap is
-    // left alone -- only exact-tile stacks are acted on.
     ResolveStackedUnits(registry, map, occ);
 }

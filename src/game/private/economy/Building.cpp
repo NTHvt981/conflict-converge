@@ -5,7 +5,6 @@
 #include "Nodes.h"
 #include "TileMap.h"
 
-// Placeholder base trickle (per Operational Base); balance pass tunes these.
 inline constexpr float kBaseIronPerSecond = 2.0f;
 inline constexpr float kBaseOilPerSecond = 1.0f;
 
@@ -25,8 +24,6 @@ cc::IVec2 Footprint(BuildingType type)
 
 float BuildingMaxHealth(BuildingType type)
 {
-    // Pacing tune: demolition must end games faster than production
-    // replaces. A LightTank levels a Base in ~20s now.
     switch (type)
     {
     case BuildingType::Base:
@@ -65,9 +62,6 @@ void QueryBuildingsInRect(Registry &registry, Rectangle area, int teamID,
 namespace
 {
 
-// Every footprint tile must exist and be buildable Grass. Placed buildings
-// mark their tiles, so overlap and water/edge cases fall out of one check.
-// (Units standing on the site are allowed: no unit collision system yet.)
 bool FootprintBuildable(const TileMap &map, cc::IVec2 size, int tileX, int tileY)
 {
     for (int y = 0; y < size.y; ++y)
@@ -95,7 +89,7 @@ void MarkFootprint(TileMap &map, cc::IVec2 size, int tileX, int tileY, TerrainTy
     }
 }
 
-} // namespace
+}
 
 bool CanPlaceBuilding(const TileMap &map, const ResourceNodes *nodes, BuildingType type,
                       int tileX, int tileY)
@@ -156,11 +150,11 @@ Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int te
     const cc::IVec2 size = Footprint(type);
     Building building;
     building.type = type;
-    building.state = BuildingState::UnderConstruction; // ramps via UpdateBuildingConstruction
+    building.state = BuildingState::UnderConstruction;
     building.teamID = teamID;
     building.tileX = tileX;
     building.tileY = tileY;
-    building.health = 0.0f; // construction ramps 0 -> max (reads as "being built")
+    building.health = 0.0f;
     building.maxHealth = BuildingMaxHealth(type);
 
     const Entity id = registry.Create();
@@ -200,9 +194,6 @@ void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float
     }
 }
 
-// QoL auto-repair pacing: matches the Engineer channel rate so the paid
-// convenience doesn't out-heal the free manual option; iron-only (placing
-// structures is free, so there is no per-type cost table to mirror).
 inline constexpr float kAutoRepairRateHPPerSec = 15.0f;
 inline constexpr float kAutoRepairIronPerHP = 0.5f;
 
@@ -228,18 +219,16 @@ void UpdateBuildingAutoRepair(Registry &registry, ResourceSystem &resources, flo
         building.repairCarry += kAutoRepairRateHPPerSec * capFraction * dt;
         if (building.repairCarry > missing)
         {
-            building.repairCarry = missing; // never bank past full
+            building.repairCarry = missing;
         }
         const float take = std::floor(std::min(building.repairCarry, missing));
         if (take < 1.0f)
         {
-            return; // sub-HP remainder waits for more damage/budget
+            return;
         }
         const long cost = static_cast<long>(std::ceil(take * kAutoRepairIronPerHP));
         if (!resources.TrySpend(cost, 0))
         {
-            // Broke: pause with no progress banked (carry reset, never
-            // partially charged) — poverty must not buy a burst heal later.
             building.repairCarry = 0.0f;
             return;
         }
@@ -280,24 +269,21 @@ void UpdateBuildingConstruction(Registry &registry, float dt)
         if (building.constructionTime >= total)
         {
             building.state = BuildingState::Operational;
-            building.health = building.maxHealth; // exact, never overshoots
+            building.health = building.maxHealth;
             return;
         }
         building.health = building.maxHealth * (building.constructionTime / total);
     });
 }
 
-// Entrance tiles (walkable tiles just outside the building footprint).
 std::vector<cc::IVec2> BuildingEntrances(const TileMap &map, int tileX, int tileY,
                                           int fpW, int fpH)
 {
     std::vector<cc::IVec2> result;
-    // Scan every tile in the one-ring around the footprint.
     for (int y = tileY - 1; y <= tileY + fpH; ++y)
     {
         for (int x = tileX - 1; x <= tileX + fpW; ++x)
         {
-            // Skip tiles inside the footprint itself.
             if (x >= tileX && x < tileX + fpW && y >= tileY && y < tileY + fpH)
             {
                 continue;
@@ -316,18 +302,14 @@ std::vector<cc::IVec2> BuildingEntrances(const TileMap &map, int tileX, int tile
     return result;
 }
 
-// Attack positions around the building perimeter.
-// Returns up to maxPositions evenly-spaced walkable tiles.
 std::vector<cc::IVec2> BuildingAttackPositions(const TileMap &map, int tileX, int tileY,
                                                 int fpW, int fpH, int maxPositions)
 {
-    // Collect all walkable perimeter tiles (same set as entrances).
     auto all = BuildingEntrances(map, tileX, tileY, fpW, fpH);
     if (all.empty() || static_cast<int>(all.size()) <= maxPositions)
     {
         return all;
     }
-    // Evenly sample from the perimeter list.
     std::vector<cc::IVec2> result;
     result.reserve(maxPositions);
     const float step = static_cast<float>(all.size()) / static_cast<float>(maxPositions);

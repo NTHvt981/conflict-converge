@@ -7,7 +7,7 @@ float BuildTime(UnitType type)
 {
     const UnitCost cost = CostOf(type);
     const float timed = 2.0f + static_cast<float>(cost.iron) / 50.0f;
-    return timed < 2.0f ? 2.0f : timed; // every unit takes at least 2s
+    return timed < 2.0f ? 2.0f : timed;
 }
 
 bool ProductionQueue::Enqueue(ResourceSystem &resources, UnitType type, bool repeat)
@@ -62,21 +62,12 @@ Entity ProductionQueue::Update(UnitFactory &factory, ResourceSystem &resources, 
     }
     Item &head = items_.front();
     head.progress += dt;
-    // Carry surplus past buildTime into the next item instead of dropping
-    // it, so frame hitches and catch-up ticks don't silently slow
-    // production. At most one completion per call (the tested "finishes
-    // head only" contract); the carried surplus fires the next item sooner.
     if (head.progress < head.buildTime)
     {
         return kInvalidEntity;
     }
     if (head.repeat)
     {
-        // QoL repeat: re-charge the same cost and restart in place (stable
-        // FIFO position — never cycled to the back). Broke: park at 100%
-        // and retry funds next tick (one TrySpend per Update, no re-spawn),
-        // mirroring MaintainProduction's retry idiom. CancelTop still
-        // refunds + removes unconditionally ("until cancelled" is free).
         const UnitCost cost = CostOf(head.type);
         if (!resources.TrySpend(cost.iron, cost.oil))
         {
@@ -88,8 +79,6 @@ Entity ProductionQueue::Update(UnitFactory &factory, ResourceSystem &resources, 
         return spawned;
     }
     const Item done = head;
-    // Already paid at Enqueue; a short-funded spawn here would eat the
-    // item, so SpawnPrepaid (not Spawn) keeps cost handling in one place.
     const Entity spawned = factory.SpawnPrepaid(done.type, teamID, rallyPos);
     const float overflow = done.progress - done.buildTime;
     items_.erase(items_.begin());

@@ -45,7 +45,7 @@ bool ParseValue(const std::string &line, const char *key, std::string &out)
     return true;
 }
 
-} // namespace
+}
 
 bool ParseMapFile(const std::string &path, MapData &out)
 {
@@ -81,7 +81,7 @@ bool ParseMapFile(const std::string &path, MapData &out)
     }
     if (static_cast<int>(lines.size()) != 5 + data.height)
     {
-        return false; // grid must be exactly height rows, nothing trailing
+        return false;
     }
     data.terrain.assign(static_cast<std::size_t>(data.width) * data.height, TerrainType::Grass);
     for (int y = 0; y < data.height; ++y)
@@ -124,7 +124,7 @@ bool ParseMapFile(const std::string &path, MapData &out)
                 data.aiSpawns.push_back(tile);
                 break;
             default:
-                return false; // unknown legend character
+                return false;
             }
             data.terrain[static_cast<std::size_t>(y) * data.width + x] = terrain;
         }
@@ -202,8 +202,6 @@ bool EditorPassable(const MapData &data, cc::IVec2 tile)
            terrain != TerrainType::Rock;
 }
 
-// 4-dir flood fill over passable tiles (mirrors TileMap::IsBlocked minus
-// the out-of-bounds rule, which is handled by EditorTileInMap above).
 bool EditorReachable(const MapData &data, cc::IVec2 from, cc::IVec2 to)
 {
     if (!EditorPassable(data, from) || !EditorPassable(data, to))
@@ -241,7 +239,7 @@ bool EditorReachable(const MapData &data, cc::IVec2 from, cc::IVec2 to)
     return false;
 }
 
-} // namespace
+}
 
 bool WriteMapFile(const MapData &data, const std::string &path)
 {
@@ -249,8 +247,6 @@ bool WriteMapFile(const MapData &data, const std::string &path)
     {
         return false;
     }
-    // Node/spawn markers must sit on grass tiles inside the map (the
-    // reader rejects anything else, so the writer refuses first).
     for (const MapNodeSpawn &spawn : data.nodes)
     {
         if (!EditorTileInMap(data, spawn.tile))
@@ -272,7 +268,6 @@ bool WriteMapFile(const MapData &data, const std::string &path)
             return false;
         }
     }
-    // Overlay markers onto a grass canvas; `B` comes from terrain.
     std::vector<std::string> rows(static_cast<std::size_t>(data.height),
                                   std::string(static_cast<std::size_t>(data.width), '.'));
     for (int y = 0; y < data.height; ++y)
@@ -375,8 +370,6 @@ void PaintEditorCell(MapData &map, char brush, cc::IVec2 tile)
     {
         return;
     }
-    // One marker per tile: painting anything clears node/spawn entries
-    // here first (terrain markers re-add below as needed).
     map.nodes.erase(std::remove_if(map.nodes.begin(), map.nodes.end(),
                                    [&](const MapNodeSpawn &spawn) {
                                        return spawn.tile == tile;
@@ -479,7 +472,7 @@ std::vector<MapEntry> ListMaps(const std::string &dir)
     std::filesystem::directory_iterator it(dir, ec);
     if (ec)
     {
-        return maps; // missing/unreadable dir: setup shows an empty list
+        return maps;
     }
     const std::filesystem::directory_iterator end;
     for (; it != end; it.increment(ec))
@@ -491,7 +484,7 @@ std::vector<MapEntry> ListMaps(const std::string &dir)
         MapData data;
         if (!ParseMapFile(it->path().string(), data))
         {
-            continue; // unparseable files never reach the setup screen
+            continue;
         }
         MapEntry entry;
         entry.path = it->path().string();

@@ -5,9 +5,6 @@
 
 namespace
 {
-// Same budget as MapFile's kMaxTiles: guards the size_t cast below so a
-// negative or gigantic dimension yields an empty grid instead of a
-// multi-exabyte vector allocation that throws before any assert could run.
 constexpr std::int64_t kMaxGridTiles = 1024 * 1024;
 
 bool GridDimsValid(int widthTiles, int heightTiles, std::size_t &outCount)
@@ -25,7 +22,7 @@ bool GridDimsValid(int widthTiles, int heightTiles, std::size_t &outCount)
     outCount = static_cast<std::size_t>(count);
     return true;
 }
-} // namespace
+}
 
 TileMap::TileMap(int widthTiles, int heightTiles)
     : width_(0)
@@ -36,7 +33,7 @@ TileMap::TileMap(int widthTiles, int heightTiles)
     std::size_t count = 0;
     if (!GridDimsValid(widthTiles, heightTiles, count))
     {
-        return; // degenerate 0x0 grid: InBounds false, IsBlocked true
+        return;
     }
     width_ = widthTiles;
     height_ = heightTiles;
@@ -92,7 +89,7 @@ void TileMap::Resize(int widthTiles, int heightTiles)
     std::size_t count = 0;
     if (!GridDimsValid(widthTiles, heightTiles, count))
     {
-        return; // keep existing contents rather than corrupt on bad input
+        return;
     }
     width_ = widthTiles;
     height_ = heightTiles;
@@ -104,8 +101,6 @@ int TileMap::Index(cc::IVec2 tile) const
     return tile.y * width_ + tile.x;
 }
 
-// --- OccupancyGrid ---
-
 OccupancyGrid::OccupancyGrid(int widthTiles, int heightTiles)
     : width_(0)
     , height_(0)
@@ -116,7 +111,7 @@ OccupancyGrid::OccupancyGrid(int widthTiles, int heightTiles)
     std::size_t count = 0;
     if (!GridDimsValid(widthTiles, heightTiles, count))
     {
-        return; // degenerate 0x0 grid: InBounds false, CanEnter false
+        return;
     }
     width_ = widthTiles;
     height_ = heightTiles;
@@ -277,7 +272,7 @@ void OccupancyGrid::Resize(int widthTiles, int heightTiles)
     std::size_t count = 0;
     if (!GridDimsValid(widthTiles, heightTiles, count))
     {
-        return; // keep existing contents rather than corrupt on bad input
+        return;
     }
     width_ = widthTiles;
     height_ = heightTiles;

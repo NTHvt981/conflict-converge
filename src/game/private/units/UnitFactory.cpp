@@ -5,8 +5,6 @@
 
 UnitCost CostOf(UnitType type)
 {
-    // Placeholder price list: infantry is cheap iron, vehicles mix in oil,
-    // heavies cost both. Retune with real balance + income numbers.
     switch (type)
     {
     case UnitType::Infantry:
@@ -24,7 +22,7 @@ UnitCost CostOf(UnitType type)
     case UnitType::HeavyTank:
         return { 250, 100 };
     case UnitType::PrototypeInfantry:
-        return { 25, 0 }; // sandbox type; same price as Infantry
+        return { 25, 0 };
     }
     return { 0, 0 };
 }

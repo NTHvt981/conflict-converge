@@ -21,7 +21,6 @@ int Manhattan(cc::IVec2 a, cc::IVec2 b)
     return dx + dy;
 }
 
-// Octile distance heuristic for 8-dir A*.
 float OctileDist(cc::IVec2 a, cc::IVec2 b)
 {
     const float dx = static_cast<float>(a.x >= b.x ? a.x - b.x : b.x - a.x);
@@ -36,26 +35,23 @@ struct OpenNode
     cc::IVec2 tile{ 0, 0 };
 };
 
-// std::priority_queue is a max-heap: invert the comparison to pop lowest cost.
 bool operator<(const OpenNode &a, const OpenNode &b)
 {
     return a.priority > b.priority;
 }
 
-// Fixed neighbor order keeps routes deterministic for tests.
 const cc::IVec2 kDirs[] = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
 
-// 8 Directions (cardinals + diagonals).
 const cc::IVec2 kDirs8[] = {
-    { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 },   // cardinals
-    { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 }    // diagonals
+    { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 },
+    { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 }
 };
 
-} // namespace
+}
 
 float TerrainCost(TerrainType terrain)
 {
-    (void)terrain; // uniform 1.0; branch here for costly ground later
+    (void)terrain;
     return 1.0f;
 }
 
@@ -82,8 +78,8 @@ TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal)
     std::priority_queue<OpenNode> open;
     open.push({ static_cast<float>(Manhattan(start, goal)), start });
 
-    std::unordered_map<int, float> costSoFar; // tile key -> g cost
-    std::unordered_map<int, cc::IVec2> cameFrom; // tile key -> previous tile
+    std::unordered_map<int, float> costSoFar;
+    std::unordered_map<int, cc::IVec2> cameFrom;
     costSoFar[TileKey(start, width)] = 0.0f;
 
     while (!open.empty())
@@ -117,7 +113,7 @@ TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal)
 
     if (cameFrom.find(TileKey(goal, width)) == cameFrom.end())
     {
-        return {}; // goal never reached
+        return {};
     }
 
     TilePath reversed;
@@ -144,12 +140,6 @@ TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
     {
         return {};
     }
-    // No CanEnter gate on start: units routinely stand on building tiles
-    // (spawned inside fresh footprints, rally points, harvesters working a
-    // node edge). StepToward's step-out allowance already lets a unit leave
-    // a blocked anchor, and neighbors are still fully validated below, so
-    // gating here would strand every such unit on straight fallback. The
-    // legacy 4-dir FindPath likewise never gates start, for the same reason.
     if (start == goal)
     {
         return { start };
@@ -176,10 +166,6 @@ TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
         {
             const cc::IVec2 next{ current.x + dir.x, current.y + dir.y };
 
-            // Diagonal corner-cutting prevention: if moving diagonally,
-            // both adjacent cardinal tiles must be passable for the full
-            // footprint. This prevents large units from slicing through
-            // corners they shouldn't fit through.
             if (dir.x != 0 && dir.y != 0)
             {
                 const cc::IVec2 cardA{ current.x + dir.x, current.y };
@@ -265,7 +251,7 @@ void IssuePathOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
     TilePath path = FindPath(map, start, goal);
     if (path.empty())
     {
-        IssueMoveOrder(unit, worldTarget); // unreachable: straight attempt
+        IssueMoveOrder(unit, worldTarget);
         unit.hasPath = false;
         unit.path.clear();
         unit.pathNext = 0;
@@ -275,7 +261,6 @@ void IssuePathOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
     unit.moveTarget = cc::ToRaylib(cc::TileToWorld(goal.x, goal.y));
     unit.hasMoveOrder = true;
     unit.path = std::move(path);
-    // The first node is the unit's own tile: start walking at the next one.
     unit.pathNext = 1;
     unit.hasPath = true;
     unit.blockedTime = 0.0f;
@@ -287,8 +272,6 @@ void IssuePathOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid
 {
     const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
     cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(worldTarget)));
-    // Clicks landing on units sanitize to the nearest enterable anchor, so
-    // the unit stops beside the blocker instead of cancelling against it.
     goal = NearestEnterableTile(map, occ, goal, unit.footprintWidth, unit.footprintHeight,
                                 self, selfGen);
     TilePath path = FindPathFootprint(map, occ, start, goal,

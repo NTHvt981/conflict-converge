@@ -14,11 +14,11 @@ float TargetPriorityWeight(UnitType seekerType, UnitType candidateType)
 {
     if (!IsVehicleHull(candidateType))
     {
-        return 1.0f; // foot candidates: nobody deprioritizes them below neutral
+        return 1.0f;
     }
     if (IsVehicleHull(seekerType) || seekerType == UnitType::AntiArmorInfantry)
     {
-        return 1.5f; // armor hunters prefer vehicle targets
+        return 1.5f;
     }
     return 1.0f;
 }
@@ -31,7 +31,6 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
     {
         return kInvalidEntity;
     }
-    // Artillery blind-fires into shroud at no penalty: exempt from fog.
     const bool seesThroughFog = (fog == nullptr) || self->type == UnitType::Artillery;
 
     Entity best = kInvalidEntity;
@@ -40,14 +39,10 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
     registry.Each<Unit>([&](Entity candidate, const Unit &unit) {
         if (candidate == seeker || unit.teamID == self->teamID || unit.health <= 0.0f)
         {
-            return; // self, ally, or already dead
+            return;
         }
         if (reserved != nullptr)
         {
-            // Overkill protection: someone already has enough committed to
-            // finish this candidate — look elsewhere. attackPower is a
-            // conservative proxy for landed damage (armor effectiveness
-            // would only reduce it); slight over-reserving is acceptable.
             const auto it = reserved->find(candidate);
             if (it != reserved->end() && unit.health - it->second <= 0.0f)
             {
@@ -62,7 +57,7 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
         if (!seesThroughFog &&
             !fog->IsVisible(self->teamID, cc::WorldToTile(cc::ToGlm(unit.position))))
         {
-            return; // shrouded: hold fire until recon reveals the tile
+            return;
         }
         const float threat =
             static_cast<float>(unit.attackPower) * TargetPriorityWeight(self->type, unit.type);
@@ -103,7 +98,7 @@ Entity AcquireBuildingTarget(const Registry &registry, Entity seeker, const FogO
     registry.Each<Building>([&](Entity candidate, const Building &building) {
         if (building.teamID == self->teamID || building.state != BuildingState::Operational)
         {
-            return; // own or already wrecked
+            return;
         }
         const Vector2 center = BuildingCenter(building);
         const float dist = glm::distance(cc::ToGlm(self->position), cc::ToGlm(center));

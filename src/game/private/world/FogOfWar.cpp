@@ -7,7 +7,6 @@
 namespace
 {
 
-// Scout-role types reveal further without stat changes.
 bool IsScout(UnitType type)
 {
     return type == UnitType::Infantry || type == UnitType::IFV;
@@ -15,7 +14,7 @@ bool IsScout(UnitType type)
 
 constexpr float kScoutMultiplier = 1.5f;
 
-} // namespace
+}
 
 void FogOfWar::Resize(int width, int height)
 {
@@ -70,7 +69,7 @@ void FogOfWar::Recompute(const Registry &registry)
     registry.Each<Unit>([&](Entity, const Unit &unit) {
         if (unit.health <= 0.0f || unit.sightRange <= 0.0f)
         {
-            return; // corpses and the blind reveal nothing
+            return;
         }
         float range = unit.sightRange;
         if (IsScout(unit.type))
@@ -153,7 +152,7 @@ void FogOfWar::SetExplored(int teamID, const std::uint8_t *bytes, std::size_t si
     std::vector<std::uint8_t> &row = ExploredRow(teamID);
     if (size != row.size() || bytes == nullptr)
     {
-        return; // size mismatch: keep current memory, never trust the input
+        return;
     }
     for (std::size_t i = 0; i < size; ++i)
     {

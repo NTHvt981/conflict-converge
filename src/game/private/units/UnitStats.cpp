@@ -3,24 +3,20 @@
 namespace
 {
 
-// Order matches UnitType enum: Infantry, AntiArmorInfantry, Engineer, IFV,
-// Artillery, LightTank, HeavyTank, PrototypeInfantry (infantry stats;
-// the art differs, the logic is identical). Placeholder balance; retune
-// against the damage matrix.
 const UnitStats kTable[] = {
-    { 100.0f, ArmorType::RUBBER, DamageType::KINETIC, 10, 128, 1.0f, 64.0f, 320.0f }, // Infantry
-    { 90.0f, ArmorType::RUBBER, DamageType::EXPLOSIVE, 25, 128, 1.5f, 64.0f, 320.0f }, // AntiArmorInfantry
-    { 60.0f, ArmorType::RUBBER, DamageType::KINETIC, 2, 64, 1.0f, 64.0f, 256.0f }, // Engineer
-    { 200.0f, ArmorType::STEEL, DamageType::KINETIC, 15, 192, 0.8f, 128.0f, 384.0f }, // IFV
-    { 150.0f, ArmorType::STEEL, DamageType::EXPLOSIVE, 40, 384, 3.0f, 48.0f, 320.0f }, // Artillery
-    { 300.0f, ArmorType::STEEL, DamageType::KINETIC, 20, 192, 1.2f, 96.0f, 320.0f }, // LightTank
-    { 500.0f, ArmorType::COMPOSITE, DamageType::EXPLOSIVE, 35, 224, 1.8f, 64.0f, 320.0f }, // HeavyTank
-    { 100.0f, ArmorType::RUBBER, DamageType::KINETIC, 10, 128, 1.0f, 64.0f, 320.0f }, // PrototypeInfantry
+    { 100.0f, ArmorType::RUBBER, DamageType::KINETIC, 10, 128, 1.0f, 64.0f, 320.0f },
+    { 90.0f, ArmorType::RUBBER, DamageType::EXPLOSIVE, 25, 128, 1.5f, 64.0f, 320.0f },
+    { 60.0f, ArmorType::RUBBER, DamageType::KINETIC, 2, 64, 1.0f, 64.0f, 256.0f },
+    { 200.0f, ArmorType::STEEL, DamageType::KINETIC, 15, 192, 0.8f, 128.0f, 384.0f },
+    { 150.0f, ArmorType::STEEL, DamageType::EXPLOSIVE, 40, 384, 3.0f, 48.0f, 320.0f },
+    { 300.0f, ArmorType::STEEL, DamageType::KINETIC, 20, 192, 1.2f, 96.0f, 320.0f },
+    { 500.0f, ArmorType::COMPOSITE, DamageType::EXPLOSIVE, 35, 224, 1.8f, 64.0f, 320.0f },
+    { 100.0f, ArmorType::RUBBER, DamageType::KINETIC, 10, 128, 1.0f, 64.0f, 320.0f },
 };
 
 static_assert(sizeof(kTable) / sizeof(kTable[0]) == 8, "one stat line per UnitType");
 
-} // namespace
+}
 
 const UnitStats &BaseStats(UnitType type)
 {
@@ -39,7 +35,6 @@ void ApplyBaseStats(Unit &unit)
     unit.cooldown = 0.0f;
     unit.speed = stats.speed;
     unit.sightRange = stats.sightRange;
-    // Footprint. Infantry types are 1x1; vehicles are 2x2.
     const bool isVehicle = unit.type == UnitType::IFV || unit.type == UnitType::Artillery ||
                            unit.type == UnitType::LightTank || unit.type == UnitType::HeavyTank;
     unit.footprintWidth = isVehicle ? 2 : 1;

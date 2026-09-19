@@ -1,7 +1,5 @@
 #include "ResourceSystem.h"
 
-// Minimal ledger so UnitFactory can validate costs. Gathering, buildings,
-// and the production queue live in their own modules.
 void ResourceSystem::AddIron(long amount)
 {
     iron += amount;
@@ -20,7 +18,7 @@ bool ResourceSystem::TrySpend(long ironCost, long oilCost)
     }
     if (iron < ironCost || oil < oilCost)
     {
-        return false; // insufficient funds: balances untouched
+        return false;
     }
     iron -= ironCost;
     oil -= oilCost;
@@ -35,7 +33,7 @@ void ResourceSystem::TickIncome(float ironPerSecond, float oilPerSecond, float d
     }
     if (ironPerSecond < 0.0f)
     {
-        ironPerSecond = 0.0f; // income never drains; spending goes through TrySpend
+        ironPerSecond = 0.0f;
     }
     if (oilPerSecond < 0.0f)
     {
