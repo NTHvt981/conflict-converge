@@ -10,14 +10,15 @@ class GameCamera;
 class ResourceNodes;
 class FogOfWar;
 
-// Versioned binary save/load. migrated the payload to protobuf
-// (proto/savegame.proto, checked-in generated code in../private/):
-//   "CCPB" magic, then one serialized cc.save.SaveGame message.
+// Versioned binary save/load. Payload is cereal-binary (wire structs in
+// ../private/app/SaveWire.h):
+//   "CCB2" magic, then one serialized SaveGameData.
 // Entity IDs are session-local: unit targets are stored as indices into the
 // saved unit array (-1 = none) and remapped to fresh IDs on load. Production
 // queues, menu state, and UI toggles are session-only and NOT saved.
-// Old "CCSV" custom-binary files are rejected by the magic check.
-inline constexpr unsigned int kSaveVersion = 1;
+// Old "CCSV" custom-binary and v1 "CCPB" protobuf-era files are rejected by
+// the magic check.
+inline constexpr unsigned int kSaveVersion = 2;
 
 struct WorldState
 {

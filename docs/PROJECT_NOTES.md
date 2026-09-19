@@ -2,6 +2,19 @@
 Do not use CMake to build or generate project files
 Use premake to generate project files, then run msbuild to build project
 
+## Cereal migration Phase 2 done (2026-09-19)
+`SaveGame.cpp` ported to cereal binary; SaveGame suite 65/65, full runner
+4262 green (+1: new old-CCPB-magic rejection test). Magic `CCPB`→`CCB2`,
+`kSaveVersion` 1→2 (break-compat as decided). Wire structs live in
+`src/game/private/app/SaveWire.h` (tests reach it via relative include,
+same trick the old `savegame.pb.h` include used). Validation ported
+line-for-line; H5 test now smuggles INT32_MAX through the real encode path
+(hand-added registry Building) instead of a hand-built wire message.
+Notes: binary archives need no tolerant-load dance and no assert override
+(no rapidjson involved) — unnamed root struct is fine for binary; the
+`cereal/types/*` includes are needed in EVERY TU that archives (test TU
+hit the same C2338 until fixed).
+
 ## Cereal migration Phase 1 done (2026-09-19)
 `SpriteData.cpp` ported to cereal JSON; suite 60/60, full runner 4261 green.
 Two deviations from `plans/CerealMigration_Plan.md` Phase 1 (apply to Phases 2-3):

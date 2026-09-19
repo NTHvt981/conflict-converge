@@ -12,12 +12,17 @@
 #include "TileMap.h"
 #include "Unit.h"
 #include "UnitStats.h"
-#include "../../src/game/private/app/savegame.pb.h" // private/ is NOT on the test include path
+#include "../../src/game/private/app/SaveWire.h" // wire structs for the version-99 probe
+
+#include <cereal/archives/binary.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/vector.hpp>
 
 #include <cstdint> // INT32_MAX crafted-save probe
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
 
 namespace
 {
@@ -199,14 +204,27 @@ void RunSaveGameTests()
     CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
     {
-        // Unsupported save_version inside a well-formed protobuf payload.
-        cc::save::SaveGame future;
-        future.set_save_version(99);
-        std::string payload;
-        CC_CHECK(future.SerializeToString(&payload));
+        // Old CCPB (protobuf-era) saves are rejected at the magic check.
+        std::ofstream old(path, std::ios::binary | std::ios::trunc);
+        const char legacy[] = { 'C', 'C', 'P', 'B', 2, 0, 0, 0 };
+        old.write(legacy, sizeof(legacy));
+    }
+    CC_CHECK(!LoadWorld(victimState, path));
+    CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
+
+    {
+        // Unsupported save_version inside a well-formed payload.
+        SaveGameData future;
+        future.saveVersion = 99;
+        std::ostringstream payload(std::ios::binary);
+        {
+            cereal::BinaryOutputArchive ar(payload);
+            ar(future);
+        }
         std::ofstream out(path, std::ios::binary | std::ios::trunc);
-        out.write("CCPB", 4);
-        out.write(payload.data(), static_cast<std::streamsize>(payload.size()));
+        out.write("CCB2", 4);
+        const std::string bytes = payload.str();
+        out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
     }
     CC_CHECK(!LoadWorld(victimState, path));
     CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
@@ -223,28 +241,22 @@ void RunSaveGameTests()
     CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
     {
-        // Crafted save: building tile_x at INT32_MAX. The old
-        // `tile_x + fp.x > mapWidth` check signed-overflows and wraps
-        // negative, passing validation to smuggle an out-of-range tile.
-        cc::save::SaveGame crafted;
-        crafted.set_save_version(1);
-        crafted.mutable_map()->set_width(20);
-        crafted.mutable_map()->set_height(15);
-        for (int i = 0; i < 20 * 15; ++i)
-        {
-            crafted.mutable_map()->add_terrain(0);
-        }
-        cc::save::Building *evil = crafted.add_buildings();
-        evil->set_type(0);
-        evil->set_state(0);
-        evil->set_team(0);
-        evil->set_tile_x(INT32_MAX);
-        evil->set_tile_y(0);
-        std::string payload;
-        CC_CHECK(crafted.SerializeToString(&payload));
-        std::ofstream out(path, std::ios::binary | std::ios::trunc);
-        out.write("CCPB", 4);
-        out.write(payload.data(), static_cast<std::streamsize>(payload.size()));
+        // Crafted save: building tile_x at INT32_MAX smuggled through the
+        // real encode path (hand-added to the registry, bypassing placement
+        // validation). The old `tile_x + fp.x > mapWidth` check
+        // signed-overflows and wraps negative, passing validation to smuggle
+        // an out-of-range tile; the subtraction form must reject it.
+        Fixture trap;
+        Building evil;
+        evil.type = BuildingType::Base;
+        evil.state = BuildingState::Operational;
+        evil.teamID = 0;
+        evil.tileX = INT32_MAX;
+        evil.tileY = 0;
+        evil.health = BuildingMaxHealth(BuildingType::Base);
+        evil.maxHealth = evil.health;
+        trap.registry.Add(trap.registry.Create(), evil);
+        CC_CHECK(SaveWorld(trap.State(), path));
     }
     CC_CHECK(!LoadWorld(victimState, path));
     CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
