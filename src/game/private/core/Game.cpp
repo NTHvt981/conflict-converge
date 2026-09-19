@@ -130,6 +130,7 @@ void Game::Init()
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(kInitialWidth, kInitialHeight, "raylib basic window");
+    SetExitKey(KEY_NULL); // Esc is handled per-screen, not by raylib
     SetWindowMinSize(800, 450);
     SetTargetFPS(60);
     GuiEnableTooltip();
@@ -263,6 +264,45 @@ void Game::QuitToMenu()
     sim.StopRecording();
     Announce(EventType::MenuAction);
     menu.OpenMainMenu();
+}
+
+void Game::PollConfirmKeys()
+{
+    if (!menu.ConfirmOpen())
+    {
+        return;
+    }
+    if (IsKeyPressed(KEY_Y))
+    {
+        pendingConfirm = ConfirmChoice::Yes;
+        return;
+    }
+    const int backKey = hotkeys.KeyFor("Back");
+    if (IsKeyPressed(KEY_N) || (backKey != 0 && IsKeyPressed(backKey)))
+    {
+        pendingConfirm = ConfirmChoice::No;
+    }
+}
+
+void Game::ApplyConfirmChoice(ConfirmChoice choice)
+{
+    if (choice == ConfirmChoice::None)
+    {
+        return;
+    }
+    const ConfirmKind kind = menu.confirm;
+    menu.CloseConfirm();
+    if (choice == ConfirmChoice::Yes)
+    {
+        if (kind == ConfirmKind::QuitApp)
+        {
+            menu.quitRequested = true;
+        }
+        else if (kind == ConfirmKind::BackToMenu)
+        {
+            QuitToMenu();
+        }
+    }
 }
 
 void Game::LoadGameFromSlot(const std::string &slotPath)
@@ -569,29 +609,19 @@ void Game::BindShortcuts()
         {
             return;
         }
-        if (menu.state == MenuState::ReplayViewer)
+        switch (menu.OnBackPressed())
         {
-            QuitToMenu();
-            return;
-        }
-        if (!worldActive)
-        {
-            if (menu.state == MenuState::SkirmishSetup || menu.state == MenuState::Settings ||
-                menu.state == MenuState::LoadGame || menu.state == MenuState::MapEditor)
-            {
-                Announce(EventType::MenuAction);
-                menu.OpenMainMenu();
-            }
-            return;
-        }
-        if (menu.state == MenuState::Playing)
-        {
-            playingInput.CancelForEsc();
-        }
-        else if (menu.state == MenuState::Paused)
-        {
-            menu.TogglePause();
+        case BackAction::Navigate:
+        case BackAction::OpenQuitConfirm:
+        case BackAction::OpenBackToMenuConfirm:
             Announce(EventType::MenuAction);
+            break;
+        case BackAction::QuitToMenu:
+            QuitToMenu();
+            break;
+        case BackAction::None:
+        default:
+            break;
         }
     });
     input.shortcuts.Bind(hotkeys.KeyFor("Halt"), [&] {
@@ -897,6 +927,13 @@ void Game::DrawWorld()
 
 void Game::DrawHudAndOverlays(int screenWidth, int screenHeight)
 {
+    // The modal owns input while open: lock raygui so HUD/overlay controls
+    // behind it cannot fire.
+    const bool modal = menu.ConfirmOpen();
+    if (modal)
+    {
+        GuiLock();
+    }
     if (playingInput.IsDragging() && input.LeftDown())
     {
         DrawRectangleLinesEx(
@@ -1112,10 +1149,27 @@ void Game::DrawHudAndOverlays(int screenWidth, int screenHeight)
     {
         DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 1.0f - fade));
     }
+    if (!modal)
+    {
+        return;
+    }
+    GuiUnlock();
+    if (const ConfirmChoice choice = DrawConfirmDialog(menu, screenWidth, screenHeight);
+        choice != ConfirmChoice::None)
+    {
+        pendingConfirm = choice;
+    }
 }
 
 void Game::Update()
 {
+    if (pendingConfirm != ConfirmChoice::None)
+    {
+        ApplyConfirmChoice(pendingConfirm);
+        pendingConfirm = ConfirmChoice::None;
+    }
+    PollConfirmKeys();
+    input.shortcuts.SetEnabled(!menu.ConfirmOpen());
     input.Update(camera, menu.settings.cameraSpeed, GetFrameTime());
     camera.AdjustZoom(input.WheelDelta());
     const int screenWidth = GetScreenWidth();
@@ -1133,11 +1187,15 @@ void Game::Update()
 
     if (!worldActive)
     {
-        menuScreens.Draw(screenWidth, screenHeight, menuStateTime);
+        if (const ConfirmChoice choice = menuScreens.Draw(screenWidth, screenHeight, menuStateTime);
+            choice != ConfirmChoice::None)
+        {
+            pendingConfirm = choice;
+        }
         return;
     }
 
-    if (menu.state == MenuState::Playing)
+    if (menu.state == MenuState::Playing && !menu.ConfirmOpen())
     {
         playingInput.Dispatch();
         sim.Step(GetFrameTime());

@@ -119,6 +119,47 @@ void RunMenuTests()
     boot.ShowOutcome(false, true); // terminal states still reachable
     CC_CHECK(boot.state == MenuState::GameOver);
 
+    // --- Esc/Back policy: modals, submenu back, direct teardown ---
+    {
+        MenuFlow esc;
+        CC_CHECK(!esc.ConfirmOpen());
+        // MainMenu: ask before quitting to desktop
+        CC_CHECK(esc.OnBackPressed() == BackAction::OpenQuitConfirm);
+        CC_CHECK(esc.confirm == ConfirmKind::QuitApp);
+        CC_CHECK(esc.OnBackPressed() == BackAction::None); // Esc cancels the modal
+        CC_CHECK(!esc.ConfirmOpen());
+        // Sub-menus navigate back to the title
+        esc.OpenSetup({});
+        CC_CHECK(esc.OnBackPressed() == BackAction::Navigate);
+        CC_CHECK(esc.state == MenuState::MainMenu);
+        esc.OpenSettings();
+        CC_CHECK(esc.OnBackPressed() == BackAction::Navigate);
+        CC_CHECK(esc.state == MenuState::MainMenu);
+        esc.OpenLoad();
+        CC_CHECK(esc.OnBackPressed() == BackAction::Navigate);
+        CC_CHECK(esc.state == MenuState::MainMenu);
+        // Playing/Paused: confirm abandoning the match
+        esc.state = MenuState::Playing;
+        CC_CHECK(esc.OnBackPressed() == BackAction::OpenBackToMenuConfirm);
+        CC_CHECK(esc.confirm == ConfirmKind::BackToMenu);
+        esc.CloseConfirm();
+        esc.state = MenuState::Paused;
+        CC_CHECK(esc.OnBackPressed() == BackAction::OpenBackToMenuConfirm);
+        CC_CHECK(esc.confirm == ConfirmKind::BackToMenu);
+        esc.CloseConfirm();
+        // Terminal/outcome/replay: straight back to the menu (no modal)
+        esc.state = MenuState::GameOver;
+        CC_CHECK(esc.OnBackPressed() == BackAction::QuitToMenu);
+        CC_CHECK(!esc.ConfirmOpen());
+        esc.state = MenuState::Victory;
+        CC_CHECK(esc.OnBackPressed() == BackAction::QuitToMenu);
+        esc.state = MenuState::ReplayViewer;
+        CC_CHECK(esc.OnBackPressed() == BackAction::QuitToMenu);
+        // HotkeyRemap is owned by MenuScreens::CancelRemapCapture
+        esc.state = MenuState::HotkeyRemap;
+        CC_CHECK(esc.OnBackPressed() == BackAction::None);
+    }
+
     // --- Settings file roundtrip (standalone file) ---
     MenuSettings saved;
     saved.cameraSpeed = 512.5f;

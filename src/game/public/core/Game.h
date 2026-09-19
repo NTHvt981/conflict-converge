@@ -64,6 +64,10 @@ private:
     bool WatchLastReplay();
     void DrawWorld();
     void DrawHudAndOverlays(int screenWidth, int screenHeight);
+    // Esc-modal keys (Y = yes, N/Back = no); deferred so world teardown never
+    // runs mid-frame.
+    void PollConfirmKeys();
+    void ApplyConfirmChoice(ConfirmChoice choice);
 
     Audio audio;
     Art art;
@@ -108,6 +112,7 @@ private:
     MenuState previousMenuState = MenuState::MainMenu; // transition-fade clock
     float menuStateTime = 0.0f;
     MenuState lastOutcomeState = MenuState::MainMenu;
+    ConfirmChoice pendingConfirm = ConfirmChoice::None; // resolved next frame
     // Input dispatch + match tick (declared after the members they bind).
     PlayingInput playingInput;
     Simulation sim;

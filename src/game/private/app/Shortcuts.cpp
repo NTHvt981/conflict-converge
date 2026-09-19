@@ -30,6 +30,10 @@ bool ShortcutRegistry::Has(int raylibKey) const
 
 bool ShortcutRegistry::Fire(int raylibKey) const
 {
+    if (!enabled_)
+    {
+        return false;
+    }
     auto it = bindings_.find(raylibKey);
     if (it == bindings_.end() || !it->second.hasPlain)
     {
@@ -42,6 +46,10 @@ bool ShortcutRegistry::Fire(int raylibKey) const
 
 bool ShortcutRegistry::FireChord(int raylibKey) const
 {
+    if (!enabled_)
+    {
+        return false;
+    }
     auto it = bindings_.find(raylibKey);
     if (it == bindings_.end() || !it->second.hasChord)
     {
@@ -54,6 +62,10 @@ bool ShortcutRegistry::FireChord(int raylibKey) const
 
 bool ShortcutRegistry::FireWithShift(int raylibKey, bool shift) const
 {
+    if (!enabled_)
+    {
+        return false;
+    }
     auto it = bindings_.find(raylibKey);
     if (it == bindings_.end())
     {
@@ -78,6 +90,10 @@ bool ShortcutRegistry::FireWithShift(int raylibKey, bool shift) const
 
 void ShortcutRegistry::PollAndFire() const
 {
+    if (!enabled_)
+    {
+        return;
+    }
     const bool shift = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
     std::vector<int> keys;
     keys.reserve(bindings_.size());

@@ -23,6 +23,18 @@ struct MenuCallbacks
     std::function<void()> hotkeysRebound;
 };
 
+enum class ConfirmChoice
+{
+    None,
+    Yes,
+    No
+};
+
+// Draws the shared Esc-confirm modal over the current frame (used by both the
+// menu and gameplay branches). Returns the button clicked this frame; the host
+// resolves it, since only Game tears the world down.
+ConfirmChoice DrawConfirmDialog(const MenuFlow &menu, int screenWidth, int screenHeight);
+
 // MenuScreens owns the out-of-world menu branch (main/setup/settings/
 // remap/load/editor) plus the shared hotkey-remap screen the pause overlay
 // borrows. Needs a window + GL context; not headless-testable.
@@ -34,8 +46,9 @@ public:
     MenuScreens(const MenuScreens &) = delete;
     MenuScreens &operator=(const MenuScreens &) = delete;
 
-    // Draw the !worldActive branch; owns its Begin/EndDrawing pair.
-    void Draw(int screenWidth, int screenHeight, float menuStateTime);
+    // Draw the !worldActive branch; owns its Begin/EndDrawing pair. Returns
+    // the confirm-modal button clicked this frame (None when no modal).
+    ConfirmChoice Draw(int screenWidth, int screenHeight, float menuStateTime);
     // Remap screen body, shared by Settings and the pause overlay.
     void DrawRemap(float cx);
     // Arm a remap capture from Settings or pause.

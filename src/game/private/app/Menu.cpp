@@ -20,6 +20,38 @@ void MenuFlow::TogglePause()
     }
 }
 
+BackAction MenuFlow::OnBackPressed()
+{
+    if (ConfirmOpen())
+    {
+        CloseConfirm();
+        return BackAction::None;
+    }
+    switch (state)
+    {
+    case MenuState::MainMenu:
+        OpenQuitConfirm();
+        return BackAction::OpenQuitConfirm;
+    case MenuState::SkirmishSetup:
+    case MenuState::Settings:
+    case MenuState::LoadGame:
+    case MenuState::MapEditor:
+        OpenMainMenu();
+        return BackAction::Navigate;
+    case MenuState::Playing:
+    case MenuState::Paused:
+        OpenBackToMenuConfirm();
+        return BackAction::OpenBackToMenuConfirm;
+    case MenuState::GameOver:
+    case MenuState::Victory:
+    case MenuState::ReplayViewer:
+        return BackAction::QuitToMenu;
+    case MenuState::HotkeyRemap:
+    default:
+        return BackAction::None;
+    }
+}
+
 void MenuFlow::ShowOutcome(bool playerAlive, bool enemyAlive)
 {
     if (!playerAlive)

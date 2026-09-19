@@ -67,7 +67,7 @@ void MenuScreens::SyncHotkeySettings()
     menu_.settings.hotkeyOverrides = hotkeys_.Overrides();
 }
 
-void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
+ConfirmChoice MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
 {
     audio_.ApplySettings(menu_.settings.masterVolume, menu_.settings.musicVolume,
                          menu_.settings.sfxVolume, menu_.settings.mute);
@@ -75,6 +75,13 @@ void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
+    // The confirm modal owns input while open: lock raygui so menu controls
+    // behind it cannot fire.
+    const bool modal = menu_.ConfirmOpen();
+    if (modal)
+    {
+        GuiLock();
+    }
     const float cx = screenWidth / 2.0f;
     if (menu_.state == MenuState::MainMenu)
     {
@@ -115,7 +122,7 @@ void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
         if (GuiButton({ cx - 130.0f, 445.0f, 260.0f, 40.0f }, "Quit"))
         {
             Announce(EventType::MenuAction);
-            menu_.quitRequested = true;
+            menu_.OpenQuitConfirm();
         }
     }
     else if (menu_.state == MenuState::SkirmishSetup)
@@ -409,7 +416,43 @@ void MenuScreens::Draw(int screenWidth, int screenHeight, float menuStateTime)
     {
         DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 1.0f - fade));
     }
+    if (!modal)
+    {
+        EndDrawing();
+        return ConfirmChoice::None;
+    }
+    GuiUnlock();
+    const ConfirmChoice choice = DrawConfirmDialog(menu_, screenWidth, screenHeight);
     EndDrawing();
+    return choice;
+}
+
+ConfirmChoice DrawConfirmDialog(const MenuFlow &menu, int screenWidth, int screenHeight)
+{
+    if (!menu.ConfirmOpen())
+    {
+        return ConfirmChoice::None;
+    }
+    const bool quitting = menu.confirm == ConfirmKind::QuitApp;
+    const Rectangle box{ screenWidth / 2.0f - 190.0f, screenHeight / 2.0f - 85.0f, 380.0f,
+                         170.0f };
+    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));
+    ConfirmChoice choice = ConfirmChoice::None;
+    if (GuiWindowBox(box, quitting ? "Quit Conflict Converge?" : "Return to main menu?"))
+    {
+        choice = ConfirmChoice::No;
+    }
+    GuiLabel({ box.x + 20.0f, box.y + 46.0f, box.width - 40.0f, 20.0f },
+             quitting ? "Close the game?" : "Abandon the current match?");
+    if (GuiButton({ box.x + 30.0f, box.y + box.height - 52.0f, 140.0f, 34.0f }, "Yes"))
+    {
+        choice = ConfirmChoice::Yes;
+    }
+    if (GuiButton({ box.x + box.width - 170.0f, box.y + box.height - 52.0f, 140.0f, 34.0f }, "No"))
+    {
+        choice = ConfirmChoice::No;
+    }
+    return choice;
 }
 
 void MenuScreens::DrawRemap(float cx)

@@ -102,4 +102,21 @@ void RunShortcutTests()
     CC_CHECK(fired == 1);
     CC_CHECK(storm.FireWithShift(100, false));
     CC_CHECK(fired == 2);
+
+    // --- disabled registry is inert (modal gating), re-enables cleanly ---
+    ShortcutRegistry gate;
+    int gated = 0;
+    gate.Bind(5, [&] { ++gated; });
+    gate.BindChord(5, [&] { ++gated; });
+    gate.SetEnabled(false);
+    CC_CHECK(!gate.Enabled());
+    CC_CHECK(!gate.Fire(5));
+    CC_CHECK(!gate.FireChord(5));
+    CC_CHECK(!gate.FireWithShift(5, false));
+    CC_CHECK(!gate.FireWithShift(5, true));
+    CC_CHECK(gated == 0);
+    gate.SetEnabled(true);
+    CC_CHECK(gate.Enabled());
+    CC_CHECK(gate.Fire(5));
+    CC_CHECK(gated == 1);
 }

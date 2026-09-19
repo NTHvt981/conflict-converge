@@ -38,20 +38,6 @@ void PlayingInput::ResetForMatch()
     attackGroundMode_ = false;
 }
 
-void PlayingInput::CancelForEsc()
-{
-    attackGroundMode_ = false;
-    rightDragging_ = false;
-    pendingRightClick_ = false;
-    rightDragDist_ = 0.0f;
-    placingType_.reset();
-    placeDragActive_ = false;
-    areaRepairMode_ = false;
-    repairDragActive_ = false;
-    DeselectAll(registry_);
-    dragging_ = false;
-}
-
 void PlayingInput::ToggleSettingRally()
 {
     settingRally_ = !settingRally_;

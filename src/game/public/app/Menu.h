@@ -29,6 +29,23 @@ enum class MenuState
     MapEditor     // scratch-canvas painter, never the live match map
 };
 
+enum class ConfirmKind
+{
+    None,
+    QuitApp,   // "quit to desktop?" modal
+    BackToMenu // "abandon the match?" modal
+};
+
+// What the host must do after an Esc/Back press.
+enum class BackAction
+{
+    None,                 // consumed (e.g. the modal was cancelled)
+    Navigate,             // MenuFlow already changed menu state
+    QuitToMenu,           // host tears down the world, then main menu
+    OpenQuitConfirm,      // modal opened: quit-to-desktop
+    OpenBackToMenuConfirm // modal opened: back-to-menu
+};
+
 struct MenuSettings
 {
     float cameraSpeed = 400.0f;
@@ -67,6 +84,16 @@ struct MenuFlow
     MenuSettings settings;
     SkirmishSetup setup;
     bool quitRequested = false;
+    ConfirmKind confirm = ConfirmKind::None;
+
+    bool ConfirmOpen() const { return confirm != ConfirmKind::None; }
+    void OpenQuitConfirm() { confirm = ConfirmKind::QuitApp; }
+    void OpenBackToMenuConfirm() { confirm = ConfirmKind::BackToMenu; }
+    void CloseConfirm() { confirm = ConfirmKind::None; }
+
+    // Esc/Back policy. Opens the matching modal, navigates a submenu back, or
+    // asks the host to tear the world down; see BackAction.
+    BackAction OnBackPressed();
 
     // Playing <-> Paused only; outcome screens are terminal until quit.
     void TogglePause();

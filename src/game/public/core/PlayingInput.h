@@ -30,8 +30,6 @@ public:
     void Dispatch();
     // Clear transient gesture state (sticky modes persist).
     void ResetForMatch();
-    // Esc in Playing: stand down every gesture + mode, drop queued clicks, deselect.
-    void CancelForEsc();
     // Shortcut toggles (guards live in Game's BindShortcuts).
     void ToggleSettingRally();
     void ToggleSlowestSpeed();

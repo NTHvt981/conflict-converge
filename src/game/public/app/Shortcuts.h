@@ -29,6 +29,11 @@ public:
     // Fire each binding whose key was pressed this frame.
     void PollAndFire() const;
 
+    // While disabled, Fire/FireChord/FireWithShift/PollAndFire are no-ops.
+    // Used to gate shortcuts behind a modal without unbinding them.
+    void SetEnabled(bool enabled) { enabled_ = enabled; }
+    bool Enabled() const { return enabled_; }
+
     void Clear();
 
 private:
@@ -40,4 +45,5 @@ private:
         bool hasChord = false;
     };
     std::unordered_map<int, KeyBindings> bindings_;
+    bool enabled_ = true;
 };
