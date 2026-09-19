@@ -1,14 +1,27 @@
 #include "UnitConfig.h"
 
+// Fail-closed JSON parsing, same arrangement as SpriteData.cpp: cereal
+// throws on absent keys (handled per-field below), but mistyped scalars
+// and malformed documents trip rapidjson's C assert — the documented
+// override turns those into exceptions the parse boundary catches, so
+// malformed input returns false like the protobuf-JSON path did. TU-local:
+// must precede every cereal include, and UnitConfig.h must stay cereal-free.
+
+#define CEREAL_RAPIDJSON_ASSERT(x) \
+    do { if (!(x)) throw std::runtime_error("malformed unit-config JSON"); } while (0)
+
+#include <cereal/archives/json.hpp>
+#include <cereal/cereal.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/vector.hpp>
+
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <sstream>
-
-#include <google/protobuf/util/json_util.h>
-
-#include "unitconfig.pb.h"
+#include <stdexcept>
 
 namespace
 {
@@ -103,6 +116,183 @@ const char *UnitTypeConfigName(UnitType type)
     }
     return "";
 }
+
+// Wire structs mirroring proto/unitconfig.proto (key names are the shipped
+// camelCase JSON). Loading is tolerant: single-name TryLoadValue keeps the
+// default when a key is absent (protobuf default-instance semantics), and
+// the two-name form additionally accepts the proto's original snake_case
+// spellings, mirroring protobuf-JSON's dual-casing input exactly. A present
+// but mistyped value throws past TryLoadValue (only cereal::Exception is
+// caught) so the whole file is rejected, also like protobuf-JSON. Only
+// load() is tolerant — save() writes every field unconditionally from a
+// fully populated struct (see UnitConfigToJson), unwrapping the optionals.
+template <class Archive, class T>
+bool TryLoadKey(Archive &ar, const char *name, T &out)
+{
+    try
+    {
+        ar(cereal::make_nvp(name, out));
+        return true;
+    }
+    catch (const cereal::Exception &)
+    {
+        return false;
+    }
+}
+
+template <class Archive, class T>
+void TryLoadValue(Archive &ar, const char *camelName, const char *snakeName, T &out)
+{
+    if (!TryLoadKey(ar, camelName, out) && snakeName != nullptr)
+    {
+        TryLoadKey(ar, snakeName, out);
+    }
+}
+
+template <class Archive, class T>
+void TryLoadValue(Archive &ar, const char *name, T &out)
+{
+    TryLoadValue(ar, name, nullptr, out);
+}
+
+template <class Archive, class T>
+void TryLoadOptional(Archive &ar, const char *camelName, const char *snakeName,
+                     std::optional<T> &out)
+{
+    T value{};
+    if (TryLoadKey(ar, camelName, value) ||
+        (snakeName != nullptr && TryLoadKey(ar, snakeName, value)))
+    {
+        out = value;
+    }
+    else
+    {
+        out = std::nullopt;
+    }
+}
+
+struct JsonStats
+{
+    std::optional<float> health;
+    std::string armorType;
+    std::string damageType;
+    std::optional<int> attackPower;
+    std::optional<int> attackRange;
+    std::optional<float> cooldownTime;
+    std::optional<float> speed;
+    std::optional<float> sightRange;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadOptional(ar, "health", nullptr, health);
+        TryLoadValue(ar, "armorType", "armor_type", armorType);
+        TryLoadValue(ar, "damageType", "damage_type", damageType);
+        TryLoadOptional(ar, "attackPower", "attack_power", attackPower);
+        TryLoadOptional(ar, "attackRange", "attack_range", attackRange);
+        TryLoadOptional(ar, "cooldownTime", "cooldown_time", cooldownTime);
+        TryLoadOptional(ar, "speed", nullptr, speed);
+        TryLoadOptional(ar, "sightRange", "sight_range", sightRange);
+    }
+    template <class Archive>
+    void save(Archive &ar) const
+    {
+        ar(cereal::make_nvp("health", health.value()),
+           cereal::make_nvp("armorType", armorType),
+           cereal::make_nvp("damageType", damageType),
+           cereal::make_nvp("attackPower", attackPower.value()),
+           cereal::make_nvp("attackRange", attackRange.value()),
+           cereal::make_nvp("cooldownTime", cooldownTime.value()),
+           cereal::make_nvp("speed", speed.value()),
+           cereal::make_nvp("sightRange", sightRange.value()));
+    }
+};
+
+struct JsonBounds
+{
+    int left = 0;
+    int top = 0;
+    int right = 0;
+    int bottom = 0;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadValue(ar, "left", left);
+        TryLoadValue(ar, "top", top);
+        TryLoadValue(ar, "right", right);
+        TryLoadValue(ar, "bottom", bottom);
+    }
+    template <class Archive>
+    void save(Archive &ar) const
+    {
+        ar(CEREAL_NVP(left), CEREAL_NVP(top), CEREAL_NVP(right), CEREAL_NVP(bottom));
+    }
+};
+
+struct JsonOrigin
+{
+    int x = 0;
+    int y = 0;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadValue(ar, "x", x);
+        TryLoadValue(ar, "y", y);
+    }
+    template <class Archive>
+    void save(Archive &ar) const
+    {
+        ar(CEREAL_NVP(x), CEREAL_NVP(y));
+    }
+};
+
+struct JsonCollision
+{
+    std::optional<JsonBounds> bounds;
+    std::optional<JsonOrigin> origin;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadOptional(ar, "bounds", nullptr, bounds);
+        TryLoadOptional(ar, "origin", nullptr, origin);
+    }
+    template <class Archive>
+    void save(Archive &ar) const
+    {
+        ar(cereal::make_nvp("bounds", bounds.value()),
+           cereal::make_nvp("origin", origin.value()));
+    }
+};
+
+struct JsonArt
+{
+    std::string spritePrefix;
+    std::string atlasIdlePrefix;
+    std::string atlasWalkPrefix;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadValue(ar, "spritePrefix", "sprite_prefix", spritePrefix);
+        TryLoadValue(ar, "atlasIdlePrefix", "atlas_idle_prefix", atlasIdlePrefix);
+        TryLoadValue(ar, "atlasWalkPrefix", "atlas_walk_prefix", atlasWalkPrefix);
+    }
+    template <class Archive>
+    void save(Archive &ar) const
+    {
+        ar(CEREAL_NVP(spritePrefix), CEREAL_NVP(atlasIdlePrefix), CEREAL_NVP(atlasWalkPrefix));
+    }
+};
+
+struct JsonConfig
+{
+    // Plain aggregate, no load()/save(): like SpriteData's JsonSheet, an
+    // unnamed root struct misaligns the archive a full level — on input the
+    // lookups all miss, on output cereal wraps it in a "value0" object.
+    // Both directions drive the four named members directly instead.
+    std::string type;
+    JsonStats stats;
+    JsonCollision collision;
+    JsonArt art;
+};
 
 } // namespace
 
@@ -271,65 +461,74 @@ const char *DamageTypeName(DamageType type)
 bool ParseUnitConfigJson(const std::string &json, const std::string &filenameStem,
                          UnitConfig &out)
 {
-    cc::unitconfig::UnitConfig proto;
-    if (!google::protobuf::util::JsonStringToMessage(json, &proto).ok())
+    JsonConfig cfg;
+    try
+    {
+        std::istringstream in(json);
+        cereal::JSONInputArchive ar(in);
+        TryLoadValue(ar, "type", cfg.type);
+        TryLoadValue(ar, "stats", cfg.stats);
+        TryLoadValue(ar, "collision", cfg.collision);
+        TryLoadValue(ar, "art", cfg.art);
+    }
+    catch (const std::exception &)
     {
         return false;
     }
     UnitType type = UnitType::Infantry;
-    if (!ParseUnitTypeName(proto.type(), type))
+    if (!ParseUnitTypeName(cfg.type, type))
     {
         return false; // missing or unrecognized UnitType
     }
-    if (NormalizedStem(proto.type()) != NormalizedStem(filenameStem))
+    if (NormalizedStem(cfg.type) != NormalizedStem(filenameStem))
     {
         return false; // type doesn't match its own filename
     }
 
     UnitConfig config = DefaultUnitConfig(type);
-    const cc::unitconfig::UnitStatsConfig &stats = proto.stats();
-    if (stats.has_health() && stats.health() > 0.0f)
+    const JsonStats &stats = cfg.stats;
+    if (stats.health.has_value() && *stats.health > 0.0f)
     {
-        config.stats.health = stats.health();
+        config.stats.health = *stats.health;
     }
     ArmorType armor = config.stats.armorType;
-    if (!stats.armor_type().empty() && ParseArmorTypeName(stats.armor_type(), armor))
+    if (!stats.armorType.empty() && ParseArmorTypeName(stats.armorType, armor))
     {
         config.stats.armorType = armor;
     }
     DamageType damage = config.stats.damageType;
-    if (!stats.damage_type().empty() && ParseDamageTypeName(stats.damage_type(), damage))
+    if (!stats.damageType.empty() && ParseDamageTypeName(stats.damageType, damage))
     {
         config.stats.damageType = damage;
     }
-    if (stats.has_attack_power())
+    if (stats.attackPower.has_value())
     {
-        config.stats.attackPower = stats.attack_power();
+        config.stats.attackPower = *stats.attackPower;
     }
-    if (stats.has_attack_range())
+    if (stats.attackRange.has_value())
     {
-        config.stats.attackRange = stats.attack_range();
+        config.stats.attackRange = *stats.attackRange;
     }
-    if (stats.has_cooldown_time())
+    if (stats.cooldownTime.has_value())
     {
-        config.stats.cooldownTime = stats.cooldown_time();
+        config.stats.cooldownTime = *stats.cooldownTime;
     }
-    if (stats.has_speed())
+    if (stats.speed.has_value())
     {
-        config.stats.speed = stats.speed();
+        config.stats.speed = *stats.speed;
     }
-    if (stats.has_sight_range())
+    if (stats.sightRange.has_value())
     {
-        config.stats.sightRange = stats.sight_range();
+        config.stats.sightRange = *stats.sightRange;
     }
     // Collision bounds: well-formed rects derive the footprint size;
     // anything else keeps the compiled-in baseline for this type.
-    if (proto.has_collision() && proto.collision().has_bounds())
+    if (cfg.collision.bounds.has_value())
     {
-        const int left = proto.collision().bounds().left();
-        const int top = proto.collision().bounds().top();
-        const int right = proto.collision().bounds().right();
-        const int bottom = proto.collision().bounds().bottom();
+        const int left = cfg.collision.bounds->left;
+        const int top = cfg.collision.bounds->top;
+        const int right = cfg.collision.bounds->right;
+        const int bottom = cfg.collision.bounds->bottom;
         if (left >= 0 && top >= 0 && right > left && bottom > top)
         {
             config.boundLeft = left;
@@ -339,18 +538,18 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
         }
     }
     // Origin is stored as-is (no gameplay effect yet — see the schema doc).
-    if (proto.has_collision() && proto.collision().has_origin())
+    if (cfg.collision.origin.has_value())
     {
-        config.originX = proto.collision().origin().x();
-        config.originY = proto.collision().origin().y();
+        config.originX = cfg.collision.origin->x;
+        config.originY = cfg.collision.origin->y;
     }
-    if (!proto.art().sprite_prefix().empty())
+    if (!cfg.art.spritePrefix.empty())
     {
-        config.spritePrefix = proto.art().sprite_prefix();
+        config.spritePrefix = cfg.art.spritePrefix;
     }
     // Atlas prefixes: empty is the valid "flat-PNG fallback" state.
-    config.atlasIdlePrefix = proto.art().atlas_idle_prefix();
-    config.atlasWalkPrefix = proto.art().atlas_walk_prefix();
+    config.atlasIdlePrefix = cfg.art.atlasIdlePrefix;
+    config.atlasWalkPrefix = cfg.art.atlasWalkPrefix;
 
     out = config;
     return true;
@@ -369,36 +568,37 @@ bool LoadUnitConfig(const std::string &path, UnitConfig &out)
 
 std::string UnitConfigToJson(const UnitConfig &config)
 {
-    cc::unitconfig::UnitConfig proto;
-    proto.set_type(config.type);
-    cc::unitconfig::UnitStatsConfig *stats = proto.mutable_stats();
-    stats->set_health(config.stats.health);
-    stats->set_armor_type(ArmorTypeName(config.stats.armorType));
-    stats->set_damage_type(DamageTypeName(config.stats.damageType));
-    stats->set_attack_power(config.stats.attackPower);
-    stats->set_attack_range(config.stats.attackRange);
-    stats->set_cooldown_time(config.stats.cooldownTime);
-    stats->set_speed(config.stats.speed);
-    stats->set_sight_range(config.stats.sightRange);
-    cc::unitconfig::UnitCollisionConfig *collision = proto.mutable_collision();
-    collision->mutable_bounds()->set_left(config.boundLeft);
-    collision->mutable_bounds()->set_top(config.boundTop);
-    collision->mutable_bounds()->set_right(config.boundLeft + config.footprintWidth);
-    collision->mutable_bounds()->set_bottom(config.boundTop + config.footprintHeight);
-    collision->mutable_origin()->set_x(config.originX);
-    collision->mutable_origin()->set_y(config.originY);
-    proto.mutable_art()->set_sprite_prefix(config.spritePrefix);
-    proto.mutable_art()->set_atlas_idle_prefix(config.atlasIdlePrefix);
-    proto.mutable_art()->set_atlas_walk_prefix(config.atlasWalkPrefix);
+    JsonConfig out;
+    out.type = config.type;
+    out.stats.health = config.stats.health;
+    out.stats.armorType = ArmorTypeName(config.stats.armorType);
+    out.stats.damageType = DamageTypeName(config.stats.damageType);
+    out.stats.attackPower = config.stats.attackPower;
+    out.stats.attackRange = config.stats.attackRange;
+    out.stats.cooldownTime = config.stats.cooldownTime;
+    out.stats.speed = config.stats.speed;
+    out.stats.sightRange = config.stats.sightRange;
+    JsonBounds bounds;
+    bounds.left = config.boundLeft;
+    bounds.top = config.boundTop;
+    bounds.right = config.boundLeft + config.footprintWidth;
+    bounds.bottom = config.boundTop + config.footprintHeight;
+    out.collision.bounds = bounds;
+    JsonOrigin origin;
+    origin.x = config.originX;
+    origin.y = config.originY;
+    out.collision.origin = origin;
+    out.art.spritePrefix = config.spritePrefix;
+    out.art.atlasIdlePrefix = config.atlasIdlePrefix;
+    out.art.atlasWalkPrefix = config.atlasWalkPrefix;
 
-    std::string json;
-    google::protobuf::util::JsonPrintOptions options;
-    options.add_whitespace = true; // hand-editable style, like the atlas JSON
-    if (!google::protobuf::util::MessageToJsonString(proto, &json, options).ok())
+    std::ostringstream json;
     {
-        return {};
+        cereal::JSONOutputArchive ar(json);
+        ar(cereal::make_nvp("type", out.type), cereal::make_nvp("stats", out.stats),
+           cereal::make_nvp("collision", out.collision), cereal::make_nvp("art", out.art));
     }
-    return json;
+    return json.str();
 }
 
 bool SaveUnitConfig(const std::string &path, const UnitConfig &config)

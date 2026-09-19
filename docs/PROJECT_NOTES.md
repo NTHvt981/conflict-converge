@@ -2,6 +2,18 @@
 Do not use CMake to build or generate project files
 Use premake to generate project files, then run msbuild to build project
 
+## Cereal migration Phase 3 done (2026-09-19)
+`UnitConfig.cpp` ported; UnitConfig suite 82/82, full runner 4262 green.
+Presence via `std::optional` + tolerant `load()` (explicit 0 survives, as
+the tests demand); dual-casing fallback (`attackPower`→`attack_power`, …)
+preserves protobuf-JSON's exact input acceptance — audited: shipped files
+are all camelCase, fallback is for wild hand-edits. Absent→default,
+mistyped→whole-file-reject (matches protobuf). No test additions needed:
+existing shipped-seed + all-omitted cases already cover the plan's items.
+New rule (bit twice now): cereal JSON wraps an UNNAMED root struct in a
+`"value0"` object on output (and misaligns input) — both directions drive
+named top-level members directly; nested structs are always named, fine.
+
 ## Cereal migration Phase 2 done (2026-09-19)
 `SaveGame.cpp` ported to cereal binary; SaveGame suite 65/65, full runner
 4262 green (+1: new old-CCPB-magic rejection test). Magic `CCPB`→`CCB2`,
