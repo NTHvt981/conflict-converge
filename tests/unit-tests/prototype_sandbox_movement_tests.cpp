@@ -2,8 +2,8 @@
 // BuildSandbox): all 6 PrototypeInfantry spawn stacked on the exact same
 // tile (BuildSandbox computes the free tile once, reuses it for every
 // SpawnPrepaid call), then get sent to 6 scattered destinations around the
-// real prototype.map layout -- crossing paths around its water/rock
-// obstacles -- to catch collision/pathing regressions the same way
+// real prototype.map layout -- crossing paths around its water blob and
+// tree cluster -- to catch collision/pathing regressions the same way
 // movement_stall_tests.cpp does for hand-built maps, but against the actual
 // shipped map and the real BuildSandbox spawn path.
 
@@ -76,7 +76,7 @@ void RunPrototypeSandboxMovementTests()
 
     Harness sand;
     CC_CHECK(BuildSandbox(sand.world, proto));
-    CC_CHECK(sand.map.Width() == 32 && sand.map.Height() == 32);
+    CC_CHECK(sand.map.Width() == 20 && sand.map.Height() == 10);
 
     std::vector<Entity> squad;
     sand.registry.Each<Unit>([&](Entity id, const Unit &unit) {
@@ -98,14 +98,14 @@ void RunPrototypeSandboxMovementTests()
         CC_CHECK(cc::WorldToTile(cc::ToGlm(sand.registry.Get<Unit>(id)->position)) == spawnTile);
     }
 
-    // 6 destinations spread around the 32x32 map's corners/mid-edges, well
-    // clear of the spawn point and verified walkable (Grass or Forest --
-    // never Water/Rock/Building) -- chosen so the routes cross near the
-    // map's water blob (~x12-19,y11-15) and both rock clusters, forcing
-    // real pathfinding + mutual collision pressure, not just a straight
-    // unobstructed walk.
+    // 6 destinations spread around the 20x10 map's corners/mid-edges, well
+    // clear of the spawn point and verified walkable (all Grass, never
+    // Water) -- chosen so westward routes cross the tree cluster
+    // cluster (~x2-6,y1-3) and southward routes press against the water blob
+    // (~x12-19,y5-9), forcing real pathfinding + mutual collision pressure,
+    // not just a straight unobstructed walk.
     const cc::IVec2 destinations[] = {
-        { 2, 2 },   { 29, 2 },  { 2, 29 }, { 29, 29 }, { 16, 2 }, { 16, 29 },
+        { 1, 0 },   { 18, 0 },  { 1, 8 }, { 17, 4 }, { 5, 8 }, { 10, 5 },
     };
     for (const cc::IVec2 &dest : destinations)
     {
@@ -124,7 +124,7 @@ void RunPrototypeSandboxMovementTests()
     // Step the exact same per-frame pipeline the real game loop uses
     // (occupancy pre-pass, driver, continuous-space separation, stall
     // detection) until every unit's order resolves (arrival or a clean
-    // stall-cancel) or the budget runs out. 40s is generous for a ~30-tile
+    // stall-cancel) or the budget runs out. 40s is generous for a ~20-tile
     // diagonal crossing at Infantry speed with obstacle routing; the soak
     // tests already run into the 100s+ range for full matches.
     constexpr float kDt = 1.0f / 60.0f;
