@@ -9,6 +9,7 @@
 #include "DataRoot.h"
 #include "Formation.h"
 #include "Hud.h"
+#include "Log.h"
 #include "MapFile.h"
 #include "Pathfinder.h"
 #include "Selection.h"
@@ -146,6 +147,10 @@ void Game::Init()
     {
         ChangeDirectory(dataRoot);
     }
+
+    // Fatal log file from here on (console + data/logs/conflict-converge.log);
+    // Init falls back to console-only when the file cannot be opened.
+    Log::Init("data/logs/conflict-converge.log");
 
     const int kInitialWidth = 1200;
     const int kInitialHeight = 675;
@@ -1371,6 +1376,7 @@ void Game::Shutdown()
     audio.Shutdown(); // Unload sounds + music stream
     CloseAudioDevice();
     CloseWindow();
+    Log::Shutdown(); // last: keep the log sink through CloseWindow chatter
 }
 
 bool Game::IsRunning() const
