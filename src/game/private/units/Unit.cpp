@@ -1340,20 +1340,20 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
 void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
                           const FogOfWar *fog, float dtSeconds)
 {
+	// Release then Re reserve all unit footprints to avoid hanging footprint from pathfinding bug
+	occ.ReleaseAllUnitFootprints();
+
     // Reserve each unit's current anchor tile before movement, so
-    // StepToward's CanEnter check prevents two units from entering the same
-    // tile. Ownership-checked: a shoved unit never wipes or steals another
+    // StepToward's CanEnter check prevents two units from entering the same tile.
+    // Ownership-checked: a shoved unit never wipes or steals another
     // unit's reservation, it just goes unreserved until ResolveStackedUnits
     // relocates it clear.
     registry.Each<Unit>([&](Entity id, Unit &unit) {
         if (unit.health > 0.0f)
         {
             const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(unit.position));
-            occ.ReleaseFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight, id,
-                                      registry.Generation(id));
-            // Count discarded deliberately: overlap is routine in crowds
-            // (see above); a partially reserved unit just goes unreserved
-            // until ResolveStackedUnits relocates it clear.
+
+			// Re reserve footprint after clear all command above
             (void)occ.ReserveFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight, id,
                                             registry.Generation(id));
         }

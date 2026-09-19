@@ -106,6 +106,8 @@ public:
     int ReserveFootprintOwned(cc::IVec2 anchor, int footprintW, int footprintH,
                               Entity entity, std::uint32_t generation);
 
+	void ReleaseAllUnitFootprints();
+
     // Check whether a unit's entire footprint can enter at anchor.
     // Returns true only if every tile in the footprint is in-bounds,
     // not terrain-blocked, and not occupied by another entity.
