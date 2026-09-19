@@ -240,7 +240,7 @@ int OccupancyGrid::ReserveFootprintOwned(cc::IVec2 anchor, int footprintW, int f
 
 void OccupancyGrid::ReleaseAllUnitFootprints()
 {
-	std::fill(units_.begin(), units_.end(), 0);
+	std::fill(units_.begin(), units_.end(), OccEntry(0));
 }
 
 bool OccupancyGrid::CanEnter(const TileMap &map, cc::IVec2 anchor, int footprintW, int footprintH,
