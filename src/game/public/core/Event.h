@@ -4,10 +4,8 @@
 #include <unordered_map>
 #include <vector>
 
-// Event dispatcher architecture. Gameplay systems post
-// events through EventDispatcher; UI and tests subscribe to them.
-// Listener routing is by EventType; handlers receive the base Event and
-// downcast to the concrete payload type for their event.
+// Event dispatcher: systems post events, UI and tests subscribe. Routing is
+// by EventType; handlers downcast the base Event to the concrete payload.
 
 enum class EventType
 {
@@ -15,11 +13,6 @@ enum class EventType
     UnitSpawned,
     UnitDestroyed,
     ResourceChanged,
-    // Unit damage, resource depletion, game-state (match start/pause/game-over
-    // victory), and UI (menu actions,
-    // production ordered). Game-state + UI are dispatched by the menu/match
-    // flow; UnitDamaged/ResourceDepleted reserve the unit/resource slots
-    // (combat and gather ticks stay dispatcher-free for now).
     UnitDamaged,
     ResourceDepleted,
     MatchStarted,
@@ -44,8 +37,6 @@ public:
     // Register a handler invoked for every Dispatch of the given type.
     void Subscribe(EventType type, Handler handler);
     // Invoke all handlers registered for event.type, in subscription order.
-    // Snapshot semantics: re-entrant Subscribe/Clear affects the next
-    // Dispatch, never the in-flight one.
     void Dispatch(const Event &event) const;
     // Drop all subscriptions (teardown / test isolation).
     void Clear();

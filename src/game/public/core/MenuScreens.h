@@ -12,8 +12,8 @@
 #include "MapFile.h"
 #include "Menu.h"
 
-// World-transition callbacks: MenuScreens owns every menu pixel, Game
-// owns every world mutation. The screens never touch the world directly.
+// World-transition callbacks: MenuScreens owns every menu pixel, Game owns
+// every world mutation.
 struct MenuCallbacks
 {
     std::function<void(const std::string &mapPath, AIDifficulty difficulty)> startMatch;
@@ -24,13 +24,8 @@ struct MenuCallbacks
 };
 
 // MenuScreens owns the out-of-world menu branch (main/setup/settings/
-// remap/load/editor) plus the shared hotkey-remap screen the pause
-// overlay borrows. Extracted from Game::Update/DrawHotkeyRemap: menu UI
-// state (editor scratch, remap capture, setup scroll) lives here, world
-// transitions cross via MenuCallbacks, announcements dispatch directly.
-// Needs a window + GL context (raygui/raylib draw calls throughout):
-// not headless-testable, the full suite + e2e gate it.
-// Non-copyable: reference members bind the owner's storage for life.
+// remap/load/editor) plus the shared hotkey-remap screen the pause overlay
+// borrows. Needs a window + GL context; not headless-testable.
 class MenuScreens
 {
 public:
@@ -39,19 +34,13 @@ public:
     MenuScreens(const MenuScreens &) = delete;
     MenuScreens &operator=(const MenuScreens &) = delete;
 
-    // The !worldActive branch: audio follow, per-screen UI, transition
-    // fade. Owns its Begin/EndDrawing pair; the early return stays with
-    // the caller. menuStateTime is the Game-owned transition clock.
+    // Draw the !worldActive branch; owns its Begin/EndDrawing pair.
     void Draw(int screenWidth, int screenHeight, float menuStateTime);
-    // Remap screen body, shared by the Settings-chain branch and the
-    // pause overlay (same screen, whichever state entered it).
+    // Remap screen body, shared by Settings and the pause overlay.
     void DrawRemap(float cx);
-    // Arm a remap capture from Settings or pause (records where Esc/Back
-    // returns to).
+    // Arm a remap capture from Settings or pause.
     void BeginRemap(MenuState returnTo);
-    // Esc binding: never rebinds — cancels an armed capture, else backs
-    // out to wherever the remap screen was entered from. Returns true
-    // when the remap screen consumed the key.
+    // Esc: cancel an armed capture, else back out; true when consumed.
     bool CancelRemapCapture();
     // Persisted remaps into hotkeys (startup, before BindShortcuts).
     void ApplyHotkeyOverrides();
@@ -59,7 +48,6 @@ public:
     void SyncHotkeySettings();
 
 private:
-    // Bare-event announcer for MenuAction.
     void Announce(EventType type);
 
     MenuFlow &menu_;
@@ -69,17 +57,12 @@ private:
     HotkeyMap &hotkeys_;
     EventDispatcher &events_;
     MenuCallbacks callbacks_;
-    // Setup-screen map list scroll position.
-    int setupScroll_ = 0;
-    // QoL remap-screen capture state: action index being rebound (-1 =
-    // none), pending conflict (action + key awaiting second-click
-    // confirm), and where Esc returns to (Settings or Paused).
-    int remapArming_ = -1;
-    std::string remapConflictAction_;
+    int setupScroll_ = 0; // setup-screen map list scroll position
+    int remapArming_ = -1; // action being rebound (-1 = none)
+    std::string remapConflictAction_; // pending conflict (awaiting confirm)
     int remapConflictKey_ = 0;
-    MenuState remapReturn_ = MenuState::Settings;
-    // QoL map editor scratch state (24x18 canvas, never the live match).
-    MapData editorMap_;
+    MenuState remapReturn_ = MenuState::Settings; // where Esc returns to
+    MapData editorMap_; // map editor scratch (never the live match)
     char editorBrush_ = '.';
     std::string editorStatus_;
     char editorSaveName_[64] = "custom"; // Save-As buffer (raw char* for raygui)

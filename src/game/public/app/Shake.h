@@ -1,11 +1,7 @@
 #pragma once
 
-// Screen shake (trauma pattern): impacts raise a 0..1 trauma value that
-// bleeds off per frame; the rendered offset scales with trauma squared so
-// small hits barely register while overlapping explosions compose (add and
-// clamp). Pure math only — camera.view itself is never touched; Game renders
-// through a shaken copy at BeginMode2D, so Pan/ClampToMap keep reasoning
-// about the real, unshaken camera across frames.
+// Screen shake (trauma pattern): pure math only; Game renders through a
+// shaken camera copy, never mutating camera.view.
 
 constexpr float kShakeDecayRate = 1.5f; // trauma per second (full hit clears in ~0.7s)
 constexpr float kShakeMaxPixels = 12.0f; // offset at trauma == 1

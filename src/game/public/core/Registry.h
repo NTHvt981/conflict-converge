@@ -8,10 +8,8 @@
 #include <unordered_set>
 #include <vector>
 
-// ECS-lite registry for component management. Entities are plain IDs;
-// components are arbitrary structs stored per type (movement, unit stats,
-// combat state all attach here). Systems iterate by querying the
-// component pools they care about. No dependencies beyond the STL.
+// ECS-lite registry: entities are plain uint32 IDs, components are arbitrary
+// structs stored per type. Systems iterate the pools they care about.
 
 using Entity = std::uint32_t;
 
@@ -21,26 +19,21 @@ inline constexpr Entity kInvalidEntity = 0;
 class Registry
 {
 public:
-    // --- entity lifecycle ---
     Entity Create();
     void Destroy(Entity entity);
     bool IsAlive(Entity entity) const;
     std::size_t EntityCount() const;
 
     // Generation counter: increments each time an entity ID is recycled.
-    // Occupancy grids store (entity, generation) to detect stale references
-    // after destroy+reuse (recycled IDs must never resurrect dead entries).
     std::uint32_t Generation(Entity entity) const;
 
-    // --- component access (per-type pools) ---
     template <typename T> void Add(Entity entity, T component);
     template <typename T> bool Has(Entity entity) const;
     template <typename T> T *Get(Entity entity);
     template <typename T> const T *Get(Entity entity) const;
     template <typename T> void Remove(Entity entity);
 
-    // Visit every component of type T: fn(Entity, T&) (or const T&).
-    // Selection, orders, and movement update all iterate units.
+    // Visit every component of type T: fn(Entity, T&).
     template <typename T, typename Fn> void Each(Fn fn);
     template <typename T, typename Fn> void Each(Fn fn) const;
 
@@ -135,7 +128,6 @@ template <typename T> const T *Registry::Get(Entity entity) const
 
 template <typename T> void Registry::Remove(Entity entity)
 {
-    // Look up without creating: removing a never-added component is a no-op.
     auto it = pools_.find(std::type_index(typeid(T)));
     if (it != pools_.end())
     {

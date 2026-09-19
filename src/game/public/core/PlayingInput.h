@@ -12,16 +12,10 @@
 #include "Registry.h"
 #include "TileMap.h"
 
-// PlayingInput owns the in-match input dispatch extracted from Game:
-// drag-box select, area-build/repair gestures, right-click orders
-// (+deferred pan release), line formation, control groups, and the
-// sticky gesture modes the shortcuts arm (placement, repair, shelling,
-// rally, slowest-speed). Game keeps the shortcut guards (worldActive +
-// Playing) and calls the toggles; rendering reads the gesture state
-// through the const accessors (drag boxes, ghosts, previews, hints).
-// Runs only while Playing (the gate stays with the caller); advances no
-// simulation itself — orders land before Simulation::Step runs.
-// Non-copyable: reference members bind the owner's storage for life.
+// PlayingInput owns the in-match input dispatch extracted from Game: drag-box
+// select, area-build/repair gestures, right-click orders, line formation,
+// control groups, and the sticky gesture modes. Runs only while Playing;
+// advances no simulation itself.
 class PlayingInput
 {
 public:
@@ -32,14 +26,11 @@ public:
     PlayingInput(const PlayingInput &) = delete;
     PlayingInput &operator=(const PlayingInput &) = delete;
 
-    // Exactly one frame of gesture dispatch (see DispatchPlayingInput).
+    // Exactly one frame of gesture dispatch.
     void Dispatch();
-    // Clear transient gesture state for a fresh/loaded match or the
-    // replay viewer (sticky modes — placement type, repair mode,
-    // slowest-speed, group routing — persist, as before).
+    // Clear transient gesture state (sticky modes persist).
     void ResetForMatch();
-    // Esc in Playing: stand down every gesture + mode, drop queued
-    // clicks, deselect.
+    // Esc in Playing: stand down every gesture + mode, drop queued clicks, deselect.
     void CancelForEsc();
     // Shortcut toggles (guards live in Game's BindShortcuts).
     void ToggleSettingRally();

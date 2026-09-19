@@ -16,16 +16,9 @@
 #include "TileMap.h"
 #include "UnitFactory.h"
 
-// Simulation owns the per-frame match tick extracted from Game::Update
-// (visibility, movement, death sweep, edge-triggered audio, economy,
-// production, replay capture, auto-repair/retreat, AI, minimap refresh,
-// outcome) plus the edge-trigger and replay-recording state that only the
-// tick reads and writes. Everything else is a reference into the world
-// the simulation steps — same precedent as AICommander/UnitFactory, which
-// hold reference bundles into their owners' registries. The class never
-// touches input, menus (beyond the outcome gate), or rendering, so unit
-// tests can drive Step headlessly over fixture worlds.
-// Non-copyable: reference members bind the owner's storage for life.
+// Simulation owns the per-frame match tick extracted from Game::Update.
+// It never touches input, menus (beyond the outcome gate), or rendering, so
+// unit tests can drive Step headlessly over fixture worlds.
 class Simulation
 {
 public:
@@ -41,31 +34,24 @@ public:
     Simulation(const Simulation &) = delete;
     Simulation &operator=(const Simulation &) = delete;
 
-    // Per-match reset: edge-trigger polls, factory gate, and a fresh
-    // replay recording (replaces the StartMatch reset block).
+    // Per-match reset: edge-trigger polls, factory gate, fresh replay recording.
     void ResetForMatch();
-    // Fresh edge-trigger polls + factory gate for a loaded world, without
-    // touching the replay recording (load path only).
+    // Fresh edge-trigger polls + factory gate for a loaded world (load path).
     void ResetEdgePolls();
-    // End recording but keep this match's frames for the viewer
-    // (QuitToMenu / viewer entry).
+    // End recording but keep this match's frames for the viewer.
     void StopRecording();
     // Viewer entry seeds the frame count from the replay directory.
     void SetReplayCount(int count);
     int ReplayCount() const;
-    // Team-0 operational Factory gate: recomputed by Step, and re-runnable
-    // for the HUD so the production panel stays correct while paused.
+    // Team-0 operational Factory gate, re-runnable for the paused HUD.
     void RefreshFactory();
     bool HasFactory() const;
-    // Exactly one match tick. Runs only while Playing (the gate stays
-    // with the caller).
+    // Exactly one match tick; runs only while Playing.
     void Step(float dt);
 
 private:
-    // Bare-event announcer for the game-state + UI event types.
     void Announce(EventType type);
 
-    // World under test (owned elsewhere, bound for life).
     Registry &registry_;
     TileMap &map_;
     OccupancyGrid &occ_;
@@ -93,8 +79,6 @@ private:
     const bool &playerAutoRepair_;
     const float &autoRepairCap_;
     float &shakeTrauma_;
-    // Outcome-transition edge (menu flow owns it: match setup seeds
-    // Playing, the tick's fanfare block advances it).
     MenuState &lastOutcomeState_;
     // Edge-trigger + replay-recording state (owned here).
     int lastBuildingCount_ = 0;
