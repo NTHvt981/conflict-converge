@@ -180,11 +180,11 @@ void RunSkirmishTests()
         CC_CHECK(ParseMapFile(proto, protoData));
         CC_CHECK(!protoData.playerSpawns.empty());
         CC_CHECK(protoData.aiSpawns.empty()); // no '2' marker: sandbox signal
-        CC_CHECK(protoData.width == 32 && protoData.height == 32);
+        CC_CHECK(protoData.width == 20 && protoData.height == 10);
 
         Harness sand;
         CC_CHECK(BuildSandbox(sand.world, proto));
-        CC_CHECK(sand.map.Width() == 32 && sand.map.Height() == 32);
+        CC_CHECK(sand.map.Width() == 20 && sand.map.Height() == 10);
         // 6 units: all team-0 PrototypeInfantry (infantry logic), stacked at
         // the same spawn tile (BuildSandbox computes the free tile once and
         // reuses it for every SpawnPrepaid call -- separation must untangle
@@ -207,8 +207,11 @@ void RunSkirmishTests()
         CC_CHECK(!TeamHasUnits(sand.registry, 1));
         CC_CHECK(sand.resources.iron == 0 && sand.resources.oil == 0);
         CC_CHECK(sand.queue.Empty());
-        // The squad parks on walkable ground at the marker.
-        CC_CHECK(sand.map.Get({ 5, 16 }) != TerrainType::Water);
+        // The squad parks on walkable ground at the marker (spawn tiles are
+        // free by construction: BuildSandbox places units via NearestFreeTile
+        // from the player spawn, so read the marker back instead of a
+        // hardcoded tile that rots when the map is reworked).
+        CC_CHECK(sand.map.Get(protoData.playerSpawns[0]) != TerrainType::Water);
     }
 
     // --- BuildSandbox refuses maps without a player spawn ---

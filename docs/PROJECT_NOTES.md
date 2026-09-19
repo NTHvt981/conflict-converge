@@ -6,11 +6,13 @@ Use premake to generate project files, then run msbuild to build project
 Found while verifying the include-comment cleanup (that change was comment-only,
 so these fail without it too):
 - `Skirmish` suite aborts (exit 3): `CC_ASSERT(InBounds(tile))` fires in
-  `TileMap::Get` (`src/game/private/world/TileMap.cpp:63`) — OOB tile access on
-  the Skirmish path. `TileMap.cpp` itself is untouched by the cleanup.
-  crossroads.map is unchanged since creation, so unlike the sandbox failure
-  below this is not a stale map — suspect the movement rework or a genuine
-  sim OOB bug. Still open.
+  `TileMap::Get` (`src/game/private/world/TileMap.cpp:63`) — FIXED 2026-09-19.
+  Same stale-map family as the sandbox failure, but disguised as a crash:
+  the test's BuildSandbox section called `sand.map.Get({5, 16})` (valid on
+  the old 32x32 layout, OOB on the 20x10 map), so the assert fired inside the
+  test itself — no game-code bug. Fixed like Phase A (dims 20x10) plus made
+  the spawn-tile check rot-proof by reading `protoData.playerSpawns[0]`
+  instead of a hardcoded tile. Full runner green: 4261 checks, 0 failures.
 - `PrototypeSandboxMovement` (9 CHECK failures — and the earlier `Movement`
   EXIT=1, which was only the substring filter also running this suite; the
   Movement suite proper was always green): FIXED 2026-09-19. Root cause was
