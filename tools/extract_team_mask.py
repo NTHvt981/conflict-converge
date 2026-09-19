@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
 extract_team_mask.py -- splits an already-rendered 2D sprite PNG (output of
-convert_vox_to_sprite.py) into the project's base+mask team-tint pair
-(documented in CLAUDE.md's "Team color: base+mask split" section):
+convert_vox_to_sprite.py) into the project's base+mask team-tint pair:
 
   <name>_base.png -- every pixel EXCEPT the team-color material, unchanged;
                      team-color pixels become transparent.
