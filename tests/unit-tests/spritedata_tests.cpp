@@ -1,4 +1,4 @@
-// Unit tests for the protobuf-JSON sprite-atlas loader (SpriteData).
+// Unit tests for the cereal-JSON sprite-atlas loader (SpriteData).
 // Covers the real data/configs atlas happy path plus every validation
 // rejection via inline JSON (no temp files). Headless-safe: no textures.
 

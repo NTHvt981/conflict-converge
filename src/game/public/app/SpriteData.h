@@ -4,8 +4,8 @@
 #include <vector>
 
 // Sprite-atlas data (JSON in data/configs/: textures.json, sprites.json,
-// animations.json — one SpriteSheet section each, merged at load; schema in
-// proto/spritedata.proto, parsed via protobuf-JSON). Mirrors the
+// animations.json — one SpriteSheet section each, merged at load; parsed via
+// cereal-JSON with key names matching proto/spritedata.proto). Mirrors the
 // GameFramework Textures/Sprites/Animations trio: textures name the atlas
 // images, sprites name source-rects (explicit or grid-expanded), animations
 // sequence sprites with per-frame durations. Pure logic, headless-safe.

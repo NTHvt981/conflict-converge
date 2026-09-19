@@ -2,6 +2,23 @@
 Do not use CMake to build or generate project files
 Use premake to generate project files, then run msbuild to build project
 
+## Cereal migration Phase 1 done (2026-09-19)
+`SpriteData.cpp` ported to cereal JSON; suite 60/60, full runner 4261 green.
+Two deviations from `plans/CerealMigration_Plan.md` Phase 1 (apply to Phases 2-3):
+- Plain `serialize()` is insufficient: cereal throws on absent keys, but the
+  schema/tests rely on protobuf default-instance semantics (omitted origin,
+  mask ids, even whole top-level arrays). Every member loads via a
+  `TryLoadValue` try/catch that keeps the default on absence.
+- Never process an unnamed struct at a JSON root: cereal enters every `ar()`
+  struct via `startNode()`, so a root struct silently misaligns the iterator
+  stack (all lookups miss, empty sheet validates vacuously true). Load root
+  members as top-level NVPs instead; nested structs are always named, fine.
+- Fail-closed parsing needs the documented `CEREAL_RAPIDJSON_ASSERT` override
+  (TU-local, before cereal includes): without it, mistyped scalars and
+  malformed docs abort (Debug) instead of returning false like protobuf-JSON
+  did. Also had to include `cereal/types/string.hpp` + `vector.hpp`
+  explicitly (base `cereal.hpp` lacks container support — C2338 otherwise).
+
 ## Cereal migration step 0 decisions (2026-09-19)
 - Go: migrate protobuf → cereal per `plans/CerealMigration_Plan.md`.
 - Save compat: break it. Cereal binary layout can't read old `.ccpb` saves;

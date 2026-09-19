@@ -1,13 +1,26 @@
 #include "SpriteData.h"
 
+// Fail-closed JSON parsing: cereal signals missing keys via exception, but
+// mistyped scalars and malformed documents trip rapidjson's C assert
+// (abort in Debug, garbage in Release). The documented override below turns
+// every rapidjson complaint into an exception the parse boundary catches,
+// so malformed input returns false exactly like the protobuf-JSON path did.
+// TU-local by necessity (preprocessor): must precede every cereal include,
+// and SpriteData.h must stay cereal-free.
+
+#define CEREAL_RAPIDJSON_ASSERT(x) \
+    do { if (!(x)) throw std::runtime_error("malformed sprite JSON"); } while (0)
+
+#include <cereal/archives/json.hpp>
+#include <cereal/cereal.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/vector.hpp>
+
 #include <cstdio>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 #include <unordered_set>
-
-#include <google/protobuf/util/json_util.h>
-
-#include "spritedata.pb.h"
 
 namespace
 {
@@ -31,38 +44,210 @@ bool RectInside(int left, int top, int right, int bottom, int width, int height)
            bottom <= height;
 }
 
+// Wire structs mirroring proto/spritedata.proto field-for-field (key names
+// match the shipped camelCase JSON). Loading is tolerant by design: every
+// member goes through TryLoadValue, so an absent key keeps its default —
+// exactly protobuf-JSON's default-instance semantics, which the validation
+// below (and its tests) rely on. Only load() is defined: the game never
+// writes these files back.
+template <class Archive, class T>
+void TryLoadValue(Archive &ar, const char *name, T &out)
+{
+    try
+    {
+        ar(cereal::make_nvp(name, out));
+    }
+    catch (const cereal::Exception &)
+    {
+    }
+}
+
+struct JsonBounds
+{
+    int left = 0;
+    int top = 0;
+    int right = 0;
+    int bottom = 0;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadValue(ar, "left", left);
+        TryLoadValue(ar, "top", top);
+        TryLoadValue(ar, "right", right);
+        TryLoadValue(ar, "bottom", bottom);
+    }
+};
+
+struct JsonOrigin
+{
+    int x = 0;
+    int y = 0;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadValue(ar, "x", x);
+        TryLoadValue(ar, "y", y);
+    }
+};
+
+struct JsonTexture
+{
+    std::string id;
+    std::string file;
+    int width = 0;
+    int height = 0;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadValue(ar, "id", id);
+        TryLoadValue(ar, "file", file);
+        TryLoadValue(ar, "width", width);
+        TryLoadValue(ar, "height", height);
+    }
+};
+
+struct JsonSprite
+{
+    std::string name;
+    int id = 0;
+    std::string texture;
+    JsonBounds bounds;
+    JsonOrigin origin;
+    int maskSprite = 0;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadValue(ar, "name", name);
+        TryLoadValue(ar, "id", id);
+        TryLoadValue(ar, "texture", texture);
+        TryLoadValue(ar, "bounds", bounds);
+        TryLoadValue(ar, "origin", origin);
+        TryLoadValue(ar, "maskSprite", maskSprite);
+    }
+};
+
+struct JsonGrid
+{
+    std::string texture;
+    std::string prefix;
+    int startId = 0;
+    int rows = 0;
+    int cols = 0;
+    int cellW = 0;
+    int cellH = 0;
+    JsonOrigin origin;
+    int maskGridStartId = 0;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadValue(ar, "texture", texture);
+        TryLoadValue(ar, "prefix", prefix);
+        TryLoadValue(ar, "startId", startId);
+        TryLoadValue(ar, "rows", rows);
+        TryLoadValue(ar, "cols", cols);
+        TryLoadValue(ar, "cellW", cellW);
+        TryLoadValue(ar, "cellH", cellH);
+        TryLoadValue(ar, "origin", origin);
+        TryLoadValue(ar, "maskGridStartId", maskGridStartId);
+    }
+};
+
+struct JsonAnimFrame
+{
+    int sprite = 0;
+    int durationMs = 0;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadValue(ar, "sprite", sprite);
+        TryLoadValue(ar, "durationMs", durationMs);
+    }
+};
+
+struct JsonAnim
+{
+    std::string name;
+    int id = 0;
+    bool loop = false;
+    std::vector<JsonAnimFrame> frames;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadValue(ar, "name", name);
+        TryLoadValue(ar, "id", id);
+        TryLoadValue(ar, "loop", loop);
+        TryLoadValue(ar, "frames", frames);
+    }
+};
+
+struct JsonSheet
+{
+    // Plain aggregate, deliberately NO load(): cereal's JSON archive enters
+    // every struct processed through ar() via startNode(), so an unnamed
+    // root struct would consume one iterator level too many and every member
+    // lookup would miss. The four members are loaded directly off the
+    // archive instead (see ParseJsonSheet).
+    std::vector<JsonTexture> textures;
+    std::vector<JsonSprite> sprites;
+    std::vector<JsonGrid> grids;
+    std::vector<JsonAnim> animations;
+};
+
+// Broad catch is the point: syntax errors, missing keys that some other
+// layer requires, mistyped scalars (via the assert override above) — any
+// failure means malformed input, and every caller maps false to reject.
+bool ParseJsonSheet(const std::string &json, JsonSheet &out)
+{
+    try
+    {
+        std::istringstream in(json);
+        cereal::JSONInputArchive ar(in);
+        JsonSheet sheet;
+        TryLoadValue(ar, "textures", sheet.textures);
+        TryLoadValue(ar, "sprites", sheet.sprites);
+        TryLoadValue(ar, "grids", sheet.grids);
+        TryLoadValue(ar, "animations", sheet.animations);
+        out = sheet;
+        return true;
+    }
+    catch (const std::exception &)
+    {
+        return false;
+    }
+}
+
 } // namespace
 
-bool ValidateSpriteSheet(const cc::sprites::SpriteSheet &proto, SpriteSheetData &out);
+bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out);
 
 bool ParseSpriteSheetJson(const std::string &json, SpriteSheetData &out)
 {
-    cc::sprites::SpriteSheet proto;
-    if (!google::protobuf::util::JsonStringToMessage(json, &proto).ok())
+    JsonSheet proto;
+    if (!ParseJsonSheet(json, proto))
     {
         return false;
     }
     return ValidateSpriteSheet(proto, out);
 }
 
-bool ValidateSpriteSheet(const cc::sprites::SpriteSheet &proto, SpriteSheetData &out)
+bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 {
     SpriteSheetData sheet;
 
     // --- textures: unique non-empty ids, non-empty files, positive dims ---
     std::unordered_set<std::string> textureIds;
-    for (const cc::sprites::SpriteTexture &t : proto.textures())
+    for (const JsonTexture &t : proto.textures)
     {
-        if (t.id().empty() || t.file().empty() || t.width() <= 0 || t.height() <= 0 ||
-            !textureIds.insert(t.id()).second)
+        if (t.id.empty() || t.file.empty() || t.width <= 0 || t.height <= 0 ||
+            !textureIds.insert(t.id).second)
         {
             return false;
         }
         SpriteTextureInfo info;
-        info.id = t.id();
-        info.file = t.file();
-        info.width = t.width();
-        info.height = t.height();
+        info.id = t.id;
+        info.file = t.file;
+        info.width = t.width;
+        info.height = t.height;
         sheet.textures.push_back(info);
     }
 
@@ -108,45 +293,41 @@ bool ValidateSpriteSheet(const cc::sprites::SpriteSheet &proto, SpriteSheetData 
     };
 
     // --- explicit sprites ---
-    for (const cc::sprites::SpriteDef &s : proto.sprites())
+    for (const JsonSprite &s : proto.sprites)
     {
-        const SpriteRect bounds{ s.bounds().left(), s.bounds().top(), s.bounds().right(),
-                                s.bounds().bottom() };
-        const SpriteOriginPx origin{ s.origin().x(), s.origin().y() };
-        if (!pushSprite(s.name(), s.id(), s.texture(), bounds, origin, s.mask_sprite()))
+        const SpriteRect bounds{ s.bounds.left, s.bounds.top, s.bounds.right, s.bounds.bottom };
+        const SpriteOriginPx origin{ s.origin.x, s.origin.y };
+        if (!pushSprite(s.name, s.id, s.texture, bounds, origin, s.maskSprite))
         {
             return false;
         }
     }
 
     // --- grids: expand to "<prefix>_<r>_<c>", ids start_id + r*cols + c ---
-    for (const cc::sprites::SpriteGrid &g : proto.grids())
+    for (const JsonGrid &g : proto.grids)
     {
-        if (g.prefix().empty() || g.rows() <= 0 || g.cols() <= 0 || g.cell_w() <= 0 ||
-            g.cell_h() <= 0)
+        if (g.prefix.empty() || g.rows <= 0 || g.cols <= 0 || g.cellW <= 0 || g.cellH <= 0)
         {
             return false;
         }
-        const SpriteTextureInfo *tex = findTexture(g.texture());
-        if (tex == nullptr || g.cols() * g.cell_w() > tex->width ||
-            g.rows() * g.cell_h() > tex->height)
+        const SpriteTextureInfo *tex = findTexture(g.texture);
+        if (tex == nullptr || g.cols * g.cellW > tex->width || g.rows * g.cellH > tex->height)
         {
             return false;
         }
-        const SpriteOriginPx origin{ g.origin().x(), g.origin().y() };
-        for (int r = 0; r < g.rows(); ++r)
+        const SpriteOriginPx origin{ g.origin.x, g.origin.y };
+        for (int r = 0; r < g.rows; ++r)
         {
-            for (int c = 0; c < g.cols(); ++c)
+            for (int c = 0; c < g.cols; ++c)
             {
                 char name[128];
-                std::snprintf(name, sizeof(name), "%s_%d_%d", g.prefix().c_str(), r, c);
-                const SpriteRect bounds{ c * g.cell_w(), r * g.cell_h(), (c + 1) * g.cell_w(),
-                                         (r + 1) * g.cell_h() };
-                const int maskId = g.mask_grid_start_id() != 0
-                                       ? g.mask_grid_start_id() + r * g.cols() + c
-                                       : 0;
-                if (!pushSprite(name, g.start_id() + r * g.cols() + c, g.texture(), bounds,
-                                origin, maskId))
+                std::snprintf(name, sizeof(name), "%s_%d_%d", g.prefix.c_str(), r, c);
+                const SpriteRect bounds{ c * g.cellW, r * g.cellH, (c + 1) * g.cellW,
+                                         (r + 1) * g.cellH };
+                const int maskId =
+                    g.maskGridStartId != 0 ? g.maskGridStartId + r * g.cols + c : 0;
+                if (!pushSprite(name, g.startId + r * g.cols + c, g.texture, bounds, origin,
+                                maskId))
                 {
                     return false;
                 }
@@ -182,26 +363,26 @@ bool ValidateSpriteSheet(const cc::sprites::SpriteSheet &proto, SpriteSheetData 
     // --- animations: unique names/ids, >= 1 frame, live sprite refs ---
     std::unordered_set<int> animIds;
     std::unordered_set<std::string> animNames;
-    for (const cc::sprites::SpriteAnim &a : proto.animations())
+    for (const JsonAnim &a : proto.animations)
     {
-        if (a.name().empty() || !animIds.insert(a.id()).second ||
-            !animNames.insert(a.name()).second || a.frames_size() == 0)
+        if (a.name.empty() || !animIds.insert(a.id).second ||
+            !animNames.insert(a.name).second || a.frames.empty())
         {
             return false;
         }
         SpriteAnimInfo info;
-        info.name = a.name();
-        info.id = a.id();
-        info.loop = a.loop();
-        for (const cc::sprites::AnimFrame &f : a.frames())
+        info.name = a.name;
+        info.id = a.id;
+        info.loop = a.loop;
+        for (const JsonAnimFrame &f : a.frames)
         {
-            if (f.duration_ms() <= 0 || FindSpriteById(sheet, f.sprite()) == nullptr)
+            if (f.durationMs <= 0 || FindSpriteById(sheet, f.sprite) == nullptr)
             {
                 return false;
             }
             SpriteAnimFrame frame;
-            frame.sprite = f.sprite();
-            frame.durationMs = f.duration_ms();
+            frame.sprite = f.sprite;
+            frame.durationMs = f.durationMs;
             info.frames.push_back(frame);
         }
         sheet.animations.push_back(info);
@@ -223,7 +404,7 @@ bool LoadSpriteSheet(SpriteSheetData &out)
         "data/configs/sprites.json",
         "data/configs/animations.json",
     };
-    cc::sprites::SpriteSheet merged;
+    JsonSheet merged;
     for (const char *path : kAtlasFiles)
     {
         std::string json;
@@ -231,12 +412,16 @@ bool LoadSpriteSheet(SpriteSheetData &out)
         {
             return false;
         }
-        cc::sprites::SpriteSheet part;
-        if (!google::protobuf::util::JsonStringToMessage(json, &part).ok())
+        JsonSheet part;
+        if (!ParseJsonSheet(json, part))
         {
             return false;
         }
-        merged.MergeFrom(part);
+        merged.textures.insert(merged.textures.end(), part.textures.begin(), part.textures.end());
+        merged.sprites.insert(merged.sprites.end(), part.sprites.begin(), part.sprites.end());
+        merged.grids.insert(merged.grids.end(), part.grids.begin(), part.grids.end());
+        merged.animations.insert(merged.animations.end(), part.animations.begin(),
+                                 part.animations.end());
     }
     return ValidateSpriteSheet(merged, out);
 }
