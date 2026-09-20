@@ -9,3 +9,4 @@ test_sandbox/
 .clean/
 .agents/
 **.log
+imgui.ini

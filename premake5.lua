@@ -68,6 +68,29 @@ project "raylib-static"
         "deps/glm"
     }
 
+project "imgui-static"
+    kind "StaticLib"
+    cppdialect "C++20"
+    files {
+        "deps/imgui/imgui.cpp",
+        "deps/imgui/imgui_draw.cpp",
+        "deps/imgui/imgui_tables.cpp",
+        "deps/imgui/imgui_widgets.cpp",
+        "deps/rlImGui/rlImGui.cpp",
+        "deps/imgui/**.h",
+        "deps/rlImGui/**.h"
+    }
+    includedirs {
+        "deps/imgui",
+        "deps/rlImGui",
+        "deps/raylib/src"
+    }
+    defines {
+        "IMGUI_DISABLE_OBSOLETE_FUNCTIONS",
+        "IMGUI_DISABLE_OBSOLETE_KEYIO",
+        "NO_FONT_AWESOME"
+    }
+
 -- Project to build raygui as static library from deps/
 project "raygui-static"
     kind "StaticLib"
@@ -107,6 +130,8 @@ project "conflict-converge"
     includedirs {
         "deps/raylib/src",
         "deps/raygui/src",
+        "deps/imgui",
+        "deps/rlImGui",
         "deps/glm",
         "deps/reasings/src",
         "deps/rini/src",
@@ -149,6 +174,10 @@ project "conflict-converge"
     postbuildcommands {
         "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
     }
+    defines { "NO_FONT_AWESOME" }
+    filter "configurations:Debug or ASan"
+        links { "imgui-static" }
+    filter {}
 
 -- Test project
 project "conflict-converge-test"
@@ -180,6 +209,8 @@ project "conflict-converge-test"
     includedirs {
         "deps/raylib/src",
         "deps/raygui/src",
+        "deps/imgui",
+        "deps/rlImGui",
         "deps/glm",
         "deps/reasings/src",
         "deps/rini/src",
@@ -203,6 +234,10 @@ project "conflict-converge-test"
         "winmm",
         "shell32"
     }
+    defines { "NO_FONT_AWESOME" }
+    filter "configurations:Debug or ASan"
+        links { "imgui-static" }
+    filter {}
 
 -- Tier-1 end-to-end project: the real Game loop in a hidden window
 -- (tests/e2e/e2e_main.cpp). Own binary, excluded from the default test run:
@@ -225,6 +260,8 @@ project "conflict-converge-e2e"
     includedirs {
         "deps/raylib/src",
         "deps/raygui/src",
+        "deps/imgui",
+        "deps/rlImGui",
         "deps/glm",
         "deps/reasings/src",
         "deps/rini/src",
@@ -254,6 +291,10 @@ project "conflict-converge-e2e"
     postbuildcommands {
         "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
     }
+    defines { "NO_FONT_AWESOME" }
+    filter "configurations:Debug or ASan"
+        links { "imgui-static" }
+    filter {}
 
 -- Standalone unit-config editor: its own windowed binary sharing only the
 -- data-layer + art TUs (UnitStats/UnitConfig/SpriteData + Art for the live

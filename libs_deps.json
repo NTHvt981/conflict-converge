@@ -46,5 +46,17 @@
         "git_repo": "https://github.com/raysan5/rini.git",
         "dest": "deps/rini",
         "git_tag": "main"
+    },
+    {
+        "name": "imgui",
+        "git_repo": "https://github.com/ocornut/imgui",
+        "dest": "deps/imgui",
+        "git_tag": "v1.92.7"
+    },
+    {
+        "name": "rlImGui",
+        "git_repo": "https://github.com/raylib-extras/rlImGui",
+        "dest": "deps/rlImGui",
+        "git_tag": "Raylib_6_0"
     }
 ]

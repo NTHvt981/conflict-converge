@@ -3,12 +3,15 @@
 
 #include "raygui.h"
 #include "Building.h"
+#include "Cheats.h"
 #include "Cursor.h"
 #include "Hud.h"
 #include "Selection.h"
 #include "Unit.h"
 #include <algorithm>
 #include <vector>
+
+DEFINE_CHEAT_WIDGET(SHOW_UNIT_ID_TOGGLE, TOGGLE, false)
 
 namespace
 {
@@ -288,6 +291,14 @@ void GameRenderer::DrawWorld()
         {
             return;
         }
+        DEFINE_CHEAT_CODE(
+            if (SHOW_UNIT_ID_TOGGLE.value())
+            {
+                Art::DrawUiText(&art_, TextFormat("%u", id),
+                                static_cast<int>(unit.position.x),
+                                static_cast<int>(unit.position.y), 12, YELLOW);
+            }
+        )
         const Rectangle body = { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };
         const Vector2 center = { body.x + 16.0f, body.y + 16.0f };
         if (art_.UseRectangles() && !art_.UseAtlas())

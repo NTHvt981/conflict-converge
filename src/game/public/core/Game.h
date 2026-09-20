@@ -6,6 +6,7 @@
 #include "AICommander.h"
 #include "Art.h"
 #include "Audio.h"
+#include "CheatOverlay.h"
 #include "Event.h"
 #include "FogOfWar.h"
 #include "GameCamera.h"
@@ -112,4 +113,5 @@ private:
     ShortcutBindings bindings;
     GameRenderer renderer;
     MatchController match;
+    CheatOverlay cheats;
 };

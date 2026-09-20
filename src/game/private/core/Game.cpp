@@ -63,6 +63,7 @@ void Game::Init()
     SetWindowMinSize(800, 450);
     SetTargetFPS(60);
     GuiEnableTooltip();
+    cheats.Init();
 
     InitAudioDevice();
     audio.Init(IsAudioDeviceReady());
@@ -111,7 +112,7 @@ void Game::Update()
         pendingConfirm = ConfirmChoice::None;
     }
     match.PollConfirmKeys();
-    input.shortcuts.SetEnabled(!menu.ConfirmOpen());
+    input.shortcuts.SetEnabled(!menu.ConfirmOpen() && !cheats.CapturingInput());
     input.Update(camera, menu.settings.cameraSpeed, GetFrameTime());
     camera.AdjustZoom(input.WheelDelta());
     const int screenWidth = GetScreenWidth();
@@ -137,7 +138,7 @@ void Game::Update()
         return;
     }
 
-    if (menu.state == MenuState::Playing && !menu.ConfirmOpen())
+    if (menu.state == MenuState::Playing && !menu.ConfirmOpen() && !cheats.CapturingInput())
     {
         playingInput.Dispatch();
         sim.Step(GetFrameTime());
@@ -168,6 +169,7 @@ void Game::Update()
     renderer.DrawWorld();
 
     pendingConfirm = renderer.DrawHudAndOverlays(screenWidth, screenHeight);
+    cheats.Frame();
     EndDrawing();
 }
 
@@ -177,6 +179,7 @@ void Game::Shutdown()
     art.Shutdown();
     audio.Shutdown();
     CloseAudioDevice();
+    cheats.Shutdown();
     CloseWindow();
     Log::Shutdown();
 }
