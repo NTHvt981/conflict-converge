@@ -8,10 +8,10 @@
       "rows": 4, "cols": 8, "cellW": 16, "cellH": 32,
       "origin": { "x": 8, "y": 16 } },
     { "texture": "prototype_infantry_idle", "prefix": "prototypeinfantry_idle", "startId": 200,
-      "rows": 1, "cols": 8, "cellW": 16, "cellH": 32,
-      "origin": { "x": 8, "y": 16 } },
+      "rows": 1, "cols": 8, "cellW": 32, "cellH": 32,
+      "origin": { "x": 16, "y": 16 } },
     { "texture": "prototype_infantry_run", "prefix": "prototypeinfantry_walk", "startId": 300,
-      "rows": 4, "cols": 8, "cellW": 16, "cellH": 32,
-      "origin": { "x": 8, "y": 16 } }
+      "rows": 4, "cols": 8, "cellW": 32, "cellH": 32,
+      "origin": { "x": 16, "y": 16 } }
   ]
 }
