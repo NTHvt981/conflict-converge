@@ -1,0 +1,97 @@
+body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	background: #f0f0f0;
+	font-family: comfortaa;
+	font-size: 22px;
+	color: #222222;
+}
+
+#clickme {
+	position: absolute;
+	top: 20px;
+	left: 20px;
+	width: 200px;
+	height: 40px;
+	background: #4a90d9;
+	color: #ffffff;
+	border: 2px #2c5f8a;
+	font-family: comfortaa;
+	font-size: 22px;
+}
+
+#clickme:hover {
+	background: #e07b39;
+}
+
+#status {
+	position: absolute;
+	top: 70px;
+	left: 20px;
+	color: #222222;
+}
+
+#hello {
+	position: absolute;
+	top: 110px;
+	left: 20px;
+	color: #333333;
+}
+
+#boxA {
+	position: absolute;
+	top: 160px;
+	left: 20px;
+	width: 30%;
+	height: 80px;
+	background: #7bc96f;
+	border: 3px #2e7d32;
+}
+
+#boxB {
+	position: absolute;
+	top: 260px;
+	left: 20px;
+	width: 200px;
+	height: 60px;
+	background: #b39ddb;
+	border: 2px #4527a0;
+}
+
+#clip {
+	position: absolute;
+	top: 340px;
+	left: 20px;
+	width: 220px;
+	height: 60px;
+	overflow: hidden;
+	background: #eeeeee;
+	border: 2px #616161;
+}
+
+#clipInner {
+	width: 300px;
+	height: 120px;
+	margin-top: -20px;
+	margin-left: -30px;
+	background: #ef5350;
+}
+
+#pic {
+	position: absolute;
+	top: 420px;
+	left: 20px;
+	width: 270px;
+	height: 138px;
+}
+
+#widebar {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100vw;
+	height: 24px;
+	background: #37474f;
+}

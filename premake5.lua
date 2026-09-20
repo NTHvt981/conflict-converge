@@ -344,3 +344,57 @@ project "conflict-converge-editor"
     postbuildcommands {
         "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
     }
+
+-- ===== RmlUi probe (TEMPORARY, remove after spike) =====
+project "rmlui-static"
+    kind "StaticLib"
+    cppdialect "C++20"
+    files {
+        "deps/RmlUi/Source/Core/**.cpp",
+        "deps/RmlUi/Source/Core/**.h",
+        "deps/RmlUi/Source/Debugger/**.cpp",
+        "deps/RmlUi/Source/Debugger/**.h"
+    }
+    removefiles {
+        "deps/RmlUi/Source/Core/FontEngineDefault/**"
+    }
+    includedirs {
+        "deps/RmlUi/Include"
+    }
+    defines {
+        "RMLUI_STATIC_LIB"
+    }
+
+filter { "files:deps/RmlUi/**.cpp" }
+    defines { "_CRT_SECURE_NO_WARNINGS" }
+filter {}
+
+project "rmlui-probe"
+    kind "ConsoleApp"
+    cppdialect "C++20"
+    files {
+        "tools/rmlui_probe/**.cpp",
+        "tools/rmlui_probe/**.h"
+    }
+    includedirs {
+        "deps/raylib/src",
+        "deps/RmlUi/Include",
+        "deps/RmlUi/Samples/basic/bitmap_font/src",
+        "tools/rmlui_probe"
+    }
+    defines {
+        "RMLUI_STATIC_LIB",
+        "NO_FONT_AWESOME"
+    }
+    links {
+        "raylib-static",
+        "rmlui-static",
+        "opengl32",
+        "gdi32",
+        "winmm",
+        "shell32"
+    }
+    debugdir "%{wks.location}/.."
+    postbuildcommands {
+        "{COPYDIR} %{wks.location}/../tools/rmlui_probe/data %{cfg.buildtarget.directory}/data"
+    }
