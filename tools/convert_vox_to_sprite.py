@@ -6,8 +6,8 @@ flat raycast render per direction of the model exactly as it sits in the
 file.
 
 Usage:
-    python convert_vox_to_sprite.py <model>.vox [--angle ANGLE] [--size N]
-                                    [--width W] [--height H] [--out PATH]
+    python convert_vox_to_sprite.py <model>.vox [--angle ANGLE] [--scale SCALE]
+                                     [--out PATH]
 
     python convert_vox_to_sprite.py <pose1>.vox <pose2>.vox ... [same flags]
     python convert_vox_to_sprite.py <folder> [same flags]
@@ -26,17 +26,14 @@ Usage:
 degrees: 0 = horizontal (pure side view), 90 = straight top-down. Default
 45 (a generic 3/4-ish overhead angle). (--degree still works as an alias.)
 
---size / -s sets both the output width and height, in pixels, to the same
-number. --width / -w and --height / -h override just that one dimension
-(if only one of width/height is given, the other defaults to match it, so
-the output stays square unless both are given explicitly). With none of
-these given, the tile size is auto-computed from the actual rendered
-sprite's own pixel footprint (see "recenter + resize" below), rounded up
-to the nearest multiple of 16 per axis (independently for width and
+--scale sets the output pixels per voxel unit (uniform, never
+stretched). The tile always auto-sizes to the model's projected footprint
+at this scale (see "recenter + resize" below), padded a little, then
+rounded up to a multiple of 16 per axis (independently for width and
 height -- a tall, narrow subject gets a tall, narrow tile instead of being
-forced square).
+forced square). Default 1.0.
 
-Whatever size is used, the model is always scaled uniformly (never
+Whatever scale is used, the model is always scaled uniformly (never
 stretched) and placed dead center in the frame -- across all 8 directions
 it rotates in place around a fixed point; it never shifts around within
 the tile from one direction to the next.
@@ -48,11 +45,10 @@ direction (e.g. a tall thin character needs a tall tile, but that same
 tall tile is far wider than any single direction's silhouette actually
 needs). After the initial render, this tool measures the tight
 non-transparent bounding box shared across every direction/frame tile,
-then re-crops every tile so that box sits dead-center -- this "recenter"
-happens whether or not --size/--width/--height was given. When none of
-those were given, the tile is additionally shrunk to that tight box
-(padded a little, then rounded up to a multiple of 16) instead of the
-old world-space auto-fit size, so the output isn't mostly empty margin.
+then re-crops every tile so that box sits dead-center and shrinks the
+tile to that tight box (padded a little, then rounded up to a multiple of
+16) instead of the old world-space auto-fit size, so the output is always
+a tight tile that isn't mostly empty margin.
 
 Output: "<model>_2d.png" written next to the input file. 8 columns -- one
 tile per direction, 45 degrees apart around the vertical axis, starting at
@@ -104,8 +100,8 @@ N_DIRS = 8
 DIRECTION_LABELS = ["top", "top left", "left", "bottom left",
                     "bottom", "bottom right", "right", "top right"]
 MARGIN_FACTOR = 1.03  # small safety pad so edge voxels never clip
-DEFAULT_PIXELS_PER_UNIT = 1.0  # used only in auto-size mode (no --size/--width/--height)
-AUTO_SIZE_MULTIPLE = 16  # auto tile size (no --size/--width/--height) rounds up to this
+DEFAULT_PIXELS_PER_UNIT = 1.0  # default --scale (output pixels per voxel unit)
+AUTO_SIZE_MULTIPLE = 16  # auto-sized tile rounds up to this (--scale always auto-sizes tight tiles)
 AUTO_SIZE_PAD = 4  # total breathing-room pixels (both sides combined) added per axis before rounding
 
 
@@ -201,8 +197,11 @@ def load_viewer_frames(path):
         frame = []
         for (x, y, z, c) in raw_voxels:
             # raw vox space (x=width, y=depth, z=height) -> viewer space
-            # (x, y=up, z=depth), matching this project's convention.
-            frame.append((x, z, y, c - 1))
+            # (x, y=up, z=depth), matching this project's convention. The x
+            # negation preserves handedness: a plain (x, z, y) swap is a
+            # reflection that mirrors the rendered model (e.g. text reads
+            # backwards), so negate x to make it a proper rotation.
+            frame.append((-x, z, y, c - 1))
         frames.append(frame)
     palette_rgb = [tuple(p[:3]) for p in raw_palette]
     return frames, palette_rgb
@@ -290,26 +289,15 @@ def compute_camera_fit(voxels, tilt_rad):
     return ground_y, target_x_per_dir, needed_x * MARGIN_FACTOR, needed_yz * MARGIN_FACTOR
 
 
-def resolve_canvas(needed_x, needed_yz, width, height):
+def resolve_canvas(needed_x, needed_yz, scale):
     """Turns the world-space fit requirements into a final (width, height,
-    pixels_per_unit). If width/height are given, uses them as-is (the
-    model is scaled -- never stretched -- and centered within whichever
-    axis has slack). Otherwise auto-sizes a square tile at ~1px/unit,
-    matching this tool's original auto-fit behavior."""
-    if width is None and height is None:
-        ppu = DEFAULT_PIXELS_PER_UNIT
-        size = max(16, int(math.ceil(2 * max(needed_x, needed_yz) * ppu)))
-        if size % 2:
-            size += 1
-        return size, size, ppu
-
-    if width is None:
-        width = height
-    if height is None:
-        height = width
-
-    ppu = min((width / 2.0) / needed_x, (height / 2.0) / needed_yz)
-    return width, height, ppu
+    pixels_per_unit). The scale is the output pixels per voxel unit; the
+    tile auto-sizes to the model's projected footprint at this scale."""
+    ppu = scale
+    side = max(16, int(math.ceil(2 * max(needed_x, needed_yz) * ppu)))
+    if side % 2:
+        side += 1
+    return side, side, ppu
 
 
 # --------------------------------------------------------------------------
@@ -486,7 +474,7 @@ def recenter_and_resize(sheet, n_dirs, n_frames, tile_w, tile_h, final_w, final_
     return new_sheet
 
 
-def render_sheet(frames, palette_rgb, degree, size, width, height, out_path, align_baseline=False):
+def render_sheet(frames, palette_rgb, degree, scale, out_path, align_baseline=False):
     """Core render pipeline, shared by both single-file (`convert`) and
     multi-file (`convert_many`) entry points: every entry in `frames` is one
     row (one animation frame), all sharing one camera fit so the subject
@@ -502,9 +490,7 @@ def render_sheet(frames, palette_rgb, degree, size, width, height, out_path, ali
     all_voxels = [v for frame in frames for v in frame]
     target_y, target_x_per_dir, needed_x, needed_yz = compute_camera_fit(all_voxels, tilt_rad)
 
-    req_width = width if width is not None else size
-    req_height = height if height is not None else size
-    out_width, out_height, ppu = resolve_canvas(needed_x, needed_yz, req_width, req_height)
+    out_width, out_height, ppu = resolve_canvas(needed_x, needed_yz, scale)
     print(f"angle={degree}  tile size={out_width}x{out_height}px  scale={ppu:.2f}px/unit")
     dir_list = ", ".join(DIRECTION_LABELS)
     print(f"directions (left to right): {dir_list}")
@@ -527,11 +513,8 @@ def render_sheet(frames, palette_rgb, degree, size, width, height, out_path, ali
     else:
         min_x, min_y, max_x, max_y = bounds
         content_w, content_h = max_x - min_x + 1, max_y - min_y + 1
-        if width is None and height is None and size is None:
-            final_width = round_up_to_multiple(content_w + AUTO_SIZE_PAD, AUTO_SIZE_MULTIPLE)
-            final_height = round_up_to_multiple(content_h + AUTO_SIZE_PAD, AUTO_SIZE_MULTIPLE)
-        else:
-            final_width, final_height = out_width, out_height
+        final_width = round_up_to_multiple(content_w + AUTO_SIZE_PAD, AUTO_SIZE_MULTIPLE)
+        final_height = round_up_to_multiple(content_h + AUTO_SIZE_PAD, AUTO_SIZE_MULTIPLE)
         sheet = recenter_and_resize(sheet, N_DIRS, len(frames), out_width, out_height,
                                     final_width, final_height, bounds)
         out_width, out_height = final_width, final_height
@@ -554,12 +537,12 @@ def _load_and_report(vox_path):
     return frames, palette_rgb
 
 
-def convert(vox_path, degree, size, width, height, align_baseline=False):
+def convert(vox_path, degree, scale, align_baseline=False):
     frames, palette_rgb = _load_and_report(vox_path)
     out_dir = os.path.dirname(os.path.abspath(vox_path))
     base = os.path.splitext(os.path.basename(vox_path))[0]
     out_path = os.path.join(out_dir, f"{base}_2d.png")
-    return render_sheet(frames, palette_rgb, degree, size, width, height, out_path, align_baseline)
+    return render_sheet(frames, palette_rgb, degree, scale, out_path, align_baseline)
 
 
 def derive_multi_out_path(vox_paths):
@@ -576,7 +559,7 @@ def derive_multi_out_path(vox_paths):
     return os.path.join(out_dir, f"{base}_2d.png")
 
 
-def convert_many(vox_paths, degree, size, width, height, out_path=None, align_baseline=False):
+def convert_many(vox_paths, degree, scale, out_path=None, align_baseline=False):
     """Combines several standalone single-pose .vox files (this project's
     convention for hand-authored animation frames, e.g. infantry_generic's
     run1..run4.vox) into ONE multi-frame sheet, one input file per row,
@@ -597,16 +580,12 @@ def convert_many(vox_paths, degree, size, width, height, out_path=None, align_ba
 
     if out_path is None:
         out_path = derive_multi_out_path(vox_paths)
-    return render_sheet(frames, palette_rgb, degree, size, width, height, out_path, align_baseline)
+    return render_sheet(frames, palette_rgb, degree, scale, out_path, align_baseline)
 
 
 def main():
-    # -h is claimed by --height per this tool's own convention, so the
-    # default argparse -h/--help is disabled and re-added as --help only.
     parser = argparse.ArgumentParser(
-        description="Convert a .vox model into a static 8-direction orthographic sprite sheet.",
-        add_help=False)
-    parser.add_argument("--help", action="help", help="show this help message and exit")
+        description="Convert a .vox model into a static 8-direction orthographic sprite sheet.")
     parser.add_argument("vox_file", nargs="+",
                         help="path to the input .vox file. Give more than one -- or a "
                              "folder, expanded to every .vox file directly inside it, "
@@ -619,15 +598,11 @@ def main():
     parser.add_argument("--angle", "--degree", "-a", dest="degree", type=float, default=45.0,
                         help="camera elevation angle above the ground, in degrees "
                              "(0=horizontal side view, 90=top-down). Default 45.")
-    parser.add_argument("--size", "-s", type=int, default=None,
-                        help="output width AND height in pixels (square tiles). "
-                             "Overridden per-axis by --width/--height. Default: auto-fit.")
-    parser.add_argument("--width", "-w", type=int, default=None,
-                        help="output tile width in pixels (defaults to --height or --size "
-                             "if only one of width/height is given).")
-    parser.add_argument("--height", "-h", type=int, default=None,
-                        help="output tile height in pixels (defaults to --width or --size "
-                             "if only one of width/height is given).")
+    parser.add_argument("--scale", type=float, default=DEFAULT_PIXELS_PER_UNIT,
+                        help="output pixels per voxel unit (uniform, never stretched). "
+                             "The tile auto-sizes to the model's projected footprint at this "
+                             "scale, then is padded and rounded up to a multiple of 16. "
+                             "Default 1.0.")
     parser.add_argument("--out", "-o", type=str, default=None,
                         help="output PNG path. Default: <model>_2d.png next to the input "
                              "(single file), or a name derived from the shared prefix of "
@@ -672,10 +647,9 @@ def main():
     if not (0.0 <= args.degree <= 90.0):
         print(f"error: --angle must be between 0 and 90, got {args.degree}", file=sys.stderr)
         sys.exit(1)
-    for name, val in (("--size", args.size), ("--width", args.width), ("--height", args.height)):
-        if val is not None and val <= 0:
-            print(f"error: {name} must be a positive integer, got {val}", file=sys.stderr)
-            sys.exit(1)
+    if args.scale <= 0:
+        print(f"error: --scale must be positive, got {args.scale}", file=sys.stderr)
+        sys.exit(1)
 
     # Exactly 0 or 90 degrees makes sin/cos of the tilt hit zero, which the
     # ray-box test divides by -- nudge a hair off the singularity. No
@@ -683,9 +657,9 @@ def main():
     degree = min(max(args.degree, 1e-3), 90.0 - 1e-3)
 
     if len(vox_paths) == 1 and args.out is None:
-        convert(vox_paths[0], degree, args.size, args.width, args.height, args.align_baseline)
+        convert(vox_paths[0], degree, args.scale, args.align_baseline)
     else:
-        convert_many(vox_paths, degree, args.size, args.width, args.height, args.out,
+        convert_many(vox_paths, degree, args.scale, args.out,
                      args.align_baseline)
 
 
