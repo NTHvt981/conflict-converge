@@ -219,7 +219,7 @@ bool ShotOk(const char* path)
 	return !ec && size > 1024;
 }
 
-int RunBackendSmoke(Rml::Context* context, Rml::ElementDocument*& document, ClickCounter& counter, const std::string& document_path)
+int RunBackendSmoke(Rml::Context* context, Rml::ElementDocument*& document, ClickCounter& counter, const std::string& document_path, float base_scale)
 {
 	std::error_code ec;
 	std::filesystem::create_directories("tools/rmlui_probe/out", ec);
@@ -280,7 +280,9 @@ int RunBackendSmoke(Rml::Context* context, Rml::ElementDocument*& document, Clic
 			break;
 	}
 	context->SetDimensions(Rml::Vector2i(GetScreenWidth(), GetScreenHeight()));
-	context->SetDensityIndependentPixelRatio(GetWindowScaleDPI().x);
+	// DPI policy (manual uiScale-only): same base_scale as the menu path.
+	// OS DPI is not folded in — raylib upscales the framebuffer itself.
+	context->SetDensityIndependentPixelRatio(base_scale);
 	(void)document_path;
 	for (int i = 0; i < 10; ++i)
 		RenderFrame(context, true, nullptr);
@@ -310,6 +312,8 @@ public:
 		: context(context), dataDir(data_dir), baseScale(base_scale)
 	{
 	}
+
+	float DpRatio() const { return baseScale * state.uiScale; }
 
 	bool Init()
 	{
@@ -617,7 +621,7 @@ private:
 		else if (id == "opt-uiscale")
 		{
 			state.uiScale = Clamp(ReadRange(target), 0.75f, 2.0f);
-			context->SetDensityIndependentPixelRatio(baseScale * state.uiScale);
+			context->SetDensityIndependentPixelRatio(DpRatio());
 			snprintf(text, sizeof(text), "%g", static_cast<double>(state.uiScale));
 			SetText("val-uiscale", text);
 		}
@@ -1119,13 +1123,13 @@ int RunMenuSmoke(ProbeMenu& menu, Rml::Context* context)
 	// steps below keep their default-scale coordinates.
 	{
 		menu.state.uiScale = 1.5f;
-		context->SetDensityIndependentPixelRatio(menu.state.uiScale);
+		context->SetDensityIndependentPixelRatio(menu.DpRatio());
 		menu.ShowState();
 		frames(6);
 		if (!shot("08b_hud_uiscale.png"))
 			return fail("hud_uiscale", "screenshot missing");
 		menu.state.uiScale = 1.0f;
-		context->SetDensityIndependentPixelRatio(menu.state.uiScale);
+		context->SetDensityIndependentPixelRatio(menu.DpRatio());
 		menu.ShowState();
 		frames(6);
 	}
@@ -1171,6 +1175,60 @@ int RunMenuSmoke(ProbeMenu& menu, Rml::Context* context)
 	if (!shot("11_outcome_defeat.png"))
 		return fail("11_outcome_defeat", "screenshot missing");
 
+	// Scaling matrix: {800x600, 960x600, 1280x720} x {1.0, 1.5, 2.0}.
+	// Hover-only (no clicks) so the mock match state stays intact for the
+	// steps below; ElementCenter + ProcessMouseMove at each cell catches
+	// logical-vs-device coordinate mismatch. The mutating click proof
+	// above/below covers the button-down path at 1.0x.
+	{
+		menu.state.page = ProbePage::Playing;
+		menu.ShowState();
+		frames(6);
+		const int widths[3] = { 800, 960, 1280 };
+		const int heights[3] = { 600, 600, 720 };
+		const float scales[3] = { 1.0f, 1.5f, 2.0f };
+		for (int r = 0; r < 3; ++r)
+		{
+			SetWindowSize(widths[r], heights[r]);
+			for (int i = 0; i < 120; ++i)
+			{
+				RenderFrame(context, false, nullptr);
+				if (GetScreenWidth() == widths[r] && GetScreenHeight() == heights[r])
+					break;
+			}
+			context->SetDimensions(Rml::Vector2i(GetScreenWidth(), GetScreenHeight()));
+			for (int s = 0; s < 3; ++s)
+			{
+				menu.state.uiScale = scales[s];
+				context->SetDensityIndependentPixelRatio(menu.DpRatio());
+				menu.ShowState();
+				frames(6);
+				int fx = 0, fy = 0;
+				if (!menu.ElementCenter("hud", "fac-0", fx, fy))
+					return fail("scale_matrix", "Factory row fac-0 not found");
+				context->ProcessMouseMove(fx, fy, 0);
+				frames(3);
+				char name[64];
+				snprintf(name, sizeof(name), "12_scale_%dx%d_%d.png", widths[r], heights[r],
+					static_cast<int>(scales[s] * 100.0f + 0.5f));
+				if (!shot(name))
+					return fail("scale_matrix", "screenshot missing");
+			}
+		}
+		SetWindowSize(1280, 720);
+		for (int i = 0; i < 120; ++i)
+		{
+			RenderFrame(context, false, nullptr);
+			if (GetScreenWidth() == 1280 && GetScreenHeight() == 720)
+				break;
+		}
+		context->SetDimensions(Rml::Vector2i(GetScreenWidth(), GetScreenHeight()));
+		menu.state.uiScale = 1.0f;
+		context->SetDensityIndependentPixelRatio(menu.DpRatio());
+		menu.ShowState();
+		frames(6);
+	}
+
 	// Interactivity proof: a synthetic mouse click on the Settings button.
 	menu.state.OpenMainMenu();
 	menu.ShowState();
@@ -1198,7 +1256,7 @@ int main(int argc, char** argv)
 	bool backend = argc > 1 && std::strcmp(argv[1], "--backend") == 0;
 
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
-	InitWindow(960, 600, "RmlUi raylib probe");
+	InitWindow(1280, 720, "RmlUi raylib probe");
 	SetTargetFPS(60);
 
 	RmlRaylibSystemInterface system_interface;
@@ -1278,7 +1336,7 @@ int main(int argc, char** argv)
 			CloseWindow();
 			return 1;
 		}
-		result = RunBackendSmoke(context, document, counter, document_path);
+		result = RunBackendSmoke(context, document, counter, document_path, baseScale);
 		if (document)
 		{
 			context->UnloadDocument(document);
@@ -1315,8 +1373,8 @@ int main(int argc, char** argv)
 					last_height = height;
 					context->SetDimensions(Rml::Vector2i(width, height));
 					// Same scale at any window size: dimensions follow the
-					// window, the ratio follows only uiScale.
-					context->SetDensityIndependentPixelRatio(menu.state.uiScale);
+					// window, the ratio follows DpRatio() (baseScale * uiScale).
+					context->SetDensityIndependentPixelRatio(menu.DpRatio());
 				}
 
 				PumpInput(context);

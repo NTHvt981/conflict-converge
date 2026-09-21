@@ -60,8 +60,11 @@ Rml::TextureHandle RmlRaylibRenderInterface::LoadTexture(Rml::Vector2i& texture_
 	if (texture.id == 0)
 		return 0;
 
-	// 1-bit font atlases stay pixel-crisp under dp upscaling with point
-	// sampling; UI art (img.png, …) keeps bilinear smoothing.
+	// Font atlas filter trade-off (probe): POINT keeps the OpenSansPX
+	// pixel font crisp at dp_ratio 1.0 but blocky at non-integer uiScale
+	// (1.25/1.5x); BILINEAR smooths scaled text at the cost of slight
+	// softness at 1.0x. Production needs SDF/FreeType or multi-size
+	// atlases — see FontFaceBitmap clone note. UI art keeps bilinear.
 	const bool isFontAtlas = source.find("OpenSansPX") != Rml::String::npos;
 	SetTextureFilter(texture, isFontAtlas ? TEXTURE_FILTER_POINT : TEXTURE_FILTER_BILINEAR);
 
@@ -116,10 +119,21 @@ void RmlRaylibRenderInterface::EnableScissorRegion(bool enable)
 
 void RmlRaylibRenderInterface::SetScissorRegion(Rml::Rectanglei region)
 {
-	int fbH = GetScreenHeight();
-	int x = region.Left();
-	int y = fbH - region.Top() - region.Height();
-	int w = region.Width() > 0 ? region.Width() : 0;
-	int h = region.Height() > 0 ? region.Height() : 0;
+	// rlScissor expects framebuffer pixels. Scale the RmlUi device-pixel
+	// region by render/logical ratio so clipping stays correct with
+	// FLAG_WINDOW_HIGHDPI (ratio > 1) and unchanged without it (ratio = 1).
+	const int screenW = GetScreenWidth();
+	const int screenH = GetScreenHeight();
+	const int renderW = GetRenderWidth();
+	const int renderH = GetRenderHeight();
+	const float scaleX = (screenW > 0 && renderW > 0) ? static_cast<float>(renderW) / static_cast<float>(screenW) : 1.0f;
+	const float scaleY = (screenH > 0 && renderH > 0) ? static_cast<float>(renderH) / static_cast<float>(screenH) : 1.0f;
+	const int x = static_cast<int>(static_cast<float>(region.Left()) * scaleX + 0.5f);
+	const int wIn = region.Width() > 0 ? region.Width() : 0;
+	const int hIn = region.Height() > 0 ? region.Height() : 0;
+	const int w = static_cast<int>(static_cast<float>(wIn) * scaleX + 0.5f);
+	const int h = static_cast<int>(static_cast<float>(hIn) * scaleY + 0.5f);
+	const int top = static_cast<int>(static_cast<float>(region.Top()) * scaleY + 0.5f);
+	const int y = renderH - top - h;
 	rlScissor(x, y, w, h);
 }

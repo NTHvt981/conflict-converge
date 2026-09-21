@@ -1,6 +1,6 @@
 /* Step-2 HUD look. Same raygui-derived palette as theme.rcss; geometry
-   mirrors src/game/private/app/Hud.cpp panel positions at 960x600.
-   Right/bottom-anchored panels scale with the window. Sizes are grown
+   mirrors src/game/private/app/Hud.cpp panel positions (base window
+   1280x720). Right/bottom-anchored panels scale with the window. Sizes are grown
    slightly wherever the probe's 22px-at-scale-1 bitmap font cannot fit
    the real 10-16px raygui rows; anchors stay faithful. Lengths use dp
    (see theme.rcss); pause/outcome overlays center like confirm-box. */
@@ -340,4 +340,43 @@ input.pause-range sliderprogress {
 /* Color-blind checkbox is visual-only in the probe. */
 body.colorblind #hud-body-art {
 	background: #e8e8e8;
+}
+
+/* Responsive: bottom-left cluster (selection 340 + idle 150 + repair 150)
+   plus the right-anchored factory (250) needs ~918dp. Below that the
+   left-anchored idle/repair would slide under the factory, so shrink the
+   two wide panels. Wide windows keep the default layout: left cluster
+   stays left, factory stays right, the gap grows outward. */
+@media (max-width: 917dp)
+{
+	#hud-selection {
+		width: 220dp;
+	}
+	/* Pull the fixed-left bottom panels together so the shrunken row
+	   (8 + 220 + 10 + 150 + 10 + 150 + 10 + 210 + 10 = 778) fits 800dp:
+	   without this, #hud-repair [518,668] slides under the
+	   right-anchored factory (left edge 580 at 800 wide). */
+	#hud-idle {
+		left: 238dp;
+	}
+	#hud-repair {
+		left: 398dp;
+	}
+	#hud-factory {
+		width: 210dp;
+	}
+	.fac-btn {
+		width: 142dp;
+	}
+	#queue-line {
+		width: 90dp;
+	}
+	#btn-cancel {
+		width: 70dp;
+	}
+	/* Narrow panels cannot fit the nowrap summary lines: clip instead of
+	   overpainting the neighbour panel. */
+	.hud-line {
+		overflow: hidden;
+	}
 }

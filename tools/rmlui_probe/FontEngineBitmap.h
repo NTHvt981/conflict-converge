@@ -38,6 +38,11 @@ public:
 	// same texels); advances, offsets, quad sizes and metrics are scaled.
 	// Lets dp-sized text (font-size:Ndp with dp_ratio != 1) grow/shrink
 	// together with dp-sized boxes instead of staying at 22px.
+	// PROBE-ONLY: GPU-stretching a 22px bitmap looks blocky at non-integer
+	// scales (1.25/1.5x) and soft/blurry if the atlas filter is bilinear.
+	// Production needs an SDF/FreeType engine or pre-baked multi-size
+	// atlases; do not carry these clones over (see RmlRaylibRenderInterface
+	// font-atlas filter note).
 	FontFaceBitmap(const FontFaceBitmap& other, float scale);
 
 	// Get width of string.
