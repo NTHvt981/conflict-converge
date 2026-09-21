@@ -136,6 +136,7 @@ project "conflict-converge"
         "deps/reasings/src",
         "deps/rini/src",
         "deps/cereal/include",
+        "deps/RmlUi/Include",
         "..",
         "src/game",
         "src/game/public",
@@ -152,11 +153,12 @@ project "conflict-converge"
         "src/game/private/app"
     }
     
-    -- Link with raylib and raygui static libraries, plus the Windows system
-    -- libraries raylib's desktop (GLFW) backend needs
+    -- Link with raylib, raygui and RmlUi static libraries, plus the Windows
+    -- system libraries raylib's desktop (GLFW) backend needs
     links {
         "raylib-static",
         "raygui-static",
+        "rmlui-static",
         "opengl32",
         "gdi32",
         "winmm",
@@ -345,7 +347,7 @@ project "conflict-converge-editor"
         "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
     }
 
--- ===== RmlUi probe (TEMPORARY, remove after spike) =====
+-- ===== RmlUi (permanent; the rmlui-probe app below is still TEMPORARY) =====
 project "rmlui-static"
     kind "StaticLib"
     cppdialect "C++20"
@@ -369,6 +371,7 @@ filter { "files:deps/RmlUi/**.cpp" }
     defines { "_CRT_SECURE_NO_WARNINGS" }
 filter {}
 
+-- Probe app (TEMPORARY, remove in integration Phase 5)
 project "rmlui-probe"
     kind "ConsoleApp"
     cppdialect "C++20"

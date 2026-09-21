@@ -58,5 +58,11 @@
         "git_repo": "https://github.com/raylib-extras/rlImGui",
         "dest": "deps/rlImGui",
         "git_tag": "Raylib_6_0"
+    },
+    {
+        "name": "rmlui",
+        "git_repo": "https://github.com/mikke89/RmlUi.git",
+        "dest": "deps/RmlUi",
+        "git_tag": "6.3"
     }
 ]
