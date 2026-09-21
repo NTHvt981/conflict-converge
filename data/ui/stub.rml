@@ -1,0 +1,19 @@
+<rml>
+<head>
+<title>RmlUi overlay stub</title>
+<link type="text/rcss" href="theme.rcss"/>
+<style>
+/* Transparent stage: Phase 1 proof text floats over the live world/HUD
+   instead of the opaque theme body. Real documents (Phase 2) keep their
+   own body treatment. */
+body {
+	background: transparent;
+}
+</style>
+</head>
+<body>
+<div id="stub-wrap">
+<p id="stub-hint">RmlUi overlay OK (Phase 1 proof)</p>
+</div>
+</body>
+</rml>

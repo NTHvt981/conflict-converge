@@ -176,7 +176,7 @@ project "conflict-converge"
     postbuildcommands {
         "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
     }
-    defines { "NO_FONT_AWESOME" }
+    defines { "NO_FONT_AWESOME", "RMLUI_STATIC_LIB" }
     filter "configurations:Debug or ASan"
         links { "imgui-static" }
     filter {}
@@ -217,6 +217,7 @@ project "conflict-converge-test"
         "deps/reasings/src",
         "deps/rini/src",
         "deps/cereal/include",
+        "deps/RmlUi/Include",
         "..",
         "src/game/public",
         "src/game/public/core",
@@ -231,12 +232,13 @@ project "conflict-converge-test"
     links {
         "raylib-static",
         "raygui-static",
+        "rmlui-static",
         "opengl32",
         "gdi32",
         "winmm",
         "shell32"
     }
-    defines { "NO_FONT_AWESOME" }
+    defines { "NO_FONT_AWESOME", "RMLUI_STATIC_LIB" }
     filter "configurations:Debug or ASan"
         links { "imgui-static" }
     filter {}
@@ -275,12 +277,14 @@ project "conflict-converge-e2e"
         "src/game/public/units",
         "src/game/public/economy",
         "src/game/public/app",
-        "tests/unit-tests"
+        "tests/unit-tests",
+        "deps/RmlUi/Include"
     }
 
     links {
         "raylib-static",
         "raygui-static",
+        "rmlui-static",
         "opengl32",
         "gdi32",
         "winmm",
@@ -293,7 +297,7 @@ project "conflict-converge-e2e"
     postbuildcommands {
         "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
     }
-    defines { "NO_FONT_AWESOME" }
+    defines { "NO_FONT_AWESOME", "RMLUI_STATIC_LIB" }
     filter "configurations:Debug or ASan"
         links { "imgui-static" }
     filter {}
@@ -377,13 +381,20 @@ project "rmlui-probe"
     cppdialect "C++20"
     files {
         "tools/rmlui_probe/**.cpp",
-        "tools/rmlui_probe/**.h"
+        "tools/rmlui_probe/**.h",
+        -- Canonical backend lives in src/game now (Phase 1 move); the probe
+        -- references it until the probe is deleted in Phase 5.
+        "src/game/private/app/RmlRaylibRenderInterface.cpp",
+        "src/game/private/app/RmlRaylibSystemInterface.cpp",
+        "src/game/private/app/RmlRaylibFileInterface.cpp",
+        "src/game/private/app/FontEngineBitmap.cpp",
+        "src/game/private/app/FontEngineInterfaceBitmap.cpp"
     }
     includedirs {
         "deps/raylib/src",
         "deps/RmlUi/Include",
-        "deps/RmlUi/Samples/basic/bitmap_font/src",
-        "tools/rmlui_probe"
+        "tools/rmlui_probe",
+        "src/game/public/app"
     }
     defines {
         "RMLUI_STATIC_LIB",
@@ -399,5 +410,5 @@ project "rmlui-probe"
     }
     debugdir "%{wks.location}/.."
     postbuildcommands {
-        "{COPYDIR} %{wks.location}/../tools/rmlui_probe/data %{cfg.buildtarget.directory}/data"
+        "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
     }

@@ -36,7 +36,7 @@ Game::Game()
     , renderer(art, camera, map, registry, fog, nodes, minimap, pings, damageNumbers,
                playingInput, menu, sim, resources, queue, hotkeys, input, ai, menuScreens,
                events, showHints, replayCursor, worldDifficulty, menuStateTime, shakeTrauma,
-               playerAutoRepair, autoRepairCap, [this]() { QuitToMenu(); })
+               playerAutoRepair, autoRepairCap, rmlUi, [this]() { QuitToMenu(); })
     , match(camera, ai, allyAI, enemyAI2, menu, minimap, playingInput, sim, events,
             skirmish, worldState, hotkeys, rallyPos, worldActive, worldIs2v2, sandboxMode,
             worldDifficulty, worldMapPath, lastOutcomeState, replayCursor, replayPlayTimer,
@@ -72,6 +72,7 @@ void Game::Init()
     {
         GuiSetFont(art.UiFont());
     }
+    rmlUi.Init("data/ui");
     lastOutcomeState = MenuState::MainMenu;
 
     camera.view.offset = { kInitialWidth / 2.0f, kInitialHeight / 2.0f };
@@ -168,7 +169,7 @@ void Game::Update()
 
     renderer.DrawWorld();
 
-    pendingConfirm = renderer.DrawHudAndOverlays(screenWidth, screenHeight);
+    pendingConfirm = renderer.DrawHudAndOverlays(screenWidth, screenHeight, menu.settings.uiScale);
     cheats.Frame();
     EndDrawing();
 }
@@ -180,6 +181,7 @@ void Game::Shutdown()
     audio.Shutdown();
     CloseAudioDevice();
     cheats.Shutdown();
+    rmlUi.Shutdown();
     CloseWindow();
     Log::Shutdown();
 }

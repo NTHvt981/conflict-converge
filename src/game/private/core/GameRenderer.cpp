@@ -6,6 +6,7 @@
 #include "Cheats.h"
 #include "Cursor.h"
 #include "Hud.h"
+#include "RmlUiHost.h"
 #include "Selection.h"
 #include "Unit.h"
 #include <algorithm>
@@ -86,11 +87,11 @@ GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry 
                            FogOfWar &fog, ResourceNodes &nodes, Minimap &minimap, Pings &pings,
                            DamageNumbers &damageNumbers, PlayingInput &playingInput, MenuFlow &menu,
                            Simulation &sim, ResourceSystem &resources, ProductionQueue &queue,
-                           HotkeyMap &hotkeys, InputManager &input, AICommander &ai,
-                           MenuScreens &menuScreens, EventDispatcher &events, const bool &showHints,
-                           const int &replayCursor, const AIDifficulty &worldDifficulty,
-                           const float &menuStateTime, const float &shakeTrauma, bool &playerAutoRepair,
-                           float &autoRepairCap, std::function<void()> quitToMenu)
+                            HotkeyMap &hotkeys, InputManager &input, AICommander &ai,
+                            MenuScreens &menuScreens, EventDispatcher &events, const bool &showHints,
+                            const int &replayCursor, const AIDifficulty &worldDifficulty,
+                            const float &menuStateTime, const float &shakeTrauma, bool &playerAutoRepair,
+                            float &autoRepairCap, RmlUiHost &rmlUi, std::function<void()> quitToMenu)
     : art_(art)
     , camera_(camera)
     , map_(map)
@@ -117,6 +118,7 @@ GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry 
     , shakeTrauma_(shakeTrauma)
     , playerAutoRepair_(playerAutoRepair)
     , autoRepairCap_(autoRepairCap)
+    , rmlUi_(rmlUi)
     , quitToMenu_(std::move(quitToMenu))
 {
 }
@@ -409,7 +411,7 @@ void GameRenderer::DrawWorld()
     EndMode2D();
 }
 
-ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight)
+ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight, float uiScale)
 {
     // The modal owns input while open: lock raygui so HUD/overlay controls
     // behind it cannot fire.
@@ -633,6 +635,10 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
     {
         DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 1.0f - fade));
     }
+    // Phase 1 RmlUi proof overlay (screen-space, over world + raygui HUD).
+    // Render-only: input still belongs to raygui until Phase 4.
+    rmlUi_.BeginFrame(screenWidth, screenHeight, uiScale);
+    rmlUi_.Render();
     if (!modal)
     {
         return ConfirmChoice::None;

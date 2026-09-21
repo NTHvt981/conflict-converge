@@ -25,6 +25,7 @@
 #include "Production.h"
 #include "Registry.h"
 #include "ResourceSystem.h"
+#include "RmlUiHost.h"
 #include "SaveGame.h"
 #include "Shake.h"
 #include "ShortcutBindings.h"
@@ -111,6 +112,7 @@ private:
     Simulation sim;
     MenuScreens menuScreens;
     ShortcutBindings bindings;
+    RmlUiHost rmlUi; // declared before renderer: overlay host (Phase 1 render-only)
     GameRenderer renderer;
     MatchController match;
     CheatOverlay cheats;

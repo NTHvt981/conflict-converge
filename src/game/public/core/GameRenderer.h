@@ -23,6 +23,8 @@
 #include "Shake.h"
 #include "TileMap.h"
 
+class RmlUiHost;
+
 class GameRenderer
 {
 public:
@@ -34,12 +36,12 @@ public:
                  MenuScreens &menuScreens, EventDispatcher &events, const bool &showHints,
                  const int &replayCursor, const AIDifficulty &worldDifficulty,
                  const float &menuStateTime, const float &shakeTrauma, bool &playerAutoRepair,
-                 float &autoRepairCap, std::function<void()> quitToMenu);
+                 float &autoRepairCap, RmlUiHost &rmlUi, std::function<void()> quitToMenu);
     GameRenderer(const GameRenderer &) = delete;
     GameRenderer &operator=(const GameRenderer &) = delete;
 
     void DrawWorld();
-    ConfirmChoice DrawHudAndOverlays(int screenWidth, int screenHeight);
+    ConfirmChoice DrawHudAndOverlays(int screenWidth, int screenHeight, float uiScale);
 
 private:
     void Announce(EventType type);
@@ -70,6 +72,7 @@ private:
     const float &shakeTrauma_;
     bool &playerAutoRepair_;
     float &autoRepairCap_;
+    RmlUiHost &rmlUi_;
     std::function<void()> quitToMenu_;
     HoverTooltipState hoverTip_;
 };
