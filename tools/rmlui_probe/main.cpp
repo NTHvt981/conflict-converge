@@ -301,8 +301,13 @@ int RunBackendSmoke(Rml::Context* context, Rml::ElementDocument*& document, Clic
 // MenuFlow navigation from src/game/private/app/Menu.cpp.
 class ProbeMenu : public Rml::EventListener {
 public:
-	ProbeMenu(Rml::Context* context, const std::string& data_dir, float base_dpi)
-		: context(context), dataDir(data_dir), baseDpi(base_dpi)
+	// base_scale carries the DPI-independent part of the dp_ratio. It stays
+	// 1.0f: raylib renders in screen coordinates and upscales the
+	// framebuffer itself, so the OS DPI must NOT be folded in here (that
+	// would double-scale dp units on HiDPI). Window resizes therefore keep
+	// the same UI scale; only ProbeState::uiScale changes it.
+	ProbeMenu(Rml::Context* context, const std::string& data_dir, float base_scale)
+		: context(context), dataDir(data_dir), baseScale(base_scale)
 	{
 	}
 
@@ -612,7 +617,7 @@ private:
 		else if (id == "opt-uiscale")
 		{
 			state.uiScale = Clamp(ReadRange(target), 0.75f, 2.0f);
-			context->SetDensityIndependentPixelRatio(baseDpi * state.uiScale);
+			context->SetDensityIndependentPixelRatio(baseScale * state.uiScale);
 			snprintf(text, sizeof(text), "%g", static_cast<double>(state.uiScale));
 			SetText("val-uiscale", text);
 		}
@@ -987,7 +992,7 @@ private:
 
 	Rml::Context* context;
 	std::string dataDir;
-	float baseDpi;
+	float baseScale;
 	Rml::ElementDocument* menuDoc = nullptr;
 	Rml::ElementDocument* setupDoc = nullptr;
 	Rml::ElementDocument* settingsDoc = nullptr;
@@ -1109,6 +1114,22 @@ int RunMenuSmoke(ProbeMenu& menu, Rml::Context* context)
 	if (!shot("08_hud.png"))
 		return fail("08_hud", "screenshot missing");
 
+	// UI-scale proof: dp_ratio 1.5 must rescale buttons+text together
+	// (exercises the scaled bitmap-font clones), then restore 1.0 so the
+	// steps below keep their default-scale coordinates.
+	{
+		menu.state.uiScale = 1.5f;
+		context->SetDensityIndependentPixelRatio(menu.state.uiScale);
+		menu.ShowState();
+		frames(6);
+		if (!shot("08b_hud_uiscale.png"))
+			return fail("hud_uiscale", "screenshot missing");
+		menu.state.uiScale = 1.0f;
+		context->SetDensityIndependentPixelRatio(menu.state.uiScale);
+		menu.ShowState();
+		frames(6);
+	}
+
 	// INPUT-DRIVEN HUD proof: a synthetic click on the first Factory row
 	// (Infantry 25/0) must enqueue one unit and deduct 25 iron.
 	{
@@ -1206,8 +1227,13 @@ int main(int argc, char** argv)
 		CloseWindow();
 		return 1;
 	}
-	const float baseDpi = GetWindowScaleDPI().x;
-	context->SetDensityIndependentPixelRatio(baseDpi);
+	// Logical-space rendering: the context spans GetScreenWidth/Height and
+	// raylib upscales the framebuffer for the OS DPI on its own, so the
+	// dp_ratio carries only the user uiScale (1.0f here). Maximizing the
+	// window changes dimensions but not the ratio, i.e. buttons/text keep
+	// the same scale and dialogs stay centered at any size.
+	const float baseScale = 1.0f;
+	context->SetDensityIndependentPixelRatio(baseScale);
 
 	if (!Rml::Debugger::Initialise(context))
 	{
@@ -1230,9 +1256,10 @@ int main(int argc, char** argv)
 	}
 	std::string document_path = data_dir + (backend ? "probe.rml" : "main_menu.rml");
 
-	if (!Rml::LoadFontFace(data_dir + "Comfortaa_Regular_22.fnt"))
+	if (!Rml::LoadFontFace(data_dir + "OpenSansPX_Regular_22.fnt") ||
+		!Rml::LoadFontFace(data_dir + "OpenSansPX_Bold_22.fnt"))
 	{
-		printf("Font load failed: %s\n", (data_dir + "Comfortaa_Regular_22.fnt").c_str());
+		printf("Font load failed in %s\n", data_dir.c_str());
 		Rml::Shutdown();
 		CloseWindow();
 		return 1;
@@ -1261,7 +1288,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		ProbeMenu menu(context, data_dir, baseDpi);
+		ProbeMenu menu(context, data_dir, baseScale);
 		if (!menu.Init())
 		{
 			Rml::Shutdown();
@@ -1287,8 +1314,9 @@ int main(int argc, char** argv)
 					last_width = width;
 					last_height = height;
 					context->SetDimensions(Rml::Vector2i(width, height));
-					context->SetDensityIndependentPixelRatio(
-						GetWindowScaleDPI().x * menu.state.uiScale);
+					// Same scale at any window size: dimensions follow the
+					// window, the ratio follows only uiScale.
+					context->SetDensityIndependentPixelRatio(menu.state.uiScale);
 				}
 
 				PumpInput(context);

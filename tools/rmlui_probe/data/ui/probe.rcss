@@ -4,7 +4,7 @@ body {
 	width: 100%;
 	height: 100%;
 	background: #f0f0f0;
-	font-family: comfortaa;
+	font-family: opensanspx;
 	font-size: 22px;
 	color: #222222;
 }
@@ -18,7 +18,7 @@ body {
 	background: #4a90d9;
 	color: #ffffff;
 	border: 2px #2c5f8a;
-	font-family: comfortaa;
+	font-family: opensanspx;
 	font-size: 22px;
 }
 

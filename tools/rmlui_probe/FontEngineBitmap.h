@@ -33,17 +33,26 @@ public:
 	FontFaceBitmap(String family, FontStyle style, FontWeight weight, FontMetrics metrics, String texture_name, String texture_path,
 		Vector2f texture_dimensions, FontGlyphs&& glyphs, FontKerning&& kerning);
 
+	// Clone of another face, rendering at scale * native size. The glyph
+	// source rects stay in native texture pixels (so UVs keep sampling the
+	// same texels); advances, offsets, quad sizes and metrics are scaled.
+	// Lets dp-sized text (font-size:Ndp with dp_ratio != 1) grow/shrink
+	// together with dp-sized boxes instead of staying at 22px.
+	FontFaceBitmap(const FontFaceBitmap& other, float scale);
+
 	// Get width of string.
 	int GetStringWidth(StringView string, Character prior_character);
 
 	// Generate the string geometry, returning its width.
 	int GenerateString(RenderManager& render_manager, StringView string, Vector2f string_position, ColourbPremultiplied colour, TexturedMeshList& mesh_list);
 
-	const FontMetrics& GetMetrics() const { return metrics; }
+	const FontMetrics& GetMetrics() const { return scaled_metrics; }
 
 	const String& GetFamily() const { return family; }
 	FontStyle GetStyle() const { return style; }
 	FontWeight GetWeight() const { return weight; }
+	float GetScale() const { return scale; }
+	int GetNativeSize() const { return metrics.size; }
 
 private:
 	int GetKerning(Character left, Character right) const;
@@ -53,6 +62,8 @@ private:
 	FontWeight weight;
 
 	FontMetrics metrics;
+	FontMetrics scaled_metrics;
+	float scale = 1.0f;
 
 	TextureSource texture_source;
 	Vector2f texture_dimensions;

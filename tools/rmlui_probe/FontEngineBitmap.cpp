@@ -4,15 +4,20 @@
 #include <RmlUi/Core/MeshUtilities.h>
 #include <RmlUi/Core/StreamMemory.h>
 #include <cstdio>
+#include <unordered_map>
 
 namespace FontProviderBitmap {
 static Rml::Vector<Rml::UniquePtr<FontFaceBitmap>> fonts;
+// Scaled clones keyed by (native index, requested size), so dp-sized text
+// renders at the requested size via GPU-upscaled quads.
+static std::unordered_map<uint64_t, Rml::UniquePtr<FontFaceBitmap>> scaled_fonts;
 
 void Initialise() {}
 
 void Shutdown()
 {
 	fonts.clear();
+	scaled_fonts.clear();
 }
 
 bool LoadFontFace(const String& file_name, const String& family)
@@ -72,11 +77,13 @@ bool LoadFontFace(const String& file_name, const String& family)
 FontFaceBitmap* GetFontFaceHandle(const String& family, FontStyle style, FontWeight weight, int size)
 {
 	FontFaceBitmap* best_match = nullptr;
+	size_t best_index = 0;
 	int best_score = 0;
 
 	// Normally, we'd want to only match the font family exactly, but for this demo we create a very lenient heuristic.
-	for (const auto& font : fonts)
+	for (size_t i = 0; i < fonts.size(); ++i)
 	{
+		const auto& font = fonts[i];
 		int score = 1;
 		if (font->GetFamily() == family)
 			score += 100;
@@ -91,24 +98,63 @@ FontFaceBitmap* GetFontFaceHandle(const String& family, FontStyle style, FontWei
 		if (score > best_score)
 		{
 			best_match = font.get();
+			best_index = i;
 			best_score = score;
 		}
 	}
 
-	return best_match;
+	if (!best_match || size <= 0)
+		return best_match;
+
+	// Exact (or native-size) request: the shared native face renders 1:1.
+	if (size == best_match->GetNativeSize())
+		return best_match;
+
+	// Otherwise hand out a cached scaled clone so layout, metrics and
+	// raster all agree on the requested size. The clone shares the glyph
+	// source rects and upscales the emitted quads (bilinear filter).
+	const uint64_t key = (static_cast<uint64_t>(best_index) << 32) | static_cast<uint32_t>(size);
+	auto it = scaled_fonts.find(key);
+	if (it != scaled_fonts.end())
+		return it->second.get();
+
+	const float scale = static_cast<float>(size) / static_cast<float>(best_match->GetNativeSize());
+	auto clone = Rml::MakeUnique<FontFaceBitmap>(*best_match, scale);
+	FontFaceBitmap* result = clone.get();
+	scaled_fonts.emplace(key, std::move(clone));
+	return result;
 }
 
 } // namespace FontProviderBitmap
 
 FontFaceBitmap::FontFaceBitmap(String family, FontStyle style, FontWeight weight, FontMetrics metrics, String texture_name, String texture_path,
 	Vector2f texture_dimensions, FontGlyphs&& glyphs, FontKerning&& kerning) :
-	family(family), style(style), weight(weight), metrics(metrics), texture_source(texture_name, texture_path),
+	family(family), style(style), weight(weight), metrics(metrics), scaled_metrics(metrics), scale(1.0f),
+	texture_source(texture_name, texture_path),
 	texture_dimensions(texture_dimensions), glyphs(std::move(glyphs)), kerning(std::move(kerning))
 {}
 
+FontFaceBitmap::FontFaceBitmap(const FontFaceBitmap& other, float new_scale) :
+	family(other.family), style(other.style), weight(other.weight), metrics(other.metrics),
+	texture_source(other.texture_source.GetSource(), other.texture_source.GetDefinitionSource()),
+	texture_dimensions(other.texture_dimensions),
+	glyphs(other.glyphs), kerning(other.kerning)
+{
+	scale = (new_scale > 0.0f) ? new_scale : 1.0f;
+	scaled_metrics = metrics;
+	scaled_metrics.size = static_cast<int>(static_cast<float>(metrics.size) * scale + 0.5f);
+	scaled_metrics.ascent = metrics.ascent * scale;
+	scaled_metrics.descent = metrics.descent * scale;
+	scaled_metrics.line_spacing = metrics.line_spacing * scale;
+	scaled_metrics.x_height = metrics.x_height * scale;
+	scaled_metrics.underline_position = metrics.underline_position * scale;
+	scaled_metrics.underline_thickness = metrics.underline_thickness * scale;
+	scaled_metrics.has_ellipsis = metrics.has_ellipsis;
+}
+
 int FontFaceBitmap::GetStringWidth(StringView string, Character previous_character)
 {
-	int width = 0;
+	float width = 0.0f;
 
 	for (auto it_char = Rml::StringIteratorU8(string); it_char; ++it_char)
 	{
@@ -120,13 +166,13 @@ int FontFaceBitmap::GetStringWidth(StringView string, Character previous_charact
 
 		const BitmapGlyph& glyph = it_glyph->second;
 
-		int kerning = GetKerning(previous_character, character);
+		float kerning = static_cast<float>(GetKerning(previous_character, character));
 
-		width += glyph.advance + kerning;
+		width += static_cast<float>(glyph.advance) * scale + kerning * scale;
 		previous_character = character;
 	}
 
-	return width;
+	return static_cast<int>(width + 0.5f);
 }
 
 int FontFaceBitmap::GenerateString(RenderManager& render_manager, StringView string, Vector2f string_position, ColourbPremultiplied colour,
@@ -158,8 +204,9 @@ int FontFaceBitmap::GenerateString(RenderManager& render_manager, StringView str
 
 		int kerning = GetKerning(previous_character, character);
 
-		width += kerning;
-		position.x += kerning;
+		const float kerning_scaled = static_cast<float>(kerning) * scale;
+		width += static_cast<int>(kerning_scaled + (kerning_scaled >= 0.0f ? 0.5f : -0.5f));
+		position.x += kerning_scaled;
 
 		const BitmapGlyph& glyph = it_glyph->second;
 
@@ -167,13 +214,17 @@ int FontFaceBitmap::GenerateString(RenderManager& render_manager, StringView str
 		vertices.resize(vertices.size() + 4);
 		indices.resize(indices.size() + 6);
 
+		// UVs sample the native texels; the emitted quad is scaled so the
+		// bilinear filter upscales the bitmap to the requested size.
 		Vector2f uv_top_left = glyph.position / texture_dimensions;
 		Vector2f uv_bottom_right = (glyph.position + glyph.dimension) / texture_dimensions;
 
-		Rml::MeshUtilities::GenerateQuad(mesh, Vector2f(position + glyph.offset).Round(), glyph.dimension, colour, uv_top_left, uv_bottom_right);
+		Rml::MeshUtilities::GenerateQuad(mesh, Vector2f(position + glyph.offset * scale).Round(), glyph.dimension * scale, colour,
+			uv_top_left, uv_bottom_right);
 
-		width += glyph.advance;
-		position.x += glyph.advance;
+		const float advance_scaled = static_cast<float>(glyph.advance) * scale;
+		width += static_cast<int>(advance_scaled + 0.5f);
+		position.x += advance_scaled;
 
 		previous_character = character;
 	}

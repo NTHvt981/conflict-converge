@@ -60,7 +60,10 @@ Rml::TextureHandle RmlRaylibRenderInterface::LoadTexture(Rml::Vector2i& texture_
 	if (texture.id == 0)
 		return 0;
 
-	SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+	// 1-bit font atlases stay pixel-crisp under dp upscaling with point
+	// sampling; UI art (img.png, …) keeps bilinear smoothing.
+	const bool isFontAtlas = source.find("OpenSansPX") != Rml::String::npos;
+	SetTextureFilter(texture, isFontAtlas ? TEXTURE_FILTER_POINT : TEXTURE_FILTER_BILINEAR);
 
 	texture_dimensions.x = texture.width;
 	texture_dimensions.y = texture.height;

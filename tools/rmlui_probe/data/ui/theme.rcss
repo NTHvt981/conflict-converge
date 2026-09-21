@@ -5,7 +5,10 @@
    pressed border #0492c7 base #97e8ff text #368baf;
    disabled border #b5c1c2 base #e6e9e9 text #aeb7b8;
    background #f5f5f5, line #90abb5. Titles use raylib DARKGRAY
-   (#505050), subtitles GRAY (#828282), like MenuScreens.cpp. */
+   (#505050), subtitles GRAY (#828282), like MenuScreens.cpp.
+   All lengths use dp so the context dp_ratio (uiScale) scales buttons
+   and text together; dialogs center with left/top 50% + negative
+   margins so they stay centered at any window size. */
 
 body {
 	margin: 0;
@@ -13,8 +16,8 @@ body {
 	width: 100%;
 	height: 100%;
 	background: #f5f5f5;
-	font-family: comfortaa;
-	font-size: 22px;
+	font-family: opensanspx;
+	font-size: 22dp;
 	color: #686868;
 }
 
@@ -28,75 +31,77 @@ span {
 }
 
 .col {
-	width: 400px;
+	width: 400dp;
 	margin-left: auto;
 	margin-right: auto;
-	margin-top: 40px;
+	margin-top: 40dp;
 }
 
 .col-tight {
-	width: 400px;
+	width: 400dp;
 	margin-left: auto;
 	margin-right: auto;
-	margin-top: 6px;
+	margin-top: 6dp;
 }
 
 h1.title {
 	text-align: center;
 	color: #505050;
-	margin-top: 70px;
-	margin-bottom: 6px;
+	font-weight: bold;
+	margin-top: 70dp;
+	margin-bottom: 6dp;
 }
 
 p.subtitle {
 	text-align: center;
 	color: #828282;
-	margin-bottom: 44px;
+	margin-bottom: 44dp;
 }
 
 h2.heading {
 	color: #505050;
-	margin-bottom: 10px;
+	font-weight: bold;
+	margin-bottom: 10dp;
 }
 
 p.field-label {
-	margin-top: 8px;
-	margin-bottom: 2px;
+	margin-top: 8dp;
+	margin-bottom: 2dp;
 	color: #686868;
 }
 
 p.detail {
 	color: #828282;
-	margin-top: 6px;
-	margin-bottom: 2px;
+	margin-top: 6dp;
+	margin-bottom: 2dp;
 }
 
 p.hint {
 	color: #828282;
 	text-align: center;
-	margin-top: 10px;
+	margin-top: 10dp;
 }
 
 button {
 	background: #c9c9c9;
 	color: #686868;
-	border: 2px #838383;
-	font-family: comfortaa;
-	font-size: 22px;
+	border: 2dp #838383;
+	font-family: opensanspx;
+	font-size: 22dp;
 	text-align: center;
-	padding: 4px;
+	padding: 4dp;
 }
 
 button:hover {
 	background: #c9effe;
 	color: #6c9bbc;
-	border: 2px #5bb2d9;
+	border: 2dp #5bb2d9;
 }
 
 button:active {
 	background: #97e8ff;
 	color: #368baf;
-	border: 2px #0492c7;
+	border: 2dp #0492c7;
 }
 
 /* RmlUi <button> is a plain element (not a form control), so the disabled
@@ -106,69 +111,69 @@ button.disabled,
 button.disabled:hover {
 	background: #e6e9e9;
 	color: #aeb7b8;
-	border: 2px #b5c1c2;
+	border: 2dp #b5c1c2;
 }
 
 .menu-btn {
 	display: block;
-	width: 248px;
-	height: 40px;
+	width: 248dp;
+	height: 40dp;
 	margin-left: auto;
 	margin-right: auto;
-	margin-top: 10px;
+	margin-top: 10dp;
 }
 
 .row-2btn {
-	width: 400px;
-	margin-top: 10px;
+	width: 400dp;
+	margin-top: 10dp;
 }
 
 .row-2btn button {
 	display: inline-block;
-	width: 182px;
-	height: 40px;
+	width: 182dp;
+	height: 40dp;
 }
 
 #btn-back-right {
-	margin-left: 10px;
+	margin-left: 10dp;
 }
 
 .wide-btn {
 	display: block;
-	width: 388px;
-	height: 40px;
-	margin-top: 10px;
+	width: 388dp;
+	height: 40dp;
+	margin-top: 10dp;
 }
 
 .wide-btn-short {
 	display: block;
-	width: 388px;
-	height: 30px;
-	margin-top: 10px;
+	width: 388dp;
+	height: 30dp;
+	margin-top: 10dp;
 }
 
 .maplist {
-	width: 400px;
-	height: 224px;
+	width: 400dp;
+	height: 224dp;
 	overflow-y: auto;
 	background: #ffffff;
-	border: 1px #838383;
+	border: 1dp #838383;
 }
 
 .map-item {
 	display: block;
 	box-sizing: border-box;
 	width: 100%;
-	height: 36px;
-	line-height: 32px;
+	height: 36dp;
+	line-height: 32dp;
 	white-space: nowrap;
 	margin: 0;
 	border: 0;
-	border-bottom: 1px #c9c9c9;
+	border-bottom: 1dp #c9c9c9;
 	background: #ffffff;
 	color: #686868;
 	text-align: left;
-	padding: 2px 6px;
+	padding: 2dp 6dp;
 }
 
 /* Pin the border so the generic button:hover/:active border cannot change the
@@ -176,7 +181,7 @@ button.disabled:hover {
 .map-item:hover,
 .map-item:active {
 	border: 0;
-	border-bottom: 1px #c9c9c9;
+	border-bottom: 1dp #c9c9c9;
 	background: #c9effe;
 	color: #6c9bbc;
 }
@@ -187,40 +192,40 @@ button.disabled:hover {
 }
 
 .diff-row {
-	width: 400px;
+	width: 400dp;
 }
 
 .diff-row button {
 	display: inline-block;
-	width: 120px;
-	height: 30px;
-	margin-top: 4px;
+	width: 120dp;
+	height: 30dp;
+	margin-top: 4dp;
 }
 
 .diff-row button.selected {
 	background: #97e8ff;
 	color: #368baf;
-	border: 2px #0492c7;
+	border: 2dp #0492c7;
 }
 
 input.range {
 	display: block;
-	width: 388px;
-	height: 24px;
-	margin-top: 2px;
+	width: 388dp;
+	height: 24dp;
+	margin-top: 2dp;
 }
 
 input.range slidertrack {
 	background: #e6e9e9;
-	border: 1px #838383;
-	height: 10px;
+	border: 1dp #838383;
+	height: 10dp;
 }
 
 input.range sliderbar {
 	background: #c9c9c9;
-	border: 1px #838383;
-	width: 14px;
-	height: 20px;
+	border: 1dp #838383;
+	width: 14dp;
+	height: 20dp;
 }
 
 input.range sliderprogress {
@@ -232,70 +237,70 @@ input.range sliderprogress {
 }
 
 .check-row {
-	margin-top: 6px;
-	height: 24px;
+	margin-top: 6dp;
+	height: 24dp;
 }
 
 input[type=checkbox] {
 	display: inline-block;
-	width: 16px;
-	height: 16px;
+	width: 16dp;
+	height: 16dp;
 	background: #ffffff;
-	border: 2px #838383;
+	border: 2dp #838383;
 }
 
 input[type=checkbox]:checked {
 	background: #0492c7;
-	border: 2px #0492c7;
+	border: 2dp #0492c7;
 }
 
 .hk-cols {
-	width: 848px;
-	margin-left: -224px;
+	width: 848dp;
+	margin-left: -224dp;
 }
 
 .hkcol {
 	display: inline-block;
-	width: 408px;
+	width: 408dp;
 	vertical-align: top;
 }
 
 .hkcol-right {
-	margin-left: 32px;
+	margin-left: 32dp;
 }
 
 .hkrow {
-	height: 30px;
-	margin-bottom: 2px;
+	height: 30dp;
+	margin-bottom: 2dp;
 }
 
 .hklabel {
 	display: inline-block;
-	width: 262px;
-	height: 24px;
+	width: 262dp;
+	height: 24dp;
 	white-space: nowrap;
 	overflow: hidden;
 }
 
 button.hkkey {
 	display: inline-block;
-	width: 130px;
-	height: 24px;
-	font-size: 22px;
+	width: 130dp;
+	height: 24dp;
+	font-size: 22dp;
 	padding: 0;
 }
 
 .hkrow.armed button.hkkey {
 	background: #97e8ff;
 	color: #368baf;
-	border: 2px #0492c7;
+	border: 2dp #0492c7;
 }
 
 .slot-btn {
 	display: block;
-	width: 388px;
-	height: 40px;
-	margin-top: 10px;
+	width: 388dp;
+	height: 40dp;
+	margin-top: 10dp;
 }
 
 #dim {
@@ -310,47 +315,50 @@ button.hkkey {
 
 #confirm-box {
 	position: absolute;
-	left: 290px;
-	top: 215px;
-	width: 380px;
-	height: 170px;
+	left: 50%;
+	top: 50%;
+	width: 380dp;
+	height: 170dp;
+	margin-left: -190dp;
+	margin-top: -85dp;
 	background: #f5f5f5;
-	border: 1px #838383;
+	border: 1dp #838383;
 }
 
 #confirm-titlebar {
 	width: 100%;
-	height: 24px;
+	height: 24dp;
 	background: #c9c9c9;
 	color: #505050;
+	font-weight: bold;
 	text-align: center;
 }
 
 #confirm-sub {
 	text-align: center;
 	color: #686868;
-	margin-top: 22px;
+	margin-top: 22dp;
 }
 
 #btn-yes {
 	position: absolute;
-	left: 30px;
-	bottom: 18px;
-	width: 140px;
-	height: 34px;
+	left: 30dp;
+	bottom: 18dp;
+	width: 140dp;
+	height: 34dp;
 }
 
 #btn-no {
 	position: absolute;
-	right: 30px;
-	bottom: 18px;
-	width: 140px;
-	height: 34px;
+	right: 30dp;
+	bottom: 18dp;
+	width: 140dp;
+	height: 34dp;
 }
 
 #stub-wrap {
 	text-align: center;
-	margin-top: 250px;
+	margin-top: 250dp;
 }
 
 #stub-hint {
