@@ -1,0 +1,29 @@
+<rml>
+<head>
+<title>Paused</title>
+<link type="text/rcss" href="theme.rcss"/>
+<link type="text/rcss" href="hud.rcss"/>
+</head>
+<body>
+<div class="hud-dim"></div>
+<div id="pause-box">
+<div id="pause-titlebar">Paused</div>
+<button class="pause-btn" id="btn-resume">Resume</button>
+<p class="pause-label">Camera speed <span class="slider-val" id="val-p-camspeed">400</span></p>
+<input type="range" class="pause-range" id="opt-p-camspeed" min="100" max="800" step="10" value="400"/>
+<div class="pause-check"><input type="checkbox" id="opt-p-minimap" checked="checked"/> Minimap</div>
+<p class="pause-label">Master volume <span class="slider-val" id="val-p-master">1</span></p>
+<input type="range" class="pause-range" id="opt-p-master" min="0" max="1" step="0.05" value="1"/>
+<p class="pause-label">Music volume <span class="slider-val" id="val-p-music">0.8</span></p>
+<input type="range" class="pause-range" id="opt-p-music" min="0" max="1" step="0.05" value="0.8"/>
+<p class="pause-label">SFX volume <span class="slider-val" id="val-p-sfx">1</span></p>
+<input type="range" class="pause-range" id="opt-p-sfx" min="0" max="1" step="0.05" value="1"/>
+<div class="pause-check"><input type="checkbox" id="opt-p-mute"/> Mute</div>
+<div class="pause-check"><input type="checkbox" id="opt-p-rightdrag"/> Right-drag pan</div>
+<div class="pause-check"><input type="checkbox" id="opt-p-colorblind"/> Color-blind mode</div>
+<button class="pause-btn" id="btn-p-remap">Remap hotkeys...</button>
+<button class="pause-btn" id="btn-p-tomenu">Quit to menu</button>
+<button class="pause-btn" id="btn-p-todesktop">Quit to desktop</button>
+</div>
+</body>
+</rml>

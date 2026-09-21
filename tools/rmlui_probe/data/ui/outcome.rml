@@ -1,0 +1,16 @@
+<rml>
+<head>
+<title>Outcome</title>
+<link type="text/rcss" href="theme.rcss"/>
+<link type="text/rcss" href="hud.rcss"/>
+</head>
+<body>
+<div class="hud-dim"></div>
+<div id="outcome-box">
+<div id="outcome-titlebar"><span id="outcome-title">Victory!</span></div>
+<p id="outcome-body">Enemy force destroyed.</p>
+<button class="pause-btn" id="btn-o-tomenu">Return to menu</button>
+<button class="pause-btn" id="btn-o-todesktop">Quit to desktop</button>
+</div>
+</body>
+</rml>

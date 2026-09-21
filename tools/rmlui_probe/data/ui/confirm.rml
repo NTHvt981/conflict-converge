@@ -1,0 +1,15 @@
+<rml>
+<head>
+<title>Confirm</title>
+<link type="text/rcss" href="theme.rcss"/>
+</head>
+<body>
+<div id="dim"></div>
+<div id="confirm-box">
+<div id="confirm-titlebar"><span id="confirm-title">Quit Conflict Converge?</span></div>
+<p id="confirm-sub">Close the game?</p>
+<button id="btn-yes">Yes</button>
+<button id="btn-no">No</button>
+</div>
+</body>
+</rml>

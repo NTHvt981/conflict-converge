@@ -1,0 +1,335 @@
+/* Step-2 HUD look. Same raygui-derived palette as theme.rcss; geometry
+   mirrors src/game/private/app/Hud.cpp panel positions at 960x600.
+   Right/bottom-anchored panels scale with the window. Sizes are grown
+   slightly wherever the probe's fixed 22px bitmap font cannot fit the
+   real 10-16px raygui rows; anchors stay faithful. */
+
+.hud-panel {
+	position: absolute;
+	background: #f5f5f5;
+	border: 1px #838383;
+}
+
+.hud-title {
+	width: 100%;
+	height: 20px;
+	background: #c9c9c9;
+	color: #505050;
+	text-align: center;
+}
+
+.hud-line {
+	margin-left: 8px;
+	margin-right: 8px;
+	margin-top: 6px;
+	color: #686868;
+	white-space: nowrap;
+}
+
+/* DrawResourcePanel: (8,8,220,56) "Stockpile". */
+#hud-stockpile {
+	left: 8px;
+	top: 8px;
+	width: 220px;
+	height: 56px;
+}
+
+/* DrawSelectionPanel: (8,screenH-64,300,56) "Selection". Widened so the
+   single-unit summary fits the fixed probe font. */
+#hud-selection {
+	left: 8px;
+	bottom: 8px;
+	width: 340px;
+	height: 56px;
+}
+
+/* DrawIdleButtons: (318,screenH-64,150,56) "Idle". Taller for the font. */
+#hud-idle {
+	left: 358px;
+	bottom: 8px;
+	width: 150px;
+	height: 96px;
+}
+
+.idle-btn {
+	display: block;
+	width: 134px;
+	height: 28px;
+	margin-left: 8px;
+	margin-top: 4px;
+}
+
+/* DrawRepairPanel: (478,screenH-64,150,56) "Repair". Taller for the font. */
+#hud-repair {
+	left: 518px;
+	bottom: 8px;
+	width: 150px;
+	height: 96px;
+}
+
+#hud-repair .check-row {
+	margin-left: 8px;
+}
+
+#repair-cap {
+	display: inline-block;
+	width: 80px;
+	height: 20px;
+}
+
+#repair-cap-row {
+	margin-left: 8px;
+	margin-top: 2px;
+	color: #686868;
+}
+
+/* DrawControlGroupStrip: y=70, 10 boxes 26x20 gap 2 from x=8.
+   Boxes widened to 40px so "<digit>:<count>" fits the probe font. */
+#hud-groups {
+	position: absolute;
+	left: 8px;
+	top: 70px;
+}
+
+.cg-box {
+	display: inline-block;
+	width: 40px;
+	height: 22px;
+	margin-right: 2px;
+	text-align: center;
+	background: #e6e9e9;
+	color: #aeb7b8;
+	border: 1px #b5c1c2;
+}
+
+.cg-box.nonempty {
+	background: #2e8b57;
+	color: #000000;
+}
+
+.cg-box.allselected {
+	background: #87ceeb;
+	color: #000000;
+}
+
+.cg-box.autogold {
+	border: 2px #ffcb00;
+}
+
+/* DrawSaveSlots: (300,8) "Slots". Widened for the fixed probe font. */
+#hud-slots {
+	left: 300px;
+	top: 8px;
+	width: 440px;
+	height: 52px;
+}
+
+/* DrawProductionPanel: bottom-right (pw=174,ph=188). Widened/taller for
+   the fixed probe font; bottom-right anchor kept. */
+#hud-factory {
+	right: 10px;
+	bottom: 10px;
+	width: 250px;
+	height: 268px;
+}
+
+.fac-row {
+	height: 26px;
+	margin-left: 8px;
+	margin-top: 2px;
+}
+
+.fac-btn {
+	display: inline-block;
+	width: 182px;
+	height: 22px;
+	padding: 0;
+}
+
+.fac-rep {
+	display: inline-block;
+	width: 36px;
+	height: 22px;
+	margin-left: 6px;
+	padding: 0;
+}
+
+#need-factory {
+	margin-left: 12px;
+	margin-top: 6px;
+	color: #686868;
+}
+
+#fac-queue-row {
+	margin-left: 8px;
+	margin-top: 4px;
+	color: #686868;
+}
+
+#queue-line {
+	display: inline-block;
+	width: 120px;
+}
+
+#btn-cancel {
+	display: inline-block;
+	width: 90px;
+	height: 22px;
+	padding: 0;
+}
+
+/* "Producing..." label at (x,screenH-222), bar (x,screenH-202,150,12). */
+#hud-producing {
+	position: absolute;
+	right: 110px;
+	bottom: 288px;
+}
+
+#producing-label {
+	color: #828282;
+}
+
+#producing-bar {
+	width: 150px;
+	height: 12px;
+	background: #d3d3d3;
+	border: 1px #838383;
+	margin-top: 4px;
+}
+
+#producing-fill {
+	height: 100%;
+	background: #2e8b57;
+}
+
+/* FPS at (screenW-170,135), enemy readout at (screenW-170,155). */
+.hud-readout {
+	position: absolute;
+	right: 10px;
+	color: #828282;
+}
+
+#fps-line {
+	top: 135px;
+}
+
+#enemy-line {
+	top: 160px;
+}
+
+/* ShortcutHintLines from (8,250), muted. */
+#hud-hints {
+	position: absolute;
+	left: 8px;
+	top: 250px;
+}
+
+.hint-line {
+	color: #505050;
+	opacity: 0.8;
+	height: 22px;
+	margin: 0;
+}
+
+/* Dim veil shared by the pause/outcome overlays (cf. #dim in theme). */
+.hud-dim {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background: #000000;
+	opacity: 0.5;
+}
+
+#pause-box {
+	position: absolute;
+	left: 330px;
+	top: 10px;
+	width: 300px;
+	height: 580px;
+	background: #f5f5f5;
+	border: 1px #838383;
+}
+
+#pause-titlebar {
+	width: 100%;
+	height: 24px;
+	background: #c9c9c9;
+	color: #505050;
+	text-align: center;
+}
+
+.pause-btn {
+	display: block;
+	width: 264px;
+	height: 26px;
+	margin-left: 18px;
+	margin-top: 4px;
+}
+
+.pause-label {
+	margin-left: 18px;
+	margin-top: 2px;
+	color: #686868;
+}
+
+.pause-check {
+	margin-left: 18px;
+	margin-top: 2px;
+	height: 24px;
+	color: #686868;
+}
+
+input.pause-range {
+	display: block;
+	width: 264px;
+	height: 20px;
+	margin-left: 18px;
+}
+
+input.pause-range slidertrack {
+	background: #e6e9e9;
+	border: 1px #838383;
+	height: 10px;
+}
+
+input.pause-range sliderbar {
+	background: #c9c9c9;
+	border: 1px #838383;
+	width: 14px;
+	height: 20px;
+}
+
+input.pause-range sliderprogress {
+	background: #97e8ff;
+}
+
+#outcome-box {
+	position: absolute;
+	left: 330px;
+	top: 200px;
+	width: 300px;
+	height: 190px;
+	background: #f5f5f5;
+	border: 1px #838383;
+}
+
+#outcome-titlebar {
+	width: 100%;
+	height: 24px;
+	background: #c9c9c9;
+	color: #505050;
+	text-align: center;
+}
+
+#outcome-body {
+	text-align: center;
+	color: #686868;
+	margin-top: 24px;
+}
+
+/* Color-blind checkbox is visual-only in the probe. */
+body.colorblind #hud-body-art {
+	background: #e8e8e8;
+}

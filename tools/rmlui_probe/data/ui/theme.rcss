@@ -1,0 +1,358 @@
+/* Shared faithful-raygui look. Colors sampled from
+   GuiLoadStyleDefault() in deps/raygui/src/raygui.h:
+   normal  border #838383 base #c9c9c9 text #686868;
+   focused border #5bb2d9 base #c9effe text #6c9bbc;
+   pressed border #0492c7 base #97e8ff text #368baf;
+   disabled border #b5c1c2 base #e6e9e9 text #aeb7b8;
+   background #f5f5f5, line #90abb5. Titles use raylib DARKGRAY
+   (#505050), subtitles GRAY (#828282), like MenuScreens.cpp. */
+
+body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	background: #f5f5f5;
+	font-family: comfortaa;
+	font-size: 22px;
+	color: #686868;
+}
+
+/* RmlUi ships no UA stylesheet: block layout must be explicit. */
+div, h1, h2, p {
+	display: block;
+}
+
+span {
+	display: inline;
+}
+
+.col {
+	width: 400px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 40px;
+}
+
+.col-tight {
+	width: 400px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 6px;
+}
+
+h1.title {
+	text-align: center;
+	color: #505050;
+	margin-top: 70px;
+	margin-bottom: 6px;
+}
+
+p.subtitle {
+	text-align: center;
+	color: #828282;
+	margin-bottom: 44px;
+}
+
+h2.heading {
+	color: #505050;
+	margin-bottom: 10px;
+}
+
+p.field-label {
+	margin-top: 8px;
+	margin-bottom: 2px;
+	color: #686868;
+}
+
+p.detail {
+	color: #828282;
+	margin-top: 6px;
+	margin-bottom: 2px;
+}
+
+p.hint {
+	color: #828282;
+	text-align: center;
+	margin-top: 10px;
+}
+
+button {
+	background: #c9c9c9;
+	color: #686868;
+	border: 2px #838383;
+	font-family: comfortaa;
+	font-size: 22px;
+	text-align: center;
+	padding: 4px;
+}
+
+button:hover {
+	background: #c9effe;
+	color: #6c9bbc;
+	border: 2px #5bb2d9;
+}
+
+button:active {
+	background: #97e8ff;
+	color: #368baf;
+	border: 2px #0492c7;
+}
+
+/* RmlUi <button> is a plain element (not a form control), so the disabled
+   look is driven by a "disabled" class from C++ instead of :disabled. */
+button:disabled,
+button.disabled,
+button.disabled:hover {
+	background: #e6e9e9;
+	color: #aeb7b8;
+	border: 2px #b5c1c2;
+}
+
+.menu-btn {
+	display: block;
+	width: 248px;
+	height: 40px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 10px;
+}
+
+.row-2btn {
+	width: 400px;
+	margin-top: 10px;
+}
+
+.row-2btn button {
+	display: inline-block;
+	width: 182px;
+	height: 40px;
+}
+
+#btn-back-right {
+	margin-left: 10px;
+}
+
+.wide-btn {
+	display: block;
+	width: 388px;
+	height: 40px;
+	margin-top: 10px;
+}
+
+.wide-btn-short {
+	display: block;
+	width: 388px;
+	height: 30px;
+	margin-top: 10px;
+}
+
+.maplist {
+	width: 400px;
+	height: 224px;
+	overflow-y: auto;
+	background: #ffffff;
+	border: 1px #838383;
+}
+
+.map-item {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	height: 36px;
+	line-height: 32px;
+	white-space: nowrap;
+	margin: 0;
+	border: 0;
+	border-bottom: 1px #c9c9c9;
+	background: #ffffff;
+	color: #686868;
+	text-align: left;
+	padding: 2px 6px;
+}
+
+/* Pin the border so the generic button:hover/:active border cannot change the
+   row's box on hover/click (that reflow made the list collapse). */
+.map-item:hover,
+.map-item:active {
+	border: 0;
+	border-bottom: 1px #c9c9c9;
+	background: #c9effe;
+	color: #6c9bbc;
+}
+
+.map-item.selected {
+	background: #97e8ff;
+	color: #368baf;
+}
+
+.diff-row {
+	width: 400px;
+}
+
+.diff-row button {
+	display: inline-block;
+	width: 120px;
+	height: 30px;
+	margin-top: 4px;
+}
+
+.diff-row button.selected {
+	background: #97e8ff;
+	color: #368baf;
+	border: 2px #0492c7;
+}
+
+input.range {
+	display: block;
+	width: 388px;
+	height: 24px;
+	margin-top: 2px;
+}
+
+input.range slidertrack {
+	background: #e6e9e9;
+	border: 1px #838383;
+	height: 10px;
+}
+
+input.range sliderbar {
+	background: #c9c9c9;
+	border: 1px #838383;
+	width: 14px;
+	height: 20px;
+}
+
+input.range sliderprogress {
+	background: #97e8ff;
+}
+
+.slider-val {
+	color: #828282;
+}
+
+.check-row {
+	margin-top: 6px;
+	height: 24px;
+}
+
+input[type=checkbox] {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	background: #ffffff;
+	border: 2px #838383;
+}
+
+input[type=checkbox]:checked {
+	background: #0492c7;
+	border: 2px #0492c7;
+}
+
+.hk-cols {
+	width: 848px;
+	margin-left: -224px;
+}
+
+.hkcol {
+	display: inline-block;
+	width: 408px;
+	vertical-align: top;
+}
+
+.hkcol-right {
+	margin-left: 32px;
+}
+
+.hkrow {
+	height: 30px;
+	margin-bottom: 2px;
+}
+
+.hklabel {
+	display: inline-block;
+	width: 262px;
+	height: 24px;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+button.hkkey {
+	display: inline-block;
+	width: 130px;
+	height: 24px;
+	font-size: 22px;
+	padding: 0;
+}
+
+.hkrow.armed button.hkkey {
+	background: #97e8ff;
+	color: #368baf;
+	border: 2px #0492c7;
+}
+
+.slot-btn {
+	display: block;
+	width: 388px;
+	height: 40px;
+	margin-top: 10px;
+}
+
+#dim {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background: #000000;
+	opacity: 0.5;
+}
+
+#confirm-box {
+	position: absolute;
+	left: 290px;
+	top: 215px;
+	width: 380px;
+	height: 170px;
+	background: #f5f5f5;
+	border: 1px #838383;
+}
+
+#confirm-titlebar {
+	width: 100%;
+	height: 24px;
+	background: #c9c9c9;
+	color: #505050;
+	text-align: center;
+}
+
+#confirm-sub {
+	text-align: center;
+	color: #686868;
+	margin-top: 22px;
+}
+
+#btn-yes {
+	position: absolute;
+	left: 30px;
+	bottom: 18px;
+	width: 140px;
+	height: 34px;
+}
+
+#btn-no {
+	position: absolute;
+	right: 30px;
+	bottom: 18px;
+	width: 140px;
+	height: 34px;
+}
+
+#stub-wrap {
+	text-align: center;
+	margin-top: 250px;
+}
+
+#stub-hint {
+	color: #828282;
+}

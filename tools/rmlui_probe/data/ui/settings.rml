@@ -1,0 +1,27 @@
+<rml>
+<head>
+<title>Settings</title>
+<link type="text/rcss" href="theme.rcss"/>
+</head>
+<body>
+<div class="col-tight">
+<h2 class="heading">Settings</h2>
+<p class="field-label">Camera speed <span class="slider-val" id="val-camspeed"></span></p>
+<input type="range" id="opt-camspeed" min="100" max="800" step="10" value="400"/>
+<div class="check-row"><input type="checkbox" id="opt-minimap" checked="checked"/> Minimap</div>
+<p class="field-label">Master volume <span class="slider-val" id="val-master"></span></p>
+<input type="range" id="opt-master" min="0" max="1" step="0.05" value="1"/>
+<p class="field-label">Music volume <span class="slider-val" id="val-music"></span></p>
+<input type="range" id="opt-music" min="0" max="1" step="0.05" value="0.8"/>
+<p class="field-label">SFX volume <span class="slider-val" id="val-sfx"></span></p>
+<input type="range" id="opt-sfx" min="0" max="1" step="0.05" value="1"/>
+<div class="check-row"><input type="checkbox" id="opt-mute"/> Mute</div>
+<div class="check-row"><input type="checkbox" id="opt-rightdrag"/> Right-drag pan</div>
+<div class="check-row"><input type="checkbox" id="opt-colorblind"/> Color-blind mode</div>
+<p class="field-label">UI scale <span class="slider-val" id="val-uiscale"></span></p>
+<input type="range" id="opt-uiscale" min="0.75" max="2" step="0.05" value="1"/>
+<button class="wide-btn" id="btn-settings-back">Back</button>
+<button class="wide-btn-short" id="btn-remap">Remap hotkeys...</button>
+</div>
+</body>
+</rml>
