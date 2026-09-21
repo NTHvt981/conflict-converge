@@ -10,6 +10,7 @@
 <button class="menu-btn" id="btn-setup">Start Skirmish</button>
 <button class="menu-btn" id="btn-load">Load Game</button>
 <button class="menu-btn" id="btn-settings">Settings</button>
+<button class="menu-btn" id="btn-editor">Map Editor</button>
 <button class="menu-btn" id="btn-quit">Quit</button>
 </div>
 </body>

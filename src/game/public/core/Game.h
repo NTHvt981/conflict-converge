@@ -26,6 +26,7 @@
 #include "Registry.h"
 #include "ResourceSystem.h"
 #include "RmlUiHost.h"
+#include "RmlUiMenus.h"
 #include "SaveGame.h"
 #include "Shake.h"
 #include "ShortcutBindings.h"
@@ -113,6 +114,7 @@ private:
     MenuScreens menuScreens;
     ShortcutBindings bindings;
     RmlUiHost rmlUi; // declared before renderer: overlay host (Phase 1 render-only)
+    RmlUiMenus rmlUiMenus; // menu-branch owner (Phase 2 states, raygui keeps the rest)
     GameRenderer renderer;
     MatchController match;
     CheatOverlay cheats;

@@ -100,6 +100,14 @@ void RmlUiHost::Shutdown()
     Rml::Shutdown();
 }
 
+void RmlUiHost::HideStub()
+{
+    if (stub_ != nullptr)
+    {
+        stub_->Hide();
+    }
+}
+
 void RmlUiHost::BeginFrame(int width, int height, float uiScale)
 {
     if (!ready_ || context_ == nullptr)

@@ -26,6 +26,21 @@ void MenuScreens::Announce(EventType type)
     events_.Dispatch(bare);
 }
 
+void MenuScreens::OpenEditor()
+{
+    editorMap_.name = "Custom";
+    editorMap_.author = "";
+    editorMap_.width = 24;
+    editorMap_.height = 18;
+    editorMap_.terrain.assign(static_cast<std::size_t>(24 * 18), TerrainType::Grass);
+    editorMap_.nodes.clear();
+    editorMap_.playerSpawns.clear();
+    editorMap_.aiSpawns.clear();
+    editorBrush_ = '.';
+    editorStatus_ = "";
+    menu_.state = MenuState::MapEditor;
+}
+
 void MenuScreens::BeginRemap(MenuState returnTo)
 {
     remapArming_ = -1;
@@ -106,17 +121,7 @@ ConfirmChoice MenuScreens::Draw(int screenWidth, int screenHeight, float menuSta
         }
         if (GuiButton({ cx - 130.0f, 395.0f, 260.0f, 40.0f }, "Map Editor"))
         {
-            editorMap_.name = "Custom";
-            editorMap_.author = "";
-            editorMap_.width = 24;
-            editorMap_.height = 18;
-            editorMap_.terrain.assign(static_cast<std::size_t>(24 * 18), TerrainType::Grass);
-            editorMap_.nodes.clear();
-            editorMap_.playerSpawns.clear();
-            editorMap_.aiSpawns.clear();
-            editorBrush_ = '.';
-            editorStatus_ = "";
-            menu_.state = MenuState::MapEditor;
+            OpenEditor();
             Announce(EventType::MenuAction);
         }
         if (GuiButton({ cx - 130.0f, 445.0f, 260.0f, 40.0f }, "Quit"))

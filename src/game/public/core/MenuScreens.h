@@ -53,6 +53,9 @@ public:
     void DrawRemap(float cx);
     // Arm a remap capture from Settings or pause.
     void BeginRemap(MenuState returnTo);
+    // Enter the map editor with a fresh scratch canvas (extracted so the
+    // RmlUi menu branch can route here too; never the live match map).
+    void OpenEditor();
     // Esc: cancel an armed capture, else back out; true when consumed.
     bool CancelRemapCapture();
     // Persisted remaps into hotkeys (startup, before BindShortcuts).

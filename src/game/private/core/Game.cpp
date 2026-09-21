@@ -33,6 +33,15 @@ Game::Game()
     , bindings(input, hotkeys, menu, menuScreens, playingInput, audio, camera, map, occ,
                 nodes, fog, registry, resources, events, worldState, pings, worldActive,
                 showHints, [this]() { QuitToMenu(); }, [this](int dir) { match.StepReplay(dir); })
+    , rmlUiMenus(menu, hotkeys, art, audio, events, menuScreens,
+                 MenuCallbacks{
+                     [&](const std::string &mapPath, AIDifficulty difficulty) {
+                         StartMatch(mapPath, difficulty);
+                     },
+                     [&](const std::string &slotPath) { match.LoadGameFromSlot(slotPath); },
+                     [&]() { match.WatchLastReplay(); },
+                     [&]() { bindings.Bind(); },
+                 })
     , renderer(art, camera, map, registry, fog, nodes, minimap, pings, damageNumbers,
                playingInput, menu, sim, resources, queue, hotkeys, input, ai, menuScreens,
                events, showHints, replayCursor, worldDifficulty, menuStateTime, shakeTrauma,
@@ -73,6 +82,11 @@ void Game::Init()
         GuiSetFont(art.UiFont());
     }
     rmlUi.Init("data/ui");
+    if (rmlUi.IsReady() && !rmlUiMenus.Init(rmlUi, "data/ui"))
+    {
+        // Menu documents failed: fall back to the pure raygui branch.
+        rmlUi.Shutdown();
+    }
     lastOutcomeState = MenuState::MainMenu;
 
     camera.view.offset = { kInitialWidth / 2.0f, kInitialHeight / 2.0f };
@@ -131,6 +145,16 @@ void Game::Update()
 
     if (!worldActive)
     {
+        if (rmlUiMenus.HandlesState())
+        {
+            if (const ConfirmChoice choice = rmlUiMenus.Draw(screenWidth, screenHeight);
+                choice != ConfirmChoice::None)
+            {
+                pendingConfirm = choice;
+            }
+            return;
+        }
+        rmlUiMenus.HideAll();
         if (const ConfirmChoice choice = menuScreens.Draw(screenWidth, screenHeight, menuStateTime);
             choice != ConfirmChoice::None)
         {

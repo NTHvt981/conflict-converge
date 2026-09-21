@@ -30,6 +30,9 @@ public:
     void Shutdown();
     bool IsReady() const { return ready_; }
     Rml::Context *context() { return context_; }
+    // Hides the Phase 1 proof document (called by RmlUiMenus::Init once the
+    // real documents take over; the stub is deleted in Phase 3).
+    void HideStub();
 
     // Syncs dimensions/dp-ratio (manual uiScale-only policy, base 1.0) and
     // ticks the context. Render draws it screen-space: call inside
