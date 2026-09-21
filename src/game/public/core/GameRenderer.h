@@ -19,6 +19,7 @@
 #include "Production.h"
 #include "Registry.h"
 #include "ResourceSystem.h"
+#include "RmlUiHud.h"
 #include "Simulation.h"
 #include "Shake.h"
 #include "TileMap.h"
@@ -36,8 +37,8 @@ public:
                  MenuScreens &menuScreens, EventDispatcher &events, const bool &showHints,
                  const int &replayCursor, const AIDifficulty &worldDifficulty,
                  const float &menuStateTime, const float &shakeTrauma, bool &playerAutoRepair,
-                 float &autoRepairCap, RmlUiHost &rmlUi, std::function<void()> quitToMenu);
-    GameRenderer(const GameRenderer &) = delete;
+                 float &autoRepairCap, RmlUiHost &rmlUi, RmlUiHud &rmlUiHud,
+                 std::function<void()> quitToMenu);    GameRenderer(const GameRenderer &) = delete;
     GameRenderer &operator=(const GameRenderer &) = delete;
 
     void DrawWorld();
@@ -73,6 +74,7 @@ private:
     bool &playerAutoRepair_;
     float &autoRepairCap_;
     RmlUiHost &rmlUi_;
+    RmlUiHud &rmlUiHud_;
     std::function<void()> quitToMenu_;
     HoverTooltipState hoverTip_;
 };

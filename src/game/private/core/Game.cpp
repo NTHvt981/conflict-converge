@@ -42,10 +42,12 @@ Game::Game()
                      [&]() { match.WatchLastReplay(); },
                      [&]() { bindings.Bind(); },
                  })
+    , rmlUiHud(registry, resources, queue, sim, hotkeys, playingInput, ai, worldDifficulty,
+               showHints, playerAutoRepair, autoRepairCap)
     , renderer(art, camera, map, registry, fog, nodes, minimap, pings, damageNumbers,
                playingInput, menu, sim, resources, queue, hotkeys, input, ai, menuScreens,
                events, showHints, replayCursor, worldDifficulty, menuStateTime, shakeTrauma,
-               playerAutoRepair, autoRepairCap, rmlUi, [this]() { QuitToMenu(); })
+               playerAutoRepair, autoRepairCap, rmlUi, rmlUiHud, [this]() { QuitToMenu(); })
     , match(camera, ai, allyAI, enemyAI2, menu, minimap, playingInput, sim, events,
             skirmish, worldState, hotkeys, rallyPos, worldActive, worldIs2v2, sandboxMode,
             worldDifficulty, worldMapPath, lastOutcomeState, replayCursor, replayPlayTimer,
@@ -86,6 +88,12 @@ void Game::Init()
     {
         // Menu documents failed: fall back to the pure raygui branch.
         rmlUi.Shutdown();
+    }
+    if (rmlUiMenus.IsReady())
+    {
+        // HUD document failure is non-fatal: IsReady stays false and the
+        // renderer keeps the raygui panels while menus stay RmlUi.
+        rmlUiHud.Init(rmlUi, "data/ui");
     }
     lastOutcomeState = MenuState::MainMenu;
 
@@ -163,9 +171,19 @@ void Game::Update()
         return;
     }
 
+    // Menu documents never draw in the world branch: hide any left visible
+    // by the menu branch (entering a match otherwise leaves them shown over
+    // the game). Idempotent while raygui owns the menus.
+    rmlUiMenus.HideAll();
+
     if (menu.state == MenuState::Playing && !menu.ConfirmOpen() && !cheats.CapturingInput())
     {
-        playingInput.Dispatch();
+        // First-refusal preview (Phase 4 owns full routing): presses on RmlUi
+        // controls never reach world dispatch. The sim always steps.
+        if (!rmlUiHud.IsPointerOverUI())
+        {
+            playingInput.Dispatch();
+        }
         sim.Step(GetFrameTime());
     }
 

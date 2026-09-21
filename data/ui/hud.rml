@@ -3,6 +3,13 @@
 <title>Playing HUD</title>
 <link type="text/rcss" href="theme.rcss"/>
 <link type="text/rcss" href="hud.rcss"/>
+<style>
+/* Transparent stage: the HUD floats over the live world. Panels carry
+   their own backgrounds; the stub proof doc does the same. */
+body {
+	background: transparent;
+}
+</style>
 </head>
 <body id="hud-body">
 <div class="hud-panel" id="hud-stockpile"><div class="hud-title">Stockpile</div><div class="hud-line" id="res-line">Iron: 500  Oil: 250</div></div>

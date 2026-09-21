@@ -91,7 +91,8 @@ GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry 
                             MenuScreens &menuScreens, EventDispatcher &events, const bool &showHints,
                             const int &replayCursor, const AIDifficulty &worldDifficulty,
                             const float &menuStateTime, const float &shakeTrauma, bool &playerAutoRepair,
-                            float &autoRepairCap, RmlUiHost &rmlUi, std::function<void()> quitToMenu)
+                            float &autoRepairCap, RmlUiHost &rmlUi, RmlUiHud &rmlUiHud,
+                            std::function<void()> quitToMenu)
     : art_(art)
     , camera_(camera)
     , map_(map)
@@ -119,6 +120,7 @@ GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry 
     , playerAutoRepair_(playerAutoRepair)
     , autoRepairCap_(autoRepairCap)
     , rmlUi_(rmlUi)
+    , rmlUiHud_(rmlUiHud)
     , quitToMenu_(std::move(quitToMenu))
 {
 }
@@ -476,43 +478,57 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
         }
     }
 
-    DrawResourcePanel(resources_, &art_);
-    DrawSelectionPanel(registry_, &art_);
-    DrawIdleButtons(registry_, 0);
-    DrawRepairPanel(&playerAutoRepair_, &autoRepairCap_);
-    DrawControlGroupStrip(registry_, 0, playingInput_.AutoAddGroupBit(),
-                            &art_);
-    DrawSaveSlots();
     sim_.RefreshFactory();
-    DrawProductionPanel(resources_, queue_, sim_.HasFactory());
-    if (playingInput_.IsSettingRally())
+    if (rmlUiHud_.IsReady())
     {
-        Art::DrawUiText(&art_, "Rally: left-click to place (R cancels)", 250, 364, 16, DARKGREEN);
+        // Phase 3: the RmlUi HUD owns these panels (clicks are pre-routed by
+        // the first-refusal gate in Game::Update). Drag visuals, the hover
+        // tooltip, and every overlay below stay raygui until Phase 4.
+        rmlUiHud_.Draw(screenWidth, screenHeight, uiScale);
     }
-    if (playingInput_.AttackGroundMode())
+    else
     {
-        Art::DrawUiText(&art_, "Shelling: right-click to fire (X/Esc cancels)", 250, 364, 16, RED);
-    }
-    if (!queue_.Empty())
-    {
-        const float ppw = 174.0f;
-        const float ppx = static_cast<float>(screenWidth) - ppw - 10.0f;
-        Art::DrawUiText(&art_, "Producing...", static_cast<int>(ppx), screenHeight - 222, 16, GRAY);
-        DrawRectangle(static_cast<int>(ppx), screenHeight - 202, 150, 12, LIGHTGRAY);
-        DrawRectangle(static_cast<int>(ppx), screenHeight - 202, static_cast<int>(150.0f * queue_.HeadProgress()), 12, DARKGREEN);
-    }
-
-    DrawFPS(screenWidth - 170, 135);
-    Art::DrawUiText(&art_, TextFormat("Enemy: %s  Waves: %d", DifficultyName(worldDifficulty_),
-                        ai_.WavesLaunched()),
-             screenWidth - 170, 155, 16, GRAY);
-
-    if (showHints_)
-    {
-        const std::vector<std::string> hints = ShortcutHintLines(hotkeys_);
-        for (std::size_t i = 0; i < hints.size(); ++i)
+        DrawResourcePanel(resources_, &art_);
+        DrawSelectionPanel(registry_, &art_);
+        DrawIdleButtons(registry_, 0);
+        DrawRepairPanel(&playerAutoRepair_, &autoRepairCap_);
+        DrawControlGroupStrip(registry_, 0, playingInput_.AutoAddGroupBit(), &art_);
+        DrawSaveSlots();
+        DrawProductionPanel(resources_, queue_, sim_.HasFactory());
+        if (playingInput_.IsSettingRally())
         {
-            Art::DrawUiText(&art_, hints[i].c_str(), 8, 250 + static_cast<int>(i) * 18, 14, Fade(DARKGRAY, 0.8f));
+            Art::DrawUiText(&art_, "Rally: left-click to place (R cancels)", 250, 364, 16,
+                            DARKGREEN);
+        }
+        if (playingInput_.AttackGroundMode())
+        {
+            Art::DrawUiText(&art_, "Shelling: right-click to fire (X/Esc cancels)", 250, 364,
+                            16, RED);
+        }
+        if (!queue_.Empty())
+        {
+            const float ppw = 174.0f;
+            const float ppx = static_cast<float>(screenWidth) - ppw - 10.0f;
+            Art::DrawUiText(&art_, "Producing...", static_cast<int>(ppx), screenHeight - 222, 16,
+                            GRAY);
+            DrawRectangle(static_cast<int>(ppx), screenHeight - 202, 150, 12, LIGHTGRAY);
+            DrawRectangle(static_cast<int>(ppx), screenHeight - 202,
+                          static_cast<int>(150.0f * queue_.HeadProgress()), 12, DARKGREEN);
+        }
+
+        DrawFPS(screenWidth - 170, 135);
+        Art::DrawUiText(&art_, TextFormat("Enemy: %s  Waves: %d", DifficultyName(worldDifficulty_),
+                                         ai_.WavesLaunched()),
+                        screenWidth - 170, 155, 16, GRAY);
+
+        if (showHints_)
+        {
+            const std::vector<std::string> hints = ShortcutHintLines(hotkeys_);
+            for (std::size_t i = 0; i < hints.size(); ++i)
+            {
+                Art::DrawUiText(&art_, hints[i].c_str(), 8, 250 + static_cast<int>(i) * 18, 14,
+                                Fade(DARKGRAY, 0.8f));
+            }
         }
     }
 
@@ -635,9 +651,10 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
     {
         DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 1.0f - fade));
     }
-    // Phase 1 RmlUi proof overlay (screen-space, over world + raygui HUD).
-    // Render-only: input still belongs to raygui until Phase 4.
-    rmlUi_.BeginFrame(screenWidth, screenHeight, uiScale);
+    // RmlUi overlay: hud.rml (synced + host-updated inside RmlUiHud::Draw
+    // when ready) and any visible menu document. The host renders even when
+    // the HUD falls back to raygui panels — with nothing visible that is a
+    // no-op. Input routing for the world branch lands in Phase 4.
     rmlUi_.Render();
     if (!modal)
     {
