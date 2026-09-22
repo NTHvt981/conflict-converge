@@ -48,15 +48,9 @@ Game::Game()
     , playingInput(world_.Get<Registry>(), world_.Get<TileMap>(), world_.Get<OccupancyGrid>(),
                    world_.Get<ResourceNodes>(), camera, world_.Get<Minimap>(),
                    engine_.Get<InputManager>(), engine_.Get<Audio>(), menu.settings, rallyPos)
-    , sim(world_.Get<Registry>(), world_.Get<TileMap>(), world_.Get<OccupancyGrid>(),
-          world_.Get<FogOfWar>(), world_.Get<ResourceNodes>(), world_.Get<ProductionQueue>(),
-          world_.Get<UnitFactory>(), world_.Get<ResourceSystem>(),
-          world_.GetKeyed<AICommander>("ai"), world_.GetKeyed<AICommander>("ally"),
-          world_.GetKeyed<AICommander>("enemy2"), engine_.Get<Art>(), engine_.Get<Audio>(),
-          world_.Get<Pings>(), menu, world_.Get<Minimap>(), worldState, damageNumbers,
-          engine_.Get<EventDispatcher>(), rallyPos, playingInput.AutoAddGroupBit(),
-          sandboxMode, worldIs2v2, playerAutoRepair, autoRepairCap, shakeTrauma,
-          lastOutcomeState)
+    , sim(world_, engine_, menu, worldState, damageNumbers, rallyPos,
+          playingInput.AutoAddGroupBit(), sandboxMode, worldIs2v2, playerAutoRepair,
+          autoRepairCap, shakeTrauma, lastOutcomeState)
     , menuScreens(menu, engine_.Get<Art>(), engine_.Get<Audio>(), engine_.Get<InputManager>(),
                   engine_.Get<HotkeyMap>(), engine_.Get<EventDispatcher>(),
                   MenuCallbacks{

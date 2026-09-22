@@ -7,35 +7,31 @@
 #include <cmath>
 #include <vector>
 
-Simulation::Simulation(Registry &registry, TileMap &map, OccupancyGrid &occ, FogOfWar &fog,
-                       ResourceNodes &nodes, ProductionQueue &queue, UnitFactory &factory,
-                       ResourceSystem &resources, AICommander &ai, AICommander &allyAI,
-                       AICommander &enemyAI2, Art &art, Audio &audio, Pings &pings,
-                       MenuFlow &menu, Minimap &minimap, const WorldState &worldState,
-                       DamageNumbers &damageNumbers, EventDispatcher &events,
+Simulation::Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
+                       const WorldState &worldState, DamageNumbers &damageNumbers,
                        const Vector2 &rallyPos, const int &autoAddGroupBit,
                        const bool &sandboxMode, const bool &worldIs2v2,
                        const bool &playerAutoRepair, const float &autoRepairCap,
                        float &shakeTrauma, MenuState &lastOutcomeState)
-    : registry_(registry)
-    , map_(map)
-    , occ_(occ)
-    , fog_(fog)
-    , nodes_(nodes)
-    , queue_(queue)
-    , factory_(factory)
-    , resources_(resources)
-    , ai_(ai)
-    , allyAI_(allyAI)
-    , enemyAI2_(enemyAI2)
-    , art_(art)
-    , audio_(audio)
-    , pings_(pings)
+    : registry_(world.Get<Registry>())
+    , map_(world.Get<TileMap>())
+    , occ_(world.Get<OccupancyGrid>())
+    , fog_(world.Get<FogOfWar>())
+    , nodes_(world.Get<ResourceNodes>())
+    , queue_(world.Get<ProductionQueue>())
+    , factory_(world.Get<UnitFactory>())
+    , resources_(world.Get<ResourceSystem>())
+    , ai_(world.GetKeyed<AICommander>("ai"))
+    , allyAI_(world.GetKeyed<AICommander>("ally"))
+    , enemyAI2_(world.GetKeyed<AICommander>("enemy2"))
+    , art_(engine.Get<Art>())
+    , audio_(engine.Get<Audio>())
+    , pings_(world.Get<Pings>())
     , menu_(menu)
-    , minimap_(minimap)
+    , minimap_(world.Get<Minimap>())
     , worldState_(worldState)
     , damageNumbers_(damageNumbers)
-    , events_(events)
+    , events_(engine.Get<EventDispatcher>())
     , rallyPos_(rallyPos)
     , autoAddGroupBit_(autoAddGroupBit)
     , sandboxMode_(sandboxMode)

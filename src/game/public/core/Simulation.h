@@ -13,24 +13,24 @@
 #include "Registry.h"
 #include "ResourceSystem.h"
 #include "SaveGame.h"
+#include "Subsystem.h"
 #include "TileMap.h"
 #include "UnitFactory.h"
 
 // Simulation owns the per-frame match tick extracted from Game::Update.
 // It never touches input, menus (beyond the outcome gate), or rendering, so
-// unit tests can drive Step headlessly over fixture worlds.
+// unit tests can drive Step headlessly over fixture worlds. World and engine
+// services arrive as scope containers (M3: 27-arg ctor collapsed); reference
+// members still bind the same objects, so Step semantics are unchanged.
 class Simulation
 {
 public:
-    Simulation(Registry &registry, TileMap &map, OccupancyGrid &occ, FogOfWar &fog,
-               ResourceNodes &nodes, ProductionQueue &queue, UnitFactory &factory,
-               ResourceSystem &resources, AICommander &ai, AICommander &allyAI,
-               AICommander &enemyAI2, Art &art, Audio &audio, Pings &pings, MenuFlow &menu,
-               Minimap &minimap, const WorldState &worldState, DamageNumbers &damageNumbers,
-               EventDispatcher &events, const Vector2 &rallyPos, const int &autoAddGroupBit,
+    Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
+               const WorldState &worldState, DamageNumbers &damageNumbers,
+               const Vector2 &rallyPos, const int &autoAddGroupBit,
                const bool &sandboxMode, const bool &worldIs2v2,
-               const bool &playerAutoRepair, const float &autoRepairCap, float &shakeTrauma,
-               MenuState &lastOutcomeState);
+               const bool &playerAutoRepair, const float &autoRepairCap,
+               float &shakeTrauma, MenuState &lastOutcomeState);
     Simulation(const Simulation &) = delete;
     Simulation &operator=(const Simulation &) = delete;
 
