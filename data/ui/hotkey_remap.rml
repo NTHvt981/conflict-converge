@@ -1,0 +1,23 @@
+<rml>
+<head>
+<title>Remap hotkeys</title>
+<link type="text/rcss" href="theme.rcss"/>
+<style>
+/* Transparent stage: the remap form floats over the menu clear color or
+   the dimmed world, like the raygui screen it replaces. */
+body {
+	background: transparent;
+}
+</style>
+</head>
+<body>
+<div class="col-tight">
+<h2 class="heading">Remap hotkeys</h2>
+<p class="field-label" id="remap-status">Click a key to rebind it. Digits/Alt (Tier 2) are fixed.</p>
+<div class="hk-cols">
+<div class="hkcol" id="hkcol-a"></div><div class="hkcol hkcol-right" id="hkcol-b"></div>
+</div>
+<button class="wide-btn" id="btn-remap-back">Back</button>
+</div>
+</body>
+</rml>

@@ -1,0 +1,357 @@
+/* Shared faithful-raygui look. Colors sampled from
+   GuiLoadStyleDefault() in deps/raygui/src/raygui.h:
+   normal  border #838383 base #c9c9c9 text #686868;
+   focused border #5bb2d9 base #c9effe text #6c9bbc;
+   pressed border #0492c7 base #97e8ff text #368baf;
+   disabled border #b5c1c2 base #e6e9e9 text #aeb7b8;
+   background #f5f5f5, line #90abb5. Titles use raylib DARKGRAY
+   (#505050), subtitles GRAY (#828282), like MenuScreens.cpp.
+   All lengths use dp so the context dp_ratio (uiScale) scales buttons
+   and text together; dialogs center with left/top 50% + negative
+   margins so they stay centered at any window size. */
+
+body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	background: #f5f5f5;
+	font-family: opensanspx;
+	font-size: 22dp;
+	color: #686868;
+}
+
+/* RmlUi ships no UA stylesheet: block layout must be explicit. */
+div, h1, h2, p {
+	display: block;
+}
+
+span {
+	display: inline;
+}
+
+.col {
+	width: 400dp;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 40dp;
+}
+
+.col-tight {
+	width: 400dp;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 6dp;
+}
+
+h1.title {
+	text-align: center;
+	color: #505050;
+	font-weight: bold;
+	margin-top: 70dp;
+	margin-bottom: 6dp;
+}
+
+p.subtitle {
+	text-align: center;
+	color: #828282;
+	margin-bottom: 44dp;
+}
+
+h2.heading {
+	color: #505050;
+	font-weight: bold;
+	margin-bottom: 10dp;
+}
+
+p.field-label {
+	margin-top: 8dp;
+	margin-bottom: 2dp;
+	color: #686868;
+}
+
+p.detail {
+	color: #828282;
+	margin-top: 6dp;
+	margin-bottom: 2dp;
+}
+
+p.hint {
+	color: #828282;
+	text-align: center;
+	margin-top: 10dp;
+}
+
+button {
+	background: #c9c9c9;
+	color: #686868;
+	border: 2dp #838383;
+	font-family: opensanspx;
+	font-size: 22dp;
+	text-align: center;
+	padding: 4dp;
+}
+
+button:hover {
+	background: #c9effe;
+	color: #6c9bbc;
+	border: 2dp #5bb2d9;
+}
+
+button:active {
+	background: #97e8ff;
+	color: #368baf;
+	border: 2dp #0492c7;
+}
+
+/* RmlUi <button> is a plain element (not a form control), so the disabled
+   look is driven by a "disabled" class from C++ instead of :disabled. */
+button:disabled,
+button.disabled,
+button.disabled:hover {
+	background: #e6e9e9;
+	color: #aeb7b8;
+	border: 2dp #b5c1c2;
+}
+
+.menu-btn {
+	display: block;
+	width: 248dp;
+	height: 40dp;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 10dp;
+}
+
+.row-2btn {
+	width: 400dp;
+	margin-top: 10dp;
+}
+
+.row-2btn button {
+	display: inline-block;
+	width: 182dp;
+	height: 40dp;
+}
+
+#btn-back-right {
+	margin-left: 10dp;
+}
+
+.wide-btn {
+	display: block;
+	width: 388dp;
+	height: 40dp;
+	margin-top: 10dp;
+}
+
+.wide-btn-short {
+	display: block;
+	width: 388dp;
+	height: 30dp;
+	margin-top: 10dp;
+}
+
+.maplist {
+	width: 400dp;
+	height: 224dp;
+	overflow-y: auto;
+	background: #ffffff;
+	border: 1dp #838383;
+}
+
+.map-item {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	height: 36dp;
+	line-height: 32dp;
+	white-space: nowrap;
+	margin: 0;
+	border: 0;
+	border-bottom: 1dp #c9c9c9;
+	background: #ffffff;
+	color: #686868;
+	text-align: left;
+	padding: 2dp 6dp;
+}
+
+/* Pin the border so the generic button:hover/:active border cannot change the
+   row's box on hover/click (that reflow made the list collapse). */
+.map-item:hover,
+.map-item:active {
+	border: 0;
+	border-bottom: 1dp #c9c9c9;
+	background: #c9effe;
+	color: #6c9bbc;
+}
+
+.map-item.selected {
+	background: #97e8ff;
+	color: #368baf;
+}
+
+.diff-row {
+	width: 400dp;
+}
+
+.diff-row button {
+	display: inline-block;
+	width: 120dp;
+	height: 30dp;
+	margin-top: 4dp;
+}
+
+.diff-row button.selected {
+	background: #97e8ff;
+	color: #368baf;
+	border: 2dp #0492c7;
+}
+
+input.range {
+	display: block;
+	width: 388dp;
+	height: 24dp;
+	margin-top: 2dp;
+}
+
+input.range slidertrack {
+	background: #e6e9e9;
+	border: 1dp #838383;
+	height: 10dp;
+}
+
+input.range sliderbar {
+	background: #c9c9c9;
+	border: 1dp #838383;
+	width: 14dp;
+	height: 20dp;
+}
+
+input.range sliderprogress {
+	background: #97e8ff;
+}
+
+.slider-val {
+	color: #828282;
+}
+
+.check-row {
+	margin-top: 6dp;
+	height: 24dp;
+}
+
+input[type=checkbox] {
+	display: inline-block;
+	width: 16dp;
+	height: 16dp;
+	background: #ffffff;
+	border: 2dp #838383;
+}
+
+input[type=checkbox]:checked {
+	background: #0492c7;
+	border: 2dp #0492c7;
+}
+
+.hk-cols {
+	width: 848dp;
+	margin-left: -224dp;
+}
+
+.hkcol {
+	display: inline-block;
+	width: 408dp;
+	vertical-align: top;
+}
+
+.hkcol-right {
+	margin-left: 32dp;
+}
+
+.hkrow {
+	height: 30dp;
+	margin-bottom: 2dp;
+}
+
+.hklabel {
+	display: inline-block;
+	width: 262dp;
+	height: 24dp;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+button.hkkey {
+	display: inline-block;
+	width: 130dp;
+	height: 24dp;
+	font-size: 22dp;
+	padding: 0;
+}
+
+.hkrow.armed button.hkkey {
+	background: #97e8ff;
+	color: #368baf;
+	border: 2dp #0492c7;
+}
+
+.slot-btn {
+	display: block;
+	width: 388dp;
+	height: 40dp;
+	margin-top: 10dp;
+}
+
+#dim {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background: #000000;
+	opacity: 0.5;
+}
+
+#confirm-box {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 380dp;
+	height: 170dp;
+	margin-left: -190dp;
+	margin-top: -85dp;
+	background: #f5f5f5;
+	border: 1dp #838383;
+}
+
+#confirm-titlebar {
+	width: 100%;
+	height: 24dp;
+	background: #c9c9c9;
+	color: #505050;
+	font-weight: bold;
+	text-align: center;
+}
+
+#confirm-sub {
+	text-align: center;
+	color: #686868;
+	margin-top: 22dp;
+}
+
+#btn-yes {
+	position: absolute;
+	left: 30dp;
+	bottom: 18dp;
+	width: 140dp;
+	height: 34dp;
+}
+
+#btn-no {
+	position: absolute;
+	right: 30dp;
+	bottom: 18dp;
+	width: 140dp;
+	height: 34dp;
+}

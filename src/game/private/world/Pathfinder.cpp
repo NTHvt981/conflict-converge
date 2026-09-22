@@ -279,7 +279,6 @@ void IssuePathOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid
                                       self, selfGen);
     if (path.empty())
     {
-        IssueMoveOrder(unit, worldTarget);
         unit.hasPath = false;
         unit.path.clear();
         unit.pathNext = 0;

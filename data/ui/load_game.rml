@@ -1,0 +1,17 @@
+<rml>
+<head>
+<title>Load game</title>
+<link type="text/rcss" href="theme.rcss"/>
+</head>
+<body>
+<div class="col-tight">
+<h2 class="heading">Load game</h2>
+<button class="slot-btn" id="slot-0">Quicksave</button>
+<button class="slot-btn" id="slot-1">Slot 1</button>
+<button class="slot-btn" id="slot-2">Slot 2</button>
+<button class="slot-btn" id="slot-3">Slot 3</button>
+<button class="slot-btn" id="btn-load-back">Back</button>
+<button class="slot-btn disabled" id="btn-replay">Watch last replay</button>
+</div>
+</body>
+</rml>

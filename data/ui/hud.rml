@@ -1,0 +1,27 @@
+<rml>
+<head>
+<title>Playing HUD</title>
+<link type="text/rcss" href="theme.rcss"/>
+<link type="text/rcss" href="hud.rcss"/>
+<style>
+/* Transparent stage: the HUD floats over the live world. Panels carry
+   their own backgrounds; the stub proof doc does the same. */
+body {
+	background: transparent;
+}
+</style>
+</head>
+<body id="hud-body">
+<div class="hud-panel" id="hud-stockpile"><div class="hud-title">Stockpile</div><div class="hud-line" id="res-line">Iron: 500  Oil: 250</div></div>
+<div id="hud-groups"><div class="cg-box" id="cg-0">1:4</div><div class="cg-box" id="cg-1">2:0</div><div class="cg-box" id="cg-2">3:2</div><div class="cg-box" id="cg-3">4:0</div><div class="cg-box" id="cg-4">5:0</div><div class="cg-box" id="cg-5">6:1</div><div class="cg-box" id="cg-6">7:0</div><div class="cg-box" id="cg-7">8:0</div><div class="cg-box" id="cg-8">9:0</div><div class="cg-box" id="cg-9">0:0</div></div>
+<div class="hud-panel" id="hud-slots"><div class="hud-title">Slots</div><div class="hud-line" id="slots-line">1+ 2- 3-  (F6-8 save, S+F6-8 load)</div></div>
+<div class="hud-panel" id="hud-selection"><div class="hud-title">Selection</div><div class="hud-line" id="sel-line">Light Tank  HP 238/300  Team 0</div></div>
+<div class="hud-panel" id="hud-idle"><div class="hud-title">Idle</div><button class="idle-btn" id="idle-workers">Workers (2)</button><button class="idle-btn" id="idle-army">Army (3)</button></div>
+<div class="hud-panel" id="hud-repair"><div class="hud-title">Repair</div><div class="check-row"><input type="checkbox" id="repair-auto"/> Auto</div><div id="repair-cap-row">Cap <input type="range" id="repair-cap" min="0" max="1" step="0.05" value="0.5"/><span id="repair-cap-val">0.5</span></div></div>
+<div class="hud-panel" id="hud-factory"><div class="hud-title">Factory</div><div id="factory-rows"><div class="fac-row"><button class="fac-btn" id="fac-0">Infantry 25/0</button><button class="fac-rep" id="repr-0">R</button></div><div class="fac-row"><button class="fac-btn" id="fac-1">Anti-Armor 30/5</button><button class="fac-rep" id="repr-1">R</button></div><div class="fac-row"><button class="fac-btn" id="fac-2">Engineer 40/0</button><button class="fac-rep" id="repr-2">R</button></div><div class="fac-row"><button class="fac-btn" id="fac-3">IFV 80/20</button><button class="fac-rep" id="repr-3">R</button></div><div class="fac-row"><button class="fac-btn" id="fac-4">Artillery 120/40</button><button class="fac-rep" id="repr-4">R</button></div><div class="fac-row"><button class="fac-btn" id="fac-5">Light Tank 150/50</button><button class="fac-rep" id="repr-5">R</button></div><div class="fac-row"><button class="fac-btn" id="fac-6">Heavy Tank 250/100</button><button class="fac-rep" id="repr-6">R</button></div></div><div class="hud-line" id="need-factory">Need Factory</div><div id="fac-queue-row"><span id="queue-line">Queue: 2</span><button id="btn-cancel">Cancel</button></div></div>
+<div id="hud-producing"><div id="producing-label">Producing...</div><div id="producing-bar"><div id="producing-fill"></div></div></div>
+<div class="hud-readout" id="fps-line">60 FPS</div>
+<div class="hud-readout" id="enemy-line">Enemy: Medium  Waves: 3</div>
+<div id="hud-hints"><p class="hint-line">WASD Camera</p><p class="hint-line">Left Select</p><p class="hint-line">Right Order</p><p class="hint-line">Esc Deselect</p><p class="hint-line">Space Halt</p><p class="hint-line">P Pause</p><p class="hint-line">F1 Hints</p><p class="hint-line">F5 Save</p><p class="hint-line">F9 Load</p><p class="hint-line">A AttackMove</p><p class="hint-line">H Hold</p><p class="hint-line">G Guard</p><p class="hint-line">V Patrol</p><p class="hint-line">R Rally</p><p class="hint-line">C SelectType</p><p class="hint-line">F Factories</p><p class="hint-line">B SlowMove</p><p class="hint-line">Z Place</p><p class="hint-line">Alt+RDrag Line</p><p class="hint-line">X AttackGnd</p><p class="hint-line">T AutoRetreat</p><p class="hint-line">J JumpPing</p><p class="hint-line">Shift Queues</p><p class="hint-line">Wheel Zoom</p><p class="hint-line">F6/F7/F8 SaveSlot</p><p class="hint-line">Shift+F6/F7/F8 Load</p><p class="hint-line">Ctrl+1-0 Group</p><p class="hint-line">Shift+1-0 AddGrp</p><p class="hint-line">1-0 Recall</p><p class="hint-line">C+S+1-0 AutoAdd</p></div>
+</body>
+</rml>

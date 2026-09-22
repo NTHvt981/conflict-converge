@@ -1144,6 +1144,13 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
 
         IssuePathOrderFootprint(*unit, map, occ, cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)),
                                pick, registry.Generation(pick));
+        // The stacked start tile blocks the footprint pathfinder (the neighbor
+        // still owns it), so fall back to a straight move order: step-out walks
+        // the unit clear and repaths from the freed tile.
+        if (unit->path.empty())
+        {
+            IssueMoveOrder(*unit, cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)));
+        }
     }
 }
 

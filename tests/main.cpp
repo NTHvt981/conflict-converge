@@ -75,6 +75,7 @@ void RunPrototypeSandboxMovementTests();
 void RunFormationStackMoveTests();
 void RunFormationDeadlockFixTests();
 void RunLogTests();
+void RunCheatTests();
 
 namespace
 {
@@ -151,6 +152,7 @@ const Suite kSuites[] = {
     { "FormationStackMove", RunFormationStackMoveTests },
     { "FormationDeadlockFix", RunFormationDeadlockFixTests },
     { "Log", RunLogTests },
+    { "Cheat", RunCheatTests },
 };
 
 bool MatchesFilter(const char *name, const std::vector<std::string> &filters)

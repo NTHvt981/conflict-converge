@@ -1,0 +1,17 @@
+<rml>
+<head>
+<title>Conflict Converge</title>
+<link type="text/rcss" href="theme.rcss"/>
+</head>
+<body>
+<div class="col">
+<h1 class="title">CONFLICT CONVERGE</h1>
+<p class="subtitle">real-time strategy demo</p>
+<button class="menu-btn" id="btn-setup">Start Skirmish</button>
+<button class="menu-btn" id="btn-load">Load Game</button>
+<button class="menu-btn" id="btn-settings">Settings</button>
+<button class="menu-btn" id="btn-editor">Map Editor</button>
+<button class="menu-btn" id="btn-quit">Quit</button>
+</div>
+</body>
+</rml>

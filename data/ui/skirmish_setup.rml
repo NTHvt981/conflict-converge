@@ -1,0 +1,21 @@
+<rml>
+<head>
+<title>Skirmish setup</title>
+<link type="text/rcss" href="theme.rcss"/>
+</head>
+<body>
+<div class="col-tight">
+<h2 class="heading">Skirmish setup</h2>
+<p class="field-label">Map (from data/*.map)</p>
+<div class="maplist" id="maplist"></div>
+<p class="detail" id="mapdetail"></p>
+<p class="field-label">AI difficulty</p>
+<div class="diff-row">
+<button id="diff-0">Easy</button><button id="diff-1">Medium</button><button id="diff-2">Hard</button>
+</div>
+<div class="row-2btn">
+<button id="btn-start">Start match</button><button id="btn-back-right">Back</button>
+</div>
+</div>
+</body>
+</rml>

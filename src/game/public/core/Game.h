@@ -6,13 +6,16 @@
 #include "AICommander.h"
 #include "Art.h"
 #include "Audio.h"
+#include "CheatOverlay.h"
 #include "Event.h"
 #include "FogOfWar.h"
 #include "GameCamera.h"
+#include "GameRenderer.h"
 #include "Hotkeys.h"
 #include "Hud.h"
 #include "InputManager.h"
 #include "MapFile.h"
+#include "MatchController.h"
 #include "Menu.h"
 #include "MenuScreens.h"
 #include "Minimap.h"
@@ -22,8 +25,12 @@
 #include "Production.h"
 #include "Registry.h"
 #include "ResourceSystem.h"
+#include "RmlUiHost.h"
+#include "RmlUiHud.h"
+#include "RmlUiMenus.h"
 #include "SaveGame.h"
 #include "Shake.h"
+#include "ShortcutBindings.h"
 #include "Simulation.h"
 #include "Skirmish.h"
 #include "TileMap.h"
@@ -45,25 +52,12 @@ public:
     // Convenience for main: Init + loop + Shutdown.
     int Run();
 
-private:
-    void Announce(EventType type);
 protected:
     // Test-seam access for E2EGame (tests/e2e): the match lifecycle the
     // headless harness drives directly. Everything else stays private.
     void StartMatch(const std::string &mapPath, AIDifficulty difficulty);
     void QuitToMenu();
 private:
-    void LoadGameFromSlot(const std::string &slotPath);
-    void BindShortcuts();
-    void StepReplay(int dir);
-    bool WatchLastReplay();
-    void DrawWorld();
-    void DrawHudAndOverlays(int screenWidth, int screenHeight);
-    // Esc-modal keys (Y = yes, N/Back = no); deferred so world teardown never
-    // runs mid-frame.
-    void PollConfirmKeys();
-    void ApplyConfirmChoice(ConfirmChoice choice);
-
     Audio audio;
     Art art;
     GameCamera camera;
@@ -109,7 +103,6 @@ private:
     bool showHints = true;
     bool playerAutoRepair = false;
     float autoRepairCap = 1.0f;
-    HoverTooltipState hoverTip; // unit hover-tooltip debounce (Playing only)
     float shakeTrauma = 0.0f; // screen-shake trauma 0..1 (render copy only)
     DamageNumbers damageNumbers; // floating hit numbers (presentation-only)
     MenuState previousMenuState = MenuState::MainMenu; // transition-fade clock
@@ -120,4 +113,13 @@ private:
     PlayingInput playingInput;
     Simulation sim;
     MenuScreens menuScreens;
+    // Declared before bindings: the Back shortcut prefers the RML remap
+    // capture while it owns the HotkeyRemap state.
+    RmlUiMenus rmlUiMenus;
+    ShortcutBindings bindings;
+    RmlUiHost rmlUi; // declared before renderer: overlay host (Phase 1 render-only)
+    RmlUiHud rmlUiHud; // in-match HUD panels (Phase 3, raygui fallback when not ready)
+    GameRenderer renderer;
+    MatchController match;
+    CheatOverlay cheats;
 };

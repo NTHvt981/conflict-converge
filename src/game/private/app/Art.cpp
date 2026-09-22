@@ -587,7 +587,7 @@ void Art::SetColorBlindMode(bool enabled)
 
 float Art::BaseArtScale(UnitType type)
 {
-    return type == UnitType::PrototypeInfantry ? 2.0f : 1.0f;
+    return 1.0f;
 }
 
 void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,

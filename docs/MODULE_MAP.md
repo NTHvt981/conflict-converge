@@ -18,7 +18,8 @@ units:   Unit, UnitStats, Combat, UnitFactory, Targeting, Formation, AICommander
 economy: Building, Nodes, ResourceSystem, Production
 app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, Art,
          SpriteData, UnitConfig, Menu, Skirmish, SaveGame, Audio, Log, Cursor, Pings,
-         Shake, DataRoot
+         Shake, DataRoot, RmlUiHost, RmlUiMenus, RmlUiHud, RmlRaylibRenderInterface,
+         RmlRaylibSystemInterface, RmlRaylibFileInterface
 ```
 
 ## core
@@ -32,9 +33,10 @@ app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, 
 - `PlayingInput.h` - In-match input dispatch extracted from `Game`: drag-box select,
   area-build/repair, right-click orders, line formation, control groups, sticky gesture
   modes. Runs only while Playing; advances no simulation
-- `MenuScreens.h` - Out-of-world menu branch (main/setup/settings/remap/load/editor) + the
-  shared hotkey-remap screen the pause overlay borrows; `MenuCallbacks` gives `Game` every
-  world mutation. Needs window + GL, not headless-testable
+- `MenuScreens.h` - Map Editor branch only (raygui scratch canvas) + hotkey
+  override apply/sync (`ApplyHotkeyOverrides`/`SyncHotkeySettings`); menus/HUD are
+  RmlUi (`RmlUiMenus`/`RmlUiHud`). `MenuCallbacks` gives `Game` every world mutation.
+  Needs window + GL, not headless-testable
 - `Registry.h` - ECS-lite: `uint32_t` entities (0 never issued, free-list recycle), per-type
   pools, `Each<T>` iteration
 - `Event.h` - `EventDispatcher`: Subscribe/Dispatch(in order)/Clear by EventType, base-`Event`
@@ -103,8 +105,9 @@ app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, 
   drag-box (center-hit, Shift extends)
 - `Minimap.h` - Render-texture minimap, periodic refresh, world transform, viewport box, M13
   inverse (`MinimapToWorld`/`Contains` for click-to-move)
-- `Hud.h` - raygui stockpile/selection/production/slots panels (optional `Art` icons); pure
-  text builders (`UnitTypeName`, `FormatResources`, `SelectionSummary`)
+- `Hud.h` - Pure text builders (`UnitTypeName`, `FormatResources`, `SelectionSummary`,
+  `ShortcutHintLines`, `ProductionMenuOrder`); the raygui Draw* panels were removed —
+  the RmlUi HUD owns the panels
 - `Art.h` - M12 sprites + particles (`data/sprites/` via `tools/gen_sprites.py`); `Init(false)`
   is the headless rectangle-fallback path
 - `SpriteData.h` - Sprite-atlas data (JSON in `data/configs/`: textures/sprites/animations

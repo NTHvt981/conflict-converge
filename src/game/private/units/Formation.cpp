@@ -186,7 +186,10 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
         IssuePathOrderFootprint(*unit, map, formationOcc, slotWorld, units[i],
                                registry.Generation(units[i]));
 
-		formationOcc.ReserveFootprintOwned(slot, unit->footprintWidth, unit->footprintHeight, units[i], registry.Generation(units[i]));
+		if (unit->hasPath)
+		{
+			formationOcc.ReserveFootprintOwned(slot, unit->footprintWidth, unit->footprintHeight, units[i], registry.Generation(units[i]));
+		}
     }
 }
 

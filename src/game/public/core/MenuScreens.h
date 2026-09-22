@@ -30,14 +30,9 @@ enum class ConfirmChoice
     No
 };
 
-// Draws the shared Esc-confirm modal over the current frame (used by both the
-// menu and gameplay branches). Returns the button clicked this frame; the host
-// resolves it, since only Game tears the world down.
-ConfirmChoice DrawConfirmDialog(const MenuFlow &menu, int screenWidth, int screenHeight);
-
-// MenuScreens owns the out-of-world menu branch (main/setup/settings/
-// remap/load/editor) plus the shared hotkey-remap screen the pause overlay
-// borrows. Needs a window + GL context; not headless-testable.
+// MenuScreens owns the Map Editor branch (raygui scratch-canvas painter;
+// menus/HUD are RmlUi in RmlUiMenus/RmlUiHud). Needs a window + GL context;
+// not headless-testable.
 class MenuScreens
 {
 public:
@@ -46,23 +41,19 @@ public:
     MenuScreens(const MenuScreens &) = delete;
     MenuScreens &operator=(const MenuScreens &) = delete;
 
-    // Draw the !worldActive branch; owns its Begin/EndDrawing pair. Returns
-    // the confirm-modal button clicked this frame (None when no modal).
+    // Draw the !worldActive Map Editor branch; owns its Begin/EndDrawing
+    // pair. Returns the confirm-modal button clicked this frame (None when
+    // no modal).
     ConfirmChoice Draw(int screenWidth, int screenHeight, float menuStateTime);
-    // Remap screen body, shared by Settings and the pause overlay.
-    void DrawRemap(float cx);
-    // Arm a remap capture from Settings or pause.
-    void BeginRemap(MenuState returnTo);
-    // Esc: cancel an armed capture, else back out; true when consumed.
-    bool CancelRemapCapture();
+    // Enter the map editor with a fresh scratch canvas (extracted so the
+    // RmlUi menu branch can route here too; never the live match map).
+    void OpenEditor();
     // Persisted remaps into hotkeys (startup, before BindShortcuts).
     void ApplyHotkeyOverrides();
     // Live overrides back into settings (before every SaveSettings).
     void SyncHotkeySettings();
 
 private:
-    void Announce(EventType type);
-
     MenuFlow &menu_;
     Art &art_;
     Audio &audio_;
@@ -70,11 +61,6 @@ private:
     HotkeyMap &hotkeys_;
     EventDispatcher &events_;
     MenuCallbacks callbacks_;
-    int setupScroll_ = 0; // setup-screen map list scroll position
-    int remapArming_ = -1; // action being rebound (-1 = none)
-    std::string remapConflictAction_; // pending conflict (awaiting confirm)
-    int remapConflictKey_ = 0;
-    MenuState remapReturn_ = MenuState::Settings; // where Esc returns to
     MapData editorMap_; // map editor scratch (never the live match)
     char editorBrush_ = '.';
     std::string editorStatus_;
