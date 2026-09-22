@@ -7,9 +7,33 @@ Pulls all Git dependencies into the deps/ folder.
 import json
 import os
 import shutil
+import stat
 import subprocess
 import time
 from pathlib import Path
+
+
+def remove_tree(path: Path, attempts: int = 5) -> None:
+    """Remove a directory tree on Windows, clearing read-only attributes.
+
+    Git marks pack files under .git/objects read-only, which makes a plain
+    shutil.rmtree fail with PermissionError. Retry a few times to ride out
+    transient locks (antivirus, indexers, open handles).
+    """
+    def _on_error(func, failed_path, exc_info):
+        os.chmod(failed_path, stat.S_IWRITE)
+        func(failed_path)
+
+    last_error = None
+    for attempt in range(attempts):
+        try:
+            shutil.rmtree(path, onerror=_on_error)
+            return
+        except PermissionError as e:
+            last_error = e
+            if attempt < attempts - 1:
+                time.sleep(0.5)
+    raise last_error
 
 
 def load_dependencies():
@@ -41,7 +65,12 @@ def pull_git_repo(dep_info: dict):
     # Remove existing folder if exists to get clean checkout
     if full_dest.exists():
         print(f"  [!] Removing existing folder: {full_dest}")
-        shutil.rmtree(full_dest)
+        try:
+            remove_tree(full_dest)
+        except OSError as e:
+            print(f"  [-] Could not remove {full_dest}: {e}")
+            print("      Close any program using it (editor, build, explorer) and re-run.")
+            return False
 
     # Create parent directory
     full_dest.parent.mkdir(parents=True, exist_ok=True)
