@@ -834,6 +834,13 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
     const float dist = glm::length(diff);
     if (dist <= step)
     {
+        // Treat off-map as blocked
+        const cc::IVec2 fromTile = cc::WorldToTile(pos);
+        const cc::IVec2 targetTile = cc::WorldToTile(target);
+        if (targetTile != fromTile && map.IsBlocked(targetTile))
+        {
+            return StepResult::Blocked;
+        }
         outNext = target;
         return StepResult::Arrived;
     }
@@ -870,7 +877,7 @@ void Arrive(Unit &unit, cc::Vec2 where)
     unit.speedCapPixelsPerSec = -1.0f;
 }
 
-void CancelAtBlocked(Unit &unit)
+void CancelAtBlocked(Unit &unit, const TileMap &map)
 {
     unit.velocity = { 0.0f, 0.0f };
     unit.hasMoveOrder = false;
@@ -882,6 +889,17 @@ void CancelAtBlocked(Unit &unit)
     unit.blockedRepaths = 0;
     unit.speedCapPixelsPerSec = -1.0f;
     SnapUnitToTile(unit);
+
+    // Make sure unit dont drift off-map
+    if (map.Width() > 0 && map.Height() > 0)
+    {
+        cc::Vec2 clamped = cc::ToGlm(unit.position);
+        clamped.x =
+            std::clamp(clamped.x, 0.0f, static_cast<float>(map.Width()) * cc::TILE_SIZE - 1.0f);
+        clamped.y =
+            std::clamp(clamped.y, 0.0f, static_cast<float>(map.Height()) * cc::TILE_SIZE - 1.0f);
+        unit.position = cc::ToRaylib(cc::SnapToTile(clamped));
+    }
 }
 
 constexpr float kBlockedRetryDelaySeconds = 0.5f;
@@ -982,7 +1000,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
             }
             return;
         case StepResult::Blocked:
-            CancelAtBlocked(unit);
+            CancelAtBlocked(unit, map);
             OnOrderCancelled(unit);
             return;
         case StepResult::BlockedUnit:
@@ -990,7 +1008,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
             {
                 return;
             }
-            CancelAtBlocked(unit);
+            CancelAtBlocked(unit, map);
             OnOrderCancelled(unit);
             return;
         case StepResult::Stepped:
@@ -1012,7 +1030,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         OnOrderFinished(unit, map, occ, self, selfGen);
         return;
     case StepResult::Blocked:
-        CancelAtBlocked(unit);
+        CancelAtBlocked(unit, map);
         OnOrderCancelled(unit);
         return;
     case StepResult::BlockedUnit:
@@ -1020,7 +1038,7 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         {
             return;
         }
-        CancelAtBlocked(unit);
+        CancelAtBlocked(unit, map);
         OnOrderCancelled(unit);
         return;
     case StepResult::Stepped:
@@ -1061,6 +1079,10 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
     for (auto &[tile, occupants] : byTile)
     {
         if (occupants.size() < 2)
+        {
+            continue;
+        }
+        if (!occ.InBounds(tile))
         {
             continue;
         }

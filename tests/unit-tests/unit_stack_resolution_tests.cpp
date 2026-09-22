@@ -180,4 +180,45 @@ void RunUnitStackResolutionTests()
         CC_CHECK(after->hasMoveOrder == hasMoveBefore);
         CC_CHECK(after->moveTarget.x == targetBefore.x && after->moveTarget.y == targetBefore.y);
     }
+
+    // --- regression (e2e InBounds assert): stacked units with off-map
+    // positions must not reach OccupancyGrid::GetUnit ---
+    {
+        TileMap map(10, 10);
+        OccupancyGrid occ(10, 10);
+        Registry registry;
+        const Entity a = registry.Create();
+        registry.Add(a, MakeUnit(5, 5));
+        const Entity b = registry.Create();
+        registry.Add(b, MakeUnit(5, 5));
+        // Past the east edge: tile.x = 10 is OOB on a 10-wide map.
+        registry.Get<Unit>(a)->position = Vector2{ 10.0f * 64.0f + 1.0f, 5.0f * 64.0f };
+        registry.Get<Unit>(b)->position = Vector2{ 10.0f * 64.0f + 1.0f, 5.0f * 64.0f };
+
+        SeedOccupancy(registry, occ);
+        ResolveStackedUnits(registry, map, occ); // used to assert InBounds in GetUnit
+
+        // OOB stacks are skipped, not relocated.
+        CC_CHECK(!registry.Get<Unit>(a)->hasMoveOrder && !registry.Get<Unit>(a)->hasPath);
+        CC_CHECK(!registry.Get<Unit>(b)->hasMoveOrder && !registry.Get<Unit>(b)->hasPath);
+    }
+
+    // --- regression: an off-map move target within one step cancels
+    // in-bounds instead of teleporting the unit out of bounds (the e2e
+    // real-dt spike path: StepToward's arrive shortcut skipped IsBlocked) ---
+    {
+        TileMap map(10, 10);
+        OccupancyGrid occ(10, 10);
+        Registry registry;
+        const Entity solo = registry.Create();
+        registry.Add(solo, MakeUnit(9, 5));
+        Unit *unit = registry.Get<Unit>(solo);
+        unit->speed = 200.0f;
+        IssueMoveOrder(*unit, Vector2{ 10.0f * 64.0f + 32.0f, 5.0f * 64.0f }); // OOB target
+        UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), 1.0f, &occ, solo,
+                           registry.Generation(solo));
+        const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit->position));
+        CC_CHECK(map.InBounds(tile));
+        CC_CHECK(!unit->hasMoveOrder && !unit->hasPath);
+    }
 }
