@@ -10,3 +10,4 @@ test_sandbox/
 .agents/
 **.log
 imgui.ini
+**.pyc
