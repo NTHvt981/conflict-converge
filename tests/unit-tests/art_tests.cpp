@@ -238,9 +238,9 @@ void RunArtTests()
         CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f, 0).empty());
     }
 
-    // --- BaseArtScale: prototype infantry renders its 16px art at 2x ---
+    // --- BaseArtScale: prototype infantry's 2x is baked into its 32px art ---
     {
-        CC_CHECK(Art::BaseArtScale(UnitType::PrototypeInfantry) == 2.0f);
+        CC_CHECK(Art::BaseArtScale(UnitType::PrototypeInfantry) == 1.0f);
         CC_CHECK(Art::BaseArtScale(UnitType::Infantry) == 1.0f);
         CC_CHECK(Art::BaseArtScale(UnitType::HeavyTank) == 1.0f);
     }
