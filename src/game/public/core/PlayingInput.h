@@ -10,13 +10,14 @@
 #include "Minimap.h"
 #include "Nodes.h"
 #include "Registry.h"
+#include "Subsystem.h"
 #include "TileMap.h"
 
 // PlayingInput owns the in-match input dispatch extracted from Game: drag-box
 // select, area-build/repair gestures, right-click orders, line formation,
 // control groups, and the sticky gesture modes. Runs only while Playing;
 // advances no simulation itself.
-class PlayingInput
+class PlayingInput : public Subsystem
 {
 public:
     PlayingInput(Registry &registry, TileMap &map, OccupancyGrid &occ,

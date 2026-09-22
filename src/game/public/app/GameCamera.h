@@ -1,12 +1,13 @@
 #pragma once
 
 #include "raylib.h"
+#include "Subsystem.h"
 
 // Manual panning camera wrapping raylib's Camera2D: WASD/edge panning plus a
 // key-free Pan for tests. Named GameCamera because raylib already defines
 // Camera.
 
-class GameCamera
+class GameCamera : public Subsystem
 {
 public:
     static constexpr float kMinZoom = 0.5f; // absolute floor

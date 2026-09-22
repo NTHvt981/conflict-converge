@@ -35,22 +35,30 @@ Game::WorldScope::WorldScope(Subsystems &engine)
     Add<Minimap>();
 }
 
+Game::PlayerScope::PlayerScope(Subsystems &engine, Subsystems &world,
+                               const MenuSettings &settings, Vector2 &rallyPos)
+{
+    Add<GameCamera>();
+    Add<PlayingInput>(world.Get<Registry>(), world.Get<TileMap>(), world.Get<OccupancyGrid>(),
+                      world.Get<ResourceNodes>(), Get<GameCamera>(), world.Get<Minimap>(),
+                      engine.Get<InputManager>(), engine.Get<Audio>(), settings, rallyPos);
+}
+
 Game::Game()
     : skirmish{ &world_.Get<Registry>(), &world_.Get<ResourceSystem>(),
                 &world_.Get<TileMap>(), &world_.Get<OccupancyGrid>(),
                 &world_.Get<FogOfWar>(), &world_.Get<ResourceNodes>(),
                 &world_.Get<ProductionQueue>(), &world_.Get<UnitFactory>(),
                 &world_.GetKeyed<AICommander>("ai"), &world_.GetKeyed<AICommander>("ally"),
-                &world_.GetKeyed<AICommander>("enemy2"), &camera, &rallyPos }
+                &world_.GetKeyed<AICommander>("enemy2"), &player_.Get<GameCamera>(),
+                &rallyPos }
     , worldState{ &world_.Get<Registry>(), &world_.Get<ResourceSystem>(),
-                  &world_.Get<TileMap>(), &camera, &world_.Get<ResourceNodes>(),
-                  &world_.Get<FogOfWar>(), &world_.Get<OccupancyGrid>() }
-    , playingInput(world_.Get<Registry>(), world_.Get<TileMap>(), world_.Get<OccupancyGrid>(),
-                   world_.Get<ResourceNodes>(), camera, world_.Get<Minimap>(),
-                   engine_.Get<InputManager>(), engine_.Get<Audio>(), menu.settings, rallyPos)
+                  &world_.Get<TileMap>(), &player_.Get<GameCamera>(),
+                  &world_.Get<ResourceNodes>(), &world_.Get<FogOfWar>(),
+                  &world_.Get<OccupancyGrid>() }
     , sim(world_, engine_, menu, worldState, damageNumbers, rallyPos,
-          playingInput.AutoAddGroupBit(), sandboxMode, worldIs2v2, playerAutoRepair,
-          autoRepairCap, shakeTrauma, lastOutcomeState)
+          player_.Get<PlayingInput>().AutoAddGroupBit(), sandboxMode, worldIs2v2,
+          playerAutoRepair, autoRepairCap, shakeTrauma, lastOutcomeState)
     , menuScreens(menu, engine_.Get<Art>(), engine_.Get<Audio>(), engine_.Get<InputManager>(),
                   engine_.Get<HotkeyMap>(), engine_.Get<EventDispatcher>(),
                   MenuCallbacks{
@@ -72,31 +80,34 @@ Game::Game()
                      [&]() { bindings.Bind(); },
                  })
     , bindings(engine_.Get<InputManager>(), engine_.Get<HotkeyMap>(), menu, rmlUiMenus,
-                playingInput, engine_.Get<Audio>(), camera, world_.Get<TileMap>(),
+                player_.Get<PlayingInput>(), engine_.Get<Audio>(),
+                player_.Get<GameCamera>(), world_.Get<TileMap>(),
                 world_.Get<OccupancyGrid>(), world_.Get<ResourceNodes>(), world_.Get<FogOfWar>(),
                 world_.Get<Registry>(), world_.Get<ResourceSystem>(),
                 engine_.Get<EventDispatcher>(), worldState, world_.Get<Pings>(), worldActive,
                 showHints, [this]() { QuitToMenu(); },
                 [this](int dir) { match.StepReplay(dir); })
     , rmlUiHud(world_.Get<Registry>(), world_.Get<ResourceSystem>(),
-               world_.Get<ProductionQueue>(), sim, engine_.Get<HotkeyMap>(), playingInput,
+               world_.Get<ProductionQueue>(), sim, engine_.Get<HotkeyMap>(),
+               player_.Get<PlayingInput>(),
                world_.GetKeyed<AICommander>("ai"), worldDifficulty, showHints,
                playerAutoRepair, autoRepairCap, menu, engine_.Get<Art>(),
                engine_.Get<EventDispatcher>(),
                [this]() { QuitToMenu(); },
                [this](MenuState returnTo) { rmlUiMenus.BeginRemap(returnTo); })
-    , renderer(engine_.Get<Art>(), camera, world_.Get<TileMap>(), world_.Get<Registry>(),
+    , renderer(engine_.Get<Art>(), player_.Get<GameCamera>(), world_.Get<TileMap>(), world_.Get<Registry>(),
                world_.Get<FogOfWar>(), world_.Get<ResourceNodes>(), world_.Get<Minimap>(),
-               world_.Get<Pings>(), damageNumbers, playingInput, menu, sim,
+               world_.Get<Pings>(), damageNumbers, player_.Get<PlayingInput>(), menu, sim,
                world_.Get<ResourceSystem>(), world_.Get<ProductionQueue>(),
                engine_.Get<HotkeyMap>(), engine_.Get<InputManager>(),
                world_.GetKeyed<AICommander>("ai"),
                engine_.Get<EventDispatcher>(), replayCursor, worldDifficulty, menuStateTime,
                shakeTrauma, rmlUi, rmlUiHud, rmlUiMenus,
                [this]() { QuitToMenu(); })
-    , match(camera, world_.GetKeyed<AICommander>("ai"), world_.GetKeyed<AICommander>("ally"),
+    , match(player_.Get<GameCamera>(), world_.GetKeyed<AICommander>("ai"),
+            world_.GetKeyed<AICommander>("ally"),
             world_.GetKeyed<AICommander>("enemy2"), menu, world_.Get<Minimap>(),
-            playingInput, sim,
+            player_.Get<PlayingInput>(), sim,
             engine_.Get<EventDispatcher>(), skirmish, worldState, engine_.Get<HotkeyMap>(),
             rallyPos, worldActive, worldIs2v2, sandboxMode, worldDifficulty, worldMapPath,
             lastOutcomeState, replayCursor, replayPlayTimer, pendingConfirm)
@@ -142,9 +153,9 @@ void Game::Init()
     }
     lastOutcomeState = MenuState::MainMenu;
 
-    camera.view.offset = { kInitialWidth / 2.0f, kInitialHeight / 2.0f };
-    camera.view.rotation = 0.0f;
-    camera.view.zoom = 1.0f;
+    player_.Get<GameCamera>().view.offset = { kInitialWidth / 2.0f, kInitialHeight / 2.0f };
+    player_.Get<GameCamera>().view.rotation = 0.0f;
+    player_.Get<GameCamera>().view.zoom = 1.0f;
     LoadSettings(menu.settings, kSettingsPath);
     engine_.Get<Art>().SetColorBlindMode(menu.settings.colorBlindMode);
     GuiSetStyle(DEFAULT, TEXT_SIZE, static_cast<int>(10 * menu.settings.uiScale));
@@ -183,18 +194,19 @@ void Game::Update()
     }
     match.PollConfirmKeys();
     engine_.Get<InputManager>().shortcuts.SetEnabled(!menu.ConfirmOpen() && !cheats.CapturingInput());
-    engine_.Get<InputManager>().Update(camera, menu.settings.cameraSpeed, GetFrameTime());
-    camera.AdjustZoom(engine_.Get<InputManager>().WheelDelta());
+    engine_.Get<InputManager>().Update(player_.Get<GameCamera>(), menu.settings.cameraSpeed,
+                                       GetFrameTime());
+    player_.Get<GameCamera>().AdjustZoom(engine_.Get<InputManager>().WheelDelta());
     const int screenWidth = GetScreenWidth();
     const int screenHeight = GetScreenHeight();
-    camera.view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
+    player_.Get<GameCamera>().view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
     world_.Get<Minimap>().screenRect.x =
         static_cast<float>(screenWidth) - world_.Get<Minimap>().screenRect.width - 10.0f;
     world_.Get<Minimap>().screenRect.y = 10.0f;
-    camera.ClampZoomToWorld(static_cast<float>(world_.Get<TileMap>().Width()) * cc::TILE_SIZE,
+    player_.Get<GameCamera>().ClampZoomToWorld(static_cast<float>(world_.Get<TileMap>().Width()) * cc::TILE_SIZE,
                             static_cast<float>(world_.Get<TileMap>().Height()) * cc::TILE_SIZE,
                             screenWidth, screenHeight);
-    camera.ClampToMap(static_cast<float>(world_.Get<TileMap>().Width()) * cc::TILE_SIZE,
+    player_.Get<GameCamera>().ClampToMap(static_cast<float>(world_.Get<TileMap>().Width()) * cc::TILE_SIZE,
                       static_cast<float>(world_.Get<TileMap>().Height()) * cc::TILE_SIZE,
                       screenWidth, screenHeight);
     TrackMenuTransition(previousMenuState, menuStateTime, menu.state, GetFrameTime());
@@ -232,7 +244,7 @@ void Game::Update()
         // controls never reach world dispatch. The sim always steps.
         if (!rmlUiHud.IsPointerOverUI())
         {
-            playingInput.Dispatch();
+            player_.Get<PlayingInput>().Dispatch();
         }
         sim.Step(GetFrameTime());
     }

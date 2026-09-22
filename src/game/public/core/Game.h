@@ -81,12 +81,18 @@ protected:
         explicit WorldScope(Subsystems &engine);
     };
     WorldScope world_{engine_}; // E2EGame seam (registry/map access)
+    MenuFlow menu;    // E2EGame seam (moved before player_: PlayerScope binds menu.settings)
 private:
-    GameCamera camera;
-protected:
-    MenuFlow menu;    // E2EGame seam
-private:
-    Vector2 rallyPos = {};
+    Vector2 rallyPos = {}; // moved before player_: PlayerScope forwards it to PlayingInput
+    // Player/view-state scope: owns GameCamera + PlayingInput. Declared after
+    // engine_/world_/menu/rallyPos (PlayingInput binds them all) and before
+    // every consumer, so init-list expressions may bind player_.Get<T>().
+    struct PlayerScope : public Subsystems
+    {
+        PlayerScope(Subsystems &engine, Subsystems &world, const MenuSettings &settings,
+                    Vector2 &rallyPos);
+    };
+    PlayerScope player_{engine_, world_, menu.settings, rallyPos};
     SkirmishWorld skirmish;
     WorldState worldState;
 protected:
@@ -109,8 +115,7 @@ private:
     float menuStateTime = 0.0f;
     MenuState lastOutcomeState = MenuState::MainMenu;
     ConfirmChoice pendingConfirm = ConfirmChoice::None; // resolved next frame
-    // Input dispatch + match tick (declared after the members they bind).
-    PlayingInput playingInput;
+    // Match tick (declared after the members it binds).
     Simulation sim;
     MenuScreens menuScreens;
     // Declared before bindings: the Back shortcut prefers the RML remap
