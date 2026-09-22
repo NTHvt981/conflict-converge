@@ -68,28 +68,24 @@ private:
         EngineScope();
     };
     EngineScope engine_;
+protected:
+    // World/match-lifetime service scope: owns Registry, ResourceSystem,
+    // TileMap, OccupancyGrid, FogOfWar, ResourceNodes, ProductionQueue,
+    // UnitFactory, three keyed AICommanders, Pings, and Minimap. Declared
+    // after engine_ (factory/AI bind the engine EventDispatcher) and before
+    // every consumer, so init-list expressions may bind world_.Get<T>().
+    // Protected: E2EGame reaches the registry/map through it, replacing the
+    // former protected members.
+    struct WorldScope : public Subsystems
+    {
+        explicit WorldScope(Subsystems &engine);
+    };
+    WorldScope world_{engine_}; // E2EGame seam (registry/map access)
+private:
     GameCamera camera;
 protected:
     MenuFlow menu;    // E2EGame seam
 private:
-    Minimap minimap;
-    Pings pings; // attack/event pings (minimap blips + camera jump)
-protected:
-    Registry registry; // E2EGame seam
-private:
-    ResourceSystem resources;
-protected:
-    TileMap map; // E2EGame seam
-private:
-    OccupancyGrid occ; // unit/building tile occupancy
-    FogOfWar fog;
-    ResourceNodes nodes;
-    ProductionQueue queue;
-    UnitFactory factory;
-    AICommander ai;
-    // 2v2 overflow commanders (declared after ai); armed only on 2v2 maps.
-    AICommander allyAI;
-    AICommander enemyAI2;
     Vector2 rallyPos = {};
     SkirmishWorld skirmish;
     WorldState worldState;

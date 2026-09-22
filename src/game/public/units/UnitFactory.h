@@ -3,6 +3,7 @@
 #include "Event.h"
 #include "Registry.h"
 #include "ResourceSystem.h"
+#include "Subsystem.h"
 #include "Unit.h"
 #include "raylib.h"
 
@@ -24,7 +25,8 @@ struct UnitLifecycleEvent : Event
 
 // Spawns units with base stats applied, deducting costs and emitting
 // UnitSpawned/UnitDestroyed events.
-class UnitFactory{
+class UnitFactory : public Subsystem
+{
 public:
     UnitFactory(Registry &registry, ResourceSystem &resources, EventDispatcher &events);
 

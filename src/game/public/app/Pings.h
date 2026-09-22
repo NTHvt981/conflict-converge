@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "raylib.h"
+#include "Subsystem.h"
 
 // Attack/event pings: short-lived world-space markers drawn as minimap blips
 // with camera-jump support. Pure logic, headless-testable; Game owns draw
@@ -22,7 +23,7 @@ struct Ping
     float age = 0.0f; // seconds since raised; blips fade/pulse by age
 };
 
-class Pings
+class Pings : public Subsystem
 {
 public:
     Pings();

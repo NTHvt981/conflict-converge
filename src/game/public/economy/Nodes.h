@@ -6,6 +6,7 @@
 #include "MathUtils.h"
 #include "Registry.h"
 #include "ResourceSystem.h"
+#include "Subsystem.h"
 
 class TileMap;
 
@@ -31,7 +32,7 @@ struct ResourceNode
     bool IsDepleted() const;
 };
 
-class ResourceNodes
+class ResourceNodes : public Subsystem
 {
 public:
     // Place a node on a Grass tile (one per tile); false leaves storage untouched.

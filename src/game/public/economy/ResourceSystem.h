@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Subsystem.h"
+
 // Iron and oil ledger, uncapped. Spending and income ticks live here;
 // gathering and production queues live in Nodes/Production/Building.
 
-class ResourceSystem
+class ResourceSystem : public Subsystem
 {
 public:
     long iron = 0;

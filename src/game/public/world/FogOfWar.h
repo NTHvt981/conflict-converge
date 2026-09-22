@@ -7,12 +7,13 @@
 
 #include "MathUtils.h"
 #include "Registry.h"
+#include "Subsystem.h"
 #include "Unit.h"
 
 // Fog of war. Per-team visibility: `visible` is recomputed from living units'
 // sightRange circles every Recompute; `explored` latches forever.
 
-class FogOfWar
+class FogOfWar : public Subsystem
 {
 public:
     // Size the grids; clears all vision memory.

@@ -1,12 +1,13 @@
 #pragma once
 
 #include "raylib.h"
+#include "Subsystem.h"
 
 // Minimap: the map re-renders into a small texture at a fixed cadence
 // (periodic refresh, not per-frame); unit positions draw as markers. All
 // math is render-free and tested; Game owns the refresh drawing.
 
-struct Minimap
+struct Minimap : public Subsystem
 {
     // Screen-space box the minimap occupies.
     Rectangle screenRect = { 0.0f, 0.0f, 160.0f, 120.0f };

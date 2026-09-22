@@ -8,6 +8,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Subsystem.h"
+
 // ECS-lite registry: entities are plain uint32 IDs, components are arbitrary
 // structs stored per type. Systems iterate the pools they care about.
 
@@ -16,7 +18,7 @@ using Entity = std::uint32_t;
 // Reserved sentinel: Create never returns this value.
 inline constexpr Entity kInvalidEntity = 0;
 
-class Registry
+class Registry : public Subsystem
 {
 public:
     Entity Create();

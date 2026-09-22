@@ -5,6 +5,7 @@
 
 #include "CcAssert.h"
 #include "MathUtils.h"
+#include "Subsystem.h"
 
 // Tile-based movement system. TileMap owns the 64x64 grid: dimensions,
 // per-tile terrain, and blocked queries for movement, pathfinding, and
@@ -20,7 +21,7 @@ enum class TerrainType : std::uint8_t
     Count
 };
 
-class TileMap
+class TileMap : public Subsystem
 {
 public:
     TileMap(int widthTiles, int heightTiles);
@@ -62,7 +63,7 @@ struct OccEntry
     std::uint32_t generation = 0;
 };
 
-class OccupancyGrid
+class OccupancyGrid : public Subsystem
 {
 public:
     OccupancyGrid(int widthTiles, int heightTiles);

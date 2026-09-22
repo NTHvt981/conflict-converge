@@ -7,6 +7,7 @@
 #include "Production.h"
 #include "Registry.h"
 #include "ResourceSystem.h"
+#include "Subsystem.h"
 #include "Unit.h"
 #include "UnitFactory.h"
 
@@ -39,7 +40,7 @@ struct AIDifficultyParams
 
 AIDifficultyParams ParamsFor(AIDifficulty difficulty);
 
-class AICommander
+class AICommander : public Subsystem
 {
 public:
     AICommander(Registry &registry, TileMap &map, ResourceNodes &nodes, EventDispatcher &events,

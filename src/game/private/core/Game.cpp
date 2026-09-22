@@ -14,23 +14,49 @@ Game::EngineScope::EngineScope()
     Add<HotkeyMap>();
 }
 
+Game::WorldScope::WorldScope(Subsystems &engine)
+{
+    Add<Registry>();
+    Add<ResourceSystem>();
+    Add<TileMap>(20, 15);
+    Add<OccupancyGrid>(20, 15);
+    Add<FogOfWar>();
+    Add<ResourceNodes>();
+    Add<ProductionQueue>();
+    EventDispatcher &events = engine.Get<EventDispatcher>();
+    Add<UnitFactory>(Get<Registry>(), Get<ResourceSystem>(), events);
+    AddKeyed<AICommander>("ai", Get<Registry>(), Get<TileMap>(), Get<ResourceNodes>(), events,
+                          1, AIDifficulty::Medium, cc::IVec2{ 0, 0 }, cc::IVec2{ 0, 0 });
+    AddKeyed<AICommander>("ally", Get<Registry>(), Get<TileMap>(), Get<ResourceNodes>(), events,
+                          0, AIDifficulty::Medium, cc::IVec2{ 0, 0 }, cc::IVec2{ 0, 0 });
+    AddKeyed<AICommander>("enemy2", Get<Registry>(), Get<TileMap>(), Get<ResourceNodes>(),
+                          events, 1, AIDifficulty::Medium, cc::IVec2{ 0, 0 }, cc::IVec2{ 0, 0 });
+    Add<Pings>();
+    Add<Minimap>();
+}
+
 Game::Game()
-    : map(20, 15)
-    , occ(20, 15)
-    , factory(registry, resources, engine_.Get<EventDispatcher>())
-    , ai(registry, map, nodes, engine_.Get<EventDispatcher>(), 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
-    , allyAI(registry, map, nodes, engine_.Get<EventDispatcher>(), 0, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
-    , enemyAI2(registry, map, nodes, engine_.Get<EventDispatcher>(), 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
-    , skirmish{ &registry, &resources, &map, &occ, &fog, &nodes,
-                &queue,   &factory,   &ai, &allyAI, &enemyAI2, &camera, &rallyPos }
-    , worldState{ &registry, &resources, &map, &camera, &nodes, &fog, &occ }
-    , playingInput(registry, map, occ, nodes, camera, minimap, engine_.Get<InputManager>(),
-                   engine_.Get<Audio>(), menu.settings, rallyPos)
-    , sim(registry, map, occ, fog, nodes, queue, factory, resources, ai, allyAI, enemyAI2,
-          engine_.Get<Art>(), engine_.Get<Audio>(), pings, menu, minimap, worldState,
-          damageNumbers, engine_.Get<EventDispatcher>(), rallyPos,
-          playingInput.AutoAddGroupBit(), sandboxMode, worldIs2v2, playerAutoRepair,
-          autoRepairCap, shakeTrauma, lastOutcomeState)
+    : skirmish{ &world_.Get<Registry>(), &world_.Get<ResourceSystem>(),
+                &world_.Get<TileMap>(), &world_.Get<OccupancyGrid>(),
+                &world_.Get<FogOfWar>(), &world_.Get<ResourceNodes>(),
+                &world_.Get<ProductionQueue>(), &world_.Get<UnitFactory>(),
+                &world_.GetKeyed<AICommander>("ai"), &world_.GetKeyed<AICommander>("ally"),
+                &world_.GetKeyed<AICommander>("enemy2"), &camera, &rallyPos }
+    , worldState{ &world_.Get<Registry>(), &world_.Get<ResourceSystem>(),
+                  &world_.Get<TileMap>(), &camera, &world_.Get<ResourceNodes>(),
+                  &world_.Get<FogOfWar>(), &world_.Get<OccupancyGrid>() }
+    , playingInput(world_.Get<Registry>(), world_.Get<TileMap>(), world_.Get<OccupancyGrid>(),
+                   world_.Get<ResourceNodes>(), camera, world_.Get<Minimap>(),
+                   engine_.Get<InputManager>(), engine_.Get<Audio>(), menu.settings, rallyPos)
+    , sim(world_.Get<Registry>(), world_.Get<TileMap>(), world_.Get<OccupancyGrid>(),
+          world_.Get<FogOfWar>(), world_.Get<ResourceNodes>(), world_.Get<ProductionQueue>(),
+          world_.Get<UnitFactory>(), world_.Get<ResourceSystem>(),
+          world_.GetKeyed<AICommander>("ai"), world_.GetKeyed<AICommander>("ally"),
+          world_.GetKeyed<AICommander>("enemy2"), engine_.Get<Art>(), engine_.Get<Audio>(),
+          world_.Get<Pings>(), menu, world_.Get<Minimap>(), worldState, damageNumbers,
+          engine_.Get<EventDispatcher>(), rallyPos, playingInput.AutoAddGroupBit(),
+          sandboxMode, worldIs2v2, playerAutoRepair, autoRepairCap, shakeTrauma,
+          lastOutcomeState)
     , menuScreens(menu, engine_.Get<Art>(), engine_.Get<Audio>(), engine_.Get<InputManager>(),
                   engine_.Get<HotkeyMap>(), engine_.Get<EventDispatcher>(),
                   MenuCallbacks{
@@ -52,22 +78,31 @@ Game::Game()
                      [&]() { bindings.Bind(); },
                  })
     , bindings(engine_.Get<InputManager>(), engine_.Get<HotkeyMap>(), menu, rmlUiMenus,
-                playingInput, engine_.Get<Audio>(), camera, map, occ, nodes, fog, registry,
-                resources, engine_.Get<EventDispatcher>(), worldState, pings, worldActive,
+                playingInput, engine_.Get<Audio>(), camera, world_.Get<TileMap>(),
+                world_.Get<OccupancyGrid>(), world_.Get<ResourceNodes>(), world_.Get<FogOfWar>(),
+                world_.Get<Registry>(), world_.Get<ResourceSystem>(),
+                engine_.Get<EventDispatcher>(), worldState, world_.Get<Pings>(), worldActive,
                 showHints, [this]() { QuitToMenu(); },
                 [this](int dir) { match.StepReplay(dir); })
-    , rmlUiHud(registry, resources, queue, sim, engine_.Get<HotkeyMap>(), playingInput, ai,
-               worldDifficulty, showHints, playerAutoRepair, autoRepairCap, menu,
-               engine_.Get<Art>(), engine_.Get<EventDispatcher>(),
+    , rmlUiHud(world_.Get<Registry>(), world_.Get<ResourceSystem>(),
+               world_.Get<ProductionQueue>(), sim, engine_.Get<HotkeyMap>(), playingInput,
+               world_.GetKeyed<AICommander>("ai"), worldDifficulty, showHints,
+               playerAutoRepair, autoRepairCap, menu, engine_.Get<Art>(),
+               engine_.Get<EventDispatcher>(),
                [this]() { QuitToMenu(); },
                [this](MenuState returnTo) { rmlUiMenus.BeginRemap(returnTo); })
-    , renderer(engine_.Get<Art>(), camera, map, registry, fog, nodes, minimap, pings,
-               damageNumbers, playingInput, menu, sim, resources, queue,
-               engine_.Get<HotkeyMap>(), engine_.Get<InputManager>(), ai,
+    , renderer(engine_.Get<Art>(), camera, world_.Get<TileMap>(), world_.Get<Registry>(),
+               world_.Get<FogOfWar>(), world_.Get<ResourceNodes>(), world_.Get<Minimap>(),
+               world_.Get<Pings>(), damageNumbers, playingInput, menu, sim,
+               world_.Get<ResourceSystem>(), world_.Get<ProductionQueue>(),
+               engine_.Get<HotkeyMap>(), engine_.Get<InputManager>(),
+               world_.GetKeyed<AICommander>("ai"),
                engine_.Get<EventDispatcher>(), replayCursor, worldDifficulty, menuStateTime,
                shakeTrauma, rmlUi, rmlUiHud, rmlUiMenus,
                [this]() { QuitToMenu(); })
-    , match(camera, ai, allyAI, enemyAI2, menu, minimap, playingInput, sim,
+    , match(camera, world_.GetKeyed<AICommander>("ai"), world_.GetKeyed<AICommander>("ally"),
+            world_.GetKeyed<AICommander>("enemy2"), menu, world_.Get<Minimap>(),
+            playingInput, sim,
             engine_.Get<EventDispatcher>(), skirmish, worldState, engine_.Get<HotkeyMap>(),
             rallyPos, worldActive, worldIs2v2, sandboxMode, worldDifficulty, worldMapPath,
             lastOutcomeState, replayCursor, replayPlayTimer, pendingConfirm)
@@ -121,8 +156,8 @@ void Game::Init()
     GuiSetStyle(DEFAULT, TEXT_SIZE, static_cast<int>(10 * menu.settings.uiScale));
     menuScreens.ApplyHotkeyOverrides();
 
-    minimap.Init({ static_cast<float>(kInitialWidth) - 170.0f, 10.0f,
-                   160.0f, 120.0f });
+    world_.Get<Minimap>().Init({ static_cast<float>(kInitialWidth) - 170.0f, 10.0f,
+                         160.0f, 120.0f });
 
     worldActive = false;
     worldIs2v2 = false;
@@ -137,8 +172,8 @@ void Game::Init()
         const auto *lifecycle = dynamic_cast<const UnitLifecycleEvent *>(&e);
         if (lifecycle != nullptr && lifecycle->teamID == 0)
         {
-            pings.Raise({ lifecycle->position.x + 32.0f, lifecycle->position.y + 32.0f },
-                        PingKind::UnitLost);
+            world_.Get<Pings>().Raise({ lifecycle->position.x + 32.0f, lifecycle->position.y + 32.0f },
+                                PingKind::UnitLost);
         }
     });
 
@@ -159,14 +194,15 @@ void Game::Update()
     const int screenWidth = GetScreenWidth();
     const int screenHeight = GetScreenHeight();
     camera.view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
-    minimap.screenRect.x = static_cast<float>(screenWidth) - minimap.screenRect.width - 10.0f;
-    minimap.screenRect.y = 10.0f;
-    camera.ClampZoomToWorld(static_cast<float>(map.Width()) * cc::TILE_SIZE,
-                            static_cast<float>(map.Height()) * cc::TILE_SIZE, screenWidth,
-                            screenHeight);
-    camera.ClampToMap(static_cast<float>(map.Width()) * cc::TILE_SIZE,
-                      static_cast<float>(map.Height()) * cc::TILE_SIZE, screenWidth,
-                      screenHeight);
+    world_.Get<Minimap>().screenRect.x =
+        static_cast<float>(screenWidth) - world_.Get<Minimap>().screenRect.width - 10.0f;
+    world_.Get<Minimap>().screenRect.y = 10.0f;
+    camera.ClampZoomToWorld(static_cast<float>(world_.Get<TileMap>().Width()) * cc::TILE_SIZE,
+                            static_cast<float>(world_.Get<TileMap>().Height()) * cc::TILE_SIZE,
+                            screenWidth, screenHeight);
+    camera.ClampToMap(static_cast<float>(world_.Get<TileMap>().Width()) * cc::TILE_SIZE,
+                      static_cast<float>(world_.Get<TileMap>().Height()) * cc::TILE_SIZE,
+                      screenWidth, screenHeight);
     TrackMenuTransition(previousMenuState, menuStateTime, menu.state, GetFrameTime());
 
     if (!worldActive)
@@ -223,7 +259,7 @@ void Game::Update()
             }
         }
     }
-    pings.Update(GetFrameTime());
+    world_.Get<Pings>().Update(GetFrameTime());
     shakeTrauma = DecayShakeTrauma(shakeTrauma, GetFrameTime());
 
     BeginDrawing();
@@ -238,7 +274,7 @@ void Game::Update()
 
 void Game::Shutdown()
 {
-    minimap.Unload();
+    world_.Get<Minimap>().Unload();
     engine_.Get<Art>().Shutdown();
     engine_.Get<Audio>().Shutdown();
     CloseAudioDevice();
@@ -246,6 +282,7 @@ void Game::Shutdown()
     rmlUi.Shutdown();
     CloseWindow();
     Log::Shutdown();
+    world_.Shutdown();
     engine_.Shutdown();
 }
 

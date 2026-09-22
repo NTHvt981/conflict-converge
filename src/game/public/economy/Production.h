@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <vector>
 
+#include "Subsystem.h"
 #include "Unit.h"
 #include "raylib.h"
 
@@ -15,7 +16,7 @@ class UnitFactory;
 // Placeholder build times (seconds).
 float BuildTime(UnitType type);
 
-class ProductionQueue
+class ProductionQueue : public Subsystem
 {
 public:
     // Charge CostOf(type) via TrySpend and queue the build.

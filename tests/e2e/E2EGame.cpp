@@ -7,12 +7,12 @@ MenuFlow &E2EGame::E2EMenu()
 
 Registry &E2EGame::E2ERegistry()
 {
-    return registry;
+    return world_.Get<Registry>();
 }
 
 TileMap &E2EGame::E2EMap()
 {
-    return map;
+    return world_.Get<TileMap>();
 }
 
 bool E2EGame::IsWorldActive() const
