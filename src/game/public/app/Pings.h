@@ -27,6 +27,7 @@ class Pings : public Subsystem
 {
 public:
     Pings();
+    void ResetForMatch() override;
 
     // Raise a ping stamped with live time; swallowed within the same kind's
     // retrigger floor (combat spam guard).

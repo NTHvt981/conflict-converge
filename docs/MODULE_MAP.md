@@ -11,7 +11,7 @@ edits. `Unit.h` fwd-declares `TileMap`; never include `Pathfinder.h` from `Unit.
 cycles.
 
 ```
-core:    MathUtils, CcAssert, Registry, Event
+core:    MathUtils, CcAssert, Registry, Event, Subsystem
          Game, Simulation, PlayingInput, MenuScreens
 world:   TileMap, Pathfinder, MapFile, FogOfWar
 units:   Unit, UnitStats, Combat, UnitFactory, Targeting, Formation, AICommander
@@ -25,7 +25,11 @@ app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, 
 ## core
 
 - `Game.h` - Owns match state + frame loop (`Init`/`Update`/`Shutdown`/`IsRunning`/`Run`);
-  `main.cpp` is entry-only. `worldIs2v2` gates the ally/enemyAI2 ticks (never unit counts —
+  `main.cpp` is entry-only. Services live in scope containers declared first
+  (`engine_` process lifetime, `world_` match lifetime, `player_` view state;
+  construction order is load-bearing — init lists bind `engine_.Get<T>()` etc.).
+  `MatchController` fans out `world_.ResetForMatch()` at match boundaries.
+  `worldIs2v2` gates the ally/enemyAI2 ticks (never unit counts —
   shared teams wake parked commanders); `E2E*` seam is for tests/e2e only
 - `Simulation.h` - Per-frame match tick extracted from `Game::Update` (no input/menus/
   rendering, so unit tests drive `Step` headlessly); `ResetForMatch`/`ResetEdgePolls`, team-0
@@ -45,6 +49,10 @@ app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, 
 - `MathUtils.h` - `cc::Vec2`, raylib conversions, 64x64 tile helpers (top-left-corner
   convention)
 - `CcAssert.h` - `CC_ASSERT`: live in Debug, `((void)0)` under NDEBUG
+- `Subsystem.h` - UE5-inspired service scopes (no reflection): `Subsystem` base
+  (`Init`/`Shutdown`/`ResetForMatch` no-op defaults) + `Subsystems` container
+  (`Add`/`Get`/`TryGet`, keyed lookup for repeated types like `AICommander`);
+  `Game` owns `engine_`/`world_`/`player_` scopes (see `Game.h`)
 
 ## world
 
@@ -134,7 +142,8 @@ app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, 
   would do at `worldPos` (Move/Attack/Repair/InvalidPlacement). Pure prediction, never
   mutates
 - `Pings.h` - Attack/event pings: short-lived world-space markers for minimap blips +
-  camera jump (`Raise`/`Update`/`Latest`); pure logic, headless-testable
+  camera jump (`Raise`/`Update`/`Latest`); pure logic, headless-testable;
+  `ResetForMatch` clears pings + retrigger floors on match boundaries
 - `Shake.h` - Screen-shake trauma math (pure inline: add/decay/magnitude); `Game` renders
   through a shaken camera copy
 - `DataRoot.h` - Launch hardening: `PickDataRoot` picks the chdir target so `data/` resolves

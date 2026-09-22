@@ -13,12 +13,13 @@
 #include "SaveGame.h"
 #include "Simulation.h"
 #include "Skirmish.h"
+#include "Subsystem.h"
 #include "raylib.h"
 
 class MatchController
 {
 public:
-    MatchController(GameCamera &camera, AICommander &ai, AICommander &allyAI,
+    MatchController(Subsystems &world, GameCamera &camera, AICommander &ai, AICommander &allyAI,
                     AICommander &enemyAI2, MenuFlow &menu, Minimap &minimap,
                     PlayingInput &playingInput, Simulation &sim, EventDispatcher &events,
                     SkirmishWorld &skirmish, WorldState &worldState, HotkeyMap &hotkeys,
@@ -40,6 +41,7 @@ public:
 private:
     void Announce(EventType type);
 
+    Subsystems &world_; // match-boundary ResetForMatch fan-out (world scope)
     GameCamera &camera_;
     AICommander &ai_;
     AICommander &allyAI_;

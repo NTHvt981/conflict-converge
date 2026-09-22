@@ -5,7 +5,7 @@
 #include "SaveGame.h"
 #include <filesystem>
 
-MatchController::MatchController(GameCamera &camera, AICommander &ai, AICommander &allyAI,
+MatchController::MatchController(Subsystems &world, GameCamera &camera, AICommander &ai, AICommander &allyAI,
                                  AICommander &enemyAI2, MenuFlow &menu, Minimap &minimap,
                                  PlayingInput &playingInput, Simulation &sim,
                                  EventDispatcher &events, SkirmishWorld &skirmish,
@@ -14,7 +14,8 @@ MatchController::MatchController(GameCamera &camera, AICommander &ai, AICommande
                                  AIDifficulty &worldDifficulty, std::string &worldMapPath,
                                  MenuState &lastOutcomeState, int &replayCursor,
                                  float &replayPlayTimer, ConfirmChoice &pendingConfirm)
-    : camera_(camera)
+    : world_(world)
+    , camera_(camera)
     , ai_(ai)
     , allyAI_(allyAI)
     , enemyAI2_(enemyAI2)
@@ -68,6 +69,7 @@ void MatchController::StartMatch(const std::string &mapPath, AIDifficulty diffic
     camera_.view.zoom = 1.0f;
     minimap_.elapsed = minimap_.refreshInterval;
     sim_.ResetForMatch();
+    world_.ResetForMatch();
     replayCursor_ = 0;
     replayPlayTimer_ = 0.0f;
     {
@@ -85,6 +87,7 @@ void MatchController::StartMatch(const std::string &mapPath, AIDifficulty diffic
 void MatchController::QuitToMenu()
 {
     ResetSkirmish(skirmish_);
+    world_.ResetForMatch();
     worldActive_ = false;
     worldIs2v2_ = false;
     sandboxMode_ = false;
@@ -153,6 +156,7 @@ void MatchController::LoadGameFromSlot(const std::string &slotPath)
     worldIs2v2_ = spots.is2v2;
     playingInput_.ResetForMatch();
     sim_.ResetEdgePolls();
+    world_.ResetForMatch();
     lastOutcomeState_ = MenuState::Playing;
     camera_.view.zoom = 1.0f;
     minimap_.elapsed = minimap_.refreshInterval;
@@ -202,6 +206,7 @@ bool MatchController::WatchLastReplay()
     worldActive_ = true;
     worldIs2v2_ = false;
     playingInput_.ResetForMatch();
+    world_.ResetForMatch();
     camera_.view.zoom = 1.0f;
     minimap_.elapsed = minimap_.refreshInterval;
     menu_.state = MenuState::ReplayViewer;

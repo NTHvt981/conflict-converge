@@ -104,7 +104,7 @@ Game::Game()
                engine_.Get<EventDispatcher>(), replayCursor, worldDifficulty, menuStateTime,
                shakeTrauma, rmlUi, rmlUiHud, rmlUiMenus,
                [this]() { QuitToMenu(); })
-    , match(player_.Get<GameCamera>(), world_.GetKeyed<AICommander>("ai"),
+    , match(world_, player_.Get<GameCamera>(), world_.GetKeyed<AICommander>("ai"),
             world_.GetKeyed<AICommander>("ally"),
             world_.GetKeyed<AICommander>("enemy2"), menu, world_.Get<Minimap>(),
             player_.Get<PlayingInput>(), sim,

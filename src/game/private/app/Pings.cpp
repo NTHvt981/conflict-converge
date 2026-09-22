@@ -11,6 +11,12 @@ constexpr std::size_t kMaxPings = 32;
 
 Pings::Pings()
 {
+    ResetForMatch();
+}
+
+void Pings::ResetForMatch()
+{
+    pings_.clear();
     for (double &last : lastRaise_)
     {
         last = -1.0e9;

@@ -25,6 +25,21 @@ void RunPingTests()
         CC_CHECK(pos.x == 100.0f && pos.y == 200.0f);
     }
 
+    // --- ResetForMatch clears pings and restores the retrigger floor ---
+    {
+        Pings pings;
+        pings.RaiseAt({ 0.0f, 0.0f }, PingKind::UnderAttack, 10.0);
+        pings.RaiseAt({ 1.0f, 1.0f }, PingKind::UnitLost, 10.0);
+        CC_CHECK(pings.Active().size() == 2);
+        pings.ResetForMatch();
+        CC_CHECK(pings.Active().empty());
+        Vector2 pos = {};
+        CC_CHECK(!pings.Latest(pos));
+        // Floors restored: same-kind raise at the same clock passes again.
+        pings.RaiseAt({ 2.0f, 2.0f }, PingKind::UnderAttack, 10.0);
+        CC_CHECK(pings.Active().size() == 1);
+    }
+
     // --- same-kind retrigger floor swallows spam, other kinds pass ---
     {
         Pings pings;
