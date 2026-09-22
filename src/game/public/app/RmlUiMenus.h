@@ -58,7 +58,22 @@ public:
     void HideAll();
     // One menu-branch frame: audio parity, input pump, doc sync, own
     // Begin/EndDrawing pair. Returns the confirm-modal button pressed.
+    // HotkeyRemap routes internally to the remap screen.
     ConfirmChoice Draw(int screenWidth, int screenHeight);
+    // World-branch remap overlay (Phase 4): no frame management, no audio —
+    // the caller owns BeginDrawing and the HUD pumps the mouse. Shares the
+    // capture machine below.
+    void DrawRemapOverlay();
+    // Menu-branch remap screen: own Begin/EndDrawing pair (called from Draw
+    // for HotkeyRemap).
+    void DrawRemapScreen(int screenWidth, int screenHeight);
+    // Arm a remap capture (mirrors MenuScreens::BeginRemap; RML remap entries
+    // from Settings or pause call this instead).
+    void BeginRemap(MenuState returnTo);
+    // Esc: cancel an armed capture, else back out; true when consumed
+    // (mirrors MenuScreens::CancelRemapCapture; ShortcutBindings prefers this
+    // while the RML remap screen owns the state).
+    bool CancelRemapCapture();
 
     void ProcessEvent(Rml::Event &event) override;
 
@@ -74,6 +89,10 @@ private:
     void RefreshLoad();
     void RefreshConfirm();
     void PopulateMaps();
+    void RefreshRemap();
+    void PopulateRemapRows();
+    void PollRemapCapture();
+    std::string RemapSignature() const;
     void OnClick(const Rml::String &id);
     void OnChange(Rml::Element *target, const Rml::String &id);
     void Announce(EventType type);
@@ -102,4 +121,10 @@ private:
     Rml::ElementDocument *settingsDoc_ = nullptr;
     Rml::ElementDocument *loadDoc_ = nullptr;
     Rml::ElementDocument *confirmDoc_ = nullptr;
+    Rml::ElementDocument *remapDoc_ = nullptr;
+    int remapArming_ = -1; // action being rebound (-1 = none)
+    std::string remapConflictAction_; // pending conflict (awaiting steal click)
+    int remapConflictKey_ = 0;
+    MenuState remapReturn_ = MenuState::Settings; // where Back returns to
+    std::string remapCache_;
 };

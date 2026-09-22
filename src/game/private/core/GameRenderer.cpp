@@ -7,6 +7,7 @@
 #include "Cursor.h"
 #include "Hud.h"
 #include "RmlUiHost.h"
+#include "RmlUiMenus.h"
 #include "Selection.h"
 #include "Unit.h"
 #include <algorithm>
@@ -92,7 +93,7 @@ GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry 
                             const int &replayCursor, const AIDifficulty &worldDifficulty,
                             const float &menuStateTime, const float &shakeTrauma, bool &playerAutoRepair,
                             float &autoRepairCap, RmlUiHost &rmlUi, RmlUiHud &rmlUiHud,
-                            std::function<void()> quitToMenu)
+                            RmlUiMenus &rmlUiMenus, std::function<void()> quitToMenu)
     : art_(art)
     , camera_(camera)
     , map_(map)
@@ -121,6 +122,7 @@ GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry 
     , autoRepairCap_(autoRepairCap)
     , rmlUi_(rmlUi)
     , rmlUiHud_(rmlUiHud)
+    , rmlUiMenus_(rmlUiMenus)
     , quitToMenu_(std::move(quitToMenu))
 {
 }
@@ -479,12 +481,13 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
     }
 
     sim_.RefreshFactory();
+    ConfirmChoice hudChoice = ConfirmChoice::None;
     if (rmlUiHud_.IsReady())
     {
         // Phase 3: the RmlUi HUD owns these panels (clicks are pre-routed by
         // the first-refusal gate in Game::Update). Drag visuals, the hover
         // tooltip, and every overlay below stay raygui until Phase 4.
-        rmlUiHud_.Draw(screenWidth, screenHeight, uiScale);
+        hudChoice = rmlUiHud_.Draw(screenWidth, screenHeight, uiScale);
     }
     else
     {
@@ -575,8 +578,15 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
 
     if (menu_.state == MenuState::HotkeyRemap)
     {
-        DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));
-        menuScreens_.DrawRemap(screenWidth / 2.0f);
+        if (rmlUiMenus_.IsReady())
+        {
+            rmlUiMenus_.DrawRemapOverlay();
+        }
+        else
+        {
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));
+            menuScreens_.DrawRemap(screenWidth / 2.0f);
+        }
     }
     if (menu_.state == MenuState::ReplayViewer)
     {
@@ -656,6 +666,14 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
     // the HUD falls back to raygui panels — with nothing visible that is a
     // no-op. Input routing for the world branch lands in Phase 4.
     rmlUi_.Render();
+    // The RML confirm modal only ever shows over Playing/Paused (same
+    // condition as RmlUiHud::Draw); anywhere else the modal stays raygui so
+    // it can never be open with no visible dialog.
+    if (rmlUiHud_.IsReady() && modal &&
+        (menu_.state == MenuState::Playing || menu_.state == MenuState::Paused))
+    {
+        return hudChoice;
+    }
     if (!modal)
     {
         return ConfirmChoice::None;

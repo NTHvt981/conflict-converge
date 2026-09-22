@@ -113,9 +113,11 @@ private:
     PlayingInput playingInput;
     Simulation sim;
     MenuScreens menuScreens;
+    // Declared before bindings: the Back shortcut prefers the RML remap
+    // capture while it owns the HotkeyRemap state.
+    RmlUiMenus rmlUiMenus;
     ShortcutBindings bindings;
     RmlUiHost rmlUi; // declared before renderer: overlay host (Phase 1 render-only)
-    RmlUiMenus rmlUiMenus; // menu-branch owner (Phase 2 states, raygui keeps the rest)
     RmlUiHud rmlUiHud; // in-match HUD panels (Phase 3, raygui fallback when not ready)
     GameRenderer renderer;
     MatchController match;

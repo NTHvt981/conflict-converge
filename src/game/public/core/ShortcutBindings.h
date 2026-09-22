@@ -15,6 +15,7 @@
 #include "PlayingInput.h"
 #include "Registry.h"
 #include "ResourceSystem.h"
+#include "RmlUiMenus.h"
 #include "SaveGame.h"
 #include "TileMap.h"
 
@@ -22,12 +23,13 @@ class ShortcutBindings
 {
 public:
     ShortcutBindings(InputManager &input, HotkeyMap &hotkeys, MenuFlow &menu,
-                     MenuScreens &menuScreens, PlayingInput &playingInput, Audio &audio,
-                     GameCamera &camera, TileMap &map, OccupancyGrid &occ, ResourceNodes &nodes,
-                     FogOfWar &fog, Registry &registry, ResourceSystem &resources,
-                     EventDispatcher &events, const WorldState &worldState, Pings &pings,
-                     const bool &worldActive, bool &showHints,
-                     std::function<void()> quitToMenu, std::function<void(int)> stepReplay);
+                     MenuScreens &menuScreens, RmlUiMenus &rmlUiMenus, PlayingInput &playingInput,
+                     Audio &audio, GameCamera &camera, TileMap &map, OccupancyGrid &occ,
+                     ResourceNodes &nodes, FogOfWar &fog, Registry &registry,
+                     ResourceSystem &resources, EventDispatcher &events,
+                     const WorldState &worldState, Pings &pings, const bool &worldActive,
+                     bool &showHints, std::function<void()> quitToMenu,
+                     std::function<void(int)> stepReplay);
     ShortcutBindings(const ShortcutBindings &) = delete;
     ShortcutBindings &operator=(const ShortcutBindings &) = delete;
 
@@ -41,6 +43,7 @@ private:
     HotkeyMap &hotkeys_;
     MenuFlow &menu_;
     MenuScreens &menuScreens_;
+    RmlUiMenus &rmlUiMenus_;
     PlayingInput &playingInput_;
     Audio &audio_;
     GameCamera &camera_;

@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <filesystem>
+#include <initializer_list>
 
 #include "raylib.h"
 
@@ -67,7 +68,9 @@ constexpr int kPlayerTeam = 0;
 RmlUiHud::RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueue &queue,
                    Simulation &sim, HotkeyMap &hotkeys, PlayingInput &playingInput,
                    AICommander &ai, const AIDifficulty &difficulty, const bool &showHints,
-                   bool &playerAutoRepair, float &autoRepairCap)
+                   bool &playerAutoRepair, float &autoRepairCap, MenuFlow &menu, Art &art,
+                   EventDispatcher &events, std::function<void()> quitToMenu,
+                   std::function<void(MenuState)> beginRemap)
     : registry_(registry)
     , resources_(resources)
     , queue_(queue)
@@ -79,6 +82,11 @@ RmlUiHud::RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueu
     , showHints_(showHints)
     , playerAutoRepair_(playerAutoRepair)
     , autoRepairCap_(autoRepairCap)
+    , menu_(menu)
+    , art_(art)
+    , events_(events)
+    , quitToMenu_(std::move(quitToMenu))
+    , beginRemap_(std::move(beginRemap))
 {
 }
 
@@ -95,7 +103,11 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
     }
     host_ = &host;
     hudDoc_ = context_->LoadDocument(dataDir + "/hud.rml");
-    if (hudDoc_ == nullptr)
+    pauseDoc_ = context_->LoadDocument(dataDir + "/pause.rml");
+    outcomeDoc_ = context_->LoadDocument(dataDir + "/outcome.rml");
+    confirmDoc_ = context_->LoadDocument(dataDir + "/confirm.rml");
+    if (hudDoc_ == nullptr || pauseDoc_ == nullptr || outcomeDoc_ == nullptr ||
+        confirmDoc_ == nullptr)
     {
         Shutdown();
         return false;
@@ -134,6 +146,27 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
     {
         el->AddEventListener("change", this);
     }
+    for (Rml::ElementDocument *doc : { pauseDoc_, outcomeDoc_ })
+    {
+        (void)doc;
+    }
+    auto listen = [this](Rml::ElementDocument *doc, const char *event,
+                         std::initializer_list<const char *> ids) {
+        for (const char *id : ids)
+        {
+            if (Rml::Element *el = doc->GetElementById(id))
+            {
+                el->AddEventListener(event, this);
+            }
+        }
+    };
+    listen(pauseDoc_, "click",
+           { "btn-resume", "btn-p-remap", "btn-p-tomenu", "btn-p-todesktop" });
+    listen(pauseDoc_, "change",
+           { "opt-p-camspeed", "opt-p-minimap", "opt-p-master", "opt-p-music",
+             "opt-p-sfx", "opt-p-mute", "opt-p-rightdrag", "opt-p-colorblind" });
+    listen(outcomeDoc_, "click", { "btn-o-tomenu", "btn-o-todesktop" });
+    listen(confirmDoc_, "click", { "btn-yes", "btn-no" });
     host_->HideStub();
     hudDoc_->Show();
     ready_ = true;
@@ -142,12 +175,18 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
 
 void RmlUiHud::Shutdown()
 {
-    if (context_ != nullptr && hudDoc_ != nullptr)
+    if (context_ != nullptr)
     {
-        context_->UnloadDocument(hudDoc_);
+        for (Rml::ElementDocument *doc : { hudDoc_, pauseDoc_, outcomeDoc_, confirmDoc_ })
+        {
+            if (doc != nullptr)
+            {
+                context_->UnloadDocument(doc);
+            }
+        }
         context_->Update();
     }
-    hudDoc_ = nullptr;
+    hudDoc_ = pauseDoc_ = outcomeDoc_ = confirmDoc_ = nullptr;
     context_ = nullptr;
     host_ = nullptr;
     ready_ = false;
@@ -179,11 +218,92 @@ bool RmlUiHud::IsPointerOverUI()
     return over || dragLatch_;
 }
 
-void RmlUiHud::Draw(int screenWidth, int screenHeight, float uiScale)
+ConfirmChoice RmlUiHud::Draw(int screenWidth, int screenHeight, float uiScale)
 {
-    PumpMouse(context_);
+    // The remap overlay owns the mouse pump (see header); pumping here too
+    // would double-fire the press edge into two click events.
+    if (menu_.state != MenuState::HotkeyRemap)
+    {
+        PumpMouse(context_);
+    }
     RefreshHud();
+    for (Rml::ElementDocument *doc : { hudDoc_, pauseDoc_, outcomeDoc_, confirmDoc_ })
+    {
+        doc->Hide();
+    }
+    hudDoc_->Show();
+    switch (menu_.state)
+    {
+    case MenuState::Paused:
+        pauseDoc_->Show(Rml::ModalFlag::Modal);
+        RefreshPause();
+        break;
+    case MenuState::GameOver:
+    case MenuState::Victory:
+        outcomeDoc_->Show(Rml::ModalFlag::Modal);
+        RefreshOutcome();
+        break;
+    default:
+        break;
+    }
+    // The modal only ever opens over Playing/Paused; other world-branch
+    // states fall through to the legacy raygui modal in GameRenderer.
+    if (menu_.ConfirmOpen() &&
+        (menu_.state == MenuState::Playing || menu_.state == MenuState::Paused))
+    {
+        confirmDoc_->Show(Rml::ModalFlag::Modal);
+        RefreshConfirm();
+    }
     host_->BeginFrame(screenWidth, screenHeight, uiScale);
+    const ConfirmChoice out = pendingChoice_;
+    pendingChoice_ = ConfirmChoice::None;
+    return out;
+}
+
+void RmlUiHud::RefreshPause()
+{
+    SetRangeIn(pauseDoc_, "opt-p-camspeed", menu_.settings.cameraSpeed);
+    SetRangeIn(pauseDoc_, "opt-p-master", menu_.settings.masterVolume);
+    SetRangeIn(pauseDoc_, "opt-p-music", menu_.settings.musicVolume);
+    SetRangeIn(pauseDoc_, "opt-p-sfx", menu_.settings.sfxVolume);
+    SetCheckIn(pauseDoc_, "opt-p-minimap", menu_.settings.showMinimap);
+    SetCheckIn(pauseDoc_, "opt-p-mute", menu_.settings.mute);
+    SetCheckIn(pauseDoc_, "opt-p-rightdrag", menu_.settings.rightDragPan);
+    SetCheckIn(pauseDoc_, "opt-p-colorblind", menu_.settings.colorBlindMode);
+    char text[32];
+    snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.cameraSpeed));
+    SetTextIn(pauseDoc_, "val-p-camspeed", text);
+    snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.masterVolume));
+    SetTextIn(pauseDoc_, "val-p-master", text);
+    snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.musicVolume));
+    SetTextIn(pauseDoc_, "val-p-music", text);
+    snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.sfxVolume));
+    SetTextIn(pauseDoc_, "val-p-sfx", text);
+}
+
+void RmlUiHud::RefreshOutcome()
+{
+    const bool won = menu_.state == MenuState::Victory;
+    SetTextIn(outcomeDoc_, "outcome-title", won ? "Victory!" : "Defeat");
+    SetTextIn(outcomeDoc_, "outcome-body",
+              won ? "Enemy force destroyed." : "Your force was destroyed.");
+}
+
+void RmlUiHud::RefreshConfirm()
+{
+    // Texts match DrawConfirmDialog (raygui) exactly.
+    const bool quitting = menu_.confirm == ConfirmKind::QuitApp;
+    SetTextIn(confirmDoc_, "confirm-title",
+              quitting ? "Quit Conflict Converge?" : "Return to main menu?");
+    SetTextIn(confirmDoc_, "confirm-sub",
+              quitting ? "Close the game?" : "Abandon the current match?");
+}
+
+void RmlUiHud::Announce(EventType type)
+{
+    Event bare;
+    bare.type = type;
+    events_.Dispatch(bare);
 }
 
 void RmlUiHud::ProcessEvent(Rml::Event &event)
@@ -441,6 +561,39 @@ void RmlUiHud::OnClick(const Rml::String &id)
             queue_.SetRepeatArmed(type, !queue_.RepeatArmed(type));
         }
     }
+    else if (id == "btn-resume")
+    {
+        Announce(EventType::MenuAction);
+        menu_.state = MenuState::Playing;
+    }
+    else if (id == "btn-p-remap")
+    {
+        beginRemap_(MenuState::Paused);
+    }
+    else if (id == "btn-p-tomenu")
+    {
+        quitToMenu_();
+    }
+    else if (id == "btn-p-todesktop")
+    {
+        menu_.quitRequested = true;
+    }
+    else if (id == "btn-o-tomenu")
+    {
+        quitToMenu_();
+    }
+    else if (id == "btn-o-todesktop")
+    {
+        menu_.quitRequested = true;
+    }
+    else if (id == "btn-yes")
+    {
+        pendingChoice_ = ConfirmChoice::Yes;
+    }
+    else if (id == "btn-no")
+    {
+        pendingChoice_ = ConfirmChoice::No;
+    }
 }
 
 void RmlUiHud::OnChange(Rml::Element *target, const Rml::String &id)
@@ -454,6 +607,51 @@ void RmlUiHud::OnChange(Rml::Element *target, const Rml::String &id)
     else if (id == "repair-cap")
     {
         autoRepairCap_ = Clamp(ReadRange(target), 0.0f, 1.0f);
+    }
+    else if (id == "opt-p-camspeed")
+    {
+        menu_.settings.cameraSpeed = Clamp(ReadRange(target), 100.0f, 800.0f);
+        char text[32];
+        snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.cameraSpeed));
+        SetTextIn(pauseDoc_, "val-p-camspeed", text);
+    }
+    else if (id == "opt-p-master")
+    {
+        menu_.settings.masterVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
+        char text[32];
+        snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.masterVolume));
+        SetTextIn(pauseDoc_, "val-p-master", text);
+    }
+    else if (id == "opt-p-music")
+    {
+        menu_.settings.musicVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
+        char text[32];
+        snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.musicVolume));
+        SetTextIn(pauseDoc_, "val-p-music", text);
+    }
+    else if (id == "opt-p-sfx")
+    {
+        menu_.settings.sfxVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
+        char text[32];
+        snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.sfxVolume));
+        SetTextIn(pauseDoc_, "val-p-sfx", text);
+    }
+    else if (id == "opt-p-minimap")
+    {
+        menu_.settings.showMinimap = target->HasAttribute("checked");
+    }
+    else if (id == "opt-p-mute")
+    {
+        menu_.settings.mute = target->HasAttribute("checked");
+    }
+    else if (id == "opt-p-rightdrag")
+    {
+        menu_.settings.rightDragPan = target->HasAttribute("checked");
+    }
+    else if (id == "opt-p-colorblind")
+    {
+        menu_.settings.colorBlindMode = target->HasAttribute("checked");
+        art_.SetColorBlindMode(menu_.settings.colorBlindMode);
     }
 }
 
@@ -503,7 +701,21 @@ void RmlUiHud::SetTextCached(const char *id, const std::string &text)
 
 void RmlUiHud::SetRangeIn(const char *id, float value)
 {
-    if (Rml::Element *el = hudDoc_->GetElementById(id))
+    SetRangeIn(hudDoc_, id, value);
+}
+
+void RmlUiHud::SetCheckIn(const char *id, bool checked)
+{
+    SetCheckIn(hudDoc_, id, checked);
+}
+
+void RmlUiHud::SetRangeIn(Rml::ElementDocument *doc, const char *id, float value)
+{
+    if (doc == nullptr)
+    {
+        return;
+    }
+    if (Rml::Element *el = doc->GetElementById(id))
     {
         if (auto *control = dynamic_cast<Rml::ElementFormControl *>(el))
         {
@@ -514,9 +726,13 @@ void RmlUiHud::SetRangeIn(const char *id, float value)
     }
 }
 
-void RmlUiHud::SetCheckIn(const char *id, bool checked)
+void RmlUiHud::SetCheckIn(Rml::ElementDocument *doc, const char *id, bool checked)
 {
-    if (Rml::Element *el = hudDoc_->GetElementById(id))
+    if (doc == nullptr)
+    {
+        return;
+    }
+    if (Rml::Element *el = doc->GetElementById(id))
     {
         if (checked)
         {
@@ -526,5 +742,17 @@ void RmlUiHud::SetCheckIn(const char *id, bool checked)
         {
             el->RemoveAttribute("checked");
         }
+    }
+}
+
+void RmlUiHud::SetTextIn(Rml::ElementDocument *doc, const char *id, const std::string &text)
+{
+    if (doc == nullptr)
+    {
+        return;
+    }
+    if (Rml::Element *el = doc->GetElementById(id))
+    {
+        el->SetInnerRML(text.c_str());
     }
 }

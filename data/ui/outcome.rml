@@ -3,6 +3,12 @@
 <title>Outcome</title>
 <link type="text/rcss" href="theme.rcss"/>
 <link type="text/rcss" href="hud.rcss"/>
+<style>
+/* Transparent stage: the .hud-dim veil dims the world behind. */
+body {
+	background: transparent;
+}
+</style>
 </head>
 <body>
 <div class="hud-dim"></div>

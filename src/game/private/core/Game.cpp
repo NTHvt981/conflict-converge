@@ -30,9 +30,6 @@ Game::Game()
                       [&]() { match.WatchLastReplay(); },
                       [&]() { bindings.Bind(); },
                   })
-    , bindings(input, hotkeys, menu, menuScreens, playingInput, audio, camera, map, occ,
-                nodes, fog, registry, resources, events, worldState, pings, worldActive,
-                showHints, [this]() { QuitToMenu(); }, [this](int dir) { match.StepReplay(dir); })
     , rmlUiMenus(menu, hotkeys, art, audio, events, menuScreens,
                  MenuCallbacks{
                      [&](const std::string &mapPath, AIDifficulty difficulty) {
@@ -42,12 +39,19 @@ Game::Game()
                      [&]() { match.WatchLastReplay(); },
                      [&]() { bindings.Bind(); },
                  })
+    , bindings(input, hotkeys, menu, menuScreens, rmlUiMenus, playingInput, audio, camera,
+                map, occ, nodes, fog, registry, resources, events, worldState, pings,
+                worldActive, showHints, [this]() { QuitToMenu(); },
+                [this](int dir) { match.StepReplay(dir); })
     , rmlUiHud(registry, resources, queue, sim, hotkeys, playingInput, ai, worldDifficulty,
-               showHints, playerAutoRepair, autoRepairCap)
+               showHints, playerAutoRepair, autoRepairCap, menu, art, events,
+               [this]() { QuitToMenu(); },
+               [this](MenuState returnTo) { rmlUiMenus.BeginRemap(returnTo); })
     , renderer(art, camera, map, registry, fog, nodes, minimap, pings, damageNumbers,
                playingInput, menu, sim, resources, queue, hotkeys, input, ai, menuScreens,
                events, showHints, replayCursor, worldDifficulty, menuStateTime, shakeTrauma,
-               playerAutoRepair, autoRepairCap, rmlUi, rmlUiHud, [this]() { QuitToMenu(); })
+               playerAutoRepair, autoRepairCap, rmlUi, rmlUiHud, rmlUiMenus,
+               [this]() { QuitToMenu(); })
     , match(camera, ai, allyAI, enemyAI2, menu, minimap, playingInput, sim, events,
             skirmish, worldState, hotkeys, rallyPos, worldActive, worldIs2v2, sandboxMode,
             worldDifficulty, worldMapPath, lastOutcomeState, replayCursor, replayPlayTimer,

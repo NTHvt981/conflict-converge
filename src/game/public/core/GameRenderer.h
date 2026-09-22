@@ -25,6 +25,7 @@
 #include "TileMap.h"
 
 class RmlUiHost;
+class RmlUiMenus;
 
 class GameRenderer
 {
@@ -38,7 +39,7 @@ public:
                  const int &replayCursor, const AIDifficulty &worldDifficulty,
                  const float &menuStateTime, const float &shakeTrauma, bool &playerAutoRepair,
                  float &autoRepairCap, RmlUiHost &rmlUi, RmlUiHud &rmlUiHud,
-                 std::function<void()> quitToMenu);    GameRenderer(const GameRenderer &) = delete;
+                 RmlUiMenus &rmlUiMenus, std::function<void()> quitToMenu);    GameRenderer(const GameRenderer &) = delete;
     GameRenderer &operator=(const GameRenderer &) = delete;
 
     void DrawWorld();
@@ -75,6 +76,7 @@ private:
     float &autoRepairCap_;
     RmlUiHost &rmlUi_;
     RmlUiHud &rmlUiHud_;
+    RmlUiMenus &rmlUiMenus_;
     std::function<void()> quitToMenu_;
     HoverTooltipState hoverTip_;
 };

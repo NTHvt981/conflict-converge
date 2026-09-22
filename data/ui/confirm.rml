@@ -2,6 +2,13 @@
 <head>
 <title>Confirm</title>
 <link type="text/rcss" href="theme.rcss"/>
+<style>
+/* Transparent stage: the #dim veil dims whatever is behind (menu doc or
+   world); the opaque theme body would hide it entirely. */
+body {
+	background: transparent;
+}
+</style>
 </head>
 <body>
 <div id="dim"></div>
