@@ -4,13 +4,14 @@
 
 #include "GameCamera.h"
 #include "Shortcuts.h"
+#include "Subsystem.h"
 
 // Single per-frame polling point for input: WASD camera pan, mouse click
 // edges, and shortcut actions. Game code binds actions once, calls Update
 // every frame, then reads the snapshot — no raw raylib input calls outside
 // this class. Snapshot is injectable so tests cover routing headless.
 
-class InputManager
+class InputManager : public Subsystem
 {
 public:
     ShortcutRegistry shortcuts;

@@ -5,23 +5,34 @@
 #include "DataRoot.h"
 #include "Log.h"
 
+Game::EngineScope::EngineScope()
+{
+    Add<Audio>();
+    Add<Art>();
+    Add<EventDispatcher>();
+    Add<InputManager>();
+    Add<HotkeyMap>();
+}
+
 Game::Game()
     : map(20, 15)
     , occ(20, 15)
-    , factory(registry, resources, events)
-    , ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
-    , allyAI(registry, map, nodes, events, 0, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
-    , enemyAI2(registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
+    , factory(registry, resources, engine_.Get<EventDispatcher>())
+    , ai(registry, map, nodes, engine_.Get<EventDispatcher>(), 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
+    , allyAI(registry, map, nodes, engine_.Get<EventDispatcher>(), 0, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
+    , enemyAI2(registry, map, nodes, engine_.Get<EventDispatcher>(), 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 })
     , skirmish{ &registry, &resources, &map, &occ, &fog, &nodes,
                 &queue,   &factory,   &ai, &allyAI, &enemyAI2, &camera, &rallyPos }
     , worldState{ &registry, &resources, &map, &camera, &nodes, &fog, &occ }
-    , playingInput(registry, map, occ, nodes, camera, minimap, input, audio, menu.settings,
-                   rallyPos)
+    , playingInput(registry, map, occ, nodes, camera, minimap, engine_.Get<InputManager>(),
+                   engine_.Get<Audio>(), menu.settings, rallyPos)
     , sim(registry, map, occ, fog, nodes, queue, factory, resources, ai, allyAI, enemyAI2,
-          art, audio, pings, menu, minimap, worldState, damageNumbers, events, rallyPos,
+          engine_.Get<Art>(), engine_.Get<Audio>(), pings, menu, minimap, worldState,
+          damageNumbers, engine_.Get<EventDispatcher>(), rallyPos,
           playingInput.AutoAddGroupBit(), sandboxMode, worldIs2v2, playerAutoRepair,
           autoRepairCap, shakeTrauma, lastOutcomeState)
-    , menuScreens(menu, art, audio, input, hotkeys, events,
+    , menuScreens(menu, engine_.Get<Art>(), engine_.Get<Audio>(), engine_.Get<InputManager>(),
+                  engine_.Get<HotkeyMap>(), engine_.Get<EventDispatcher>(),
                   MenuCallbacks{
                       [&](const std::string &mapPath, AIDifficulty difficulty) {
                           StartMatch(mapPath, difficulty);
@@ -30,7 +41,8 @@ Game::Game()
                       [&]() { match.WatchLastReplay(); },
                       [&]() { bindings.Bind(); },
                   })
-    , rmlUiMenus(menu, hotkeys, art, audio, events, menuScreens,
+    , rmlUiMenus(menu, engine_.Get<HotkeyMap>(), engine_.Get<Art>(), engine_.Get<Audio>(),
+                 engine_.Get<EventDispatcher>(), menuScreens,
                  MenuCallbacks{
                      [&](const std::string &mapPath, AIDifficulty difficulty) {
                          StartMatch(mapPath, difficulty);
@@ -39,23 +51,26 @@ Game::Game()
                      [&]() { match.WatchLastReplay(); },
                      [&]() { bindings.Bind(); },
                  })
-    , bindings(input, hotkeys, menu, rmlUiMenus, playingInput, audio, camera,
-                map, occ, nodes, fog, registry, resources, events, worldState, pings,
-                worldActive, showHints, [this]() { QuitToMenu(); },
+    , bindings(engine_.Get<InputManager>(), engine_.Get<HotkeyMap>(), menu, rmlUiMenus,
+                playingInput, engine_.Get<Audio>(), camera, map, occ, nodes, fog, registry,
+                resources, engine_.Get<EventDispatcher>(), worldState, pings, worldActive,
+                showHints, [this]() { QuitToMenu(); },
                 [this](int dir) { match.StepReplay(dir); })
-    , rmlUiHud(registry, resources, queue, sim, hotkeys, playingInput, ai, worldDifficulty,
-               showHints, playerAutoRepair, autoRepairCap, menu, art, events,
+    , rmlUiHud(registry, resources, queue, sim, engine_.Get<HotkeyMap>(), playingInput, ai,
+               worldDifficulty, showHints, playerAutoRepair, autoRepairCap, menu,
+               engine_.Get<Art>(), engine_.Get<EventDispatcher>(),
                [this]() { QuitToMenu(); },
                [this](MenuState returnTo) { rmlUiMenus.BeginRemap(returnTo); })
-    , renderer(art, camera, map, registry, fog, nodes, minimap, pings, damageNumbers,
-               playingInput, menu, sim, resources, queue, hotkeys, input, ai,
-               events, replayCursor, worldDifficulty, menuStateTime, shakeTrauma,
-               rmlUi, rmlUiHud, rmlUiMenus,
+    , renderer(engine_.Get<Art>(), camera, map, registry, fog, nodes, minimap, pings,
+               damageNumbers, playingInput, menu, sim, resources, queue,
+               engine_.Get<HotkeyMap>(), engine_.Get<InputManager>(), ai,
+               engine_.Get<EventDispatcher>(), replayCursor, worldDifficulty, menuStateTime,
+               shakeTrauma, rmlUi, rmlUiHud, rmlUiMenus,
                [this]() { QuitToMenu(); })
-    , match(camera, ai, allyAI, enemyAI2, menu, minimap, playingInput, sim, events,
-            skirmish, worldState, hotkeys, rallyPos, worldActive, worldIs2v2, sandboxMode,
-            worldDifficulty, worldMapPath, lastOutcomeState, replayCursor, replayPlayTimer,
-            pendingConfirm)
+    , match(camera, ai, allyAI, enemyAI2, menu, minimap, playingInput, sim,
+            engine_.Get<EventDispatcher>(), skirmish, worldState, engine_.Get<HotkeyMap>(),
+            rallyPos, worldActive, worldIs2v2, sandboxMode, worldDifficulty, worldMapPath,
+            lastOutcomeState, replayCursor, replayPlayTimer, pendingConfirm)
 {
 }
 
@@ -81,11 +96,11 @@ void Game::Init()
     cheats.Init();
 
     InitAudioDevice();
-    audio.Init(IsAudioDeviceReady());
-    art.Init(true);
-    if (art.HasFont())
+    engine_.Get<Audio>().Init(IsAudioDeviceReady());
+    engine_.Get<Art>().Init(true);
+    if (engine_.Get<Art>().HasFont())
     {
-        GuiSetFont(art.UiFont());
+        GuiSetFont(engine_.Get<Art>().UiFont());
     }
     rmlUi.Init("data/ui", "data/fonts");
     if (!rmlUiMenus.Init(rmlUi, "data/ui"))
@@ -102,7 +117,7 @@ void Game::Init()
     camera.view.rotation = 0.0f;
     camera.view.zoom = 1.0f;
     LoadSettings(menu.settings, kSettingsPath);
-    art.SetColorBlindMode(menu.settings.colorBlindMode);
+    engine_.Get<Art>().SetColorBlindMode(menu.settings.colorBlindMode);
     GuiSetStyle(DEFAULT, TEXT_SIZE, static_cast<int>(10 * menu.settings.uiScale));
     menuScreens.ApplyHotkeyOverrides();
 
@@ -115,8 +130,10 @@ void Game::Init()
     worldMapPath.clear();
     showHints = true;
 
-    events.Subscribe(EventType::UnitSpawned, [&](const Event &) { audio.Play(SfxId::Confirm); });
-    events.Subscribe(EventType::UnitDestroyed, [&](const Event &e) {
+    engine_.Get<EventDispatcher>().Subscribe(EventType::UnitSpawned, [&](const Event &) {
+        engine_.Get<Audio>().Play(SfxId::Confirm);
+    });
+    engine_.Get<EventDispatcher>().Subscribe(EventType::UnitDestroyed, [&](const Event &e) {
         const auto *lifecycle = dynamic_cast<const UnitLifecycleEvent *>(&e);
         if (lifecycle != nullptr && lifecycle->teamID == 0)
         {
@@ -136,9 +153,9 @@ void Game::Update()
         pendingConfirm = ConfirmChoice::None;
     }
     match.PollConfirmKeys();
-    input.shortcuts.SetEnabled(!menu.ConfirmOpen() && !cheats.CapturingInput());
-    input.Update(camera, menu.settings.cameraSpeed, GetFrameTime());
-    camera.AdjustZoom(input.WheelDelta());
+    engine_.Get<InputManager>().shortcuts.SetEnabled(!menu.ConfirmOpen() && !cheats.CapturingInput());
+    engine_.Get<InputManager>().Update(camera, menu.settings.cameraSpeed, GetFrameTime());
+    camera.AdjustZoom(engine_.Get<InputManager>().WheelDelta());
     const int screenWidth = GetScreenWidth();
     const int screenHeight = GetScreenHeight();
     camera.view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
@@ -190,9 +207,9 @@ void Game::Update()
         sim.Step(GetFrameTime());
     }
 
-    audio.ApplySettings(menu.settings.masterVolume, menu.settings.musicVolume,
-                        menu.settings.sfxVolume, menu.settings.mute);
-    audio.UpdateMusic();
+    engine_.Get<Audio>().ApplySettings(menu.settings.masterVolume, menu.settings.musicVolume,
+                                  menu.settings.sfxVolume, menu.settings.mute);
+    engine_.Get<Audio>().UpdateMusic();
 
     if (menu.state == MenuState::ReplayViewer && sim.ReplayCount() > 0)
     {
@@ -222,13 +239,14 @@ void Game::Update()
 void Game::Shutdown()
 {
     minimap.Unload();
-    art.Shutdown();
-    audio.Shutdown();
+    engine_.Get<Art>().Shutdown();
+    engine_.Get<Audio>().Shutdown();
     CloseAudioDevice();
     cheats.Shutdown();
     rmlUi.Shutdown();
     CloseWindow();
     Log::Shutdown();
+    engine_.Shutdown();
 }
 
 bool Game::IsRunning() const

@@ -33,6 +33,7 @@
 #include "ShortcutBindings.h"
 #include "Simulation.h"
 #include "Skirmish.h"
+#include "Subsystem.h"
 #include "TileMap.h"
 #include "UnitFactory.h"
 
@@ -58,8 +59,15 @@ protected:
     void StartMatch(const std::string &mapPath, AIDifficulty difficulty);
     void QuitToMenu();
 private:
-    Audio audio;
-    Art art;
+    // Engine-lifetime service scope: owns Audio, Art, EventDispatcher,
+    // InputManager, and HotkeyMap. First member, constructed before every
+    // consumer, so init-list expressions may bind engine_.Get<T>() references.
+    // The Adds run in the EngineScope ctor; Game::Init body would be too late.
+    struct EngineScope : public Subsystems
+    {
+        EngineScope();
+    };
+    EngineScope engine_;
     GameCamera camera;
 protected:
     MenuFlow menu;    // E2EGame seam
@@ -70,7 +78,6 @@ protected:
     Registry registry; // E2EGame seam
 private:
     ResourceSystem resources;
-    EventDispatcher events;
 protected:
     TileMap map; // E2EGame seam
 private:
@@ -86,9 +93,6 @@ private:
     Vector2 rallyPos = {};
     SkirmishWorld skirmish;
     WorldState worldState;
-    InputManager input;
-    HotkeyMap hotkeys; // remappable Tier-1 keys
-
 protected:
     bool worldActive = false; // E2EGame seam
 private:

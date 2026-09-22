@@ -11,6 +11,7 @@
 #include "Building.h"
 #include "Nodes.h"
 #include "SpriteData.h"
+#include "Subsystem.h"
 #include "Unit.h"
 
 enum class TerrainType : std::uint8_t;
@@ -90,7 +91,7 @@ private:
     std::vector<DamageNumber> live_;
 };
 
-class Art
+class Art : public Subsystem
 {
 public:
     // Load every sprite. With withDevice=false or on a missing file, loads

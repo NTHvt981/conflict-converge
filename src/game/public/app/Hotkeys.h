@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "raylib.h"
+#include "Subsystem.h"
 
 // Fully remappable Tier-1 hotkeys: single source of truth for action ids,
 // labels, and default keys. Game::BindShortcuts, the remap screen, and
@@ -27,7 +28,7 @@ bool IsKnownHotkeyAction(const std::string &action);
 // pure table lookup, safe headless.
 const char *HotkeyDisplayName(int key);
 
-class HotkeyMap
+class HotkeyMap : public Subsystem
 {
 public:
     // Effective key: override if rebound, else the table default; 0 when the

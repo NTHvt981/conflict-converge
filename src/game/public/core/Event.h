@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Subsystem.h"
+
 // Event dispatcher: systems post events, UI and tests subscribe. Routing is
 // by EventType; handlers downcast the base Event to the concrete payload.
 
@@ -29,7 +31,7 @@ struct Event
     virtual ~Event() = default;
 };
 
-class EventDispatcher
+class EventDispatcher : public Subsystem
 {
 public:
     using Handler = std::function<void(const Event &)>;

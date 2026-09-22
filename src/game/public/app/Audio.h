@@ -3,6 +3,7 @@
 #include <string>
 
 #include "raylib.h"
+#include "Subsystem.h"
 
 // Audio: SFX + a looped music stream from data/audio/*.wav (synthesized by
 // tools/gen_audio.py). Headless-safe: Init(false) loads nothing and every
@@ -21,7 +22,7 @@ enum class SfxId
     Count
 };
 
-class Audio
+class Audio : public Subsystem
 {
 public:
     Audio(); // first ShouldPlay ever is true
