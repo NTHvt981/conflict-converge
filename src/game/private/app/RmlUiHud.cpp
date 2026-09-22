@@ -167,10 +167,20 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
              "opt-p-sfx", "opt-p-mute", "opt-p-rightdrag", "opt-p-colorblind" });
     listen(outcomeDoc_, "click", { "btn-o-tomenu", "btn-o-todesktop" });
     listen(confirmDoc_, "click", { "btn-yes", "btn-no" });
-    host_->HideStub();
-    hudDoc_->Show();
     ready_ = true;
     return true;
+}
+
+void RmlUiHud::Hide()
+{
+    if (!ready_)
+    {
+        return;
+    }
+    for (Rml::ElementDocument *doc : { hudDoc_, pauseDoc_, outcomeDoc_, confirmDoc_ })
+    {
+        doc->Hide();
+    }
 }
 
 void RmlUiHud::Shutdown()
@@ -246,8 +256,7 @@ ConfirmChoice RmlUiHud::Draw(int screenWidth, int screenHeight, float uiScale)
     default:
         break;
     }
-    // The modal only ever opens over Playing/Paused; other world-branch
-    // states fall through to the legacy raygui modal in GameRenderer.
+    // The modal only ever opens over Playing/Paused.
     if (menu_.ConfirmOpen() &&
         (menu_.state == MenuState::Playing || menu_.state == MenuState::Paused))
     {
@@ -291,7 +300,7 @@ void RmlUiHud::RefreshOutcome()
 
 void RmlUiHud::RefreshConfirm()
 {
-    // Texts match DrawConfirmDialog (raygui) exactly.
+    // Texts match the confirm.rml dialog exactly.
     const bool quitting = menu_.confirm == ConfirmKind::QuitApp;
     SetTextIn(confirmDoc_, "confirm-title",
               quitting ? "Quit Conflict Converge?" : "Return to main menu?");

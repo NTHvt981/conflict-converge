@@ -57,6 +57,7 @@ public:
     bool Init(RmlUiHost &host, const std::string &dataDir);
     void Shutdown();
     bool IsReady() const { return ready_; }
+    void Hide();
 
     // First-refusal gate for PlayingInput (Phase 4 preview): true while the
     // pointer is over an interactive control, latched while its mouse button

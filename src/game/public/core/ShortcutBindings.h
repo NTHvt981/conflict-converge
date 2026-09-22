@@ -9,7 +9,6 @@
 #include "Hotkeys.h"
 #include "InputManager.h"
 #include "Menu.h"
-#include "MenuScreens.h"
 #include "Nodes.h"
 #include "Pings.h"
 #include "PlayingInput.h"
@@ -23,7 +22,7 @@ class ShortcutBindings
 {
 public:
     ShortcutBindings(InputManager &input, HotkeyMap &hotkeys, MenuFlow &menu,
-                     MenuScreens &menuScreens, RmlUiMenus &rmlUiMenus, PlayingInput &playingInput,
+                     RmlUiMenus &rmlUiMenus, PlayingInput &playingInput,
                      Audio &audio, GameCamera &camera, TileMap &map, OccupancyGrid &occ,
                      ResourceNodes &nodes, FogOfWar &fog, Registry &registry,
                      ResourceSystem &resources, EventDispatcher &events,
@@ -42,7 +41,6 @@ private:
     InputManager &input_;
     HotkeyMap &hotkeys_;
     MenuFlow &menu_;
-    MenuScreens &menuScreens_;
     RmlUiMenus &rmlUiMenus_;
     PlayingInput &playingInput_;
     Audio &audio_;

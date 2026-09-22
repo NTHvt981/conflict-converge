@@ -6,7 +6,7 @@
 #include "Unit.h"
 
 ShortcutBindings::ShortcutBindings(InputManager &input, HotkeyMap &hotkeys, MenuFlow &menu,
-                                   MenuScreens &menuScreens, RmlUiMenus &rmlUiMenus,
+                                   RmlUiMenus &rmlUiMenus,
                                    PlayingInput &playingInput, Audio &audio, GameCamera &camera,
                                    TileMap &map, OccupancyGrid &occ, ResourceNodes &nodes,
                                    FogOfWar &fog, Registry &registry, ResourceSystem &resources,
@@ -17,7 +17,6 @@ ShortcutBindings::ShortcutBindings(InputManager &input, HotkeyMap &hotkeys, Menu
     : input_(input)
     , hotkeys_(hotkeys)
     , menu_(menu)
-    , menuScreens_(menuScreens)
     , rmlUiMenus_(rmlUiMenus)
     , playingInput_(playingInput)
     , audio_(audio)
@@ -268,13 +267,8 @@ void ShortcutBindings::Bind()
         }
     });
     input_.shortcuts.Bind(hotkeys_.KeyFor("Back"), [&] {
-        // The RML remap screen owns Esc while it owns the HotkeyRemap state
-        // (disarm first); otherwise the raygui capture goes first, as before.
+        // The RML remap screen owns Esc while it owns the HotkeyRemap state.
         if (rmlUiMenus_.CancelRemapCapture())
-        {
-            return;
-        }
-        if (menuScreens_.CancelRemapCapture())
         {
             return;
         }

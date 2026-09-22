@@ -39,7 +39,7 @@ Game::Game()
                      [&]() { match.WatchLastReplay(); },
                      [&]() { bindings.Bind(); },
                  })
-    , bindings(input, hotkeys, menu, menuScreens, rmlUiMenus, playingInput, audio, camera,
+    , bindings(input, hotkeys, menu, rmlUiMenus, playingInput, audio, camera,
                 map, occ, nodes, fog, registry, resources, events, worldState, pings,
                 worldActive, showHints, [this]() { QuitToMenu(); },
                 [this](int dir) { match.StepReplay(dir); })
@@ -48,9 +48,9 @@ Game::Game()
                [this]() { QuitToMenu(); },
                [this](MenuState returnTo) { rmlUiMenus.BeginRemap(returnTo); })
     , renderer(art, camera, map, registry, fog, nodes, minimap, pings, damageNumbers,
-               playingInput, menu, sim, resources, queue, hotkeys, input, ai, menuScreens,
-               events, showHints, replayCursor, worldDifficulty, menuStateTime, shakeTrauma,
-               playerAutoRepair, autoRepairCap, rmlUi, rmlUiHud, rmlUiMenus,
+               playingInput, menu, sim, resources, queue, hotkeys, input, ai,
+               events, replayCursor, worldDifficulty, menuStateTime, shakeTrauma,
+               rmlUi, rmlUiHud, rmlUiMenus,
                [this]() { QuitToMenu(); })
     , match(camera, ai, allyAI, enemyAI2, menu, minimap, playingInput, sim, events,
             skirmish, worldState, hotkeys, rallyPos, worldActive, worldIs2v2, sandboxMode,
@@ -87,17 +87,14 @@ void Game::Init()
     {
         GuiSetFont(art.UiFont());
     }
-    rmlUi.Init("data/ui");
-    if (rmlUi.IsReady() && !rmlUiMenus.Init(rmlUi, "data/ui"))
+    rmlUi.Init("data/ui", "data/fonts");
+    if (!rmlUiMenus.Init(rmlUi, "data/ui"))
     {
-        // Menu documents failed: fall back to the pure raygui branch.
-        rmlUi.Shutdown();
+        Log::Fatal("RmlUi menu documents failed to load from data/ui");
     }
-    if (rmlUiMenus.IsReady())
+    if (!rmlUiHud.Init(rmlUi, "data/ui"))
     {
-        // HUD document failure is non-fatal: IsReady stays false and the
-        // renderer keeps the raygui panels while menus stay RmlUi.
-        rmlUiHud.Init(rmlUi, "data/ui");
+        Log::Fatal("RmlUi HUD documents failed to load from data/ui");
     }
     lastOutcomeState = MenuState::MainMenu;
 
@@ -157,6 +154,7 @@ void Game::Update()
 
     if (!worldActive)
     {
+        rmlUiHud.Hide();
         if (rmlUiMenus.HandlesState())
         {
             if (const ConfirmChoice choice = rmlUiMenus.Draw(screenWidth, screenHeight);
@@ -166,6 +164,7 @@ void Game::Update()
             }
             return;
         }
+        // Anything RmlUiMenus does not handle is the raygui Map Editor.
         rmlUiMenus.HideAll();
         if (const ConfirmChoice choice = menuScreens.Draw(screenWidth, screenHeight, menuStateTime);
             choice != ConfirmChoice::None)

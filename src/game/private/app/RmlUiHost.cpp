@@ -8,10 +8,8 @@
 
 #include <RmlUi/Core.h>
 #include <RmlUi/Core/Context.h>
-#include <RmlUi/Core/ElementDocument.h>
 #include <RmlUi/Debugger.h>
 
-#include "FontEngineInterfaceBitmap.h"
 #include "RmlRaylibFileInterface.h"
 #include "RmlRaylibRenderInterface.h"
 #include "RmlRaylibSystemInterface.h"
@@ -23,7 +21,7 @@ RmlUiHost::~RmlUiHost()
     Shutdown();
 }
 
-bool RmlUiHost::Init(const std::string &dataDir)
+bool RmlUiHost::Init(const std::string &dataDir, const std::string &fontsDir)
 {
     if (ready_ || !IsWindowReady())
     {
@@ -32,11 +30,9 @@ bool RmlUiHost::Init(const std::string &dataDir)
     render_ = std::make_unique<RmlRaylibRenderInterface>();
     system_ = std::make_unique<RmlRaylibSystemInterface>();
     files_ = std::make_unique<RmlRaylibFileInterface>();
-    fonts_ = std::make_unique<FontEngineInterfaceBitmap>();
     Rml::SetSystemInterface(system_.get());
     Rml::SetFileInterface(files_.get());
     Rml::SetRenderInterface(render_.get());
-    Rml::SetFontEngineInterface(fonts_.get());
     if (!Rml::Initialise())
     {
         return false;
@@ -60,22 +56,13 @@ bool RmlUiHost::Init(const std::string &dataDir)
         return false;
     }
     Rml::Debugger::SetVisible(false);
-    if (!Rml::LoadFontFace(dataDir_ + "/OpenSansPX_Regular_22.fnt") ||
-        !Rml::LoadFontFace(dataDir_ + "/OpenSansPX_Bold_22.fnt"))
+    if (!Rml::LoadFontFace(fontsDir + "/OpenSansPX.ttf", "opensanspx", Rml::Style::FontStyle::Normal, Rml::Style::FontWeight::Normal) ||
+        !Rml::LoadFontFace(fontsDir + "/OpenSansPXBold.ttf", "opensanspx", Rml::Style::FontStyle::Normal, Rml::Style::FontWeight::Bold))
     {
         Rml::Shutdown();
         context_ = nullptr;
         return false;
     }
-    // Phase 1 proof document; Phase 2 loads the real menu/HUD documents.
-    stub_ = context_->LoadDocument(dataDir_ + "/stub.rml");
-    if (stub_ == nullptr)
-    {
-        Rml::Shutdown();
-        context_ = nullptr;
-        return false;
-    }
-    stub_->Show();
     ready_ = true;
     return true;
 }
@@ -89,23 +76,10 @@ void RmlUiHost::Shutdown()
     ready_ = false;
     if (context_ != nullptr)
     {
-        if (stub_ != nullptr)
-        {
-            context_->UnloadDocument(stub_);
-            stub_ = nullptr;
-        }
         context_->Update();
         context_ = nullptr;
     }
     Rml::Shutdown();
-}
-
-void RmlUiHost::HideStub()
-{
-    if (stub_ != nullptr)
-    {
-        stub_->Hide();
-    }
 }
 
 void RmlUiHost::BeginFrame(int width, int height, float uiScale)

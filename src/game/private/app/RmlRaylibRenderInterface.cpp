@@ -60,13 +60,8 @@ Rml::TextureHandle RmlRaylibRenderInterface::LoadTexture(Rml::Vector2i& texture_
 	if (texture.id == 0)
 		return 0;
 
-	// Font atlas filter trade-off (probe): POINT keeps the OpenSansPX
-	// pixel font crisp at dp_ratio 1.0 but blocky at non-integer uiScale
-	// (1.25/1.5x); BILINEAR smooths scaled text at the cost of slight
-	// softness at 1.0x. Production needs SDF/FreeType or multi-size
-	// atlases — see FontFaceBitmap clone note. UI art keeps bilinear.
-	const bool isFontAtlas = source.find("OpenSansPX") != Rml::String::npos;
-	SetTextureFilter(texture, isFontAtlas ? TEXTURE_FILTER_POINT : TEXTURE_FILTER_BILINEAR);
+	// FreeType glyph textures stay bilinear at any uiScale.
+	SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
 
 	texture_dimensions.x = texture.width;
 	texture_dimensions.y = texture.height;

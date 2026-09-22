@@ -115,6 +115,9 @@ private:
     Rml::Context *context_ = nullptr;
     std::string dataDir_;
     bool ready_ = false;
+    bool shown_ = false;
+    MenuState shownState_ = MenuState::MainMenu;
+    bool shownConfirm_ = false;
     ConfirmChoice pendingChoice_ = ConfirmChoice::None;
     Rml::ElementDocument *menuDoc_ = nullptr;
     Rml::ElementDocument *setupDoc_ = nullptr;
@@ -127,4 +130,5 @@ private:
     int remapConflictKey_ = 0;
     MenuState remapReturn_ = MenuState::Settings; // where Back returns to
     std::string remapCache_;
+    std::string mapCache_;
 };

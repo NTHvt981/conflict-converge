@@ -223,7 +223,6 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
     Listen(confirmDoc_, "click", { "btn-yes", "btn-no" });
     Listen(remapDoc_, "click", { "btn-remap-back" });
     PopulateMaps();
-    host_->HideStub();
     ready_ = true;
     ShowState();
     return true;
@@ -271,6 +270,7 @@ bool RmlUiMenus::HandlesState() const
 
 void RmlUiMenus::HideAll()
 {
+    shown_ = false;
     for (Rml::ElementDocument *doc :
          { menuDoc_, setupDoc_, settingsDoc_, loadDoc_, confirmDoc_, remapDoc_ })
     {
@@ -293,7 +293,10 @@ ConfirmChoice RmlUiMenus::Draw(int screenWidth, int screenHeight)
                          menu_.settings.sfxVolume, menu_.settings.mute);
     audio_.UpdateMusic();
     PumpInput(context_);
-    ShowState();
+    if (!shown_ || menu_.state != shownState_ || menu_.ConfirmOpen() != shownConfirm_)
+    {
+        ShowState();
+    }
     host_->BeginFrame(screenWidth, screenHeight, menu_.settings.uiScale);
     BeginDrawing();
     ClearBackground(RAYWHITE);
@@ -325,7 +328,7 @@ void RmlUiMenus::ProcessEvent(Rml::Event &event)
 
 Rml::ElementDocument *RmlUiMenus::Load(const std::string &file)
 {
-    return context_->LoadDocument(dataDir_ + file);
+    return context_->LoadDocument(dataDir_ + "/" + file);
 }
 
 void RmlUiMenus::Listen(Rml::ElementDocument *doc, const char *event,
@@ -541,6 +544,9 @@ void RmlUiMenus::ShowState()
         confirmDoc_->Show(Rml::ModalFlag::Modal);
     }
     RefreshCurrent();
+    shown_ = true;
+    shownState_ = menu_.state;
+    shownConfirm_ = menu_.ConfirmOpen();
 }
 
 Rml::ElementDocument *RmlUiMenus::DocForState(MenuState state)
@@ -770,7 +776,7 @@ void RmlUiMenus::OnChange(Rml::Element *target, const Rml::String &id)
     else if (id == "opt-uiscale")
     {
         menu_.settings.uiScale = Clamp(ReadRange(target), 0.75f, 2.0f);
-        // Keeps the remaining raygui states legible; the RmlUi ratio follows
+        // Keeps the raygui Map Editor legible; the RmlUi ratio follows
         // uiScale every frame via BeginFrame.
         GuiSetStyle(DEFAULT, TEXT_SIZE,
                     static_cast<int>(10 * menu_.settings.uiScale));
@@ -802,6 +808,17 @@ void RmlUiMenus::OnChange(Rml::Element *target, const Rml::String &id)
 
 void RmlUiMenus::PopulateMaps()
 {
+    std::string signature;
+    for (const MapEntry &entry : menu_.setup.maps)
+    {
+        signature += entry.path;
+        signature += '\n';
+    }
+    if (signature == mapCache_)
+    {
+        return;
+    }
+    mapCache_ = signature;
     Rml::Element *list = setupDoc_->GetElementById("maplist");
     while (Rml::Element *child = list->GetFirstChild())
     {
@@ -914,7 +931,7 @@ void RmlUiMenus::RefreshLoad()
 
 void RmlUiMenus::RefreshConfirm()
 {
-    // Texts match DrawConfirmDialog (raygui) exactly.
+    // Texts match the confirm.rml dialog exactly.
     const bool quitting = menu_.confirm == ConfirmKind::QuitApp;
     SetTextIn(confirmDoc_, "confirm-title",
               quitting ? "Quit Conflict Converge?" : "Return to main menu?");

@@ -1,7 +1,6 @@
 
 #include "GameRenderer.h"
 
-#include "raygui.h"
 #include "Building.h"
 #include "Cheats.h"
 #include "Cursor.h"
@@ -69,19 +68,6 @@ Rectangle SquadSelectionBox(const Art &art, const Unit &unit, Entity id, bool at
     }
     return { x0 - 2.0f, y0 - 2.0f, (x1 - x0) + 4.0f, (y1 - y0) + 4.0f };
 }
-const char *DifficultyName(AIDifficulty difficulty)
-{
-    switch (difficulty)
-    {
-    case AIDifficulty::Easy:
-        return "Easy";
-    case AIDifficulty::Hard:
-        return "Hard";
-    case AIDifficulty::Medium:
-    default:
-        return "Medium";
-    }
-}
 }
 
 GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry &registry,
@@ -89,10 +75,9 @@ GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry 
                            DamageNumbers &damageNumbers, PlayingInput &playingInput, MenuFlow &menu,
                            Simulation &sim, ResourceSystem &resources, ProductionQueue &queue,
                             HotkeyMap &hotkeys, InputManager &input, AICommander &ai,
-                            MenuScreens &menuScreens, EventDispatcher &events, const bool &showHints,
-                            const int &replayCursor, const AIDifficulty &worldDifficulty,
-                            const float &menuStateTime, const float &shakeTrauma, bool &playerAutoRepair,
-                            float &autoRepairCap, RmlUiHost &rmlUi, RmlUiHud &rmlUiHud,
+                            EventDispatcher &events, const int &replayCursor,
+                            const AIDifficulty &worldDifficulty, const float &menuStateTime,
+                            const float &shakeTrauma, RmlUiHost &rmlUi, RmlUiHud &rmlUiHud,
                             RmlUiMenus &rmlUiMenus, std::function<void()> quitToMenu)
     : art_(art)
     , camera_(camera)
@@ -111,27 +96,16 @@ GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry 
     , hotkeys_(hotkeys)
     , input_(input)
     , ai_(ai)
-    , menuScreens_(menuScreens)
     , events_(events)
-    , showHints_(showHints)
     , replayCursor_(replayCursor)
     , worldDifficulty_(worldDifficulty)
     , menuStateTime_(menuStateTime)
     , shakeTrauma_(shakeTrauma)
-    , playerAutoRepair_(playerAutoRepair)
-    , autoRepairCap_(autoRepairCap)
     , rmlUi_(rmlUi)
     , rmlUiHud_(rmlUiHud)
     , rmlUiMenus_(rmlUiMenus)
     , quitToMenu_(std::move(quitToMenu))
 {
-}
-
-void GameRenderer::Announce(EventType type)
-{
-    Event bare;
-    bare.type = type;
-    events_.Dispatch(bare);
 }
 
 void GameRenderer::DrawWorld()
@@ -417,13 +391,6 @@ void GameRenderer::DrawWorld()
 
 ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight, float uiScale)
 {
-    // The modal owns input while open: lock raygui so HUD/overlay controls
-    // behind it cannot fire.
-    const bool modal = menu_.ConfirmOpen();
-    if (modal)
-    {
-        GuiLock();
-    }
     if (playingInput_.IsDragging() && input_.LeftDown())
     {
         DrawRectangleLinesEx(
@@ -484,55 +451,7 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
     ConfirmChoice hudChoice = ConfirmChoice::None;
     if (rmlUiHud_.IsReady())
     {
-        // Phase 3: the RmlUi HUD owns these panels (clicks are pre-routed by
-        // the first-refusal gate in Game::Update). Drag visuals, the hover
-        // tooltip, and every overlay below stay raygui until Phase 4.
         hudChoice = rmlUiHud_.Draw(screenWidth, screenHeight, uiScale);
-    }
-    else
-    {
-        DrawResourcePanel(resources_, &art_);
-        DrawSelectionPanel(registry_, &art_);
-        DrawIdleButtons(registry_, 0);
-        DrawRepairPanel(&playerAutoRepair_, &autoRepairCap_);
-        DrawControlGroupStrip(registry_, 0, playingInput_.AutoAddGroupBit(), &art_);
-        DrawSaveSlots();
-        DrawProductionPanel(resources_, queue_, sim_.HasFactory());
-        if (playingInput_.IsSettingRally())
-        {
-            Art::DrawUiText(&art_, "Rally: left-click to place (R cancels)", 250, 364, 16,
-                            DARKGREEN);
-        }
-        if (playingInput_.AttackGroundMode())
-        {
-            Art::DrawUiText(&art_, "Shelling: right-click to fire (X/Esc cancels)", 250, 364,
-                            16, RED);
-        }
-        if (!queue_.Empty())
-        {
-            const float ppw = 174.0f;
-            const float ppx = static_cast<float>(screenWidth) - ppw - 10.0f;
-            Art::DrawUiText(&art_, "Producing...", static_cast<int>(ppx), screenHeight - 222, 16,
-                            GRAY);
-            DrawRectangle(static_cast<int>(ppx), screenHeight - 202, 150, 12, LIGHTGRAY);
-            DrawRectangle(static_cast<int>(ppx), screenHeight - 202,
-                          static_cast<int>(150.0f * queue_.HeadProgress()), 12, DARKGREEN);
-        }
-
-        DrawFPS(screenWidth - 170, 135);
-        Art::DrawUiText(&art_, TextFormat("Enemy: %s  Waves: %d", DifficultyName(worldDifficulty_),
-                                         ai_.WavesLaunched()),
-                        screenWidth - 170, 155, 16, GRAY);
-
-        if (showHints_)
-        {
-            const std::vector<std::string> hints = ShortcutHintLines(hotkeys_);
-            for (std::size_t i = 0; i < hints.size(); ++i)
-            {
-                Art::DrawUiText(&art_, hints[i].c_str(), 8, 250 + static_cast<int>(i) * 18, 14,
-                                Fade(DARKGRAY, 0.8f));
-            }
-        }
     }
 
     if (menu_.state == MenuState::Playing && !playingInput_.IsDragging() &&
@@ -578,15 +497,7 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
 
     if (menu_.state == MenuState::HotkeyRemap)
     {
-        if (rmlUiMenus_.IsReady())
-        {
-            rmlUiMenus_.DrawRemapOverlay();
-        }
-        else
-        {
-            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));
-            menuScreens_.DrawRemap(screenWidth / 2.0f);
-        }
+        rmlUiMenus_.DrawRemapOverlay();
     }
     if (menu_.state == MenuState::ReplayViewer)
     {
@@ -594,90 +505,12 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
                  DARKGRAY);
         Art::DrawUiText(&art_, "Left/Right step - Esc exit", 8, 116, 14, Fade(DARKGRAY, 0.8f));
     }
-    if (menu_.state == MenuState::Paused)
-    {
-        DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));
-        if (GuiWindowBox(Rectangle{ 250, 40, 300, 400 }, "Paused"))
-        {
-            menu_.state = MenuState::Playing;
-        }
-        if (GuiButton(Rectangle{ 270, 85, 260, 30 }, "Resume"))
-        {
-            Announce(EventType::MenuAction);
-            menu_.state = MenuState::Playing;
-        }
-        GuiLabel(Rectangle{ 270, 122, 260, 20 }, "Camera speed");
-        GuiSlider(Rectangle{ 270, 145, 260, 20 }, "100", "800", &menu_.settings.cameraSpeed,
-                  100.0f, 800.0f);
-        GuiCheckBox(Rectangle{ 270, 170, 20, 20 }, "Minimap", &menu_.settings.showMinimap);
-        GuiLabel(Rectangle{ 270, 195, 260, 20 }, "Master volume");
-        GuiSlider(Rectangle{ 270, 218, 260, 20 }, "0", "1", &menu_.settings.masterVolume,
-                  0.0f, 1.0f);
-        GuiLabel(Rectangle{ 270, 243, 260, 20 }, "Music volume");
-        GuiSlider(Rectangle{ 270, 266, 260, 20 }, "0", "1", &menu_.settings.musicVolume,
-                  0.0f, 1.0f);
-        GuiLabel(Rectangle{ 270, 291, 260, 20 }, "SFX volume");
-        GuiSlider(Rectangle{ 270, 314, 260, 20 }, "0", "1", &menu_.settings.sfxVolume,
-                  0.0f, 1.0f);
-        GuiCheckBox(Rectangle{ 270, 340, 20, 20 }, "Mute", &menu_.settings.mute);
-        GuiCheckBox(Rectangle{ 270, 365, 20, 20 }, "Right-drag pan",
-                    &menu_.settings.rightDragPan);
-        GuiCheckBox(Rectangle{ 270, 390, 20, 20 }, "Color-blind mode",
-                    &menu_.settings.colorBlindMode);
-        art_.SetColorBlindMode(menu_.settings.colorBlindMode);
-        if (GuiButton(Rectangle{ 270, 415, 260, 30 }, "Remap hotkeys_..."))
-        {
-            menuScreens_.BeginRemap(MenuState::Paused);
-        }
-        if (GuiButton(Rectangle{ 270, 450, 260, 30 }, "Quit to menu_"))
-        {
-            quitToMenu_();
-        }
-        if (GuiButton(Rectangle{ 270, 485, 260, 30 }, "Quit to desktop"))
-        {
-            menu_.quitRequested = true;
-        }
-    }
-    else if (menu_.state == MenuState::GameOver || menu_.state == MenuState::Victory)
-    {
-        DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.6f));
-        const bool won = menu_.state == MenuState::Victory;
-        if (GuiWindowBox(Rectangle{ 250, 140, 300, 195 }, won ? "Victory!" : "Defeat"))
-        {
-            menu_.quitRequested = true;
-        }
-        GuiLabel(Rectangle{ 270, 185, 260, 20 },
-                 won ? "Enemy force destroyed." : "Your force was destroyed.");
-        if (GuiButton(Rectangle{ 270, 240, 260, 30 }, "Return to menu_"))
-        {
-            quitToMenu_();
-        }
-        if (GuiButton(Rectangle{ 270, 280, 260, 30 }, "Quit to desktop"))
-        {
-            menu_.quitRequested = true;
-        }
-    }
     if (const float fade = MenuFadeAlpha(menuStateTime_); fade < 1.0f)
     {
         DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 1.0f - fade));
     }
-    // RmlUi overlay: hud.rml (synced + host-updated inside RmlUiHud::Draw
-    // when ready) and any visible menu document. The host renders even when
-    // the HUD falls back to raygui panels — with nothing visible that is a
-    // no-op. Input routing for the world branch lands in Phase 4.
+    // The RmlUi HUD owns every panel and overlay above; the host renders
+    // them screen-space over the world.
     rmlUi_.Render();
-    // The RML confirm modal only ever shows over Playing/Paused (same
-    // condition as RmlUiHud::Draw); anywhere else the modal stays raygui so
-    // it can never be open with no visible dialog.
-    if (rmlUiHud_.IsReady() && modal &&
-        (menu_.state == MenuState::Playing || menu_.state == MenuState::Paused))
-    {
-        return hudChoice;
-    }
-    if (!modal)
-    {
-        return ConfirmChoice::None;
-    }
-    GuiUnlock();
-    return DrawConfirmDialog(menu_, screenWidth, screenHeight);
+    return hudChoice;
 }

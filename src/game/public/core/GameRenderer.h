@@ -35,10 +35,9 @@ public:
                  DamageNumbers &damageNumbers, PlayingInput &playingInput, MenuFlow &menu,
                  Simulation &sim, ResourceSystem &resources, ProductionQueue &queue,
                  HotkeyMap &hotkeys, InputManager &input, AICommander &ai,
-                 MenuScreens &menuScreens, EventDispatcher &events, const bool &showHints,
-                 const int &replayCursor, const AIDifficulty &worldDifficulty,
-                 const float &menuStateTime, const float &shakeTrauma, bool &playerAutoRepair,
-                 float &autoRepairCap, RmlUiHost &rmlUi, RmlUiHud &rmlUiHud,
+                 EventDispatcher &events, const int &replayCursor,
+                 const AIDifficulty &worldDifficulty, const float &menuStateTime,
+                 const float &shakeTrauma, RmlUiHost &rmlUi, RmlUiHud &rmlUiHud,
                  RmlUiMenus &rmlUiMenus, std::function<void()> quitToMenu);    GameRenderer(const GameRenderer &) = delete;
     GameRenderer &operator=(const GameRenderer &) = delete;
 
@@ -46,8 +45,6 @@ public:
     ConfirmChoice DrawHudAndOverlays(int screenWidth, int screenHeight, float uiScale);
 
 private:
-    void Announce(EventType type);
-
     Art &art_;
     GameCamera &camera_;
     TileMap &map_;
@@ -65,15 +62,11 @@ private:
     HotkeyMap &hotkeys_;
     InputManager &input_;
     AICommander &ai_;
-    MenuScreens &menuScreens_;
     EventDispatcher &events_;
-    const bool &showHints_;
     const int &replayCursor_;
     const AIDifficulty &worldDifficulty_;
     const float &menuStateTime_;
     const float &shakeTrauma_;
-    bool &playerAutoRepair_;
-    float &autoRepairCap_;
     RmlUiHost &rmlUi_;
     RmlUiHud &rmlUiHud_;
     RmlUiMenus &rmlUiMenus_;

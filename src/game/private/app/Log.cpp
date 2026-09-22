@@ -4,6 +4,7 @@
 
 #include <cstdarg>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 
@@ -89,6 +90,7 @@ void Fatal(const char *format, ...)
     std::vsnprintf(message, sizeof(message), format, args);
     va_end(args);
     TraceLog(LOG_FATAL, "%s", message);
+    std::exit(EXIT_FAILURE);
 }
 
 }

@@ -64,5 +64,11 @@
         "git_repo": "https://github.com/mikke89/RmlUi.git",
         "dest": "deps/RmlUi",
         "git_tag": "6.3"
+    },
+    {
+        "name": "freetype",
+        "git_repo": "https://github.com/freetype/freetype.git",
+        "dest": "deps/freetype",
+        "git_tag": "VER-2-13-3"
     }
 ]

@@ -355,12 +355,3 @@ button.hkkey {
 	width: 140dp;
 	height: 34dp;
 }
-
-#stub-wrap {
-	text-align: center;
-	margin-top: 250dp;
-}
-
-#stub-hint {
-	color: #828282;
-}

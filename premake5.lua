@@ -159,6 +159,7 @@ project "conflict-converge"
         "raylib-static",
         "raygui-static",
         "rmlui-static",
+        "freetype-static",
         "opengl32",
         "gdi32",
         "winmm",
@@ -233,6 +234,7 @@ project "conflict-converge-test"
         "raylib-static",
         "raygui-static",
         "rmlui-static",
+        "freetype-static",
         "opengl32",
         "gdi32",
         "winmm",
@@ -285,6 +287,7 @@ project "conflict-converge-e2e"
         "raylib-static",
         "raygui-static",
         "rmlui-static",
+        "freetype-static",
         "opengl32",
         "gdi32",
         "winmm",
@@ -351,7 +354,50 @@ project "conflict-converge-editor"
         "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
     }
 
--- ===== RmlUi (permanent; the rmlui-probe app below is still TEMPORARY) =====
+-- ===== FreeType (RmlUi default font engine) =====
+project "freetype-static"
+    kind "StaticLib"
+    cppdialect "C++20"
+    files {
+        "deps/freetype/src/base/ftsystem.c",
+        "deps/freetype/src/base/ftinit.c",
+        "deps/freetype/src/base/ftdebug.c",
+        "deps/freetype/src/base/ftbase.c",
+        "deps/freetype/src/base/ftbbox.c",
+        "deps/freetype/src/base/ftglyph.c",
+        "deps/freetype/src/base/ftbitmap.c",
+        "deps/freetype/src/base/ftstroke.c",
+        "deps/freetype/src/base/ftsynth.c",
+        "deps/freetype/src/base/fttype1.c",
+        "deps/freetype/src/base/ftmm.c",
+        "deps/freetype/src/autofit/autofit.c",
+        "deps/freetype/src/bdf/bdf.c",
+        "deps/freetype/src/cff/cff.c",
+        "deps/freetype/src/cid/type1cid.c",
+        "deps/freetype/src/pcf/pcf.c",
+        "deps/freetype/src/pfr/pfr.c",
+        "deps/freetype/src/sfnt/sfnt.c",
+        "deps/freetype/src/truetype/truetype.c",
+        "deps/freetype/src/type1/type1.c",
+        "deps/freetype/src/type42/type42.c",
+        "deps/freetype/src/winfonts/winfnt.c",
+        "deps/freetype/src/raster/raster.c",
+        "deps/freetype/src/smooth/smooth.c",
+        "deps/freetype/src/sdf/sdf.c",
+        "deps/freetype/src/psaux/psaux.c",
+        "deps/freetype/src/pshinter/pshinter.c",
+        "deps/freetype/src/psnames/psnames.c",
+        "deps/freetype/src/gzip/ftgzip.c",
+        "deps/freetype/src/lzw/ftlzw.c",
+        "deps/freetype/src/svg/svg.c"
+    }
+    includedirs { "deps/freetype/include" }
+    defines { "FT2_BUILD_LIBRARY" }
+filter { "files:deps/freetype/**.c" }
+    defines { "_CRT_SECURE_NO_WARNINGS" }
+filter {}
+
+-- ===== RmlUi (permanent) =====
 project "rmlui-static"
     kind "StaticLib"
     cppdialect "C++20"
@@ -361,54 +407,18 @@ project "rmlui-static"
         "deps/RmlUi/Source/Debugger/**.cpp",
         "deps/RmlUi/Source/Debugger/**.h"
     }
-    removefiles {
-        "deps/RmlUi/Source/Core/FontEngineDefault/**"
-    }
     includedirs {
-        "deps/RmlUi/Include"
+        "deps/RmlUi/Include",
+        "deps/freetype/include"
     }
     defines {
-        "RMLUI_STATIC_LIB"
+        "RMLUI_STATIC_LIB",
+        "RMLUI_FONT_ENGINE_FREETYPE"
+    }
+    links {
+        "freetype-static"
     }
 
 filter { "files:deps/RmlUi/**.cpp" }
     defines { "_CRT_SECURE_NO_WARNINGS" }
 filter {}
-
--- Probe app (TEMPORARY, remove in integration Phase 5)
-project "rmlui-probe"
-    kind "ConsoleApp"
-    cppdialect "C++20"
-    files {
-        "tools/rmlui_probe/**.cpp",
-        "tools/rmlui_probe/**.h",
-        -- Canonical backend lives in src/game now (Phase 1 move); the probe
-        -- references it until the probe is deleted in Phase 5.
-        "src/game/private/app/RmlRaylibRenderInterface.cpp",
-        "src/game/private/app/RmlRaylibSystemInterface.cpp",
-        "src/game/private/app/RmlRaylibFileInterface.cpp",
-        "src/game/private/app/FontEngineBitmap.cpp",
-        "src/game/private/app/FontEngineInterfaceBitmap.cpp"
-    }
-    includedirs {
-        "deps/raylib/src",
-        "deps/RmlUi/Include",
-        "tools/rmlui_probe",
-        "src/game/public/app"
-    }
-    defines {
-        "RMLUI_STATIC_LIB",
-        "NO_FONT_AWESOME"
-    }
-    links {
-        "raylib-static",
-        "rmlui-static",
-        "opengl32",
-        "gdi32",
-        "winmm",
-        "shell32"
-    }
-    debugdir "%{wks.location}/.."
-    postbuildcommands {
-        "{COPYDIR} %{wks.location}/../data %{cfg.buildtarget.directory}/data"
-    }
