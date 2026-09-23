@@ -30,11 +30,11 @@ is header-only (cereal) — there is no codegen step.
 
 ## Build
 
-The solution is **Win32 only** (x64 fails):
+The solution is **x64 only**:
 
 ```bat
-msbuild prj/ConflictConverge.sln /p:Configuration=Debug /p:Platform=Win32
-msbuild prj/ConflictConverge.sln /p:Configuration=Release /p:Platform=Win32
+msbuild prj/ConflictConverge.sln /p:Configuration=Debug /p:Platform=x64
+msbuild prj/ConflictConverge.sln /p:Configuration=Release /p:Platform=x64
 ```
 
 ## Test

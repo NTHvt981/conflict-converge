@@ -48,8 +48,8 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build ${{ matrix.config }} Win32 (solution defines Win32 only)
-        run: msbuild prj/ConflictConverge.sln /p:Configuration=${{ matrix.config }} /p:Platform=Win32 /v:minimal /nologo /clp:ErrorsOnly
+      - name: Build ${{ matrix.config }} x64 (solution is x64 only)
+        run: msbuild prj/ConflictConverge.sln /p:Configuration=${{ matrix.config }} /p:Platform=x64 /v:minimal /nologo /clp:ErrorsOnly
 
       - name: Run tests (${{ matrix.config }}, exit 1 on failure)
         run: prj/bin/${{ matrix.config }}/conflict-converge-test.exe

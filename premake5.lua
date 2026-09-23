@@ -10,8 +10,19 @@ workspace "ConflictConverge"
     -- incremental linking, so both are switched off here explicitly.
     configurations { "Debug", "Release", "ASan" }
 
+    -- 64-bit only: Win32/32-bit is dropped (2GB limit, WOW64, weaker
+    -- optimizer). Single platform so /p:Platform=x64 everywhere.
+    platforms { "x64" }
+
     -- Output directory
     location "prj"
+
+    -- Flat output layout (x64-only, so no platform segment is needed):
+    -- prj/bin/<Cfg> and prj/obj/<Cfg>/<project>. Keeps the documented
+    -- `prj/bin/<Cfg>/conflict-converge-test.exe` paths stable. (Paths are
+    -- resolved against the workspace root, hence the prj/ prefix.)
+    targetdir "prj/bin/%{cfg.buildcfg}"
+    objdir "prj/obj/%{cfg.buildcfg}/%{prj.name}"
 
     -- /FS serializes PDB writes. The header-heavy TUs (cereal templates)
     -- are huge; without this, parallel CL instances lock vc143.pdb (MSVC C1041).
@@ -116,6 +127,15 @@ project "raygui-static"
 project "conflict-converge"
     kind "ConsoleApp"
     cppdialect "C++20"
+
+    -- x64 link order: sibling static libs must be searched BEFORE the Windows
+    -- system libs. raylib defines CloseWindow/PlaySound, which also exist in
+    -- user32.lib/winmm.lib; x64 has no stdcall name decoration to tell them
+    -- apart (unlike Win32), so MSVC reports LNK2005 if a system lib wins the
+    -- race. NoImplicitLink emits the sibling .libs as explicit ordered paths
+    -- first in AdditionalDependencies; ProjectReference items are still
+    -- emitted, preserving solution build ordering.
+    flags { "NoImplicitLink" }
     
     -- Source files from src/ folder
     files {
@@ -186,6 +206,15 @@ project "conflict-converge"
 project "conflict-converge-test"
     kind "ConsoleApp"
     cppdialect "C++20"
+
+    -- x64 link order: sibling static libs must be searched BEFORE the Windows
+    -- system libs. raylib defines CloseWindow/PlaySound, which also exist in
+    -- user32.lib/winmm.lib; x64 has no stdcall name decoration to tell them
+    -- apart (unlike Win32), so MSVC reports LNK2005 if a system lib wins the
+    -- race. NoImplicitLink emits the sibling .libs as explicit ordered paths
+    -- first in AdditionalDependencies; ProjectReference items are still
+    -- emitted, preserving solution build ordering.
+    flags { "NoImplicitLink" }
     
     -- Depend on conflict-converge project (build order dependency)
     dependson { "conflict-converge" }
@@ -252,6 +281,15 @@ project "conflict-converge-e2e"
     kind "ConsoleApp"
     cppdialect "C++20"
 
+    -- x64 link order: sibling static libs must be searched BEFORE the Windows
+    -- system libs. raylib defines CloseWindow/PlaySound, which also exist in
+    -- user32.lib/winmm.lib; x64 has no stdcall name decoration to tell them
+    -- apart (unlike Win32), so MSVC reports LNK2005 if a system lib wins the
+    -- race. NoImplicitLink emits the sibling .libs as explicit ordered paths
+    -- first in AdditionalDependencies; ProjectReference items are still
+    -- emitted, preserving solution build ordering.
+    flags { "NoImplicitLink" }
+
     dependson { "conflict-converge" }
 
     files {
@@ -311,6 +349,15 @@ project "conflict-converge-e2e"
 project "conflict-converge-editor"
     kind "ConsoleApp"
     cppdialect "C++20"
+
+    -- x64 link order: sibling static libs must be searched BEFORE the Windows
+    -- system libs. raylib defines CloseWindow/PlaySound, which also exist in
+    -- user32.lib/winmm.lib; x64 has no stdcall name decoration to tell them
+    -- apart (unlike Win32), so MSVC reports LNK2005 if a system lib wins the
+    -- race. NoImplicitLink emits the sibling .libs as explicit ordered paths
+    -- first in AdditionalDependencies; ProjectReference items are still
+    -- emitted, preserving solution build ordering.
+    flags { "NoImplicitLink" }
 
     files {
         "tools/unit_editor/**.cpp",
