@@ -310,6 +310,10 @@ bool Art::Init(bool withDevice)
     }
     fallback_ = false;
     char path[128];
+    // Missing legacy flats per type; reconciled against atlas coverage
+    // after the atlas loads below, so atlas-only types (Medic ships no
+    // flat PNGs) cannot trip the global rectangle fallback on their own.
+    bool unitFlatMissing[static_cast<int>(UnitType::Count)] = {};
     for (int t = 0; t < static_cast<int>(UnitType::Count); ++t)
     {
         for (int team = 0; team < 2; ++team)
@@ -323,7 +327,7 @@ bool Art::Init(bool withDevice)
                 units_[t][team][f] = LoadTexture(path);
                 if (units_[t][team][f].id == 0)
                 {
-                    fallback_ = true;
+                    unitFlatMissing[t] = true;
                 }
             }
         }
@@ -397,6 +401,23 @@ bool Art::Init(bool withDevice)
             atlas_.clear();
             sheet_ = SpriteSheetData{};
             sheetLoaded_ = false;
+        }
+    }
+    for (int t = 0; t < static_cast<int>(UnitType::Count); ++t)
+    {
+        if (!unitFlatMissing[t])
+        {
+            continue;
+        }
+        // Idle-sprite presence guarantees UnitSprite never resolves empty
+        // (attack/walk fall back to idle), so missing flats are harmless
+        // while the atlas is up. Without atlas cover the type would have
+        // no visual at all: keep the rectangle fallback.
+        const std::string idleName =
+            std::string(UnitFile(static_cast<UnitType>(t))) + "_idle_0_6";
+        if (!(atlasReady_ && FindSpriteByName(sheet_, idleName) != nullptr))
+        {
+            fallback_ = true;
         }
     }
     ready_ = !fallback_;
