@@ -1,6 +1,6 @@
 #include "SaveGame.h"
 
-#include <cereal/archives/binary.hpp>
+#include <cereal/archives/json.hpp>
 #include <cereal/cereal.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
@@ -30,7 +30,7 @@
 namespace
 {
 
-constexpr char kMagic[4] = { 'C', 'C', 'B', '2' };
+constexpr char kMagic[4] = { 'C', 'C', 'J', '3' };
 constexpr std::int32_t kMaxMapTiles = 1024 * 1024;
 constexpr std::int32_t kMaxUnits = 100000;
 constexpr std::int32_t kMaxBuildings = 100000;
@@ -117,7 +117,7 @@ struct SavedWorld
     std::vector<ResourceNode> nodes;
     float nodeIronCarry = 0.0f;
     float nodeOilCarry = 0.0f;
-    std::vector<std::pair<int, std::string>> teamFog;
+    std::vector<std::pair<int, std::vector<std::uint8_t>>> teamFog;
 };
 
 bool InRange(std::int64_t value)
@@ -192,14 +192,14 @@ bool Decode(const std::string &payload, SavedWorld &out)
     try
     {
         std::istringstream in(payload);
-        cereal::BinaryInputArchive ar(in);
+        cereal::JSONInputArchive ar(in);
         ar(msg);
     }
     catch (const std::exception &)
     {
         return false;
     }
-    if (msg.saveVersion != kSaveVersion)
+    if (msg.saveVersion > kSaveVersion || msg.saveVersion < kMinSupportedVersion)
     {
         return false;
     }
@@ -414,12 +414,12 @@ bool SaveWorld(const WorldState &world, const std::string &path)
         SaveFog &out = msg.teamFog.emplace_back();
         out.team = teamID;
         const std::vector<std::uint8_t> bytes = world.fog->ExploredBytes(teamID);
-        out.explored.assign(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+        out.explored.assign(bytes.begin(), bytes.end());
     }
 
     std::ostringstream payload(std::ios::binary);
     {
-        cereal::BinaryOutputArchive ar(payload);
+        cereal::JSONOutputArchive ar(payload);
         ar(msg);
     }
     const std::string bytes = payload.str();
@@ -517,9 +517,8 @@ bool LoadWorld(const WorldState &world, const std::string &path)
     world.fog->Resize(saved.mapWidth, saved.mapHeight);
     for (const auto &entry : saved.teamFog)
     {
-        world.fog->SetExplored(entry.first,
-                               reinterpret_cast<const std::uint8_t *>(entry.second.data()),
-                               entry.second.size());
+        const std::vector<std::uint8_t> &bytes = entry.second;
+        world.fog->SetExplored(entry.first, bytes.data(), bytes.size());
     }
     return true;
 }

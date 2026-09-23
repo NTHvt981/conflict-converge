@@ -27,6 +27,7 @@ inline TestStats &CcTestStats()
         {                                                                                                \
             ++CcTestStats().failures;                                                                    \
             std::printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #cond);                                  \
+            std::fflush(stdout); /* survive crashes/aborts later in the run */                           \
         }                                                                                                \
     } while (0)
 

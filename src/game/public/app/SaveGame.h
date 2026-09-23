@@ -10,9 +10,13 @@ class GameCamera;
 class ResourceNodes;
 class FogOfWar;
 
-// Versioned binary save/load. Payload is cereal-binary ("CCB2" magic, then
-// one SaveGameData; wire structs in ../private/app/SaveWire.h).
-inline constexpr unsigned int kSaveVersion = 2;
+// Versioned JSON save/load. Payload is cereal-JSON ("CCJ3" magic, then one
+// SaveGameData; wire structs in ../private/app/SaveWire.h). Field loads are
+// tolerant (missing keys take defaults), so old saves keep loading as new
+// fields are appended; versions outside [kMinSupportedVersion, kSaveVersion]
+// and unknown enum values still reject the load.
+inline constexpr unsigned int kSaveVersion = 3;
+inline constexpr unsigned int kMinSupportedVersion = 3;
 
 struct WorldState
 {

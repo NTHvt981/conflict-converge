@@ -1,4 +1,4 @@
-// Unit tests for save/load (binary roundtrip + rejection paths).
+// Unit tests for save/load (JSON roundtrip, tolerant decode, rejection paths).
 
 #include "test_harness.h"
 
@@ -14,7 +14,7 @@
 #include "UnitStats.h"
 #include "../../src/game/private/app/SaveWire.h" // wire structs for the version-99 probe
 
-#include <cereal/archives/binary.hpp>
+#include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 
@@ -156,6 +156,7 @@ void RunSaveGameTests()
     const Unit *ls = dst.registry.Get<Unit>(loadedScout);
     const Unit *lh = dst.registry.Get<Unit>(loadedHunter);
     CC_CHECK(Near(ls->health, 73.5f) && ls->isSelected);
+    CC_CHECK(ls->health == 73.5f); // JSON round-trips exact floats
     CC_CHECK(Near(ls->lastDamageTaken, 12.0f) && Near(ls->hitFlashTime, 0.1f));
     CC_CHECK(Near(ls->cooldown, 0.2f));
     CC_CHECK(lh->target == loadedScout); // remapped to the fresh scout ID
@@ -163,6 +164,7 @@ void RunSaveGameTests()
     CC_CHECK(lh->path[0] == cc::IVec2(5, 2) && lh->path[2] == cc::IVec2(3, 3));
     CC_CHECK(lh->state == UnitState::Moving && lh->phase == AttackPhase::WindUp);
     CC_CHECK(Near(lh->phaseTime, 0.05f));
+    CC_CHECK(lh->phaseTime == 0.05f); // JSON round-trips exact floats
 
     int bases = 0, factories = 0;
     dst.registry.Each<Building>([&](Entity, const Building &b) {
@@ -218,13 +220,22 @@ void RunSaveGameTests()
         future.saveVersion = 99;
         std::ostringstream payload(std::ios::binary);
         {
-            cereal::BinaryOutputArchive ar(payload);
+            cereal::JSONOutputArchive ar(payload);
             ar(future);
         }
         std::ofstream out(path, std::ios::binary | std::ios::trunc);
-        out.write("CCB2", 4);
+        out.write("CCJ3", 4);
         const std::string bytes = payload.str();
         out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+    }
+    CC_CHECK(!LoadWorld(victimState, path));
+    CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
+
+    {
+        // Previous binary format (CCB2 magic) is rejected at the magic check.
+        std::ofstream old(path, std::ios::binary | std::ios::trunc);
+        const char legacy[] = { 'C', 'C', 'B', '2', 2, 0, 0, 0, 0, 0, 0, 0 };
+        old.write(legacy, sizeof(legacy));
     }
     CC_CHECK(!LoadWorld(victimState, path));
     CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
@@ -260,6 +271,49 @@ void RunSaveGameTests()
     }
     CC_CHECK(!LoadWorld(victimState, path));
     CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
+
+    // --- tolerant decode: missing keys take defaults, unknown keys ignored ---
+    // A hand-written sparse v3 save (map + one partial unit, future and
+    // mystery keys sprinkled in) must load with defaults elsewhere. Note
+    // the "value0" root: cereal auto-names the unnamed top-level struct.
+    {
+        std::ostringstream sparse;
+        sparse << "{\"value0\":{\"saveVersion\":3,"
+               << "\"futureSection\":{\"whatever\":1},"
+               << "\"map\":{\"width\":20,\"height\":15,\"terrain\":[";
+        for (int i = 0; i < 300; ++i)
+        {
+            sparse << (i == 0 ? "0" : ",0");
+        }
+        sparse << "]},"
+               << "\"units\":[{"
+               << "\"type\":0,\"team\":0,\"health\":50.0,"
+               << "\"position\":{\"x\":128.0,\"y\":128.0},"
+               << "\"mysteryField\":42"
+               << "}]}}";
+        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        out.write("CCJ3", 4);
+        const std::string bytes = sparse.str();
+        out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+        out.close();
+        Fixture sparseWorld;
+        CC_CHECK(LoadWorld(sparseWorld.State(), path));
+        CC_CHECK(sparseWorld.registry.EntityCount() == 1);
+        Entity only = kInvalidEntity;
+        sparseWorld.registry.Each<Unit>([&](Entity id, const Unit &) { only = id; });
+        const Unit *u = sparseWorld.registry.Get<Unit>(only);
+        CC_CHECK(u != nullptr);
+        if (u == nullptr)
+        {
+            return;
+        }
+        CC_CHECK(u->type == UnitType::RifleInfantry && u->teamID == 0);
+        CC_CHECK(u->health == 50.0f);
+        CC_CHECK(u->cooldown == 0.0f && !u->hasMoveOrder && !u->hasPath);
+        CC_CHECK(u->attackPower == 0 && u->attackRange == 0); // absent: zero, not table
+        CC_CHECK(u->position.x == 128.0f && u->position.y == 128.0f);
+        CC_CHECK(sparseWorld.resources.iron == 0 && sparseWorld.nodes.Count() == 0);
+    }
 
     // --- QoL replay sequencing: frames save/load in order with motion ---
     {
