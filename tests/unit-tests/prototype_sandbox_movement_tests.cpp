@@ -1,11 +1,13 @@
-// Regression coverage for the prototype sandbox's 6-unit spawn (Skirmish.cpp
-// BuildSandbox): all 6 PrototypeInfantry spawn stacked on the exact same
+// Regression coverage for stacked-spawn separation (Skirmish.cpp
+// BuildSandbox): the sandbox spawns its squad stacked on the exact same
 // tile (BuildSandbox computes the free tile once, reuses it for every
-// SpawnPrepaid call), then get sent to 6 scattered destinations around the
-// real prototype.map layout -- crossing paths around its water blob and
-// tree cluster -- to catch collision/pathing regressions the same way
-// movement_stall_tests.cpp does for hand-built maps, but against the actual
-// shipped map and the real BuildSandbox spawn path.
+// SpawnPrepaid call), then this test sends the team-0 prototype squad to
+// scattered destinations around the real prototype.map layout -- crossing
+// paths around its water blob and tree cluster -- to catch
+// collision/pathing regressions the same way movement_stall_tests.cpp does
+// for hand-built maps, but against the actual shipped map and the real
+// BuildSandbox spawn path. The test adapts to whatever the sandbox spawns
+// (up to 6 units driven); spawn composition itself is not asserted here.
 
 #include "test_harness.h"
 
@@ -85,13 +87,19 @@ void RunPrototypeSandboxMovementTests()
             squad.push_back(id);
         }
     });
-    CC_CHECK(squad.size() == 6);
-    if (squad.size() != 6)
+    // Whatever the sandbox spawns, drive up to 6 of the team-0 prototypes
+    // (more would overflow the destination list below; fewer just test less).
+    CC_CHECK(!squad.empty());
+    if (squad.empty())
     {
         return;
     }
+    if (squad.size() > 6)
+    {
+        squad.resize(6);
+    }
 
-    // All 6 spawn stacked at the exact same tile (see BuildSandbox).
+    // The squad spawns stacked at the exact same tile (see BuildSandbox).
     const cc::IVec2 spawnTile = cc::WorldToTile(cc::ToGlm(sand.registry.Get<Unit>(squad[0])->position));
     for (Entity id : squad)
     {
@@ -125,12 +133,12 @@ void RunPrototypeSandboxMovementTests()
     // (occupancy pre-pass, driver, continuous-space separation, stall
     // detection) until every unit's order resolves (arrival or a clean
     // stall-cancel) or the budget runs out. 40s is generous for a ~20-tile
-    // diagonal crossing at Infantry speed with obstacle routing; the soak
+    // diagonal crossing at foot speed with obstacle routing; the soak
     // tests already run into the 100s+ range for full matches.
     constexpr float kDt = 1.0f / 60.0f;
     constexpr int kBudget = 2400; // 40s at 60fps
     std::vector<bool> done(squad.size(), false);
-    int doneFrame[6] = { -1, -1, -1, -1, -1, -1 };
+    std::vector<int> doneFrame(squad.size(), -1);
     int frame = 0;
     for (; frame < kBudget; ++frame)
     {

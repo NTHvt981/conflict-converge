@@ -287,13 +287,9 @@ bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath)
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
 	factory.SpawnPrepaid(UnitType::PrototypeInfantry, 0,
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
-	factory.SpawnPrepaid(UnitType::PrototypeInfantry, 0,
+	factory.SpawnPrepaid(UnitType::RifleInfantry, 0,
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
-	factory.SpawnPrepaid(UnitType::PrototypeInfantry, 0,
-		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
-	factory.SpawnPrepaid(UnitType::PrototypeInfantry, 0,
-		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
-	factory.SpawnPrepaid(UnitType::PrototypeInfantry, 0,
+	factory.SpawnPrepaid(UnitType::RifleInfantry, 0,
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
 
 	*world.rallyPos = cc::ToRaylib(cc::TileToWorld(free.x, free.y));
