@@ -283,13 +283,17 @@ bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath)
 
 	const cc::IVec2 home = data.playerSpawns[0];
 	const cc::IVec2 free = NearestFreeTile(map, home.x, home.y);
-	factory.SpawnPrepaid(UnitType::PrototypeInfantry, 0,
-		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
-	factory.SpawnPrepaid(UnitType::PrototypeInfantry, 0,
+	factory.SpawnPrepaid(UnitType::Engineer, 0,
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
 	factory.SpawnPrepaid(UnitType::RifleInfantry, 0,
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
+	factory.SpawnPrepaid(UnitType::AntiArmorInfantry, 0,
+		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
+	factory.SpawnPrepaid(UnitType::Medic, 0,
+		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
 	factory.SpawnPrepaid(UnitType::RifleInfantry, 0,
+		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
+	factory.SpawnPrepaid(UnitType::AntiArmorInfantry, 0,
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
 
 	*world.rallyPos = cc::ToRaylib(cc::TileToWorld(free.x, free.y));
