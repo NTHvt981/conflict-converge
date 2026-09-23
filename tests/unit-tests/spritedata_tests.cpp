@@ -192,20 +192,20 @@ void RunSpriteDataTests()
         CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
     }
 
-    // --- real data/configs atlas files: 18 sheets, 392 sprites, 48 anims ---
+    // --- real data/configs atlas files: 22 sheets, 472 sprites, 56 anims ---
     // Rifle-infantry renders from base+mask team-tint sheets (8 idle +
     // 8 dirs x 4 walk frames + 8 dirs x 2 attack frames, each with a mask);
     // antiarmor mirrors it on taller 32x48 cells (8 idle + 8 dirs x 4 walk
     // + 8 dirs x 3 attack, each with a mask); engineer adds idle plus a
-    // 4-frame walk on 32x32 cells (each with a mask); prototype keeps its
-    // untinted sheets. PrototypeInfantry resolves its own namespace, not
-    // rifle_infantry's.
+    // 4-frame walk on 32x32 cells (each with a mask); medic adds the same
+    // idle + 4-frame walk pair; prototype keeps its untinted sheets.
+    // PrototypeInfantry resolves its own namespace, not rifle_infantry's.
     {
         SpriteSheetData sheet;
         CC_CHECK(LoadSpriteSheet(sheet));
-        CC_CHECK(sheet.textures.size() == 18);
-        CC_CHECK(sheet.sprites.size() == 392);
-        CC_CHECK(sheet.animations.size() == 48);
+        CC_CHECK(sheet.textures.size() == 22);
+        CC_CHECK(sheet.sprites.size() == 472);
+        CC_CHECK(sheet.animations.size() == 56);
         const SpriteDefInfo *first = FindSpriteByName(sheet, "rifle_infantry_idle_0_0");
         CC_CHECK(first != nullptr && first->id == 0 && first->texture == "rifle_idle_base");
         CC_CHECK(first->bounds.left == 0 && first->bounds.top == 0);
@@ -290,6 +290,26 @@ void RunSpriteDataTests()
                  engWalkAnim->frames.size() == 4);
         CC_CHECK(engWalkAnim->frames[0].sprite == 1206 &&
                  engWalkAnim->frames[3].sprite == 1230);
+        // Medic namespace on 32x32 cells (ids 1300+/1400+, masks
+        // 1350+/1450+; walk column 6 across 4 frames: 1406..1430).
+        const SpriteDefInfo *medIdle = FindSpriteByName(sheet, "medic_idle_0_0");
+        CC_CHECK(medIdle != nullptr && medIdle->id == 1300 &&
+                 medIdle->texture == "medic_idle_base");
+        CC_CHECK(medIdle->bounds.left == 0 && medIdle->bounds.top == 0);
+        CC_CHECK(medIdle->bounds.right == 32 && medIdle->bounds.bottom == 32);
+        CC_CHECK(medIdle->origin.x == 16 && medIdle->origin.y == 16);
+        CC_CHECK(medIdle->maskSprite == 1350);
+        const SpriteDefInfo *medWalk = FindSpriteByName(sheet, "medic_walk_3_6");
+        CC_CHECK(medWalk != nullptr && medWalk->id == 1430 &&
+                 medWalk->texture == "medic_run_base");
+        CC_CHECK(medWalk->bounds.left == 192 && medWalk->bounds.top == 96);
+        CC_CHECK(medWalk->bounds.right == 224 && medWalk->bounds.bottom == 128);
+        CC_CHECK(medWalk->maskSprite == 1480);
+        const SpriteAnimInfo *medWalkAnim = FindAnimByName(sheet, "medic_walk_6");
+        CC_CHECK(medWalkAnim != nullptr && medWalkAnim->loop &&
+                 medWalkAnim->frames.size() == 4);
+        CC_CHECK(medWalkAnim->frames[0].sprite == 1406 &&
+                 medWalkAnim->frames[3].sprite == 1430);
         // Prototype namespace mirrors it (own textures, ids 200+/300+).
         const SpriteDefInfo *protoIdle = FindSpriteByName(sheet, "prototypeinfantry_idle_0_0");
         CC_CHECK(protoIdle != nullptr && protoIdle->id == 200 &&

@@ -149,7 +149,8 @@ void RunUnitConfigTests()
                 {
                     CC_CHECK(config.stats.attackPower == 0); // support: cannot attack
                     CC_CHECK(config.spritePrefix == "medic");
-                    CC_CHECK(config.atlasIdlePrefix.empty()); // PNG fallback
+                    CC_CHECK(config.atlasIdlePrefix == "medic_idle");
+                    CC_CHECK(config.atlasWalkPrefix == "medic_walk");
                     medicOk = true;
                 }
                 if (config.type == "HeavyTank")

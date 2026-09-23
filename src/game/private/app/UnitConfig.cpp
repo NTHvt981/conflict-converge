@@ -323,6 +323,11 @@ UnitConfig DefaultUnitConfig(UnitType type)
         config.atlasIdlePrefix = "engineer_idle";
         config.atlasWalkPrefix = "engineer_walk";
     }
+    if (type == UnitType::Medic)
+    {
+        config.atlasIdlePrefix = "medic_idle";
+        config.atlasWalkPrefix = "medic_walk";
+    }
     return config;
 }
 

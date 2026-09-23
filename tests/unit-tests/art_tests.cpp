@@ -270,6 +270,13 @@ void RunArtTests()
         CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.13f, 6) == "engineer_walk_1_6");
         CC_CHECK(art.UnitSprite(UnitType::Engineer, false, 1, 0.0f, 6, true) ==
                  "engineer_idle_0_6");
+        // Medic resolves the medic namespace (32x32 cells, 4-frame walk;
+        // no attack sheets, so attacking falls back to walk/idle).
+        CC_CHECK(art.UnitSprite(UnitType::Medic, false, 1, 0.0f, 6) == "medic_idle_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.0f, 6) == "medic_walk_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.13f, 6) == "medic_walk_1_6");
+        CC_CHECK(art.UnitSprite(UnitType::Medic, false, 1, 0.0f, 6, true) ==
+                 "medic_idle_0_6");
         // Types without atlas entries resolve empty (legacy DrawUnit covers).
         CC_CHECK(art.UnitSprite(UnitType::HeavyTank, true, 1, 0.0f, 0).empty());
         CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f, 0).empty());

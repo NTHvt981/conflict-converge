@@ -16,6 +16,10 @@
     { "id": "engineer_idle_mask", "file": "units/engineer/idle_2d_mask.png", "width": 256, "height": 32 },
     { "id": "engineer_run_base", "file": "units/engineer/run_2d_base.png", "width": 256, "height": 192 },
     { "id": "engineer_run_mask", "file": "units/engineer/run_2d_mask.png", "width": 256, "height": 192 },
+    { "id": "medic_idle_base", "file": "units/medic/idle_2d_base.png", "width": 256, "height": 32 },
+    { "id": "medic_idle_mask", "file": "units/medic/idle_2d_mask.png", "width": 256, "height": 32 },
+    { "id": "medic_run_base", "file": "units/medic/run_2d_base.png", "width": 256, "height": 128 },
+    { "id": "medic_run_mask", "file": "units/medic/run_2d_mask.png", "width": 256, "height": 128 },
     { "id": "prototype_infantry_idle", "file": "units/prototypeinfantry/prototype_infantry_idle.png", "width": 256, "height": 32 },
     { "id": "prototype_infantry_run", "file": "units/prototypeinfantry/prototype_infantry_run.png", "width": 256, "height": 128 }
   ]

@@ -16,7 +16,7 @@
   },
   "art": {
     "spritePrefix": "medic",
-    "atlasIdlePrefix": "",
-    "atlasWalkPrefix": ""
+    "atlasIdlePrefix": "medic_idle",
+    "atlasWalkPrefix": "medic_walk"
   }
 }
