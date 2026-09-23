@@ -1,11 +1,11 @@
 {
-  "type": "Engineer",
+  "type": "Medic",
   "stats": {
     "health": 60,
     "armorType": "RUBBER",
     "damageType": "KINETIC",
     "attackPower": 0,
-    "attackRange": 64,
+    "attackRange": 0,
     "cooldownTime": 1,
     "speed": 64,
     "sightRange": 256
@@ -15,8 +15,8 @@
     "origin": { "x": 0, "y": 0 }
   },
   "art": {
-    "spritePrefix": "engineer",
-    "atlasIdlePrefix": "engineer_idle",
-    "atlasWalkPrefix": "engineer_walk"
+    "spritePrefix": "medic",
+    "atlasIdlePrefix": "",
+    "atlasWalkPrefix": ""
   }
 }

@@ -67,6 +67,8 @@ void RunAttackPhaseTests()
     }
 
     // --- unarmed units never leave Ready ---
+    // Acquisition refuses power-0 seekers, so the target is assigned
+    // directly to isolate the fire gate below.
     {
         Registry registry;
         TileMap map(10, 10);
@@ -78,7 +80,8 @@ void RunAttackPhaseTests()
         unarmed.position = { 0.0f, 0.0f };
         const Entity pacifist = registry.Create();
         registry.Add(pacifist, unarmed);
-        AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
+        const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
+        registry.Get<Unit>(pacifist)->target = foe; // bypass acquisition
         StepPhasers(registry, map, kDt, 30);
         const Unit *unit = registry.Get<Unit>(pacifist);
         CC_CHECK(unit->phase == AttackPhase::Ready);

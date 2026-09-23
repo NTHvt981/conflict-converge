@@ -96,6 +96,166 @@
         { "sprite": 407, "durationMs": 120 },
         { "sprite": 415, "durationMs": 120 }
       ] },
+    { "name": "antiarmor_walk_0", "id": 50, "loop": true,
+      "frames": [
+        { "sprite": 900, "durationMs": 120 },
+        { "sprite": 908, "durationMs": 120 },
+        { "sprite": 916, "durationMs": 120 },
+        { "sprite": 924, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_walk_1", "id": 51, "loop": true,
+      "frames": [
+        { "sprite": 901, "durationMs": 120 },
+        { "sprite": 909, "durationMs": 120 },
+        { "sprite": 917, "durationMs": 120 },
+        { "sprite": 925, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_walk_2", "id": 52, "loop": true,
+      "frames": [
+        { "sprite": 902, "durationMs": 120 },
+        { "sprite": 910, "durationMs": 120 },
+        { "sprite": 918, "durationMs": 120 },
+        { "sprite": 926, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_walk_3", "id": 53, "loop": true,
+      "frames": [
+        { "sprite": 903, "durationMs": 120 },
+        { "sprite": 911, "durationMs": 120 },
+        { "sprite": 919, "durationMs": 120 },
+        { "sprite": 927, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_walk_4", "id": 54, "loop": true,
+      "frames": [
+        { "sprite": 904, "durationMs": 120 },
+        { "sprite": 912, "durationMs": 120 },
+        { "sprite": 920, "durationMs": 120 },
+        { "sprite": 928, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_walk_5", "id": 55, "loop": true,
+      "frames": [
+        { "sprite": 905, "durationMs": 120 },
+        { "sprite": 913, "durationMs": 120 },
+        { "sprite": 921, "durationMs": 120 },
+        { "sprite": 929, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_walk_6", "id": 56, "loop": true,
+      "frames": [
+        { "sprite": 906, "durationMs": 120 },
+        { "sprite": 914, "durationMs": 120 },
+        { "sprite": 922, "durationMs": 120 },
+        { "sprite": 930, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_walk_7", "id": 57, "loop": true,
+      "frames": [
+        { "sprite": 907, "durationMs": 120 },
+        { "sprite": 915, "durationMs": 120 },
+        { "sprite": 923, "durationMs": 120 },
+        { "sprite": 931, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_attack_0", "id": 60, "loop": true,
+      "frames": [
+        { "sprite": 1000, "durationMs": 120 },
+        { "sprite": 1008, "durationMs": 120 },
+        { "sprite": 1016, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_attack_1", "id": 61, "loop": true,
+      "frames": [
+        { "sprite": 1001, "durationMs": 120 },
+        { "sprite": 1009, "durationMs": 120 },
+        { "sprite": 1017, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_attack_2", "id": 62, "loop": true,
+      "frames": [
+        { "sprite": 1002, "durationMs": 120 },
+        { "sprite": 1010, "durationMs": 120 },
+        { "sprite": 1018, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_attack_3", "id": 63, "loop": true,
+      "frames": [
+        { "sprite": 1003, "durationMs": 120 },
+        { "sprite": 1011, "durationMs": 120 },
+        { "sprite": 1019, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_attack_4", "id": 64, "loop": true,
+      "frames": [
+        { "sprite": 1004, "durationMs": 120 },
+        { "sprite": 1012, "durationMs": 120 },
+        { "sprite": 1020, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_attack_5", "id": 65, "loop": true,
+      "frames": [
+        { "sprite": 1005, "durationMs": 120 },
+        { "sprite": 1013, "durationMs": 120 },
+        { "sprite": 1021, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_attack_6", "id": 66, "loop": true,
+      "frames": [
+        { "sprite": 1006, "durationMs": 120 },
+        { "sprite": 1014, "durationMs": 120 },
+        { "sprite": 1022, "durationMs": 120 }
+      ] },
+    { "name": "antiarmor_attack_7", "id": 67, "loop": true,
+      "frames": [
+        { "sprite": 1007, "durationMs": 120 },
+        { "sprite": 1015, "durationMs": 120 },
+        { "sprite": 1023, "durationMs": 120 }
+      ] },
+    { "name": "engineer_walk_0", "id": 70, "loop": true,
+      "frames": [
+        { "sprite": 1200, "durationMs": 120 },
+        { "sprite": 1208, "durationMs": 120 },
+        { "sprite": 1216, "durationMs": 120 },
+        { "sprite": 1224, "durationMs": 120 }
+      ] },
+    { "name": "engineer_walk_1", "id": 71, "loop": true,
+      "frames": [
+        { "sprite": 1201, "durationMs": 120 },
+        { "sprite": 1209, "durationMs": 120 },
+        { "sprite": 1217, "durationMs": 120 },
+        { "sprite": 1225, "durationMs": 120 }
+      ] },
+    { "name": "engineer_walk_2", "id": 72, "loop": true,
+      "frames": [
+        { "sprite": 1202, "durationMs": 120 },
+        { "sprite": 1210, "durationMs": 120 },
+        { "sprite": 1218, "durationMs": 120 },
+        { "sprite": 1226, "durationMs": 120 }
+      ] },
+    { "name": "engineer_walk_3", "id": 73, "loop": true,
+      "frames": [
+        { "sprite": 1203, "durationMs": 120 },
+        { "sprite": 1211, "durationMs": 120 },
+        { "sprite": 1219, "durationMs": 120 },
+        { "sprite": 1227, "durationMs": 120 }
+      ] },
+    { "name": "engineer_walk_4", "id": 74, "loop": true,
+      "frames": [
+        { "sprite": 1204, "durationMs": 120 },
+        { "sprite": 1212, "durationMs": 120 },
+        { "sprite": 1220, "durationMs": 120 },
+        { "sprite": 1228, "durationMs": 120 }
+      ] },
+    { "name": "engineer_walk_5", "id": 75, "loop": true,
+      "frames": [
+        { "sprite": 1205, "durationMs": 120 },
+        { "sprite": 1213, "durationMs": 120 },
+        { "sprite": 1221, "durationMs": 120 },
+        { "sprite": 1229, "durationMs": 120 }
+      ] },
+    { "name": "engineer_walk_6", "id": 76, "loop": true,
+      "frames": [
+        { "sprite": 1206, "durationMs": 120 },
+        { "sprite": 1214, "durationMs": 120 },
+        { "sprite": 1222, "durationMs": 120 },
+        { "sprite": 1230, "durationMs": 120 }
+      ] },
+    { "name": "engineer_walk_7", "id": 77, "loop": true,
+      "frames": [
+        { "sprite": 1207, "durationMs": 120 },
+        { "sprite": 1215, "durationMs": 120 },
+        { "sprite": 1223, "durationMs": 120 },
+        { "sprite": 1231, "durationMs": 120 }
+      ] },
     { "name": "prototypeinfantry_walk_0", "id": 20, "loop": true,
       "frames": [
         { "sprite": 300, "durationMs": 120 },

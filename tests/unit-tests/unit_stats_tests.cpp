@@ -1,4 +1,4 @@
-// Unit tests for the 7-type base stat table.
+// Unit tests for the 9-type base stat table.
 
 #include "test_harness.h"
 
@@ -7,6 +7,8 @@
 void RunUnitStatsTests()
 {
     // --- every type has a sane (positive) stat line ---
+    // Support types (Medic, Engineer) cannot attack: attackPower 0 and no
+    // attack range; everything else must reach past its own tile.
     const UnitType all[] = {
         UnitType::RifleInfantry,
         UnitType::AntiArmorInfantry,
@@ -15,15 +17,19 @@ void RunUnitStatsTests()
         UnitType::Artillery,
         UnitType::LightTank,
         UnitType::HeavyTank,
+        UnitType::Medic,
     };
     for (UnitType type : all)
     {
         const UnitStats &stats = BaseStats(type);
         CC_CHECK(stats.health > 0.0f);
-        CC_CHECK(stats.attackRange > 0);
         CC_CHECK(stats.cooldownTime > 0.0f);
         CC_CHECK(stats.speed > 0.0f);
         CC_CHECK(stats.sightRange > 0.0f);
+        if (stats.attackPower > 0)
+        {
+            CC_CHECK(stats.attackRange > 0);
+        }
     }
 
     // --- spot values pin the table (change deliberately, not by accident) ---
@@ -33,6 +39,10 @@ void RunUnitStatsTests()
     CC_CHECK(BaseStats(UnitType::IFV).speed == 128.0f);
     CC_CHECK(BaseStats(UnitType::AntiArmorInfantry).damageType == DamageType::EXPLOSIVE);
     CC_CHECK(BaseStats(UnitType::HeavyTank).armorType == ArmorType::COMPOSITE);
+    // Support types cannot attack (heal/repair instead).
+    CC_CHECK(BaseStats(UnitType::Medic).attackPower == 0);
+    CC_CHECK(BaseStats(UnitType::Medic).health == 60.0f);
+    CC_CHECK(BaseStats(UnitType::Engineer).attackPower == 0);
 
     // --- ordering sanity: heavies outlive lights, artillery outranges all ---
     CC_CHECK(BaseStats(UnitType::HeavyTank).health > BaseStats(UnitType::LightTank).health);

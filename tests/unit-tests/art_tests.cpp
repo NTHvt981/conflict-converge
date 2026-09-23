@@ -130,6 +130,13 @@ void RunArtTests()
         CC_CHECK(aaScale == 0.80f);
         CC_CHECK(SquadSlots(UnitType::AntiArmorInfantry, 10, 0.40f, aOffsets, aaScale) == 1);
 
+        // Medic: 2-man team above half health, 1 below (like AntiArmor).
+        std::array<Vector2, 6> mOffsets;
+        float mScale = 1.0f;
+        CC_CHECK(SquadSlots(UnitType::Medic, 11, 0.90f, mOffsets, mScale) == 2);
+        CC_CHECK(mScale == 0.80f);
+        CC_CHECK(SquadSlots(UnitType::Medic, 11, 0.40f, mOffsets, mScale) == 1);
+
         // Engineer: always a single centered sprite, like a vehicle.
         std::array<Vector2, 6> eOffsets;
         float eScale = 0.0f;
@@ -244,6 +251,25 @@ void RunArtTests()
         // Types without attack anims fall back to walk/idle when attacking.
         CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, false, 1, 0.0f, 6, true) ==
                  "prototypeinfantry_idle_0_6");
+        // AntiArmorInfantry resolves the antiarmor namespace (32x48 cells):
+        // idle is sprite-direct, walk is 4x120ms, attack 3x120ms per column.
+        CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, false, 1, 0.0f, 6) ==
+                 "antiarmor_idle_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, true, 1, 0.0f, 6) ==
+                 "antiarmor_walk_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, true, 1, 0.13f, 6) ==
+                 "antiarmor_walk_1_6");
+        CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, false, 1, 0.0f, 6, true) ==
+                 "antiarmor_attack_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, false, 1, 0.25f, 6, true) ==
+                 "antiarmor_attack_2_6");
+        // Engineer resolves the engineer namespace (32x32 cells, 4-frame
+        // walk; no attack sheets, so attacking falls back to walk/idle).
+        CC_CHECK(art.UnitSprite(UnitType::Engineer, false, 1, 0.0f, 6) == "engineer_idle_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.0f, 6) == "engineer_walk_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.13f, 6) == "engineer_walk_1_6");
+        CC_CHECK(art.UnitSprite(UnitType::Engineer, false, 1, 0.0f, 6, true) ==
+                 "engineer_idle_0_6");
         // Types without atlas entries resolve empty (legacy DrawUnit covers).
         CC_CHECK(art.UnitSprite(UnitType::HeavyTank, true, 1, 0.0f, 0).empty());
         CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f, 0).empty());

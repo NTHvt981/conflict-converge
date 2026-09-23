@@ -32,7 +32,7 @@ int SquadSlots(UnitType type, unsigned int id, float healthFraction,
                std::array<Vector2, 6> &outOffsets, float &outScale)
 {
     if (type != UnitType::RifleInfantry && type != UnitType::AntiArmorInfantry &&
-        type != UnitType::PrototypeInfantry)
+        type != UnitType::PrototypeInfantry && type != UnitType::Medic)
     {
         outOffsets[0] = { 0.0f, 0.0f };
         outScale = 1.0f;
@@ -219,6 +219,8 @@ const char *UnitFile(UnitType type)
         return "heavytank";
     case UnitType::PrototypeInfantry:
         return "prototypeinfantry";
+    case UnitType::Medic:
+        return "medic";
     }
     return "rifle_infantry";
 }

@@ -26,6 +26,8 @@ const char *UnitTypeName(UnitType type)
         return "Heavy Tank";
     case UnitType::PrototypeInfantry:
         return "Prototype Infantry";
+    case UnitType::Medic:
+        return "Medic";
     }
     return "Unknown";
 }
@@ -189,6 +191,6 @@ std::vector<std::string> UnitTooltipLines(const Unit &unit)
 std::vector<UnitType> ProductionMenuOrder()
 {
     return { UnitType::RifleInfantry,          UnitType::AntiArmorInfantry, UnitType::Engineer,
-             UnitType::IFV,               UnitType::Artillery,         UnitType::LightTank,
-             UnitType::HeavyTank };
+             UnitType::Medic,                 UnitType::IFV,               UnitType::Artillery,
+             UnitType::LightTank,             UnitType::HeavyTank };
 }

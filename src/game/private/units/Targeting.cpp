@@ -27,7 +27,7 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
                      const ReservedDamageMap *reserved)
 {
     const Unit *self = registry.Get<Unit>(seeker);
-    if (self == nullptr || self->sightRange <= 0.0f)
+    if (self == nullptr || self->sightRange <= 0.0f || self->attackPower <= 0)
     {
         return kInvalidEntity;
     }
@@ -87,7 +87,7 @@ Vector2 BuildingCenter(const Building &building)
 Entity AcquireBuildingTarget(const Registry &registry, Entity seeker, const FogOfWar *fog)
 {
     const Unit *self = registry.Get<Unit>(seeker);
-    if (self == nullptr || self->sightRange <= 0.0f)
+    if (self == nullptr || self->sightRange <= 0.0f || self->attackPower <= 0)
     {
         return kInvalidEntity;
     }

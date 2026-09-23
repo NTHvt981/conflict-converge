@@ -14,7 +14,7 @@ void RunFactoryTests()
     const UnitCost heavy = CostOf(UnitType::HeavyTank);
     CC_CHECK(rifle.iron >= 0 && rifle.oil >= 0);
     CC_CHECK(heavy.iron > rifle.iron);
-    for (int i = 0; i <= static_cast<int>(UnitType::HeavyTank); ++i)
+    for (int i = 0; i < static_cast<int>(UnitType::Count); ++i)
     {
         const UnitCost cost = CostOf(static_cast<UnitType>(i));
         CC_CHECK(cost.iron >= 0 && cost.oil >= 0);

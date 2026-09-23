@@ -405,7 +405,7 @@ void RmlUiHud::RefreshHud()
         queueRow->SetProperty("display", showRows ? "block" : "none");
     }
     const std::vector<UnitType> order = ProductionMenuOrder();
-    for (std::size_t i = 0; i < order.size() && i < 7; ++i)
+    for (std::size_t i = 0; i < order.size() && i < 8; ++i)
     {
         const UnitCost cost = CostOf(order[i]);
         char id[16];

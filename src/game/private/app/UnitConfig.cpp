@@ -64,6 +64,8 @@ const char *BaselineSpritePrefix(UnitType type)
         return "lighttank";
     case UnitType::HeavyTank:
         return "heavytank";
+    case UnitType::Medic:
+        return "medic";
     case UnitType::Count:
         break;
     }
@@ -96,6 +98,8 @@ const char *UnitTypeConfigName(UnitType type)
         return "HeavyTank";
     case UnitType::PrototypeInfantry:
         return "PrototypeInfantry";
+    case UnitType::Medic:
+        return "Medic";
     case UnitType::Count:
         break;
     }
@@ -288,6 +292,8 @@ const char *UnitConfigFilename(UnitType type)
         return "heavy_tank";
     case UnitType::PrototypeInfantry:
         return "prototype_infantry";
+    case UnitType::Medic:
+        return "medic";
     case UnitType::Count:
         break;
     }
@@ -306,6 +312,16 @@ UnitConfig DefaultUnitConfig(UnitType type)
     {
         config.atlasIdlePrefix = "rifle_infantry_idle";
         config.atlasWalkPrefix = "rifle_infantry_walk";
+    }
+    if (type == UnitType::AntiArmorInfantry)
+    {
+        config.atlasIdlePrefix = "antiarmor_idle";
+        config.atlasWalkPrefix = "antiarmor_walk";
+    }
+    if (type == UnitType::Engineer)
+    {
+        config.atlasIdlePrefix = "engineer_idle";
+        config.atlasWalkPrefix = "engineer_walk";
     }
     return config;
 }
@@ -350,6 +366,11 @@ bool ParseUnitTypeName(const std::string &name, UnitType &out)
     if (name == "PrototypeInfantry")
     {
         out = UnitType::PrototypeInfantry;
+        return true;
+    }
+    if (name == "Medic")
+    {
+        out = UnitType::Medic;
         return true;
     }
     return false;

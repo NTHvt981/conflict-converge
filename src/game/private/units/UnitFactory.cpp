@@ -23,6 +23,8 @@ UnitCost CostOf(UnitType type)
         return { 250, 100 };
     case UnitType::PrototypeInfantry:
         return { 25, 0 };
+    case UnitType::Medic:
+        return { 30, 0 };
     }
     return { 0, 0 };
 }

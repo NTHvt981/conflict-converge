@@ -136,6 +136,7 @@ void GameRenderer::DrawWorld()
             SetMouseCursor(MOUSE_CURSOR_CROSSHAIR);
             break;
         case CursorIntent::Repair:
+        case CursorIntent::Heal:
             SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
             break;
         case CursorIntent::InvalidPlacement:

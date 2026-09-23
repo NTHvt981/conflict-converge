@@ -65,17 +65,19 @@ void RunCommandUiTests()
         CC_CHECK(!shortcuts.FireChord(11));
     }
 
-    // --- production menu covers all 7 types exactly once ---
+    // --- production menu covers all 8 buildables exactly once ---
+    // (PrototypeInfantry is sandbox-only, never in factory menus.)
     {
         const std::vector<UnitType> order = ProductionMenuOrder();
-        CC_CHECK(order.size() == 7);
-        bool seen[7] = {};
+        CC_CHECK(order.size() == 8);
+        bool seen[static_cast<int>(UnitType::Count)] = {};
         for (UnitType type : order)
         {
             const int i = static_cast<int>(type);
-            CC_CHECK(i >= 0 && i < 7 && !seen[i]);
+            CC_CHECK(i >= 0 && i < static_cast<int>(UnitType::Count) && !seen[i]);
             seen[i] = true;
         }
+        CC_CHECK(!seen[static_cast<int>(UnitType::PrototypeInfantry)]);
     }
 
     // --- save slots map to data/ paths with clamping ---

@@ -12,8 +12,9 @@ enum class CursorIntent
 {
     Default,          // no selection / nothing special: system default arrow
     Move,             // plain move order
-    Attack,           // hovering an enemy unit
+    Attack,           // hovering an enemy unit (selected can attack)
     Repair,           // selected Engineer hovering a CanRepairTarget patient
+    Heal,             // selected Medic hovering a CanHealTarget patient
     InvalidPlacement, // placement mode over a CanPlaceBuilding-rejected tile
 };
 

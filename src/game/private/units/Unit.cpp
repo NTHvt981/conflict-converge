@@ -207,7 +207,14 @@ void DispatchQueuedOrder(Unit &unit, const TileMap &map, OccupancyGrid *occ, Ent
         IssuePatrolOrder(unit, map, order.pointA, order.pointB);
         break;
     case QueuedOrderKind::Repair:
-        IssueRepairOrder(unit, order.target);
+        if (unit.type == UnitType::Medic)
+        {
+            IssueHealOrder(unit, order.target);
+        }
+        else
+        {
+            IssueRepairOrder(unit, order.target);
+        }
         break;
     case QueuedOrderKind::AttackGround:
         if (occ != nullptr)
@@ -317,6 +324,53 @@ bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity targ
     return RepairAim(registry, engineer, target, aim);
 }
 
+void IssueHealOrder(Unit &medic, Entity target)
+{
+    if (medic.type != UnitType::Medic)
+    {
+        return;
+    }
+    StopMoving(medic);
+    ClearOrders(medic);
+    medic.hasRepairOrder = true;
+    medic.repairTarget = target;
+}
+
+bool IsHealableUnit(const Unit &unit)
+{
+    return unit.type == UnitType::RifleInfantry || unit.type == UnitType::AntiArmorInfantry ||
+           unit.type == UnitType::Engineer || unit.type == UnitType::PrototypeInfantry ||
+           unit.type == UnitType::Medic;
+}
+
+bool HealAim(const Registry &registry, const Unit &medic, Entity target, Vector2 &outPos)
+{
+    if (medic.type != UnitType::Medic)
+    {
+        return false;
+    }
+    if (const Unit *u = registry.Get<Unit>(target))
+    {
+        if (u->health <= 0.0f || u->teamID != medic.teamID || !IsHealableUnit(*u))
+        {
+            return false;
+        }
+        if (u->health >= BaseStats(u->type).health)
+        {
+            return false;
+        }
+        outPos = u->position;
+        return true;
+    }
+    return false;
+}
+
+bool CanHealTarget(const Registry &registry, const Unit &medic, Entity target)
+{
+    Vector2 aim = {};
+    return HealAim(registry, medic, target, aim);
+}
+
 void CollectAreaRepairCandidates(Registry &registry, Rectangle worldArea, int teamID,
                                  std::vector<Entity> &out)
 {
@@ -325,8 +379,11 @@ void CollectAreaRepairCandidates(Registry &registry, Rectangle worldArea, int te
     for (const Entity id : units)
     {
         const Unit *unit = registry.Get<Unit>(id);
-        if (unit != nullptr && IsRepairableUnit(*unit) &&
-            unit->health < BaseStats(unit->type).health)
+        if (unit == nullptr || unit->health >= BaseStats(unit->type).health)
+        {
+            continue;
+        }
+        if (IsRepairableUnit(*unit) || IsHealableUnit(*unit))
         {
             out.push_back(id);
         }
@@ -380,7 +437,14 @@ int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engine
         bool found = false;
         for (std::size_t i = 0; i < candidates.size(); ++i)
         {
-            if (claimed[i] || !CanRepairTarget(registry, *engineer, candidates[i]))
+            if (claimed[i] || candidates[i] == engineerId)
+            {
+                continue;
+            }
+            const bool valid = engineer->type == UnitType::Medic
+                                   ? CanHealTarget(registry, *engineer, candidates[i])
+                                   : CanRepairTarget(registry, *engineer, candidates[i]);
+            if (!valid)
             {
                 continue;
             }
@@ -655,7 +719,9 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     if (unit->hasRepairOrder)
     {
         Vector2 aim = {};
-        if (!RepairAim(registry, *unit, unit->repairTarget, aim))
+        const bool healing = unit->type == UnitType::Medic;
+        if (!(healing ? HealAim(registry, *unit, unit->repairTarget, aim)
+                      : RepairAim(registry, *unit, unit->repairTarget, aim)))
         {
             unit->hasRepairOrder = false;
             unit->repairTarget = kInvalidEntity;

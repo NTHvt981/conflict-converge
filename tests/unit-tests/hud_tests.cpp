@@ -8,7 +8,7 @@
 
 void RunHudTests()
 {
-    // --- unit type names cover all 8 types ---
+    // --- unit type names cover all 9 types ---
     CC_CHECK(std::string(UnitTypeName(UnitType::RifleInfantry)) == "Rifle Infantry");
     CC_CHECK(std::string(UnitTypeName(UnitType::AntiArmorInfantry)) == "Anti-Armor");
     CC_CHECK(std::string(UnitTypeName(UnitType::Engineer)) == "Engineer");
@@ -17,6 +17,7 @@ void RunHudTests()
     CC_CHECK(std::string(UnitTypeName(UnitType::LightTank)) == "Light Tank");
     CC_CHECK(std::string(UnitTypeName(UnitType::HeavyTank)) == "Heavy Tank");
     CC_CHECK(std::string(UnitTypeName(UnitType::PrototypeInfantry)) == "Prototype Infantry");
+    CC_CHECK(std::string(UnitTypeName(UnitType::Medic)) == "Medic");
 
     // --- resource formatting ---
     ResourceSystem resources;

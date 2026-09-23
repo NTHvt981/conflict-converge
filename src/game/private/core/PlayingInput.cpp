@@ -255,7 +255,8 @@ void PlayingInput::Dispatch()
                 DraggedWorldBox(camera_, repairDragStart_, input_.MouseScreen());
             std::vector<Entity> engineers;
             registry_.Each<Unit>([&](Entity id, const Unit &unit) {
-                if (unit.isSelected && unit.type == UnitType::Engineer)
+                if (unit.isSelected &&
+                    (unit.type == UnitType::Engineer || unit.type == UnitType::Medic))
                 {
                     engineers.push_back(id);
                 }
@@ -363,6 +364,23 @@ void PlayingInput::Dispatch()
                                 patient = id;
                             }
                         });
+                    }
+                    if (patient != kInvalidEntity)
+                    {
+                        IssueOrEnqueue(*ordered, map_, &occ_, squad[0],
+                                       registry_.Generation(squad[0]), input_.ShiftDown(),
+                                       QueuedOrder{ QueuedOrderKind::Repair, {}, {}, patient });
+                        repaired = true;
+                    }
+                }
+                if (!repaired && ordered->type == UnitType::Medic)
+                {
+                    const Vector2 world = input_.MouseWorld(camera_);
+                    Entity patient = PickUnitAt(registry_, world);
+                    if (patient == kInvalidEntity ||
+                        !CanHealTarget(registry_, *ordered, patient))
+                    {
+                        patient = kInvalidEntity;
                     }
                     if (patient != kInvalidEntity)
                     {

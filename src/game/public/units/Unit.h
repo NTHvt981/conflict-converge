@@ -13,7 +13,7 @@ class TileMap;
 class OccupancyGrid;
 class FogOfWar;
 
-// 7 unit types plus the prototype-sandbox type
+// 8 unit types plus the prototype-sandbox type
 // (prototype art at 2x; sandbox levels only, never in factory menus).
 enum class UnitType
 {
@@ -25,6 +25,7 @@ enum class UnitType
     LightTank,
     HeavyTank,
     PrototypeInfantry,
+    Medic,
     Count
 };
 
@@ -203,18 +204,31 @@ void IssueRepairOrder(Unit &engineer, Entity target);
 // Player-side pre-check for the right-click repair gesture.
 bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity target);
 
-// One greedy area-repair pairing (engineer + target).
+// Medic heal order on a same-team damaged flesh unit. Reuses the channeled
+// repair fields below (hasRepairOrder/repairTarget); the per-frame driver
+// aims via CanHealTarget instead of CanRepairTarget.
+void IssueHealOrder(Unit &medic, Entity target);
+
+// Player-side pre-check for the right-click heal gesture.
+bool CanHealTarget(const Registry &registry, const Unit &medic, Entity target);
+
+// One greedy area-repair pairing (engineer/medic + target). Medic heal
+// jobs reuse this shape; `engineer` then holds the medic.
 struct RepairAssignment
 {
     Entity engineer = kInvalidEntity;
     Entity target = kInvalidEntity;
 };
 
-// Pure sweep of damaged repairable units/buildings overlapping worldArea.
+// Pure sweep of damaged supportable units/buildings overlapping worldArea:
+// repairable vehicles + operational buildings (engineers) plus wounded
+// flesh units (medics).
 void CollectAreaRepairCandidates(Registry &registry, Rectangle worldArea, int teamID,
                                  std::vector<Entity> &out);
 
-// Pure greedy assignment of engineers to nearest unclaimed candidates.
+// Pure greedy assignment of engineers/medics to nearest unclaimed
+// candidates (validity per unit type: CanRepairTarget vs CanHealTarget;
+// never self-pairs).
 int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engineers,
                      const std::vector<Entity> &candidates,
                      std::vector<RepairAssignment> &out);

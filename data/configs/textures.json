@@ -6,6 +6,16 @@
     { "id": "rifle_run_mask", "file": "units/rifle/run_2d_mask.png", "width": 256, "height": 128 },
     { "id": "rifle_attack_base", "file": "units/rifle/attack_2d_base.png", "width": 256, "height": 64 },
     { "id": "rifle_attack_mask", "file": "units/rifle/attack_2d_mask.png", "width": 256, "height": 64 },
+    { "id": "antiarmor_idle_base", "file": "units/antiarmor/idle_2d_base.png", "width": 256, "height": 48 },
+    { "id": "antiarmor_idle_mask", "file": "units/antiarmor/idle_2d_mask.png", "width": 256, "height": 48 },
+    { "id": "antiarmor_run_base", "file": "units/antiarmor/run_2d_base.png", "width": 256, "height": 192 },
+    { "id": "antiarmor_run_mask", "file": "units/antiarmor/run_2d_mask.png", "width": 256, "height": 192 },
+    { "id": "antiarmor_attack_base", "file": "units/antiarmor/attack_2d_base.png", "width": 256, "height": 144 },
+    { "id": "antiarmor_attack_mask", "file": "units/antiarmor/attack_2d_mask.png", "width": 256, "height": 144 },
+    { "id": "engineer_idle_base", "file": "units/engineer/idle_2d_base.png", "width": 256, "height": 32 },
+    { "id": "engineer_idle_mask", "file": "units/engineer/idle_2d_mask.png", "width": 256, "height": 32 },
+    { "id": "engineer_run_base", "file": "units/engineer/run_2d_base.png", "width": 256, "height": 192 },
+    { "id": "engineer_run_mask", "file": "units/engineer/run_2d_mask.png", "width": 256, "height": 192 },
     { "id": "prototype_infantry_idle", "file": "units/prototypeinfantry/prototype_infantry_idle.png", "width": 256, "height": 32 },
     { "id": "prototype_infantry_run", "file": "units/prototypeinfantry/prototype_infantry_run.png", "width": 256, "height": 128 }
   ]

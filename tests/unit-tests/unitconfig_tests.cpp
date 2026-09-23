@@ -113,8 +113,11 @@ void RunUnitConfigTests()
         CC_CHECK(found != nullptr);
         if (found != nullptr)
         {
-            CC_CHECK(found->size() == 8);
+            CC_CHECK(found->size() == 9);
             bool rifleOk = false;
+            bool antiarmorOk = false;
+            bool engineerOk = false;
+            bool medicOk = false;
             bool tankOk = false;
             for (const UnitConfig &config : *found)
             {
@@ -128,6 +131,27 @@ void RunUnitConfigTests()
                     CC_CHECK(config.atlasIdlePrefix == "rifle_infantry_idle");
                     rifleOk = true;
                 }
+                if (config.type == "AntiArmorInfantry")
+                {
+                    CC_CHECK(config.spritePrefix == "antiarmor");
+                    CC_CHECK(config.atlasIdlePrefix == "antiarmor_idle");
+                    CC_CHECK(config.atlasWalkPrefix == "antiarmor_walk");
+                    antiarmorOk = true;
+                }
+                if (config.type == "Engineer")
+                {
+                    CC_CHECK(config.spritePrefix == "engineer");
+                    CC_CHECK(config.atlasIdlePrefix == "engineer_idle");
+                    CC_CHECK(config.atlasWalkPrefix == "engineer_walk");
+                    engineerOk = true;
+                }
+                if (config.type == "Medic")
+                {
+                    CC_CHECK(config.stats.attackPower == 0); // support: cannot attack
+                    CC_CHECK(config.spritePrefix == "medic");
+                    CC_CHECK(config.atlasIdlePrefix.empty()); // PNG fallback
+                    medicOk = true;
+                }
                 if (config.type == "HeavyTank")
                 {
                     CC_CHECK(config.stats.armorType == ArmorType::COMPOSITE);
@@ -137,6 +161,9 @@ void RunUnitConfigTests()
                 }
             }
             CC_CHECK(rifleOk);
+            CC_CHECK(antiarmorOk);
+            CC_CHECK(engineerOk);
+            CC_CHECK(medicOk);
             CC_CHECK(tankOk);
         }
     }

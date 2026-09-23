@@ -49,7 +49,8 @@ void RunTargetingTests()
     // --- acquisition: threat (power) beats proximity ---
     Registry registry;
     const Entity seeker = AddSoldier(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
-    const Entity weakNear = AddSoldier(registry, UnitType::Engineer, 1, 100.0f, 0.0f); // pow 2
+    const Entity weakNear = AddSoldier(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
+    registry.Get<Unit>(weakNear)->attackPower = 2; // weak
     const Entity strongFar = AddSoldier(registry, UnitType::LightTank, 1, 200.0f, 0.0f); // pow 20
     CC_CHECK(AcquireTarget(registry, seeker) == strongFar);
 
@@ -89,6 +90,7 @@ void RunTargetingTests()
     CC_CHECK(AcquireTarget(registry, kInvalidEntity) == kInvalidEntity);
     CC_CHECK(AcquireTarget(registry, 9999) == kInvalidEntity);
     Unit blind;
+    blind.attackPower = 10;
     blind.sightRange = 0.0f;
     const Entity blindId = registry.Create();
     registry.Add(blindId, blind);
