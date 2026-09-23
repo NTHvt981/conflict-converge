@@ -13,7 +13,7 @@ Entity SpawnFoot(Registry &registry, int tileX, int tileY)
 {
     Entity entity = registry.Create();
     Unit unit;
-    unit.type = UnitType::Infantry;
+    unit.type = UnitType::RifleInfantry;
     unit.position = cc::ToRaylib(cc::TileToWorld(tileX, tileY));
     registry.Add(entity, unit);
     return entity;

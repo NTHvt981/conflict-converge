@@ -70,7 +70,7 @@ void RunFogTests()
     FogOfWar scoutFog;
     scoutFog.Resize(20, 15);
     AddWatcher(scoutRegistry, 0, UnitType::LightTank, 64.0f, 5, 5);
-    AddWatcher(scoutRegistry, 1, UnitType::Infantry, 64.0f, 15, 5);
+    AddWatcher(scoutRegistry, 1, UnitType::RifleInfantry, 64.0f, 15, 5);
     scoutFog.Recompute(scoutRegistry);
     // Radius 1 without bonus: (6,5) yes, (7,5) no. With 1.5x: radius 2.
     CC_CHECK(scoutFog.IsVisible(0, { 6, 5 }));

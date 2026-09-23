@@ -10,7 +10,7 @@
 namespace
 {
 
-const char *kTypeList = "Infantry;AntiArmorInfantry;Engineer;IFV;Artillery;LightTank;HeavyTank;PrototypeInfantry";
+const char *kTypeList = "RifleInfantry;AntiArmorInfantry;Engineer;IFV;Artillery;LightTank;HeavyTank;PrototypeInfantry";
 const char *kArmorList = "STEEL;RUBBER;COMPOSITE";
 const char *kDamageList = "KINETIC;EXPLOSIVE;ENERGY";
 

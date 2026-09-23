@@ -10,8 +10,8 @@ const char *UnitTypeName(UnitType type)
 {
     switch (type)
     {
-    case UnitType::Infantry:
-        return "Infantry";
+    case UnitType::RifleInfantry:
+        return "Rifle Infantry";
     case UnitType::AntiArmorInfantry:
         return "Anti-Armor";
     case UnitType::Engineer:
@@ -188,7 +188,7 @@ std::vector<std::string> UnitTooltipLines(const Unit &unit)
 
 std::vector<UnitType> ProductionMenuOrder()
 {
-    return { UnitType::Infantry,          UnitType::AntiArmorInfantry, UnitType::Engineer,
+    return { UnitType::RifleInfantry,          UnitType::AntiArmorInfantry, UnitType::Engineer,
              UnitType::IFV,               UnitType::Artillery,         UnitType::LightTank,
              UnitType::HeavyTank };
 }

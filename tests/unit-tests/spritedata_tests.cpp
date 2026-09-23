@@ -192,35 +192,52 @@ void RunSpriteDataTests()
         CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
     }
 
-    // --- real data/configs atlas files: 4 sheets, 80 sprites, 16 anims ---
-    // Rifle and prototype families share geometry (8 idle + 8 dirs x 4);
-    // PrototypeInfantry resolves its own namespace, not infantry's.
+    // --- real data/configs atlas files: 8 sheets, 152 sprites, 24 anims ---
+    // Rifle-infantry renders from base+mask team-tint sheets (8 idle +
+    // 8 dirs x 4 walk frames + 8 dirs x 2 attack frames, each with a mask);
+    // prototype keeps its untinted sheets. PrototypeInfantry resolves its
+    // own namespace, not rifle_infantry's.
     {
         SpriteSheetData sheet;
         CC_CHECK(LoadSpriteSheet(sheet));
-        CC_CHECK(sheet.textures.size() == 4);
-        CC_CHECK(sheet.sprites.size() == 80);
-        const SpriteDefInfo *first = FindSpriteByName(sheet, "infantry_idle_0_0");
-        CC_CHECK(first != nullptr && first->id == 0 &&
-                 first->texture == "rifle_infantry_idle");
+        CC_CHECK(sheet.textures.size() == 8);
+        CC_CHECK(sheet.sprites.size() == 152);
+        CC_CHECK(sheet.animations.size() == 24);
+        const SpriteDefInfo *first = FindSpriteByName(sheet, "rifle_infantry_idle_0_0");
+        CC_CHECK(first != nullptr && first->id == 0 && first->texture == "rifle_idle_base");
         CC_CHECK(first->bounds.left == 0 && first->bounds.top == 0);
-        CC_CHECK(first->bounds.right == 16 && first->bounds.bottom == 32);
-        CC_CHECK(first->maskSprite == 0); // prototype has no mask sheets: full tint
+        CC_CHECK(first->bounds.right == 32 && first->bounds.bottom == 32);
+        CC_CHECK(first->origin.x == 16 && first->origin.y == 16);
+        CC_CHECK(first->maskSprite == 500); // team-tint mask grid
+        const SpriteDefInfo *firstMask = FindSpriteById(sheet, 500);
+        CC_CHECK(firstMask != nullptr && firstMask->name == "rifle_infantry_idle_mask_0_0" &&
+                 firstMask->texture == "rifle_idle_mask" && firstMask->maskSprite == 0);
         // Walk grid is 8 direction columns x 4 frames; the wired anim uses
         // column 6 (right): ids 106/114/122/130.
-        const SpriteDefInfo *last = FindSpriteByName(sheet, "infantry_walk_3_6");
-        CC_CHECK(last != nullptr && last->id == 130 &&
-                 last->texture == "rifle_infantry_run");
-        CC_CHECK(last->bounds.left == 96 && last->bounds.top == 96);
-        CC_CHECK(last->bounds.right == 112 && last->bounds.bottom == 128);
-        const SpriteAnimInfo *walk = FindAnimByName(sheet, "infantry_walk_6");
+        const SpriteDefInfo *last = FindSpriteByName(sheet, "rifle_infantry_walk_3_6");
+        CC_CHECK(last != nullptr && last->id == 130 && last->texture == "rifle_run_base");
+        CC_CHECK(last->bounds.left == 192 && last->bounds.top == 96);
+        CC_CHECK(last->bounds.right == 224 && last->bounds.bottom == 128);
+        CC_CHECK(last->maskSprite == 630);
+        const SpriteAnimInfo *walk = FindAnimByName(sheet, "rifle_infantry_walk_6");
         CC_CHECK(walk != nullptr && walk->loop && walk->frames.size() == 4);
         CC_CHECK(walk->frames[0].sprite == 106 && walk->frames[3].sprite == 130);
-        const SpriteAnimInfo *walkTop = FindAnimByName(sheet, "infantry_walk_0");
+        const SpriteAnimInfo *walkTop = FindAnimByName(sheet, "rifle_infantry_walk_0");
         CC_CHECK(walkTop != nullptr && walkTop->frames.size() == 4);
         CC_CHECK(walkTop->frames[0].sprite == 100 && walkTop->frames[3].sprite == 124);
-        CC_CHECK(FindAnimByName(sheet, "infantry_walk") == nullptr); // split by direction
-        CC_CHECK(FindAnimByName(sheet, "infantry_idle") == nullptr); // idle is sprite-direct
+        // Attack grid is 8 direction columns x 2 frames (column 6: 406/414).
+        const SpriteDefInfo *strike = FindSpriteByName(sheet, "rifle_infantry_attack_1_6");
+        CC_CHECK(strike != nullptr && strike->id == 414 &&
+                 strike->texture == "rifle_attack_base");
+        CC_CHECK(strike->bounds.left == 192 && strike->bounds.top == 32);
+        CC_CHECK(strike->bounds.right == 224 && strike->bounds.bottom == 64);
+        CC_CHECK(strike->maskSprite == 714);
+        const SpriteAnimInfo *attack = FindAnimByName(sheet, "rifle_infantry_attack_6");
+        CC_CHECK(attack != nullptr && attack->loop && attack->frames.size() == 2);
+        CC_CHECK(attack->frames[0].sprite == 406 && attack->frames[1].sprite == 414);
+        CC_CHECK(FindAnimByName(sheet, "rifle_infantry_walk") == nullptr); // split by direction
+        CC_CHECK(FindAnimByName(sheet, "rifle_infantry_idle") == nullptr); // idle is sprite-direct
+        CC_CHECK(FindAnimByName(sheet, "rifle_infantry_attack") == nullptr); // split by direction
         // Prototype namespace mirrors it (own textures, ids 200+/300+).
         const SpriteDefInfo *protoIdle = FindSpriteByName(sheet, "prototypeinfantry_idle_0_0");
         CC_CHECK(protoIdle != nullptr && protoIdle->id == 200 &&

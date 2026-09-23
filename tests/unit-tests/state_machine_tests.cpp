@@ -42,7 +42,7 @@ void RunStateMachineTests()
     {
         Registry registry;
         TileMap map(10, 10);
-        const Entity id = AddSoldier(registry, UnitType::Infantry, 0, 0.0f, 0.0f);
+        const Entity id = AddSoldier(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
         StepAll(registry, map, kDt, 10);
         const Unit *unit = registry.Get<Unit>(id);
         CC_CHECK(unit->state == UnitState::Idle);
@@ -53,8 +53,8 @@ void RunStateMachineTests()
     {
         Registry registry;
         TileMap map(10, 10);
-        const Entity attacker = AddSoldier(registry, UnitType::Infantry, 0, 0.0f, 0.0f);
-        const Entity victim = AddSoldier(registry, UnitType::Infantry, 1, 100.0f, 0.0f);
+        const Entity attacker = AddSoldier(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
+        const Entity victim = AddSoldier(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
         UpdateUnit(attacker, registry, map, kDt);
         const Unit *unit = registry.Get<Unit>(attacker);
         CC_CHECK(unit->target == victim);
@@ -84,8 +84,8 @@ void RunStateMachineTests()
     {
         Registry registry;
         TileMap map(10, 10);
-        const Entity chaser = AddSoldier(registry, UnitType::Infantry, 0, 0.0f, 0.0f);
-        const Entity prey = AddSoldier(registry, UnitType::Infantry, 1, 256.0f, 0.0f); // > 128 range, < 320 sight
+        const Entity chaser = AddSoldier(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
+        const Entity prey = AddSoldier(registry, UnitType::RifleInfantry, 1, 256.0f, 0.0f); // > 128 range, < 320 sight
         UpdateUnit(chaser, registry, map, kDt);
         const Unit *unit = registry.Get<Unit>(chaser);
         CC_CHECK(unit->target == prey);
@@ -103,8 +103,8 @@ void RunStateMachineTests()
     {
         Registry registry;
         TileMap map(10, 10);
-        const Entity ordered = AddSoldier(registry, UnitType::Infantry, 0, 0.0f, 0.0f);
-        AddSoldier(registry, UnitType::Infantry, 1, 100.0f, 0.0f);
+        const Entity ordered = AddSoldier(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
+        AddSoldier(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
         IssueMoveOrder(*registry.Get<Unit>(ordered), { 5 * 64.0f, 0.0f });
         StepAll(registry, map, kDt, 5);
         const Unit *unit = registry.Get<Unit>(ordered);
@@ -132,7 +132,7 @@ void RunStateMachineTests()
     {
         Registry registry;
         TileMap map(10, 10);
-        const Entity dead = AddSoldier(registry, UnitType::Infantry, 0, 0.0f, 0.0f);
+        const Entity dead = AddSoldier(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
         registry.Get<Unit>(dead)->health = 0.0f;
         registry.Get<Unit>(dead)->state = UnitState::Attacking;
         UpdateUnit(dead, registry, map, kDt);

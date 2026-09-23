@@ -29,7 +29,7 @@ enum class UnitFrame
 };
 UnitFrame FrameForPhase(AttackPhase phase);
 
-// Infantry squad visual. Returns the number of soldier sprites to draw
+// Rifle-infantry squad visual. Returns the number of soldier sprites to draw
 // (driven by healthFraction, capped per type) and fills outOffsets with that
 // many pixel offsets from the unit's tile-corner position. Deterministic
 // per-entity. outScale shrinks with the count so clustered soldiers don't
@@ -127,10 +127,11 @@ public:
     // Parse the atlas files without touching the GPU (tests). False on
     // missing/invalid files.
     bool LoadAtlas();
-    // Sprite name for a unit at timeSeconds: directional walk/idle, with
+    // Sprite name for a unit at timeSeconds: directional attack (when
+    // attacking and the type has attack anims), walk/idle otherwise, with
     // legacy fallbacks. Empty when no sheet or no entries.
     std::string UnitSprite(UnitType type, bool moving, unsigned int id,
-                           float timeSeconds, int facingDir) const;
+                           float timeSeconds, int facingDir, bool attacking = false) const;
     // Base art scale multiplier (prototype infantry renders at 2x).
     static float BaseArtScale(UnitType type);
     // Terrain filename stem + tile slot per type (`<stem>_64px.png`).

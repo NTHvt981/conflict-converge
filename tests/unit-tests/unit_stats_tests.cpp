@@ -8,7 +8,7 @@ void RunUnitStatsTests()
 {
     // --- every type has a sane (positive) stat line ---
     const UnitType all[] = {
-        UnitType::Infantry,
+        UnitType::RifleInfantry,
         UnitType::AntiArmorInfantry,
         UnitType::Engineer,
         UnitType::IFV,
@@ -27,7 +27,7 @@ void RunUnitStatsTests()
     }
 
     // --- spot values pin the table (change deliberately, not by accident) ---
-    CC_CHECK(BaseStats(UnitType::Infantry).health == 100.0f);
+    CC_CHECK(BaseStats(UnitType::RifleInfantry).health == 100.0f);
     CC_CHECK(BaseStats(UnitType::HeavyTank).health == 500.0f);
     CC_CHECK(BaseStats(UnitType::Artillery).attackRange == 384);
     CC_CHECK(BaseStats(UnitType::IFV).speed == 128.0f);
@@ -36,7 +36,7 @@ void RunUnitStatsTests()
 
     // --- ordering sanity: heavies outlive lights, artillery outranges all ---
     CC_CHECK(BaseStats(UnitType::HeavyTank).health > BaseStats(UnitType::LightTank).health);
-    CC_CHECK(BaseStats(UnitType::LightTank).health > BaseStats(UnitType::Infantry).health);
+    CC_CHECK(BaseStats(UnitType::LightTank).health > BaseStats(UnitType::RifleInfantry).health);
     for (UnitType type : all)
     {
         if (type != UnitType::Artillery)

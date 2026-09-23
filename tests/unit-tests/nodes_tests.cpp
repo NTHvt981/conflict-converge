@@ -44,7 +44,7 @@ void RunNodesTests()
     ResourceSystem resources;
     SpawnEngineer(registry, { 3, 3 });
     Unit scout;
-    scout.type = UnitType::Infantry;
+    scout.type = UnitType::RifleInfantry;
     ApplyBaseStats(scout);
     scout.teamID = 0;
     scout.position = cc::ToRaylib(cc::TileToWorld(3, 3));

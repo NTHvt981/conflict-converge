@@ -32,9 +32,9 @@ void RunTargetingTests()
     b.position = { 3.0f, 4.0f };
     CC_CHECK(CcNear(DistanceBetween(a, b), 5.0f));
 
-    // --- range check with Infantry (range 128) ---
+    // --- range check with RifleInfantry (range 128) ---
     Unit attacker;
-    attacker.type = UnitType::Infantry;
+    attacker.type = UnitType::RifleInfantry;
     ApplyBaseStats(attacker);
     Unit close;
     close.position = { 100.0f, 0.0f };
@@ -48,7 +48,7 @@ void RunTargetingTests()
 
     // --- acquisition: threat (power) beats proximity ---
     Registry registry;
-    const Entity seeker = AddSoldier(registry, UnitType::Infantry, 0, 0.0f, 0.0f);
+    const Entity seeker = AddSoldier(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
     const Entity weakNear = AddSoldier(registry, UnitType::Engineer, 1, 100.0f, 0.0f); // pow 2
     const Entity strongFar = AddSoldier(registry, UnitType::LightTank, 1, 200.0f, 0.0f); // pow 20
     CC_CHECK(AcquireTarget(registry, seeker) == strongFar);
@@ -62,15 +62,15 @@ void RunTargetingTests()
         Registry duel;
         const Entity heavy = AddSoldier(duel, UnitType::HeavyTank, 0, 0.0f, 0.0f);
         const Entity tank = AddSoldier(duel, UnitType::LightTank, 1, 200.0f, 0.0f);
-        const Entity foot = AddSoldier(duel, UnitType::Infantry, 1, 100.0f, 0.0f);
+        const Entity foot = AddSoldier(duel, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
         duel.Get<Unit>(tank)->attackPower = 10;
         duel.Get<Unit>(foot)->attackPower = 10;
         CC_CHECK(AcquireTarget(duel, heavy) == tank); // 10*1.5 beats 10*1.0
-        const Entity grunt = AddSoldier(duel, UnitType::Infantry, 0, 0.0f, 0.0f);
+        const Entity grunt = AddSoldier(duel, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
         CC_CHECK(AcquireTarget(duel, grunt) == foot); // neutral: nearest wins
         CC_CHECK(TargetPriorityWeight(UnitType::AntiArmorInfantry, UnitType::HeavyTank) > 1.0f);
-        CC_CHECK(TargetPriorityWeight(UnitType::Infantry, UnitType::HeavyTank) == 1.0f);
-        CC_CHECK(TargetPriorityWeight(UnitType::HeavyTank, UnitType::Infantry) == 1.0f);
+        CC_CHECK(TargetPriorityWeight(UnitType::RifleInfantry, UnitType::HeavyTank) == 1.0f);
+        CC_CHECK(TargetPriorityWeight(UnitType::HeavyTank, UnitType::RifleInfantry) == 1.0f);
     }
 
     // --- allies, the dead, and the out-of-sight are ignored ---
@@ -97,7 +97,7 @@ void RunTargetingTests()
     // --- overkill protection: reserved-lethal targets are skipped ---
     {
         Registry battle;
-        const Entity hunter = AddSoldier(battle, UnitType::Infantry, 0, 0.0f, 0.0f);
+        const Entity hunter = AddSoldier(battle, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
         const Entity doomed = AddSoldier(battle, UnitType::LightTank, 1, 100.0f, 0.0f);
         const Entity healthy = AddSoldier(battle, UnitType::Engineer, 1, 150.0f, 0.0f);
         battle.Get<Unit>(doomed)->health = 5.0f; // one hit from anything

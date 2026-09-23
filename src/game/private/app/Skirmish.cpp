@@ -224,11 +224,11 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 		}
 	};
 	placeBase(0, spots.playerHome);
-	spawnDemo(UnitType::Infantry, spots.playerHome.x, spots.playerHome.y, 0);
+	spawnDemo(UnitType::RifleInfantry, spots.playerHome.x, spots.playerHome.y, 0);
 	spawnDemo(UnitType::LightTank, spots.playerHome.x + 2, spots.playerHome.y, 0);
 	spawnDemo(UnitType::Artillery, spots.playerHome.x + 1, spots.playerHome.y + 3, 0);
 	spawnDemo(UnitType::Engineer, spots.harvest.x, spots.harvest.y, 0);
-	queue.Enqueue(resources, UnitType::Infantry);
+	queue.Enqueue(resources, UnitType::RifleInfantry);
 	queue.Enqueue(resources, UnitType::LightTank);
 
 	world.ai->Reset(difficulty, spots.aiHome, spots.playerHome, 1);

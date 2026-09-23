@@ -102,7 +102,7 @@ void RunPathfindTests()
         map.Set({ 4, y }, TerrainType::Water); // vertical wall, gap at y = 5
     }
     Unit unit;
-    unit.type = UnitType::Infantry;
+    unit.type = UnitType::RifleInfantry;
     ApplyBaseStats(unit);
     unit.position = cc::ToRaylib(cc::TileToWorld(1, 1));
     IssuePathOrder(unit, map, cc::ToRaylib(cc::Vec2(6 * 64.0f + 10.0f, 1 * 64.0f + 5.0f)));

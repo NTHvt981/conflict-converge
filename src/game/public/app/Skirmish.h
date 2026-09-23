@@ -58,7 +58,7 @@ void ResetSkirmish(SkirmishWorld &world);
 // Reset + seed a full match. False only on a null bundle member.
 bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficulty difficulty);
 
-// Reset + seed a prototype sandbox: map terrain + one player Infantry squad,
+// Reset + seed a prototype sandbox: map terrain + one player RifleInfantry squad,
 // no funds/bases/production/AI. False on a null member, unreadable map, or
 // missing player spawn.
 bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath);

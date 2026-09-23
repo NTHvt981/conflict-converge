@@ -54,7 +54,7 @@ void RunAreaRepairTests()
         TileMap map(20, 15);
         const Entity hurtTank = SpawnUnit(registry, UnitType::LightTank, 0, 2, 2, 0.5f);
         const Entity wholeTank = SpawnUnit(registry, UnitType::LightTank, 0, 3, 2, 1.0f);
-        const Entity hurtFlesh = SpawnUnit(registry, UnitType::Infantry, 0, 2, 3, 0.5f);
+        const Entity hurtFlesh = SpawnUnit(registry, UnitType::RifleInfantry, 0, 2, 3, 0.5f);
         const Entity foeTank = SpawnUnit(registry, UnitType::LightTank, 1, 4, 2, 0.5f);
         const Entity farTank = SpawnUnit(registry, UnitType::LightTank, 0, 15, 12, 0.5f);
         const Entity hurtBase = SpawnBuilding(registry, map, BuildingType::Base, 0, 6, 2, 0.5f);

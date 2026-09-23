@@ -9,7 +9,7 @@ namespace
 
 bool IsScout(UnitType type)
 {
-    return type == UnitType::Infantry || type == UnitType::IFV;
+    return type == UnitType::RifleInfantry || type == UnitType::IFV;
 }
 
 constexpr float kScoutMultiplier = 1.5f;

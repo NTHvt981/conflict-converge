@@ -97,7 +97,7 @@ void RunAttackGroundTests()
         Unit &gun = *registry.Get<Unit>(id);
         const Entity near = registry.Create();
         Unit close;
-        close.type = UnitType::Infantry;
+        close.type = UnitType::RifleInfantry;
         ApplyBaseStats(close);
         close.teamID = 1;
         close.position = cc::ToRaylib(cc::TileToWorld(5, 5));
@@ -110,7 +110,7 @@ void RunAttackGroundTests()
         // Ally at the impact point is never hit.
         const Entity pal = registry.Create();
         Unit ally;
-        ally.type = UnitType::Infantry;
+        ally.type = UnitType::RifleInfantry;
         ApplyBaseStats(ally);
         ally.teamID = 0;
         ally.position = cc::ToRaylib(cc::TileToWorld(5, 5));

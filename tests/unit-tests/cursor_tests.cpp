@@ -35,8 +35,8 @@ Vector2 UnitCenter(const Registry &registry, Entity id)
 void RunCursorTests()
 {
     Registry registry;
-    Entity attacker = SpawnUnit(registry, UnitType::Infantry, 0, 64.0f, 64.0f);
-    Entity enemy = SpawnUnit(registry, UnitType::Infantry, 1, 256.0f, 128.0f);
+    Entity attacker = SpawnUnit(registry, UnitType::RifleInfantry, 0, 64.0f, 64.0f);
+    Entity enemy = SpawnUnit(registry, UnitType::RifleInfantry, 1, 256.0f, 128.0f);
     Entity engineer = SpawnUnit(registry, UnitType::Engineer, 0, 64.0f, 320.0f);
     Entity wounded = SpawnUnit(registry, UnitType::LightTank, 0, 320.0f, 320.0f, 0.5f);
     Entity healthy = SpawnUnit(registry, UnitType::LightTank, 0, 448.0f, 320.0f);

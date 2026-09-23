@@ -50,8 +50,8 @@ const char *BaselineSpritePrefix(UnitType type)
 {
     switch (type)
     {
-    case UnitType::Infantry:
-        return "infantry";
+    case UnitType::RifleInfantry:
+        return "rifle_infantry";
     case UnitType::AntiArmorInfantry:
         return "antiarmor";
     case UnitType::Engineer:
@@ -67,7 +67,7 @@ const char *BaselineSpritePrefix(UnitType type)
     case UnitType::Count:
         break;
     }
-    return "infantry";
+    return "rifle_infantry";
 }
 
 bool BaselineIsVehicle(UnitType type)
@@ -80,8 +80,8 @@ const char *UnitTypeConfigName(UnitType type)
 {
     switch (type)
     {
-    case UnitType::Infantry:
-        return "Infantry";
+    case UnitType::RifleInfantry:
+        return "RifleInfantry";
     case UnitType::AntiArmorInfantry:
         return "AntiArmorInfantry";
     case UnitType::Engineer:
@@ -272,8 +272,8 @@ const char *UnitConfigFilename(UnitType type)
 {
     switch (type)
     {
-    case UnitType::Infantry:
-        return "infantry";
+    case UnitType::RifleInfantry:
+        return "rifle_infantry";
     case UnitType::AntiArmorInfantry:
         return "antiarmor_infantry";
     case UnitType::Engineer:
@@ -302,19 +302,19 @@ UnitConfig DefaultUnitConfig(UnitType type)
     config.footprintWidth = BaselineIsVehicle(type) ? 2 : 1;
     config.footprintHeight = BaselineIsVehicle(type) ? 2 : 1;
     config.spritePrefix = BaselineSpritePrefix(type);
-    if (type == UnitType::Infantry)
+    if (type == UnitType::RifleInfantry)
     {
-        config.atlasIdlePrefix = "infantry_idle";
-        config.atlasWalkPrefix = "infantry_walk";
+        config.atlasIdlePrefix = "rifle_infantry_idle";
+        config.atlasWalkPrefix = "rifle_infantry_walk";
     }
     return config;
 }
 
 bool ParseUnitTypeName(const std::string &name, UnitType &out)
 {
-    if (name == "Infantry")
+    if (name == "RifleInfantry" || name == "Infantry") // "Infantry" is the pre-rename alias
     {
-        out = UnitType::Infantry;
+        out = UnitType::RifleInfantry;
         return true;
     }
     if (name == "AntiArmorInfantry")
@@ -444,7 +444,7 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
     {
         return false;
     }
-    UnitType type = UnitType::Infantry;
+    UnitType type = UnitType::RifleInfantry;
     if (!ParseUnitTypeName(cfg.type, type))
     {
         return false;

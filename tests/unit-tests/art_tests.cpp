@@ -104,22 +104,22 @@ void RunArtTests()
         std::array<Vector2, 6> offsets;
         float scale = 1.0f;
 
-        // Infantry at full health → 5 soldiers
-        const int infCount = SquadSlots(UnitType::Infantry, 42, 1.0f, offsets, scale);
+        // RifleInfantry at full health → 5 soldiers
+        const int infCount = SquadSlots(UnitType::RifleInfantry, 42, 1.0f, offsets, scale);
         CC_CHECK(infCount == 5);
         CC_CHECK(scale < 1.0f); // clusters shrink: 5-wide at 0.55
         // All 5 offsets must be non-identical (spaced apart)
         CC_CHECK(offsets[0].x != offsets[3].x || offsets[0].y != offsets[3].y);
 
-        // Infantry at 40% health → 2 soldiers (0.40 is not > 0.40)
+        // RifleInfantry at 40% health → 2 soldiers (0.40 is not > 0.40)
         float midScale = 1.0f;
-        const int midCount = SquadSlots(UnitType::Infantry, 42, 0.40f, offsets, midScale);
+        const int midCount = SquadSlots(UnitType::RifleInfantry, 42, 0.40f, offsets, midScale);
         CC_CHECK(midCount == 2);
         CC_CHECK(midScale > scale); // fewer soldiers → larger blit
 
-        // Infantry at 5% health → 1 soldier at full scale
+        // RifleInfantry at 5% health → 1 soldier at full scale
         float lowScale = 0.0f;
-        const int lowCount = SquadSlots(UnitType::Infantry, 42, 0.05f, offsets, lowScale);
+        const int lowCount = SquadSlots(UnitType::RifleInfantry, 42, 0.05f, offsets, lowScale);
         CC_CHECK(lowCount == 1);
         CC_CHECK(lowScale == 1.0f);
 
@@ -137,7 +137,7 @@ void RunArtTests()
         CC_CHECK(eOffsets[0].x == 0.0f && eOffsets[0].y == 0.0f);
         CC_CHECK(eScale == 1.0f);
 
-        // PrototypeInfantry clusters exactly like Infantry (5 at full health).
+        // PrototypeInfantry clusters exactly like RifleInfantry (5 at full health).
         std::array<Vector2, 6> pOffsets;
         float pScale = 0.0f;
         CC_CHECK(SquadSlots(UnitType::PrototypeInfantry, 10, 1.0f, pOffsets, pScale) == 5);
@@ -156,17 +156,17 @@ void RunArtTests()
         // Deterministic: same id + health → same offsets
         std::array<Vector2, 6> a, b;
         float sa = 0.0f, sb = 0.0f;
-        SquadSlots(UnitType::Infantry, 77, 0.90f, a, sa);
-        SquadSlots(UnitType::Infantry, 77, 0.90f, b, sb);
+        SquadSlots(UnitType::RifleInfantry, 77, 0.90f, a, sa);
+        SquadSlots(UnitType::RifleInfantry, 77, 0.90f, b, sb);
         CC_CHECK(a[0].x == b[0].x);
         CC_CHECK(a[0].y == b[0].y);
         CC_CHECK(sa == sb);
 
         // No overlap: every pair of active slots in a full-strength
-        // Infantry squad stays >= scale * 32px apart (jitter included).
+        // RifleInfantry squad stays >= scale * 32px apart (jitter included).
         std::array<Vector2, 6> full;
         float fullScale = 1.0f;
-        const int fullCount = SquadSlots(UnitType::Infantry, 1234, 1.0f, full, fullScale);
+        const int fullCount = SquadSlots(UnitType::RifleInfantry, 1234, 1.0f, full, fullScale);
         CC_CHECK(fullCount == 5);
         for (int i = 0; i < fullCount; ++i)
         {
@@ -183,8 +183,8 @@ void RunArtTests()
     {
         Art art;
         CC_CHECK(!art.UseAtlas());
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f, 6).empty());
-        art.DrawAtlasFrame("infantry_idle_0_0", { 0.0f, 0.0f }, WHITE); // no crash
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6).empty());
+        art.DrawAtlasFrame("rifle_infantry_idle_0_0", { 0.0f, 0.0f }, WHITE); // no crash
         // Default mode: raw BLUE/RED (colorBlindMode_ defaults to false).
         const Color blue = art.TeamTint(0);
         CC_CHECK(blue.r == BLUE.r && blue.g == BLUE.g && blue.b == BLUE.b);
@@ -207,23 +207,23 @@ void RunArtTests()
         CC_CHECK(art.LoadAtlas());
         CC_CHECK(!art.UseAtlas()); // parsed, but no GPU textures headless
         // Idle resolves to the facing column's pose (column 0 = top).
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f, 0) == "infantry_idle_0_0");
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f, 6) == "infantry_idle_0_6");
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f, 3) == "infantry_idle_0_3");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 0) == "rifle_infantry_idle_0_0");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6) == "rifle_infantry_idle_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 3) == "rifle_infantry_idle_0_3");
         // Walk anim is 4x120ms per direction column (column 6 = right);
         // id 1 offsets 37ms in: t=0 -> frame 0.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.0f, 6) == "infantry_walk_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 6) == "rifle_infantry_walk_0_6");
         // t=130ms + 37 offset = 167 -> frame 1.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f, 6) == "infantry_walk_1_6");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6) == "rifle_infantry_walk_1_6");
         // Per-entity desync: id 200 offsets 200*37%480=200ms in -> frame 1 at t=0.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 200, 0.0f, 6) == "infantry_walk_1_6");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 200, 0.0f, 6) == "rifle_infantry_walk_1_6");
         // Direction 0 walks column 0 (sprites 100/108/116/124).
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.0f, 0) == "infantry_walk_0_0");
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f, 0) == "infantry_walk_1_0");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 0) == "rifle_infantry_walk_0_0");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 0) == "rifle_infantry_walk_1_0");
         // Out-of-range facing clamps to Right (column 6).
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.0f, 9) == "infantry_walk_0_6");
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, false, 1, 0.0f, -1) == "infantry_idle_0_6");
-        // PrototypeInfantry resolves its own namespace, not infantry's.
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 9) == "rifle_infantry_walk_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, -1) == "rifle_infantry_idle_0_6");
+        // PrototypeInfantry resolves its own namespace, not rifle_infantry's.
         CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, false, 1, 0.0f, 0) ==
                  "prototypeinfantry_idle_0_0");
         CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, true, 1, 0.0f, 6) ==
@@ -231,8 +231,19 @@ void RunArtTests()
         CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, true, 1, 0.13f, 6) ==
                  "prototypeinfantry_walk_1_6");
         // Deterministic: same args -> same frame.
-        CC_CHECK(art.UnitSprite(UnitType::Infantry, true, 1, 0.13f, 6) ==
-                 art.UnitSprite(UnitType::Infantry, true, 1, 0.13f, 6));
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6) ==
+                 art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6));
+        // Attack anim is 2x120ms per direction column and wins over
+        // walk/idle while attacking (column 6 = right: sprites 406/414).
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6, true) ==
+                 "rifle_infantry_attack_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.13f, 6, true) ==
+                 "rifle_infantry_attack_1_6");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 6, true) ==
+                 "rifle_infantry_attack_0_6");
+        // Types without attack anims fall back to walk/idle when attacking.
+        CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, false, 1, 0.0f, 6, true) ==
+                 "prototypeinfantry_idle_0_6");
         // Types without atlas entries resolve empty (legacy DrawUnit covers).
         CC_CHECK(art.UnitSprite(UnitType::HeavyTank, true, 1, 0.0f, 0).empty());
         CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f, 0).empty());
@@ -241,7 +252,7 @@ void RunArtTests()
     // --- BaseArtScale: prototype infantry's 2x is baked into its 32px art ---
     {
         CC_CHECK(Art::BaseArtScale(UnitType::PrototypeInfantry) == 1.0f);
-        CC_CHECK(Art::BaseArtScale(UnitType::Infantry) == 1.0f);
+        CC_CHECK(Art::BaseArtScale(UnitType::RifleInfantry) == 1.0f);
         CC_CHECK(Art::BaseArtScale(UnitType::HeavyTank) == 1.0f);
     }
 

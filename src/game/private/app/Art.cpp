@@ -31,7 +31,7 @@ static unsigned int HashId(unsigned int id)
 int SquadSlots(UnitType type, unsigned int id, float healthFraction,
                std::array<Vector2, 6> &outOffsets, float &outScale)
 {
-    if (type != UnitType::Infantry && type != UnitType::AntiArmorInfantry &&
+    if (type != UnitType::RifleInfantry && type != UnitType::AntiArmorInfantry &&
         type != UnitType::PrototypeInfantry)
     {
         outOffsets[0] = { 0.0f, 0.0f };
@@ -40,7 +40,7 @@ int SquadSlots(UnitType type, unsigned int id, float healthFraction,
     }
 
     int count;
-    if (type == UnitType::Infantry || type == UnitType::PrototypeInfantry)
+    if (type == UnitType::RifleInfantry || type == UnitType::PrototypeInfantry)
     {
         if (healthFraction > 0.80f)
             count = 5;
@@ -203,8 +203,8 @@ const char *UnitFile(UnitType type)
 {
     switch (type)
     {
-    case UnitType::Infantry:
-        return "infantry";
+    case UnitType::RifleInfantry:
+        return "rifle_infantry";
     case UnitType::AntiArmorInfantry:
         return "antiarmor";
     case UnitType::Engineer:
@@ -220,7 +220,7 @@ const char *UnitFile(UnitType type)
     case UnitType::PrototypeInfantry:
         return "prototypeinfantry";
     }
-    return "infantry";
+    return "rifle_infantry";
 }
 
 const char *BuildingFile(BuildingType type)
@@ -245,6 +245,13 @@ const char *NodeFile(ResourceKind kind)
 const char *TeamName(int teamID)
 {
     return teamID == 0 ? "blue" : "red";
+}
+
+// Folder under data/sprites/units/ holding a type's PNGs. Matches UnitFile
+// except RifleInfantry, whose folder predates the rename.
+const char *UnitDir(UnitType type)
+{
+    return type == UnitType::RifleInfantry ? "rifle" : UnitFile(type);
 }
 
 }
@@ -307,7 +314,8 @@ bool Art::Init(bool withDevice)
         {
             for (int f = 0; f < 2; ++f)
             {
-                std::snprintf(path, sizeof(path), "data/sprites/units/%s_%s_%s.png",
+                std::snprintf(path, sizeof(path), "data/sprites/units/%s/%s_%s_%s.png",
+                              UnitDir(static_cast<UnitType>(t)),
                               UnitFile(static_cast<UnitType>(t)), team == 0 ? "blue" : "red",
                               f == 0 ? "idle" : "attack");
                 units_[t][team][f] = LoadTexture(path);
@@ -508,7 +516,7 @@ bool Art::LoadAtlas()
 }
 
 std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
-                            float timeSeconds, int facingDir) const
+                            float timeSeconds, int facingDir, bool attacking) const
 {
     if (!sheetLoaded_)
     {
@@ -516,43 +524,63 @@ std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
     }
     const int dir = (facingDir < 0 || facingDir > 7) ? 6 : facingDir;
     const std::string prefix = UnitFile(type);
+    auto animSprite = [&](const std::string &animName) -> std::string {
+        const SpriteAnimInfo *anim = FindAnimByName(sheet_, animName);
+        if (anim == nullptr || anim->frames.empty())
+        {
+            return {};
+        }
+        int total = 0;
+        for (const SpriteAnimFrame &f : anim->frames)
+        {
+            total += f.durationMs;
+        }
+        if (total <= 0)
+        {
+            return {};
+        }
+        int t = static_cast<int>(timeSeconds * 1000.0f) +
+                static_cast<int>(id * 37u % static_cast<unsigned int>(total));
+        t %= total;
+        if (t < 0)
+        {
+            t += total;
+        }
+        for (const SpriteAnimFrame &f : anim->frames)
+        {
+            if (t < f.durationMs)
+            {
+                if (const SpriteDefInfo *s = FindSpriteById(sheet_, f.sprite); s != nullptr)
+                {
+                    return s->name;
+                }
+                break;
+            }
+            t -= f.durationMs;
+        }
+        return {};
+    };
+    if (attacking)
+    {
+        const std::string names[] = { prefix + "_attack_" + std::to_string(dir),
+                                      prefix + "_attack" };
+        for (const std::string &name : names)
+        {
+            if (std::string sprite = animSprite(name); !sprite.empty())
+            {
+                return sprite;
+            }
+        }
+    }
     if (moving)
     {
         const std::string names[] = { prefix + "_walk_" + std::to_string(dir),
                                       prefix + "_walk" };
         for (const std::string &name : names)
         {
-            if (const SpriteAnimInfo *anim = FindAnimByName(sheet_, name);
-                anim != nullptr && !anim->frames.empty())
+            if (std::string sprite = animSprite(name); !sprite.empty())
             {
-                int total = 0;
-                for (const SpriteAnimFrame &f : anim->frames)
-                {
-                    total += f.durationMs;
-                }
-                if (total > 0)
-                {
-                    int t = static_cast<int>(timeSeconds * 1000.0f) +
-                            static_cast<int>(id * 37u % static_cast<unsigned int>(total));
-                    t %= total;
-                    if (t < 0)
-                    {
-                        t += total;
-                    }
-                    for (const SpriteAnimFrame &f : anim->frames)
-                    {
-                        if (t < f.durationMs)
-                        {
-                            if (const SpriteDefInfo *s = FindSpriteById(sheet_, f.sprite);
-                                s != nullptr)
-                            {
-                                return s->name;
-                            }
-                            break;
-                        }
-                        t -= f.durationMs;
-                    }
-                }
+                return sprite;
             }
         }
     }

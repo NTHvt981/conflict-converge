@@ -89,9 +89,9 @@ void RunControlGroupTests()
     EventDispatcher events;
     UnitFactory factory(prodRegistry, resources, events);
     ProductionQueue queue;
-    CC_CHECK(queue.Enqueue(resources, UnitType::Infantry));
+    CC_CHECK(queue.Enqueue(resources, UnitType::RifleInfantry));
     const Entity spawned =
-        queue.Update(factory, resources, 0, { 0.0f, 0.0f }, BuildTime(UnitType::Infantry));
+        queue.Update(factory, resources, 0, { 0.0f, 0.0f }, BuildTime(UnitType::RifleInfantry));
     CC_CHECK(spawned != kInvalidEntity);
     CC_CHECK(prodRegistry.Get<Unit>(spawned) != nullptr);
     // Nothing left to complete: no entity.

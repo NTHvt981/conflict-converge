@@ -67,8 +67,8 @@ void RunSelectionVisualTests()
     Registry tipReg;
     Entity u1 = tipReg.Create();
     Unit uu1;
-    uu1.type = UnitType::Infantry;
-    uu1.health = BaseStats(UnitType::Infantry).health;
+    uu1.type = UnitType::RifleInfantry;
+    uu1.health = BaseStats(UnitType::RifleInfantry).health;
     tipReg.Add(u1, uu1);
     Entity u2 = tipReg.Create();
     Unit uu2 = uu1;

@@ -1,60 +1,100 @@
 {
   "animations": [
-    { "name": "infantry_walk_0", "id": 10, "loop": true,
+    { "name": "rifle_infantry_walk_0", "id": 10, "loop": true,
       "frames": [
         { "sprite": 100, "durationMs": 120 },
         { "sprite": 108, "durationMs": 120 },
         { "sprite": 116, "durationMs": 120 },
         { "sprite": 124, "durationMs": 120 }
       ] },
-    { "name": "infantry_walk_1", "id": 11, "loop": true,
+    { "name": "rifle_infantry_walk_1", "id": 11, "loop": true,
       "frames": [
         { "sprite": 101, "durationMs": 120 },
         { "sprite": 109, "durationMs": 120 },
         { "sprite": 117, "durationMs": 120 },
         { "sprite": 125, "durationMs": 120 }
       ] },
-    { "name": "infantry_walk_2", "id": 12, "loop": true,
+    { "name": "rifle_infantry_walk_2", "id": 12, "loop": true,
       "frames": [
         { "sprite": 102, "durationMs": 120 },
         { "sprite": 110, "durationMs": 120 },
         { "sprite": 118, "durationMs": 120 },
         { "sprite": 126, "durationMs": 120 }
       ] },
-    { "name": "infantry_walk_3", "id": 13, "loop": true,
+    { "name": "rifle_infantry_walk_3", "id": 13, "loop": true,
       "frames": [
         { "sprite": 103, "durationMs": 120 },
         { "sprite": 111, "durationMs": 120 },
         { "sprite": 119, "durationMs": 120 },
         { "sprite": 127, "durationMs": 120 }
       ] },
-    { "name": "infantry_walk_4", "id": 14, "loop": true,
+    { "name": "rifle_infantry_walk_4", "id": 14, "loop": true,
       "frames": [
         { "sprite": 104, "durationMs": 120 },
         { "sprite": 112, "durationMs": 120 },
         { "sprite": 120, "durationMs": 120 },
         { "sprite": 128, "durationMs": 120 }
       ] },
-    { "name": "infantry_walk_5", "id": 15, "loop": true,
+    { "name": "rifle_infantry_walk_5", "id": 15, "loop": true,
       "frames": [
         { "sprite": 105, "durationMs": 120 },
         { "sprite": 113, "durationMs": 120 },
         { "sprite": 121, "durationMs": 120 },
         { "sprite": 129, "durationMs": 120 }
       ] },
-    { "name": "infantry_walk_6", "id": 16, "loop": true,
+    { "name": "rifle_infantry_walk_6", "id": 16, "loop": true,
       "frames": [
         { "sprite": 106, "durationMs": 120 },
         { "sprite": 114, "durationMs": 120 },
         { "sprite": 122, "durationMs": 120 },
         { "sprite": 130, "durationMs": 120 }
       ] },
-    { "name": "infantry_walk_7", "id": 17, "loop": true,
+    { "name": "rifle_infantry_walk_7", "id": 17, "loop": true,
       "frames": [
         { "sprite": 107, "durationMs": 120 },
         { "sprite": 115, "durationMs": 120 },
         { "sprite": 123, "durationMs": 120 },
         { "sprite": 131, "durationMs": 120 }
+      ] },
+    { "name": "rifle_infantry_attack_0", "id": 40, "loop": true,
+      "frames": [
+        { "sprite": 400, "durationMs": 120 },
+        { "sprite": 408, "durationMs": 120 }
+      ] },
+    { "name": "rifle_infantry_attack_1", "id": 41, "loop": true,
+      "frames": [
+        { "sprite": 401, "durationMs": 120 },
+        { "sprite": 409, "durationMs": 120 }
+      ] },
+    { "name": "rifle_infantry_attack_2", "id": 42, "loop": true,
+      "frames": [
+        { "sprite": 402, "durationMs": 120 },
+        { "sprite": 410, "durationMs": 120 }
+      ] },
+    { "name": "rifle_infantry_attack_3", "id": 43, "loop": true,
+      "frames": [
+        { "sprite": 403, "durationMs": 120 },
+        { "sprite": 411, "durationMs": 120 }
+      ] },
+    { "name": "rifle_infantry_attack_4", "id": 44, "loop": true,
+      "frames": [
+        { "sprite": 404, "durationMs": 120 },
+        { "sprite": 412, "durationMs": 120 }
+      ] },
+    { "name": "rifle_infantry_attack_5", "id": 45, "loop": true,
+      "frames": [
+        { "sprite": 405, "durationMs": 120 },
+        { "sprite": 413, "durationMs": 120 }
+      ] },
+    { "name": "rifle_infantry_attack_6", "id": 46, "loop": true,
+      "frames": [
+        { "sprite": 406, "durationMs": 120 },
+        { "sprite": 414, "durationMs": 120 }
+      ] },
+    { "name": "rifle_infantry_attack_7", "id": 47, "loop": true,
+      "frames": [
+        { "sprite": 407, "durationMs": 120 },
+        { "sprite": 415, "durationMs": 120 }
       ] },
     { "name": "prototypeinfantry_walk_0", "id": 20, "loop": true,
       "frames": [

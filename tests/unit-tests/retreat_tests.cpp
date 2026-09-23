@@ -50,7 +50,7 @@ void RunRetreatTests()
     {
         Registry registry;
         TileMap map(10, 10);
-        const Entity id = SpawnTeam(registry, UnitType::Infantry, 0, 8, 8, 0.2f);
+        const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, 0, 8, 8, 0.2f);
         Unit &unit = *registry.Get<Unit>(id);
         unit.autoRetreat = true;
 
@@ -65,7 +65,7 @@ void RunRetreatTests()
     {
         Registry registry;
         TileMap map(10, 10);
-        const Entity id = SpawnTeam(registry, UnitType::Infantry, 0, 8, 8, 1.0f);
+        const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, 0, 8, 8, 1.0f);
         Unit &unit = *registry.Get<Unit>(id);
         unit.autoRetreat = true;
 
@@ -109,7 +109,7 @@ void RunRetreatTests()
     {
         Registry registry;
         TileMap map(10, 10);
-        const Entity id = SpawnTeam(registry, UnitType::Infantry, 1, 8, 8, 0.1f);
+        const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, 1, 8, 8, 0.1f);
         Unit &unit = *registry.Get<Unit>(id);
 
         RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), 0, kRetreatHealthFraction,
@@ -123,7 +123,7 @@ void RunRetreatTests()
         TileMap map(20, 15); // center ~(10, 7): Base B is nearer the center,
         SpawnBase(registry, 16, 12); // ...but Base A is nearer the unit.
         SpawnBase(registry, 2, 2);
-        const Entity id = SpawnTeam(registry, UnitType::Infantry, 0, 2, 5, 0.2f);
+        const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, 0, 2, 5, 0.2f);
         Unit &unit = *registry.Get<Unit>(id);
         unit.autoRetreat = true;
 
@@ -144,7 +144,7 @@ void RunRetreatTests()
         TileMap map(20, 15);
         SpawnBase(registry, 2, 2);
         SpawnBase(registry, 16, 12);
-        SpawnTeam(registry, UnitType::Infantry, 0, 2, 5, 0.2f);
+        SpawnTeam(registry, UnitType::RifleInfantry, 0, 2, 5, 0.2f);
 
         const Vector2 home = ResolvePlayerRetreatHome(registry, HomeTile(10, 3));
         CC_CHECK(cc::WorldToTile(cc::ToGlm(home)) == cc::IVec2(10, 3));

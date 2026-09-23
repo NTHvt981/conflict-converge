@@ -59,8 +59,8 @@ void RunOrdersTests()
         Registry registry;
         TileMap map(20, 15);
         const Entity seekerId =
-            AddUnit(registry, Soldier(0, UnitType::Infantry, 2, 2));
-        Unit victim = Soldier(1, UnitType::Infantry, 5, 2);
+            AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
+        Unit victim = Soldier(1, UnitType::RifleInfantry, 5, 2);
         victim.health = 30.0f;
         victim.attackPower = 0; // passive: never fights back
         const Entity victimId = AddUnit(registry, victim);
@@ -118,7 +118,7 @@ void RunOrdersTests()
     {
         Registry registry;
         TileMap map(20, 15);
-        const Entity id = AddUnit(registry, Soldier(0, UnitType::Infantry, 2, 2));
+        const Entity id = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
         Unit *u = registry.Get<Unit>(id);
         IssueAttackMoveOrder(*u, map, cc::ToRaylib(cc::TileToWorld(6, 2)));
         StepUnits(registry, map, 600);
@@ -131,10 +131,10 @@ void RunOrdersTests()
     {
         Registry registry;
         TileMap map(20, 15);
-        const Entity holderId = AddUnit(registry, Soldier(0, UnitType::Infantry, 2, 2));
+        const Entity holderId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
         Unit *holder = registry.Get<Unit>(holderId);
         SetStance(*holder, Stance::Hold);
-        Unit foe = Soldier(1, UnitType::Infantry, 5, 2);
+        Unit foe = Soldier(1, UnitType::RifleInfantry, 5, 2);
         foe.attackPower = 0;
         const Entity foeId = AddUnit(registry, foe);
         StepUnits(registry, map, 120);
@@ -153,7 +153,7 @@ void RunOrdersTests()
     {
         Registry registry;
         TileMap map(20, 15);
-        const Entity id = AddUnit(registry, Soldier(0, UnitType::Infantry, 2, 2));
+        const Entity id = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
         Unit *u = registry.Get<Unit>(id);
         IssuePatrolOrder(*u, map, cc::ToRaylib(cc::TileToWorld(2, 2)),
                          cc::ToRaylib(cc::TileToWorld(6, 2)));
@@ -234,7 +234,7 @@ void RunOrdersTests()
         tank.health = 10.0f;
         const Entity tankId = AddUnit(registry, tank);
         // Non-engineer issuer: no-op.
-        const Entity gruntId = AddUnit(registry, Soldier(0, UnitType::Infantry, 3, 2));
+        const Entity gruntId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 3, 2));
         IssueRepairOrder(*registry.Get<Unit>(gruntId), tankId);
         CC_CHECK(!registry.Get<Unit>(gruntId)->hasRepairOrder);
         // Enemy patient: order dies on the first tick.
@@ -256,7 +256,7 @@ void RunOrdersTests()
         StepUnits(registry, map, 5);
         CC_CHECK(!registry.Get<Unit>(spyId)->hasRepairOrder);
         // Flesh (infantry) is not repairable.
-        const Entity mateId = AddUnit(registry, Soldier(0, UnitType::Infantry, 6, 2));
+        const Entity mateId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 6, 2));
         registry.Get<Unit>(mateId)->health = 10.0f;
         IssueRepairOrder(*registry.Get<Unit>(spyId), mateId);
         StepUnits(registry, map, 5);

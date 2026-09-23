@@ -15,7 +15,7 @@
 namespace
 {
 
-Unit MakeUnit(int tileX, int tileY, UnitType type = UnitType::Infantry)
+Unit MakeUnit(int tileX, int tileY, UnitType type = UnitType::RifleInfantry)
 {
     Unit unit;
     unit.type = type;

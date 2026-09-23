@@ -295,6 +295,7 @@ void GameRenderer::DrawWorld()
             float slotScale = 1.0f;
             const int count = SquadSlots(unit.type, id, UnitHealthFraction(unit), slots, slotScale);
             const bool moving = unit.state == UnitState::Moving;
+            const bool attacking = unit.state == UnitState::Attacking;
             const float animTime = static_cast<float>(GetTime());
             const Color tint = art_.TeamTint(unit.teamID);
             for (int i = 0; i < count; ++i)
@@ -304,7 +305,8 @@ void GameRenderer::DrawWorld()
                 if (art_.UseAtlas())
                 {
                     const std::string sprite = art_.UnitSprite(unit.type, moving, id, animTime,
-                                                            static_cast<int>(unit.facing));
+                                                            static_cast<int>(unit.facing),
+                                                            attacking);
                     if (!sprite.empty())
                     {
                         art_.DrawAtlasFrame(sprite, corner, tint,

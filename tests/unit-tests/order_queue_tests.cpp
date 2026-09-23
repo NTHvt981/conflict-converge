@@ -16,7 +16,7 @@ Entity SpawnInfantry(Registry &registry, int tileX, int tileY)
 {
     Entity entity = registry.Create();
     Unit unit;
-    unit.type = UnitType::Infantry;
+    unit.type = UnitType::RifleInfantry;
     unit.position = cc::ToRaylib(cc::TileToWorld(tileX, tileY));
     unit.speed = 64.0f; // 1 tile per 1s tick below
     unit.sightRange = 0.0f; // blind: attack-move marches never engage

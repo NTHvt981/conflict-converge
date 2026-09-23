@@ -7,7 +7,7 @@ UnitCost CostOf(UnitType type)
 {
     switch (type)
     {
-    case UnitType::Infantry:
+    case UnitType::RifleInfantry:
         return { 25, 0 };
     case UnitType::AntiArmorInfantry:
         return { 30, 5 };

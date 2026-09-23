@@ -158,7 +158,7 @@ void RunIntegrationTests()
         EventDispatcher events;
         UnitFactory factory(registry, resources, events);
         TileMap map(20, 15);
-        DeployFaceoff(registry, factory, UnitType::Infantry);
+        DeployFaceoff(registry, factory, UnitType::RifleInfantry);
 
         int frames = 0;
         while (CountTeam(registry, 0) > 0 && CountTeam(registry, 1) > 0 && frames < 3600)
@@ -185,7 +185,7 @@ void RunIntegrationTests()
         nodes.SpawnNode(map, ResourceKind::Iron, { 15, 3 }, 10000.0f, 60.0f);
         factory.Spawn(UnitType::Engineer, 0, cc::ToRaylib(cc::TileToWorld(15, 3)));
         ProductionQueue queue;
-        CC_CHECK(queue.Enqueue(resources, UnitType::Infantry));
+        CC_CHECK(queue.Enqueue(resources, UnitType::RifleInfantry));
         const std::size_t before = registry.EntityCount();
         const Vector2 rally = cc::ToRaylib(cc::TileToWorld(13, 11));
 
@@ -200,7 +200,7 @@ void RunIntegrationTests()
         }
         CC_CHECK(queue.Empty());                        // order rolled off the line
         CC_CHECK(registry.EntityCount() > before);      // reinforcement arrived
-        CC_CHECK(resources.iron > 500 - CostOf(UnitType::Infantry).iron); // income outpaced cost
+        CC_CHECK(resources.iron > 500 - CostOf(UnitType::RifleInfantry).iron); // income outpaced cost
     }
 
     // --- mid-combat save/load: snapshot, resume, sim completes ---

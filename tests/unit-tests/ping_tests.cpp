@@ -114,7 +114,7 @@ void RunPingTests()
         });
         UnitFactory factory(registry, resources, events);
         const Entity id =
-            factory.Spawn(UnitType::Infantry, 1, { 128.0f, 192.0f });
+            factory.Spawn(UnitType::RifleInfantry, 1, { 128.0f, 192.0f });
         CC_CHECK(id != kInvalidEntity);
         CC_CHECK(spawnPos.x == 128.0f && spawnPos.y == 192.0f);
         CC_CHECK(spawnTeam == 1);

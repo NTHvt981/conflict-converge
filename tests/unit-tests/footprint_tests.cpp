@@ -149,7 +149,7 @@ void RunFootprintTests()
     // --- ApplyBaseStats sets footprints ---
     {
         Unit inf;
-        inf.type = UnitType::Infantry;
+        inf.type = UnitType::RifleInfantry;
         ApplyBaseStats(inf);
         CC_CHECK(inf.footprintWidth == 1);
         CC_CHECK(inf.footprintHeight == 1);
@@ -490,14 +490,14 @@ void RunFootprintTests()
             Registry registry;
             const Entity chaser = registry.Create();
             Unit hunter;
-            hunter.type = UnitType::Infantry;
+            hunter.type = UnitType::RifleInfantry;
             ApplyBaseStats(hunter);
             hunter.teamID = 0;
             hunter.position = cc::ToRaylib(cc::TileToWorld(0, 0));
             registry.Add(chaser, hunter);
             const Entity prey = registry.Create();
             Unit victim;
-            victim.type = UnitType::Infantry;
+            victim.type = UnitType::RifleInfantry;
             ApplyBaseStats(victim);
             victim.teamID = 1;
             victim.position = cc::ToRaylib(cc::TileToWorld(4, 0));

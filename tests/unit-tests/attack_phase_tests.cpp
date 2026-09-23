@@ -41,8 +41,8 @@ void RunAttackPhaseTests()
     {
         Registry registry;
         TileMap map(10, 10);
-        const Entity attacker = AddPhaser(registry, UnitType::Infantry, 0, 0.0f, 0.0f);
-        const Entity victim = AddPhaser(registry, UnitType::Infantry, 1, 100.0f, 0.0f);
+        const Entity attacker = AddPhaser(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
+        const Entity victim = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
 
         UpdateUnit(attacker, registry, map, kDt);
         CC_CHECK(registry.Get<Unit>(attacker)->phase == AttackPhase::WindUp);
@@ -78,7 +78,7 @@ void RunAttackPhaseTests()
         unarmed.position = { 0.0f, 0.0f };
         const Entity pacifist = registry.Create();
         registry.Add(pacifist, unarmed);
-        AddPhaser(registry, UnitType::Infantry, 1, 100.0f, 0.0f);
+        AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
         StepPhasers(registry, map, kDt, 30);
         const Unit *unit = registry.Get<Unit>(pacifist);
         CC_CHECK(unit->phase == AttackPhase::Ready);
@@ -89,8 +89,8 @@ void RunAttackPhaseTests()
     {
         Registry registry;
         TileMap map(10, 10);
-        const Entity walker = AddPhaser(registry, UnitType::Infantry, 0, 0.0f, 0.0f);
-        const Entity gone = AddPhaser(registry, UnitType::Infantry, 1, 100.0f, 0.0f);
+        const Entity walker = AddPhaser(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
+        const Entity gone = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
         UpdateUnit(walker, registry, map, kDt); // acquires, starts WindUp
         CC_CHECK(registry.Get<Unit>(walker)->phase == AttackPhase::WindUp);
         registry.Destroy(gone); // target lost...

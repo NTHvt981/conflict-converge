@@ -135,15 +135,15 @@ void RunSelectionTests()
     // --- SelectAllOfType: same-team same-type only; add extends ---
     Registry typeReg;
     const Entity infA = SpawnAt(typeReg, 64.0f, 64.0f);
-    typeReg.Get<Unit>(infA)->type = UnitType::Infantry;
+    typeReg.Get<Unit>(infA)->type = UnitType::RifleInfantry;
     const Entity infB = SpawnAt(typeReg, 256.0f, 64.0f);
-    typeReg.Get<Unit>(infB)->type = UnitType::Infantry;
+    typeReg.Get<Unit>(infB)->type = UnitType::RifleInfantry;
     const Entity tank = SpawnAt(typeReg, 64.0f, 256.0f);
     typeReg.Get<Unit>(tank)->type = UnitType::LightTank;
     const Entity foeInf = SpawnAt(typeReg, 256.0f, 256.0f);
-    typeReg.Get<Unit>(foeInf)->type = UnitType::Infantry;
+    typeReg.Get<Unit>(foeInf)->type = UnitType::RifleInfantry;
     typeReg.Get<Unit>(foeInf)->teamID = 1;
-    CC_CHECK(SelectAllOfType(typeReg, UnitType::Infantry, 0, false) == 2);
+    CC_CHECK(SelectAllOfType(typeReg, UnitType::RifleInfantry, 0, false) == 2);
     CC_CHECK(typeReg.Get<Unit>(infA)->isSelected && typeReg.Get<Unit>(infB)->isSelected);
     CC_CHECK(!typeReg.Get<Unit>(tank)->isSelected && !typeReg.Get<Unit>(foeInf)->isSelected);
     CC_CHECK(SelectAllOfType(typeReg, UnitType::LightTank, 0, true) == 1); // extends
@@ -152,26 +152,26 @@ void RunSelectionTests()
     // --- SelectAllOfTypeInRect: type + team + viewport, replace/extend ---
     Registry viewReg;
     const Entity inA = SpawnAt(viewReg, 64.0f, 64.0f); // center (96,96): inside
-    viewReg.Get<Unit>(inA)->type = UnitType::Infantry;
+    viewReg.Get<Unit>(inA)->type = UnitType::RifleInfantry;
     const Entity inB = SpawnAt(viewReg, 192.0f, 64.0f); // center (224,96): inside
-    viewReg.Get<Unit>(inB)->type = UnitType::Infantry;
+    viewReg.Get<Unit>(inB)->type = UnitType::RifleInfantry;
     const Entity viewTank = SpawnAt(viewReg, 64.0f, 192.0f); // inside, wrong type
     viewReg.Get<Unit>(viewTank)->type = UnitType::LightTank;
     const Entity viewFoe = SpawnAt(viewReg, 320.0f, 64.0f); // inside, enemy team
-    viewReg.Get<Unit>(viewFoe)->type = UnitType::Infantry;
+    viewReg.Get<Unit>(viewFoe)->type = UnitType::RifleInfantry;
     viewReg.Get<Unit>(viewFoe)->teamID = 1;
     const Entity offView = SpawnAt(viewReg, 2000.0f, 2000.0f); // same type/team, offscreen
-    viewReg.Get<Unit>(offView)->type = UnitType::Infantry;
+    viewReg.Get<Unit>(offView)->type = UnitType::RifleInfantry;
     const Rectangle viewport = { 0.0f, 0.0f, 500.0f, 500.0f };
 
-    CC_CHECK(SelectAllOfTypeInRect(viewReg, viewport, UnitType::Infantry, 0, false) == 2);
+    CC_CHECK(SelectAllOfTypeInRect(viewReg, viewport, UnitType::RifleInfantry, 0, false) == 2);
     CC_CHECK(viewReg.Get<Unit>(inA)->isSelected && viewReg.Get<Unit>(inB)->isSelected);
     CC_CHECK(!viewReg.Get<Unit>(viewTank)->isSelected);
     CC_CHECK(!viewReg.Get<Unit>(viewFoe)->isSelected);
     CC_CHECK(!viewReg.Get<Unit>(offView)->isSelected);
     // add=true keeps the prior selection and still counts only matches.
     viewReg.Get<Unit>(viewTank)->isSelected = true;
-    CC_CHECK(SelectAllOfTypeInRect(viewReg, viewport, UnitType::Infantry, 0, true) == 2);
+    CC_CHECK(SelectAllOfTypeInRect(viewReg, viewport, UnitType::RifleInfantry, 0, true) == 2);
     CC_CHECK(viewReg.Get<Unit>(viewTank)->isSelected); // kept, not counted
     CC_CHECK(viewReg.Get<Unit>(inA)->isSelected);
 }

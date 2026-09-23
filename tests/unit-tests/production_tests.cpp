@@ -32,16 +32,16 @@ struct Rig
 void RunProductionTests()
 {
     // --- build times scale with cost, floored at 2s ---
-    CC_CHECK(BuildTime(UnitType::Infantry) >= 2.0f);
-    CC_CHECK(BuildTime(UnitType::HeavyTank) > BuildTime(UnitType::Infantry));
+    CC_CHECK(BuildTime(UnitType::RifleInfantry) >= 2.0f);
+    CC_CHECK(BuildTime(UnitType::HeavyTank) > BuildTime(UnitType::RifleInfantry));
 
     // --- enqueue charges upfront; broke orders rejected ---
     Rig rig;
     ProductionQueue queue;
     CC_CHECK(queue.Empty());
     CC_CHECK(queue.HeadProgress() == 0.0f);
-    CC_CHECK(queue.Enqueue(rig.resources, UnitType::Infantry));
-    const UnitCost cost = CostOf(UnitType::Infantry);
+    CC_CHECK(queue.Enqueue(rig.resources, UnitType::RifleInfantry));
+    const UnitCost cost = CostOf(UnitType::RifleInfantry);
     CC_CHECK(rig.resources.iron == 1000 - cost.iron);
     CC_CHECK(rig.resources.oil == 500 - cost.oil);
     CC_CHECK(queue.Size() == 1);
@@ -53,7 +53,7 @@ void RunProductionTests()
 
     // --- partial progress advances without spawning ---
     queue.Update(rig.factory, rig.resources, 0, { 0.0f, 0.0f },
-                 BuildTime(UnitType::Infantry) * 0.5f);
+                 BuildTime(UnitType::RifleInfantry) * 0.5f);
     CC_CHECK(queue.Size() == 1);
     CC_CHECK(rig.spawned == 0);
     const float half = queue.HeadProgress();
@@ -62,7 +62,7 @@ void RunProductionTests()
     // --- completion spawns prepaid at the rally point (no second charge) ---
     const long ironBefore = rig.resources.iron;
     queue.Update(rig.factory, rig.resources, 3, cc::ToRaylib(cc::TileToWorld(4, 4)),
-                 BuildTime(UnitType::Infantry));
+                 BuildTime(UnitType::RifleInfantry));
     CC_CHECK(queue.Empty());
     CC_CHECK(rig.spawned == 1);
     CC_CHECK(rig.resources.iron == ironBefore); // prepaid: balances untouched
@@ -78,7 +78,7 @@ void RunProductionTests()
     // --- items build strictly in order ---
     Rig line;
     ProductionQueue lineQueue;
-    CC_CHECK(lineQueue.Enqueue(line.resources, UnitType::Infantry));
+    CC_CHECK(lineQueue.Enqueue(line.resources, UnitType::RifleInfantry));
     CC_CHECK(lineQueue.Enqueue(line.resources, UnitType::Engineer));
     lineQueue.Update(line.factory, line.resources, 0, { 0.0f, 0.0f }, 1000.0f); // finishes head only
     CC_CHECK(lineQueue.Size() == 1);
@@ -90,30 +90,30 @@ void RunProductionTests()
     // --- repeat items re-charge and restart instead of popping ---
     Rig rep;
     ProductionQueue repQueue;
-    CC_CHECK(repQueue.Enqueue(rep.resources, UnitType::Infantry, true));
-    const UnitCost repCost = CostOf(UnitType::Infantry);
+    CC_CHECK(repQueue.Enqueue(rep.resources, UnitType::RifleInfantry, true));
+    const UnitCost repCost = CostOf(UnitType::RifleInfantry);
     const long afterFirstCharge = rep.resources.iron;
     repQueue.Update(rep.factory, rep.resources, 0, { 0.0f, 0.0f },
-                    BuildTime(UnitType::Infantry));
+                    BuildTime(UnitType::RifleInfantry));
     CC_CHECK(repQueue.Size() == 1); // still queued, rebuilding
     CC_CHECK(rep.spawned == 1);
     CC_CHECK(rep.resources.iron == afterFirstCharge - repCost.iron); // charged twice
     repQueue.Update(rep.factory, rep.resources, 0, { 0.0f, 0.0f },
-                    BuildTime(UnitType::Infantry));
+                    BuildTime(UnitType::RifleInfantry));
     CC_CHECK(repQueue.Size() == 1);
     CC_CHECK(rep.spawned == 2);
 
     // --- broke repeat parks at 100% and resumes when funded ---
     Rig poor;
     ProductionQueue poorQueue;
-    CC_CHECK(poorQueue.Enqueue(poor.resources, UnitType::Infantry, true));
+    CC_CHECK(poorQueue.Enqueue(poor.resources, UnitType::RifleInfantry, true));
     poorQueue.Update(poor.factory, poor.resources, 0, { 0.0f, 0.0f },
-                     BuildTime(UnitType::Infantry)); // first cycle ok
+                     BuildTime(UnitType::RifleInfantry)); // first cycle ok
     CC_CHECK(poor.spawned == 1);
     poor.resources.iron = 0; // drain before the second cycle completes
     poor.resources.oil = 0;
     poorQueue.Update(poor.factory, poor.resources, 0, { 0.0f, 0.0f },
-                     BuildTime(UnitType::Infantry));
+                     BuildTime(UnitType::RifleInfantry));
     CC_CHECK(poorQueue.Size() == 1); // parked, not dropped
     CC_CHECK(poor.spawned == 1);     // no free spawn while broke
     poor.resources.AddIron(1000);

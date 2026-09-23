@@ -171,7 +171,7 @@ void RunSkirmishTests()
     CC_CHECK(TeamHasUnits(game.registry, 0));
     CC_CHECK(TeamHasUnits(game.registry, 1));
 
-    // --- BuildSandbox: terrain + one player Infantry, nothing else ---
+    // --- BuildSandbox: terrain + player prototype squad, nothing else ---
     const std::string proto = ShippedMap("prototype.map");
     CC_CHECK(!proto.empty());
     if (!proto.empty())
@@ -185,7 +185,7 @@ void RunSkirmishTests()
         Harness sand;
         CC_CHECK(BuildSandbox(sand.world, proto));
         CC_CHECK(sand.map.Width() == 20 && sand.map.Height() == 10);
-        // 6 units: all team-0 PrototypeInfantry (infantry logic), stacked at
+        // 6 units: all team-0 PrototypeInfantry (rifle-infantry logic), stacked at
         // the same spawn tile (BuildSandbox computes the free tile once and
         // reuses it for every SpawnPrepaid call -- separation must untangle
         // them, see PrototypeSandboxMovement tests).

@@ -28,7 +28,7 @@ namespace
 Unit MakeInfantry(int tileX, int tileY, int team)
 {
     Unit unit;
-    unit.type = UnitType::Infantry;
+    unit.type = UnitType::RifleInfantry;
     ApplyBaseStats(unit);
     unit.teamID = team;
     unit.position = cc::ToRaylib(cc::TileToWorld(tileX, tileY));

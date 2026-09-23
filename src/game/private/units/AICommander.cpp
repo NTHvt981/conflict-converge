@@ -18,7 +18,7 @@ AIDifficultyParams ParamsFor(AIDifficulty difficulty)
         params.scoutInterval = 60.0f;
         params.relaunchCooldown = 30.0f;
         params.retreats = false;
-        params.composition = { UnitType::Infantry };
+        params.composition = { UnitType::RifleInfantry };
         break;
     case AIDifficulty::Medium:
         params.harvesters = 2;
@@ -26,7 +26,7 @@ AIDifficultyParams ParamsFor(AIDifficulty difficulty)
         params.scoutInterval = 30.0f;
         params.relaunchCooldown = 20.0f;
         params.retreats = false;
-        params.composition = { UnitType::Infantry, UnitType::Infantry, UnitType::LightTank };
+        params.composition = { UnitType::RifleInfantry, UnitType::RifleInfantry, UnitType::LightTank };
         break;
     case AIDifficulty::Hard:
         params.harvesters = 3;
@@ -35,7 +35,7 @@ AIDifficultyParams ParamsFor(AIDifficulty difficulty)
         params.scoutInterval = 15.0f;
         params.relaunchCooldown = 15.0f;
         params.retreats = true;
-        params.composition = { UnitType::Infantry, UnitType::LightTank, UnitType::Artillery,
+        params.composition = { UnitType::RifleInfantry, UnitType::LightTank, UnitType::Artillery,
                                UnitType::IFV };
         break;
     }
@@ -160,7 +160,7 @@ void AICommander::SetupBase()
             break;
         }
     }
-    factory_.Spawn(UnitType::Infantry, teamID_,
+    factory_.Spawn(UnitType::RifleInfantry, teamID_,
                    cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
 }
 
@@ -330,7 +330,7 @@ void AICommander::ScoutTick(float dt)
     {
         return;
     }
-    const Entity scout = factory_.Spawn(UnitType::Infantry, teamID_,
+    const Entity scout = factory_.Spawn(UnitType::RifleInfantry, teamID_,
                                         cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
     scoutTimer_ = params_.scoutInterval;
     if (scout == kInvalidEntity)

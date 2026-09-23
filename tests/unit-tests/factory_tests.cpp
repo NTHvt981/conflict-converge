@@ -10,10 +10,10 @@
 void RunFactoryTests()
 {
     // --- price list sanity ---
-    const UnitCost infantry = CostOf(UnitType::Infantry);
+    const UnitCost rifle = CostOf(UnitType::RifleInfantry);
     const UnitCost heavy = CostOf(UnitType::HeavyTank);
-    CC_CHECK(infantry.iron >= 0 && infantry.oil >= 0);
-    CC_CHECK(heavy.iron > infantry.iron);
+    CC_CHECK(rifle.iron >= 0 && rifle.oil >= 0);
+    CC_CHECK(heavy.iron > rifle.iron);
     for (int i = 0; i <= static_cast<int>(UnitType::HeavyTank); ++i)
     {
         const UnitCost cost = CostOf(static_cast<UnitType>(i));
@@ -30,15 +30,15 @@ void RunFactoryTests()
     events.Subscribe(EventType::UnitSpawned, [&](const Event &) { ++spawned; });
     UnitFactory factory(registry, resources, events);
 
-    const Entity id = factory.Spawn(UnitType::Infantry, 2, { 70.0f, 130.0f });
+    const Entity id = factory.Spawn(UnitType::RifleInfantry, 2, { 70.0f, 130.0f });
     CC_CHECK(id != kInvalidEntity);
     CC_CHECK(spawned == 1);
-    CC_CHECK(resources.iron == 1000 - infantry.iron);
-    CC_CHECK(resources.oil == 500 - infantry.oil);
+    CC_CHECK(resources.iron == 1000 - rifle.iron);
+    CC_CHECK(resources.oil == 500 - rifle.oil);
 
     const Unit *unit = registry.Get<Unit>(id);
     CC_CHECK(unit != nullptr);
-    CC_CHECK(unit->health == BaseStats(UnitType::Infantry).health);
+    CC_CHECK(unit->health == BaseStats(UnitType::RifleInfantry).health);
     CC_CHECK(unit->teamID == 2);
     CC_CHECK(unit->state == UnitState::Idle);
     CC_CHECK(unit->position.x == 64.0f && unit->position.y == 128.0f);

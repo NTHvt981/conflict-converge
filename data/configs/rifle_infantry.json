@@ -1,5 +1,5 @@
 {
-  "type": "Infantry",
+  "type": "RifleInfantry",
   "stats": {
     "health": 100,
     "armorType": "RUBBER",
@@ -15,8 +15,8 @@
     "origin": { "x": 0, "y": 0 }
   },
   "art": {
-    "spritePrefix": "infantry",
-    "atlasIdlePrefix": "infantry_idle",
-    "atlasWalkPrefix": "infantry_walk"
+    "spritePrefix": "rifle_infantry",
+    "atlasIdlePrefix": "rifle_infantry_idle",
+    "atlasWalkPrefix": "rifle_infantry_walk"
   }
 }

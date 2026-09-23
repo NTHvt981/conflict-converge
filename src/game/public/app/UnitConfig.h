@@ -9,7 +9,7 @@
 // data/configs/<type>.json file. Pure logic, no raylib.
 struct UnitConfig
 {
-    std::string type; // UnitType enum name, e.g. "Infantry"
+    std::string type; // UnitType enum name, e.g. "RifleInfantry"
     UnitStats stats;
     // Collision, bounds/origin style: footprint size is derived as
     // (right-left) x (bottom-top); boundLeft/Top is the offset from the
@@ -29,7 +29,7 @@ struct UnitConfig
 // per-field fallback below.
 UnitConfig DefaultUnitConfig(UnitType type);
 
-// Enum <-> enumerator-spelling names ("RUBBER", "KINETIC", "Infantry");
+// Enum <-> enumerator-spelling names ("RUBBER", "KINETIC", "RifleInfantry");
 // Parse returns false on unknown names.
 bool ParseUnitTypeName(const std::string &name, UnitType &out);
 bool ParseArmorTypeName(const std::string &name, ArmorType &out);

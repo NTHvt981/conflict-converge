@@ -77,15 +77,19 @@ def vehicle(draw, team, w, h, barrel_len, barrel_y, turret=True):
     return x0 + 8 + barrel_len, barrel_y + 1  # muzzle anchor
 
 
-UNIT_DEFS = ["infantry", "antiarmor", "engineer", "ifv",
+UNIT_DEFS = ["rifle_infantry", "antiarmor", "engineer", "ifv",
              "artillery", "lighttank", "heavytank"]
+
+# Folder under data/sprites/units/ per generated stem. Defaults to the stem
+# itself; rifle_infantry's folder predates the rename (mirrors Art.cpp).
+UNIT_DIRS = {"rifle_infantry": "rifle"}
 
 
 def draw_unit(unit, team):
     img = canvas()
     d = ImageDraw.Draw(img)
     muzzle = None
-    if unit == "infantry":
+    if unit == "rifle_infantry":
         trooper(d, team)
         muzzle = (29, 19)
     elif unit == "antiarmor":
@@ -160,12 +164,14 @@ def main():
     for sub in ("units", "buildings", "nodes", "icons"):
         os.makedirs(f"{OUT}/{sub}", exist_ok=True)
     for unit in UNIT_DEFS:
+        unit_dir = UNIT_DIRS.get(unit, unit)
+        os.makedirs(f"{OUT}/units/{unit_dir}", exist_ok=True)
         for team in TEAMS:
             idle, muzzle = draw_unit(unit, team)
-            idle.save(f"{OUT}/units/{unit}_{team}_idle.png")
+            idle.save(f"{OUT}/units/{unit_dir}/{unit}_{team}_idle.png")
             atk = idle.copy()
             flash(ImageDraw.Draw(atk), *muzzle)
-            atk.save(f"{OUT}/units/{unit}_{team}_attack.png")
+            atk.save(f"{OUT}/units/{unit_dir}/{unit}_{team}_attack.png")
     for team in TEAMS:
         for name, img in buildings(team).items():
             img.save(f"{OUT}/buildings/{name}_{team}.png")

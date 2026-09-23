@@ -161,7 +161,7 @@ void RunFormationTests()
         for (int i = 0; i < 3; ++i)
         {
             Unit unit;
-            unit.type = UnitType::Infantry;
+            unit.type = UnitType::RifleInfantry;
             ApplyBaseStats(unit);
             unit.teamID = 0;
             unit.position = cc::ToRaylib(cc::TileToWorld(i * 3, 0));

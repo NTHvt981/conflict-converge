@@ -9,7 +9,7 @@
 void RunHudTests()
 {
     // --- unit type names cover all 8 types ---
-    CC_CHECK(std::string(UnitTypeName(UnitType::Infantry)) == "Infantry");
+    CC_CHECK(std::string(UnitTypeName(UnitType::RifleInfantry)) == "Rifle Infantry");
     CC_CHECK(std::string(UnitTypeName(UnitType::AntiArmorInfantry)) == "Anti-Armor");
     CC_CHECK(std::string(UnitTypeName(UnitType::Engineer)) == "Engineer");
     CC_CHECK(std::string(UnitTypeName(UnitType::IFV)) == "IFV");

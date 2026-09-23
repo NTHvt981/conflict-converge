@@ -61,7 +61,7 @@ void RunUnitConfigTests()
 
     // --- round-trip preserves edited (non-default) values ---
     {
-        UnitConfig edited = DefaultUnitConfig(UnitType::Infantry);
+        UnitConfig edited = DefaultUnitConfig(UnitType::RifleInfantry);
         edited.stats.health = 150.0f;
         edited.stats.armorType = ArmorType::COMPOSITE;
         edited.stats.attackPower = 0; // explicit zero survives (not a default)
@@ -72,13 +72,13 @@ void RunUnitConfigTests()
         edited.atlasIdlePrefix = "custom_idle";
         const std::string json = UnitConfigToJson(edited);
         UnitConfig reloaded;
-        CC_CHECK(ParseUnitConfigJson(json, "infantry", reloaded));
+        CC_CHECK(ParseUnitConfigJson(json, "rifle_infantry", reloaded));
         CC_CHECK(ConfigsEqual(edited, reloaded));
     }
 
     // --- canonical filenames: snake_case stems, underscore-tolerant match ---
     {
-        CC_CHECK(std::string(UnitConfigFilename(UnitType::Infantry)) == "infantry");
+        CC_CHECK(std::string(UnitConfigFilename(UnitType::RifleInfantry)) == "rifle_infantry");
         CC_CHECK(std::string(UnitConfigFilename(UnitType::AntiArmorInfantry)) ==
                  "antiarmor_infantry");
         CC_CHECK(std::string(UnitConfigFilename(UnitType::Engineer)) == "engineer");
@@ -114,19 +114,19 @@ void RunUnitConfigTests()
         if (found != nullptr)
         {
             CC_CHECK(found->size() == 8);
-            bool infantryOk = false;
+            bool rifleOk = false;
             bool tankOk = false;
             for (const UnitConfig &config : *found)
             {
-                if (config.type == "Infantry")
+                if (config.type == "RifleInfantry")
                 {
-                    const UnitStats &base = BaseStats(UnitType::Infantry);
+                    const UnitStats &base = BaseStats(UnitType::RifleInfantry);
                     CC_CHECK(config.stats.health == base.health);
                     CC_CHECK(config.stats.attackPower == base.attackPower);
                     CC_CHECK(config.footprintWidth == 1);
-                    CC_CHECK(config.spritePrefix == "infantry");
-                    CC_CHECK(config.atlasIdlePrefix == "infantry_idle");
-                    infantryOk = true;
+                    CC_CHECK(config.spritePrefix == "rifle_infantry");
+                    CC_CHECK(config.atlasIdlePrefix == "rifle_infantry_idle");
+                    rifleOk = true;
                 }
                 if (config.type == "HeavyTank")
                 {
@@ -136,7 +136,7 @@ void RunUnitConfigTests()
                     tankOk = true;
                 }
             }
-            CC_CHECK(infantryOk);
+            CC_CHECK(rifleOk);
             CC_CHECK(tankOk);
         }
     }
@@ -146,8 +146,8 @@ void RunUnitConfigTests()
         const std::string dir = TempDir("cc_unitconfig_discovery");
         std::error_code ec;
         std::filesystem::create_directories(dir, ec);
-        WriteFile(dir + "/infantry.json",
-                  UnitConfigToJson(DefaultUnitConfig(UnitType::Infantry)).c_str());
+        WriteFile(dir + "/rifle_infantry.json",
+                  UnitConfigToJson(DefaultUnitConfig(UnitType::RifleInfantry)).c_str());
         WriteFile(dir + "/engineer.json",
                   UnitConfigToJson(DefaultUnitConfig(UnitType::Engineer)).c_str());
         WriteFile(dir + "/ifv.json",
@@ -175,13 +175,13 @@ void RunUnitConfigTests()
     // --- tolerant load: type/filename mismatch + unknown type skipped ---
     {
         UnitConfig config;
-        const std::string infantry =
-            UnitConfigToJson(DefaultUnitConfig(UnitType::Infantry));
-        CC_CHECK(!ParseUnitConfigJson(infantry, "engineer", config)); // mismatch
+        const std::string rifle =
+            UnitConfigToJson(DefaultUnitConfig(UnitType::RifleInfantry));
+        CC_CHECK(!ParseUnitConfigJson(rifle, "engineer", config)); // mismatch
         CC_CHECK(!ParseUnitConfigJson("{\"type\":\"Spaceship\"}", "spaceship",
                                       config)); // unknown
-        CC_CHECK(!ParseUnitConfigJson("{ nope", "infantry", config)); // garbage
-        CC_CHECK(!ParseUnitConfigJson("{\"stats\":{}}", "infantry", config)); // no type
+        CC_CHECK(!ParseUnitConfigJson("{ nope", "rifle_infantry", config)); // garbage
+        CC_CHECK(!ParseUnitConfigJson("{\"stats\":{}}", "rifle_infantry", config)); // no type
     }
 
     // --- tolerant load: missing/unknown/out-of-range fields -> defaults ---
@@ -241,15 +241,18 @@ void RunUnitConfigTests()
         {
             const UnitType type = static_cast<UnitType>(i);
             const UnitConfig baseline = DefaultUnitConfig(type);
-            UnitType back = UnitType::Infantry;
+            UnitType back = UnitType::RifleInfantry;
             CC_CHECK(ParseUnitTypeName(baseline.type, back));
             CC_CHECK(back == type);
         }
         ArmorType noArmor = ArmorType::STEEL;
         DamageType noDamage = DamageType::KINETIC;
-        UnitType noUnit = UnitType::Infantry;
+        UnitType noUnit = UnitType::RifleInfantry;
         CC_CHECK(!ParseArmorTypeName("WOOD", noArmor));
         CC_CHECK(!ParseDamageTypeName("NUCLEAR", noDamage));
         CC_CHECK(!ParseUnitTypeName("Spaceship", noUnit));
+        // Pre-rename "Infantry" stays a valid alias for old configs/saves.
+        CC_CHECK(ParseUnitTypeName("Infantry", noUnit));
+        CC_CHECK(noUnit == UnitType::RifleInfantry);
     }
 }

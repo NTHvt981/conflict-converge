@@ -17,7 +17,7 @@ class FogOfWar;
 // (prototype art at 2x; sandbox levels only, never in factory menus).
 enum class UnitType
 {
-    Infantry,
+    RifleInfantry,
     AntiArmorInfantry,
     Engineer,
     IFV,
@@ -131,7 +131,7 @@ struct Unit
     bool isSelected = false;
     unsigned int controlGroups = 0; // bit N = control group N; 0 = none
     int teamID = 0;
-    UnitType type = UnitType::Infantry;
+    UnitType type = UnitType::RifleInfantry;
     UnitState state = UnitState::Idle;
     Facing facing = Facing::Right; // last travel direction
     Entity target = kInvalidEntity; // acquired enemy
@@ -153,7 +153,7 @@ struct Unit
     bool hasAttackGroundOrder = false;
     Vector2 attackGroundPos = {};
     std::vector<QueuedOrder> orderQueue; // pending orders, dispatched FIFO
-    // Multi-tile footprint. 1x1 for infantry, 2x2 for vehicles.
+    // Multi-tile footprint. 1x1 for foot units, 2x2 for vehicles.
     // Anchor tile is the unit's logical position; the footprint extends
     // toward +x/+y from the anchor. Occupancy and CanEnter check all tiles.
     int footprintWidth = 1;

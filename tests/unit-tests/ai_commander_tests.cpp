@@ -92,7 +92,7 @@ void RunAICommanderTests()
     UnitFactory warFactory(warRegistry, warResources, warEvents);
     for (int i = 0; i < 3; ++i)
     {
-        warFactory.SpawnPrepaid(UnitType::Infantry, 1,
+        warFactory.SpawnPrepaid(UnitType::RifleInfantry, 1,
                                 cc::ToRaylib(cc::TileToWorld(16 + i, 9)));
     }
     war.Update(1.0f / 60.0f);
@@ -201,7 +201,7 @@ void RunAICommanderTests()
         UnitFactory factory(registry, resources, events);
         for (int i = 0; i < 3; ++i)
         {
-            factory.SpawnPrepaid(UnitType::Infantry, 1,
+            factory.SpawnPrepaid(UnitType::RifleInfantry, 1,
                                  cc::ToRaylib(cc::TileToWorld(16 + i, 9)));
         }
         // Wave slots around lastSeenEnemy (1,10): (1,10),(2,10),(1,11),(2,11).
@@ -249,7 +249,7 @@ void RunAICommanderTests()
         UnitFactory factory(registry, resources, events);
         for (int i = 0; i < 3; ++i)
         {
-            factory.SpawnPrepaid(UnitType::Infantry, 1,
+            factory.SpawnPrepaid(UnitType::RifleInfantry, 1,
                                  cc::ToRaylib(cc::TileToWorld(16 + i, 9)));
         }
         const Entity blocker = registry.Create();

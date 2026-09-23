@@ -1,8 +1,12 @@
 {
   "textures": [
-    { "id": "rifle_infantry_idle", "file": "units/rifle_infantry_idle.png", "width": 128, "height": 32 },
-    { "id": "rifle_infantry_run", "file": "units/rifle_infantry_run.png", "width": 128, "height": 128 },
-    { "id": "prototype_infantry_idle", "file": "units/prototype_infantry_idle.png", "width": 256, "height": 32 },
-    { "id": "prototype_infantry_run", "file": "units/prototype_infantry_run.png", "width": 256, "height": 128 }
+    { "id": "rifle_idle_base", "file": "units/rifle/idle_2d_base.png", "width": 256, "height": 32 },
+    { "id": "rifle_idle_mask", "file": "units/rifle/idle_2d_mask.png", "width": 256, "height": 32 },
+    { "id": "rifle_run_base", "file": "units/rifle/run_2d_base.png", "width": 256, "height": 128 },
+    { "id": "rifle_run_mask", "file": "units/rifle/run_2d_mask.png", "width": 256, "height": 128 },
+    { "id": "rifle_attack_base", "file": "units/rifle/attack_2d_base.png", "width": 256, "height": 64 },
+    { "id": "rifle_attack_mask", "file": "units/rifle/attack_2d_mask.png", "width": 256, "height": 64 },
+    { "id": "prototype_infantry_idle", "file": "units/prototypeinfantry/prototype_infantry_idle.png", "width": 256, "height": 32 },
+    { "id": "prototype_infantry_run", "file": "units/prototypeinfantry/prototype_infantry_run.png", "width": 256, "height": 128 }
   ]
 }

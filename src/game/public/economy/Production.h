@@ -37,7 +37,7 @@ public:
 private:
     struct Item
     {
-        UnitType type = UnitType::Infantry;
+        UnitType type = UnitType::RifleInfantry;
         float progress = 0.0f;
         float buildTime = 1.0f;
         bool repeat = false;

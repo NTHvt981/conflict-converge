@@ -26,7 +26,7 @@ void RunPerfTests()
     TileMap map(40, 30);
 
     const UnitType mix[] = {
-        UnitType::Infantry, UnitType::LightTank, UnitType::Artillery, UnitType::AntiArmorInfantry
+        UnitType::RifleInfantry, UnitType::LightTank, UnitType::Artillery, UnitType::AntiArmorInfantry
     };
     for (int i = 0; i < 200; ++i)
     {

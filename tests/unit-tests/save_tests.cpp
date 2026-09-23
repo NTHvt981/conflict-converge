@@ -78,7 +78,7 @@ void RunSaveGameTests()
     src.nodes.SpawnNode(src.map, ResourceKind::Oil, { 15, 12 }, 150.0f, 10.0f);
 
     Unit scout;
-    scout.type = UnitType::Infantry;
+    scout.type = UnitType::RifleInfantry;
     ApplyBaseStats(scout);
     scout.teamID = 0;
     scout.position = cc::ToRaylib(cc::TileToWorld(2, 2));
@@ -269,7 +269,7 @@ void RunSaveGameTests()
         std::filesystem::create_directories(dir, ec);
         Fixture actor;
         Unit walker;
-        walker.type = UnitType::Infantry;
+        walker.type = UnitType::RifleInfantry;
         ApplyBaseStats(walker);
         walker.teamID = 0;
         walker.speed = 64.0f;
