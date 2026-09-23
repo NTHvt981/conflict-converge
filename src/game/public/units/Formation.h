@@ -26,7 +26,9 @@ std::vector<cc::IVec2> FormationOffsetsFP(std::size_t count, int cellSize);
 void IssueFormationMove(Registry &registry, const std::vector<Entity> &units, const TileMap &map,
                         Vector2 worldTarget);
 
-// Footprint-aware variant using IssuePathOrderFootprint.
+// Footprint-aware variant using IssuePathOrderFootprint. Units are matched to
+// slots by bottleneck assignment (minimize the longest walk, min-sum
+// tie-break over octile start->slot costs); selection order is ignored.
 void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
                           const TileMap &map, const OccupancyGrid &occ,
                           Vector2 worldTarget, bool slowestSpeed = false);

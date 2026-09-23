@@ -123,12 +123,11 @@ void RunFormationDeadlockFixTests()
 
         const cc::IVec2 tileA = cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(a)->position));
         const cc::IVec2 tileB = cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(b)->position));
-        // Each unit's real destination is tied to its own index in the
-        // `squad` list passed to IssueFormationMoveFP (offsets[i]), not to
-        // whether it ends up the keeper or the staggered straggler -- so
-        // the pairing is exact, not either/or. Both must land on their real
-        // slot, not some anonymous nearby tile from an old-style rescue
-        // reroute.
+        // Each unit's real destination comes from the bottleneck slot
+        // assignment (deterministic tie-break: lower entity takes the lower
+        // slot on equal costs). Here both units start co-located so costs
+        // tie and the small entity keeps slotA -- the same pairing as index
+        // order in this symmetric case, exact rather than either/or.
         CC_CHECK(tileA == slotA);
         CC_CHECK(tileB == slotB);
     }

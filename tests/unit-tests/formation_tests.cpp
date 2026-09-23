@@ -193,4 +193,39 @@ void RunFormationTests()
             CC_CHECK(capRegistry.Get<Unit>(id)->speedCapPixelsPerSec == -1.0f);
         }
     }
+
+    // --- Bottleneck assignment: selection order is ignored ---
+    // A(0,0) B(1,0) C(0,1) D(1,1) ordered to anchor (10,10) with the squad
+    // list reversed (D first). The fair match is identity by position:
+    // A->(10,10) B->(11,10) C->(10,11) D->(11,11) even though D was picked
+    // first; index-order issue would give D->(10,10) with max cost 294
+    // instead of 280.
+    {
+        Registry asRegistry;
+        TileMap asMap(30, 30);
+        OccupancyGrid asOcc(30, 30);
+        const cc::IVec2 starts[4] = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } };
+        Entity byPos[4];
+        for (int i = 0; i < 4; ++i)
+        {
+            Unit unit;
+            unit.type = UnitType::RifleInfantry;
+            ApplyBaseStats(unit);
+            unit.teamID = 0;
+            unit.position = cc::ToRaylib(cc::TileToWorld(starts[i].x, starts[i].y));
+            byPos[i] = asRegistry.Create();
+            asRegistry.Add(byPos[i], unit);
+        }
+        // Reversed pick order: D, C, B, A.
+        const std::vector<Entity> reversed{ byPos[3], byPos[2], byPos[1], byPos[0] };
+        formation::IssueFormationMoveFP(asRegistry, reversed, asMap, asOcc,
+                                        cc::ToRaylib(cc::TileToWorld(10, 10)), false);
+        const cc::IVec2 want[4] = { { 10, 10 }, { 11, 10 }, { 10, 11 }, { 11, 11 } };
+        for (int i = 0; i < 4; ++i)
+        {
+            const Unit *u = asRegistry.Get<Unit>(byPos[i]);
+            CC_CHECK(u->hasMoveOrder || u->hasPath);
+            CC_CHECK(cc::WorldToTile(cc::ToGlm(u->moveTarget)) == want[i]);
+        }
+    }
 }
