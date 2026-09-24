@@ -1,5 +1,6 @@
 #include "Cursor.h"
 
+#include "Extensions.h"
 #include "Selection.h"
 #include "Unit.h"
 #include "UnitStats.h"
@@ -28,6 +29,19 @@ CursorIntent PredictCursorIntent(Registry &registry, const Unit *selected, Vecto
         if (selected->type == UnitType::Medic && CanHealTarget(registry, *selected, hit))
         {
             return CursorIntent::Heal;
+        }
+        // G4 load: resolve the selected entity for the Cargo fullness check.
+        Entity selectedId = kInvalidEntity;
+        registry.Each<Unit>([&](Entity id, Unit &unit) {
+            if (&unit == selected)
+            {
+                selectedId = id;
+            }
+        });
+        if (selectedId != kInvalidEntity && registry.Has<Cargo>(selectedId) &&
+            CanLoadTarget(registry, selectedId, *selected, hit))
+        {
+            return CursorIntent::Load;
         }
     }
     return CursorIntent::Move;

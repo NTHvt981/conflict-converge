@@ -5,8 +5,10 @@
 #include "AICommander.h" // factory-gate test
 #include "Building.h" // PlaceBuilding, BuildingMaxHealth
 #include "Event.h"    // commander event routing
+#include "Extensions.h" // G4 transport components/orders
 #include "FogOfWar.h" // structure acquisition under fog
 #include "Nodes.h"    // ResourceNodes for the commander fixture
+#include "Selection.h" // G4 embarked pick/select guards
 #include "Targeting.h" // AcquireBuildingTarget
 #include "TileMap.h"
 #include "Unit.h"
@@ -354,5 +356,83 @@ void RunOrdersTests()
         }
         // Guard stands alone: no queue completions without a factory.
         CC_CHECK(ai.CombatUnitCount() == 1);
+    }
+
+    // --- G4 load: adjacent foot boards, carrier keeps the manifest ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        const Entity carrierId = AddUnit(registry, Soldier(0, UnitType::IFV, 2, 2));
+        Cargo cargo;
+        cargo.capacity = 2;
+        registry.Add(carrierId, cargo);
+        const Entity riderId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 3, 2));
+        IssueLoadOrder(*registry.Get<Unit>(carrierId), riderId);
+        StepUnits(registry, map, 5);
+        CC_CHECK(registry.Has<EmbarkedOn>(riderId));
+        CC_CHECK(registry.Get<EmbarkedOn>(riderId)->carrier == carrierId);
+        CC_CHECK(registry.Get<Cargo>(carrierId)->passengers.size() == 1);
+        CC_CHECK(!registry.Get<Unit>(carrierId)->hasLoadOrder); // order consumed
+    }
+
+    // --- G4 load validation: enemies, vehicles, full, and carrier-less ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        const Entity carrierId = AddUnit(registry, Soldier(0, UnitType::IFV, 2, 2));
+        Cargo cargo;
+        cargo.capacity = 1;
+        registry.Add(carrierId, cargo);
+        const Unit *carrier = registry.Get<Unit>(carrierId);
+        const Entity foeId = AddUnit(registry, Soldier(1, UnitType::RifleInfantry, 2, 3));
+        CC_CHECK(!CanLoadTarget(registry, carrierId, *carrier, foeId)); // enemy
+        const Entity truckId = AddUnit(registry, Soldier(0, UnitType::LightTank, 2, 3));
+        CC_CHECK(!CanLoadTarget(registry, carrierId, *carrier, truckId)); // vehicle
+        const Entity firstId = AddUnit(registry, Soldier(0, UnitType::Engineer, 2, 3));
+        CC_CHECK(CanLoadTarget(registry, carrierId, *carrier, firstId));
+        CC_CHECK(BoardTransport(registry, carrierId, firstId));
+        const Entity secondId = AddUnit(registry, Soldier(0, UnitType::Medic, 2, 3));
+        CC_CHECK(!CanLoadTarget(registry, carrierId, *carrier, secondId)); // full
+        CC_CHECK(!BoardTransport(registry, carrierId, secondId));
+        const Entity bareId = AddUnit(registry, Soldier(0, UnitType::LightTank, 4, 4));
+        CC_CHECK(!CanLoadTarget(registry, bareId, *registry.Get<Unit>(bareId),
+                                firstId)); // no Cargo
+    }
+
+    // --- G4 unload: passengers land on free tiles, manifest clears ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        const Entity carrierId = AddUnit(registry, Soldier(0, UnitType::IFV, 5, 5));
+        Cargo cargo;
+        cargo.capacity = 4;
+        registry.Add(carrierId, cargo);
+        const Entity riderId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 5, 5));
+        CC_CHECK(BoardTransport(registry, carrierId, riderId));
+        IssueUnloadOrder(*registry.Get<Unit>(carrierId), map,
+                         cc::ToRaylib(cc::TileToWorld(8, 8)));
+        StepUnits(registry, map, 600); // drives there, then drops
+        CC_CHECK(!registry.Has<EmbarkedOn>(riderId));
+        CC_CHECK(registry.Get<Cargo>(carrierId)->passengers.empty());
+        CC_CHECK(!registry.Get<Unit>(carrierId)->hasUnloadOrder);
+        CC_CHECK(registry.IsAlive(riderId));
+    }
+
+    // --- G4 embarked: untargetable, unpickable, unselectable ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        const Entity carrierId = AddUnit(registry, Soldier(0, UnitType::IFV, 2, 2));
+        Cargo cargo;
+        cargo.capacity = 2;
+        registry.Add(carrierId, cargo);
+        const Entity riderId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
+        CC_CHECK(BoardTransport(registry, carrierId, riderId));
+        const Entity seekerId = AddUnit(registry, Soldier(1, UnitType::RifleInfantry, 2, 3));
+        CC_CHECK(AcquireTarget(registry, seekerId, nullptr) != riderId); // untargetable
+        CC_CHECK(PickUnitAt(registry, registry.Get<Unit>(riderId)->position) !=
+                 riderId); // unpickable
+        CC_CHECK(SelectInRect(registry, { 0.0f, 0.0f, 512.0f, 512.0f }, false) == 2);
+        CC_CHECK(!registry.Get<Unit>(riderId)->isSelected); // unselectable
     }
 }

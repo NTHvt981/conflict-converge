@@ -1,6 +1,7 @@
 #include "Selection.h"
 
 #include "Building.h"
+#include "Extensions.h"
 #include "MathUtils.h"
 #include "Unit.h"
 
@@ -8,7 +9,7 @@ Entity PickUnitAt(Registry &registry, Vector2 worldPos)
 {
     Entity found = kInvalidEntity;
     registry.Each<Unit>([&](Entity entity, Unit &unit) {
-        if (found != kInvalidEntity)
+        if (found != kInvalidEntity || IsEmbarked(registry, entity))
         {
             return;
         }
@@ -83,7 +84,12 @@ int SelectInRect(Registry &registry, Rectangle worldBox, bool add)
                                         { worldBox.x + worldBox.width,
                                           worldBox.y + worldBox.height });
     int picked = 0;
-    registry.Each<Unit>([&](Entity, Unit &unit) {
+    registry.Each<Unit>([&](Entity id, Unit &unit) {
+        if (IsEmbarked(registry, id))
+        {
+            unit.isSelected = false;
+            return;
+        }
         const float cx = unit.position.x + 32.0f;
         const float cy = unit.position.y + 32.0f;
         const bool inside = cx >= box.x && cx <= box.x + box.width && cy >= box.y &&

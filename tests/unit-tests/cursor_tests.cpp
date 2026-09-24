@@ -6,6 +6,7 @@
 #include "test_harness.h"
 
 #include "Cursor.h"
+#include "Extensions.h"
 #include "Unit.h"
 #include "UnitStats.h"
 
@@ -98,5 +99,32 @@ void RunCursorTests()
     CC_CHECK(PredictCursorIntent(registry, sel, UnitCenter(registry, hurtFoot)) ==
              CursorIntent::Move);
     CC_CHECK(PredictCursorIntent(registry, eng, UnitCenter(registry, hurtFoot)) ==
+             CursorIntent::Move);
+
+    // --- G4 carrier over friendly foot: Load; enemy still wins as Attack ---
+    Entity carrier = SpawnUnit(registry, UnitType::IFV, 0, 64.0f, 576.0f);
+    Cargo cargo;
+    cargo.capacity = 4;
+    registry.Add(carrier, cargo);
+    const Unit *drv = registry.Get<Unit>(carrier);
+    CC_CHECK(PredictCursorIntent(registry, drv, UnitCenter(registry, wholeFoot)) ==
+             CursorIntent::Load);
+    CC_CHECK(PredictCursorIntent(registry, drv, UnitCenter(registry, foeFoot)) ==
+             CursorIntent::Attack); // IFV can attack: enemy wins over load
+    CC_CHECK(PredictCursorIntent(registry, drv, UnitCenter(registry, wounded)) ==
+             CursorIntent::Move); // vehicles are not passengers
+
+    // --- full carrier: back to Move ---
+    for (int i = 0; i < 4; ++i)
+    {
+        const Entity seat =
+            SpawnUnit(registry, UnitType::RifleInfantry, 0, 700.0f + i * 64.0f, 576.0f);
+        EmbarkedOn ride;
+        ride.carrier = carrier;
+        registry.Add(seat, ride);
+        registry.Get<Cargo>(carrier)->passengers.push_back(seat);
+    }
+    drv = registry.Get<Unit>(carrier); // re-fetch: seat spawns may rehash
+    CC_CHECK(PredictCursorIntent(registry, drv, UnitCenter(registry, wholeFoot)) ==
              CursorIntent::Move);
 }

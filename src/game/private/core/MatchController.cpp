@@ -3,6 +3,7 @@
 #include "MapFile.h"
 #include "Skirmish.h"
 #include "SaveGame.h"
+#include "UnitConfig.h"
 #include <filesystem>
 
 MatchController::MatchController(Subsystems &world, GameCamera &camera, AICommander &ai, AICommander &allyAI,
@@ -49,6 +50,7 @@ void MatchController::Announce(EventType type)
 
 void MatchController::StartMatch(const std::string &mapPath, AIDifficulty difficulty)
 {
+    RefreshActiveUnitConfigsFromSearch();
     MapData startData;
     sandboxMode_ = ParseMapFile(mapPath, startData) && !startData.playerSpawns.empty() &&
                    startData.aiSpawns.empty();
@@ -137,6 +139,7 @@ void MatchController::ApplyConfirmChoice(ConfirmChoice choice)
 
 void MatchController::LoadGameFromSlot(const std::string &slotPath)
 {
+    RefreshActiveUnitConfigsFromSearch();
     ResetSkirmish(skirmish_);
     if (!LoadWorld(worldState_, slotPath))
     {

@@ -19,6 +19,7 @@
 
 #include "Building.h"
 #include "CcAssert.h"
+#include "Extensions.h"
 #include "FogOfWar.h"
 #include "GameCamera.h"
 #include "Nodes.h"
@@ -26,6 +27,7 @@
 #include "ResourceSystem.h"
 #include "TileMap.h"
 #include "Unit.h"
+#include "UnitConfig.h"
 
 namespace
 {
@@ -60,9 +62,23 @@ Vector2 ToVec2(const SaveVec2 &in)
     return { in.x, in.y };
 }
 
-void FillUnit(SaveUnit &out, const Unit &u, std::int32_t targetIndex)
+void FillUnit(SaveUnit &out, const Registry &registry, Entity id, const Unit &u,
+              const std::vector<Entity> &order)
 {
-    out.health = u.health;
+    auto indexOf = [&](Entity e) -> std::int32_t {
+        if (e == kInvalidEntity)
+        {
+            return -1;
+        }
+        for (std::size_t i = 0; i < order.size(); ++i)
+        {
+            if (order[i] == e)
+            {
+                return static_cast<std::int32_t>(i);
+            }
+        }
+        return -1;
+    };    out.health = u.health;
     out.armorType = static_cast<std::int32_t>(u.armorType);
     out.damageType = static_cast<std::int32_t>(u.damageType);
     out.attackPower = u.attackPower;
@@ -82,7 +98,7 @@ void FillUnit(SaveUnit &out, const Unit &u, std::int32_t targetIndex)
     out.team = u.teamID;
     out.type = static_cast<std::int32_t>(u.type);
     out.state = static_cast<std::int32_t>(u.state);
-    out.targetIndex = targetIndex;
+    out.targetIndex = indexOf(u.target);
     FillVec2(out.moveTarget, u.moveTarget);
     out.hasMoveOrder = u.hasMoveOrder;
     for (const cc::IVec2 &step : u.path)
@@ -94,12 +110,41 @@ void FillUnit(SaveUnit &out, const Unit &u, std::int32_t targetIndex)
     }
     out.pathNext = static_cast<std::uint32_t>(u.pathNext);
     out.hasPath = u.hasPath;
+    out.hasTurret = false;
+    out.turretFacing = 0.0f;
+    out.facing = static_cast<std::int32_t>(u.facing);
+    if (const Turret *turret = registry.Get<Turret>(id))
+    {
+        out.hasTurret = true;
+        out.turretFacing = turret->facing;
+    }
+    out.cargoManifest.clear();
+    if (const Cargo *cargo = registry.Get<Cargo>(id))
+    {
+        for (const Entity passenger : cargo->passengers)
+        {
+            const std::int32_t idx = indexOf(passenger);
+            if (idx >= 0)
+            {
+                out.cargoManifest.push_back(idx);
+            }
+        }
+    }
+    out.embarkedOn = -1;
+    if (const EmbarkedOn *ride = registry.Get<EmbarkedOn>(id))
+    {
+        out.embarkedOn = indexOf(ride->carrier);
+    }
 }
 
 struct SavedUnit
 {
     Unit unit;
     std::int32_t targetIndex = -1;
+    bool hasTurret = false;
+    float turretFacing = 0.0f;
+    std::vector<std::int32_t> cargoManifest;
+    std::int32_t embarkedOn = -1;
 };
 
 struct SavedWorld
@@ -183,6 +228,14 @@ bool DecodeUnit(const SaveUnit &in, SavedUnit &out, std::int32_t mapWidth,
     u.pathNext = static_cast<std::size_t>(in.pathNext);
     u.hasPath = in.hasPath;
     u.target = kInvalidEntity;
+    if (in.facing >= 0 && in.facing < static_cast<std::int32_t>(Facing::Count))
+    {
+        u.facing = static_cast<Facing>(in.facing);
+    }
+    out.hasTurret = in.hasTurret;
+    out.turretFacing = in.turretFacing;
+    out.cargoManifest = in.cargoManifest;
+    out.embarkedOn = in.embarkedOn;
     return true;
 }
 
@@ -373,19 +426,7 @@ bool SaveWorld(const WorldState &world, const std::string &path)
     for (Entity id : order)
     {
         const Unit &u = *world.registry->Get<Unit>(id);
-        std::int32_t targetIndex = -1;
-        if (u.target != kInvalidEntity)
-        {
-            for (std::size_t i = 0; i < order.size(); ++i)
-            {
-                if (order[i] == u.target)
-                {
-                    targetIndex = static_cast<std::int32_t>(i);
-                    break;
-                }
-            }
-        }
-        FillUnit(msg.units.emplace_back(), u, targetIndex);
+        FillUnit(msg.units.emplace_back(), *world.registry, id, u, order);
     }
     world.registry->Each<Building>([&](Entity, const Building &b) {
         SaveBuilding &out = msg.buildings.emplace_back();
@@ -501,6 +542,40 @@ bool LoadWorld(const WorldState &world, const std::string &path)
         if (targetIndex >= 0 && static_cast<std::size_t>(targetIndex) < freshIds.size())
         {
             world.registry->Get<Unit>(freshIds[i])->target = freshIds[static_cast<std::size_t>(targetIndex)];
+        }
+        // M2 extension restore: turret facing + cargo manifest + embarked
+        // marker (same remap pattern as targetIndex; tolerant wire defaults
+        // mean old saves simply get no components).
+        const SavedUnit &savedUnit = saved.units[i];
+        if (savedUnit.hasTurret)
+        {
+            Turret turret;
+            turret.facing = savedUnit.turretFacing;
+            turret.turnRate =
+                ActiveUnitConfig(savedUnit.unit.type).abilities.turretTurnRate;
+            world.registry->Add(freshIds[i], turret);
+        }
+        if (!savedUnit.cargoManifest.empty())
+        {
+            Cargo cargo;
+            cargo.capacity =
+                ActiveUnitConfig(savedUnit.unit.type).abilities.transportCapacity;
+            for (const std::int32_t passengerIndex : savedUnit.cargoManifest)
+            {
+                if (passengerIndex >= 0 &&
+                    static_cast<std::size_t>(passengerIndex) < freshIds.size())
+                {
+                    cargo.passengers.push_back(freshIds[static_cast<std::size_t>(passengerIndex)]);
+                }
+            }
+            world.registry->Add(freshIds[i], cargo);
+        }
+        if (savedUnit.embarkedOn >= 0 &&
+            static_cast<std::size_t>(savedUnit.embarkedOn) < freshIds.size())
+        {
+            EmbarkedOn ride;
+            ride.carrier = freshIds[static_cast<std::size_t>(savedUnit.embarkedOn)];
+            world.registry->Add(freshIds[i], ride);
         }
     }
     for (const Building &b : saved.buildings)

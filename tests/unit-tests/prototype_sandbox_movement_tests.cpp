@@ -13,6 +13,7 @@
 
 #include "AICommander.h"
 #include "Building.h"
+#include "Combat.h" // IsVehicleHull foot filter
 #include "Event.h"
 #include "FogOfWar.h"
 #include "GameCamera.h"
@@ -82,12 +83,14 @@ void RunPrototypeSandboxMovementTests()
 
     std::vector<Entity> squad;
     sand.registry.Each<Unit>([&](Entity id, const Unit &unit) {
-        if (unit.type == UnitType::PrototypeInfantry && unit.teamID == 0)
+        // Whatever the sandbox spawns (composition changed in 91b11a5 away
+        // from all-Prototype): drive the team-0 foot squad.
+        if (unit.teamID == 0 && !IsVehicleHull(unit.type))
         {
             squad.push_back(id);
         }
     });
-    // Whatever the sandbox spawns, drive up to 6 of the team-0 prototypes
+    // Whatever the sandbox spawns, drive up to 6 of the team-0 foot units
     // (more would overflow the destination list below; fewer just test less).
     CC_CHECK(!squad.empty());
     if (squad.empty())

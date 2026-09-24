@@ -6,6 +6,7 @@
 #include "test_harness.h"
 
 #include "UnitConfig.h"
+#include "UnitFactory.h"
 #include "UnitStats.h"
 
 #include <filesystem>
@@ -23,11 +24,27 @@ bool ConfigsEqual(const UnitConfig &a, const UnitConfig &b)
            a.stats.attackRange == b.stats.attackRange &&
            a.stats.cooldownTime == b.stats.cooldownTime &&
            a.stats.speed == b.stats.speed && a.stats.sightRange == b.stats.sightRange &&
+           a.costIron == b.costIron && a.costOil == b.costOil &&
+           a.abilities.turretTurnRate == b.abilities.turretTurnRate &&
+           a.abilities.arcingFlightTime == b.abilities.arcingFlightTime &&
+           a.abilities.arcingSplashTiles == b.abilities.arcingSplashTiles &&
+           a.abilities.crushesFlesh == b.abilities.crushesFlesh &&
+           a.abilities.transportCapacity == b.abilities.transportCapacity &&
+           a.abilities.sniper == b.abilities.sniper &&
            a.footprintWidth == b.footprintWidth &&
            a.footprintHeight == b.footprintHeight && a.boundLeft == b.boundLeft &&
            a.boundTop == b.boundTop && a.originX == b.originX && a.originY == b.originY &&
            a.spritePrefix == b.spritePrefix && a.atlasIdlePrefix == b.atlasIdlePrefix &&
            a.atlasWalkPrefix == b.atlasWalkPrefix;
+}
+
+bool AbilitiesEqual(const UnitAbilities &a, const UnitAbilities &b)
+{
+    return a.turretTurnRate == b.turretTurnRate &&
+           a.arcingFlightTime == b.arcingFlightTime &&
+           a.arcingSplashTiles == b.arcingSplashTiles &&
+           a.crushesFlesh == b.crushesFlesh &&
+           a.transportCapacity == b.transportCapacity && a.sniper == b.sniper;
 }
 
 std::string TempDir(const char *name)
@@ -282,5 +299,84 @@ void RunUnitConfigTests()
         // Pre-rename "Infantry" stays a valid alias for old configs/saves.
         CC_CHECK(ParseUnitTypeName("Infantry", noUnit));
         CC_CHECK(noUnit == UnitType::RifleInfantry);
+    }
+
+    // --- M1 abilities: defaults off, tolerant parse, round-trip ---
+    {
+        const UnitConfig baseline = DefaultUnitConfig(UnitType::HeavyTank);
+        CC_CHECK(baseline.abilities.turretTurnRate == 3.0f); // G1: tanks turreted
+        CC_CHECK(baseline.abilities.arcingFlightTime == 0.0f);
+        CC_CHECK(baseline.abilities.crushesFlesh); // G3: heavies crush flesh
+        CC_CHECK(DefaultUnitConfig(UnitType::RifleInfantry).abilities.crushesFlesh == false);
+        CC_CHECK(DefaultUnitConfig(UnitType::RifleInfantry).abilities.turretTurnRate == 0.0f);
+        CC_CHECK(baseline.abilities.transportCapacity == 0);
+        CC_CHECK(!baseline.abilities.sniper);
+        CC_CHECK(baseline.costIron == 250 && baseline.costOil == 100);
+
+        UnitConfig config;
+        CC_CHECK(ParseUnitConfigJson(
+            "{\"type\":\"HeavyTank\",\"abilities\":{\"turret\":{\"turnRate\":2.5},"
+            "\"arcingShell\":{\"flightTime\":1.2,\"splashTiles\":1},"
+            "\"crushesFlesh\":true,\"transport\":{\"capacity\":6},\"sniper\":true}}",
+            "heavy_tank", config));
+        CC_CHECK(config.abilities.turretTurnRate == 2.5f);
+        CC_CHECK(config.abilities.arcingFlightTime == 1.2f);
+        CC_CHECK(config.abilities.arcingSplashTiles == 1);
+        CC_CHECK(config.abilities.crushesFlesh);
+        CC_CHECK(config.abilities.transportCapacity == 6);
+        CC_CHECK(config.abilities.sniper);
+
+        const std::string json = UnitConfigToJson(config);
+        UnitConfig reloaded;
+        CC_CHECK(ParseUnitConfigJson(json, "heavy_tank", reloaded));
+        CC_CHECK(ConfigsEqual(config, reloaded));
+
+        // Missing abilities block -> defaults (old files keep working).
+        CC_CHECK(ParseUnitConfigJson("{\"type\":\"HeavyTank\"}", "heavy_tank", config));
+        CC_CHECK(AbilitiesEqual(config.abilities,
+                                DefaultUnitConfig(UnitType::HeavyTank).abilities));
+    }
+
+    // --- M1 abilities: unknown keys reject (fail fast on typos) ---
+    {
+        UnitConfig config;
+        CC_CHECK(!ParseUnitConfigJson(
+            "{\"type\":\"HeavyTank\",\"abilities\":{\"turboTurret\":1.0}}",
+            "heavy_tank", config));
+        CC_CHECK(!ParseUnitConfigJson(
+            "{\"type\":\"IFV\",\"abilities\":{\"transport\":{\"seats\":6}}}",
+            "ifv", config));
+    }
+
+    // --- M1 cost: per-field fallback, negative rejected ---
+    {
+        UnitConfig config;
+        CC_CHECK(ParseUnitConfigJson(
+            "{\"type\":\"IFV\",\"cost\":{\"iron\":90}}", "ifv", config));
+        CC_CHECK(config.costIron == 90);
+        CC_CHECK(config.costOil == DefaultUnitConfig(UnitType::IFV).costOil);
+        CC_CHECK(ParseUnitConfigJson(
+            "{\"type\":\"IFV\",\"cost\":{\"iron\":-5,\"oil\":-1}}", "ifv", config));
+        CC_CHECK(config.costIron == DefaultUnitConfig(UnitType::IFV).costIron);
+        CC_CHECK(config.costOil == DefaultUnitConfig(UnitType::IFV).costOil);
+    }
+
+    // --- M1 catalog: CostOf reads active configs, reset restores defaults ---
+    {
+        ResetActiveUnitConfigs();
+        const UnitCost before = CostOf(UnitType::RifleInfantry);
+        CC_CHECK(before.iron == 25 && before.oil == 0);
+        std::vector<UnitConfig> override;
+        UnitConfig rifle = DefaultUnitConfig(UnitType::RifleInfantry);
+        rifle.costIron = 77;
+        rifle.costOil = 11;
+        override.push_back(rifle);
+        SetActiveUnitConfigs(override);
+        const UnitCost after = CostOf(UnitType::RifleInfantry);
+        CC_CHECK(after.iron == 77 && after.oil == 11);
+        // Types missing from the override fall back per-type.
+        CC_CHECK(ActiveUnitConfig(UnitType::HeavyTank).costIron == 250);
+        ResetActiveUnitConfigs();
+        CC_CHECK(CostOf(UnitType::RifleInfantry).iron == 25);
     }
 }

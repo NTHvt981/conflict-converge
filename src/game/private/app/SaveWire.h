@@ -163,6 +163,12 @@ struct SaveUnit
     std::vector<SaveIVec2> path;
     std::uint32_t pathNext = 0;
     bool hasPath = false;
+    // M2 extension state (append-only; missing -> defaults, old saves load).
+    bool hasTurret = false;
+    float turretFacing = 0.0f;
+    std::int32_t facing = 6; // body Facing enum (Right); G1 persists both facings
+    std::vector<std::int32_t> cargoManifest;
+    std::int32_t embarkedOn = -1;
     template <class Archive>
     void save(Archive &ar) const
     {
@@ -185,7 +191,12 @@ struct SaveUnit
            cereal::make_nvp("moveTarget", moveTarget),
            cereal::make_nvp("hasMoveOrder", hasMoveOrder),
            cereal::make_nvp("path", path), cereal::make_nvp("pathNext", pathNext),
-           cereal::make_nvp("hasPath", hasPath));
+           cereal::make_nvp("hasPath", hasPath),
+           cereal::make_nvp("hasTurret", hasTurret),
+           cereal::make_nvp("turretFacing", turretFacing),
+           cereal::make_nvp("facing", facing),
+           cereal::make_nvp("cargoManifest", cargoManifest),
+           cereal::make_nvp("embarkedOn", embarkedOn));
     }
     template <class Archive>
     void load(Archive &ar)
@@ -216,6 +227,11 @@ struct SaveUnit
         save_detail::TryLoadValue(ar, "path", path);
         save_detail::TryLoadValue(ar, "pathNext", pathNext);
         save_detail::TryLoadValue(ar, "hasPath", hasPath);
+        save_detail::TryLoadValue(ar, "hasTurret", hasTurret);
+        save_detail::TryLoadValue(ar, "turretFacing", turretFacing);
+        save_detail::TryLoadValue(ar, "facing", facing);
+        save_detail::TryLoadValue(ar, "cargoManifest", cargoManifest);
+        save_detail::TryLoadValue(ar, "embarkedOn", embarkedOn);
     }
 };
 

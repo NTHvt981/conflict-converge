@@ -4,12 +4,14 @@
 #include "Building.h"
 #include "Cheats.h"
 #include "Cursor.h"
+#include "Extensions.h"
 #include "Hud.h"
 #include "RmlUiHost.h"
 #include "RmlUiMenus.h"
 #include "Selection.h"
 #include "Unit.h"
 #include <algorithm>
+#include <cmath>
 #include <vector>
 
 DEFINE_CHEAT_WIDGET(SHOW_UNIT_ID_TOGGLE, TOGGLE, false)
@@ -137,6 +139,7 @@ void GameRenderer::DrawWorld()
             break;
         case CursorIntent::Repair:
         case CursorIntent::Heal:
+        case CursorIntent::Load:
             SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
             break;
         case CursorIntent::InvalidPlacement:
@@ -267,6 +270,10 @@ void GameRenderer::DrawWorld()
     });
 
     registry_.Each<Unit>([&](Entity id, Unit &unit) {
+        if (IsEmbarked(registry_, id))
+        {
+            return; // inside a carrier: invisible until unloaded
+        }
         if (unit.teamID != 0 &&
             !fog_.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit.position))))
         {
@@ -326,6 +333,14 @@ void GameRenderer::DrawWorld()
                 }
             }
         }
+        // G1 turret head: short barrel along the traversing facing (dedicated
+        // turret_<dir> sheets land separately; this shows traverse meanwhile).
+        if (const Turret *turret = registry_.Get<Turret>(id))
+        {
+            const Vector2 muzzle = { center.x + std::cos(turret->facing) * 22.0f,
+                                     center.y + std::sin(turret->facing) * 22.0f };
+            DrawLineEx(center, muzzle, 4.0f, art_.TeamTint(unit.teamID));
+        }
         if (unit.isSelected)
         {
             const Rectangle selBox = SquadSelectionBox(
@@ -371,6 +386,17 @@ void GameRenderer::DrawWorld()
         {
             DrawCircleV(cc::ToRaylib(cc::ToGlm(unit.moveTarget) + cc::Vec2(32.0f, 32.0f)), 5.0f, GREEN);
         }
+    });
+    // G2 shells: visible and dodgeable — that is the gameplay payoff.
+    registry_.Each<Projectile>([&](Entity, const Projectile &shell) {
+        const float t = shell.flightTime > 0.0f
+                            ? std::clamp(shell.elapsed / shell.flightTime, 0.0f, 1.0f)
+                            : 1.0f;
+        const Vector2 ground = { shell.start.x + (shell.target.x - shell.start.x) * t,
+                                 shell.start.y + (shell.target.y - shell.start.y) * t };
+        const float height = std::sin(3.141592653589793f * t) * 48.0f;
+        DrawCircleV(ground, 4.0f, Fade(DARKGRAY, 0.4f)); // landing shadow
+        DrawCircleV({ ground.x, ground.y - height }, 5.0f, DARKGRAY);
     });
     art_.ParticlesPool().Draw();
     damageNumbers_.Draw();

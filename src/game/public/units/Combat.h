@@ -6,6 +6,7 @@
 #include "Unit.h"
 
 struct Building;
+class TileMap;
 
 // Damage resolution: typed attacker damage vs defender armor scales
 // attackPower into effective damage through a matrix.
@@ -25,6 +26,19 @@ float ResolveBuildingAttack(Unit &attacker, Building &building);
 // Attack-ground: fires at a world position, hitting the nearest live enemy
 // within one tile; empty ground is a clean miss.
 void ResolveGroundAttack(Registry &registry, Unit &attacker, Vector2 pos);
+
+// M3 strike dispatch: WindUp ends in ResolveStrike, which switches on
+// ability — direct ResolveAttack today, shell launch for arcing units,
+// single-sprite when per-sprite HP lands. attackPower <= 0 still means
+// "cannot attack". Shells are visible and dodgeable; in-flight shells are
+// NOT persisted (sub-second sim time).
+void ResolveStrike(Registry &registry, Entity attackerId, Unit &attacker, Entity targetId);
+void ResolveStrikeGround(Registry &registry, Entity attackerId, Unit &attacker, Vector2 pos);
+
+// G2 ballistics: step in-flight shells; landings splash enemy units and
+// operational enemy buildings (team-checked, no friendly fire). Call once
+// per frame from the movement pipeline (map needed for demolish).
+void UpdateProjectiles(Registry &registry, TileMap &map, float dtSeconds);
 
 // True for vehicle-hull types (IFV/Artillery/Light/HeavyTank).
 bool IsVehicleHull(UnitType attackerType);

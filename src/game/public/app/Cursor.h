@@ -15,6 +15,7 @@ enum class CursorIntent
     Attack,           // hovering an enemy unit (selected can attack)
     Repair,           // selected Engineer hovering a CanRepairTarget patient
     Heal,             // selected Medic hovering a CanHealTarget patient
+    Load,             // selected carrier hovering a CanLoadTarget passenger
     InvalidPlacement, // placement mode over a CanPlaceBuilding-rejected tile
 };
 

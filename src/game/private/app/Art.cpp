@@ -642,7 +642,7 @@ float Art::BaseArtScale(UnitType type)
 }
 
 void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
-                           float scale) const
+                           float scale, float rotationDeg) const
 {
     if (!atlasReady_ || spriteName.empty())
     {
@@ -655,18 +655,18 @@ void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Colo
     }
     if (s->maskSprite == 0)
     {
-        DrawOneAtlasSprite(*s, tileCorner, tint, scale);
+        DrawOneAtlasSprite(*s, tileCorner, tint, scale, rotationDeg);
         return;
     }
-    DrawOneAtlasSprite(*s, tileCorner, WHITE, scale);
+    DrawOneAtlasSprite(*s, tileCorner, WHITE, scale, rotationDeg);
     if (const SpriteDefInfo *mask = FindSpriteById(sheet_, s->maskSprite); mask != nullptr)
     {
-        DrawOneAtlasSprite(*mask, tileCorner, tint, scale);
+        DrawOneAtlasSprite(*mask, tileCorner, tint, scale, rotationDeg);
     }
 }
 
 void Art::DrawOneAtlasSprite(const SpriteDefInfo &s, Vector2 tileCorner, Color tint,
-                             float scale) const
+                             float scale, float rotationDeg) const
 {
     const auto it = atlas_.find(s.texture);
     if (it == atlas_.end() || it->second.id == 0)
@@ -681,7 +681,14 @@ void Art::DrawOneAtlasSprite(const SpriteDefInfo &s, Vector2 tileCorner, Color t
     const Rectangle dest = { anchor.x - static_cast<float>(s.origin.x) * scale,
                              anchor.y - static_cast<float>(s.origin.y) * scale, w * scale,
                              h * scale };
-    DrawTexturePro(it->second, src, dest, { 0.0f, 0.0f }, 0.0f, tint);
+    if (rotationDeg == 0.0f)
+    {
+        DrawTexturePro(it->second, src, dest, { 0.0f, 0.0f }, 0.0f, tint);
+        return;
+    }
+    // Rotate around the body center: pivot at dest center.
+    const Vector2 pivot = { dest.width / 2.0f, dest.height / 2.0f };
+    DrawTexturePro(it->second, src, dest, pivot, rotationDeg, tint);
 }
 
 void Art::DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const

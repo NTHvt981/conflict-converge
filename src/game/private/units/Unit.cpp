@@ -1,12 +1,15 @@
 #include "Unit.h"
 
 #include "Combat.h"
+#include "Extensions.h"
 #include "FogOfWar.h"
+#include "MapFile.h"
 #include "MathUtils.h"
 #include "Pathfinder.h"
 #include "Targeting.h"
 #include "TileMap.h"
 #include "Building.h"
+#include "UnitConfig.h"
 #include "UnitStats.h"
 
 #include <algorithm>
@@ -101,6 +104,7 @@ namespace
 
 template <typename LandHit> void UpdateAttackPhases(Unit &attacker, float dtSeconds, LandHit landHit)
 {
+
     if (attacker.phase == AttackPhase::Ready)
     {
         if (attacker.cooldown <= 0.0f && attacker.attackPower > 0)
@@ -126,9 +130,48 @@ template <typename LandHit> void UpdateAttackPhases(Unit &attacker, float dtSeco
     }
 }
 
-void UpdateAttack(Unit &attacker, Unit &target, float dtSeconds)
+void UpdateAttack(Entity self, Registry &registry, Unit &attacker, Entity targetId,
+                  float dtSeconds)
 {
-    UpdateAttackPhases(attacker, dtSeconds, [&] { ResolveAttack(attacker, target); });
+    // M3 strike dispatch: WindUp ends in launch for arcing units, not damage.
+    UpdateAttackPhases(attacker, dtSeconds,
+                       [&] { ResolveStrike(registry, self, attacker, targetId); });
+}
+
+// G1 turret: radians of aim tolerance before a turreted unit may open fire.
+inline constexpr float kTurretAimTolerance = 0.15f;
+
+float WrapAngle(float angle)
+{
+    constexpr float kPi = 3.141592653589793f;
+    while (angle > kPi)
+    {
+        angle -= 2.0f * kPi;
+    }
+    while (angle < -kPi)
+    {
+        angle += 2.0f * kPi;
+    }
+    return angle;
+}
+
+// Turn the head toward aimPos at turnRate; body facing is untouched. Returns
+// true when aimed within tolerance (units without turrets always aim true).
+bool TurretAimed(Registry &registry, Entity self, Vector2 fromPos, Vector2 aimPos,
+                 float dtSeconds)
+{
+    Turret *turret = registry.Get<Turret>(self);
+    if (turret == nullptr)
+    {
+        return true;
+    }
+    const float desired =
+        std::atan2(aimPos.y - fromPos.y, aimPos.x - fromPos.x);
+    const float diff = WrapAngle(desired - turret->facing);
+    const float step = std::clamp(diff, -turret->turnRate * dtSeconds,
+                                  turret->turnRate * dtSeconds);
+    turret->facing = WrapAngle(turret->facing + step);
+    return std::fabs(WrapAngle(desired - turret->facing)) <= kTurretAimTolerance;
 }
 
 void StopMoving(Unit &unit)
@@ -172,6 +215,100 @@ void IssueRepairOrder(Unit &engineer, Entity target)
     ClearOrders(engineer);
     engineer.hasRepairOrder = true;
     engineer.repairTarget = target;
+}
+
+constexpr float kLoadRange = 128.0f;
+
+bool CanLoadTarget(const Registry &registry, Entity carrier, const Unit &carrierUnit,
+                   Entity passenger)
+{
+    if (passenger == carrier || passenger == kInvalidEntity)
+    {
+        return false;
+    }
+    const Cargo *cargo = registry.Get<Cargo>(carrier);
+    if (cargo == nullptr || cargo->capacity <= 0 ||
+        cargo->passengers.size() >= static_cast<std::size_t>(cargo->capacity))
+    {
+        return false;
+    }
+    const Unit *rider = registry.Get<Unit>(passenger);
+    if (rider == nullptr || rider->health <= 0.0f || rider->teamID != carrierUnit.teamID)
+    {
+        return false;
+    }
+    if (!IsFleshUnit(rider->type) || IsEmbarked(registry, passenger))
+    {
+        return false;
+    }
+    return true;
+}
+
+bool BoardTransport(Registry &registry, Entity carrier, Entity passenger)
+{
+    Unit *carrierUnit = registry.Get<Unit>(carrier);
+    Unit *rider = registry.Get<Unit>(passenger);
+    if (carrierUnit == nullptr || rider == nullptr ||
+        !CanLoadTarget(registry, carrier, *carrierUnit, passenger))
+    {
+        return false;
+    }
+    EmbarkedOn ride;
+    ride.carrier = carrier;
+    registry.Add(passenger, ride);
+    registry.Get<Cargo>(carrier)->passengers.push_back(passenger);
+    rider->isSelected = false;
+    rider->hasMoveOrder = false;
+    rider->hasPath = false;
+    rider->path.clear();
+    rider->pathNext = 0;
+    rider->velocity = { 0.0f, 0.0f };
+    rider->state = UnitState::Idle;
+    return true;
+}
+
+int UnloadTransport(Registry &registry, const TileMap &map, Entity carrier, Vector2 worldPos)
+{
+    Cargo *cargo = registry.Get<Cargo>(carrier);
+    Unit *carrierUnit = registry.Get<Unit>(carrier);
+    if (cargo == nullptr || carrierUnit == nullptr || cargo->passengers.empty())
+    {
+        return 0;
+    }
+    const cc::IVec2 base = cc::WorldToTile(cc::ToGlm(worldPos));
+    int landed = 0;
+    for (const Entity passenger : cargo->passengers)
+    {
+        Unit *rider = registry.Get<Unit>(passenger);
+        if (rider == nullptr)
+        {
+            continue;
+        }
+        const cc::IVec2 dest = NearestFreeTile(map, base.x, base.y);
+        rider->position = cc::ToRaylib(cc::TileToWorld(dest.x, dest.y));
+        SnapUnitToTile(*rider);
+        registry.Remove<EmbarkedOn>(passenger);
+        ++landed;
+    }
+    cargo->passengers.clear();
+    return landed;
+}
+
+void IssueLoadOrder(Unit &carrier, Entity passenger)
+{
+    StopMoving(carrier);
+    ClearOrders(carrier);
+    carrier.hasLoadOrder = true;
+    carrier.loadTarget = passenger;
+}
+
+void IssueUnloadOrder(Unit &carrier, const TileMap &map, Vector2 worldPos)
+{
+    (void)map;
+    StopMoving(carrier);
+    ClearOrders(carrier);
+    carrier.hasUnloadOrder = true;
+    carrier.unloadPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
 }
 
 namespace
@@ -226,6 +363,12 @@ void DispatchQueuedOrder(Unit &unit, const TileMap &map, OccupancyGrid *occ, Ent
             IssueAttackGroundOrder(unit, map, order.pointA);
         }
         break;
+    case QueuedOrderKind::Load:
+        IssueLoadOrder(unit, order.target);
+        break;
+    case QueuedOrderKind::Unload:
+        IssueUnloadOrder(unit, map, order.pointA);
+        break;
     case QueuedOrderKind::Count:
         break;
     }
@@ -259,8 +402,8 @@ void IssueOrEnqueue(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity s
         DispatchQueuedOrder(unit, map, occ, self, selfGen, order);
         return;
     }
-    if (!unit.hasMoveOrder && !unit.hasPath && !unit.hasRepairOrder && !unit.hasPatrol &&
-        unit.orderQueue.empty())
+    if (!unit.hasMoveOrder && !unit.hasPath && !unit.hasRepairOrder && !unit.hasLoadOrder &&
+        !unit.hasUnloadOrder && !unit.hasPatrol && unit.orderQueue.empty())
     {
         DispatchQueuedOrder(unit, map, occ, self, selfGen, order);
         return;
@@ -291,7 +434,8 @@ bool RepairAim(const Registry &registry, const Unit &engineer, Entity target, Ve
     }
     if (const Unit *u = registry.Get<Unit>(target))
     {
-        if (u->health <= 0.0f || u->teamID != engineer.teamID || !IsRepairableUnit(*u))
+        if (u->health <= 0.0f || u->teamID != engineer.teamID || !IsRepairableUnit(*u) ||
+            IsEmbarked(registry, target))
         {
             return false;
         }
@@ -351,7 +495,8 @@ bool HealAim(const Registry &registry, const Unit &medic, Entity target, Vector2
     }
     if (const Unit *u = registry.Get<Unit>(target))
     {
-        if (u->health <= 0.0f || u->teamID != medic.teamID || !IsHealableUnit(*u))
+        if (u->health <= 0.0f || u->teamID != medic.teamID || !IsHealableUnit(*u) ||
+            IsEmbarked(registry, target))
         {
             return false;
         }
@@ -476,6 +621,9 @@ void ClearOrders(Unit &unit)
     unit.hasRepairOrder = false;
     unit.repairTarget = kInvalidEntity;
     unit.hasAttackGroundOrder = false;
+    unit.hasLoadOrder = false;
+    unit.loadTarget = kInvalidEntity;
+    unit.hasUnloadOrder = false;
     unit.speedCapPixelsPerSec = -1.0f;
 }
 
@@ -617,7 +765,7 @@ bool ValidateTarget(Registry &registry, const Unit &seeker, Entity id, const Fog
     if (Unit *target = registry.Get<Unit>(id))
     {
         if (target->health <= 0.0f || target->teamID == seeker.teamID ||
-            LostToFog(seeker, *target, fog))
+            IsEmbarked(registry, id) || LostToFog(seeker, *target, fog))
         {
             return false;
         }
@@ -649,7 +797,7 @@ Vector2 TargetPosition(Registry &registry, Entity id)
     return { 0.0f, 0.0f };
 }
 
-bool EngageTarget(Unit &attacker, Registry &registry, TileMap &map, Entity id,
+bool EngageTarget(Entity self, Unit &attacker, Registry &registry, TileMap &map, Entity id,
                   const FogOfWar *fog, float dtSeconds)
 {
     if (!ValidateTarget(registry, attacker, id, fog))
@@ -660,11 +808,18 @@ bool EngageTarget(Unit &attacker, Registry &registry, TileMap &map, Entity id,
     {
         if (!InAttackRange(attacker, *target))
         {
+            TurretAimed(registry, self, attacker.position, target->position, dtSeconds);
             return false;
         }
         attacker.state = UnitState::Attacking;
         attacker.velocity = { 0.0f, 0.0f };
-        UpdateAttack(attacker, *target, dtSeconds);
+        if (attacker.phase == AttackPhase::Ready &&
+            !TurretAimed(registry, self, attacker.position, target->position, dtSeconds))
+        {
+            return true; // traversing: visible aim, no free hits
+        }
+        TurretAimed(registry, self, attacker.position, target->position, dtSeconds);
+        UpdateAttack(self, registry, attacker, id, dtSeconds);
         return true;
     }
     if (Building *building = registry.Get<Building>(id))
@@ -677,6 +832,12 @@ bool EngageTarget(Unit &attacker, Registry &registry, TileMap &map, Entity id,
         }
         attacker.state = UnitState::Attacking;
         attacker.velocity = { 0.0f, 0.0f };
+        if (attacker.phase == AttackPhase::Ready &&
+            !TurretAimed(registry, self, attacker.position, center, dtSeconds))
+        {
+            return true; // traversing: visible aim, no free hits
+        }
+        TurretAimed(registry, self, attacker.position, center, dtSeconds);
         UpdateAttackPhases(attacker, dtSeconds, [&] {
             ResolveBuildingAttack(attacker, *building);
             if (building->health <= 0.0f)
@@ -697,6 +858,10 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     if (unit == nullptr || unit->health <= 0.0f)
     {
         return;
+    }
+    if (IsEmbarked(registry, self))
+    {
+        return; // inside a carrier: no cooldowns, orders, or attacks
     }
 
     if (unit->cooldown > 0.0f)
@@ -756,6 +921,59 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         }
     }
 
+    if (unit->hasLoadOrder)
+    {
+        if (!CanLoadTarget(registry, self, *unit, unit->loadTarget))
+        {
+            unit->hasLoadOrder = false;
+            unit->loadTarget = kInvalidEntity;
+            OnOrderFinished(*unit, map, occ, self, registry.Generation(self));
+            return;
+        }
+        const Unit *rider = registry.Get<Unit>(unit->loadTarget);
+        if (rider != nullptr &&
+            glm::distance(cc::ToGlm(unit->position), cc::ToGlm(rider->position)) > kLoadRange)
+        {
+            ReissueDriverOrder(*unit, map, occ, rider->position, self, registry);
+            UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self,
+                               registry.Generation(self));
+            unit->state = UnitState::Moving;
+            return;
+        }
+        BoardTransport(registry, self, unit->loadTarget);
+        unit->hasLoadOrder = false;
+        unit->loadTarget = kInvalidEntity;
+        unit->state = UnitState::Idle;
+        unit->velocity = { 0.0f, 0.0f };
+        OnOrderFinished(*unit, map, occ, self, registry.Generation(self));
+        return;
+    }
+
+    if (unit->hasUnloadOrder)
+    {
+        const Cargo *cargo = registry.Get<Cargo>(self);
+        if (cargo == nullptr || cargo->passengers.empty())
+        {
+            unit->hasUnloadOrder = false;
+            OnOrderFinished(*unit, map, occ, self, registry.Generation(self));
+            return;
+        }
+        if (glm::distance(cc::ToGlm(unit->position), cc::ToGlm(unit->unloadPos)) > kLoadRange)
+        {
+            ReissueDriverOrder(*unit, map, occ, unit->unloadPos, self, registry);
+            UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self,
+                               registry.Generation(self));
+            unit->state = UnitState::Moving;
+            return;
+        }
+        UnloadTransport(registry, map, self, unit->unloadPos);
+        unit->hasUnloadOrder = false;
+        unit->state = UnitState::Idle;
+        unit->velocity = { 0.0f, 0.0f };
+        OnOrderFinished(*unit, map, occ, self, registry.Generation(self));
+        return;
+    }
+
     if (unit->hasAttackGroundOrder)
     {
         const float dist =
@@ -770,8 +988,14 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         }
         unit->state = UnitState::Attacking;
         unit->velocity = { 0.0f, 0.0f };
+        if (unit->phase == AttackPhase::Ready &&
+            !TurretAimed(registry, self, unit->position, unit->attackGroundPos, dtSeconds))
+        {
+            return; // traversing: visible aim, no free hits
+        }
+        TurretAimed(registry, self, unit->position, unit->attackGroundPos, dtSeconds);
         UpdateAttackPhases(*unit, dtSeconds, [&] {
-            ResolveGroundAttack(registry, *unit, unit->attackGroundPos);
+            ResolveStrikeGround(registry, self, *unit, unit->attackGroundPos);
         });
         return;
     }
@@ -788,7 +1012,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
             if (unit->target != kInvalidEntity &&
                 ValidateTarget(registry, *unit, unit->target, fog))
             {
-                if (EngageTarget(*unit, registry, map, unit->target, fog, dtSeconds))
+                if (EngageTarget(self, *unit, registry, map, unit->target, fog, dtSeconds))
                 {
                     return;
                 }
@@ -815,7 +1039,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
             {
                 LoseTarget(*unit);
             }
-            else if (EngageTarget(*unit, registry, map, unit->target, fog, dtSeconds))
+            else if (EngageTarget(self, *unit, registry, map, unit->target, fog, dtSeconds))
             {
                 StopMoving(*unit);
                 return;
@@ -861,7 +1085,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         return;
     }
 
-    if (EngageTarget(*unit, registry, map, unit->target, fog, dtSeconds))
+    if (EngageTarget(self, *unit, registry, map, unit->target, fog, dtSeconds))
     {
         return;
     }
@@ -1130,11 +1354,43 @@ struct TileHash
 };
 }
 
+void ResolveCrush(Registry &registry)
+{
+    std::vector<Entity> crushers;
+    registry.Each<Unit>([&](Entity id, const Unit &unit) {
+        if (unit.health > 0.0f && !IsEmbarked(registry, id) &&
+            ActiveUnitConfig(unit.type).abilities.crushesFlesh)
+        {
+            crushers.push_back(id);
+        }
+    });
+    for (const Entity crusherId : crushers)
+    {
+        const Unit *crusher = registry.Get<Unit>(crusherId);
+        if (crusher == nullptr || crusher->health <= 0.0f)
+        {
+            continue;
+        }
+        registry.Each<Unit>([&](Entity victimId, Unit &victim) {
+            if (victimId == crusherId || victim.health <= 0.0f ||
+                victim.teamID == crusher->teamID || IsEmbarked(registry, victimId) ||
+                !IsFleshUnit(victim.type))
+            {
+                return;
+            }
+            if (HitboxesOverlap(*crusher, victim))
+            {
+                victim.health = 0.0f;
+            }
+        });
+    }
+}
+
 void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &occ)
 {
     std::unordered_map<cc::IVec2, std::vector<Entity>, TileHash> byTile;
     registry.Each<Unit>([&](Entity id, Unit &unit) {
-        if (unit.health > 0.0f)
+        if (unit.health > 0.0f && !IsEmbarked(registry, id))
         {
             byTile[cc::WorldToTile(cc::ToGlm(unit.position))].push_back(id);
         }
@@ -1245,10 +1501,12 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
 void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
                           const FogOfWar *fog, float dtSeconds)
 {
-	occ.ReleaseAllUnitFootprints();
+    ResolveCrush(registry);
+
+    occ.ReleaseAllUnitFootprints();
 
     registry.Each<Unit>([&](Entity id, Unit &unit) {
-        if (unit.health > 0.0f)
+        if (unit.health > 0.0f && !IsEmbarked(registry, id))
         {
             const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(unit.position));
 
@@ -1271,4 +1529,5 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
     });
 
     ResolveStackedUnits(registry, map, occ);
+    UpdateProjectiles(registry, map, dtSeconds);
 }

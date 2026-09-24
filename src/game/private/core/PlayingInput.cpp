@@ -1,6 +1,7 @@
 
 #include "PlayingInput.h"
 
+#include "Extensions.h"
 #include "Formation.h"
 #include "Pathfinder.h"
 #include "Selection.h"
@@ -387,6 +388,33 @@ void PlayingInput::Dispatch()
                         IssueOrEnqueue(*ordered, map_, &occ_, squad[0],
                                        registry_.Generation(squad[0]), input_.ShiftDown(),
                                        QueuedOrder{ QueuedOrderKind::Repair, {}, {}, patient });
+                        repaired = true;
+                    }
+                }
+                if (!repaired && registry_.Has<Cargo>(squad[0]))
+                {
+                    // G4 transport: right-click friendly foot to board,
+                    // right-click the carrier itself to unload at its tile.
+                    const Vector2 world = input_.MouseWorld(camera_);
+                    const Entity picked = PickUnitAt(registry_, world);
+                    if (picked == squad[0])
+                    {
+                        if (const Cargo *cargo = registry_.Get<Cargo>(squad[0]);
+                            cargo != nullptr && !cargo->passengers.empty())
+                        {
+                            IssueOrEnqueue(*ordered, map_, &occ_, squad[0],
+                                           registry_.Generation(squad[0]), input_.ShiftDown(),
+                                           QueuedOrder{ QueuedOrderKind::Unload,
+                                                        ordered->position });
+                            repaired = true;
+                        }
+                    }
+                    else if (picked != kInvalidEntity &&
+                             CanLoadTarget(registry_, squad[0], *ordered, picked))
+                    {
+                        IssueOrEnqueue(*ordered, map_, &occ_, squad[0],
+                                       registry_.Generation(squad[0]), input_.ShiftDown(),
+                                       QueuedOrder{ QueuedOrderKind::Load, {}, {}, picked });
                         repaired = true;
                     }
                 }

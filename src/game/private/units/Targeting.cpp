@@ -2,6 +2,7 @@
 
 #include "Building.h"
 #include "Combat.h"
+#include "Extensions.h"
 #include "FogOfWar.h"
 #include "MathUtils.h"
 
@@ -37,7 +38,8 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
     float bestThreat = -1.0f;
     float bestDist = 0.0f;
     registry.Each<Unit>([&](Entity candidate, const Unit &unit) {
-        if (candidate == seeker || unit.teamID == self->teamID || unit.health <= 0.0f)
+        if (candidate == seeker || unit.teamID == self->teamID || unit.health <= 0.0f ||
+            IsEmbarked(registry, candidate))
         {
             return;
         }

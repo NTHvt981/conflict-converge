@@ -1,32 +1,14 @@
 #include "UnitFactory.h"
 
+#include "Extensions.h"
 #include "MathUtils.h"
+#include "UnitConfig.h"
 #include "UnitStats.h"
 
 UnitCost CostOf(UnitType type)
 {
-    switch (type)
-    {
-    case UnitType::RifleInfantry:
-        return { 25, 0 };
-    case UnitType::AntiArmorInfantry:
-        return { 30, 5 };
-    case UnitType::Engineer:
-        return { 40, 0 };
-    case UnitType::IFV:
-        return { 80, 20 };
-    case UnitType::Artillery:
-        return { 120, 40 };
-    case UnitType::LightTank:
-        return { 150, 50 };
-    case UnitType::HeavyTank:
-        return { 250, 100 };
-    case UnitType::PrototypeInfantry:
-        return { 25, 0 };
-    case UnitType::Medic:
-        return { 30, 0 };
-    }
-    return { 0, 0 };
+    const UnitConfig &config = ActiveUnitConfig(type);
+    return { config.costIron, config.costOil };
 }
 
 UnitFactory::UnitFactory(Registry &registry, ResourceSystem &resources, EventDispatcher &events)
@@ -55,6 +37,20 @@ Entity UnitFactory::SpawnPrepaid(UnitType type, int teamID, Vector2 worldPos)
 
     const Entity id = registry_.Create();
     registry_.Add(id, unit);
+    // M2 extension components: only gimmick units get them.
+    const UnitConfig &config = ActiveUnitConfig(type);
+    if (config.abilities.turretTurnRate > 0.0f)
+    {
+        Turret turret;
+        turret.turnRate = config.abilities.turretTurnRate;
+        registry_.Add(id, turret);
+    }
+    if (config.abilities.transportCapacity > 0)
+    {
+        Cargo cargo;
+        cargo.capacity = config.abilities.transportCapacity;
+        registry_.Add(id, cargo);
+    }
 
     UnitLifecycleEvent spawned;
     spawned.type = EventType::UnitSpawned;
@@ -69,6 +65,23 @@ void UnitFactory::DestroyUnit(Entity entity)
     if (!registry_.IsAlive(entity))
     {
         return;
+    }
+    // Eject embarked passengers at the carrier's position before teardown.
+    if (Cargo *cargo = registry_.Get<Cargo>(entity))
+    {
+        if (const Unit *carrier = registry_.Get<Unit>(entity))
+        {
+            for (const Entity passenger : cargo->passengers)
+            {
+                if (Unit *u = registry_.Get<Unit>(passenger))
+                {
+                    u->position = carrier->position;
+                    SnapUnitToTile(*u);
+                }
+                registry_.Remove<EmbarkedOn>(passenger);
+            }
+        }
+        cargo->passengers.clear();
     }
     UnitLifecycleEvent destroyed;
     destroyed.type = EventType::UnitDestroyed;

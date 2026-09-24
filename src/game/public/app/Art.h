@@ -105,9 +105,10 @@ public:
     // tileCorner = unit.position (snapped); sprite fills the 32x32 body inset.
     void DrawUnit(UnitType type, int teamID, UnitFrame frame, Vector2 tileCorner) const;
     // Atlas blit of a named sprite, origin-aligned to the 32x32 body center;
-    // no-op when the atlas is down or the name is unknown.
+    // no-op when the atlas is down or the name is unknown. rotationDeg spins
+    // the blit around the body center (M3 render: turret layer, 0 = legacy).
     void DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
-                        float scale = 1.0f) const;
+                        float scale = 1.0f, float rotationDeg = 0.0f) const;
     void DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const;
     void DrawNode(ResourceKind kind, Vector2 center) const;
     void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon
@@ -148,7 +149,7 @@ public:
 private:
     static int TeamSlot(int teamID); // 0 -> blue, anything else -> red
     void DrawOneAtlasSprite(const SpriteDefInfo &sprite, Vector2 tileCorner, Color tint,
-                            float scale) const;
+                            float scale, float rotationDeg = 0.0f) const;
     bool ready_ = false;
     bool fallback_ = true;
     bool atlasReady_ = false;

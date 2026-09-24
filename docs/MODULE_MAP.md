@@ -14,7 +14,8 @@ cycles.
 core:    MathUtils, CcAssert, Registry, Event, Subsystem
          Game, Simulation, PlayingInput, MenuScreens
 world:   TileMap, Pathfinder, MapFile, FogOfWar
-units:   Unit, UnitStats, Combat, UnitFactory, Targeting, Formation, AICommander
+units:   Unit, UnitStats, Combat, UnitFactory, Targeting, Formation, AICommander,
+          Extensions
 economy: Building, Nodes, ResourceSystem, Production
 app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, Art,
          SpriteData, UnitConfig, Menu, Skirmish, SaveGame, Audio, Log, Cursor, Pings,
@@ -71,11 +72,15 @@ app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, 
 
 - `Unit.h` - Full component: stats, A* path fields, `UpdateUnit` (non-const map: demolish
   mutates), stances, attack-move/patrol/repair orders, hit-flash fields, `SeparateUnits`
-  overlap avoidance. Fwd-declares `TileMap`; never include `Pathfinder.h` from here
+  overlap avoidance. Fwd-declares `TileMap`; never include `Pathfinder.h` from here.
+  Gimmick drivers: `ResolveCrush`, turret traverse + fire-gate in `EngageTarget`,
+  player-only `Load`/`Unload` orders (`CanLoadTarget`/`BoardTransport`/`UnloadTransport`)
 - `UnitStats.h` - `BaseStats` table for 7 types + `ApplyBaseStats` (preserves
   position/team/selection)
 - `Combat.h` - 3x3 damage matrix (`Effectiveness`), `ResolveAttack` (scales, restarts
-  cooldown, stamps hit-flash), hitboxes, crush rule, M13 `ResolveBuildingAttack`
+  cooldown, stamps hit-flash), hitboxes, crush rule, M13 `ResolveBuildingAttack`;
+  M3 `ResolveStrike`/`ResolveStrikeGround` dispatch (direct vs arcing launch) +
+  `UpdateProjectiles` ballistics (dodgeable AoE, no friendly fire, never persisted)
 - `UnitFactory.h` - Cost-validated `Spawn` / prepaid `SpawnPrepaid` / `DestroyUnit`
   (`UnitSpawned`/`UnitDestroyed` events)
 - `Targeting.h` - Nearest-enemy/threat acquisition + range check (M9 fog gate, artillery
@@ -121,7 +126,12 @@ app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, 
 - `SpriteData.h` - Sprite-atlas data (JSON in `data/configs/`: textures/sprites/animations
   merged at load); `LoadSpriteSheet`/`ParseSpriteSheetJson` + name/id lookups
 - `UnitConfig.h` - Unit-config editor data layer: one `UnitConfig` per
-  `data/configs/<type>.json`, enum↔name parsing, load/save/enumerate. Pure logic, no raylib
+  `data/configs/<type>.json`, enum↔name parsing, load/save/enumerate. Pure logic, no raylib.
+  M1 runtime authority: optional `abilities` block (turret/arcing/crush/transport/sniper,
+  unknown keys reject) + `cost`; `ActiveUnitConfig` catalog loaded at match start with
+  per-type compiled fallback; `CostOf` reads the catalog
+- `Extensions.h` - M2 gimmick components in `Registry` pools: `Turret`/`Cargo`/`EmbarkedOn`
+  (+ `Projectile` shells, `IsEmbarked`/`IsFleshUnit` gates). Header-only
 - `Menu.h` - M14 boot-to-menu flow: MainMenu/SkirmishSetup/Settings/LoadGame +
   Playing/Paused/GameOver/Victory, injected-map setup (CanStart gate), `data/settings.cfg`
   persistence (Q86); pause overlay shares MenuSettings, quit-to-menu teardown
@@ -139,8 +149,8 @@ app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, 
   (`data/logs/conflict-converge.log`, wired in `Game::Init`/`Shutdown`), `Fatal` exits;
   headless-tested via `tests/unit-tests/log_tests.cpp`
 - `Cursor.h` - Context-sensitive cursor intent (`PredictCursorIntent`): what a right-click
-  would do at `worldPos` (Move/Attack/Repair/InvalidPlacement). Pure prediction, never
-  mutates
+  would do at `worldPos` (Move/Attack/Repair/Heal/Load; unload is a self-click,
+  predicted Move). Pure prediction, never mutates
 - `Pings.h` - Attack/event pings: short-lived world-space markers for minimap blips +
   camera jump (`Raise`/`Update`/`Latest`); pure logic, headless-testable;
   `ResetForMatch` clears pings + retrigger floors on match boundaries

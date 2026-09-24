@@ -78,6 +78,53 @@ bool BaselineIsVehicle(UnitType type)
            type == UnitType::LightTank || type == UnitType::HeavyTank;
 }
 
+void BaselineCost(UnitType type, int &iron, int &oil)
+{
+    switch (type)
+    {
+    case UnitType::RifleInfantry:
+        iron = 25;
+        oil = 0;
+        break;
+    case UnitType::AntiArmorInfantry:
+        iron = 30;
+        oil = 5;
+        break;
+    case UnitType::Engineer:
+        iron = 40;
+        oil = 0;
+        break;
+    case UnitType::IFV:
+        iron = 80;
+        oil = 20;
+        break;
+    case UnitType::Artillery:
+        iron = 120;
+        oil = 40;
+        break;
+    case UnitType::LightTank:
+        iron = 150;
+        oil = 50;
+        break;
+    case UnitType::HeavyTank:
+        iron = 250;
+        oil = 100;
+        break;
+    case UnitType::PrototypeInfantry:
+        iron = 25;
+        oil = 0;
+        break;
+    case UnitType::Medic:
+        iron = 30;
+        oil = 0;
+        break;
+    case UnitType::Count:
+        iron = 0;
+        oil = 0;
+        break;
+    }
+}
+
 const char *UnitTypeConfigName(UnitType type)
 {
     switch (type)
@@ -262,13 +309,190 @@ struct JsonArt
     }
 };
 
+struct JsonCost
+{
+    std::optional<int> iron;
+    std::optional<int> oil;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadOptional(ar, "iron", nullptr, iron);
+        TryLoadOptional(ar, "oil", nullptr, oil);
+    }
+    template <class Archive>
+    void save(Archive &ar) const
+    {
+        ar(cereal::make_nvp("iron", iron.value()), cereal::make_nvp("oil", oil.value()));
+    }
+};
+
+struct JsonTurret
+{
+    std::optional<float> turnRate;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadOptional(ar, "turnRate", "turn_rate", turnRate);
+    }
+    template <class Archive>
+    void save(Archive &ar) const
+    {
+        ar(cereal::make_nvp("turnRate", turnRate.value()));
+    }
+};
+
+struct JsonArcingShell
+{
+    std::optional<float> flightTime;
+    std::optional<int> splashTiles;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadOptional(ar, "flightTime", "flight_time", flightTime);
+        TryLoadOptional(ar, "splashTiles", "splash_tiles", splashTiles);
+    }
+    template <class Archive>
+    void save(Archive &ar) const
+    {
+        ar(cereal::make_nvp("flightTime", flightTime.value()),
+           cereal::make_nvp("splashTiles", splashTiles.value()));
+    }
+};
+
+struct JsonTransport
+{
+    std::optional<int> capacity;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadOptional(ar, "capacity", nullptr, capacity);
+    }
+    template <class Archive>
+    void save(Archive &ar) const
+    {
+        ar(cereal::make_nvp("capacity", capacity.value()));
+    }
+};
+
+struct JsonAbilities
+{
+    std::optional<JsonTurret> turret;
+    std::optional<JsonArcingShell> arcingShell;
+    std::optional<bool> crushesFlesh;
+    std::optional<JsonTransport> transport;
+    std::optional<bool> sniper;
+    template <class Archive>
+    void load(Archive &ar)
+    {
+        TryLoadOptional(ar, "turret", nullptr, turret);
+        TryLoadOptional(ar, "arcingShell", "arcing_shell", arcingShell);
+        TryLoadOptional(ar, "crushesFlesh", "crushes_flesh", crushesFlesh);
+        TryLoadOptional(ar, "transport", nullptr, transport);
+        TryLoadOptional(ar, "sniper", nullptr, sniper);
+    }
+    template <class Archive>
+    void save(Archive &ar) const
+    {
+        ar(cereal::make_nvp("turret", turret.value()),
+           cereal::make_nvp("arcingShell", arcingShell.value()),
+           cereal::make_nvp("crushesFlesh", crushesFlesh.value()),
+           cereal::make_nvp("transport", transport.value()),
+           cereal::make_nvp("sniper", sniper.value()));
+    }
+};
+
 struct JsonConfig
 {
     std::string type;
     JsonStats stats;
+    JsonCost cost;
+    JsonAbilities abilities;
     JsonCollision collision;
     JsonArt art;
 };
+
+// Fail fast on typos: unknown keys inside "abilities" reject the file.
+// Tolerant everywhere else (missing keys default-fill per plan).
+bool HasUnknownAbilityKey(const std::string &json)
+{
+    static const char *kKnown[] = {
+        "turret",       "turnRate",   "turn_rate",   "arcingShell", "arcing_shell",
+        "flightTime",   "flight_time", "splashTiles", "splash_tiles", "crushesFlesh",
+        "crushes_flesh", "transport",  "capacity",    "sniper",      "shotsPerSprite",
+        "shots_per_sprite",
+    };
+    const std::size_t pos = json.find("\"abilities\"");
+    if (pos == std::string::npos)
+    {
+        return false;
+    }
+    const std::size_t open = json.find('{', pos);
+    if (open == std::string::npos)
+    {
+        return false;
+    }
+    int depth = 0;
+    std::size_t close = std::string::npos;
+    for (std::size_t i = open; i < json.size(); ++i)
+    {
+        if (json[i] == '{')
+        {
+            ++depth;
+        }
+        else if (json[i] == '}')
+        {
+            if (--depth == 0)
+            {
+                close = i;
+                break;
+            }
+        }
+    }
+    if (close == std::string::npos)
+    {
+        return false;
+    }
+    const std::string block = json.substr(open, close - open + 1);
+    std::size_t i = 0;
+    while (i < block.size())
+    {
+        if (block[i] != '"')
+        {
+            ++i;
+            continue;
+        }
+        const std::size_t end = block.find('"', i + 1);
+        if (end == std::string::npos)
+        {
+            break;
+        }
+        const std::string key = block.substr(i + 1, end - i - 1);
+        std::size_t j = end + 1;
+        while (j < block.size() && (block[j] == ' ' || block[j] == '\t' ||
+                                    block[j] == '\n' || block[j] == '\r'))
+        {
+            ++j;
+        }
+        if (j < block.size() && block[j] == ':')
+        {
+            bool known = false;
+            for (const char *k : kKnown)
+            {
+                if (key == k)
+                {
+                    known = true;
+                    break;
+                }
+            }
+            if (!known)
+            {
+                return true;
+            }
+        }
+        i = end + 1;
+    }
+    return false;
+}
 
 }
 
@@ -305,6 +529,39 @@ UnitConfig DefaultUnitConfig(UnitType type)
     UnitConfig config;
     config.type = UnitTypeConfigName(type);
     config.stats = BaseStats(type);
+    BaselineCost(type, config.costIron, config.costOil);
+    config.abilities = UnitAbilities{};
+    // G3: heavy-tank crush is the first gimmick slice (movement rule).
+    if (type == UnitType::HeavyTank)
+    {
+        config.abilities.crushesFlesh = true;
+    }
+    // G1: turreted tanks aim body-independent heads (visible traverse).
+    if (type == UnitType::LightTank || type == UnitType::HeavyTank)
+    {
+        config.abilities.turretTurnRate = 3.0f;
+    }
+    // G2: artillery lobs dodgeable shells (visible arc, small AoE). Tuned
+    // so Medium closes soak games: 0.6s flight, splash 1 (foot cannot
+    // outwalk ±32px + hitbox, vehicles still dodge).
+    if (type == UnitType::Artillery)
+    {
+        config.abilities.arcingFlightTime = 0.6f;
+        config.abilities.arcingSplashTiles = 1;
+    }
+    // G4: IFV carries foot infantry (player gestures only; the AI never
+    // builds carriers or boards — transport AI is a separate project).
+    if (type == UnitType::IFV)
+    {
+        config.abilities.transportCapacity = 4;
+    }
+    // G5: AntiArmorInfantry is the designated marksman — 25 power is ~25%
+    // of a 100HP squad, so every hit visibly removes one soldier through
+    // the existing SquadSlots thresholds. True per-sprite HP deferred.
+    if (type == UnitType::AntiArmorInfantry)
+    {
+        config.abilities.sniper = true;
+    }
     config.footprintWidth = BaselineIsVehicle(type) ? 2 : 1;
     config.footprintHeight = BaselineIsVehicle(type) ? 2 : 1;
     config.spritePrefix = BaselineSpritePrefix(type);
@@ -456,6 +713,10 @@ const char *DamageTypeName(DamageType type)
 bool ParseUnitConfigJson(const std::string &json, const std::string &filenameStem,
                          UnitConfig &out)
 {
+    if (HasUnknownAbilityKey(json))
+    {
+        return false;
+    }
     JsonConfig cfg;
     try
     {
@@ -463,6 +724,8 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
         cereal::JSONInputArchive ar(in);
         TryLoadValue(ar, "type", cfg.type);
         TryLoadValue(ar, "stats", cfg.stats);
+        TryLoadValue(ar, "cost", cfg.cost);
+        TryLoadValue(ar, "abilities", cfg.abilities);
         TryLoadValue(ar, "collision", cfg.collision);
         TryLoadValue(ar, "art", cfg.art);
     }
@@ -515,6 +778,45 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
     if (stats.sightRange.has_value())
     {
         config.stats.sightRange = *stats.sightRange;
+    }
+    if (cfg.cost.iron.has_value() && *cfg.cost.iron >= 0)
+    {
+        config.costIron = *cfg.cost.iron;
+    }
+    if (cfg.cost.oil.has_value() && *cfg.cost.oil >= 0)
+    {
+        config.costOil = *cfg.cost.oil;
+    }
+    if (cfg.abilities.turret.has_value() && cfg.abilities.turret->turnRate.has_value() &&
+        *cfg.abilities.turret->turnRate > 0.0f)
+    {
+        config.abilities.turretTurnRate = *cfg.abilities.turret->turnRate;
+    }
+    if (cfg.abilities.arcingShell.has_value())
+    {
+        const JsonArcingShell &shell = *cfg.abilities.arcingShell;
+        if (shell.flightTime.has_value() && *shell.flightTime > 0.0f)
+        {
+            config.abilities.arcingFlightTime = *shell.flightTime;
+            if (shell.splashTiles.has_value() && *shell.splashTiles >= 0)
+            {
+                config.abilities.arcingSplashTiles = *shell.splashTiles;
+            }
+        }
+    }
+    if (cfg.abilities.crushesFlesh.has_value() && *cfg.abilities.crushesFlesh)
+    {
+        config.abilities.crushesFlesh = true;
+    }
+    if (cfg.abilities.transport.has_value() &&
+        cfg.abilities.transport->capacity.has_value() &&
+        *cfg.abilities.transport->capacity > 0)
+    {
+        config.abilities.transportCapacity = *cfg.abilities.transport->capacity;
+    }
+    if (cfg.abilities.sniper.has_value() && *cfg.abilities.sniper)
+    {
+        config.abilities.sniper = true;
     }
     if (cfg.collision.bounds.has_value())
     {
@@ -569,6 +871,22 @@ std::string UnitConfigToJson(const UnitConfig &config)
     out.stats.cooldownTime = config.stats.cooldownTime;
     out.stats.speed = config.stats.speed;
     out.stats.sightRange = config.stats.sightRange;
+    out.cost.iron = config.costIron;
+    out.cost.oil = config.costOil;
+    {
+        JsonTurret turret;
+        turret.turnRate = config.abilities.turretTurnRate;
+        out.abilities.turret = turret;
+        JsonArcingShell shell;
+        shell.flightTime = config.abilities.arcingFlightTime;
+        shell.splashTiles = config.abilities.arcingSplashTiles;
+        out.abilities.arcingShell = shell;
+        out.abilities.crushesFlesh = config.abilities.crushesFlesh;
+        JsonTransport transport;
+        transport.capacity = config.abilities.transportCapacity;
+        out.abilities.transport = transport;
+        out.abilities.sniper = config.abilities.sniper;
+    }
     JsonBounds bounds;
     bounds.left = config.boundLeft;
     bounds.top = config.boundTop;
@@ -587,6 +905,7 @@ std::string UnitConfigToJson(const UnitConfig &config)
     {
         cereal::JSONOutputArchive ar(json);
         ar(cereal::make_nvp("type", out.type), cereal::make_nvp("stats", out.stats),
+           cereal::make_nvp("cost", out.cost), cereal::make_nvp("abilities", out.abilities),
            cereal::make_nvp("collision", out.collision), cereal::make_nvp("art", out.art));
     }
     return json.str();
@@ -634,4 +953,99 @@ std::vector<UnitConfig> LoadAllUnitConfigs(const std::string &dir)
     std::sort(configs.begin(), configs.end(),
               [](const UnitConfig &a, const UnitConfig &b) { return a.type < b.type; });
     return configs;
+}
+
+namespace
+{
+
+std::vector<UnitConfig> gActiveConfigs;
+
+void EnsureActiveDefaults()
+{
+    if (!gActiveConfigs.empty())
+    {
+        return;
+    }
+    for (int i = 0; i < static_cast<int>(UnitType::Count); ++i)
+    {
+        gActiveConfigs.push_back(DefaultUnitConfig(static_cast<UnitType>(i)));
+    }
+}
+
+} // namespace
+
+const UnitConfig &ActiveUnitConfig(UnitType type)
+{
+    EnsureActiveDefaults();
+    const int index = static_cast<int>(type);
+    if (index < 0 || index >= static_cast<int>(gActiveConfigs.size()))
+    {
+        EnsureActiveDefaults();
+        return gActiveConfigs.front();
+    }
+    // gActiveConfigs is stored in UnitType order (see Refresh/Set).
+    for (const UnitConfig &config : gActiveConfigs)
+    {
+        UnitType parsed = UnitType::RifleInfantry;
+        if (ParseUnitTypeName(config.type, parsed) && parsed == type)
+        {
+            return config;
+        }
+    }
+    return gActiveConfigs[static_cast<std::size_t>(index)];
+}
+
+void SetActiveUnitConfigs(const std::vector<UnitConfig> &configs)
+{
+    gActiveConfigs.clear();
+    for (int i = 0; i < static_cast<int>(UnitType::Count); ++i)
+    {
+        const UnitType type = static_cast<UnitType>(i);
+        bool found = false;
+        for (const UnitConfig &config : configs)
+        {
+            UnitType parsed = UnitType::RifleInfantry;
+            if (ParseUnitTypeName(config.type, parsed) && parsed == type)
+            {
+                gActiveConfigs.push_back(config);
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            gActiveConfigs.push_back(DefaultUnitConfig(type));
+        }
+    }
+}
+
+void ResetActiveUnitConfigs()
+{
+    gActiveConfigs.clear();
+    EnsureActiveDefaults();
+}
+
+bool RefreshActiveUnitConfigs(const std::string &dir)
+{
+    const std::vector<UnitConfig> loaded = LoadAllUnitConfigs(dir);
+    if (loaded.empty())
+    {
+        return false;
+    }
+    SetActiveUnitConfigs(loaded);
+    return true;
+}
+
+bool RefreshActiveUnitConfigsFromSearch()
+{
+    static const char *kDirs[] = { "data/configs", "../../data/configs",
+                                   "../../../data/configs" };
+    for (const char *dir : kDirs)
+    {
+        if (RefreshActiveUnitConfigs(dir))
+        {
+            return true;
+        }
+    }
+    return false;
 }

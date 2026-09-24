@@ -3,6 +3,7 @@
 #include "test_harness.h"
 
 #include "Building.h"
+#include "Extensions.h"
 #include "FogOfWar.h" // fixture carries fog memory for the team_fog roundtrip
 #include "GameCamera.h"
 #include "Nodes.h"
@@ -357,6 +358,66 @@ void RunSaveGameTests()
         std::filesystem::remove(ReplayFramePath(dir, 1), ec);
         CC_CHECK(ReplayFrameCount(dir) == 1);
         std::filesystem::remove_all(dir, ec);
+    }
+
+    // --- M2 extension round-trip: turret facing + cargo manifest + embarked ---
+    {
+        Fixture carrier;
+        Unit hull;
+        hull.type = UnitType::HeavyTank;
+        ApplyBaseStats(hull);
+        hull.teamID = 0;
+        hull.position = cc::ToRaylib(cc::TileToWorld(2, 2));
+        hull.facing = Facing::Left; // G1: body facing persists alongside turret
+        const Entity carrierId = carrier.registry.Create();
+        carrier.registry.Add(carrierId, hull);
+        Turret turret;
+        turret.facing = 1.25f;
+        turret.turnRate = 2.0f;
+        carrier.registry.Add(carrierId, turret);
+        Cargo cargo;
+        cargo.capacity = 6;
+        carrier.registry.Add(carrierId, cargo);
+
+        Unit rider;
+        rider.type = UnitType::RifleInfantry;
+        ApplyBaseStats(rider);
+        rider.teamID = 0;
+        rider.position = cc::ToRaylib(cc::TileToWorld(2, 2));
+        const Entity riderId = carrier.registry.Create();
+        carrier.registry.Add(riderId, rider);
+        EmbarkedOn ride;
+        ride.carrier = carrierId;
+        carrier.registry.Add(riderId, ride);
+        carrier.registry.Get<Cargo>(carrierId)->passengers.push_back(riderId);
+
+        const std::string xpath =
+            (std::filesystem::temp_directory_path() / "cc_save_m2.ccpb").string();
+        CC_CHECK(SaveWorld(carrier.State(), xpath));
+        Fixture landed;
+        CC_CHECK(LoadWorld(landed.State(), xpath));
+        CC_CHECK(landed.registry.EntityCount() == 2);
+        Entity loadedCarrier = kInvalidEntity, loadedRider = kInvalidEntity;
+        landed.registry.Each<Unit>([&](Entity id, const Unit &u) {
+            if (u.type == UnitType::HeavyTank)
+            {
+                loadedCarrier = id;
+            }
+            else
+            {
+                loadedRider = id;
+            }
+        });
+        CC_CHECK(loadedCarrier != kInvalidEntity && loadedRider != kInvalidEntity);
+        const Turret *lt = landed.registry.Get<Turret>(loadedCarrier);
+        CC_CHECK(lt != nullptr && Near(lt->facing, 1.25f));
+        CC_CHECK(landed.registry.Get<Unit>(loadedCarrier)->facing == Facing::Left);
+        const Cargo *lc = landed.registry.Get<Cargo>(loadedCarrier);
+        CC_CHECK(lc != nullptr && lc->passengers.size() == 1 &&
+                 lc->passengers[0] == loadedRider);
+        const EmbarkedOn *lr = landed.registry.Get<EmbarkedOn>(loadedRider);
+        CC_CHECK(lr != nullptr && lr->carrier == loadedCarrier);
+        std::remove(xpath.c_str());
     }
 
     std::remove(path.c_str());

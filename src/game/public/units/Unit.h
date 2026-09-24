@@ -81,6 +81,8 @@ enum class QueuedOrderKind
     Patrol,
     Repair,
     AttackGround,
+    Load,
+    Unload,
     Count
 };
 
@@ -153,6 +155,10 @@ struct Unit
     Entity repairTarget = kInvalidEntity;
     bool hasAttackGroundOrder = false;
     Vector2 attackGroundPos = {};
+    bool hasLoadOrder = false; // G4 player-only transport boarding
+    Entity loadTarget = kInvalidEntity; // foot passenger to pick up
+    bool hasUnloadOrder = false;
+    Vector2 unloadPos = {}; // tile-snapped drop point
     std::vector<QueuedOrder> orderQueue; // pending orders, dispatched FIFO
     // Multi-tile footprint. 1x1 for foot units, 2x2 for vehicles.
     // Anchor tile is the unit's logical position; the footprint extends
@@ -238,6 +244,18 @@ void IssueAttackGroundOrder(Unit &unit, const TileMap &map, Vector2 worldPos);
 void IssueAttackGroundOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
                                      Vector2 worldPos, Entity self, std::uint32_t selfGen);
 
+// G4 IFV transport, player-only: AICommander never builds carriers or boards
+// passengers (transport AI is a separate project: pickup routing + timing).
+void IssueLoadOrder(Unit &carrier, Entity passenger);
+void IssueUnloadOrder(Unit &carrier, const TileMap &map, Vector2 worldPos);
+// Foot-only, same-team, live, non-embarked passenger with a free seat.
+// Enemies/vehicles/full carriers reject like heal validation.
+bool CanLoadTarget(const Registry &registry, Entity carrier, const Unit &carrierUnit,
+                   Entity passenger);
+// Immediate board/unload used by the order driver; false when invalid.
+bool BoardTransport(Registry &registry, Entity carrier, Entity passenger);
+int UnloadTransport(Registry &registry, const TileMap &map, Entity carrier, Vector2 worldPos);
+
 // Shared retreat threshold: fraction of type-max HP below which units fall back.
 inline constexpr float kRetreatHealthFraction = 0.3f;
 
@@ -264,6 +282,11 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 
 // Relocate one unit per exact-tile stack to a reachable neighbouring tile.
 void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &occ);
+
+// G3 crush: a `crushesFlesh` unit overlapping an enemy foot unit kills it
+// instead of pushing. Team-checked (no friendly crush); kills resolve before
+// occupancy so the tile frees. Vehicles/buildings are never crushed.
+void ResolveCrush(Registry &registry);
 
 // Full per-frame movement pipeline: occupancy pre-pass, driver, stack relocation.
 void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,

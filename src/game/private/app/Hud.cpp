@@ -98,6 +98,7 @@ std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys)
         "WASD Camera",
         "Left Select",
         "Right Order",
+        "Right-click foot: Load, self: Unload",
     };
     lines.push_back(HintKey(hotkeys, "Back") + " Deselect");
     lines.push_back(HintKey(hotkeys, "Halt") + " Halt");

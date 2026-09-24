@@ -3,10 +3,13 @@
 #include "test_harness.h"
 
 #include "Combat.h"   // expected damage via Effectiveness
+#include "Extensions.h" // G1 turret traverse/fire-gate
 #include "Targeting.h" // InAttackRange sanity
 #include "TileMap.h"  // UpdateUnit needs the full map type
 #include "Unit.h"
 #include "UnitStats.h" // ApplyBaseStats for real power/range/cooldowns
+
+#include <cmath>
 
 namespace
 {
@@ -103,5 +106,42 @@ void RunAttackPhaseTests()
         CC_CHECK(unit->phase == AttackPhase::Ready);
         CC_CHECK(unit->state == UnitState::Moving);
         CC_CHECK(unit->position.x > 0.0f);
+    }
+
+    // --- G1 traverse: head turns at turnRate, body facing untouched ---
+    {
+        Registry registry;
+        TileMap map(10, 10);
+        const Entity tank = AddPhaser(registry, UnitType::LightTank, 0, 0.0f, 0.0f);
+        const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 192.0f, 0.0f);
+        Turret turret;
+        turret.facing = 3.141592653589793f; // aimed away (desired = 0)
+        turret.turnRate = 3.0f;
+        registry.Add(tank, turret);
+        const Facing bodyBefore = registry.Get<Unit>(tank)->facing;
+        UpdateUnit(tank, registry, map, kDt);
+        const Turret *moved = registry.Get<Turret>(tank);
+        CC_CHECK(CcNear(std::fabs(moved->facing - 3.141592653589793f), 3.0f * kDt));
+        CC_CHECK(registry.Get<Unit>(tank)->facing == bodyBefore);
+    }
+
+    // --- G1 fire-only-when-aimed: traversing holds WindUp, aligned fires ---
+    {
+        Registry registry;
+        TileMap map(10, 10);
+        const Entity tank = AddPhaser(registry, UnitType::LightTank, 0, 0.0f, 0.0f);
+        const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 192.0f, 0.0f);
+        Turret turret;
+        turret.facing = 3.141592653589793f;
+        turret.turnRate = 3.0f;
+        registry.Add(tank, turret);
+        StepPhasers(registry, map, kDt, 5); // 0.25 rad traversed: still off-aim
+        CC_CHECK(registry.Get<Unit>(tank)->phase == AttackPhase::Ready);
+        CC_CHECK(registry.Get<Unit>(tank)->state == UnitState::Attacking);
+        CC_CHECK(registry.Get<Unit>(foe)->health == 100.0f); // no free hits
+
+        registry.Get<Turret>(tank)->facing = 0.0f; // pre-aimed
+        UpdateUnit(tank, registry, map, kDt);
+        CC_CHECK(registry.Get<Unit>(tank)->phase == AttackPhase::WindUp);
     }
 }
