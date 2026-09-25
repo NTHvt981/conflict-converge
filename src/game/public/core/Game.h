@@ -37,8 +37,7 @@
 #include "TileMap.h"
 #include "UnitFactory.h"
 
-// Game owns the boot state + frame loop; main.cpp is entry-only
-// (construct, Run, return). Non-copyable: shortcut lambdas capture this.
+// Non-copyable: shortcut lambdas capture this.
 class Game
 {
 public:
@@ -46,11 +45,10 @@ public:
     Game(const Game &) = delete;
     Game &operator=(const Game &) = delete;
 
-    void Init();     // window, audio/art, state, shortcut bindings
-    void Update();   // exactly one frame (input pump + sim + render)
-    void Shutdown(); // unload + CloseWindow
+    void Init();
+    void Update();
+    void Shutdown();
     bool IsRunning() const;
-    // Convenience for main: Init + loop + Shutdown.
     int Run();
 
 protected:
@@ -97,20 +95,19 @@ private:
 protected:
     bool worldActive = false; // E2EGame seam
 private:
-    // Gates the allyAI/enemyAI2 ticks; 2v2 only (see Game.h.context.md).
     bool worldIs2v2 = false;
     bool sandboxMode = false;
     AIDifficulty worldDifficulty = AIDifficulty::Medium;
     std::string worldMapPath;
 
-    int replayCursor = 0; // currently shown frame
-    float replayPlayTimer = 0.0f; // auto-advance clock in the viewer
+    int replayCursor = 0;
+    float replayPlayTimer = 0.0f;
     bool showHints = true;
     bool playerAutoRepair = false;
     float autoRepairCap = 1.0f;
-    float shakeTrauma = 0.0f; // screen-shake trauma 0..1 (render copy only)
-    DamageNumbers damageNumbers; // floating hit numbers (presentation-only)
-    MenuState previousMenuState = MenuState::MainMenu; // transition-fade clock
+    float shakeTrauma = 0.0f; // 0..1, render copy only
+    DamageNumbers damageNumbers;
+    MenuState previousMenuState = MenuState::MainMenu;
     float menuStateTime = 0.0f;
     MenuState lastOutcomeState = MenuState::MainMenu;
     ConfirmChoice pendingConfirm = ConfirmChoice::None; // resolved next frame

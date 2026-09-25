@@ -7,9 +7,7 @@
 #include "Registry.h"
 #include "Unit.h"
 
-// M2 extension components: gimmick state lives in Registry pools, not in the
-// flat Unit struct. Units without gimmicks never get them; existing systems
-// skip them by pool (see IsEmbarked). Header-only: no TU, no premake regen.
+// Header-only: no TU, no premake regen.
 
 struct Turret
 {
@@ -54,13 +52,6 @@ inline bool IsFleshUnit(UnitType type)
     return !IsVehicleHull(type);
 }
 
-// --- Core behavior components (Unit split, slice 1: orders) ---
-// Order intent lives here, not on Unit: stance/attack-move/patrol/repair/
-// attack-ground/load/unload state plus the shift-queue. Attached at spawn
-// for every unit; GetOrders creates a default on first use so callers never
-// branch on missing. Movement execution (hasMoveOrder/hasPath/path) moved
-// in slice 2, combat state in slice 3; identity
-// (type/team/health/state/selection) stays on Unit permanently.
 struct Orders
 {
     Stance stance = Stance::Guard;
@@ -97,11 +88,6 @@ inline const Orders *FindOrders(const Registry &registry, Entity entity)
     return registry.Get<Orders>(entity);
 }
 
-// --- Core behavior components (Unit split, slice 2: movement) ---
-// Movement execution lives here, not on Unit: pending destination, A*
-// waypoints, and blocked-retry accounting. Attached at spawn for every
-// unit; GetMover creates a default on first use so callers never branch
-// on missing. Combat state moved in slice 3; stats stay on Unit.
 struct Mover
 {
     Vector2 moveTarget = {}; // tile-snapped pending move destination
@@ -139,13 +125,6 @@ inline float EffectiveSpeed(const Unit &unit, const Mover &mover)
     return mover.speedCapPixelsPerSec;
 }
 
-// --- Core behavior components (Unit split, slice 3: combat) ---
-// Live combat state lives here, not on Unit: acquired target, attack-phase
-// machine, cooldown countdown, and hit feedback. Attached at spawn for
-// every unit; GetCombatState creates a default on first use so callers
-// never branch on missing. Stats (attackPower/attackRange/cooldownTime/
-// windupTime/damageType/speed/sightRange) stay on Unit by decision: they
-// are write-once, read-many with no aliasing benefit from pooling.
 struct CombatState
 {
     Entity target = kInvalidEntity; // acquired enemy

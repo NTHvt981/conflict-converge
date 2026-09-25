@@ -337,8 +337,6 @@ void GameRenderer::DrawWorld()
                 }
             }
         }
-        // G1 turret head: short barrel along the traversing facing (dedicated
-        // turret_<dir> sheets land separately; this shows traverse meanwhile).
         if (const Turret *turret = registry_.Get<Turret>(id))
         {
             const Vector2 muzzle = { center.x + std::cos(turret->facing) * 22.0f,
@@ -398,7 +396,6 @@ void GameRenderer::DrawWorld()
                         GREEN);
         }
     });
-    // G2 shells: visible and dodgeable — that is the gameplay payoff.
     registry_.Each<Projectile>([&](Entity, const Projectile &shell) {
         const float t = shell.flightTime > 0.0f
                             ? std::clamp(shell.elapsed / shell.flightTime, 0.0f, 1.0f)
@@ -406,7 +403,7 @@ void GameRenderer::DrawWorld()
         const Vector2 ground = { shell.start.x + (shell.target.x - shell.start.x) * t,
                                  shell.start.y + (shell.target.y - shell.start.y) * t };
         const float height = std::sin(3.141592653589793f * t) * 48.0f;
-        DrawCircleV(ground, 4.0f, Fade(DARKGRAY, 0.4f)); // landing shadow
+        DrawCircleV(ground, 4.0f, Fade(DARKGRAY, 0.4f));
         DrawCircleV({ ground.x, ground.y - height }, 5.0f, DARKGRAY);
     });
     art_.ParticlesPool().Draw();
@@ -550,8 +547,7 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
     {
         DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 1.0f - fade));
     }
-    // The RmlUi HUD owns every panel and overlay above; the host renders
-    // them screen-space over the world.
+    // Screen-space, over the world.
     rmlUi_.Render();
     return hudChoice;
 }

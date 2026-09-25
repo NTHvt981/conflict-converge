@@ -32,7 +32,7 @@ public:
     ShortcutBindings(const ShortcutBindings &) = delete;
     ShortcutBindings &operator=(const ShortcutBindings &) = delete;
 
-    // Clear + rebuild every Tier-1 binding (idempotent).
+    // Idempotent.
     void Bind();
 
 private:

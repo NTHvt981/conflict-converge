@@ -204,7 +204,7 @@ void UpdateProjectiles(Registry &registry, TileMap &map, float dtSeconds)
             Unit *victim = registry.Get<Unit>(victimId);
             if (victim == nullptr || victim->teamID == shell->teamID)
             {
-                continue; // no friendly fire
+                continue;
             }
             const float effective = static_cast<float>(shell->attackPower) *
                                     Effectiveness(shell->damageType, victim->armorType);

@@ -223,7 +223,6 @@ void Game::Update()
             }
             return;
         }
-        // Anything RmlUiMenus does not handle is the raygui Map Editor.
         rmlUiMenus.HideAll();
         if (const ConfirmChoice choice = menuScreens.Draw(screenWidth, screenHeight, menuStateTime);
             choice != ConfirmChoice::None)
@@ -233,15 +232,13 @@ void Game::Update()
         return;
     }
 
-    // Menu documents never draw in the world branch: hide any left visible
-    // by the menu branch (entering a match otherwise leaves them shown over
-    // the game). Idempotent while raygui owns the menus.
+    // Hide menu-branch documents: entering a match otherwise leaves them
+    // shown over the game.
     rmlUiMenus.HideAll();
 
     if (menu.state == MenuState::Playing && !menu.ConfirmOpen() && !cheats.CapturingInput())
     {
-        // First-refusal preview (Phase 4 owns full routing): presses on RmlUi
-        // controls never reach world dispatch. The sim always steps.
+        // Presses on RmlUi controls never reach world dispatch. The sim always steps.
         if (!rmlUiHud.IsPointerOverUI())
         {
             player_.Get<PlayingInput>().Dispatch();

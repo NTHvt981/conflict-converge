@@ -16,7 +16,6 @@ class InputManager : public Subsystem
 public:
     ShortcutRegistry shortcuts;
 
-    // Full per-frame pump: camera WASD, shortcut actions, mouse snapshot.
     void Update(GameCamera &camera, float cameraSpeedPixelsPerSec, float dtSeconds);
 
     // Snapshot from live raylib state.
@@ -31,16 +30,15 @@ public:
     // Frame-to-frame mouse movement in screen px (for drag-pan); zero on the
     // first snapshot.
     Vector2 MouseDeltaScreen() const;
-    bool LeftPressed() const; // edge: button went down this frame
-    bool LeftDown() const;    // level: button held (drag-box gestures)
+    bool LeftPressed() const;
+    bool LeftDown() const;
     bool RightPressed() const;
-    bool RightDown() const;  // level: right button held
+    bool RightDown() const;
     float WheelDelta() const; // mouse wheel steps this frame
     bool ShiftDown() const;   // either shift key held
     bool CtrlDown() const;    // either control key held
     bool DoubleClicked() const; // edge: second left press within 0.35s + 8px
 
-    // Snapshot mouse position under the given camera view.
     Vector2 MouseWorld(const GameCamera &camera) const;
 
 private:
@@ -55,7 +53,6 @@ private:
     bool leftDown_ = false;
     bool rightDown_ = false;
     bool ctrlDown_ = false;
-    // Last left-press time/pos for double-click; set by Snapshot.
     double lastLeftClickTime_ = -1.0;
     Vector2 lastLeftClickPos_ = {};
     bool doubleClicked_ = false;

@@ -531,7 +531,6 @@ UnitConfig DefaultUnitConfig(UnitType type)
     config.stats = BaseStats(type);
     BaselineCost(type, config.costIron, config.costOil);
     config.abilities = UnitAbilities{};
-    // G3: heavy-tank crush is the first gimmick slice (movement rule).
     if (type == UnitType::HeavyTank)
     {
         config.abilities.crushesFlesh = true;
@@ -590,7 +589,7 @@ UnitConfig DefaultUnitConfig(UnitType type)
 
 bool ParseUnitTypeName(const std::string &name, UnitType &out)
 {
-    if (name == "RifleInfantry" || name == "Infantry") // "Infantry" is the pre-rename alias
+    if (name == "RifleInfantry" || name == "Infantry") // "Infantry" alias
     {
         out = UnitType::RifleInfantry;
         return true;

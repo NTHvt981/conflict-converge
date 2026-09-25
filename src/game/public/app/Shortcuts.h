@@ -12,21 +12,18 @@ class ShortcutRegistry
 public:
     using Action = std::function<void()>;
 
-    // Bind (or rebind) a key to an action.
     void Bind(int raylibKey, Action action);
     // Bind a Shift+key chord; plain Bind never requires shift.
     void BindChord(int raylibKey, Action action);
     void Unbind(int raylibKey);
     bool Has(int raylibKey) const;
 
-    // Invoke the action bound to raylibKey; false when unbound.
     bool Fire(int raylibKey) const;
     // Headless chord path: fires only when a shift-chord is bound.
     bool FireChord(int raylibKey) const;
     // Fire one key honoring PollAndFire's shift-chord priority.
     bool FireWithShift(int raylibKey, bool shift) const;
 
-    // Fire each binding whose key was pressed this frame.
     void PollAndFire() const;
 
     // While disabled, Fire/FireChord/FireWithShift/PollAndFire are no-ops.

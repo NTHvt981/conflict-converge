@@ -26,19 +26,8 @@ class Event;
 
 class RmlUiHost;
 
-// In-match HUD plus world-branch overlays (Phase 4: hud.rml, pause.rml,
-// outcome.rml, confirm.rml). Text pushes reuse the pure builders from
-// Hud.h; factory/repair/idle/pause controls call the same paths as the
-// raygui panels they replace. The remap screen stays with RmlUiMenus
-// (shared with the menu branch).
-//
-// Refresh policy: every Draw pushes changed text only (content cache), so an
-// idle match costs ~zero DOM churn. No event subscriptions: the cached
-// refresh is cheap enough that dirty flags add nothing.
-//
-// Input scope: mouse only (move/buttons, no wheel/keys/text). Keyboard stays
-// with the game until Phase 4 owns focus routing — forwarding keys would
-// double-fire shortcuts (e.g. Space on a focused button + Halt).
+// Input scope: mouse only (move/buttons, no wheel/keys/text) — forwarding
+// keys would double-fire shortcuts (e.g. Space on a focused button + Halt).
 class RmlUiHud : public Rml::EventListener
 {
 public:

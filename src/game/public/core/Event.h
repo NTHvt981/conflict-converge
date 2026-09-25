@@ -6,8 +6,7 @@
 
 #include "Subsystem.h"
 
-// Event dispatcher: systems post events, UI and tests subscribe. Routing is
-// by EventType; handlers downcast the base Event to the concrete payload.
+// Handlers downcast the base Event to the concrete payload.
 
 enum class EventType
 {
@@ -36,11 +35,9 @@ class EventDispatcher : public Subsystem
 public:
     using Handler = std::function<void(const Event &)>;
 
-    // Register a handler invoked for every Dispatch of the given type.
     void Subscribe(EventType type, Handler handler);
-    // Invoke all handlers registered for event.type, in subscription order.
+    // In subscription order.
     void Dispatch(const Event &event) const;
-    // Drop all subscriptions (teardown / test isolation).
     void Clear();
 
 private:

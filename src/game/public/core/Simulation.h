@@ -17,11 +17,8 @@
 #include "TileMap.h"
 #include "UnitFactory.h"
 
-// Simulation owns the per-frame match tick extracted from Game::Update.
 // It never touches input, menus (beyond the outcome gate), or rendering, so
-// unit tests can drive Step headlessly over fixture worlds. World and engine
-// services arrive as scope containers (M3: 27-arg ctor collapsed); reference
-// members still bind the same objects, so Step semantics are unchanged.
+// unit tests can drive Step headlessly over fixture worlds.
 class Simulation
 {
 public:
@@ -34,19 +31,15 @@ public:
     Simulation(const Simulation &) = delete;
     Simulation &operator=(const Simulation &) = delete;
 
-    // Per-match reset: edge-trigger polls, factory gate, fresh replay recording.
     void ResetForMatch();
-    // Fresh edge-trigger polls + factory gate for a loaded world (load path).
     void ResetEdgePolls();
-    // End recording but keep this match's frames for the viewer.
     void StopRecording();
-    // Viewer entry seeds the frame count from the replay directory.
     void SetReplayCount(int count);
     int ReplayCount() const;
-    // Team-0 operational Factory gate, re-runnable for the paused HUD.
+    // Re-runnable for the paused HUD.
     void RefreshFactory();
     bool HasFactory() const;
-    // Exactly one match tick; runs only while Playing.
+    // Runs only while Playing.
     void Step(float dt);
 
 private:
@@ -71,7 +64,6 @@ private:
     const WorldState &worldState_;
     DamageNumbers &damageNumbers_;
     EventDispatcher &events_;
-    // Match config/state owned elsewhere (read, except shakeTrauma).
     const Vector2 &rallyPos_;
     const int &autoAddGroupBit_;
     const bool &sandboxMode_;
@@ -80,7 +72,6 @@ private:
     const float &autoRepairCap_;
     float &shakeTrauma_;
     MenuState &lastOutcomeState_;
-    // Edge-trigger + replay-recording state (owned here).
     int lastBuildingCount_ = 0;
     int lastDepletedCount_ = 0;
     int lastQueueSize_ = 0;

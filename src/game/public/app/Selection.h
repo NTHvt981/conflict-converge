@@ -19,18 +19,12 @@ void DeselectAll(Registry &registry);
 
 // First selected unit, or kInvalidEntity (right-click orders target this).
 Entity SelectedUnit(Registry &registry);
-// How many units are selected (portrait panel shows a count for N > 1).
 int SelectedUnitCount(Registry &registry);
 
-// Normalize a drag box (either corner may lead) to positive width/height.
 Rectangle NormalizeRect(Vector2 a, Vector2 b);
 
-// Screen-space drag (start/end in screen pixels) into a normalized
-// world-space rectangle via the camera. Shared seam for box-select, line
-// formation, and area commands.
 Rectangle DraggedWorldBox(const GameCamera &camera, Vector2 screenStart, Vector2 screenEnd);
-// Screen-space drag endpoints into world space (no normalization — a line
-// has direction, unlike a box). For line-draw formation placement.
+// No normalization: a line has direction, unlike a box.
 std::pair<Vector2, Vector2> DraggedWorldLine(const GameCamera &camera, Vector2 screenStart,
                                              Vector2 screenEnd);
 
@@ -48,13 +42,9 @@ int RecallControlGroup(Registry &registry, int groupBit);
 // QoL idle selection: every same-team unit with nothing to do.
 // workersOnly=true restricts to Engineers; false selects the idle army.
 int SelectIdle(Registry &registry, int teamID, bool workersOnly);
-// Non-mutating count for HUD buttons.
 int CountIdle(const Registry &registry, int teamID, bool workersOnly);
 
-// QoL select-all-of-type: every same-team unit of `type`; add=false replaces.
 int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add);
-// QoL double-click: same filter, restricted to the world-space viewport rect.
 int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType type,
                           int teamID, bool add);
-// QoL select-all-buildings: every same-team building of `type`.
 int SelectAllBuildings(Registry &registry, BuildingType type, int teamID);

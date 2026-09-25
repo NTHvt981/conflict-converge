@@ -114,8 +114,7 @@ bool KuhnDfs(int u, const std::vector<std::vector<int>> &allowed, std::vector<in
     return false;
 }
 
-// True when every unit can take a distinct slot with cost <= threshold.
-// Iterates units/slots in index order so the result is deterministic.
+// Index order, so the result is deterministic.
 bool CanMatchThreshold(const std::vector<std::vector<int>> &cost, int threshold)
 {
     const int n = static_cast<int>(cost.size());
@@ -143,15 +142,12 @@ bool CanMatchThreshold(const std::vector<std::vector<int>> &cost, int threshold)
     return matched == n;
 }
 
-// Hungarian min-sum assignment restricted to edges with cost <= threshold.
 // `cost` must admit a perfect matching under the threshold (guaranteed by
-// the bottleneck search below). Iteration order is index order, so ties
-// break deterministically: lower units prefer lower slots.
+// the bottleneck search below). Ties break deterministically.
 std::vector<int> HungarianRestricted(const std::vector<std::vector<int>> &cost, int threshold)
 {
     const int n = static_cast<int>(cost.size());
     constexpr int kInf = 1000000000;
-    // 1-indexed cost matrix; forbidden edges get INF.
     std::vector<std::vector<int>> a(static_cast<std::size_t>(n + 1),
                                     std::vector<int>(static_cast<std::size_t>(n + 1), 0));
     for (int i = 1; i <= n; ++i)
@@ -218,7 +214,6 @@ std::vector<int> HungarianRestricted(const std::vector<std::vector<int>> &cost, 
             j0 = j1;
         } while (j0 != 0);
     }
-    // p[j] = assigned row for column j; invert to row -> column.
     std::vector<int> assignment(static_cast<std::size_t>(n), -1);
     for (int j = 1; j <= n; ++j)
     {
@@ -230,7 +225,6 @@ std::vector<int> HungarianRestricted(const std::vector<std::vector<int>> &cost, 
     return assignment;
 }
 
-// Bottleneck (minimize the longest unit->slot walk) with min-sum tie-break.
 // Returns slot index per unit index. Empty for n == 0.
 std::vector<int> BottleneckAssignment(const std::vector<std::vector<int>> &cost)
 {
@@ -381,8 +375,6 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
     {
         baseSlots[static_cast<std::size_t>(i)] = anchor + offsets[static_cast<std::size_t>(i)];
     }
-    // Bottleneck assignment (minimize the longest walk, min-sum tie-break)
-    // over octile start->base-slot costs.
     std::vector<std::vector<int>> cost(static_cast<std::size_t>(n),
                                        std::vector<int>(static_cast<std::size_t>(n), 0));
     for (int i = 0; i < n; ++i)

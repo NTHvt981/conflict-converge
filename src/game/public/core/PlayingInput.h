@@ -13,10 +13,7 @@
 #include "Subsystem.h"
 #include "TileMap.h"
 
-// PlayingInput owns the in-match input dispatch extracted from Game: drag-box
-// select, area-build/repair gestures, right-click orders, line formation,
-// control groups, and the sticky gesture modes. Runs only while Playing;
-// advances no simulation itself.
+// In-match input dispatch. Runs only while Playing; advances no simulation itself.
 class PlayingInput : public Subsystem
 {
 public:
@@ -27,9 +24,8 @@ public:
     PlayingInput(const PlayingInput &) = delete;
     PlayingInput &operator=(const PlayingInput &) = delete;
 
-    // Exactly one frame of gesture dispatch.
     void Dispatch();
-    // Clear transient gesture state (sticky modes persist).
+    // Sticky modes persist.
     void ResetForMatch();
     // Shortcut toggles (guards live in Game's BindShortcuts).
     void ToggleSettingRally();
@@ -37,7 +33,6 @@ public:
     void ToggleAreaBuild();
     void ToggleAreaRepair();
     void ToggleAttackGround();
-    // Render/HUD reads (drag visuals, ghosts, previews, hints, tooltips).
     bool IsDragging() const;
     Vector2 DragStart() const;
     bool IsRightDragging() const;
@@ -63,12 +58,10 @@ private:
     const MenuSettings &settings_;
     // Factory rally point (owned by Game: sim + load path share it).
     Vector2 &rallyPos_;
-    // Sticky modes (persist across matches).
     std::optional<BuildingType> placingType_;
     bool areaRepairMode_ = false;
     bool moveAtSlowestSpeed_ = false;
     int autoAddGroupBit_ = -1;
-    // Transient gesture state (ResetForMatch clears it).
     bool settingRally_ = false;
     bool dragging_ = false;
     Vector2 dragStart_ = {};

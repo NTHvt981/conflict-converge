@@ -398,8 +398,6 @@ void PlayingInput::Dispatch()
                 }
                 if (!repaired && registry_.Has<Cargo>(squad[0]))
                 {
-                    // G4 transport: right-click friendly foot to board,
-                    // right-click the carrier itself to unload at its tile.
                     const Vector2 world = input_.MouseWorld(camera_);
                     const Entity picked = PickUnitAt(registry_, world);
                     if (picked == squad[0])

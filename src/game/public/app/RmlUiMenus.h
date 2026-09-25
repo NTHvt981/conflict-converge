@@ -21,10 +21,6 @@ class HotkeyMap;
 class RmlUiHost;
 struct MenuFlow;
 
-// RmlUi menu branch (Phase 2: MainMenu/SkirmishSetup/Settings/LoadGame plus
-// the confirm modal over them). Port of the probe's ProbeMenu bound to the
-// real MenuFlow/MenuSettings/SkirmishSetup instead of mock state.
-//
 // Parity notes vs MenuScreens (raygui), kept deliberately:
 // - Esc/Back stays with ShortcutBindings (game owns Esc); forwarded keys
 //   exclude Escape so RmlUi never double-handles it.

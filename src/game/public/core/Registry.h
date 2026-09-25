@@ -10,9 +10,6 @@
 
 #include "Subsystem.h"
 
-// ECS-lite registry: entities are plain uint32 IDs, components are arbitrary
-// structs stored per type. Systems iterate the pools they care about.
-
 using Entity = std::uint32_t;
 
 // Reserved sentinel: Create never returns this value.
@@ -26,7 +23,6 @@ public:
     bool IsAlive(Entity entity) const;
     std::size_t EntityCount() const;
 
-    // Generation counter: increments each time an entity ID is recycled.
     std::uint32_t Generation(Entity entity) const;
 
     template <typename T> void Add(Entity entity, T component);
@@ -35,11 +31,9 @@ public:
     template <typename T> const T *Get(Entity entity) const;
     template <typename T> void Remove(Entity entity);
 
-    // Visit every component of type T: fn(Entity, T&).
     template <typename T, typename Fn> void Each(Fn fn);
     template <typename T, typename Fn> void Each(Fn fn) const;
 
-    // Drop all entities and components (teardown / test isolation).
     void Clear();
 
 private:
@@ -73,8 +67,6 @@ private:
     std::uint32_t nextGen_ = 1;
     Entity next_ = 1;
 };
-
-// --- template implementation (header-only; non-template parts in Registry.cpp) ---
 
 template <typename T> std::unordered_map<Entity, T> &Registry::MutablePool()
 {

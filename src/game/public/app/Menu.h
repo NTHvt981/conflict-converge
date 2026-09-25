@@ -9,9 +9,7 @@
 #include "Unit.h"
 #include "reasings.h"
 
-// Menu system. MenuFlow owns the top-level game state; the sim is skipped
-// while paused. Text and transitions are pure (tested); the raygui windows
-// live in MenuScreens. Boot-to-menu: the world only builds after Start
+// The sim is skipped while paused; the world builds only after Start
 // confirms or a slot loads.
 
 enum class MenuState
@@ -103,7 +101,7 @@ struct MenuFlow
     void OpenSetup(const std::vector<MapEntry> &maps);
     void OpenSettings();
     void OpenLoad();
-    void SelectMap(int index); // out-of-range indices are ignored
+    void SelectMap(int index);
     void SelectDifficulty(AIDifficulty difficulty);
     // SkirmishSetup -> Playing when CanStart; otherwise false (stays put).
     bool StartMatch();
@@ -140,5 +138,4 @@ inline float MenuFadeAlpha(float time)
     return EaseQuadOut(time, 0.0f, 1.0f, kMenuFadeInDuration);
 }
 
-// Any living unit (health > 0) on the given team keeps that side in the game.
 bool TeamHasUnits(const Registry &registry, int teamID);

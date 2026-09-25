@@ -41,7 +41,7 @@ public:
 private:
     void Announce(EventType type);
 
-    Subsystems &world_; // match-boundary ResetForMatch fan-out (world scope)
+    Subsystems &world_;
     GameCamera &camera_;
     AICommander &ai_;
     AICommander &allyAI_;

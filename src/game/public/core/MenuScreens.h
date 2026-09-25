@@ -45,8 +45,7 @@ public:
     // pair. Returns the confirm-modal button clicked this frame (None when
     // no modal).
     ConfirmChoice Draw(int screenWidth, int screenHeight, float menuStateTime);
-    // Enter the map editor with a fresh scratch canvas (extracted so the
-    // RmlUi menu branch can route here too; never the live match map).
+    // Fresh scratch canvas; never the live match map.
     void OpenEditor();
     // Persisted remaps into hotkeys (startup, before BindShortcuts).
     void ApplyHotkeyOverrides();

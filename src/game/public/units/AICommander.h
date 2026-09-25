@@ -16,10 +16,6 @@ class OccupancyGrid;
 class ResourceNodes;
 class EventDispatcher;
 
-// Enemy AI commander: own fair-rules economy, production, building placement,
-// and orders. Difficulty scales build size, wave thresholds, scout cadence,
-// and retreat behavior.
-
 enum class AIDifficulty
 {
     Easy,
@@ -46,12 +42,10 @@ public:
     AICommander(Registry &registry, TileMap &map, ResourceNodes &nodes, EventDispatcher &events,
                 int teamID, AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile);
 
-    // Seed funds + place Base/Depot/Factory around homeTile + one starting guard.
     void SetupBase();
     // Restart for a new match: team, difficulty, homes, timers, harvesters,
     // and the owned economy/queue. Reference members are untouched.
     void Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile, int teamID);
-    // One decision tick: income, harvesters, production, waves, scouting, retreat.
     void Update(float dt);
     // Bind shared unit occupancy for footprint-aware orders (null = plain point orders).
     void SetOccupancy(OccupancyGrid *occ);
@@ -73,7 +67,6 @@ private:
     void RetreatTick();
     void OrderHarvesterToIron(Entity harvester);
     bool FindLiveIron(cc::IVec2 &outTile) const;
-    // Single-unit point order: footprint-aware when occupancy is bound.
     void OrderMove(Unit &unit, Entity id, Vector2 dest);
 
     Registry &registry_;
@@ -81,7 +74,7 @@ private:
     ResourceNodes &nodes_;
     OccupancyGrid *occ_ = nullptr;
     ResourceSystem resources_; // owned fair-rules economy
-    UnitFactory factory_;      // bound to resources_ above
+    UnitFactory factory_;
     ProductionQueue queue_;
     AIDifficultyParams params_;
     int teamID_;

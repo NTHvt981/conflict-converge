@@ -40,7 +40,6 @@ Entity UnitFactory::SpawnPrepaid(UnitType type, int teamID, Vector2 worldPos)
     registry_.Add(id, Orders{});
     registry_.Add(id, Mover{});
     registry_.Add(id, CombatState{});
-    // M2 extension components: only gimmick units get them.
     const UnitConfig &config = ActiveUnitConfig(type);
     if (config.abilities.turretTurnRate > 0.0f)
     {
@@ -69,7 +68,6 @@ void UnitFactory::DestroyUnit(Entity entity)
     {
         return;
     }
-    // Eject embarked passengers at the carrier's position before teardown.
     if (Cargo *cargo = registry_.Get<Cargo>(entity))
     {
         if (const Unit *carrier = registry_.Get<Unit>(entity))

@@ -160,8 +160,7 @@ float WrapAngle(float angle)
     return angle;
 }
 
-// Turn the head toward aimPos at turnRate; body facing is untouched. Returns
-// true when aimed within tolerance (units without turrets always aim true).
+// Units without turrets always aim true.
 bool TurretAimed(Registry &registry, Entity self, Vector2 fromPos, Vector2 aimPos,
                  float dtSeconds)
 {
@@ -1203,7 +1202,6 @@ void CancelAtBlocked(Unit &unit, Mover &mover, const TileMap &map)
     mover.speedCapPixelsPerSec = -1.0f;
     SnapUnitToTile(unit);
 
-    // Make sure unit dont drift off-map
     if (map.Width() > 0 && map.Height() > 0)
     {
         cc::Vec2 clamped = cc::ToGlm(unit.position);

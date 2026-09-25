@@ -19,7 +19,6 @@ struct HotkeyDef
     bool chord;         // true = Shift+key via BindChord
 };
 
-// All 27 Tier-1 BindShortcuts entries, in binding order.
 extern const HotkeyDef kHotkeyDefs[];
 int NumHotkeyDefs();
 const HotkeyDef *HotkeyDefFor(const std::string &action);
@@ -31,10 +30,8 @@ const char *HotkeyDisplayName(int key);
 class HotkeyMap : public Subsystem
 {
 public:
-    // Effective key: override if rebound, else the table default; 0 when the
-    // action is unknown.
     int KeyFor(const std::string &action) const;
-    void Rebind(const std::string &action, int newKey); // unknown actions ignored
+    void Rebind(const std::string &action, int newKey);
     void ClearOverrides();
     // Reverse lookup over effective keys (table order wins).
     std::optional<std::string> ActionForKey(int key) const;

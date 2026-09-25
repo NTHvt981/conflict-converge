@@ -2,9 +2,7 @@
 
 #include "Unit.h"
 
-// Base stats per unit type. Numbers are conservative C&C/CoH-inspired
-// placeholders; tuning adjusts them against the damage matrix. Ranges and
-// sight are in pixels (64px tiles).
+// Ranges and sight are in pixels (64px tiles).
 
 struct UnitStats
 {
@@ -18,9 +16,7 @@ struct UnitStats
     float sightRange = 320.0f;
 };
 
-// Stat line for a type (returned by reference to a static table).
 const UnitStats &BaseStats(UnitType type);
 
-// Copy the type's stats onto a unit; position, team, selection and orders
-// are preserved (only stat fields are overwritten).
+// Preserves position, team, selection, and orders.
 void ApplyBaseStats(Unit &unit);

@@ -11,12 +11,12 @@
 
 enum class SfxId
 {
-    Select,   // unit selected
-    Confirm,  // order acknowledged / unit produced
-    Attack,   // strike telegraph
-    Explosion, // unit destroyed
-    Place,    // building placed
-    Deplete,  // resource node exhausted
+    Select,
+    Confirm,
+    Attack,
+    Explosion,
+    Place,
+    Deplete,
     Victory,
     Defeat,
     Count
@@ -57,6 +57,5 @@ private:
     float musicVol_ = 0.8f;
     float sfx_ = 1.0f;
     bool muted_ = false;
-    // Last-play timestamps for the retrigger floors.
     double lastPlay_[static_cast<int>(SfxId::Count)] = {};
 };
