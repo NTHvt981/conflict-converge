@@ -7,17 +7,13 @@
 #include "MathUtils.h"
 #include "Subsystem.h"
 
-// Tile-based movement system. TileMap owns the 64x64 grid: dimensions,
-// per-tile terrain, and blocked queries for movement, pathfinding, and
-// building placement.
-
 enum class TerrainType : std::uint8_t
 {
-    Grass,    // passable, default fill
-    Water,    // blocked (impassable)
-    Building, // blocked (occupied by a structure)
-    Forest,   // passable, cost multiplier ready (uniform 1.0)
-    Rock,     // blocked (impassable wall tile for choke points)
+    Grass,
+    Water,
+    Building,
+    Forest,
+    Rock,
     Count
 };
 
@@ -40,7 +36,6 @@ public:
 
     void Clear(TerrainType fill = TerrainType::Grass);
 
-    // Resize to new dimensions, clearing to Grass (save/load support).
     void Resize(int widthTiles, int heightTiles);
 
 private:
@@ -72,11 +67,9 @@ public:
     int Height() const;
     bool InBounds(cc::IVec2 tile) const;
 
-    // Per-tile unit occupancy (entity + generation for stale detection).
     OccEntry GetUnit(cc::IVec2 tile) const;
     void SetUnit(cc::IVec2 tile, Entity entity, std::uint32_t generation);
 
-    // Per-tile building ownership (separate from unit occupancy).
     Entity GetBuilding(cc::IVec2 tile) const;
     void SetBuilding(cc::IVec2 tile, Entity building);
 
@@ -85,8 +78,6 @@ public:
                           Entity entity, std::uint32_t generation);
     void ReleaseFootprint(cc::IVec2 anchor, int footprintW, int footprintH);
 
-    // Ownership-checked variants: release clears only cells holding
-    // (entity, generation), reserve stamps only free-or-self cells.
     void ReleaseFootprintOwned(cc::IVec2 anchor, int footprintW, int footprintH,
                                Entity entity, std::uint32_t generation);
     int ReserveFootprintOwned(cc::IVec2 anchor, int footprintW, int footprintH,
@@ -94,14 +85,11 @@ public:
 
 	void ReleaseAllUnitFootprints();
 
-    // True only if every footprint tile is in-bounds, unblocked, and unoccupied.
     bool CanEnter(const TileMap &map, cc::IVec2 anchor, int footprintW, int footprintH,
                   Entity self, std::uint32_t selfGen) const;
 
-    // Reset all occupancy (unit + building).
     void Clear();
 
-    // Resize (clears occupancy).
     void Resize(int widthTiles, int heightTiles);
 
 private:

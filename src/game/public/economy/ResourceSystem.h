@@ -2,8 +2,7 @@
 
 #include "Subsystem.h"
 
-// Iron and oil ledger, uncapped. Spending and income ticks live here;
-// gathering and production queues live in Nodes/Production/Building.
+// Iron and oil ledger, uncapped.
 
 class ResourceSystem : public Subsystem
 {
@@ -15,10 +14,8 @@ public:
     void AddOil(long amount);
     bool TrySpend(long ironCost, long oilCost);
 
-    // Base income generation; banks whole units, carrying fractions forward.
     void TickIncome(float ironPerSecond, float oilPerSecond, float dt);
 
-    // Save/load support for the fractional income carry.
     float IronCarry() const;
     float OilCarry() const;
     void SetCarry(float ironCarry, float oilCarry);

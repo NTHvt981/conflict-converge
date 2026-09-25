@@ -10,23 +10,17 @@
 class ResourceSystem;
 class UnitFactory;
 
-// Unit production queue: costs charged upfront at Enqueue, so completion
-// spawns prepaid through the UnitFactory at the rally point.
-
-// Placeholder build times (seconds).
+// Build times in seconds.
 float BuildTime(UnitType type);
 
 class ProductionQueue : public Subsystem
 {
 public:
-    // Charge CostOf(type) via TrySpend and queue the build.
     bool Enqueue(ResourceSystem &resources, UnitType type, bool repeat = false);
-    // Drop the head item, refunding its full cost. No-op when empty.
+    // No-op when empty.
     void CancelTop(ResourceSystem &resources);
-    // Repeat-arming for the factory panel's per-type toggle.
     void SetRepeatArmed(UnitType type, bool repeat);
     bool RepeatArmed(UnitType type) const;
-    // Advance the head build; finished units SpawnPrepaid at rallyPos.
     Entity Update(UnitFactory &factory, ResourceSystem &resources, int teamID, Vector2 rallyPos,
                   float dt);
 

@@ -25,16 +25,15 @@ struct MapData
     std::string author;
     int width = 0;
     int height = 0;
-    std::vector<TerrainType> terrain; // row-major, width*height
+    std::vector<TerrainType> terrain;
     std::vector<MapNodeSpawn> nodes;
-    std::vector<cc::IVec2> playerSpawns; // '1' markers
-    std::vector<cc::IVec2> aiSpawns;     // '2' markers
+    std::vector<cc::IVec2> playerSpawns;
+    std::vector<cc::IVec2> aiSpawns;
 };
 
 // Parse a .map file; false leaves `out` untouched.
 bool ParseMapFile(const std::string &path, MapData &out);
 
-// Materialize parsed data: Resize + terrain, node spawns, building tiles.
 // False only on dimension overflow. The OccupancyGrid overload resyncs and
 // clears the grid to the new dims.
 bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes);
@@ -49,13 +48,11 @@ bool WriteMapFile(const MapData &data, const std::string &path);
 // *warning to the first failed check.
 bool ValidateMapPlayable(const MapData &data, std::string *warning);
 
-// QoL map editor painter: stamps one legend character onto a tile.
 void PaintEditorCell(MapData &map, char brush, cc::IVec2 tile);
 
-// QoL map editor Save-As: filename guard before WriteMapFile.
+// Filename guard before WriteMapFile.
 bool IsValidMapSaveName(const std::string &name);
 
-// Skirmish-setup map entry (header metadata plus file path).
 struct MapEntry
 {
     std::string path;
@@ -65,7 +62,6 @@ struct MapEntry
     int height = 0;
 };
 
-// Enumerate dir/*.map, keeping only files that parse; sorted by path.
 std::vector<MapEntry> ListMaps(const std::string &dir);
 
 // Nearest walkable tile within a small spiral (avoid spawning inside

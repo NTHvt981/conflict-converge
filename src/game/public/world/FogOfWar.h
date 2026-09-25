@@ -16,12 +16,10 @@
 class FogOfWar : public Subsystem
 {
 public:
-    // Size the grids; clears all vision memory.
     void Resize(int width, int height);
     int Width() const;
     int Height() const;
 
-    // Rebuild every team's visible set from unit positions, then fold into explored.
     void Recompute(const Registry &registry);
 
     bool IsVisible(int teamID, cc::IVec2 tile) const;
@@ -30,7 +28,6 @@ public:
     // Save/load support (team_fog): row-major explored bytes, w*h long.
     std::vector<std::uint8_t> ExploredBytes(int teamID) const;
     void SetExplored(int teamID, const std::uint8_t *bytes, std::size_t size);
-    // Teams currently tracked (have had at least one living unit).
     std::vector<int> Teams() const;
 
 private:
