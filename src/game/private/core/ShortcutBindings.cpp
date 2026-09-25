@@ -5,6 +5,7 @@
 #include "Selection.h"
 #include "Shortcuts.h"
 #include "Unit.h"
+#include "UnitCommands.h"
 
 ShortcutBindings::ShortcutBindings(InputManager &input, HotkeyMap &hotkeys, MenuFlow &menu,
                                    RmlUiMenus &rmlUiMenus,
@@ -119,16 +120,7 @@ void ShortcutBindings::Bind()
         }
         const Vector2 dest = input_.MouseWorld(camera_);
         const bool queued = input_.ShiftDown();
-        int acted = 0;
-        registry_.Each<Unit>([&](Entity id, Unit &unit) {
-            if (unit.isSelected)
-            {
-                IssueOrEnqueue(unit, GetOrders(registry_, id), GetMover(registry_, id), map_,
-                               &occ_, id, registry_.Generation(id), queued,
-                               QueuedOrder{ QueuedOrderKind::AttackMove, dest });
-                ++acted;
-            }
-        });
+        const int acted = IssueSelectionAttackMove(registry_, map_, &occ_, dest, queued);
         if (acted > 0)
         {
             audio_.Play(SfxId::Confirm);
@@ -139,24 +131,14 @@ void ShortcutBindings::Bind()
         {
             return;
         }
-        const Entity selected = SelectedUnit(registry_);
-        if (Unit *unit = registry_.Get<Unit>(selected))
-        {
-            SetStance(*unit, GetOrders(registry_, selected), GetCombatState(registry_, selected),
-                      Stance::Hold);
-        }
+        SetSelectionStance(registry_, Stance::Hold);
     });
     input_.shortcuts.Bind(hotkeys_.KeyFor("StanceGuard"), [&] {
         if (!worldActive_ || menu_.state != MenuState::Playing)
         {
             return;
         }
-        const Entity selected = SelectedUnit(registry_);
-        if (Unit *unit = registry_.Get<Unit>(selected))
-        {
-            SetStance(*unit, GetOrders(registry_, selected), GetCombatState(registry_, selected),
-                      Stance::Guard);
-        }
+        SetSelectionStance(registry_, Stance::Guard);
     });
     input_.shortcuts.Bind(hotkeys_.KeyFor("Patrol"), [&] {
         if (!worldActive_ || menu_.state != MenuState::Playing)
@@ -165,16 +147,7 @@ void ShortcutBindings::Bind()
         }
         const Vector2 dest = input_.MouseWorld(camera_);
         const bool queued = input_.ShiftDown();
-        int acted = 0;
-        registry_.Each<Unit>([&](Entity id, Unit &unit) {
-            if (unit.isSelected)
-            {
-                IssueOrEnqueue(unit, GetOrders(registry_, id), GetMover(registry_, id), map_,
-                               &occ_, id, registry_.Generation(id), queued,
-                               QueuedOrder{ QueuedOrderKind::Patrol, unit.position, dest });
-                ++acted;
-            }
-        });
+        const int acted = IssueSelectionPatrol(registry_, map_, &occ_, dest, queued);
         if (acted > 0)
         {
             audio_.Play(SfxId::Confirm);
@@ -234,23 +207,7 @@ void ShortcutBindings::Bind()
         {
             return;
         }
-        bool allOn = true;
-        registry_.Each<Unit>([&](Entity id, const Unit &unit) {
-            if (unit.isSelected)
-            {
-                const Orders *orders = FindOrders(registry_, id);
-                if (orders == nullptr || !orders->autoRetreat)
-                {
-                    allOn = false;
-                }
-            }
-        });
-        registry_.Each<Unit>([&](Entity id, Unit &unit) {
-            if (unit.isSelected)
-            {
-                GetOrders(registry_, id).autoRetreat = !allOn;
-            }
-        });
+        ToggleSelectionAutoRetreat(registry_);
     });
     input_.shortcuts.Bind(hotkeys_.KeyFor("JumpPing"), [&] {
         if (!worldActive_ || menu_.state != MenuState::Playing)
@@ -301,28 +258,6 @@ void ShortcutBindings::Bind()
         {
             return;
         }
-        registry_.Each<Unit>([&](Entity id, Unit &unit) {
-            if (unit.isSelected)
-            {
-                Orders &orders = GetOrders(registry_, id);
-                Mover &mover = GetMover(registry_, id);
-                CombatState &combat = GetCombatState(registry_, id);
-                mover.hasMoveOrder = false;
-                mover.hasPath = false;
-                mover.path.clear();
-                mover.pathNext = 0;
-                combat.target = kInvalidEntity;
-                orders.attackMove = false;
-                orders.hasRepairOrder = false;
-                orders.repairTarget = kInvalidEntity;
-                orders.hasAttackGroundOrder = false;
-                mover.speedCapPixelsPerSec = -1.0f;
-                orders.orderQueue.clear();
-                combat.phase = AttackPhase::Ready;
-                unit.velocity = { 0.0f, 0.0f };
-                unit.state = UnitState::Idle;
-                SnapUnitToTile(unit);
-            }
-        });
+        HaltSelection(registry_);
     });
 }
