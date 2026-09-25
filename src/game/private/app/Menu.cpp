@@ -148,6 +148,7 @@ bool SaveSettings(const MenuSettings &settings, const std::string &path)
     std::snprintf(number, sizeof(number), "%g", settings.cameraSpeed);
     rini_set_value_text(&data, "cameraSpeed", number, NULL);
     rini_set_value(&data, "showMinimap", settings.showMinimap ? 1 : 0, NULL);
+    rini_set_value(&data, "showHints", settings.showHints ? 1 : 0, NULL);
     rini_set_value(&data, "rightDragPan", settings.rightDragPan ? 1 : 0, NULL);
     rini_set_value(&data, "colorBlindMode", settings.colorBlindMode ? 1 : 0, NULL);
     std::snprintf(number, sizeof(number), "%g", settings.uiScale);
@@ -236,6 +237,13 @@ bool LoadSettings(MenuSettings &settings, const std::string &path)
         if (std::strcmp(text, "0") == 0 || std::strcmp(text, "1") == 0)
         {
             parsed.showMinimap = std::strcmp(text, "1") == 0;
+        }
+    }
+    if ((text = FindEntryText(data, "showHints")) != NULL)
+    {
+        if (std::strcmp(text, "0") == 0 || std::strcmp(text, "1") == 0)
+        {
+            parsed.showHints = std::strcmp(text, "1") == 0;
         }
     }
     if ((text = FindEntryText(data, "rightDragPan")) != NULL)

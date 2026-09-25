@@ -6,6 +6,7 @@
 #include "Pathfinder.h"
 #include "Selection.h"
 #include "Unit.h"
+#include "UnitCommands.h"
 #include <algorithm>
 #include <cmath>
 #include <vector>
@@ -37,6 +38,7 @@ void PlayingInput::ResetForMatch()
     placeDragActive_ = false;
     repairDragActive_ = false;
     attackGroundMode_ = false;
+    armedAbility_.reset();
 }
 
 void PlayingInput::ToggleSettingRally()
@@ -66,6 +68,60 @@ void PlayingInput::SelectPlacingType(BuildingType type)
 {
     placingType_ = type;
     placeDragActive_ = false;
+}
+
+void PlayingInput::ArmAbility(AbilityId id)
+{
+    if (armedAbility_.has_value() && *armedAbility_ == id)
+    {
+        armedAbility_.reset();
+    }
+    else
+    {
+        armedAbility_ = id;
+    }
+}
+
+void PlayingInput::ClearArmedAbility()
+{
+    armedAbility_.reset();
+}
+
+const std::optional<AbilityId> &PlayingInput::ArmedAbility() const
+{
+    return armedAbility_;
+}
+
+bool PlayingInput::IssueArmedAbilityAt(Vector2 worldTarget, bool queued)
+{
+    if (!armedAbility_.has_value())
+    {
+        return false;
+    }
+    const AbilityId armed = *armedAbility_;
+    int acted = 0;
+    if (armed == AbilityId::AttackMove)
+    {
+        acted = IssueSelectionAttackMove(registry_, map_, &occ_, worldTarget, queued);
+    }
+    else if (armed == AbilityId::Patrol)
+    {
+        acted = IssueSelectionPatrol(registry_, map_, &occ_, worldTarget, queued);
+    }
+    else if (armed == AbilityId::Heal)
+    {
+        const Entity patient = PickUnitAt(registry_, worldTarget);
+        if (patient != kInvalidEntity)
+        {
+            acted = IssueSelectionHeal(registry_, map_, &occ_, patient, queued);
+        }
+    }
+    if (acted > 0)
+    {
+        armedAbility_.reset();
+        return true;
+    }
+    return false;
 }
 
 void PlayingInput::ToggleAreaRepair()
@@ -321,7 +377,14 @@ void PlayingInput::Dispatch()
     }
     const bool cancelledPlacement = input_.RightPressed() && wasPlacing;
     auto dispatchRightClickOrders = [&]() {
-        if (attackGroundMode_)
+        if (armedAbility_.has_value())
+        {
+            if (IssueArmedAbilityAt(input_.MouseWorld(camera_), input_.ShiftDown()))
+            {
+                audio_.Play(SfxId::Confirm);
+            }
+        }
+        else if (attackGroundMode_)
         {
             attackGroundMode_ = false;
             const Vector2 target = input_.MouseWorld(camera_);

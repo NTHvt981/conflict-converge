@@ -28,12 +28,12 @@
 	white-space: nowrap;
 }
 
-/* DrawResourcePanel: (8,8,220,56) "Stockpile". */
+/* Stockpile sits under the square top-right minimap (size 33.3% of the
+   height + 10dp margin): 36% clears it on windows 375px and taller. */
 #hud-stockpile {
-	left: 8dp;
-	top: 8dp;
-	width: 220dp;
-	height: 56dp;
+	right: 10dp;
+	top: 36%;
+	width: 19%;
 }
 
 /* DrawSelectionPanel: (8,screenH-64,300,56) "Selection". Widened so the
@@ -43,22 +43,6 @@
 	bottom: 8dp;
 	width: 340dp;
 	height: 56dp;
-}
-
-/* DrawIdleButtons: (318,screenH-64,150,56) "Idle". Taller for the font. */
-#hud-idle {
-	left: 358dp;
-	bottom: 8dp;
-	width: 150dp;
-	height: 96dp;
-}
-
-.idle-btn {
-	display: block;
-	width: 134dp;
-	height: 28dp;
-	margin-left: 8dp;
-	margin-top: 4dp;
 }
 
 /* DrawControlGroupStrip: y=70, 10 boxes 26x20 gap 2 from x=8.
@@ -94,21 +78,55 @@
 	border: 2dp #ffcb00;
 }
 
-/* DrawSaveSlots: (300,8) "Slots". Widened for the fixed probe font. */
-#hud-slots {
-	left: 300dp;
-	top: 8dp;
-	width: 440dp;
-	height: 52dp;
+/* Abilities panel: bottom-left, beside the selection readout. Small
+   buttons fit all nine abilities in a 3x3 grid. */
+#hud-abilities {
+	left: 28%;
+	bottom: 2%;
+	width: 24%;
 }
 
-/* DrawProductionPanel: bottom-right (pw=174,ph=188). Widened/taller for
-   the fixed probe font; bottom-right anchor kept. */
+#abilities-grid {
+	margin-left: 4dp;
+	margin-top: 4dp;
+	margin-bottom: 4dp;
+}
+
+.ab-btn {
+	display: inline-block;
+	width: 31%;
+	height: 24dp;
+	margin-right: 2dp;
+	margin-top: 2dp;
+	padding: 0;
+}
+
+.ab-btn.active {
+	border: 2dp #2e8b57;
+}
+
+/* Factory panel: bottom-right quarter, tab-filtered rows (max 4). */
 #hud-factory {
-	right: 10dp;
-	bottom: 10dp;
-	width: 250dp;
-	height: 268dp;
+	right: 1%;
+	bottom: 2%;
+	width: 25%;
+}
+
+#factory-tabs {
+	margin-left: 8dp;
+	margin-top: 4dp;
+}
+
+.tab-btn {
+	display: inline-block;
+	width: 30%;
+	height: 22dp;
+	margin-right: 4dp;
+	padding: 0;
+}
+
+.tab-btn.selected {
+	border: 2dp #ffcb00;
 }
 
 .fac-row {
@@ -119,14 +137,14 @@
 
 .fac-btn {
 	display: inline-block;
-	width: 182dp;
+	width: 68%;
 	height: 22dp;
 	padding: 0;
 }
 
 .fac-rep {
 	display: inline-block;
-	width: 36dp;
+	width: 20%;
 	height: 22dp;
 	margin-left: 6dp;
 	padding: 0;
@@ -156,11 +174,11 @@
 	padding: 0;
 }
 
-/* "Producing..." label at (x,screenH-222), bar (x,screenH-202,150,12). */
+/* "Producing..." bar floats above the factory panel. */
 #hud-producing {
 	position: absolute;
-	right: 110dp;
-	bottom: 288dp;
+	right: 2%;
+	bottom: 46%;
 }
 
 #producing-label {
@@ -180,7 +198,7 @@
 	background: #2e8b57;
 }
 
-/* FPS at (screenW-170,135), enemy readout at (screenW-170,155). */
+/* FPS readout under the stockpile panel. */
 .hud-readout {
 	position: absolute;
 	right: 10dp;
@@ -188,11 +206,7 @@
 }
 
 #fps-line {
-	top: 135dp;
-}
-
-#enemy-line {
-	top: 160dp;
+	top: 44%;
 }
 
 /* ShortcutHintLines from (8,250), muted. */
@@ -318,34 +332,20 @@ body.colorblind #hud-body-art {
 	background: #e8e8e8;
 }
 
-/* Responsive: bottom-left cluster (selection 340 + idle 150)
-   plus the right-anchored factory (250) needs ~778dp. Below that the
-   left-anchored idle would slide under the factory, so shrink the
-   wide panel. Wide windows keep the default layout: left cluster
-   stays left, factory stays right, the gap grows outward. */
+/* Responsive: the % bottom row (selection + 24% abilities + 25% factory)
+   collides on narrow windows, so shrink the fixed selection panel and let
+   the % panels take relatively more room. */
 @media (max-width: 777dp)
 {
 	#hud-selection {
 		width: 220dp;
 	}
-	/* Pull the fixed-left bottom panel in so the shrunken row
-	   (8 + 220 + 10 + 150 + 10 + 210 + 10 = 618) fits 640dp:
-	   without this, #hud-idle [358,508] slides under the
-	   right-anchored factory (left edge 420 at 640 wide). */
-	#hud-idle {
+	#hud-abilities {
 		left: 238dp;
+		width: 30%;
 	}
 	#hud-factory {
-		width: 210dp;
-	}
-	.fac-btn {
-		width: 142dp;
-	}
-	#queue-line {
-		width: 90dp;
-	}
-	#btn-cancel {
-		width: 70dp;
+		width: 30%;
 	}
 	/* Narrow panels cannot fit the nowrap summary lines: clip instead of
 	   overpainting the neighbour panel. */

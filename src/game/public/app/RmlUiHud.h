@@ -6,7 +6,6 @@
 
 #include <RmlUi/Core/EventListener.h>
 
-#include "AICommander.h"
 #include "Art.h"
 #include "Event.h"
 #include "Hotkeys.h"
@@ -28,14 +27,20 @@ class RmlUiHost;
 
 // Input scope: mouse only (move/buttons, no wheel/keys/text) — forwarding
 // keys would double-fire shortcuts (e.g. Space on a focused button + Halt).
+enum class ProductionTab
+{
+    Infantry,
+    Vehicles,
+    Buildings
+};
+
 class RmlUiHud : public Rml::EventListener
 {
 public:
     RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueue &queue,
              Simulation &sim, HotkeyMap &hotkeys, PlayingInput &playingInput,
-             AICommander &ai, const AIDifficulty &difficulty, const bool &showHints,
-             MenuFlow &menu, Art &art,
-             EventDispatcher &events, std::function<void()> quitToMenu,
+             TileMap &map, OccupancyGrid &occ, const bool &showHints, MenuFlow &menu,
+             Art &art, EventDispatcher &events, std::function<void()> quitToMenu,
              std::function<void(MenuState)> beginRemap);
     RmlUiHud(const RmlUiHud &) = delete;
     RmlUiHud &operator=(const RmlUiHud &) = delete;
@@ -65,12 +70,14 @@ public:
 private:
     void RefreshHud();
     std::string SelectionLine() const;
-    std::string SlotsLine() const;
+    void RefreshAbilities();
+    void RefreshFactory();
     void RefreshHints();
     void RefreshPause();
     void RefreshOutcome();
     void RefreshConfirm();
     void OnClick(const Rml::String &id);
+    void OnAbility(AbilityId ability);
     void OnChange(Rml::Element *target, const Rml::String &id);
     void Announce(EventType type);
 
@@ -89,8 +96,8 @@ private:
     Simulation &sim_;
     HotkeyMap &hotkeys_;
     PlayingInput &playingInput_;
-    AICommander &ai_;
-    const AIDifficulty &difficulty_;
+    TileMap &map_;
+    OccupancyGrid &occ_;
     const bool &showHints_;
     MenuFlow &menu_;
     Art &art_;
@@ -105,6 +112,7 @@ private:
     Rml::ElementDocument *confirmDoc_ = nullptr;
     bool ready_ = false;
     bool dragLatch_ = false;
+    ProductionTab factoryTab_ = ProductionTab::Infantry;
     ConfirmChoice pendingChoice_ = ConfirmChoice::None;
     std::unordered_map<std::string, std::string> textCache_;
     std::string hintsCache_;

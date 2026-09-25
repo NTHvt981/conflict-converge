@@ -5,6 +5,7 @@
 #include "Audio.h"
 #include "Building.h"
 #include "GameCamera.h"
+#include "Hud.h"
 #include "InputManager.h"
 #include "Menu.h"
 #include "Minimap.h"
@@ -32,6 +33,14 @@ public:
     void ToggleSlowestSpeed();
     void ToggleAreaBuild();
     void SelectPlacingType(BuildingType type);
+    // HUD ability buttons arm targeted orders (attack-move, patrol, heal);
+    // the next right-click issues them. Re-arming the same id disarms.
+    void ArmAbility(AbilityId id);
+    void ClearArmedAbility();
+    const std::optional<AbilityId> &ArmedAbility() const;
+    // Issues the armed ability at a world target; false when nothing acted
+    // (ability stays armed). Headless-testable; Dispatch calls it on right-click.
+    bool IssueArmedAbilityAt(Vector2 worldTarget, bool queued);
     void ToggleAreaRepair();
     void ToggleAttackGround();
     bool IsDragging() const;
@@ -75,4 +84,5 @@ private:
     bool repairDragActive_ = false;
     Vector2 repairDragStart_ = {};
     bool attackGroundMode_ = false;
+    std::optional<AbilityId> armedAbility_;
 };

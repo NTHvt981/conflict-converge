@@ -107,34 +107,6 @@ void RunSelectionTests()
     CC_CHECK(dragged.x == manual.x && dragged.y == manual.y);
     CC_CHECK(dragged.width == manual.width && dragged.height == manual.height);
 
-    // --- SelectIdle: state Idle + no orders; repairing Engineers excluded ---
-    Registry idleReg;
-    const Entity idleEng = SpawnAt(idleReg, 64.0f, 64.0f);
-    idleReg.Get<Unit>(idleEng)->type = UnitType::Engineer;
-    const Entity busyEng = SpawnAt(idleReg, 256.0f, 64.0f);
-    idleReg.Get<Unit>(busyEng)->type = UnitType::Engineer;
-    GetOrders(idleReg, busyEng).hasRepairOrder = true; // channeling, still state Idle
-    const Entity idleTank = SpawnAt(idleReg, 64.0f, 256.0f);
-    idleReg.Get<Unit>(idleTank)->type = UnitType::LightTank;
-    const Entity movingTank = SpawnAt(idleReg, 256.0f, 256.0f);
-    idleReg.Get<Unit>(movingTank)->type = UnitType::LightTank;
-    idleReg.Get<Unit>(movingTank)->state = UnitState::Moving;
-    GetMover(idleReg, movingTank).hasMoveOrder = true;
-    const Entity foe = SpawnAt(idleReg, 448.0f, 64.0f);
-    idleReg.Get<Unit>(foe)->type = UnitType::Engineer;
-    idleReg.Get<Unit>(foe)->teamID = 1;
-
-    CC_CHECK(CountIdle(idleReg, 0, true) == 1); // only idleEng, not busyEng
-    CC_CHECK(CountIdle(idleReg, 0, false) == 1); // only idleTank
-    CC_CHECK(SelectIdle(idleReg, 0, true) == 1);
-    CC_CHECK(idleReg.Get<Unit>(idleEng)->isSelected);
-    CC_CHECK(!idleReg.Get<Unit>(busyEng)->isSelected);
-    CC_CHECK(!idleReg.Get<Unit>(foe)->isSelected);
-    CC_CHECK(SelectIdle(idleReg, 0, false) == 1); // replaces, army only
-    CC_CHECK(idleReg.Get<Unit>(idleTank)->isSelected);
-    CC_CHECK(!idleReg.Get<Unit>(idleEng)->isSelected);
-    CC_CHECK(!idleReg.Get<Unit>(movingTank)->isSelected);
-
     // --- SelectAllOfType: same-team same-type only; add extends ---
     Registry typeReg;
     const Entity infA = SpawnAt(typeReg, 64.0f, 64.0f);

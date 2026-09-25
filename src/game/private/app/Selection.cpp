@@ -183,52 +183,6 @@ int RecallControlGroup(Registry &registry, int groupBit)
     return picked;
 }
 
-namespace
-{
-
-bool IsIdleWorker(const Unit &unit, const Orders *orders, const Mover *mover, int teamID,
-                  bool workersOnly)
-{
-    if (unit.teamID != teamID || unit.state != UnitState::Idle ||
-        (mover != nullptr && (mover->hasMoveOrder || mover->hasPath)) ||
-        (orders != nullptr && orders->hasRepairOrder))
-    {
-        return false;
-    }
-    const bool isEngineer = unit.type == UnitType::Engineer;
-    return workersOnly ? isEngineer : !isEngineer;
-}
-
-}
-
-int SelectIdle(Registry &registry, int teamID, bool workersOnly)
-{
-    int picked = 0;
-    registry.Each<Unit>([&](Entity id, Unit &unit) {
-        unit.isSelected =
-            IsIdleWorker(unit, FindOrders(registry, id), FindMover(registry, id), teamID,
-                         workersOnly);
-        if (unit.isSelected)
-        {
-            ++picked;
-        }
-    });
-    return picked;
-}
-
-int CountIdle(const Registry &registry, int teamID, bool workersOnly)
-{
-    int count = 0;
-    registry.Each<Unit>([&](Entity id, const Unit &unit) {
-        if (IsIdleWorker(unit, FindOrders(registry, id), FindMover(registry, id), teamID,
-                         workersOnly))
-        {
-            ++count;
-        }
-    });
-    return count;
-}
-
 int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add)
 {
     int picked = 0;

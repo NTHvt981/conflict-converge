@@ -216,7 +216,7 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
            { "btn-start", "btn-back-right", "diff-0", "diff-1", "diff-2" });
     Listen(settingsDoc_, "click", { "btn-settings-back", "btn-remap" });
     Listen(settingsDoc_, "change",
-           { "opt-camspeed", "opt-minimap", "opt-master", "opt-music", "opt-sfx",
+           { "opt-camspeed", "opt-minimap", "opt-hints", "opt-master", "opt-music", "opt-sfx",
              "opt-mute", "opt-rightdrag", "opt-colorblind", "opt-uiscale" });
     Listen(loadDoc_, "click",
            { "slot-0", "slot-1", "slot-2", "slot-3", "btn-load-back", "btn-replay" });
@@ -787,6 +787,10 @@ void RmlUiMenus::OnChange(Rml::Element *target, const Rml::String &id)
     {
         menu_.settings.showMinimap = target->HasAttribute("checked");
     }
+    else if (id == "opt-hints")
+    {
+        menu_.settings.showHints = target->HasAttribute("checked");
+    }
     else if (id == "opt-mute")
     {
         menu_.settings.mute = target->HasAttribute("checked");
@@ -893,6 +897,7 @@ void RmlUiMenus::RefreshSettings()
     SetRangeIn(settingsDoc_, "opt-sfx", menu_.settings.sfxVolume);
     SetRangeIn(settingsDoc_, "opt-uiscale", menu_.settings.uiScale);
     SetCheckIn(settingsDoc_, "opt-minimap", menu_.settings.showMinimap);
+    SetCheckIn(settingsDoc_, "opt-hints", menu_.settings.showHints);
     SetCheckIn(settingsDoc_, "opt-mute", menu_.settings.mute);
     SetCheckIn(settingsDoc_, "opt-rightdrag", menu_.settings.rightDragPan);
     SetCheckIn(settingsDoc_, "opt-colorblind", menu_.settings.colorBlindMode);

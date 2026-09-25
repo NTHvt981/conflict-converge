@@ -19,7 +19,7 @@ its key files, owning test suites, and the decisions that shaped it
 ## Economy & production
 
 - [production-and-economy](production-and-economy.md) — repeat queues,
-  idle finders, select-all hotkeys. Per-unit build hotkeys absent.
+  tab-filtered factory, select-all hotkeys. Per-unit build hotkeys absent.
 
 ## Camera, minimap & info
 

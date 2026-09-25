@@ -255,7 +255,7 @@ void Simulation::Step(float dt)
     if (minimap_.PollRefresh(dt))
     {
         BeginTextureMode(minimap_.target);
-        ClearBackground(Color{ 20, 60, 20, 255 });
+        ClearBackground(BLACK); // letterbox bars for rectangle maps
         for (int y = 0; y < map_.Height(); ++y)
         {
             for (int x = 0; x < map_.Width(); ++x)

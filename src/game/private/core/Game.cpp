@@ -84,13 +84,13 @@ Game::Game()
                 player_.Get<GameCamera>(), world_.Get<TileMap>(),
                 world_.Get<OccupancyGrid>(), world_.Get<ResourceNodes>(), world_.Get<FogOfWar>(),
                 world_.Get<Registry>(), world_.Get<ResourceSystem>(),
-                engine_.Get<EventDispatcher>(), worldState, world_.Get<Pings>(), worldActive,
-                showHints, [this]() { QuitToMenu(); },
-                [this](int dir) { match.StepReplay(dir); })
+                 engine_.Get<EventDispatcher>(), worldState, world_.Get<Pings>(), worldActive,
+                 menu.settings.showHints, [this]() { QuitToMenu(); },
+                 [this](int dir) { match.StepReplay(dir); })
     , rmlUiHud(world_.Get<Registry>(), world_.Get<ResourceSystem>(),
                world_.Get<ProductionQueue>(), sim, engine_.Get<HotkeyMap>(),
-               player_.Get<PlayingInput>(),
-               world_.GetKeyed<AICommander>("ai"), worldDifficulty, showHints,
+               player_.Get<PlayingInput>(), world_.Get<TileMap>(),
+               world_.Get<OccupancyGrid>(), menu.settings.showHints,
                menu, engine_.Get<Art>(),
                engine_.Get<EventDispatcher>(),
                [this]() { QuitToMenu(); },
@@ -161,14 +161,13 @@ void Game::Init()
     GuiSetStyle(DEFAULT, TEXT_SIZE, static_cast<int>(10 * menu.settings.uiScale));
     menuScreens.ApplyHotkeyOverrides();
 
-    world_.Get<Minimap>().Init({ static_cast<float>(kInitialWidth) - 170.0f, 10.0f,
-                         160.0f, 120.0f });
+    world_.Get<Minimap>().Init(
+        Minimap::TopRightSquare(kInitialWidth, kInitialHeight));
 
     worldActive = false;
     worldIs2v2 = false;
     worldDifficulty = AIDifficulty::Medium;
     worldMapPath.clear();
-    showHints = true;
 
     engine_.Get<EventDispatcher>().Subscribe(EventType::UnitSpawned, [&](const Event &) {
         engine_.Get<Audio>().Play(SfxId::Confirm);
@@ -200,9 +199,21 @@ void Game::Update()
     const int screenWidth = GetScreenWidth();
     const int screenHeight = GetScreenHeight();
     player_.Get<GameCamera>().view.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
-    world_.Get<Minimap>().screenRect.x =
-        static_cast<float>(screenWidth) - world_.Get<Minimap>().screenRect.width - 10.0f;
-    world_.Get<Minimap>().screenRect.y = 10.0f;
+    Minimap &minimap = world_.Get<Minimap>();
+    const Rectangle wantMinimap = Minimap::TopRightSquare(screenWidth, screenHeight);
+    if (wantMinimap.width != minimap.screenRect.width ||
+        wantMinimap.height != minimap.screenRect.height)
+    {
+        if (wantMinimap.width >= 1.0f && wantMinimap.height >= 1.0f)
+        {
+            minimap.Init(wantMinimap);
+        }
+    }
+    else
+    {
+        minimap.screenRect.x = wantMinimap.x;
+        minimap.screenRect.y = wantMinimap.y;
+    }
     player_.Get<GameCamera>().ClampZoomToWorld(static_cast<float>(world_.Get<TileMap>().Width()) * cc::TILE_SIZE,
                             static_cast<float>(world_.Get<TileMap>().Height()) * cc::TILE_SIZE,
                             screenWidth, screenHeight);

@@ -2,8 +2,15 @@
 
 #include "test_harness.h"
 
+#include "Audio.h"
 #include "Building.h"
 #include "Extensions.h"
+#include "GameCamera.h"
+#include "InputManager.h"
+#include "Minimap.h"
+#include "Menu.h"
+#include "Nodes.h"
+#include "PlayingInput.h"
 #include "TileMap.h"
 #include "Unit.h"
 #include "UnitCommands.h"
@@ -28,6 +35,8 @@ Entity AddCommandUnit(Registry &registry, UnitType type, bool selected)
 }
 
 } // namespace
+
+void RunArmedAbilityTests();
 
 void RunUnitCommandsTests()
 {
@@ -201,5 +210,86 @@ void RunAutoRepairTests()
         GetOrders(registry, farId).autoRepair = true;
         StepCommandUnits(registry, map, 30);
         CC_CHECK(!GetOrders(registry, farId).hasRepairOrder);
+    }
+
+    RunArmedAbilityTests();
+}
+
+namespace
+{
+
+struct InputRig
+{
+    Registry registry;
+    TileMap map{ 20, 15 };
+    OccupancyGrid occ{ 20, 15 };
+    ResourceNodes nodes;
+    GameCamera camera;
+    Minimap minimap;
+    InputManager input;
+    Audio audio;
+    MenuSettings settings;
+    Vector2 rallyPos = {};
+    PlayingInput playing;
+
+    InputRig()
+        : playing(registry, map, occ, nodes, camera, minimap, input, audio, settings,
+                  rallyPos)
+    {
+    }
+};
+
+} // namespace
+
+void RunArmedAbilityTests()
+{
+    // --- arming toggles; same id disarms ---
+    {
+        InputRig rig;
+        rig.playing.ArmAbility(AbilityId::AttackMove);
+        CC_CHECK(rig.playing.ArmedAbility().has_value());
+        rig.playing.ArmAbility(AbilityId::AttackMove);
+        CC_CHECK(!rig.playing.ArmedAbility().has_value());
+        rig.playing.ArmAbility(AbilityId::Patrol);
+        CC_CHECK(*rig.playing.ArmedAbility() == AbilityId::Patrol);
+        rig.playing.ClearArmedAbility();
+        CC_CHECK(!rig.playing.ArmedAbility().has_value());
+    }
+
+    // --- armed attack-move issues at the click point, then disarms ---
+    {
+        InputRig rig;
+        const Entity id = AddCommandUnit(rig.registry, UnitType::RifleInfantry, true);
+        rig.playing.ArmAbility(AbilityId::AttackMove);
+        CC_CHECK(rig.playing.IssueArmedAbilityAt({ 320.0f, 320.0f }, false));
+        CC_CHECK(FindOrders(rig.registry, id)->attackMove);
+        CC_CHECK(!rig.playing.ArmedAbility().has_value());
+    }
+
+    // --- armed patrol and heal behave the same; misses stay armed ---
+    {
+        InputRig rig;
+        const Entity id = AddCommandUnit(rig.registry, UnitType::RifleInfantry, true);
+        rig.playing.ArmAbility(AbilityId::Patrol);
+        CC_CHECK(rig.playing.IssueArmedAbilityAt({ 320.0f, 320.0f }, false));
+        CC_CHECK(FindOrders(rig.registry, id)->hasPatrol);
+
+        const Entity medic = AddCommandUnit(rig.registry, UnitType::Medic, true);
+        const Entity wounded = AddCommandUnit(rig.registry, UnitType::RifleInfantry, false);
+        rig.registry.Get<Unit>(wounded)->health = 10.0f;
+        rig.registry.Get<Unit>(wounded)->position = { 128.0f, 0.0f };
+        rig.playing.ArmAbility(AbilityId::Heal);
+        CC_CHECK(!rig.playing.IssueArmedAbilityAt({ 640.0f, 640.0f }, false)); // empty ground
+        CC_CHECK(rig.playing.ArmedAbility().has_value()); // miss keeps the arm
+        CC_CHECK(rig.playing.IssueArmedAbilityAt(
+            rig.registry.Get<Unit>(wounded)->position, false));
+        CC_CHECK(FindOrders(rig.registry, medic)->repairTarget == wounded);
+    }
+
+    // --- nothing armed issues nothing ---
+    {
+        InputRig rig;
+        AddCommandUnit(rig.registry, UnitType::RifleInfantry, true);
+        CC_CHECK(!rig.playing.IssueArmedAbilityAt({ 320.0f, 320.0f }, false));
     }
 }

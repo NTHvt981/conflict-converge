@@ -1,7 +1,7 @@
 #include "RmlUiHud.h"
 
 #include <cstdio>
-#include <filesystem>
+#include <cstring>
 #include <initializer_list>
 
 #include "raylib.h"
@@ -15,11 +15,20 @@
 #include "Building.h"
 #include "Hud.h"
 #include "RmlUiHost.h"
-#include "SaveGame.h"
 #include "Selection.h"
+#include "UnitCommands.h"
 #include "UnitFactory.h"
 
 namespace {
+
+// Ability buttons in panel order; ids match hud.rml.
+const std::pair<const char *, AbilityId> kAbilityButtons[] = {
+    { "ab-hold", AbilityId::Hold },         { "ab-guard", AbilityId::Guard },
+    { "ab-patrol", AbilityId::Patrol },     { "ab-attackmove", AbilityId::AttackMove },
+    { "ab-halt", AbilityId::Halt },         { "ab-repair", AbilityId::Repair },
+    { "ab-heal", AbilityId::Heal },         { "ab-rally", AbilityId::Rally },
+    { "ab-demolish", AbilityId::Demolish },
+};
 
 // Mouse-only pump (see RmlUiHud docs): wheel/keys/text stay with the game
 // until Phase 4 owns focus routing.
@@ -46,20 +55,6 @@ void PumpMouse(Rml::Context *context)
     }
 }
 
-const char *DifficultyName(AIDifficulty difficulty)
-{
-    switch (difficulty)
-    {
-    case AIDifficulty::Easy:
-        return "Easy";
-    case AIDifficulty::Hard:
-        return "Hard";
-    case AIDifficulty::Medium:
-    default:
-        return "Medium";
-    }
-}
-
 } // namespace
 
 // Player team for every HUD readout, matching the raygui panels.
@@ -67,9 +62,9 @@ constexpr int kPlayerTeam = 0;
 
 RmlUiHud::RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueue &queue,
                    Simulation &sim, HotkeyMap &hotkeys, PlayingInput &playingInput,
-                   AICommander &ai, const AIDifficulty &difficulty, const bool &showHints,
-                   MenuFlow &menu, Art &art,
-                   EventDispatcher &events, std::function<void()> quitToMenu,
+                   TileMap &map, OccupancyGrid &occ, const bool &showHints,
+                   MenuFlow &menu, Art &art, EventDispatcher &events,
+                   std::function<void()> quitToMenu,
                    std::function<void(MenuState)> beginRemap)
     : registry_(registry)
     , resources_(resources)
@@ -77,8 +72,8 @@ RmlUiHud::RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueu
     , sim_(sim)
     , hotkeys_(hotkeys)
     , playingInput_(playingInput)
-    , ai_(ai)
-    , difficulty_(difficulty)
+    , map_(map)
+    , occ_(occ)
     , showHints_(showHints)
     , menu_(menu)
     , art_(art)
@@ -110,35 +105,9 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
         Shutdown();
         return false;
     }
-    if (Rml::Element *el = hudDoc_->GetElementById("idle-workers"))
-    {
-        el->AddEventListener("click", this);
-    }
-    if (Rml::Element *el = hudDoc_->GetElementById("idle-army"))
-    {
-        el->AddEventListener("click", this);
-    }
     if (Rml::Element *el = hudDoc_->GetElementById("btn-cancel"))
     {
         el->AddEventListener("click", this);
-    }
-    for (int i = 0; i < 7; ++i)
-    {
-        char id[16];
-        snprintf(id, sizeof(id), "fac-%d", i);
-        if (Rml::Element *el = hudDoc_->GetElementById(id))
-        {
-            el->AddEventListener("click", this);
-        }
-        snprintf(id, sizeof(id), "repr-%d", i);
-        if (Rml::Element *el = hudDoc_->GetElementById(id))
-        {
-            el->AddEventListener("click", this);
-        }
-    }
-    for (Rml::ElementDocument *doc : { pauseDoc_, outcomeDoc_ })
-    {
-        (void)doc;
     }
     auto listen = [this](Rml::ElementDocument *doc, const char *event,
                          std::initializer_list<const char *> ids) {
@@ -150,10 +119,20 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
             }
         }
     };
+    listen(hudDoc_, "click",
+           { "tab-infantry", "tab-vehicles", "tab-buildings", "place-0", "place-1", "place-2",
+             "fac-i-0", "fac-i-1", "fac-i-2", "fac-i-3", "fac-v-0", "fac-v-1", "fac-v-2",
+             "fac-v-3", "repr-i-0", "repr-i-1", "repr-i-2", "repr-i-3", "repr-v-0", "repr-v-1",
+             "repr-v-2", "repr-v-3", "ab-hold", "ab-guard", "ab-patrol", "ab-attackmove",
+             "ab-halt", "ab-repair", "ab-heal", "ab-rally", "ab-demolish" });
+    for (Rml::ElementDocument *doc : { pauseDoc_, outcomeDoc_ })
+    {
+        (void)doc;
+    }
     listen(pauseDoc_, "click",
            { "btn-resume", "btn-p-remap", "btn-p-tomenu", "btn-p-todesktop" });
     listen(pauseDoc_, "change",
-           { "opt-p-camspeed", "opt-p-minimap", "opt-p-master", "opt-p-music",
+           { "opt-p-camspeed", "opt-p-minimap", "opt-p-hints", "opt-p-master", "opt-p-music",
              "opt-p-sfx", "opt-p-mute", "opt-p-rightdrag", "opt-p-colorblind" });
     listen(outcomeDoc_, "click", { "btn-o-tomenu", "btn-o-todesktop" });
     listen(confirmDoc_, "click", { "btn-yes", "btn-no" });
@@ -266,6 +245,7 @@ void RmlUiHud::RefreshPause()
     SetRangeIn(pauseDoc_, "opt-p-music", menu_.settings.musicVolume);
     SetRangeIn(pauseDoc_, "opt-p-sfx", menu_.settings.sfxVolume);
     SetCheckIn(pauseDoc_, "opt-p-minimap", menu_.settings.showMinimap);
+    SetCheckIn(pauseDoc_, "opt-p-hints", menu_.settings.showHints);
     SetCheckIn(pauseDoc_, "opt-p-mute", menu_.settings.mute);
     SetCheckIn(pauseDoc_, "opt-p-rightdrag", menu_.settings.rightDragPan);
     SetCheckIn(pauseDoc_, "opt-p-colorblind", menu_.settings.colorBlindMode);
@@ -328,24 +308,8 @@ void RmlUiHud::RefreshHud()
 {
     SetTextCached("res-line", FormatResources(resources_));
     SetTextCached("sel-line", SelectionLine());
-    SetTextCached("slots-line", SlotsLine());
 
-    const int workers = CountIdle(registry_, kPlayerTeam, true);
-    const int army = CountIdle(registry_, kPlayerTeam, false);
     char label[64];
-    snprintf(label, sizeof(label), "Workers (%d)", workers);
-    SetTextCached("idle-workers", label);
-    snprintf(label, sizeof(label), "Army (%d)", army);
-    SetTextCached("idle-army", label);
-    if (Rml::Element *el = hudDoc_->GetElementById("idle-workers"))
-    {
-        SetDisabled(el, workers == 0);
-    }
-    if (Rml::Element *el = hudDoc_->GetElementById("idle-army"))
-    {
-        SetDisabled(el, army == 0);
-    }
-
     const int autoBit = playingInput_.AutoAddGroupBit();
     for (int bit = 0; bit < 10; ++bit)
     {
@@ -377,10 +341,6 @@ void RmlUiHud::RefreshHud()
     }
 
     const bool showRows = sim_.HasFactory();
-    if (Rml::Element *rows = hudDoc_->GetElementById("factory-rows"))
-    {
-        rows->SetProperty("display", showRows ? "block" : "none");
-    }
     if (Rml::Element *stub = hudDoc_->GetElementById("need-factory"))
     {
         stub->SetProperty("display", showRows ? "none" : "block");
@@ -389,22 +349,8 @@ void RmlUiHud::RefreshHud()
     {
         queueRow->SetProperty("display", showRows ? "block" : "none");
     }
-    const std::vector<UnitType> order = ProductionMenuOrder();
-    for (std::size_t i = 0; i < order.size() && i < 8; ++i)
-    {
-        const UnitCost cost = CostOf(order[i]);
-        char id[16];
-        snprintf(id, sizeof(id), "fac-%d", static_cast<int>(i));
-        snprintf(label, sizeof(label), "%s %ld/%ld", UnitTypeName(order[i]), cost.iron,
-                 cost.oil);
-        SetTextCached(id, label);
-        if (Rml::Element *el = hudDoc_->GetElementById(id))
-        {
-            SetDisabled(el, resources_.iron < cost.iron || resources_.oil < cost.oil);
-        }
-        snprintf(id, sizeof(id), "repr-%d", static_cast<int>(i));
-        SetTextCached(id, queue_.RepeatArmed(order[i]) ? "R*" : "R");
-    }
+    RefreshFactory();
+    RefreshAbilities();
     snprintf(label, sizeof(label), "Queue: %d", static_cast<int>(queue_.Size()));
     SetTextCached("queue-line", label);
 
@@ -422,15 +368,138 @@ void RmlUiHud::RefreshHud()
 
     snprintf(label, sizeof(label), "%d FPS", GetFPS());
     SetTextCached("fps-line", label);
-    snprintf(label, sizeof(label), "Enemy: %s  Waves: %d", DifficultyName(difficulty_),
-             ai_.WavesLaunched());
-    SetTextCached("enemy-line", label);
 
     if (Rml::Element *hints = hudDoc_->GetElementById("hud-hints"))
     {
         hints->SetProperty("display", showHints_ ? "block" : "none");
     }
     RefreshHints();
+}
+
+void RmlUiHud::RefreshFactory()
+{
+    char label[64];
+    const bool showRows = sim_.HasFactory();
+    const bool infantryTab = factoryTab_ == ProductionTab::Infantry;
+    const bool vehiclesTab = factoryTab_ == ProductionTab::Vehicles;
+    const bool buildingsTab = factoryTab_ == ProductionTab::Buildings;
+    if (Rml::Element *rows = hudDoc_->GetElementById("rows-infantry"))
+    {
+        rows->SetProperty("display", showRows && infantryTab ? "block" : "none");
+    }
+    if (Rml::Element *rows = hudDoc_->GetElementById("rows-vehicles"))
+    {
+        rows->SetProperty("display", showRows && vehiclesTab ? "block" : "none");
+    }
+    if (Rml::Element *rows = hudDoc_->GetElementById("rows-buildings"))
+    {
+        rows->SetProperty("display", buildingsTab ? "block" : "none");
+    }
+    if (Rml::Element *tab = hudDoc_->GetElementById("tab-infantry"))
+    {
+        tab->SetClass("selected", infantryTab);
+    }
+    if (Rml::Element *tab = hudDoc_->GetElementById("tab-vehicles"))
+    {
+        tab->SetClass("selected", vehiclesTab);
+    }
+    if (Rml::Element *tab = hudDoc_->GetElementById("tab-buildings"))
+    {
+        tab->SetClass("selected", buildingsTab);
+    }
+    const std::vector<UnitType> infantry = InfantryMenuOrder();
+    for (std::size_t i = 0; i < infantry.size() && i < 4; ++i)
+    {
+        const UnitCost cost = CostOf(infantry[i]);
+        char id[16];
+        snprintf(id, sizeof(id), "fac-i-%d", static_cast<int>(i));
+        snprintf(label, sizeof(label), "%s %ld/%ld", UnitTypeName(infantry[i]), cost.iron,
+                 cost.oil);
+        SetTextCached(id, label);
+        if (Rml::Element *el = hudDoc_->GetElementById(id))
+        {
+            SetDisabled(el, resources_.iron < cost.iron || resources_.oil < cost.oil);
+        }
+        snprintf(id, sizeof(id), "repr-i-%d", static_cast<int>(i));
+        SetTextCached(id, queue_.RepeatArmed(infantry[i]) ? "R*" : "R");
+    }
+    const std::vector<UnitType> vehicles = VehicleMenuOrder();
+    for (std::size_t i = 0; i < vehicles.size() && i < 4; ++i)
+    {
+        const UnitCost cost = CostOf(vehicles[i]);
+        char id[16];
+        snprintf(id, sizeof(id), "fac-v-%d", static_cast<int>(i));
+        snprintf(label, sizeof(label), "%s %ld/%ld", UnitTypeName(vehicles[i]), cost.iron,
+                 cost.oil);
+        SetTextCached(id, label);
+        if (Rml::Element *el = hudDoc_->GetElementById(id))
+        {
+            SetDisabled(el, resources_.iron < cost.iron || resources_.oil < cost.oil);
+        }
+        snprintf(id, sizeof(id), "repr-v-%d", static_cast<int>(i));
+        SetTextCached(id, queue_.RepeatArmed(vehicles[i]) ? "R*" : "R");
+    }
+    const std::vector<BuildingType> buildings = BuildingMenuOrder();
+    for (std::size_t i = 0; i < buildings.size() && i < 3; ++i)
+    {
+        char id[16];
+        snprintf(id, sizeof(id), "place-%d", static_cast<int>(i));
+        SetTextCached(id, BuildingTypeName(buildings[i]));
+    }
+    snprintf(label, sizeof(label), "Queue: %d", static_cast<int>(queue_.Size()));
+    SetTextCached("queue-line", label);
+}
+
+void RmlUiHud::RefreshAbilities()
+{
+    std::vector<Entity> selection;
+    registry_.Each<Unit>([&](Entity id, const Unit &unit) {
+        if (unit.isSelected)
+        {
+            selection.push_back(id);
+        }
+    });
+    registry_.Each<Building>([&](Entity id, const Building &building) {
+        if (building.isSelected)
+        {
+            selection.push_back(id);
+        }
+    });
+    const std::vector<AbilityEntry> entries = AbilitiesForSelection(registry_, selection);
+    for (const auto &[buttonId, ability] : kAbilityButtons)
+    {
+        Rml::Element *el = hudDoc_->GetElementById(buttonId);
+        if (el == nullptr)
+        {
+            continue;
+        }
+        const AbilityEntry *entry = nullptr;
+        for (const AbilityEntry &candidate : entries)
+        {
+            if (candidate.id == ability)
+            {
+                entry = &candidate;
+                break;
+            }
+        }
+        el->SetProperty("display", entry != nullptr ? "inline-block" : "none");
+        if (entry == nullptr)
+        {
+            continue;
+        }
+        el->SetInnerRML(AbilityName(ability));
+        bool active = entry->active;
+        if (ability == AbilityId::Rally && playingInput_.IsSettingRally())
+        {
+            active = true;
+        }
+        if (playingInput_.ArmedAbility().has_value() && *playingInput_.ArmedAbility() == ability)
+        {
+            active = true;
+        }
+        el->SetClass("active", active);
+        SetDisabled(el, !entry->enabled);
+    }
 }
 
 std::string RmlUiHud::SelectionLine() const
@@ -467,21 +536,6 @@ std::string RmlUiHud::SelectionLine() const
     return "No selection";
 }
 
-std::string RmlUiHud::SlotsLine() const
-{
-    char marks[3][8];
-    for (int i = 0; i < 3; ++i)
-    {
-        std::error_code ec;
-        const bool filled = std::filesystem::exists(SaveSlotPath(i + 1), ec) && !ec;
-        snprintf(marks[i], sizeof(marks[i]), "%d%s", i + 1, filled ? "+" : "-");
-    }
-    char line[96];
-    snprintf(line, sizeof(line), "%s %s %s  (F6-8 save, S+F6-8 load)", marks[0], marks[1],
-             marks[2]);
-    return line;
-}
-
 void RmlUiHud::RefreshHints()
 {
     const std::vector<std::string> hints = ShortcutHintLines(hotkeys_);
@@ -516,46 +570,82 @@ void RmlUiHud::RefreshHints()
 
 void RmlUiHud::OnClick(const Rml::String &id)
 {
-    const std::vector<UnitType> order = ProductionMenuOrder();
-    if (id == "idle-workers")
-    {
-        if (CountIdle(registry_, kPlayerTeam, true) > 0)
-        {
-            SelectIdle(registry_, kPlayerTeam, true);
-        }
-    }
-    else if (id == "idle-army")
-    {
-        if (CountIdle(registry_, kPlayerTeam, false) > 0)
-        {
-            SelectIdle(registry_, kPlayerTeam, false);
-        }
-    }
-    else if (id == "btn-cancel")
+    if (id == "btn-cancel")
     {
         queue_.CancelTop(resources_);
+        return;
     }
-    else if (id.compare(0, 4, "fac-") == 0)
+    if (id == "tab-infantry")
     {
-        // Enqueue re-validates affordability (TrySpend); the disabled class
-        // is visual-only, matching the raygui panel.
-        const int row = std::atoi(id.c_str() + 4);
+        factoryTab_ = ProductionTab::Infantry;
+        return;
+    }
+    if (id == "tab-vehicles")
+    {
+        factoryTab_ = ProductionTab::Vehicles;
+        return;
+    }
+    if (id == "tab-buildings")
+    {
+        factoryTab_ = ProductionTab::Buildings;
+        return;
+    }
+    if (id.compare(0, 6, "place-") == 0)
+    {
+        const int row = std::atoi(id.c_str() + 6);
+        const std::vector<BuildingType> order = BuildingMenuOrder();
+        if (row >= 0 && row < static_cast<int>(order.size()))
+        {
+            playingInput_.SelectPlacingType(order[static_cast<std::size_t>(row)]);
+        }
+        return;
+    }
+    // Enqueue re-validates affordability (TrySpend); the disabled class
+    // is visual-only, matching the raygui panel.
+    const std::vector<UnitType> infantry = InfantryMenuOrder();
+    const std::vector<UnitType> vehicles = VehicleMenuOrder();
+    auto enqueueRow = [&](const char *prefix, const std::vector<UnitType> &order) {
+        const std::size_t width = std::strlen(prefix);
+        if (id.compare(0, width, prefix) != 0)
+        {
+            return false;
+        }
+        const int row = std::atoi(id.c_str() + width);
         if (row >= 0 && row < static_cast<int>(order.size()))
         {
             queue_.Enqueue(resources_, order[static_cast<std::size_t>(row)],
                            queue_.RepeatArmed(order[static_cast<std::size_t>(row)]));
         }
-    }
-    else if (id.compare(0, 5, "repr-") == 0)
-    {
-        const int row = std::atoi(id.c_str() + 5);
+        return true;
+    };
+    auto repeatRow = [&](const char *prefix, const std::vector<UnitType> &order) {
+        const std::size_t width = std::strlen(prefix);
+        if (id.compare(0, width, prefix) != 0)
+        {
+            return false;
+        }
+        const int row = std::atoi(id.c_str() + width);
         if (row >= 0 && row < static_cast<int>(order.size()))
         {
             const UnitType type = order[static_cast<std::size_t>(row)];
             queue_.SetRepeatArmed(type, !queue_.RepeatArmed(type));
         }
+        return true;
+    };
+    if (enqueueRow("fac-i-", infantry) || enqueueRow("fac-v-", vehicles) ||
+        repeatRow("repr-i-", infantry) || repeatRow("repr-v-", vehicles))
+    {
+        return;
     }
-    else if (id == "btn-resume")
+    for (const auto &[buttonId, ability] : kAbilityButtons)
+    {
+        if (id == buttonId)
+        {
+            OnAbility(ability);
+            return;
+        }
+    }
+    if (id == "btn-resume")
     {
         Announce(EventType::MenuAction);
         menu_.state = MenuState::Playing;
@@ -587,6 +677,41 @@ void RmlUiHud::OnClick(const Rml::String &id)
     else if (id == "btn-no")
     {
         pendingChoice_ = ConfirmChoice::No;
+    }
+}
+
+void RmlUiHud::OnAbility(AbilityId ability)
+{
+    switch (ability)
+    {
+    case AbilityId::Hold:
+        SetSelectionStance(registry_, Stance::Hold);
+        break;
+    case AbilityId::Guard:
+        SetSelectionStance(registry_, Stance::Guard);
+        break;
+    case AbilityId::Halt:
+        HaltSelection(registry_);
+        break;
+    case AbilityId::Repair:
+        ToggleSelectionAutoRepair(registry_);
+        break;
+    case AbilityId::Rally:
+        playingInput_.ToggleSettingRally();
+        break;
+    case AbilityId::Demolish:
+        registry_.Each<Building>([&](Entity id, const Building &building) {
+            if (building.isSelected)
+            {
+                DemolishBuilding(registry_, map_, id);
+            }
+        });
+        break;
+    case AbilityId::AttackMove:
+    case AbilityId::Patrol:
+    case AbilityId::Heal:
+        playingInput_.ArmAbility(ability);
+        break;
     }
 }
 
@@ -625,6 +750,10 @@ void RmlUiHud::OnChange(Rml::Element *target, const Rml::String &id)
     else if (id == "opt-p-minimap")
     {
         menu_.settings.showMinimap = target->HasAttribute("checked");
+    }
+    else if (id == "opt-p-hints")
+    {
+        menu_.settings.showHints = target->HasAttribute("checked");
     }
     else if (id == "opt-p-mute")
     {

@@ -48,6 +48,7 @@ struct MenuSettings
 {
     float cameraSpeed = 400.0f;
     bool showMinimap = true;
+    bool showHints = false;
     bool rightDragPan = false; // opt-in right-drag camera pan
     bool colorBlindMode = false; // Okabe-Ito team palette
     float uiScale = 1.0f;      // raygui TEXT_SIZE multiplier, clamped [0.75, 2.0]

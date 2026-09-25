@@ -28,53 +28,62 @@ body {
 			<div class="cg-box" id="cg-8">9:0</div>
 			<div class="cg-box" id="cg-9">0:0</div>
 		</div>
-		<div class="hud-panel" id="hud-slots">
-			<div class="hud-title">Slots</div>
-			<div class="hud-line" id="slots-line">1+ 2- 3-  (F6-8 save, S+F6-8 load)</div>
-		</div>
 		<div class="hud-panel" id="hud-selection">
 			<div class="hud-title">Selection</div>
 			<div class="hud-line" id="sel-line">Light Tank  HP 238/300  Team 0</div>
 		</div>
-		<div class="hud-panel" id="hud-idle">
-			<div class="hud-title">Idle</div>
-			<button class="idle-btn" id="idle-workers">Workers (2)</button>
-			<button class="idle-btn" id="idle-army">Army (3)</button>
+		<div class="hud-panel" id="hud-abilities">
+			<div class="hud-title">Abilities</div>
+			<div id="abilities-grid"><button class="ab-btn" id="ab-hold">Hold</button><button class="ab-btn" id="ab-guard">Guard</button><button class="ab-btn" id="ab-patrol">Patrol</button><button class="ab-btn" id="ab-attackmove">AtkMove</button><button class="ab-btn" id="ab-halt">Halt</button><button class="ab-btn" id="ab-repair">Repair</button><button class="ab-btn" id="ab-heal">Heal</button><button class="ab-btn" id="ab-rally">Rally</button><button class="ab-btn" id="ab-demolish">Raze</button></div>
 		</div>
 		<div class="hud-panel" id="hud-factory">
 			<div class="hud-title">Factory</div>
-			<div id="factory-rows">
+			<div id="factory-tabs"><button class="tab-btn" id="tab-infantry">Inf</button><button class="tab-btn" id="tab-vehicles">Veh</button><button class="tab-btn" id="tab-buildings">Bld</button></div>
+			<div id="rows-infantry">
 				<div class="fac-row">
-					<button class="fac-btn" id="fac-0">Infantry 25/0</button>
-					<button class="fac-rep" id="repr-0">R</button>
+					<button class="fac-btn" id="fac-i-0">Infantry 25/0</button>
+					<button class="fac-rep" id="repr-i-0">R</button>
 				</div>
 				<div class="fac-row">
-					<button class="fac-btn" id="fac-1">Anti-Armor 30/5</button>
-					<button class="fac-rep" id="repr-1">R</button>
+					<button class="fac-btn" id="fac-i-1">Anti-Armor 30/5</button>
+					<button class="fac-rep" id="repr-i-1">R</button>
 				</div>
 				<div class="fac-row">
-					<button class="fac-btn" id="fac-2">Engineer 40/0</button>
-					<button class="fac-rep" id="repr-2">R</button>
+					<button class="fac-btn" id="fac-i-2">Engineer 40/0</button>
+					<button class="fac-rep" id="repr-i-2">R</button>
 				</div>
 				<div class="fac-row">
-					<button class="fac-btn" id="fac-3">Medic 30/0</button>
-					<button class="fac-rep" id="repr-3">R</button>
+					<button class="fac-btn" id="fac-i-3">Medic 30/0</button>
+					<button class="fac-rep" id="repr-i-3">R</button>
+				</div>
+			</div>
+			<div id="rows-vehicles">
+				<div class="fac-row">
+					<button class="fac-btn" id="fac-v-0">IFV 80/20</button>
+					<button class="fac-rep" id="repr-v-0">R</button>
 				</div>
 				<div class="fac-row">
-					<button class="fac-btn" id="fac-4">IFV 80/20</button>
-					<button class="fac-rep" id="repr-4">R</button>
+					<button class="fac-btn" id="fac-v-1">Artillery 120/40</button>
+					<button class="fac-rep" id="repr-v-1">R</button>
 				</div>
 				<div class="fac-row">
-					<button class="fac-btn" id="fac-5">Artillery 120/40</button>
-					<button class="fac-rep" id="repr-5">R</button>
+					<button class="fac-btn" id="fac-v-2">Light Tank 150/50</button>
+					<button class="fac-rep" id="repr-v-2">R</button>
 				</div>
 				<div class="fac-row">
-					<button class="fac-btn" id="fac-6">Light Tank 150/50</button>
-					<button class="fac-rep" id="repr-6">R</button>
+					<button class="fac-btn" id="fac-v-3">Heavy Tank 250/100</button>
+					<button class="fac-rep" id="repr-v-3">R</button>
+				</div>
+			</div>
+			<div id="rows-buildings">
+				<div class="fac-row">
+					<button class="fac-btn" id="place-0">Base</button>
 				</div>
 				<div class="fac-row">
-					<button class="fac-btn" id="fac-7">Heavy Tank 250/100</button>
-					<button class="fac-rep" id="repr-7">R</button>
+					<button class="fac-btn" id="place-1">Depot</button>
+				</div>
+				<div class="fac-row">
+					<button class="fac-btn" id="place-2">Factory</button>
 				</div>
 			</div>
 			<div class="hud-line" id="need-factory">Need Factory</div>
@@ -90,7 +99,6 @@ body {
 			</div>
 		</div>
 		<div class="hud-readout" id="fps-line">60 FPS</div>
-		<div class="hud-readout" id="enemy-line">Enemy: Medium  Waves: 3</div>
 		<div id="hud-hints">
 			<p class="hint-line">WASD Camera</p>
 			<p class="hint-line">Left Select</p>

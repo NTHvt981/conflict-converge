@@ -39,11 +39,6 @@ int AssignControlGroup(Registry &registry, int groupBit);
 int AddToControlGroup(Registry &registry, int groupBit);
 int RecallControlGroup(Registry &registry, int groupBit);
 
-// QoL idle selection: every same-team unit with nothing to do.
-// workersOnly=true restricts to Engineers; false selects the idle army.
-int SelectIdle(Registry &registry, int teamID, bool workersOnly);
-int CountIdle(const Registry &registry, int teamID, bool workersOnly);
-
 int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add);
 int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType type,
                           int teamID, bool add);

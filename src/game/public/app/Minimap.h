@@ -4,6 +4,10 @@
 #include "Subsystem.h"
 
 // Periodic refresh, not per-frame; unit positions draw as markers.
+// The frame is square, sized by screen height; rectangle maps letterbox
+// inside it (black bars), so the world never stretches.
+inline constexpr float kMinimapHeightFraction = 1.0f / 3.0f;
+inline constexpr float kMinimapMargin = 10.0f;
 
 struct Minimap : public Subsystem
 {
@@ -22,6 +26,11 @@ struct Minimap : public Subsystem
     bool PollRefresh(float dt);
 
     Vector2 WorldToMinimap(Vector2 world, int mapW, int mapH) const;
+
+    // Aspect-preserved map area inside the square frame; bars fill the rest.
+    Rectangle ContentRect(int mapW, int mapH) const;
+    // Square top-right placement sized by screen height.
+    static Rectangle TopRightSquare(int screenW, int screenH);
 
     // Minimap pixel -> world position (click-to-move); inverse of
     // WorldToMinimap, clamped into map bounds.

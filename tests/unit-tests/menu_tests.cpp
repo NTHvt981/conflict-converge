@@ -44,6 +44,7 @@ void RunMenuTests()
     MenuFlow fresh;
     CC_CHECK(fresh.settings.cameraSpeed == 400.0f);
     CC_CHECK(fresh.settings.showMinimap);
+    CC_CHECK(!fresh.settings.showHints); // hints hide by default
     CC_CHECK(!fresh.quitRequested);
 
     // --- team aliveness ignores corpses and other teams ---
@@ -164,6 +165,7 @@ void RunMenuTests()
     MenuSettings saved;
     saved.cameraSpeed = 512.5f;
     saved.showMinimap = false;
+    saved.showHints = true;
     saved.rightDragPan = true;
     saved.colorBlindMode = true;
     saved.uiScale = 1.5f;
@@ -179,6 +181,7 @@ void RunMenuTests()
     CC_CHECK(LoadSettings(loaded, settingsPath));
     CC_CHECK(loaded.cameraSpeed == 512.5f);
     CC_CHECK(!loaded.showMinimap);
+    CC_CHECK(loaded.showHints);
     CC_CHECK(loaded.rightDragPan);
     CC_CHECK(loaded.colorBlindMode);
     CC_CHECK(loaded.uiScale == 1.5f);

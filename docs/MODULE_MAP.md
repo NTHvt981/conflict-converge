@@ -15,7 +15,7 @@ core:    MathUtils, CcAssert, Registry, Event, Subsystem
          Game, Simulation, PlayingInput, MenuScreens
 world:   TileMap, Pathfinder, MapFile, FogOfWar
 units:   Unit, UnitStats, Combat, UnitFactory, Targeting, Formation, AICommander,
-          Extensions
+          Extensions, UnitCommands
 economy: Building, Nodes, ResourceSystem, Production
 app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, Art,
          SpriteData, UnitConfig, Menu, Skirmish, SaveGame, Audio, Log, Cursor, Pings,
@@ -37,7 +37,7 @@ app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, 
   factory gate, replay recording
 - `PlayingInput.h` - In-match input dispatch extracted from `Game`: drag-box select,
   area-build/repair, right-click orders, line formation, control groups, sticky gesture
-  modes. Runs only while Playing; advances no simulation
+  modes, armed HUD abilities. Runs only while Playing; advances no simulation
 - `MenuScreens.h` - Map Editor branch only (raygui scratch canvas) + hotkey
   override apply/sync (`ApplyHotkeyOverrides`/`SyncHotkeySettings`); menus/HUD are
   RmlUi (`RmlUiMenus`/`RmlUiHud`). `MenuCallbacks` gives `Game` every world mutation.
@@ -75,6 +75,9 @@ app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, 
   overlap avoidance. Fwd-declares `TileMap`; never include `Pathfinder.h` from here.
   Gimmick drivers: `ResolveCrush`, turret traverse + fire-gate in `EngageTarget`,
   player-only `Load`/`Unload` orders (`CanLoadTarget`/`BoardTransport`/`UnloadTransport`)
+- `UnitCommands.h` - Selection-batch orders shared by hotkeys, HUD ability
+  buttons, and armed right-clicks: stances, halt, auto-retreat/repair toggles,
+  attack-move/patrol/repair/heal issue
 - `UnitStats.h` - `BaseStats` table for 7 types + `ApplyBaseStats` (preserves
   position/team/selection)
 - `Combat.h` - 3x3 damage matrix (`Effectiveness`), `ResolveAttack` (scales, restarts
@@ -116,11 +119,12 @@ app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, 
   action ids/labels/default keys; `HotkeyMap` holds overrides + settings persistence
 - `Selection.h` - Pick/select/deselect over Registry units + `NormalizeRect`/`SelectInRect`
   drag-box (center-hit, Shift extends)
-- `Minimap.h` - Render-texture minimap, periodic refresh, world transform, viewport box, M13
-  inverse (`MinimapToWorld`/`Contains` for click-to-move)
+- `Minimap.h` - Square top-right render-texture minimap sized by screen
+  height, periodic refresh, aspect-preserved world transform with black-bar
+  letterbox, viewport box, M13 inverse (`MinimapToWorld`/`Contains`)
 - `Hud.h` - Pure text builders (`UnitTypeName`, `FormatResources`, `SelectionSummary`,
-  `ShortcutHintLines`, `ProductionMenuOrder`); the raygui Draw* panels were removed —
-  the RmlUi HUD owns the panels
+  `ShortcutHintLines`, production category/tab orders, `AbilitiesForSelection`
+  panel data); the RmlUi HUD owns the panels
 - `Art.h` - M12 sprites + particles (`data/sprites/` via `tools/gen_sprites.py`); `Init(false)`
   is the headless rectangle-fallback path
 - `SpriteData.h` - Sprite-atlas data (JSON in `data/configs/`: textures/sprites/animations
