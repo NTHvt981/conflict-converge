@@ -241,3 +241,117 @@ std::vector<BuildingType> BuildingMenuOrder()
 {
     return { BuildingType::Base, BuildingType::ResourceDepot, BuildingType::Factory };
 }
+
+const char *AbilityName(AbilityId id)
+{
+    switch (id)
+    {
+    case AbilityId::Hold:
+        return "Hold";
+    case AbilityId::Guard:
+        return "Guard";
+    case AbilityId::Patrol:
+        return "Patrol";
+    case AbilityId::AttackMove:
+        return "AttackMove";
+    case AbilityId::Halt:
+        return "Halt";
+    case AbilityId::Repair:
+        return "Repair";
+    case AbilityId::Heal:
+        return "Heal";
+    case AbilityId::Rally:
+        return "Rally";
+    case AbilityId::Demolish:
+        return "Demolish";
+    }
+    return "Unknown";
+}
+
+std::vector<AbilityEntry> AbilitiesForSelection(const Registry &registry,
+                                                 const std::vector<Entity> &selection)
+{
+    std::vector<Entity> units;
+    std::vector<Entity> buildings;
+    for (Entity entity : selection)
+    {
+        if (registry.Get<Unit>(entity) != nullptr)
+        {
+            units.push_back(entity);
+        }
+        else if (registry.Get<Building>(entity) != nullptr)
+        {
+            buildings.push_back(entity);
+        }
+    }
+    if (!units.empty() && !buildings.empty())
+    {
+        return { AbilityEntry{ AbilityId::Halt } };
+    }
+    if (!units.empty())
+    {
+        bool allHold = true;
+        bool allGuard = true;
+        bool allPatrol = true;
+        bool allAttackMove = true;
+        bool anyEngineer = false;
+        bool anyMedic = false;
+        bool allEngineerRepair = true;
+        bool allMedicHeal = true;
+        for (Entity entity : units)
+        {
+            const Unit *unit = registry.Get<Unit>(entity);
+            const Orders *orders = registry.Get<Orders>(entity);
+            const Stance stance = orders != nullptr ? orders->stance : Stance::Guard;
+            allHold = allHold && stance == Stance::Hold;
+            allGuard = allGuard && stance == Stance::Guard;
+            allPatrol = allPatrol && orders != nullptr && orders->hasPatrol;
+            allAttackMove = allAttackMove && orders != nullptr && orders->attackMove;
+            const bool ordered = orders != nullptr && orders->hasRepairOrder;
+            if (unit->type == UnitType::Engineer)
+            {
+                anyEngineer = true;
+                allEngineerRepair = allEngineerRepair && ordered;
+            }
+            if (unit->type == UnitType::Medic)
+            {
+                anyMedic = true;
+                allMedicHeal = allMedicHeal && ordered;
+            }
+        }
+        std::vector<AbilityEntry> out = {
+            AbilityEntry{ AbilityId::Hold, true, allHold, {} },
+            AbilityEntry{ AbilityId::Guard, true, allGuard, {} },
+            AbilityEntry{ AbilityId::Patrol, true, allPatrol, {} },
+            AbilityEntry{ AbilityId::AttackMove, true, allAttackMove, {} },
+            AbilityEntry{ AbilityId::Halt },
+        };
+        if (anyEngineer)
+        {
+            out.push_back(AbilityEntry{ AbilityId::Repair, true, allEngineerRepair, {} });
+        }
+        if (anyMedic)
+        {
+            out.push_back(AbilityEntry{ AbilityId::Heal, true, allMedicHeal, {} });
+        }
+        return out;
+    }
+    if (!buildings.empty())
+    {
+        bool anyFactory = false;
+        for (Entity entity : buildings)
+        {
+            if (const Building *building = registry.Get<Building>(entity);
+                building != nullptr && building->type == BuildingType::Factory)
+            {
+                anyFactory = true;
+            }
+        }
+        return {
+            AbilityEntry{ AbilityId::Rally, anyFactory, false,
+                          anyFactory ? std::string{} : std::string{ "Requires Factory" } },
+            AbilityEntry{ AbilityId::Demolish },
+        };
+    }
+    return {};
+}

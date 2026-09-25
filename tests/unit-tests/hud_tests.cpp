@@ -4,8 +4,11 @@
 #include "test_harness.h"
 
 #include "Building.h"
+#include "Extensions.h"
 #include "Hud.h"
 #include "UnitStats.h"
+
+void RunHudAbilityTests();
 
 void RunHudTests()
 {
@@ -61,4 +64,129 @@ void RunHudTests()
     CC_CHECK(buildings[0] == BuildingType::Base);
     CC_CHECK(buildings[1] == BuildingType::ResourceDepot);
     CC_CHECK(buildings[2] == BuildingType::Factory);
+
+    RunHudAbilityTests();
+}
+
+namespace
+{
+
+Entity AddHudUnit(Registry &registry, UnitType type)
+{
+    const Entity id = registry.Create();
+    Unit unit;
+    unit.type = type;
+    registry.Add(id, unit);
+    registry.Add(id, Orders{});
+    return id;
+}
+
+Entity AddHudBuilding(Registry &registry, BuildingType type)
+{
+    const Entity id = registry.Create();
+    Building building;
+    building.type = type;
+    registry.Add(id, building);
+    return id;
+}
+
+const AbilityEntry *FindAbility(const std::vector<AbilityEntry> &entries, AbilityId id)
+{
+    for (const AbilityEntry &entry : entries)
+    {
+        if (entry.id == id)
+        {
+            return &entry;
+        }
+    }
+    return nullptr;
+}
+
+} // namespace
+
+void RunHudAbilityTests()
+{
+    // --- empty selection shows nothing ---
+    {
+        Registry registry;
+        CC_CHECK(AbilitiesForSelection(registry, {}).empty());
+    }
+
+    // --- single combat unit: stances + orders, Guard active by default ---
+    {
+        Registry registry;
+        const Entity soldier = AddHudUnit(registry, UnitType::RifleInfantry);
+        const std::vector<AbilityEntry> entries =
+            AbilitiesForSelection(registry, { soldier });
+        CC_CHECK(entries.size() == 5);
+        CC_CHECK(FindAbility(entries, AbilityId::Hold) != nullptr);
+        CC_CHECK(!FindAbility(entries, AbilityId::Hold)->active);
+        CC_CHECK(FindAbility(entries, AbilityId::Guard)->active);
+        CC_CHECK(FindAbility(entries, AbilityId::AttackMove) != nullptr);
+        CC_CHECK(FindAbility(entries, AbilityId::Halt)->enabled);
+        CC_CHECK(FindAbility(entries, AbilityId::Repair) == nullptr);
+        CC_CHECK(FindAbility(entries, AbilityId::Heal) == nullptr);
+    }
+
+    // --- single engineer gains the Repair toggle ---
+    {
+        Registry registry;
+        const Entity engineer = AddHudUnit(registry, UnitType::Engineer);
+        std::vector<AbilityEntry> entries = AbilitiesForSelection(registry, { engineer });
+        const AbilityEntry *repair = FindAbility(entries, AbilityId::Repair);
+        CC_CHECK(repair != nullptr && repair->enabled && !repair->active);
+        GetOrders(registry, engineer).hasRepairOrder = true;
+        entries = AbilitiesForSelection(registry, { engineer });
+        CC_CHECK(FindAbility(entries, AbilityId::Repair)->active);
+    }
+
+    // --- single medic gains Heal, mixed foot keeps the intersection ---
+    {
+        Registry registry;
+        const Entity medic = AddHudUnit(registry, UnitType::Medic);
+        const Entity soldier = AddHudUnit(registry, UnitType::RifleInfantry);
+        const std::vector<AbilityEntry> solo = AbilitiesForSelection(registry, { medic });
+        CC_CHECK(FindAbility(solo, AbilityId::Heal) != nullptr);
+        const std::vector<AbilityEntry> mixed =
+            AbilitiesForSelection(registry, { medic, soldier });
+        CC_CHECK(FindAbility(mixed, AbilityId::Heal) != nullptr);
+        CC_CHECK(FindAbility(mixed, AbilityId::AttackMove) != nullptr);
+        CC_CHECK(FindAbility(mixed, AbilityId::Repair) == nullptr);
+    }
+
+    // --- split stances deactivate both toggles ---
+    {
+        Registry registry;
+        const Entity a = AddHudUnit(registry, UnitType::RifleInfantry);
+        const Entity b = AddHudUnit(registry, UnitType::RifleInfantry);
+        GetOrders(registry, a).stance = Stance::Hold;
+        const std::vector<AbilityEntry> entries = AbilitiesForSelection(registry, { a, b });
+        CC_CHECK(!FindAbility(entries, AbilityId::Hold)->active);
+        CC_CHECK(!FindAbility(entries, AbilityId::Guard)->active);
+    }
+
+    // --- factory selection enables Rally, depot explains the disabled one ---
+    {
+        Registry registry;
+        const Entity factory = AddHudBuilding(registry, BuildingType::Factory);
+        const std::vector<AbilityEntry> entries =
+            AbilitiesForSelection(registry, { factory });
+        CC_CHECK(FindAbility(entries, AbilityId::Rally)->enabled);
+        CC_CHECK(FindAbility(entries, AbilityId::Demolish)->enabled);
+        const Entity depot = AddHudBuilding(registry, BuildingType::ResourceDepot);
+        const std::vector<AbilityEntry> depotEntries =
+            AbilitiesForSelection(registry, { depot });
+        const AbilityEntry *rally = FindAbility(depotEntries, AbilityId::Rally);
+        CC_CHECK(!rally->enabled && !rally->reason.empty());
+    }
+
+    // --- mixed unit + building selection keeps Halt only ---
+    {
+        Registry registry;
+        const Entity soldier = AddHudUnit(registry, UnitType::RifleInfantry);
+        const Entity factory = AddHudBuilding(registry, BuildingType::Factory);
+        const std::vector<AbilityEntry> entries =
+            AbilitiesForSelection(registry, { soldier, factory });
+        CC_CHECK(entries.size() == 1 && entries[0].id == AbilityId::Halt);
+    }
 }

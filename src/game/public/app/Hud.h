@@ -41,3 +41,29 @@ ProductionCategory ProductionCategoryOf(UnitType type);
 std::vector<UnitType> InfantryMenuOrder();
 std::vector<UnitType> VehicleMenuOrder();
 std::vector<BuildingType> BuildingMenuOrder();
+
+// Abilities panel data. Pure selection-context query; the RmlUi HUD renders
+// the list and G3 commands execute it. Active marks toggle state, reason
+// explains a disabled entry (empty when enabled).
+enum class AbilityId
+{
+    Hold,
+    Guard,
+    Patrol,
+    AttackMove,
+    Halt,
+    Repair,
+    Heal,
+    Rally,
+    Demolish
+};
+const char *AbilityName(AbilityId id);
+struct AbilityEntry
+{
+    AbilityId id = AbilityId::Halt;
+    bool enabled = true;
+    bool active = false;
+    std::string reason;
+};
+std::vector<AbilityEntry> AbilitiesForSelection(const Registry &registry,
+                                                 const std::vector<Entity> &selection);
