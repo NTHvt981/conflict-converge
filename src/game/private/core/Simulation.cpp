@@ -12,7 +12,6 @@ Simulation::Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
                        const WorldState &worldState, DamageNumbers &damageNumbers,
                        const Vector2 &rallyPos, const int &autoAddGroupBit,
                        const bool &sandboxMode, const bool &worldIs2v2,
-                       const bool &playerAutoRepair, const float &autoRepairCap,
                        float &shakeTrauma, MenuState &lastOutcomeState)
     : registry_(world.Get<Registry>())
     , map_(world.Get<TileMap>())
@@ -37,8 +36,6 @@ Simulation::Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
     , autoAddGroupBit_(autoAddGroupBit)
     , sandboxMode_(sandboxMode)
     , worldIs2v2_(worldIs2v2)
-    , playerAutoRepair_(playerAutoRepair)
-    , autoRepairCap_(autoRepairCap)
     , shakeTrauma_(shakeTrauma)
     , lastOutcomeState_(lastOutcomeState)
 {
@@ -240,10 +237,6 @@ void Simulation::Step(float dt)
                 replayCount_ = replayIndex_;
             }
         }
-    }
-    if (playerAutoRepair_)
-    {
-        UpdateBuildingAutoRepair(registry_, resources_, dt, 0, autoRepairCap_);
     }
     UpdateBuildingConstruction(registry_, dt);
     {

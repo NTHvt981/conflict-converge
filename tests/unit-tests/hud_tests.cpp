@@ -135,7 +135,7 @@ void RunHudAbilityTests()
         std::vector<AbilityEntry> entries = AbilitiesForSelection(registry, { engineer });
         const AbilityEntry *repair = FindAbility(entries, AbilityId::Repair);
         CC_CHECK(repair != nullptr && repair->enabled && !repair->active);
-        GetOrders(registry, engineer).hasRepairOrder = true;
+        GetOrders(registry, engineer).autoRepair = true;
         entries = AbilitiesForSelection(registry, { engineer });
         CC_CHECK(FindAbility(entries, AbilityId::Repair)->active);
     }

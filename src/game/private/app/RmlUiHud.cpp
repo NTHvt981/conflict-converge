@@ -68,7 +68,7 @@ constexpr int kPlayerTeam = 0;
 RmlUiHud::RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueue &queue,
                    Simulation &sim, HotkeyMap &hotkeys, PlayingInput &playingInput,
                    AICommander &ai, const AIDifficulty &difficulty, const bool &showHints,
-                   bool &playerAutoRepair, float &autoRepairCap, MenuFlow &menu, Art &art,
+                   MenuFlow &menu, Art &art,
                    EventDispatcher &events, std::function<void()> quitToMenu,
                    std::function<void(MenuState)> beginRemap)
     : registry_(registry)
@@ -80,8 +80,6 @@ RmlUiHud::RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueu
     , ai_(ai)
     , difficulty_(difficulty)
     , showHints_(showHints)
-    , playerAutoRepair_(playerAutoRepair)
-    , autoRepairCap_(autoRepairCap)
     , menu_(menu)
     , art_(art)
     , events_(events)
@@ -137,14 +135,6 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
         {
             el->AddEventListener("click", this);
         }
-    }
-    if (Rml::Element *el = hudDoc_->GetElementById("repair-auto"))
-    {
-        el->AddEventListener("change", this);
-    }
-    if (Rml::Element *el = hudDoc_->GetElementById("repair-cap"))
-    {
-        el->AddEventListener("change", this);
     }
     for (Rml::ElementDocument *doc : { pauseDoc_, outcomeDoc_ })
     {
@@ -355,11 +345,6 @@ void RmlUiHud::RefreshHud()
     {
         SetDisabled(el, army == 0);
     }
-
-    SetCheckIn("repair-auto", playerAutoRepair_);
-    SetRangeIn("repair-cap", autoRepairCap_);
-    snprintf(label, sizeof(label), "%g", static_cast<double>(autoRepairCap_));
-    SetTextCached("repair-cap-val", label);
 
     const int autoBit = playingInput_.AutoAddGroupBit();
     for (int bit = 0; bit < 10; ++bit)
@@ -609,15 +594,7 @@ void RmlUiHud::OnChange(Rml::Element *target, const Rml::String &id)
 {
     // Same no-refresh rule as the menus: programmatic SetValue/SetAttribute
     // re-dispatches Change into this listener.
-    if (id == "repair-auto")
-    {
-        playerAutoRepair_ = target->HasAttribute("checked");
-    }
-    else if (id == "repair-cap")
-    {
-        autoRepairCap_ = Clamp(ReadRange(target), 0.0f, 1.0f);
-    }
-    else if (id == "opt-p-camspeed")
+    if (id == "opt-p-camspeed")
     {
         menu_.settings.cameraSpeed = Clamp(ReadRange(target), 100.0f, 800.0f);
         char text[32];
@@ -706,16 +683,6 @@ void RmlUiHud::SetTextCached(const char *id, const std::string &text)
     {
         el->SetInnerRML(text.c_str());
     }
-}
-
-void RmlUiHud::SetRangeIn(const char *id, float value)
-{
-    SetRangeIn(hudDoc_, id, value);
-}
-
-void RmlUiHud::SetCheckIn(const char *id, bool checked)
-{
-    SetCheckIn(hudDoc_, id, checked);
 }
 
 void RmlUiHud::SetRangeIn(Rml::ElementDocument *doc, const char *id, float value)

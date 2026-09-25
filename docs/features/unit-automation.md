@@ -3,7 +3,7 @@
 Shipped: fully shipped 2026-09-17, with the caveats below intact.
 
 Overkill protection, target priority, opt-in fighting withdrawal, and a
-global building auto-repair toggle. AI auto-repair is a deliberate
+per-Engineer auto-repair toggle. AI auto-repair is a deliberate
 non-goal (economy soak-tuned without it).
 
 ## Behavior
@@ -16,9 +16,10 @@ non-goal (economy soak-tuned without it).
 - Auto-retreat: opted-in player units withdraw at 30% HP
   (`RetreatIfLowHP`, home = rally or nearest owned Base centroid);
   AI retreats on its own path (`RetreatTick`).
-- Building auto-repair: global toggle + rate slider, player team only —
-  15 HP/s at 0.5 iron/HP in atomic chunks (pauses when broke, never
-  partial), with fractional carry; Engineers still repair free.
+- Building auto-repair: per-Engineer `Orders::autoRepair` toggle —
+  idle Engineers acquire the nearest damaged same-team vehicle or
+  Operational building in 256px and repair it through the channeled
+  order path; Engineers still repair free.
 
 ## Key files
 
@@ -26,17 +27,18 @@ non-goal (economy soak-tuned without it).
   priority weights, reserved-damage skip, threat wiring.
 - `src/game/public+private/units/Unit.{h,cpp}` — `autoRetreat` flag,
   retreat helpers, reserved-map build.
-- `src/game/public+private/economy/Building.{h,cpp}` —
-  `UpdateBuildingAutoRepair` (iron-only flat rate).
-- `src/game/private/core/Simulation.cpp` — player-only auto-repair and
-  auto-retreat ticks (the AI-unwired proof).
-- Tests: `Targeting` (priority/overkill), `Retreat`, `Building` (repair),
-  `Simulation` (wiring) suites.
+- `src/game/public/units/Extensions.h` — `Orders::autoRepair` toggle.
+- `src/game/public+private/units/UnitCommands.{h,cpp}` —
+  `ToggleSelectionAutoRepair` selection command.
+- `src/game/private/core/Simulation.cpp` — player-only
+  auto-retreat tick (the AI-unwired proof).
+- Tests: `Targeting` (priority/overkill), `Retreat`,
+  `AutoRepair` (toggle/acquire), `Simulation` (wiring) suites.
 
 ## Decisions
 
-- Repair is a global toggle, not per-building; cost is flat iron-only
-  (no partial-spend path added).
+- Repair is a per-Engineer toggle driving the channeled order path;
+  idle togglers acquire the nearest valid patient in range.
 - Retreat threshold is a hardcoded 30% constant (no UI); origin anchor
   semantics stay top-left.
 - Open (explicit non-goals): AI auto-repair, per-building overrides,

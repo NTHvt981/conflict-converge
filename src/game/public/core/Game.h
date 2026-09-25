@@ -103,8 +103,6 @@ private:
     int replayCursor = 0;
     float replayPlayTimer = 0.0f;
     bool showHints = true;
-    bool playerAutoRepair = false;
-    float autoRepairCap = 1.0f;
     float shakeTrauma = 0.0f; // 0..1, render copy only
     DamageNumbers damageNumbers;
     MenuState previousMenuState = MenuState::MainMenu;

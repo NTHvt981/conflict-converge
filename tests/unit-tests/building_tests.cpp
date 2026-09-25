@@ -80,46 +80,6 @@ void RunBuildingTests()
     UpdateBaseIncome(economy, after, 10.0f);
     CC_CHECK(after.iron == 0 && after.oil == 0);
 
-    // --- QoL auto-repair: funds-costed heal, pauses when broke ---
-    {
-        Registry yard;
-        TileMap yardMap(20, 15);
-        const Entity hut =
-            PlaceBuilding(yard, yardMap, BuildingType::Base, 0, 1, 1);
-        CC_CHECK(hut != kInvalidEntity);
-        UpdateBuildingConstruction(yard, 20.0f); // Operational before wounding
-        Building *wounded = yard.Get<Building>(hut);
-        wounded->health = 300.0f; // 100 missing of 400
-        ResourceSystem funds;
-        funds.AddIron(1000);
-        funds.AddOil(500);
-        UpdateBuildingAutoRepair(yard, funds, 1.0f, 0, 1.0f);
-        CC_CHECK(wounded->health == 315.0f); // 15 HP @ 0.5 iron/HP...
-        CC_CHECK(funds.iron == 1000 - 8);    // ...rounded up per quantum
-        CC_CHECK(funds.oil == 500);          // iron-only cost
-        // Second tick keeps healing while funded.
-        UpdateBuildingAutoRepair(yard, funds, 1.0f, 0, 1.0f);
-        CC_CHECK(wounded->health == 330.0f);
-
-        // Broke: paused, never partially charged.
-        funds.iron = 0;
-        UpdateBuildingAutoRepair(yard, funds, 1.0f, 0, 1.0f);
-        CC_CHECK(wounded->health == 330.0f);
-        CC_CHECK(funds.iron == 0);
-        UpdateBuildingAutoRepair(yard, funds, 1.0f, 0, 1.0f);
-        CC_CHECK(wounded->health == 330.0f); // still paused, no free heal
-
-        // Cap 0 pauses like a master switch; other teams untouched.
-        funds.AddIron(1000);
-        UpdateBuildingAutoRepair(yard, funds, 1.0f, 0, 0.0f);
-        CC_CHECK(wounded->health == 330.0f);
-        wounded->teamID = 1;
-        UpdateBuildingAutoRepair(yard, funds, 1.0f, 0, 1.0f);
-        CC_CHECK(wounded->health == 330.0f);
-        UpdateBuildingAutoRepair(yard, funds, 1.0f, -1, 1.0f);
-        CC_CHECK(wounded->health == 345.0f); // -1 = every team
-    }
-
     // --- construction: sites ramp 0 -> max, then go Operational exactly ---
     {
         Registry site;
@@ -144,11 +104,6 @@ void RunBuildingTests()
         ResourceSystem siteFunds;
         UpdateBaseIncome(site, siteFunds, 10.0f, 0);
         CC_CHECK(siteFunds.iron == 0 && siteFunds.oil == 0);
-        // Sites can't be auto-repaired (gates check == Operational).
-        siteFunds.AddIron(1000);
-        UpdateBuildingAutoRepair(site, siteFunds, 10.0f, 0, 1.0f);
-        CC_CHECK(baseB->health > 0.0f && baseB->health < baseB->maxHealth &&
-                 siteFunds.iron == 1000);
         // Depot finishes first (2s); base still ramping.
         UpdateBuildingConstruction(site, 1.0f);
         CC_CHECK(depotB->state == BuildingState::Operational);

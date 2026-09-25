@@ -61,30 +61,6 @@
 	margin-top: 4dp;
 }
 
-/* DrawRepairPanel: (478,screenH-64,150,56) "Repair". Taller for the font. */
-#hud-repair {
-	left: 518dp;
-	bottom: 8dp;
-	width: 150dp;
-	height: 96dp;
-}
-
-#hud-repair .check-row {
-	margin-left: 8dp;
-}
-
-#repair-cap {
-	display: inline-block;
-	width: 80dp;
-	height: 20dp;
-}
-
-#repair-cap-row {
-	margin-left: 8dp;
-	margin-top: 2dp;
-	color: #686868;
-}
-
 /* DrawControlGroupStrip: y=70, 10 boxes 26x20 gap 2 from x=8.
    Boxes widened to 40dp so "<digit>:<count>" fits the probe font. */
 #hud-groups {
@@ -342,25 +318,22 @@ body.colorblind #hud-body-art {
 	background: #e8e8e8;
 }
 
-/* Responsive: bottom-left cluster (selection 340 + idle 150 + repair 150)
-   plus the right-anchored factory (250) needs ~918dp. Below that the
-   left-anchored idle/repair would slide under the factory, so shrink the
-   two wide panels. Wide windows keep the default layout: left cluster
+/* Responsive: bottom-left cluster (selection 340 + idle 150)
+   plus the right-anchored factory (250) needs ~778dp. Below that the
+   left-anchored idle would slide under the factory, so shrink the
+   wide panel. Wide windows keep the default layout: left cluster
    stays left, factory stays right, the gap grows outward. */
-@media (max-width: 917dp)
+@media (max-width: 777dp)
 {
 	#hud-selection {
 		width: 220dp;
 	}
-	/* Pull the fixed-left bottom panels together so the shrunken row
-	   (8 + 220 + 10 + 150 + 10 + 150 + 10 + 210 + 10 = 778) fits 800dp:
-	   without this, #hud-repair [518,668] slides under the
-	   right-anchored factory (left edge 580 at 800 wide). */
+	/* Pull the fixed-left bottom panel in so the shrunken row
+	   (8 + 220 + 10 + 150 + 10 + 210 + 10 = 618) fits 640dp:
+	   without this, #hud-idle [358,508] slides under the
+	   right-anchored factory (left edge 420 at 640 wide). */
 	#hud-idle {
 		left: 238dp;
-	}
-	#hud-repair {
-		left: 398dp;
 	}
 	#hud-factory {
 		width: 210dp;

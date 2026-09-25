@@ -58,7 +58,7 @@ Game::Game()
                   &world_.Get<OccupancyGrid>() }
     , sim(world_, engine_, menu, worldState, damageNumbers, rallyPos,
           player_.Get<PlayingInput>().AutoAddGroupBit(), sandboxMode, worldIs2v2,
-          playerAutoRepair, autoRepairCap, shakeTrauma, lastOutcomeState)
+          shakeTrauma, lastOutcomeState)
     , menuScreens(menu, engine_.Get<Art>(), engine_.Get<Audio>(), engine_.Get<InputManager>(),
                   engine_.Get<HotkeyMap>(), engine_.Get<EventDispatcher>(),
                   MenuCallbacks{
@@ -91,7 +91,7 @@ Game::Game()
                world_.Get<ProductionQueue>(), sim, engine_.Get<HotkeyMap>(),
                player_.Get<PlayingInput>(),
                world_.GetKeyed<AICommander>("ai"), worldDifficulty, showHints,
-               playerAutoRepair, autoRepairCap, menu, engine_.Get<Art>(),
+               menu, engine_.Get<Art>(),
                engine_.Get<EventDispatcher>(),
                [this]() { QuitToMenu(); },
                [this](MenuState returnTo) { rmlUiMenus.BeginRemap(returnTo); })

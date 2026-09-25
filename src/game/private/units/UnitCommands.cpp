@@ -60,6 +60,27 @@ void ToggleSelectionAutoRetreat(Registry &registry)
     });
 }
 
+void ToggleSelectionAutoRepair(Registry &registry)
+{
+    bool allOn = true;
+    registry.Each<Unit>([&](Entity id, const Unit &unit) {
+        if (unit.isSelected && unit.type == UnitType::Engineer)
+        {
+            const Orders *orders = FindOrders(registry, id);
+            if (orders == nullptr || !orders->autoRepair)
+            {
+                allOn = false;
+            }
+        }
+    });
+    registry.Each<Unit>([&](Entity id, Unit &unit) {
+        if (unit.isSelected && unit.type == UnitType::Engineer)
+        {
+            GetOrders(registry, id).autoRepair = !allOn;
+        }
+    });
+}
+
 int IssueSelectionAttackMove(Registry &registry, const TileMap &map, OccupancyGrid *occ,
                              Vector2 dest, bool queued)
 {

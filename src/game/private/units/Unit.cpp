@@ -479,6 +479,38 @@ bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity targ
     return RepairAim(registry, engineer, target, aim);
 }
 
+constexpr float kAutoRepairAcquireRange = 256.0f;
+
+void AcquireAutoRepair(Registry &registry, Entity self, const Unit &engineer, Orders &orders)
+{
+    Entity best = kInvalidEntity;
+    float bestDist = kAutoRepairAcquireRange;
+    auto consider = [&](Entity candidate) {
+        if (candidate == self || candidate == kInvalidEntity)
+        {
+            return;
+        }
+        Vector2 aim = {};
+        if (!RepairAim(registry, engineer, candidate, aim))
+        {
+            return;
+        }
+        const float dist = glm::distance(cc::ToGlm(engineer.position), cc::ToGlm(aim));
+        if (dist < bestDist)
+        {
+            bestDist = dist;
+            best = candidate;
+        }
+    };
+    registry.Each<Unit>([&](Entity id, const Unit &) { consider(id); });
+    registry.Each<Building>([&](Entity id, const Building &) { consider(id); });
+    if (best != kInvalidEntity)
+    {
+        orders.hasRepairOrder = true;
+        orders.repairTarget = best;
+    }
+}
+
 void IssueHealOrder(Unit &medic, Orders &orders, Mover &mover, Entity target)
 {
     if (medic.type != UnitType::Medic)
@@ -901,6 +933,12 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         }
     }
 
+    if (unit->type == UnitType::Engineer && orders.autoRepair && !orders.hasRepairOrder &&
+        !mover.hasMoveOrder && !mover.hasPath && !orders.hasLoadOrder && !orders.hasUnloadOrder &&
+        !orders.hasPatrol && orders.orderQueue.empty() && combat.target == kInvalidEntity)
+    {
+        AcquireAutoRepair(registry, self, *unit, orders);
+    }
     if (orders.hasRepairOrder)
     {
         Vector2 aim = {};

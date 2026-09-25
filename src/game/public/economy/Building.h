@@ -37,7 +37,6 @@ struct Building
     float health = 400.0f;
     float maxHealth = 400.0f;
     float constructionTime = 0.0f;
-    float repairCarry = 0.0f;
 };
 
 float BuildingMaxHealth(BuildingType type);
@@ -65,10 +64,6 @@ bool DemolishBuilding(Registry &registry, TileMap &map, Entity entity);
 
 void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float dt,
                       int teamID = -1);
-
-// capFraction 0 = paused.
-void UpdateBuildingAutoRepair(Registry &registry, ResourceSystem &resources, float dt, int teamID,
-                               float capFraction);
 
 std::vector<cc::IVec2> BuildingEntrances(const TileMap &map, int tileX, int tileY,
                                           int fpW, int fpH);

@@ -34,7 +34,7 @@ public:
     RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueue &queue,
              Simulation &sim, HotkeyMap &hotkeys, PlayingInput &playingInput,
              AICommander &ai, const AIDifficulty &difficulty, const bool &showHints,
-             bool &playerAutoRepair, float &autoRepairCap, MenuFlow &menu, Art &art,
+             MenuFlow &menu, Art &art,
              EventDispatcher &events, std::function<void()> quitToMenu,
              std::function<void(MenuState)> beginRemap);
     RmlUiHud(const RmlUiHud &) = delete;
@@ -79,8 +79,6 @@ private:
     static float ReadRange(Rml::Element *el);
     static bool IsInteractiveTag(const Rml::String &tag);
     void SetTextCached(const char *id, const std::string &text);
-    void SetRangeIn(const char *id, float value);
-    void SetCheckIn(const char *id, bool checked);
     void SetRangeIn(Rml::ElementDocument *doc, const char *id, float value);
     void SetCheckIn(Rml::ElementDocument *doc, const char *id, bool checked);
     void SetTextIn(Rml::ElementDocument *doc, const char *id, const std::string &text);
@@ -94,8 +92,6 @@ private:
     AICommander &ai_;
     const AIDifficulty &difficulty_;
     const bool &showHints_;
-    bool &playerAutoRepair_;
-    float &autoRepairCap_;
     MenuFlow &menu_;
     Art &art_;
     EventDispatcher &events_;

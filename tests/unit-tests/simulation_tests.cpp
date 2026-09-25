@@ -39,8 +39,6 @@ struct Fixture
     int autoAddGroupBit = -1;
     bool sandboxMode = true; // skip AI + outcome: covered by soak/integration tests
     bool worldIs2v2 = false;
-    bool playerAutoRepair = false;
-    float autoRepairCap = 1.0f;
     float shakeTrauma = 0.0f;
     MenuState lastOutcomeState = MenuState::Playing;
     std::optional<Simulation> sim; // emplaced: Simulation is non-copyable
@@ -89,8 +87,7 @@ struct Fixture
                                 &world.Get<ResourceNodes>(), &world.Get<FogOfWar>(),
                                 &world.Get<OccupancyGrid>() };
         sim.emplace(world, engine, menu, worldState, damageNumbers, rallyPos,
-                    autoAddGroupBit, sandboxMode, worldIs2v2, playerAutoRepair,
-                    autoRepairCap, shakeTrauma, lastOutcomeState);
+                    autoAddGroupBit, sandboxMode, worldIs2v2, shakeTrauma, lastOutcomeState);
     }
 };
 

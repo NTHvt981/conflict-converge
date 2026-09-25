@@ -64,6 +64,7 @@ struct Orders
     bool patrolToB = true;
     bool hasRepairOrder = false; // channeled Engineer repair
     Entity repairTarget = kInvalidEntity;
+    bool autoRepair = false; // Engineer toggle: acquire nearby damage
     bool hasAttackGroundOrder = false;
     Vector2 attackGroundPos = {};
     bool hasLoadOrder = false; // G4 player-only transport boarding

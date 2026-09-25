@@ -13,7 +13,7 @@ its key files, owning test suites, and the decisions that shaped it
   attack-ground, patrol semantics, repair, area-build/repair. Reclaim
   deferred (no wreck system).
 - [unit-automation](unit-automation.md) — overkill protection, target
-  priority, auto-retreat, building auto-repair toggle. AI auto-repair
+  priority, auto-retreat, per-Engineer auto-repair toggle. AI auto-repair
   an explicit non-goal.
 
 ## Economy & production

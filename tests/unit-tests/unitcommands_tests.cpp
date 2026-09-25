@@ -2,6 +2,7 @@
 
 #include "test_harness.h"
 
+#include "Building.h"
 #include "Extensions.h"
 #include "TileMap.h"
 #include "Unit.h"
@@ -112,5 +113,93 @@ void RunUnitCommandsTests()
         CC_CHECK(FindOrders(registry, medic)->repairTarget == wounded);
         const Entity tank = AddCommandUnit(registry, UnitType::LightTank, false);
         CC_CHECK(IssueSelectionHeal(registry, map, &occ, tank, false) == 0);
+    }
+}
+
+namespace
+{
+
+void StepCommandUnits(Registry &registry, TileMap &map, int frames)
+{
+    for (int i = 0; i < frames; ++i)
+    {
+        registry.Each<Unit>([&](Entity id, Unit &unit) {
+            (void)unit;
+            UpdateUnit(id, registry, map, 1.0f / 60.0f);
+        });
+    }
+}
+
+} // namespace
+
+void RunAutoRepairTests()
+{
+    // --- toggle flips every selected engineer as a group ---
+    {
+        Registry registry;
+        const Entity a = AddCommandUnit(registry, UnitType::Engineer, true);
+        const Entity b = AddCommandUnit(registry, UnitType::Engineer, true);
+        AddCommandUnit(registry, UnitType::RifleInfantry, true);
+        ToggleSelectionAutoRepair(registry);
+        CC_CHECK(FindOrders(registry, a)->autoRepair);
+        CC_CHECK(FindOrders(registry, b)->autoRepair);
+        ToggleSelectionAutoRepair(registry);
+        CC_CHECK(!FindOrders(registry, a)->autoRepair);
+        CC_CHECK(!FindOrders(registry, b)->autoRepair);
+    }
+
+    // --- toggled engineer acquires and heals a nearby damaged vehicle ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        const Entity engId = AddCommandUnit(registry, UnitType::Engineer, false);
+        registry.Get<Unit>(engId)->speed = 64.0f;
+        const Entity tankId = AddCommandUnit(registry, UnitType::LightTank, false);
+        registry.Get<Unit>(tankId)->health = 10.0f;
+        GetOrders(registry, engId).autoRepair = true;
+        StepCommandUnits(registry, map, 5);
+        CC_CHECK(GetOrders(registry, engId).hasRepairOrder);
+        StepCommandUnits(registry, map, 3600);
+        CC_CHECK(registry.Get<Unit>(tankId)->health == BaseStats(UnitType::LightTank).health);
+        CC_CHECK(!GetOrders(registry, engId).hasRepairOrder);
+    }
+
+    // --- toggled engineer acquires and heals a nearby damaged building ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        const Entity baseId = PlaceBuilding(registry, map, BuildingType::Base, 0, 1, 1);
+        CC_CHECK(baseId != kInvalidEntity);
+        UpdateBuildingConstruction(registry, 20.0f);
+        registry.Get<Building>(baseId)->health = 100.0f;
+        const Entity engId = AddCommandUnit(registry, UnitType::Engineer, false);
+        registry.Get<Unit>(engId)->speed = 64.0f;
+        GetOrders(registry, engId).autoRepair = true;
+        StepCommandUnits(registry, map, 3600);
+        CC_CHECK(registry.Get<Building>(baseId)->health == 400.0f);
+    }
+
+    // --- untoggled, busy, and distant engineers acquire nothing ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        const Entity offId = AddCommandUnit(registry, UnitType::Engineer, false);
+        const Entity tankId = AddCommandUnit(registry, UnitType::LightTank, false);
+        registry.Get<Unit>(tankId)->health = 10.0f;
+        StepCommandUnits(registry, map, 30);
+        CC_CHECK(!GetOrders(registry, offId).hasRepairOrder);
+
+        const Entity busyId = AddCommandUnit(registry, UnitType::Engineer, false);
+        GetOrders(registry, busyId).autoRepair = true;
+        GetMover(registry, busyId).moveTarget = { 640.0f, 640.0f }; // marching: no acquire
+        GetMover(registry, busyId).hasMoveOrder = true;
+        StepCommandUnits(registry, map, 30);
+        CC_CHECK(!GetOrders(registry, busyId).hasRepairOrder);
+
+        const Entity farId = AddCommandUnit(registry, UnitType::Engineer, false);
+        registry.Get<Unit>(farId)->position = { 640.0f, 640.0f };
+        GetOrders(registry, farId).autoRepair = true;
+        StepCommandUnits(registry, map, 30);
+        CC_CHECK(!GetOrders(registry, farId).hasRepairOrder);
     }
 }

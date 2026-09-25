@@ -194,49 +194,6 @@ void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float
     }
 }
 
-inline constexpr float kAutoRepairRateHPPerSec = 15.0f;
-inline constexpr float kAutoRepairIronPerHP = 0.5f;
-
-void UpdateBuildingAutoRepair(Registry &registry, ResourceSystem &resources, float dt, int teamID,
-                              float capFraction)
-{
-    if (dt <= 0.0f || capFraction <= 0.0f)
-    {
-        return;
-    }
-    registry.Each<Building>([&](Entity, Building &building) {
-        if (building.state != BuildingState::Operational ||
-            (teamID >= 0 && building.teamID != teamID))
-        {
-            return;
-        }
-        const float missing = building.maxHealth - building.health;
-        if (missing <= 0.0f)
-        {
-            building.repairCarry = 0.0f;
-            return;
-        }
-        building.repairCarry += kAutoRepairRateHPPerSec * capFraction * dt;
-        if (building.repairCarry > missing)
-        {
-            building.repairCarry = missing;
-        }
-        const float take = std::floor(std::min(building.repairCarry, missing));
-        if (take < 1.0f)
-        {
-            return;
-        }
-        const long cost = static_cast<long>(std::ceil(take * kAutoRepairIronPerHP));
-        if (!resources.TrySpend(cost, 0))
-        {
-            building.repairCarry = 0.0f;
-            return;
-        }
-        building.health += take;
-        building.repairCarry -= take;
-    });
-}
-
 float BuildingBuildTime(BuildingType type)
 {
     switch (type)

@@ -78,6 +78,7 @@ void RunLogTests();
 void RunCheatTests();
 void RunSubsystemTests();
 void RunUnitCommandsTests();
+void RunAutoRepairTests();
 
 namespace
 {
@@ -157,6 +158,7 @@ const Suite kSuites[] = {
     { "Cheat", RunCheatTests },
     { "Subsystem", RunSubsystemTests },
     { "UnitCommands", RunUnitCommandsTests },
+    { "AutoRepair", RunAutoRepairTests },
 };
 
 bool MatchesFilter(const char *name, const std::vector<std::string> &filters)

@@ -311,7 +311,7 @@ std::vector<AbilityEntry> AbilitiesForSelection(const Registry &registry,
             if (unit->type == UnitType::Engineer)
             {
                 anyEngineer = true;
-                allEngineerRepair = allEngineerRepair && ordered;
+                allEngineerRepair = allEngineerRepair && orders != nullptr && orders->autoRepair;
             }
             if (unit->type == UnitType::Medic)
             {

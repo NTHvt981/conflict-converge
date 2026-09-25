@@ -25,9 +25,8 @@ public:
     Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
                const WorldState &worldState, DamageNumbers &damageNumbers,
                const Vector2 &rallyPos, const int &autoAddGroupBit,
-               const bool &sandboxMode, const bool &worldIs2v2,
-               const bool &playerAutoRepair, const float &autoRepairCap,
-               float &shakeTrauma, MenuState &lastOutcomeState);
+                const bool &sandboxMode, const bool &worldIs2v2,
+                float &shakeTrauma, MenuState &lastOutcomeState);
     Simulation(const Simulation &) = delete;
     Simulation &operator=(const Simulation &) = delete;
 
@@ -68,8 +67,6 @@ private:
     const int &autoAddGroupBit_;
     const bool &sandboxMode_;
     const bool &worldIs2v2_;
-    const bool &playerAutoRepair_;
-    const float &autoRepairCap_;
     float &shakeTrauma_;
     MenuState &lastOutcomeState_;
     int lastBuildingCount_ = 0;
