@@ -106,7 +106,7 @@ public:
     void DrawUnit(UnitType type, int teamID, UnitFrame frame, Vector2 tileCorner) const;
     // Atlas blit of a named sprite, origin-aligned to the 32x32 body center;
     // no-op when the atlas is down or the name is unknown. rotationDeg spins
-    // the blit around the body center (M3 render: turret layer, 0 = legacy).
+    // the blit around the body center (turret layer, 0 = unrotated).
     void DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
                         float scale = 1.0f, float rotationDeg = 0.0f) const;
     void DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const;
@@ -130,7 +130,7 @@ public:
     bool LoadAtlas();
     // Sprite name for a unit at timeSeconds: directional attack (when
     // attacking and the type has attack anims), walk/idle otherwise, with
-    // legacy fallbacks. Empty when no sheet or no entries.
+    // directional-to-base fallback. Empty when no sheet or no entries.
     std::string UnitSprite(UnitType type, bool moving, unsigned int id,
                            float timeSeconds, int facingDir, bool attacking = false) const;
     // Base art scale multiplier (prototype infantry renders at 2x).

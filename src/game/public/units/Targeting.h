@@ -22,7 +22,7 @@ using ReservedDamageMap = std::unordered_map<Entity, float>;
 
 // Nearest living enemy within seeker.sightRange, highest attackPower first.
 // fog gates on visibility (Artillery blind-fires exempt); reserved skips
-// already-doomed candidates; nullptr = legacy.
+// already-doomed candidates; nullptr = no overkill protection.
 Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fog = nullptr,
                      const ReservedDamageMap *reserved = nullptr);
 

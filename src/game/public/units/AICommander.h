@@ -53,7 +53,7 @@ public:
     void Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile, int teamID);
     // One decision tick: income, harvesters, production, waves, scouting, retreat.
     void Update(float dt);
-    // Bind shared unit occupancy for footprint-aware orders (null = legacy).
+    // Bind shared unit occupancy for footprint-aware orders (null = plain point orders).
     void SetOccupancy(OccupancyGrid *occ);
 
     int TeamID() const;

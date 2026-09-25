@@ -48,7 +48,7 @@ struct Building
     float repairCarry = 0.0f;
 };
 
-// Full-health value per type (placement + save-load repair of legacy zeros).
+// Full-health value per type (placement + save-load repair of zero values).
 float BuildingMaxHealth(BuildingType type);
 // Seconds a fresh placement needs to reach Operational.
 float BuildingBuildTime(BuildingType type);

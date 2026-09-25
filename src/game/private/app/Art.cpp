@@ -310,7 +310,7 @@ bool Art::Init(bool withDevice)
     }
     fallback_ = false;
     char path[128];
-    // Missing legacy flats per type; reconciled against atlas coverage
+    // Missing flat PNGs per type; reconciled against atlas coverage
     // after the atlas loads below, so atlas-only types (Medic ships no
     // flat PNGs) cannot trip the global rectangle fallback on their own.
     bool unitFlatMissing[static_cast<int>(UnitType::Count)] = {};
@@ -613,11 +613,11 @@ std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
     {
         return idle->name;
     }
-    if (const SpriteDefInfo *legacy =
+    if (const SpriteDefInfo *baseIdle =
             FindSpriteByName(sheet_, prefix + "_idle_0_0");
-        legacy != nullptr)
+        baseIdle != nullptr)
     {
-        return legacy->name;
+        return baseIdle->name;
     }
     return {};
 }

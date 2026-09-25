@@ -74,8 +74,7 @@ protected:
     // UnitFactory, three keyed AICommanders, Pings, and Minimap. Declared
     // after engine_ (factory/AI bind the engine EventDispatcher) and before
     // every consumer, so init-list expressions may bind world_.Get<T>().
-    // Protected: E2EGame reaches the registry/map through it, replacing the
-    // former protected members.
+    // Protected: E2EGame reaches the registry/map through it.
     struct WorldScope : public Subsystems
     {
         explicit WorldScope(Subsystems &engine);

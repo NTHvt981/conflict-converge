@@ -31,7 +31,7 @@ struct SkirmishSpots
 };
 
 // Parse mapPath for spawn/node markers; missing or unparseable files yield
-// the legacy hardcoded defaults.
+// the hardcoded defaults.
 SkirmishSpots SpotsForMap(const std::string &mapPath);
 
 struct SkirmishWorld
