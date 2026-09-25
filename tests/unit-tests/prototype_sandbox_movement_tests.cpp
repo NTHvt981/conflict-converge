@@ -15,6 +15,7 @@
 #include "Building.h"
 #include "Combat.h" // IsVehicleHull foot filter
 #include "Event.h"
+#include "Extensions.h"
 #include "FogOfWar.h"
 #include "GameCamera.h"
 #include "MapFile.h"
@@ -126,10 +127,13 @@ void RunPrototypeSandboxMovementTests()
     for (std::size_t i = 0; i < squad.size(); ++i)
     {
         Unit *u = sand.registry.Get<Unit>(squad[i]);
-        IssuePathOrderFootprint(*u, sand.map, sand.occ, cc::ToRaylib(cc::TileToWorld(
-                                                             destinations[i].x, destinations[i].y)),
+        IssuePathOrderFootprint(*u, GetOrders(sand.registry, squad[i]),
+                                GetMover(sand.registry, squad[i]), sand.map, sand.occ,
+                                cc::ToRaylib(cc::TileToWorld(
+                                    destinations[i].x, destinations[i].y)),
                                 squad[i], sand.registry.Generation(squad[i]));
-        CC_CHECK(u->hasPath || u->hasMoveOrder); // path found, or straight-line fallback engaged
+        CC_CHECK(FindMover(sand.registry, squad[i])->hasPath ||
+                 FindMover(sand.registry, squad[i])->hasMoveOrder); // path found, or straight-line fallback engaged
     }
 
     // Step the exact same per-frame pipeline the real game loop uses
@@ -149,8 +153,8 @@ void RunPrototypeSandboxMovementTests()
         bool allDone = true;
         for (std::size_t i = 0; i < squad.size(); ++i)
         {
-            const Unit *u = sand.registry.Get<Unit>(squad[i]);
-            if (!done[i] && !u->hasMoveOrder && !u->hasPath)
+            const Mover *mover = FindMover(sand.registry, squad[i]);
+            if (!done[i] && mover != nullptr && !mover->hasMoveOrder && !mover->hasPath)
             {
                 done[i] = true;
                 doneFrame[i] = frame;

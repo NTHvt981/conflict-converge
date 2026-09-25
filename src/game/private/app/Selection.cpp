@@ -186,10 +186,12 @@ int RecallControlGroup(Registry &registry, int groupBit)
 namespace
 {
 
-bool IsIdleWorker(const Unit &unit, int teamID, bool workersOnly)
+bool IsIdleWorker(const Unit &unit, const Orders *orders, const Mover *mover, int teamID,
+                  bool workersOnly)
 {
-    if (unit.teamID != teamID || unit.state != UnitState::Idle || unit.hasMoveOrder ||
-        unit.hasPath || unit.hasRepairOrder)
+    if (unit.teamID != teamID || unit.state != UnitState::Idle ||
+        (mover != nullptr && (mover->hasMoveOrder || mover->hasPath)) ||
+        (orders != nullptr && orders->hasRepairOrder))
     {
         return false;
     }
@@ -202,8 +204,10 @@ bool IsIdleWorker(const Unit &unit, int teamID, bool workersOnly)
 int SelectIdle(Registry &registry, int teamID, bool workersOnly)
 {
     int picked = 0;
-    registry.Each<Unit>([&](Entity, Unit &unit) {
-        unit.isSelected = IsIdleWorker(unit, teamID, workersOnly);
+    registry.Each<Unit>([&](Entity id, Unit &unit) {
+        unit.isSelected =
+            IsIdleWorker(unit, FindOrders(registry, id), FindMover(registry, id), teamID,
+                         workersOnly);
         if (unit.isSelected)
         {
             ++picked;
@@ -215,8 +219,9 @@ int SelectIdle(Registry &registry, int teamID, bool workersOnly)
 int CountIdle(const Registry &registry, int teamID, bool workersOnly)
 {
     int count = 0;
-    registry.Each<Unit>([&](Entity, const Unit &unit) {
-        if (IsIdleWorker(unit, teamID, workersOnly))
+    registry.Each<Unit>([&](Entity id, const Unit &unit) {
+        if (IsIdleWorker(unit, FindOrders(registry, id), FindMover(registry, id), teamID,
+                         workersOnly))
         {
             ++count;
         }

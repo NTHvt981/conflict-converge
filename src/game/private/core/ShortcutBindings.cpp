@@ -1,6 +1,7 @@
 #include "ShortcutBindings.h"
 
 #include "Building.h"
+#include "Extensions.h"
 #include "Selection.h"
 #include "Shortcuts.h"
 #include "Unit.h"
@@ -122,7 +123,8 @@ void ShortcutBindings::Bind()
         registry_.Each<Unit>([&](Entity id, Unit &unit) {
             if (unit.isSelected)
             {
-                IssueOrEnqueue(unit, map_, &occ_, id, registry_.Generation(id), queued,
+                IssueOrEnqueue(unit, GetOrders(registry_, id), GetMover(registry_, id), map_,
+                               &occ_, id, registry_.Generation(id), queued,
                                QueuedOrder{ QueuedOrderKind::AttackMove, dest });
                 ++acted;
             }
@@ -140,7 +142,8 @@ void ShortcutBindings::Bind()
         const Entity selected = SelectedUnit(registry_);
         if (Unit *unit = registry_.Get<Unit>(selected))
         {
-            SetStance(*unit, Stance::Hold);
+            SetStance(*unit, GetOrders(registry_, selected), GetCombatState(registry_, selected),
+                      Stance::Hold);
         }
     });
     input_.shortcuts.Bind(hotkeys_.KeyFor("StanceGuard"), [&] {
@@ -151,7 +154,8 @@ void ShortcutBindings::Bind()
         const Entity selected = SelectedUnit(registry_);
         if (Unit *unit = registry_.Get<Unit>(selected))
         {
-            SetStance(*unit, Stance::Guard);
+            SetStance(*unit, GetOrders(registry_, selected), GetCombatState(registry_, selected),
+                      Stance::Guard);
         }
     });
     input_.shortcuts.Bind(hotkeys_.KeyFor("Patrol"), [&] {
@@ -165,7 +169,8 @@ void ShortcutBindings::Bind()
         registry_.Each<Unit>([&](Entity id, Unit &unit) {
             if (unit.isSelected)
             {
-                IssueOrEnqueue(unit, map_, &occ_, id, registry_.Generation(id), queued,
+                IssueOrEnqueue(unit, GetOrders(registry_, id), GetMover(registry_, id), map_,
+                               &occ_, id, registry_.Generation(id), queued,
                                QueuedOrder{ QueuedOrderKind::Patrol, unit.position, dest });
                 ++acted;
             }
@@ -230,16 +235,20 @@ void ShortcutBindings::Bind()
             return;
         }
         bool allOn = true;
-        registry_.Each<Unit>([&](Entity, const Unit &unit) {
-            if (unit.isSelected && !unit.autoRetreat)
-            {
-                allOn = false;
-            }
-        });
-        registry_.Each<Unit>([&](Entity, Unit &unit) {
+        registry_.Each<Unit>([&](Entity id, const Unit &unit) {
             if (unit.isSelected)
             {
-                unit.autoRetreat = !allOn;
+                const Orders *orders = FindOrders(registry_, id);
+                if (orders == nullptr || !orders->autoRetreat)
+                {
+                    allOn = false;
+                }
+            }
+        });
+        registry_.Each<Unit>([&](Entity id, Unit &unit) {
+            if (unit.isSelected)
+            {
+                GetOrders(registry_, id).autoRetreat = !allOn;
             }
         });
     });
@@ -292,21 +301,24 @@ void ShortcutBindings::Bind()
         {
             return;
         }
-        registry_.Each<Unit>([&](Entity, Unit &unit) {
+        registry_.Each<Unit>([&](Entity id, Unit &unit) {
             if (unit.isSelected)
             {
-                unit.hasMoveOrder = false;
-                unit.hasPath = false;
-                unit.path.clear();
-                unit.pathNext = 0;
-                unit.target = kInvalidEntity;
-                unit.attackMove = false;
-                unit.hasRepairOrder = false;
-                unit.repairTarget = kInvalidEntity;
-                unit.hasAttackGroundOrder = false;
-                unit.speedCapPixelsPerSec = -1.0f;
-                unit.orderQueue.clear();
-                unit.phase = AttackPhase::Ready;
+                Orders &orders = GetOrders(registry_, id);
+                Mover &mover = GetMover(registry_, id);
+                CombatState &combat = GetCombatState(registry_, id);
+                mover.hasMoveOrder = false;
+                mover.hasPath = false;
+                mover.path.clear();
+                mover.pathNext = 0;
+                combat.target = kInvalidEntity;
+                orders.attackMove = false;
+                orders.hasRepairOrder = false;
+                orders.repairTarget = kInvalidEntity;
+                orders.hasAttackGroundOrder = false;
+                mover.speedCapPixelsPerSec = -1.0f;
+                orders.orderQueue.clear();
+                combat.phase = AttackPhase::Ready;
                 unit.velocity = { 0.0f, 0.0f };
                 unit.state = UnitState::Idle;
                 SnapUnitToTile(unit);

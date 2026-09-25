@@ -270,8 +270,9 @@ void PlayingInput::Dispatch()
             {
                 if (Unit *engineer = registry_.Get<Unit>(job.engineer))
                 {
-                    IssueOrEnqueue(*engineer, map_, &occ_, job.engineer,
-                                   registry_.Generation(job.engineer), input_.ShiftDown(),
+                    IssueOrEnqueue(*engineer, GetOrders(registry_, job.engineer),
+                                   GetMover(registry_, job.engineer), map_, &occ_, job.engineer, registry_.Generation(job.engineer),
+                                   input_.ShiftDown(),
                                    QueuedOrder{ QueuedOrderKind::Repair, {}, {},
                                                 job.target });
                 }
@@ -322,7 +323,9 @@ void PlayingInput::Dispatch()
             registry_.Each<Unit>([&](Entity id, Unit &unit) {
                 if (unit.isSelected)
                 {
-                    IssueOrEnqueue(unit, map_, &occ_, id, registry_.Generation(id), queued,
+                    IssueOrEnqueue(unit, GetOrders(registry_, id), GetMover(registry_, id), map_,
+                                   &occ_, id,
+                                   registry_.Generation(id), queued,
                                    QueuedOrder{ QueuedOrderKind::AttackGround, target });
                 }
             });
@@ -341,6 +344,8 @@ void PlayingInput::Dispatch()
         {
             if (Unit *ordered = registry_.Get<Unit>(squad[0]))
             {
+                Orders &orders = GetOrders(registry_, squad[0]);
+                Mover &mover = GetMover(registry_, squad[0]);
                 bool repaired = false;
                 if (ordered->type == UnitType::Engineer)
                 {
@@ -368,7 +373,7 @@ void PlayingInput::Dispatch()
                     }
                     if (patient != kInvalidEntity)
                     {
-                        IssueOrEnqueue(*ordered, map_, &occ_, squad[0],
+                        IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
                                        registry_.Generation(squad[0]), input_.ShiftDown(),
                                        QueuedOrder{ QueuedOrderKind::Repair, {}, {}, patient });
                         repaired = true;
@@ -385,7 +390,7 @@ void PlayingInput::Dispatch()
                     }
                     if (patient != kInvalidEntity)
                     {
-                        IssueOrEnqueue(*ordered, map_, &occ_, squad[0],
+                        IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
                                        registry_.Generation(squad[0]), input_.ShiftDown(),
                                        QueuedOrder{ QueuedOrderKind::Repair, {}, {}, patient });
                         repaired = true;
@@ -402,7 +407,7 @@ void PlayingInput::Dispatch()
                         if (const Cargo *cargo = registry_.Get<Cargo>(squad[0]);
                             cargo != nullptr && !cargo->passengers.empty())
                         {
-                            IssueOrEnqueue(*ordered, map_, &occ_, squad[0],
+                            IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
                                            registry_.Generation(squad[0]), input_.ShiftDown(),
                                            QueuedOrder{ QueuedOrderKind::Unload,
                                                         ordered->position });
@@ -412,7 +417,7 @@ void PlayingInput::Dispatch()
                     else if (picked != kInvalidEntity &&
                              CanLoadTarget(registry_, squad[0], *ordered, picked))
                     {
-                        IssueOrEnqueue(*ordered, map_, &occ_, squad[0],
+                        IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
                                        registry_.Generation(squad[0]), input_.ShiftDown(),
                                        QueuedOrder{ QueuedOrderKind::Load, {}, {}, picked });
                         repaired = true;
@@ -422,16 +427,16 @@ void PlayingInput::Dispatch()
                 {
                     if (input_.ShiftDown())
                     {
-                        IssueOrEnqueue(*ordered, map_, &occ_, squad[0],
+                        IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
                                        registry_.Generation(squad[0]), true,
                                        QueuedOrder{ QueuedOrderKind::Move,
                                                     input_.MouseWorld(camera_) });
                     }
                     else
                     {
-                        ordered->orderQueue.clear();
-                        ClearOrders(*ordered);
-                        IssuePathOrderFootprint(*ordered, map_, occ_,
+                        orders.orderQueue.clear();
+                        ClearOrders(*ordered, orders, mover);
+                        IssuePathOrderFootprint(*ordered, orders, mover, map_, occ_,
                                                 input_.MouseWorld(camera_), squad[0],
                                                 registry_.Generation(squad[0]));
                     }
@@ -448,8 +453,9 @@ void PlayingInput::Dispatch()
                 {
                     if (Unit *unit = registry_.Get<Unit>(id))
                     {
-                        IssueOrEnqueue(*unit, map_, &occ_, id, registry_.Generation(id),
-                                       true,
+                        IssueOrEnqueue(*unit, GetOrders(registry_, id), GetMover(registry_, id),
+                                       map_, &occ_, id,
+                                       registry_.Generation(id), true,
                                        QueuedOrder{ QueuedOrderKind::Move, dest });
                     }
                 }

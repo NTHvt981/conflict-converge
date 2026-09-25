@@ -6,6 +6,7 @@
 
 #include "AICommander.h"
 #include "Building.h" // building-count query
+#include "Extensions.h"
 #include "Nodes.h"
 #include "TileMap.h"
 #include "UnitFactory.h"
@@ -98,8 +99,10 @@ void RunAICommanderTests()
     war.Update(1.0f / 60.0f);
     CC_CHECK(war.WavesLaunched() == 1);
     int ordered = 0;
-    warRegistry.Each<Unit>([&](Entity, const Unit &unit) {
-        if (unit.teamID == 1 && unit.health > 0.0f && (unit.hasMoveOrder || unit.hasPath))
+    warRegistry.Each<Unit>([&](Entity id, const Unit &unit) {
+        const Mover *mover = FindMover(warRegistry, id);
+        if (unit.teamID == 1 && unit.health > 0.0f && mover != nullptr &&
+            (mover->hasMoveOrder || mover->hasPath))
         {
             ++ordered;
         }
@@ -180,9 +183,9 @@ void RunAICommanderTests()
             {
                 return;
             }
-            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(unit.moveTarget));
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(FindMover(registry, id)->moveTarget));
             CC_CHECK(!(dest == cc::IVec2(15, 3))); // beside the node, not inside
-            CC_CHECK(unit.hasMoveOrder || unit.hasPath);
+            CC_CHECK(FindMover(registry, id)->hasMoveOrder || FindMover(registry, id)->hasPath);
         });
     }
 
@@ -223,12 +226,14 @@ void RunAICommanderTests()
             {
                 return;
             }
-            CC_CHECK(unit.attackMove); // FP march preserves attack-move
-            if (unit.hasMoveOrder || unit.hasPath)
+            const Orders *orders = FindOrders(registry, id);
+            CC_CHECK(orders != nullptr && orders->attackMove); // FP march preserves attack-move
+            const Mover *mover = FindMover(registry, id);
+            if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
             {
                 ++ordered;
             }
-            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(unit.moveTarget));
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(mover->moveTarget));
             CC_CHECK(occ.CanEnter(map, dest, 1, 1, id, registry.Generation(id)));
         });
         CC_CHECK(ordered >= 3);
@@ -264,8 +269,9 @@ void RunAICommanderTests()
             {
                 return;
             }
-            CC_CHECK(unit.attackMove);
-            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(unit.moveTarget));
+            const Orders *orders = FindOrders(registry, id);
+            CC_CHECK(orders != nullptr && orders->attackMove);
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(FindMover(registry, id)->moveTarget));
             if (dest == cc::IVec2(1, 10) || dest == cc::IVec2(2, 10))
             {
                 droveAtBlocker = true;

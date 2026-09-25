@@ -2,6 +2,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "Formation.h"
 #include "TileMap.h"
 #include "Unit.h"
@@ -58,16 +59,16 @@ void RunLineFormationTests()
         formation::IssueLineFormationMoveFP(registry, squad, map, occ,
                                  cc::ToRaylib(cc::TileToWorld(2, 2)),
                                  cc::ToRaylib(cc::TileToWorld(8, 2)));
-        const Vector2 ta = registry.Get<Unit>(a)->moveTarget;
-        const Vector2 tb = registry.Get<Unit>(b)->moveTarget;
-        const Vector2 tc = registry.Get<Unit>(c)->moveTarget;
+        const Vector2 ta = FindMover(registry, a)->moveTarget;
+        const Vector2 tb = FindMover(registry, b)->moveTarget;
+        const Vector2 tc = FindMover(registry, c)->moveTarget;
         // Distinct tiles spread along row 2 (y = 128), x increasing.
         CC_CHECK(ta.x != tb.x || ta.y != tb.y);
         CC_CHECK(tb.x != tc.x || tb.y != tc.y);
         CC_CHECK(ta.x != tc.x || ta.y != tc.y);
         CC_CHECK(ta.y == 128.0f && tb.y == 128.0f && tc.y == 128.0f);
         CC_CHECK(ta.x < tb.x && tb.x < tc.x);
-        CC_CHECK(registry.Get<Unit>(a)->hasPath);
+        CC_CHECK(FindMover(registry, a)->hasPath);
     }
 
     // --- missing IDs don't shift surviving slots ---
@@ -80,6 +81,6 @@ void RunLineFormationTests()
         formation::IssueLineFormationMoveFP(registry, squad, map, occ,
                                  cc::ToRaylib(cc::TileToWorld(2, 2)),
                                  cc::ToRaylib(cc::TileToWorld(8, 2)));
-        CC_CHECK(registry.Get<Unit>(a)->hasPath); // no crash, slot kept
+        CC_CHECK(FindMover(registry, a)->hasPath); // no crash, slot kept
     }
 }

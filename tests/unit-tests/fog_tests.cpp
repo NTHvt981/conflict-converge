@@ -3,6 +3,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "FogOfWar.h"
 #include "Targeting.h" // Fog-gated acquisition
 #include "TileMap.h"   // UpdateUnit chase validation under fog
@@ -162,9 +163,9 @@ void RunFogCombatTests()
     blindRegistry.Add(blindId, seeker);
     UpdateUnit(blindId, blindRegistry, map, 1.0f / 60.0f, &blindFog);
     const Unit *blind = blindRegistry.Get<Unit>(blindId);
-    CC_CHECK(blind->target == kInvalidEntity);
+    CC_CHECK(FindCombatState(blindRegistry, blindId)->target == kInvalidEntity);
     CC_CHECK(blind->state == UnitState::Idle);
     UpdateUnit(batteryId, artyRegistry, map, 1.0f / 60.0f, &artyFog);
     const Unit *gun = artyRegistry.Get<Unit>(batteryId);
-    CC_CHECK(gun->target != kInvalidEntity);
+    CC_CHECK(FindCombatState(artyRegistry, batteryId)->target != kInvalidEntity);
 }

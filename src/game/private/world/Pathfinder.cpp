@@ -1,5 +1,7 @@
 #include "Pathfinder.h"
 
+#include "Extensions.h"
+
 #include <cmath>
 #include <queue>
 #include <unordered_map>
@@ -244,31 +246,33 @@ cc::IVec2 NearestEnterableTile(const TileMap &map, const OccupancyGrid &occ,
     return want;
 }
 
-void IssuePathOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
+void IssuePathOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                    Vector2 worldTarget)
 {
     const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
     const cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(worldTarget)));
     TilePath path = FindPath(map, start, goal);
     if (path.empty())
     {
-        IssueMoveOrder(unit, worldTarget);
-        unit.hasPath = false;
-        unit.path.clear();
-        unit.pathNext = 0;
+        IssueMoveOrder(unit, orders, mover, worldTarget);
+        mover.hasPath = false;
+        mover.path.clear();
+        mover.pathNext = 0;
         return;
     }
 
-    unit.moveTarget = cc::ToRaylib(cc::TileToWorld(goal.x, goal.y));
-    unit.hasMoveOrder = true;
-    unit.path = std::move(path);
-    unit.pathNext = 1;
-    unit.hasPath = true;
-    unit.blockedTime = 0.0f;
-    unit.blockedRepaths = 0;
+    mover.moveTarget = cc::ToRaylib(cc::TileToWorld(goal.x, goal.y));
+    mover.hasMoveOrder = true;
+    mover.path = std::move(path);
+    mover.pathNext = 1;
+    mover.hasPath = true;
+    mover.blockedTime = 0.0f;
+    mover.blockedRepaths = 0;
 }
 
-void IssuePathOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
-                             Vector2 worldTarget, Entity self, std::uint32_t selfGen)
+void IssuePathOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                             const OccupancyGrid &occ, Vector2 worldTarget, Entity self,
+                             std::uint32_t selfGen)
 {
     const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
     cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(worldTarget)));
@@ -279,17 +283,17 @@ void IssuePathOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid
                                       self, selfGen);
     if (path.empty())
     {
-        unit.hasPath = false;
-        unit.path.clear();
-        unit.pathNext = 0;
+        mover.hasPath = false;
+        mover.path.clear();
+        mover.pathNext = 0;
         return;
     }
 
-    unit.moveTarget = cc::ToRaylib(cc::TileToWorld(goal.x, goal.y));
-    unit.hasMoveOrder = true;
-    unit.path = std::move(path);
-    unit.pathNext = 1;
-    unit.hasPath = true;
-    unit.blockedTime = 0.0f;
-    unit.blockedRepaths = 0;
+    mover.moveTarget = cc::ToRaylib(cc::TileToWorld(goal.x, goal.y));
+    mover.hasMoveOrder = true;
+    mover.path = std::move(path);
+    mover.pathNext = 1;
+    mover.hasPath = true;
+    mover.blockedTime = 0.0f;
+    mover.blockedRepaths = 0;
 }

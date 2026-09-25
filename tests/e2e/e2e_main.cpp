@@ -12,6 +12,7 @@
 
 #include "E2EGame.h"
 #include "Building.h" // RazeTeamBuildings arranges demolition-first outcomes
+#include "Extensions.h"
 #include "MapFile.h"
 #include "MathUtils.h" // TileToWorld for the mop-up march
 #include "Menu.h"
@@ -142,11 +143,13 @@ void ScenarioOutcomes()
         sel != nullptr ? SpotsForMap(sel->path).aiHome : cc::IVec2{ 16, 9 };
     {
         Registry &registry = game.E2ERegistry();
-        registry.Each<Unit>([&](Entity, Unit &unit) {
+        registry.Each<Unit>([&](Entity id, Unit &unit) {
             if (unit.teamID == 0 && unit.type != UnitType::Engineer && unit.health > 0.0f)
             {
-                SetStance(unit, Stance::Hold);
-                IssueAttackMoveOrder(unit, game.E2EMap(),
+                SetStance(unit, GetOrders(registry, id), GetCombatState(registry, id),
+                          Stance::Hold);
+                IssueAttackMoveOrder(unit, GetOrders(registry, id), GetMover(registry, id),
+                                     game.E2EMap(),
                                      cc::ToRaylib(cc::TileToWorld(enemyHome.x, enemyHome.y)));
             }
         });

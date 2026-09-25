@@ -3,6 +3,7 @@
 #include <cstdio>
 
 #include "Building.h"
+#include "Extensions.h"
 #include "Hotkeys.h"
 #include "UnitStats.h"
 
@@ -181,10 +182,10 @@ const char *UnitStateName(UnitState state)
 
 }
 
-std::vector<std::string> UnitTooltipLines(const Unit &unit)
+std::vector<std::string> UnitTooltipLines(const Unit &unit, const Orders &orders)
 {
     char second[64];
-    std::snprintf(second, sizeof(second), "%s, %s", StanceName(unit.stance),
+    std::snprintf(second, sizeof(second), "%s, %s", StanceName(orders.stance),
                   UnitStateName(unit.state));
     return { SelectionSummary(unit), second };
 }

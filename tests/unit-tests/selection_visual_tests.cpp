@@ -2,6 +2,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "Hotkeys.h"
 #include "Hud.h"
 #include "UnitStats.h"
@@ -81,7 +82,8 @@ void RunSelectionVisualTests()
     CC_CHECK(!UpdateHoverTooltip(tip, kInvalidEntity, 1.0f, kHoverTooltipDelay)); // lost: hides
 
     // --- tooltip lines: summary + stance/state ---
-    const std::vector<std::string> tipLines = UnitTooltipLines(uu1);
+    const Orders tipOrders;
+    const std::vector<std::string> tipLines = UnitTooltipLines(uu1, tipOrders);
     CC_CHECK(tipLines.size() == 2);
     CC_CHECK(tipLines[0] == SelectionSummary(uu1));
     CC_CHECK(tipLines[1] == "Guard, Idle");

@@ -18,38 +18,40 @@
 
 #include "UnitStats.h"
 
-void IssueMoveOrder(Unit &unit, Vector2 worldTarget)
+void IssueMoveOrder(Unit &unit, Orders &orders, Mover &mover, Vector2 worldTarget)
 {
-    unit.moveTarget = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldTarget)));
-    unit.hasMoveOrder = true;
-    unit.blockedTime = 0.0f;
-    unit.blockedRepaths = 0;
-    ClearOrders(unit);
+    mover.moveTarget = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldTarget)));
+    mover.hasMoveOrder = true;
+    mover.blockedTime = 0.0f;
+    mover.blockedRepaths = 0;
+    ClearOrders(unit, orders, mover);
 }
 
-void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget)
+void IssueAttackMoveOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                          Vector2 worldTarget)
 {
-    ClearOrders(unit);
-    IssuePathOrder(unit, map, worldTarget);
-    unit.attackMove = true;
-    unit.attackMoveDest = unit.moveTarget;
+    ClearOrders(unit, orders, mover);
+    IssuePathOrder(unit, orders, mover, map, worldTarget);
+    orders.attackMove = true;
+    orders.attackMoveDest = mover.moveTarget;
 }
 
-void IssueAttackMoveOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
-                                   Vector2 worldTarget, Entity self, std::uint32_t selfGen)
+void IssueAttackMoveOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                                   const OccupancyGrid &occ, Vector2 worldTarget, Entity self,
+                                   std::uint32_t selfGen)
 {
-    ClearOrders(unit);
-    IssuePathOrderFootprint(unit, map, occ, worldTarget, self, selfGen);
-    unit.attackMove = true;
-    unit.attackMoveDest = unit.moveTarget;
+    ClearOrders(unit, orders, mover);
+    IssuePathOrderFootprint(unit, orders, mover, map, occ, worldTarget, self, selfGen);
+    orders.attackMove = true;
+    orders.attackMoveDest = mover.moveTarget;
 }
 
 namespace
 {
 
-void LoseTarget(Unit &unit);
+void LoseTarget(Unit &unit, CombatState &combat);
 
-bool ReissueDriverOrder(Unit &unit, TileMap &map, OccupancyGrid *occ, Vector2 dest,
+bool ReissueDriverOrder(Unit &unit, Mover &mover, TileMap &map, OccupancyGrid *occ, Vector2 dest,
                         Entity self, Registry &registry)
 {
     const cc::IVec2 wantTile = cc::WorldToTile(cc::ToGlm(dest));
@@ -58,84 +60,87 @@ bool ReissueDriverOrder(Unit &unit, TileMap &map, OccupancyGrid *occ, Vector2 de
                                                 unit.footprintHeight, self,
                                                 registry.Generation(self))
                          : wantTile;
-    if (unit.hasPath && cc::WorldToTile(cc::ToGlm(unit.moveTarget)) == goalTile)
+    if (mover.hasPath && cc::WorldToTile(cc::ToGlm(mover.moveTarget)) == goalTile)
     {
         return false;
     }
     if (occ != nullptr)
     {
-        IssuePathOrderFootprint(unit, map, *occ, dest, self, registry.Generation(self));
+        IssuePathOrderFootprint(unit, GetOrders(registry, self), mover, map, *occ, dest, self,
+                                registry.Generation(self));
     }
     else
     {
-        IssuePathOrder(unit, map, dest);
+        IssuePathOrder(unit, GetOrders(registry, self), mover, map, dest);
     }
     return true;
 }
 
 }
 
-void SetStance(Unit &unit, Stance stance)
+void SetStance(Unit &unit, Orders &orders, CombatState &combat, Stance stance)
 {
-    unit.stance = stance;
+    orders.stance = stance;
     if (stance != Stance::Patrol)
     {
-        unit.hasPatrol = false;
+        orders.hasPatrol = false;
     }
     if (stance == Stance::Hold)
     {
-        LoseTarget(unit);
+        LoseTarget(unit, combat);
     }
 }
 
-void IssuePatrolOrder(Unit &unit, const TileMap &map, Vector2 pointA, Vector2 pointB)
+void IssuePatrolOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map, Vector2 pointA,
+                      Vector2 pointB)
 {
-    ClearOrders(unit);
-    unit.stance = Stance::Patrol;
-    unit.hasPatrol = true;
-    unit.patrolA = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(pointA)));
-    unit.patrolB = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(pointB)));
-    unit.patrolToB = true;
-    IssuePathOrder(unit, map, unit.patrolB);
+    ClearOrders(unit, orders, mover);
+    orders.stance = Stance::Patrol;
+    orders.hasPatrol = true;
+    orders.patrolA = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(pointA)));
+    orders.patrolB = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(pointB)));
+    orders.patrolToB = true;
+    IssuePathOrder(unit, orders, mover, map, orders.patrolB);
 }
 
 namespace
 {
 
-template <typename LandHit> void UpdateAttackPhases(Unit &attacker, float dtSeconds, LandHit landHit)
+template <typename LandHit>
+void UpdateAttackPhases(Unit &attacker, CombatState &combat, float dtSeconds, LandHit landHit)
 {
 
-    if (attacker.phase == AttackPhase::Ready)
+    if (combat.phase == AttackPhase::Ready)
     {
-        if (attacker.cooldown <= 0.0f && attacker.attackPower > 0)
+        if (combat.cooldown <= 0.0f && attacker.attackPower > 0)
         {
-            attacker.phase = AttackPhase::WindUp;
-            attacker.phaseTime = attacker.windupTime;
+            combat.phase = AttackPhase::WindUp;
+            combat.phaseTime = attacker.windupTime;
         }
         return;
     }
-    if (attacker.phase == AttackPhase::WindUp)
+    if (combat.phase == AttackPhase::WindUp)
     {
-        attacker.phaseTime -= dtSeconds;
-        if (attacker.phaseTime <= 0.0f)
+        combat.phaseTime -= dtSeconds;
+        if (combat.phaseTime <= 0.0f)
         {
             landHit();
-            attacker.phase = AttackPhase::Recover;
+            combat.phase = AttackPhase::Recover;
         }
         return;
     }
-    if (attacker.cooldown <= 0.0f)
+    if (combat.cooldown <= 0.0f)
     {
-        attacker.phase = AttackPhase::Ready;
+        combat.phase = AttackPhase::Ready;
     }
 }
 
-void UpdateAttack(Entity self, Registry &registry, Unit &attacker, Entity targetId,
-                  float dtSeconds)
+void UpdateAttack(Entity self, Registry &registry, Unit &attacker, CombatState &combat,
+                  Entity targetId, float dtSeconds)
 {
     // M3 strike dispatch: WindUp ends in launch for arcing units, not damage.
-    UpdateAttackPhases(attacker, dtSeconds,
-                       [&] { ResolveStrike(registry, self, attacker, targetId); });
+    UpdateAttackPhases(attacker, combat, dtSeconds,
+                       [&] { ResolveStrike(registry, self, attacker, combat, targetId); });
 }
 
 // G1 turret: radians of aim tolerance before a turreted unit may open fire.
@@ -174,20 +179,21 @@ bool TurretAimed(Registry &registry, Entity self, Vector2 fromPos, Vector2 aimPo
     return std::fabs(WrapAngle(desired - turret->facing)) <= kTurretAimTolerance;
 }
 
-void StopMoving(Unit &unit)
+void StopMoving(Unit &unit, Mover &mover)
 {
-    unit.hasMoveOrder = false;
-    unit.hasPath = false;
-    unit.path.clear();
-    unit.pathNext = 0;
+    mover.hasMoveOrder = false;
+    mover.hasPath = false;
+    mover.path.clear();
+    mover.pathNext = 0;
     unit.velocity = { 0.0f, 0.0f };
 }
 
-void LoseTarget(Unit &unit)
+void LoseTarget(Unit &unit, CombatState &combat)
 {
-    unit.target = kInvalidEntity;
-    unit.phase = AttackPhase::Ready;
-    unit.phaseTime = 0.0f;
+    (void)unit;
+    combat.target = kInvalidEntity;
+    combat.phase = AttackPhase::Ready;
+    combat.phaseTime = 0.0f;
 }
 
 }
@@ -205,16 +211,16 @@ Facing FacingFromVelocity(Vector2 velocity)
     return static_cast<Facing>((6 - octant + 8) % 8);
 }
 
-void IssueRepairOrder(Unit &engineer, Entity target)
+void IssueRepairOrder(Unit &engineer, Orders &orders, Mover &mover, Entity target)
 {
     if (engineer.type != UnitType::Engineer)
     {
         return;
     }
-    StopMoving(engineer);
-    ClearOrders(engineer);
-    engineer.hasRepairOrder = true;
-    engineer.repairTarget = target;
+    StopMoving(engineer, mover);
+    ClearOrders(engineer, orders, mover);
+    orders.hasRepairOrder = true;
+    orders.repairTarget = target;
 }
 
 constexpr float kLoadRange = 128.0f;
@@ -258,10 +264,11 @@ bool BoardTransport(Registry &registry, Entity carrier, Entity passenger)
     registry.Add(passenger, ride);
     registry.Get<Cargo>(carrier)->passengers.push_back(passenger);
     rider->isSelected = false;
-    rider->hasMoveOrder = false;
-    rider->hasPath = false;
-    rider->path.clear();
-    rider->pathNext = 0;
+    Mover &riderMover = GetMover(registry, passenger);
+    riderMover.hasMoveOrder = false;
+    riderMover.hasPath = false;
+    riderMover.path.clear();
+    riderMover.pathNext = 0;
     rider->velocity = { 0.0f, 0.0f };
     rider->state = UnitState::Idle;
     return true;
@@ -294,121 +301,126 @@ int UnloadTransport(Registry &registry, const TileMap &map, Entity carrier, Vect
     return landed;
 }
 
-void IssueLoadOrder(Unit &carrier, Entity passenger)
+void IssueLoadOrder(Unit &carrier, Orders &orders, Mover &mover, Entity passenger)
 {
-    StopMoving(carrier);
-    ClearOrders(carrier);
-    carrier.hasLoadOrder = true;
-    carrier.loadTarget = passenger;
+    StopMoving(carrier, mover);
+    ClearOrders(carrier, orders, mover);
+    orders.hasLoadOrder = true;
+    orders.loadTarget = passenger;
 }
 
-void IssueUnloadOrder(Unit &carrier, const TileMap &map, Vector2 worldPos)
+void IssueUnloadOrder(Unit &carrier, Orders &orders, Mover &mover, const TileMap &map,
+                      Vector2 worldPos)
 {
     (void)map;
-    StopMoving(carrier);
-    ClearOrders(carrier);
-    carrier.hasUnloadOrder = true;
-    carrier.unloadPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
+    StopMoving(carrier, mover);
+    ClearOrders(carrier, orders, mover);
+    orders.hasUnloadOrder = true;
+    orders.unloadPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
 }
 
 namespace
 {
 
-void DispatchQueuedOrder(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
-                         std::uint32_t selfGen, const QueuedOrder &order)
+void DispatchQueuedOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                         OccupancyGrid *occ, Entity self, std::uint32_t selfGen,
+                         const QueuedOrder &order)
 {
-    ClearOrders(unit);
+    ClearOrders(unit, orders, mover);
     switch (order.kind)
     {
     case QueuedOrderKind::Move:
         if (occ != nullptr)
         {
-            IssuePathOrderFootprint(unit, map, *occ, order.pointA, self, selfGen);
+            IssuePathOrderFootprint(unit, orders, mover, map, *occ, order.pointA, self, selfGen);
         }
         else
         {
-            IssuePathOrder(unit, map, order.pointA);
+            IssuePathOrder(unit, orders, mover, map, order.pointA);
         }
         break;
     case QueuedOrderKind::AttackMove:
         if (occ != nullptr)
         {
-            IssueAttackMoveOrderFootprint(unit, map, *occ, order.pointA, self, selfGen);
+            IssueAttackMoveOrderFootprint(unit, orders, mover, map, *occ, order.pointA, self,
+                                          selfGen);
         }
         else
         {
-            IssueAttackMoveOrder(unit, map, order.pointA);
+            IssueAttackMoveOrder(unit, orders, mover, map, order.pointA);
         }
         break;
     case QueuedOrderKind::Patrol:
-        IssuePatrolOrder(unit, map, order.pointA, order.pointB);
+        IssuePatrolOrder(unit, orders, mover, map, order.pointA, order.pointB);
         break;
     case QueuedOrderKind::Repair:
         if (unit.type == UnitType::Medic)
         {
-            IssueHealOrder(unit, order.target);
+            IssueHealOrder(unit, orders, mover, order.target);
         }
         else
         {
-            IssueRepairOrder(unit, order.target);
+            IssueRepairOrder(unit, orders, mover, order.target);
         }
         break;
     case QueuedOrderKind::AttackGround:
         if (occ != nullptr)
         {
-            IssueAttackGroundOrderFootprint(unit, map, *occ, order.pointA, self, selfGen);
+            IssueAttackGroundOrderFootprint(unit, orders, mover, map, *occ, order.pointA, self,
+                                            selfGen);
         }
         else
         {
-            IssueAttackGroundOrder(unit, map, order.pointA);
+            IssueAttackGroundOrder(unit, orders, mover, map, order.pointA);
         }
         break;
     case QueuedOrderKind::Load:
-        IssueLoadOrder(unit, order.target);
+        IssueLoadOrder(unit, orders, mover, order.target);
         break;
     case QueuedOrderKind::Unload:
-        IssueUnloadOrder(unit, map, order.pointA);
+        IssueUnloadOrder(unit, orders, mover, map, order.pointA);
         break;
     case QueuedOrderKind::Count:
         break;
     }
 }
 
-void OnOrderFinished(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
-                     std::uint32_t selfGen)
+void OnOrderFinished(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                     OccupancyGrid *occ, Entity self, std::uint32_t selfGen)
 {
-    if (unit.hasPatrol || unit.orderQueue.empty())
+    if (orders.hasPatrol || orders.orderQueue.empty())
     {
         return;
     }
-    const QueuedOrder next = unit.orderQueue.front();
-    unit.orderQueue.erase(unit.orderQueue.begin());
-    DispatchQueuedOrder(unit, map, occ, self, selfGen, next);
+    const QueuedOrder next = orders.orderQueue.front();
+    orders.orderQueue.erase(orders.orderQueue.begin());
+    DispatchQueuedOrder(unit, orders, mover, map, occ, self, selfGen, next);
 }
 
-void OnOrderCancelled(Unit &unit)
+void OnOrderCancelled(Orders &orders)
 {
-    unit.orderQueue.clear();
+    orders.orderQueue.clear();
 }
 
 }
 
-void IssueOrEnqueue(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
-                    std::uint32_t selfGen, bool shiftQueue, QueuedOrder order)
+void IssueOrEnqueue(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                    OccupancyGrid *occ, Entity self, std::uint32_t selfGen, bool shiftQueue,
+                    QueuedOrder order)
 {
     if (!shiftQueue)
     {
-        unit.orderQueue.clear();
-        DispatchQueuedOrder(unit, map, occ, self, selfGen, order);
+        orders.orderQueue.clear();
+        DispatchQueuedOrder(unit, orders, mover, map, occ, self, selfGen, order);
         return;
     }
-    if (!unit.hasMoveOrder && !unit.hasPath && !unit.hasRepairOrder && !unit.hasLoadOrder &&
-        !unit.hasUnloadOrder && !unit.hasPatrol && unit.orderQueue.empty())
+    if (!mover.hasMoveOrder && !mover.hasPath && !orders.hasRepairOrder && !orders.hasLoadOrder &&
+        !orders.hasUnloadOrder && !orders.hasPatrol && orders.orderQueue.empty())
     {
-        DispatchQueuedOrder(unit, map, occ, self, selfGen, order);
+        DispatchQueuedOrder(unit, orders, mover, map, occ, self, selfGen, order);
         return;
     }
-    unit.orderQueue.push_back(order);
+    orders.orderQueue.push_back(order);
 }
 
 bool LostToFog(const Unit &unit, const Unit &target, const FogOfWar *fog)
@@ -468,16 +480,16 @@ bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity targ
     return RepairAim(registry, engineer, target, aim);
 }
 
-void IssueHealOrder(Unit &medic, Entity target)
+void IssueHealOrder(Unit &medic, Orders &orders, Mover &mover, Entity target)
 {
     if (medic.type != UnitType::Medic)
     {
         return;
     }
-    StopMoving(medic);
-    ClearOrders(medic);
-    medic.hasRepairOrder = true;
-    medic.repairTarget = target;
+    StopMoving(medic, mover);
+    ClearOrders(medic, orders, mover);
+    orders.hasRepairOrder = true;
+    orders.repairTarget = target;
 }
 
 bool IsHealableUnit(const Unit &unit)
@@ -614,34 +626,37 @@ int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engine
     return assigned;
 }
 
-void ClearOrders(Unit &unit)
+void ClearOrders(Unit &unit, Orders &orders, Mover &mover)
 {
-    unit.attackMove = false;
-    unit.hasPatrol = false;
-    unit.hasRepairOrder = false;
-    unit.repairTarget = kInvalidEntity;
-    unit.hasAttackGroundOrder = false;
-    unit.hasLoadOrder = false;
-    unit.loadTarget = kInvalidEntity;
-    unit.hasUnloadOrder = false;
-    unit.speedCapPixelsPerSec = -1.0f;
+    (void)unit;
+    orders.attackMove = false;
+    orders.hasPatrol = false;
+    orders.hasRepairOrder = false;
+    orders.repairTarget = kInvalidEntity;
+    orders.hasAttackGroundOrder = false;
+    orders.hasLoadOrder = false;
+    orders.loadTarget = kInvalidEntity;
+    orders.hasUnloadOrder = false;
+    mover.speedCapPixelsPerSec = -1.0f;
 }
 
-void IssueAttackGroundOrder(Unit &unit, const TileMap &map, Vector2 worldPos)
+void IssueAttackGroundOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                            Vector2 worldPos)
 {
-    ClearOrders(unit);
-    unit.hasAttackGroundOrder = true;
-    unit.attackGroundPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
-    IssuePathOrder(unit, map, unit.attackGroundPos);
+    ClearOrders(unit, orders, mover);
+    orders.hasAttackGroundOrder = true;
+    orders.attackGroundPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
+    IssuePathOrder(unit, orders, mover, map, orders.attackGroundPos);
 }
 
-void IssueAttackGroundOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
-                                     Vector2 worldPos, Entity self, std::uint32_t selfGen)
+void IssueAttackGroundOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                                     const OccupancyGrid &occ, Vector2 worldPos, Entity self,
+                                     std::uint32_t selfGen)
 {
-    ClearOrders(unit);
-    unit.hasAttackGroundOrder = true;
-    unit.attackGroundPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
-    IssuePathOrderFootprint(unit, map, occ, unit.attackGroundPos, self, selfGen);
+    ClearOrders(unit, orders, mover);
+    orders.hasAttackGroundOrder = true;
+    orders.attackGroundPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
+    IssuePathOrderFootprint(unit, orders, mover, map, occ, orders.attackGroundPos, self, selfGen);
 }
 
 Vector2 ResolvePlayerRetreatHome(Registry &registry, Vector2 rallyPos)
@@ -696,7 +711,9 @@ void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector
         {
             return;
         }
-        if (onlyAutoRetreat && !unit.autoRetreat)
+        Orders &orders = GetOrders(registry, id);
+        Mover &mover = GetMover(registry, id);
+        if (onlyAutoRetreat && !orders.autoRetreat)
         {
             return;
         }
@@ -711,18 +728,19 @@ void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector
                 ? NearestEnterableTile(map, *occ, wantTile, unit.footprintWidth,
                                        unit.footprintHeight, id, registry.Generation(id))
                 : wantTile;
-        if (unit.attackMove && unit.hasPath &&
-            cc::WorldToTile(cc::ToGlm(unit.moveTarget)) == goalTile)
+        if (orders.attackMove && mover.hasPath &&
+            cc::WorldToTile(cc::ToGlm(mover.moveTarget)) == goalTile)
         {
             return;
         }
         if (occ != nullptr)
         {
-            IssueAttackMoveOrderFootprint(unit, map, *occ, home, id, registry.Generation(id));
+            IssueAttackMoveOrderFootprint(unit, orders, mover, map, *occ, home, id,
+                                          registry.Generation(id));
         }
         else
         {
-            IssueAttackMoveOrder(unit, map, home);
+            IssueAttackMoveOrder(unit, orders, mover, map, home);
         }
     });
 }
@@ -797,8 +815,8 @@ Vector2 TargetPosition(Registry &registry, Entity id)
     return { 0.0f, 0.0f };
 }
 
-bool EngageTarget(Entity self, Unit &attacker, Registry &registry, TileMap &map, Entity id,
-                  const FogOfWar *fog, float dtSeconds)
+bool EngageTarget(Entity self, Unit &attacker, CombatState &combat, Registry &registry,
+                  TileMap &map, Entity id, const FogOfWar *fog, float dtSeconds)
 {
     if (!ValidateTarget(registry, attacker, id, fog))
     {
@@ -813,13 +831,13 @@ bool EngageTarget(Entity self, Unit &attacker, Registry &registry, TileMap &map,
         }
         attacker.state = UnitState::Attacking;
         attacker.velocity = { 0.0f, 0.0f };
-        if (attacker.phase == AttackPhase::Ready &&
+        if (combat.phase == AttackPhase::Ready &&
             !TurretAimed(registry, self, attacker.position, target->position, dtSeconds))
         {
             return true; // traversing: visible aim, no free hits
         }
         TurretAimed(registry, self, attacker.position, target->position, dtSeconds);
-        UpdateAttack(self, registry, attacker, id, dtSeconds);
+        UpdateAttack(self, registry, attacker, combat, id, dtSeconds);
         return true;
     }
     if (Building *building = registry.Get<Building>(id))
@@ -832,14 +850,14 @@ bool EngageTarget(Entity self, Unit &attacker, Registry &registry, TileMap &map,
         }
         attacker.state = UnitState::Attacking;
         attacker.velocity = { 0.0f, 0.0f };
-        if (attacker.phase == AttackPhase::Ready &&
+        if (combat.phase == AttackPhase::Ready &&
             !TurretAimed(registry, self, attacker.position, center, dtSeconds))
         {
             return true; // traversing: visible aim, no free hits
         }
         TurretAimed(registry, self, attacker.position, center, dtSeconds);
-        UpdateAttackPhases(attacker, dtSeconds, [&] {
-            ResolveBuildingAttack(attacker, *building);
+        UpdateAttackPhases(attacker, combat, dtSeconds, [&] {
+            ResolveBuildingAttack(attacker, combat, *building);
             if (building->health <= 0.0f)
             {
                 DemolishBuilding(registry, map, id);
@@ -863,54 +881,57 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
     {
         return; // inside a carrier: no cooldowns, orders, or attacks
     }
+    Orders &orders = GetOrders(registry, self);
+    Mover &mover = GetMover(registry, self);
+    CombatState &combat = GetCombatState(registry, self);
 
-    if (unit->cooldown > 0.0f)
+    if (combat.cooldown > 0.0f)
     {
-        unit->cooldown -= dtSeconds;
-        if (unit->cooldown < 0.0f)
+        combat.cooldown -= dtSeconds;
+        if (combat.cooldown < 0.0f)
         {
-            unit->cooldown = 0.0f;
+            combat.cooldown = 0.0f;
         }
     }
-    if (unit->hitFlashTime > 0.0f)
+    if (combat.hitFlashTime > 0.0f)
     {
-        unit->hitFlashTime -= dtSeconds;
-        if (unit->hitFlashTime < 0.0f)
+        combat.hitFlashTime -= dtSeconds;
+        if (combat.hitFlashTime < 0.0f)
         {
-            unit->hitFlashTime = 0.0f;
+            combat.hitFlashTime = 0.0f;
         }
     }
 
-    if (unit->hasRepairOrder)
+    if (orders.hasRepairOrder)
     {
         Vector2 aim = {};
         const bool healing = unit->type == UnitType::Medic;
-        if (!(healing ? HealAim(registry, *unit, unit->repairTarget, aim)
-                      : RepairAim(registry, *unit, unit->repairTarget, aim)))
+        if (!(healing ? HealAim(registry, *unit, orders.repairTarget, aim)
+                      : RepairAim(registry, *unit, orders.repairTarget, aim)))
         {
-            unit->hasRepairOrder = false;
-            unit->repairTarget = kInvalidEntity;
-            OnOrderFinished(*unit, map, occ, self, registry.Generation(self));
+            orders.hasRepairOrder = false;
+            orders.repairTarget = kInvalidEntity;
+            OnOrderFinished(*unit, orders, mover, map, occ, self, registry.Generation(self));
         }
         else if (glm::distance(cc::ToGlm(unit->position), cc::ToGlm(aim)) > kRepairRange)
         {
             const cc::IVec2 goalTile = RepairApproachTile(map, cc::WorldToTile(cc::ToGlm(aim)));
-            ReissueDriverOrder(*unit, map, occ,
+            ReissueDriverOrder(*unit, mover, map, occ,
                                cc::ToRaylib(cc::TileToWorld(goalTile.x, goalTile.y)), self,
                                registry);
-            UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self, registry.Generation(self));
+            UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self, registry.Generation(self));
             unit->state = UnitState::Moving;
             return;
         }
         else
         {
             const float step = kRepairRate * dtSeconds;
-            if (Unit *patient = registry.Get<Unit>(unit->repairTarget))
+            if (Unit *patient = registry.Get<Unit>(orders.repairTarget))
             {
                 const float max = BaseStats(patient->type).health;
                 patient->health = patient->health + step >= max ? max : patient->health + step;
             }
-            else if (Building *site = registry.Get<Building>(unit->repairTarget))
+            else if (Building *site = registry.Get<Building>(orders.repairTarget))
             {
                 site->health =
                     site->health + step >= site->maxHealth ? site->maxHealth : site->health + step;
@@ -921,162 +942,164 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         }
     }
 
-    if (unit->hasLoadOrder)
+    if (orders.hasLoadOrder)
     {
-        if (!CanLoadTarget(registry, self, *unit, unit->loadTarget))
+        if (!CanLoadTarget(registry, self, *unit, orders.loadTarget))
         {
-            unit->hasLoadOrder = false;
-            unit->loadTarget = kInvalidEntity;
-            OnOrderFinished(*unit, map, occ, self, registry.Generation(self));
+            orders.hasLoadOrder = false;
+            orders.loadTarget = kInvalidEntity;
+            OnOrderFinished(*unit, orders, mover, map, occ, self, registry.Generation(self));
             return;
         }
-        const Unit *rider = registry.Get<Unit>(unit->loadTarget);
+        const Unit *rider = registry.Get<Unit>(orders.loadTarget);
         if (rider != nullptr &&
             glm::distance(cc::ToGlm(unit->position), cc::ToGlm(rider->position)) > kLoadRange)
         {
-            ReissueDriverOrder(*unit, map, occ, rider->position, self, registry);
-            UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self,
+            ReissueDriverOrder(*unit, mover, map, occ, rider->position, self, registry);
+            UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self,
                                registry.Generation(self));
             unit->state = UnitState::Moving;
             return;
         }
-        BoardTransport(registry, self, unit->loadTarget);
-        unit->hasLoadOrder = false;
-        unit->loadTarget = kInvalidEntity;
+        BoardTransport(registry, self, orders.loadTarget);
+        orders.hasLoadOrder = false;
+        orders.loadTarget = kInvalidEntity;
         unit->state = UnitState::Idle;
         unit->velocity = { 0.0f, 0.0f };
-        OnOrderFinished(*unit, map, occ, self, registry.Generation(self));
+        OnOrderFinished(*unit, orders, mover, map, occ, self, registry.Generation(self));
         return;
     }
 
-    if (unit->hasUnloadOrder)
+    if (orders.hasUnloadOrder)
     {
         const Cargo *cargo = registry.Get<Cargo>(self);
         if (cargo == nullptr || cargo->passengers.empty())
         {
-            unit->hasUnloadOrder = false;
-            OnOrderFinished(*unit, map, occ, self, registry.Generation(self));
+            orders.hasUnloadOrder = false;
+            OnOrderFinished(*unit, orders, mover, map, occ, self, registry.Generation(self));
             return;
         }
-        if (glm::distance(cc::ToGlm(unit->position), cc::ToGlm(unit->unloadPos)) > kLoadRange)
+        if (glm::distance(cc::ToGlm(unit->position), cc::ToGlm(orders.unloadPos)) > kLoadRange)
         {
-            ReissueDriverOrder(*unit, map, occ, unit->unloadPos, self, registry);
-            UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self,
+            ReissueDriverOrder(*unit, mover, map, occ, orders.unloadPos, self, registry);
+            UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self,
                                registry.Generation(self));
             unit->state = UnitState::Moving;
             return;
         }
-        UnloadTransport(registry, map, self, unit->unloadPos);
-        unit->hasUnloadOrder = false;
+        UnloadTransport(registry, map, self, orders.unloadPos);
+        orders.hasUnloadOrder = false;
         unit->state = UnitState::Idle;
         unit->velocity = { 0.0f, 0.0f };
-        OnOrderFinished(*unit, map, occ, self, registry.Generation(self));
+        OnOrderFinished(*unit, orders, mover, map, occ, self, registry.Generation(self));
         return;
     }
 
-    if (unit->hasAttackGroundOrder)
+    if (orders.hasAttackGroundOrder)
     {
         const float dist =
-            glm::distance(cc::ToGlm(unit->position), cc::ToGlm(unit->attackGroundPos));
+            glm::distance(cc::ToGlm(unit->position), cc::ToGlm(orders.attackGroundPos));
         if (dist > static_cast<float>(unit->attackRange))
         {
-            ReissueDriverOrder(*unit, map, occ, unit->attackGroundPos, self, registry);
-            UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self,
+            ReissueDriverOrder(*unit, mover, map, occ, orders.attackGroundPos, self, registry);
+            UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self,
                                registry.Generation(self));
             unit->state = UnitState::Moving;
             return;
         }
         unit->state = UnitState::Attacking;
         unit->velocity = { 0.0f, 0.0f };
-        if (unit->phase == AttackPhase::Ready &&
-            !TurretAimed(registry, self, unit->position, unit->attackGroundPos, dtSeconds))
+        if (combat.phase == AttackPhase::Ready &&
+            !TurretAimed(registry, self, unit->position, orders.attackGroundPos, dtSeconds))
         {
             return; // traversing: visible aim, no free hits
         }
-        TurretAimed(registry, self, unit->position, unit->attackGroundPos, dtSeconds);
-        UpdateAttackPhases(*unit, dtSeconds, [&] {
-            ResolveStrikeGround(registry, self, *unit, unit->attackGroundPos);
+        TurretAimed(registry, self, unit->position, orders.attackGroundPos, dtSeconds);
+        UpdateAttackPhases(*unit, combat, dtSeconds, [&] {
+            ResolveStrikeGround(registry, self, *unit, combat, orders.attackGroundPos);
         });
         return;
     }
 
-    if (unit->hasMoveOrder || unit->hasPath)
+    if (mover.hasMoveOrder || mover.hasPath)
     {
-        if (unit->attackMove)
+        if (orders.attackMove)
         {
-            unit->target = AcquireTarget(registry, self, fog, reserved);
-            if (unit->target == kInvalidEntity)
+            combat.target = AcquireTarget(registry, self, fog, reserved);
+            if (combat.target == kInvalidEntity)
             {
-                unit->target = AcquireBuildingTarget(registry, self, fog);
+                combat.target = AcquireBuildingTarget(registry, self, fog);
             }
-            if (unit->target != kInvalidEntity &&
-                ValidateTarget(registry, *unit, unit->target, fog))
+            if (combat.target != kInvalidEntity &&
+                ValidateTarget(registry, *unit, combat.target, fog))
             {
-                if (EngageTarget(self, *unit, registry, map, unit->target, fog, dtSeconds))
+                if (EngageTarget(self, *unit, combat, registry, map, combat.target, fog, dtSeconds))
                 {
                     return;
                 }
                 if (occ != nullptr)
                 {
-                    IssuePathOrderFootprint(*unit, map, *occ,
-                                            TargetPosition(registry, unit->target), self,
+                    IssuePathOrderFootprint(*unit, orders, mover, map, *occ,
+                                            TargetPosition(registry, combat.target), self,
                                             registry.Generation(self));
                 }
                 else
                 {
-                    IssuePathOrder(*unit, map, TargetPosition(registry, unit->target));
+                    IssuePathOrder(*unit, orders, mover, map,
+                                   TargetPosition(registry, combat.target));
                 }
-                UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self, registry.Generation(self));
+                UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self, registry.Generation(self));
                 unit->state = UnitState::Moving;
                 return;
             }
-            unit->target = kInvalidEntity;
-            ReissueDriverOrder(*unit, map, occ, unit->attackMoveDest, self, registry);
+            combat.target = kInvalidEntity;
+            ReissueDriverOrder(*unit, mover, map, occ, orders.attackMoveDest, self, registry);
         }
-        if (unit->target != kInvalidEntity)
+        if (combat.target != kInvalidEntity)
         {
-            if (!ValidateTarget(registry, *unit, unit->target, fog))
+            if (!ValidateTarget(registry, *unit, combat.target, fog))
             {
-                LoseTarget(*unit);
+                LoseTarget(*unit, combat);
             }
-            else if (EngageTarget(self, *unit, registry, map, unit->target, fog, dtSeconds))
+            else if (EngageTarget(self, *unit, combat, registry, map, combat.target, fog,
+                                  dtSeconds))
             {
-                StopMoving(*unit);
+                StopMoving(*unit, mover);
                 return;
             }
         }
-        UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self, registry.Generation(self));
+                UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self, registry.Generation(self));
         return;
     }
 
-    if (unit->target != kInvalidEntity && !ValidateTarget(registry, *unit, unit->target, fog))
+    if (combat.target != kInvalidEntity && !ValidateTarget(registry, *unit, combat.target, fog))
     {
-        LoseTarget(*unit);
+        LoseTarget(*unit, combat);
     }
-    if (unit->target == kInvalidEntity)
+    if (combat.target == kInvalidEntity)
     {
-        unit->target = AcquireTarget(registry, self, fog, reserved);
-        if (unit->target != kInvalidEntity && unit->stance == Stance::Hold)
+        combat.target = AcquireTarget(registry, self, fog, reserved);
+        if (combat.target != kInvalidEntity && orders.stance == Stance::Hold)
         {
-            const Unit *sighting = registry.Get<Unit>(unit->target);
+            const Unit *sighting = registry.Get<Unit>(combat.target);
             if (sighting == nullptr || !InAttackRange(*unit, *sighting))
             {
-                LoseTarget(*unit);
+                LoseTarget(*unit, combat);
             }
         }
     }
-    if (unit->target == kInvalidEntity && unit->stance != Stance::Hold)
+    if (combat.target == kInvalidEntity && orders.stance != Stance::Hold)
     {
-        unit->target = AcquireBuildingTarget(registry, self, fog);
+        combat.target = AcquireBuildingTarget(registry, self, fog);
     }
-    if (unit->target == kInvalidEntity)
+    if (combat.target == kInvalidEntity)
     {
-        if (unit->stance == Stance::Patrol && unit->hasPatrol && !unit->hasMoveOrder &&
-            !unit->hasPath)
+        if (orders.stance == Stance::Patrol && orders.hasPatrol && !mover.hasMoveOrder &&
+            !mover.hasPath)
         {
-            const Vector2 leg = unit->patrolToB ? unit->patrolB : unit->patrolA;
-            unit->patrolToB = !unit->patrolToB;
-            ReissueDriverOrder(*unit, map, occ, leg, self, registry);
+            const Vector2 leg = orders.patrolToB ? orders.patrolB : orders.patrolA;
+            orders.patrolToB = !orders.patrolToB;
+            ReissueDriverOrder(*unit, mover, map, occ, leg, self, registry);
             unit->state = UnitState::Moving;
             return;
         }
@@ -1085,20 +1108,20 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
         return;
     }
 
-    if (EngageTarget(self, *unit, registry, map, unit->target, fog, dtSeconds))
+    if (EngageTarget(self, *unit, combat, registry, map, combat.target, fog, dtSeconds))
     {
         return;
     }
-    if (unit->stance == Stance::Hold)
+    if (orders.stance == Stance::Hold)
     {
-        LoseTarget(*unit);
+        LoseTarget(*unit, combat);
         unit->state = UnitState::Idle;
         unit->velocity = { 0.0f, 0.0f };
         return;
     }
 
-    ReissueDriverOrder(*unit, map, occ, TargetPosition(registry, unit->target), self, registry);
-    UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), dtSeconds, occ, self, registry.Generation(self));
+    ReissueDriverOrder(*unit, mover, map, occ, TargetPosition(registry, combat.target), self, registry);
+    UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self, registry.Generation(self));
 }
 
 namespace
@@ -1153,31 +1176,31 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
     return StepResult::Stepped;
 }
 
-void Arrive(Unit &unit, cc::Vec2 where)
+void Arrive(Unit &unit, Mover &mover, cc::Vec2 where)
 {
     unit.position = cc::ToRaylib(where);
     unit.velocity = { 0.0f, 0.0f };
-    unit.hasMoveOrder = false;
-    unit.hasPath = false;
-    unit.path.clear();
-    unit.pathNext = 0;
+    mover.hasMoveOrder = false;
+    mover.hasPath = false;
+    mover.path.clear();
+    mover.pathNext = 0;
     unit.state = UnitState::Idle;
-    unit.blockedTime = 0.0f;
-    unit.blockedRepaths = 0;
-    unit.speedCapPixelsPerSec = -1.0f;
+    mover.blockedTime = 0.0f;
+    mover.blockedRepaths = 0;
+    mover.speedCapPixelsPerSec = -1.0f;
 }
 
-void CancelAtBlocked(Unit &unit, const TileMap &map)
+void CancelAtBlocked(Unit &unit, Mover &mover, const TileMap &map)
 {
     unit.velocity = { 0.0f, 0.0f };
-    unit.hasMoveOrder = false;
-    unit.hasPath = false;
-    unit.path.clear();
-    unit.pathNext = 0;
+    mover.hasMoveOrder = false;
+    mover.hasPath = false;
+    mover.path.clear();
+    mover.pathNext = 0;
     unit.state = UnitState::Idle;
-    unit.blockedTime = 0.0f;
-    unit.blockedRepaths = 0;
-    unit.speedCapPixelsPerSec = -1.0f;
+    mover.blockedTime = 0.0f;
+    mover.blockedRepaths = 0;
+    mover.speedCapPixelsPerSec = -1.0f;
     SnapUnitToTile(unit);
 
     // Make sure unit dont drift off-map
@@ -1195,9 +1218,9 @@ void CancelAtBlocked(Unit &unit, const TileMap &map)
 constexpr float kBlockedRetryDelaySeconds = 0.5f;
 constexpr int kMaxBlockedRepaths = 3;
 
-bool TryBlockedRetryWithBudget(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
-                               std::uint32_t selfGen, float dtSeconds, float &blockedTime,
-                               int &blockedRepaths)
+bool TryBlockedRetryWithBudget(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                               OccupancyGrid *occ, Entity self, std::uint32_t selfGen,
+                               float dtSeconds, float &blockedTime, int &blockedRepaths)
 {
     unit.velocity = { 0.0f, 0.0f };
     blockedTime += dtSeconds;
@@ -1212,7 +1235,7 @@ bool TryBlockedRetryWithBudget(Unit &unit, const TileMap &map, OccupancyGrid *oc
     ++blockedRepaths;
     blockedTime = 0.0f;
     const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
-    const cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(unit.moveTarget)));
+    const cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(mover.moveTarget)));
     TilePath fresh;
     if (occ != nullptr)
     {
@@ -1229,48 +1252,49 @@ bool TryBlockedRetryWithBudget(Unit &unit, const TileMap &map, OccupancyGrid *oc
     }
     if (fresh.size() == 1)
     {
-        Arrive(unit, cc::ToGlm(unit.moveTarget));
-        OnOrderFinished(unit, map, occ, self, selfGen);
+        Arrive(unit, mover, cc::ToGlm(mover.moveTarget));
+        OnOrderFinished(unit, orders, mover, map, occ, self, selfGen);
         return true;
     }
-    unit.path = std::move(fresh);
-    unit.pathNext = 1;
-    unit.hasPath = true;
-    unit.hasMoveOrder = true;
+    mover.path = std::move(fresh);
+    mover.pathNext = 1;
+    mover.hasPath = true;
+    mover.hasMoveOrder = true;
     return true;
 }
 
-bool TryBlockedRetry(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
-                     std::uint32_t selfGen, float dtSeconds)
+bool TryBlockedRetry(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                     OccupancyGrid *occ, Entity self, std::uint32_t selfGen, float dtSeconds)
 {
-    return TryBlockedRetryWithBudget(unit, map, occ, self, selfGen, dtSeconds, unit.blockedTime,
-                                     unit.blockedRepaths);
+    return TryBlockedRetryWithBudget(unit, orders, mover, map, occ, self, selfGen, dtSeconds,
+                                     mover.blockedTime, mover.blockedRepaths);
 }
 
 }
 
-void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec, float dtSeconds,
+void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &combat,
+                        const TileMap &map, float speedPixelsPerSec, float dtSeconds,
                         OccupancyGrid *occ, Entity self, std::uint32_t selfGen)
 {
-    if (!unit.hasMoveOrder && !unit.hasPath)
+    if (!mover.hasMoveOrder && !mover.hasPath)
     {
         return;
     }
 
     const float step = speedPixelsPerSec * dtSeconds;
     unit.state = UnitState::Moving;
-    unit.phase = AttackPhase::Ready;
+    combat.phase = AttackPhase::Ready;
 
-    if (unit.hasPath)
+    if (mover.hasPath)
     {
-        if (unit.pathNext >= unit.path.size())
+        if (mover.pathNext >= mover.path.size())
         {
-            Arrive(unit, cc::ToGlm(unit.moveTarget));
-            OnOrderFinished(unit, map, occ, self, selfGen);
+            Arrive(unit, mover, cc::ToGlm(mover.moveTarget));
+            OnOrderFinished(unit, orders, mover, map, occ, self, selfGen);
             return;
         }
 
-        const cc::IVec2 node = unit.path[unit.pathNext];
+        const cc::IVec2 node = mover.path[mover.pathNext];
         const cc::Vec2 waypoint = cc::TileToWorld(node.x, node.y);
         cc::Vec2 next = cc::ToGlm(unit.position);
         switch (StepToward(cc::ToGlm(unit.position), waypoint, step, map, next,
@@ -1278,11 +1302,11 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
         {
         case StepResult::Arrived:
             unit.position = cc::ToRaylib(waypoint);
-            ++unit.pathNext;
-            if (unit.pathNext >= unit.path.size())
+            ++mover.pathNext;
+            if (mover.pathNext >= mover.path.size())
             {
-                Arrive(unit, cc::ToGlm(unit.moveTarget));
-                OnOrderFinished(unit, map, occ, self, selfGen);
+                Arrive(unit, mover, cc::ToGlm(mover.moveTarget));
+                OnOrderFinished(unit, orders, mover, map, occ, self, selfGen);
             }
             else
             {
@@ -1290,19 +1314,19 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
             }
             return;
         case StepResult::Blocked:
-            CancelAtBlocked(unit, map);
-            OnOrderCancelled(unit);
+            CancelAtBlocked(unit, mover, map);
+            OnOrderCancelled(orders);
             return;
         case StepResult::BlockedUnit:
-            if (TryBlockedRetry(unit, map, occ, self, selfGen, dtSeconds))
+            if (TryBlockedRetry(unit, orders, mover, map, occ, self, selfGen, dtSeconds))
             {
                 return;
             }
-            CancelAtBlocked(unit, map);
-            OnOrderCancelled(unit);
+            CancelAtBlocked(unit, mover, map);
+            OnOrderCancelled(orders);
             return;
         case StepResult::Stepped:
-            unit.blockedTime = 0.0f;
+            mover.blockedTime = 0.0f;
             unit.velocity = cc::ToRaylib((waypoint - cc::ToGlm(unit.position)) /
                                          glm::length(waypoint - cc::ToGlm(unit.position)) * speedPixelsPerSec);
             unit.facing = FacingFromVelocity(unit.velocity);
@@ -1312,29 +1336,29 @@ void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec,
     }
 
     cc::Vec2 next = cc::ToGlm(unit.position);
-    switch (StepToward(cc::ToGlm(unit.position), cc::ToGlm(unit.moveTarget), step, map, next,
+    switch (StepToward(cc::ToGlm(unit.position), cc::ToGlm(mover.moveTarget), step, map, next,
                        occ, self, selfGen, unit.footprintWidth, unit.footprintHeight))
     {
     case StepResult::Arrived:
-        Arrive(unit, cc::ToGlm(unit.moveTarget));
-        OnOrderFinished(unit, map, occ, self, selfGen);
+        Arrive(unit, mover, cc::ToGlm(mover.moveTarget));
+        OnOrderFinished(unit, orders, mover, map, occ, self, selfGen);
         return;
     case StepResult::Blocked:
-        CancelAtBlocked(unit, map);
-        OnOrderCancelled(unit);
+        CancelAtBlocked(unit, mover, map);
+        OnOrderCancelled(orders);
         return;
     case StepResult::BlockedUnit:
-        if (TryBlockedRetry(unit, map, occ, self, selfGen, dtSeconds))
+        if (TryBlockedRetry(unit, orders, mover, map, occ, self, selfGen, dtSeconds))
         {
             return;
         }
-        CancelAtBlocked(unit, map);
-        OnOrderCancelled(unit);
+        CancelAtBlocked(unit, mover, map);
+        OnOrderCancelled(orders);
         return;
     case StepResult::Stepped:
-        unit.blockedTime = 0.0f;
-        unit.velocity = cc::ToRaylib((cc::ToGlm(unit.moveTarget) - cc::ToGlm(unit.position)) /
-                                     glm::length(cc::ToGlm(unit.moveTarget) - cc::ToGlm(unit.position)) *
+        mover.blockedTime = 0.0f;
+        unit.velocity = cc::ToRaylib((cc::ToGlm(mover.moveTarget) - cc::ToGlm(unit.position)) /
+                                     glm::length(cc::ToGlm(mover.moveTarget) - cc::ToGlm(unit.position)) *
                                      speedPixelsPerSec);
         unit.facing = FacingFromVelocity(unit.velocity);
         unit.position = cc::ToRaylib(next);
@@ -1424,9 +1448,11 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
             }
             const bool isHolder =
                 holder.entity == id && holder.generation == registry.Generation(id);
-            const bool hasOrder = unit->hasMoveOrder || unit->hasPath;
+            const Mover *mover = FindMover(registry, id);
+            const bool hasOrder =
+                mover != nullptr && (mover->hasMoveOrder || mover->hasPath);
             const bool isDeadlockedNow =
-                hasOrder && unit->blockedRepaths >= kMaxBlockedRepaths && unit->blockedTime > 0.0f;
+                hasOrder && mover->blockedRepaths >= kMaxBlockedRepaths && mover->blockedTime > 0.0f;
             if (hasOrder)
             {
                 allIdle = false;
@@ -1486,14 +1512,16 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
         }
         claimedThisFrame.push_back(dest);
 
-        IssuePathOrderFootprint(*unit, map, occ, cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)),
-                               pick, registry.Generation(pick));
+        IssuePathOrderFootprint(*unit, GetOrders(registry, pick), GetMover(registry, pick), map,
+                                occ, cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)), pick,
+                                registry.Generation(pick));
         // The stacked start tile blocks the footprint pathfinder (the neighbor
         // still owns it), so fall back to a straight move order: step-out walks
         // the unit clear and repaths from the freed tile.
-        if (unit->path.empty())
+        if (FindMover(registry, pick)->path.empty())
         {
-            IssueMoveOrder(*unit, cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)));
+            IssueMoveOrder(*unit, GetOrders(registry, pick), GetMover(registry, pick),
+                           cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)));
         }
     }
 }
@@ -1516,11 +1544,12 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
     });
 
     ReservedDamageMap reservedDamage;
-    registry.Each<Unit>([&](Entity, const Unit &unit) {
-        if (unit.health > 0.0f && unit.target != kInvalidEntity &&
-            (unit.phase == AttackPhase::WindUp || unit.phase == AttackPhase::Recover))
+    registry.Each<Unit>([&](Entity id, const Unit &unit) {
+        const CombatState *combat = FindCombatState(registry, id);
+        if (unit.health > 0.0f && combat != nullptr && combat->target != kInvalidEntity &&
+            (combat->phase == AttackPhase::WindUp || combat->phase == AttackPhase::Recover))
         {
-            reservedDamage[unit.target] += static_cast<float>(unit.attackPower);
+            reservedDamage[combat->target] += static_cast<float>(unit.attackPower);
         }
     });
 

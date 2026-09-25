@@ -3,6 +3,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "Unit.h"
 
 void RunUnitAttributeTests()
@@ -12,10 +13,11 @@ void RunUnitAttributeTests()
     CC_CHECK(fresh.speed == 0.0f);
     CC_CHECK(fresh.sightRange == 0.0f);
     CC_CHECK(fresh.damageType == DamageType::KINETIC);
-    CC_CHECK(fresh.cooldown == 0.0f);
     CC_CHECK(fresh.cooldownTime == 0.0f);
-    CC_CHECK(fresh.target == kInvalidEntity);
     CC_CHECK(fresh.state == UnitState::Idle);
+    CombatState freshCombat;
+    CC_CHECK(freshCombat.cooldown == 0.0f);
+    CC_CHECK(freshCombat.target == kInvalidEntity);
 
     // --- fields are independent and assignable ---
     Unit u;
@@ -23,15 +25,16 @@ void RunUnitAttributeTests()
     u.sightRange = 320.0f;
     u.damageType = DamageType::EXPLOSIVE;
     u.cooldownTime = 1.5f;
-    u.cooldown = 0.75f;
-    u.target = 42;
     u.health = 55.0f;
+    CombatState c;
+    c.cooldown = 0.75f;
+    c.target = 42;
     CC_CHECK(u.speed == 96.0f);
     CC_CHECK(u.sightRange == 320.0f);
     CC_CHECK(u.damageType == DamageType::EXPLOSIVE);
     CC_CHECK(u.cooldownTime == 1.5f);
-    CC_CHECK(u.cooldown == 0.75f);
-    CC_CHECK(u.target == 42);
+    CC_CHECK(c.cooldown == 0.75f);
+    CC_CHECK(c.target == 42);
     CC_CHECK(u.health == 55.0f);
 
     // --- snapping touches position only ---
@@ -40,6 +43,6 @@ void RunUnitAttributeTests()
     CC_CHECK(u.position.x == 64.0f);
     CC_CHECK(u.position.y == 128.0f);
     CC_CHECK(u.speed == 96.0f);
-    CC_CHECK(u.target == 42);
-    CC_CHECK(u.cooldown == 0.75f);
+    CC_CHECK(c.target == 42);
+    CC_CHECK(c.cooldown == 0.75f);
 }

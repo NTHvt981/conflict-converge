@@ -7,6 +7,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "Pathfinder.h" // IssuePathOrderFootprint (not used directly, transitively needed)
 #include "TileMap.h"
 #include "Unit.h"
@@ -62,10 +63,10 @@ void RunUnitStackResolutionTests()
         SeedOccupancy(registry, occ);
         ResolveStackedUnits(registry, map, occ);
 
-        const Unit *ua = registry.Get<Unit>(a);
-        const Unit *ub = registry.Get<Unit>(b);
-        const bool aActive = ua->hasMoveOrder || ua->hasPath;
-        const bool bActive = ub->hasMoveOrder || ub->hasPath;
+        const Mover *ua = FindMover(registry, a);
+        const Mover *ub = FindMover(registry, b);
+        const bool aActive = ua != nullptr && (ua->hasMoveOrder || ua->hasPath);
+        const bool bActive = ub != nullptr && (ub->hasMoveOrder || ub->hasPath);
         CC_CHECK(aActive != bActive); // exactly one, not both, not neither
 
         // A second call in the same frame must not also pick the other one
@@ -73,8 +74,10 @@ void RunUnitStackResolutionTests()
         // stack alone).
         SeedOccupancy(registry, occ);
         ResolveStackedUnits(registry, map, occ);
-        const bool aActive2 = registry.Get<Unit>(a)->hasMoveOrder || registry.Get<Unit>(a)->hasPath;
-        const bool bActive2 = registry.Get<Unit>(b)->hasMoveOrder || registry.Get<Unit>(b)->hasPath;
+        const Mover *ua2 = FindMover(registry, a);
+        const Mover *ub2 = FindMover(registry, b);
+        const bool aActive2 = ua2 != nullptr && (ua2->hasMoveOrder || ua2->hasPath);
+        const bool bActive2 = ub2 != nullptr && (ub2->hasMoveOrder || ub2->hasPath);
         CC_CHECK(aActive2 != bActive2);
         CC_CHECK(aActive == aActive2 && bActive == bActive2); // same one stays picked
     }
@@ -94,9 +97,10 @@ void RunUnitStackResolutionTests()
         for (; frame < 300; ++frame)
         {
             RunUnitMovementFrame(registry, map, occ, nullptr, kDt);
-            const Unit *ua = registry.Get<Unit>(a);
-            const Unit *ub = registry.Get<Unit>(b);
-            if (!ua->hasMoveOrder && !ua->hasPath && !ub->hasMoveOrder && !ub->hasPath)
+            const Mover *ua = FindMover(registry, a);
+            const Mover *ub = FindMover(registry, b);
+            if (ua != nullptr && ub != nullptr && !ua->hasMoveOrder && !ua->hasPath &&
+                !ub->hasMoveOrder && !ub->hasPath)
             {
                 break;
             }
@@ -122,12 +126,13 @@ void RunUnitStackResolutionTests()
         SeedOccupancy(registry, occ);
         ResolveStackedUnits(registry, map, occ);
 
-        const Unit *ua = registry.Get<Unit>(a);
-        const Unit *ub = registry.Get<Unit>(b);
-        const Entity picked = (ua->hasMoveOrder || ua->hasPath) ? a : b;
-        const Unit *pickedUnit = registry.Get<Unit>(picked);
-        CC_CHECK(pickedUnit->hasMoveOrder || pickedUnit->hasPath);
-        const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(pickedUnit->moveTarget));
+        const Mover *ua = FindMover(registry, a);
+        const Mover *ub = FindMover(registry, b);
+        const Entity picked = (ua != nullptr && (ua->hasMoveOrder || ua->hasPath)) ? a : b;
+        const Mover *pickedMover = FindMover(registry, picked);
+        CC_CHECK(pickedMover != nullptr &&
+                 (pickedMover->hasMoveOrder || pickedMover->hasPath));
+        const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(pickedMover->moveTarget));
         CC_CHECK(!(dest == cc::IVec2(5, 5))); // actually moved off the stack tile
         // The chosen destination must genuinely fit the full 2x2 footprint,
         // not just a single free tile (NearestFreeTile-style would be wrong
@@ -152,10 +157,10 @@ void RunUnitStackResolutionTests()
         ResolveStackedUnits(registry, map, occ);
 
         auto stackProgressed = [&](Entity x, Entity y) {
-            const Unit *ux = registry.Get<Unit>(x);
-            const Unit *uy = registry.Get<Unit>(y);
-            const bool xActive = ux->hasMoveOrder || ux->hasPath;
-            const bool yActive = uy->hasMoveOrder || uy->hasPath;
+            const Mover *ux = FindMover(registry, x);
+            const Mover *uy = FindMover(registry, y);
+            const bool xActive = ux != nullptr && (ux->hasMoveOrder || ux->hasPath);
+            const bool yActive = uy != nullptr && (uy->hasMoveOrder || uy->hasPath);
             return xActive != yActive;
         };
         CC_CHECK(stackProgressed(a0, a1)); // near (2,2) resolved
@@ -170,14 +175,15 @@ void RunUnitStackResolutionTests()
         const Entity solo = registry.Create();
         registry.Add(solo, MakeUnit(1, 1));
         Unit *unit = registry.Get<Unit>(solo);
-        IssueMoveOrder(*unit, cc::ToRaylib(cc::TileToWorld(8, 8)));
-        const Vector2 targetBefore = unit->moveTarget;
-        const bool hasMoveBefore = unit->hasMoveOrder;
+        IssueMoveOrder(*unit, GetOrders(registry, solo), GetMover(registry, solo),
+                       cc::ToRaylib(cc::TileToWorld(8, 8)));
+        const Vector2 targetBefore = GetMover(registry, solo).moveTarget;
+        const bool hasMoveBefore = GetMover(registry, solo).hasMoveOrder;
 
         ResolveStackedUnits(registry, map, occ);
 
-        const Unit *after = registry.Get<Unit>(solo);
-        CC_CHECK(after->hasMoveOrder == hasMoveBefore);
+        const Mover *after = FindMover(registry, solo);
+        CC_CHECK(after != nullptr && after->hasMoveOrder == hasMoveBefore);
         CC_CHECK(after->moveTarget.x == targetBefore.x && after->moveTarget.y == targetBefore.y);
     }
 
@@ -199,8 +205,8 @@ void RunUnitStackResolutionTests()
         ResolveStackedUnits(registry, map, occ); // used to assert InBounds in GetUnit
 
         // OOB stacks are skipped, not relocated.
-        CC_CHECK(!registry.Get<Unit>(a)->hasMoveOrder && !registry.Get<Unit>(a)->hasPath);
-        CC_CHECK(!registry.Get<Unit>(b)->hasMoveOrder && !registry.Get<Unit>(b)->hasPath);
+        CC_CHECK(!GetMover(registry, a).hasMoveOrder && !GetMover(registry, a).hasPath);
+        CC_CHECK(!GetMover(registry, b).hasMoveOrder && !GetMover(registry, b).hasPath);
     }
 
     // --- regression: an off-map move target within one step cancels
@@ -214,11 +220,14 @@ void RunUnitStackResolutionTests()
         registry.Add(solo, MakeUnit(9, 5));
         Unit *unit = registry.Get<Unit>(solo);
         unit->speed = 200.0f;
-        IssueMoveOrder(*unit, Vector2{ 10.0f * 64.0f + 32.0f, 5.0f * 64.0f }); // OOB target
-        UpdateUnitMovement(*unit, map, EffectiveSpeed(*unit), 1.0f, &occ, solo,
+        IssueMoveOrder(*unit, GetOrders(registry, solo), GetMover(registry, solo),
+                       Vector2{ 10.0f * 64.0f + 32.0f, 5.0f * 64.0f }); // OOB target
+        UpdateUnitMovement(*unit, GetOrders(registry, solo), GetMover(registry, solo),
+                           GetCombatState(registry, solo), map,
+                           EffectiveSpeed(*unit, GetMover(registry, solo)), 1.0f, &occ, solo,
                            registry.Generation(solo));
         const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit->position));
         CC_CHECK(map.InBounds(tile));
-        CC_CHECK(!unit->hasMoveOrder && !unit->hasPath);
+        CC_CHECK(!GetMover(registry, solo).hasMoveOrder && !GetMover(registry, solo).hasPath);
     }
 }

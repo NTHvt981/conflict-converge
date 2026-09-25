@@ -31,8 +31,10 @@ cc::IVec2 NearestEnterableTile(const TileMap &map, const OccupancyGrid &occ,
 
 // Order a unit along an A* path to a world target; falls back to a straight
 // move order when no path exists.
-void IssuePathOrder(Unit &unit, const TileMap &map, Vector2 worldTarget);
+void IssuePathOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                    Vector2 worldTarget);
 
 // Footprint-aware path order (8-dir A* with CanEnter checks).
-void IssuePathOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
-                             Vector2 worldTarget, Entity self, std::uint32_t selfGen);
+void IssuePathOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                             const OccupancyGrid &occ, Vector2 worldTarget, Entity self,
+                             std::uint32_t selfGen);

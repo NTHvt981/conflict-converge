@@ -37,6 +37,9 @@ Entity UnitFactory::SpawnPrepaid(UnitType type, int teamID, Vector2 worldPos)
 
     const Entity id = registry_.Create();
     registry_.Add(id, unit);
+    registry_.Add(id, Orders{});
+    registry_.Add(id, Mover{});
+    registry_.Add(id, CombatState{});
     // M2 extension components: only gimmick units get them.
     const UnitConfig &config = ActiveUnitConfig(type);
     if (config.abilities.turretTurnRate > 0.0f)

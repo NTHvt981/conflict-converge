@@ -85,29 +85,35 @@ void RunSaveGameTests()
     scout.position = cc::ToRaylib(cc::TileToWorld(2, 2));
     scout.isSelected = true;
     scout.health = 73.5f;
-    scout.cooldown = 0.2f;
     scout.sightRange = 128.0f; // deterministic reveal for the team_fog roundtrip
-    scout.lastDamageTaken = 12.0f;
-    scout.hitFlashTime = 0.1f;
     const Entity scoutId = src.registry.Create();
     src.registry.Add(scoutId, scout);
+    CombatState scoutCombat;
+    scoutCombat.cooldown = 0.2f;
+    scoutCombat.lastDamageTaken = 12.0f;
+    scoutCombat.hitFlashTime = 0.1f;
+    src.registry.Add(scoutId, scoutCombat);
 
     Unit hunter;
     hunter.type = UnitType::LightTank;
     ApplyBaseStats(hunter);
     hunter.teamID = 1;
     hunter.position = cc::ToRaylib(cc::TileToWorld(6, 2));
-    hunter.target = scoutId; // cross-entity reference must survive the trip
-    hunter.hasMoveOrder = true;
-    hunter.moveTarget = cc::ToRaylib(cc::TileToWorld(3, 3));
-    hunter.path = { { 5, 2 }, { 4, 2 }, { 3, 3 } };
-    hunter.pathNext = 1;
-    hunter.hasPath = true;
     hunter.state = UnitState::Moving;
-    hunter.phase = AttackPhase::WindUp;
-    hunter.phaseTime = 0.05f;
     const Entity hunterId = src.registry.Create();
     src.registry.Add(hunterId, hunter);
+    CombatState hunterCombat;
+    hunterCombat.target = scoutId; // cross-entity reference must survive the trip
+    hunterCombat.phase = AttackPhase::WindUp;
+    hunterCombat.phaseTime = 0.05f;
+    src.registry.Add(hunterId, hunterCombat);
+    Mover hunterMover;
+    hunterMover.hasMoveOrder = true;
+    hunterMover.moveTarget = cc::ToRaylib(cc::TileToWorld(3, 3));
+    hunterMover.path = { { 5, 2 }, { 4, 2 }, { 3, 3 } };
+    hunterMover.pathNext = 1;
+    hunterMover.hasPath = true;
+    src.registry.Add(hunterId, hunterMover);
 
     const std::string path = ScratchPath();
     src.fog.Recompute(src.registry); // bank explored memory for team_fog
@@ -158,14 +164,20 @@ void RunSaveGameTests()
     const Unit *lh = dst.registry.Get<Unit>(loadedHunter);
     CC_CHECK(Near(ls->health, 73.5f) && ls->isSelected);
     CC_CHECK(ls->health == 73.5f); // JSON round-trips exact floats
-    CC_CHECK(Near(ls->lastDamageTaken, 12.0f) && Near(ls->hitFlashTime, 0.1f));
-    CC_CHECK(Near(ls->cooldown, 0.2f));
-    CC_CHECK(lh->target == loadedScout); // remapped to the fresh scout ID
-    CC_CHECK(lh->hasMoveOrder && lh->hasPath && lh->pathNext == 1 && lh->path.size() == 3);
-    CC_CHECK(lh->path[0] == cc::IVec2(5, 2) && lh->path[2] == cc::IVec2(3, 3));
-    CC_CHECK(lh->state == UnitState::Moving && lh->phase == AttackPhase::WindUp);
-    CC_CHECK(Near(lh->phaseTime, 0.05f));
-    CC_CHECK(lh->phaseTime == 0.05f); // JSON round-trips exact floats
+    const CombatState *loadedScoutCombat = FindCombatState(dst.registry, loadedScout);
+    CC_CHECK(Near(loadedScoutCombat->lastDamageTaken, 12.0f) &&
+             Near(loadedScoutCombat->hitFlashTime, 0.1f));
+    CC_CHECK(Near(loadedScoutCombat->cooldown, 0.2f));
+    const CombatState *loadedHunterCombat = FindCombatState(dst.registry, loadedHunter);
+    CC_CHECK(loadedHunterCombat->target == loadedScout); // remapped to the fresh scout ID
+    const Mover *loadedMover = FindMover(dst.registry, loadedHunter);
+    CC_CHECK(loadedMover != nullptr && loadedMover->hasMoveOrder && loadedMover->hasPath &&
+             loadedMover->pathNext == 1 && loadedMover->path.size() == 3);
+    CC_CHECK(loadedMover->path[0] == cc::IVec2(5, 2) && loadedMover->path[2] == cc::IVec2(3, 3));
+    CC_CHECK(lh->state == UnitState::Moving &&
+             loadedHunterCombat->phase == AttackPhase::WindUp);
+    CC_CHECK(Near(loadedHunterCombat->phaseTime, 0.05f));
+    CC_CHECK(loadedHunterCombat->phaseTime == 0.05f); // JSON round-trips exact floats
 
     int bases = 0, factories = 0;
     dst.registry.Each<Building>([&](Entity, const Building &b) {
@@ -310,7 +322,10 @@ void RunSaveGameTests()
         }
         CC_CHECK(u->type == UnitType::RifleInfantry && u->teamID == 0);
         CC_CHECK(u->health == 50.0f);
-        CC_CHECK(u->cooldown == 0.0f && !u->hasMoveOrder && !u->hasPath);
+        CC_CHECK(FindCombatState(sparseWorld.registry, only)->cooldown == 0.0f &&
+                 FindMover(sparseWorld.registry, only) != nullptr &&
+                 !FindMover(sparseWorld.registry, only)->hasMoveOrder &&
+                 !FindMover(sparseWorld.registry, only)->hasPath);
         CC_CHECK(u->attackPower == 0 && u->attackRange == 0); // absent: zero, not table
         CC_CHECK(u->position.x == 128.0f && u->position.y == 128.0f);
         CC_CHECK(sparseWorld.resources.iron == 0 && sparseWorld.nodes.Count() == 0);
@@ -331,7 +346,8 @@ void RunSaveGameTests()
         walker.position = cc::ToRaylib(cc::TileToWorld(1, 1));
         const Entity walkerId = actor.registry.Create();
         actor.registry.Add(walkerId, walker);
-        IssueMoveOrder(*actor.registry.Get<Unit>(walkerId),
+        IssueMoveOrder(*actor.registry.Get<Unit>(walkerId), GetOrders(actor.registry, walkerId),
+                       GetMover(actor.registry, walkerId),
                        cc::ToRaylib(cc::TileToWorld(5, 1)));
 
         float expectedX[3] = {};

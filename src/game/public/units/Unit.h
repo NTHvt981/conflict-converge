@@ -12,6 +12,9 @@
 class TileMap;
 class OccupancyGrid;
 class FogOfWar;
+struct Orders; // units/Extensions.h: order-intent pool (slice 1 of the Unit split)
+struct Mover;  // units/Extensions.h: movement-execution pool (slice 2)
+struct CombatState; // units/Extensions.h: live combat-state pool (slice 3)
 
 // 8 unit types plus the prototype-sandbox type
 // (prototype art at 2x; sandbox levels only, never in factory menus).
@@ -119,16 +122,10 @@ struct Unit
     DamageType damageType = DamageType::KINETIC; // dealt by this unit
     int attackPower = 0;
     int attackRange = 0; // pixels
-    float cooldown = 0.0f; // seconds until next strike
     float cooldownTime = 0.0f; // seconds between attacks
-    AttackPhase phase = AttackPhase::Ready;
-    float phaseTime = 0.0f; // live WindUp countdown
     float windupTime = 0.15f; // telegraph before the hit lands
-    float lastDamageTaken = 0.0f; // most recent effective hit
-    float hitFlashTime = 0.0f; // live hit-overlay countdown
     float speed = 0.0f; // pixels per second
     float sightRange = 0.0f; // pixels
-    float speedCapPixelsPerSec = -1.0f; // slowest-speed cap; -1 = uncapped
     Vector2 position = {}; // snapped to 64x64 grid
     Vector2 velocity = {};
     bool isSelected = false;
@@ -137,36 +134,19 @@ struct Unit
     UnitType type = UnitType::RifleInfantry;
     UnitState state = UnitState::Idle;
     Facing facing = Facing::Right; // last travel direction
-    Entity target = kInvalidEntity; // acquired enemy
-    Vector2 moveTarget = {}; // tile-snapped pending move destination
-    bool hasMoveOrder = false;
-    std::vector<cc::IVec2> path; // A* waypoints (tile indices)
-    std::size_t pathNext = 0;
-    bool hasPath = false;
-    bool attackMove = false;
-    Vector2 attackMoveDest = {}; // march goal kept across chase detours
-    Stance stance = Stance::Guard;
-    bool autoRetreat = false; // player opt-in auto-retreat
-    bool hasPatrol = false;
-    Vector2 patrolA = {};
-    Vector2 patrolB = {};
-    bool patrolToB = true;
-    bool hasRepairOrder = false; // channeled Engineer repair
-    Entity repairTarget = kInvalidEntity;
-    bool hasAttackGroundOrder = false;
-    Vector2 attackGroundPos = {};
-    bool hasLoadOrder = false; // G4 player-only transport boarding
-    Entity loadTarget = kInvalidEntity; // foot passenger to pick up
-    bool hasUnloadOrder = false;
-    Vector2 unloadPos = {}; // tile-snapped drop point
-    std::vector<QueuedOrder> orderQueue; // pending orders, dispatched FIFO
+    // Order intent (stance/attack-move/patrol/repair/attack-ground/
+    // load/unload/queue) lives in the Orders pool (units/Extensions.h),
+    // fetched via GetOrders; movement execution (moveTarget/hasMoveOrder/
+    // path/blocked-retry/speed-cap) lives in the Mover pool, fetched via
+    // GetMover; live combat state (target/phase/cooldown/hit feedback)
+    // lives in the CombatState pool, fetched via GetCombatState.
+    // Write-once stats (attackPower/attackRange/cooldownTime/windupTime/
+    // speed/sightRange/armor/damage) and identity stay on Unit by decision.
     // Multi-tile footprint. 1x1 for foot units, 2x2 for vehicles.
     // Anchor tile is the unit's logical position; the footprint extends
     // toward +x/+y from the anchor. Occupancy and CanEnter check all tiles.
     int footprintWidth = 1;
     int footprintHeight = 1;
-    float blockedTime = 0.0f; // blocked-move retry accounting
-    int blockedRepaths = 0;
 };
 
 // Snap a unit's world position to its tile's top-left corner (64x64 grid).
@@ -176,44 +156,41 @@ inline void SnapUnitToTile(Unit &unit)
 }
 
 // Effective movement speed honoring the slowest-speed cap (-1 = own speed).
-inline float EffectiveSpeed(const Unit &unit)
-{
-    if (unit.speedCapPixelsPerSec < 0.0f || unit.speedCapPixelsPerSec >= unit.speed)
-    {
-        return unit.speed;
-    }
-    return unit.speedCapPixelsPerSec;
-}
+// Defined in units/Extensions.h (needs the complete Mover type).
+float EffectiveSpeed(const Unit &unit, const Mover &mover);
 
 // Issue a tile-snapped move order; UpdateUnitMovement walks it per frame.
-void IssueMoveOrder(Unit &unit, Vector2 worldTarget);
+void IssueMoveOrder(Unit &unit, Orders &orders, Mover &mover, Vector2 worldTarget);
 
 // Clear every active order; call before issuing a fresh non-queued order.
-void ClearOrders(Unit &unit);
+void ClearOrders(Unit &unit, Orders &orders, Mover &mover);
 
 // Attack-move: engage enemies on contact and resume the march when lost.
-void IssueAttackMoveOrder(Unit &unit, const TileMap &map, Vector2 worldTarget);
+void IssueAttackMoveOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                          Vector2 worldTarget);
 
 // Footprint-aware attack-move: the initial march routes around units.
-void IssueAttackMoveOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
-                                   Vector2 worldTarget, Entity self, std::uint32_t selfGen);
+void IssueAttackMoveOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                                   const OccupancyGrid &occ, Vector2 worldTarget, Entity self,
+                                   std::uint32_t selfGen);
 
 // Switch stance; leaving Patrol drops the route.
-void SetStance(Unit &unit, Stance stance);
+void SetStance(Unit &unit, Orders &orders, CombatState &combat, Stance stance);
 
 // Patrol between two world points, looping while idle.
-void IssuePatrolOrder(Unit &unit, const TileMap &map, Vector2 pointA, Vector2 pointB);
+void IssuePatrolOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map, Vector2 pointA,
+                      Vector2 pointB);
 
 // Engineer repair order on a same-team mechanical unit or Operational building.
-void IssueRepairOrder(Unit &engineer, Entity target);
+void IssueRepairOrder(Unit &engineer, Orders &orders, Mover &mover, Entity target);
 
 // Player-side pre-check for the right-click repair gesture.
 bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity target);
 
 // Medic heal order on a same-team damaged flesh unit. Reuses the channeled
-// repair fields below (hasRepairOrder/repairTarget); the per-frame driver
-// aims via CanHealTarget instead of CanRepairTarget.
-void IssueHealOrder(Unit &medic, Entity target);
+// repair fields in the Orders pool; the per-frame driver aims via
+// CanHealTarget instead of CanRepairTarget.
+void IssueHealOrder(Unit &medic, Orders &orders, Mover &mover, Entity target);
 
 // Player-side pre-check for the right-click heal gesture.
 bool CanHealTarget(const Registry &registry, const Unit &medic, Entity target);
@@ -240,14 +217,17 @@ int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engine
                      std::vector<RepairAssignment> &out);
 
 // Attack-ground: shell worldPos continuously until cancelled.
-void IssueAttackGroundOrder(Unit &unit, const TileMap &map, Vector2 worldPos);
-void IssueAttackGroundOrderFootprint(Unit &unit, const TileMap &map, const OccupancyGrid &occ,
-                                     Vector2 worldPos, Entity self, std::uint32_t selfGen);
+void IssueAttackGroundOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                            Vector2 worldPos);
+void IssueAttackGroundOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                                     const OccupancyGrid &occ, Vector2 worldPos, Entity self,
+                                     std::uint32_t selfGen);
 
 // G4 IFV transport, player-only: AICommander never builds carriers or boards
 // passengers (transport AI is a separate project: pickup routing + timing).
-void IssueLoadOrder(Unit &carrier, Entity passenger);
-void IssueUnloadOrder(Unit &carrier, const TileMap &map, Vector2 worldPos);
+void IssueLoadOrder(Unit &carrier, Orders &orders, Mover &mover, Entity passenger);
+void IssueUnloadOrder(Unit &carrier, Orders &orders, Mover &mover, const TileMap &map,
+                      Vector2 worldPos);
 // Foot-only, same-team, live, non-embarked passenger with a free seat.
 // Enemies/vehicles/full carriers reject like heal validation.
 bool CanLoadTarget(const Registry &registry, Entity carrier, const Unit &carrierUnit,
@@ -267,11 +247,13 @@ void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector
                     float healthFraction, bool onlyAutoRetreat);
 
 // Issue immediately, or append to the shift-queue.
-void IssueOrEnqueue(Unit &unit, const TileMap &map, OccupancyGrid *occ, Entity self,
-                    std::uint32_t selfGen, bool shiftQueue, QueuedOrder order);
+void IssueOrEnqueue(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
+                    OccupancyGrid *occ, Entity self, std::uint32_t selfGen, bool shiftQueue,
+                    QueuedOrder order);
 
 // Advance one frame toward the pending order; stops snapped on arrival.
-void UpdateUnitMovement(Unit &unit, const TileMap &map, float speedPixelsPerSec, float dtSeconds,
+void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &combat,
+                        const TileMap &map, float speedPixelsPerSec, float dtSeconds,
                         OccupancyGrid *occ = nullptr, Entity self = 0,
                         std::uint32_t selfGen = 0);
 

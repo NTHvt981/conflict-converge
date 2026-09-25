@@ -13,6 +13,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "Formation.h"
 #include "Pathfinder.h"
 #include "TileMap.h"
@@ -54,8 +55,9 @@ RunResult RunUntilDone(Registry &registry, TileMap &map, OccupancyGrid &occ,
         for (std::size_t i = 0; i < squad.size(); ++i)
         {
             const Unit *u = registry.Get<Unit>(squad[i]);
-            allDone = allDone && !u->hasMoveOrder && !u->hasPath;
-            const bool active = u->hasMoveOrder || u->hasPath;
+            const Mover *mover = FindMover(registry, squad[i]);
+            allDone = allDone && mover != nullptr && !mover->hasMoveOrder && !mover->hasPath;
+            const bool active = mover != nullptr && (mover->hasMoveOrder || mover->hasPath);
             const bool still = u->velocity.x == 0.0f && u->velocity.y == 0.0f;
             if (active && still)
             {
@@ -104,8 +106,8 @@ void RunFormationDeadlockFixTests()
         // one direct (the keeper), one via the escape hop (the straggler).
         for (Entity id : squad)
         {
-            const Unit *u = registry.Get<Unit>(id);
-            CC_CHECK(u->hasMoveOrder || u->hasPath);
+            const Mover *mover = FindMover(registry, id);
+            CC_CHECK(mover != nullptr && (mover->hasMoveOrder || mover->hasPath));
         }
         // The formation slots for a 2-unit group (cellSize 1) are
         // (20,10) and (21,10) -- record them before stepping so the final
@@ -149,8 +151,8 @@ void RunFormationDeadlockFixTests()
                                         cc::ToRaylib(cc::TileToWorld(20, 20)), false);
         for (Entity id : squad)
         {
-            const Unit *u = registry.Get<Unit>(id);
-            CC_CHECK(u->hasMoveOrder || u->hasPath);
+            const Mover *mover = FindMover(registry, id);
+            CC_CHECK(mover != nullptr && (mover->hasMoveOrder || mover->hasPath));
         }
 
         const RunResult result = RunUntilDone(registry, map, occ, squad, 2400);
@@ -190,16 +192,20 @@ void RunFormationDeadlockFixTests()
 
         Unit *ua = registry.Get<Unit>(a);
         Unit *ub = registry.Get<Unit>(b);
+        (void)ua;
+        (void)ub;
+        Mover &ma = GetMover(registry, a);
+        Mover &mb = GetMover(registry, b);
         // Both "have an order" but neither has moved (as if each is
         // blocking the other's very first step). Give A a maxed-out retry
         // budget -- one more blocked frame would silently cancel it.
-        ua->hasMoveOrder = true;
-        ua->moveTarget = cc::ToRaylib(cc::TileToWorld(15, 8));
-        ua->blockedRepaths = 3; // matches Unit.cpp's private kMaxBlockedRepaths
-        ua->blockedTime = 0.1f; // currently mid-block, not just a past history of repaths
-        ub->hasMoveOrder = true;
-        ub->moveTarget = cc::ToRaylib(cc::TileToWorld(8, 15));
-        ub->blockedRepaths = 0; // B's order is still healthy
+        ma.hasMoveOrder = true;
+        ma.moveTarget = cc::ToRaylib(cc::TileToWorld(15, 8));
+        ma.blockedRepaths = 3; // matches Unit.cpp's private kMaxBlockedRepaths
+        ma.blockedTime = 0.1f; // currently mid-block, not just a past history of repaths
+        mb.hasMoveOrder = true;
+        mb.moveTarget = cc::ToRaylib(cc::TileToWorld(8, 15));
+        mb.blockedRepaths = 0; // B's order is still healthy
 
         // Seed occupancy the way RunUnitMovementFrame's pre-pass would.
         registry.Each<Unit>([&](Entity id, Unit &unit) {
@@ -229,10 +235,10 @@ void RunFormationDeadlockFixTests()
             // A is never touched -- its own order (stale moveTarget,
             // maxed-out blockedRepaths) is left exactly as-is; the fix
             // instead relocates B to free the tile.
-            CC_CHECK(ua->moveTarget.x == cc::ToRaylib(cc::TileToWorld(15, 8)).x &&
-                    ua->moveTarget.y == cc::ToRaylib(cc::TileToWorld(15, 8)).y);
-            CC_CHECK(ub->hasPath);
-            const cc::IVec2 rescueDest = cc::WorldToTile(cc::ToGlm(ub->moveTarget));
+            CC_CHECK(ma.moveTarget.x == cc::ToRaylib(cc::TileToWorld(15, 8)).x &&
+                     ma.moveTarget.y == cc::ToRaylib(cc::TileToWorld(15, 8)).y);
+            CC_CHECK(mb.hasPath);
+            const cc::IVec2 rescueDest = cc::WorldToTile(cc::ToGlm(mb.moveTarget));
             CC_CHECK(!(rescueDest == cc::IVec2(8, 8)));
         }
         else
@@ -240,13 +246,13 @@ void RunFormationDeadlockFixTests()
             // A (deadlocked, not the holder) gets rescued directly: a
             // fresh path toward a real, different tile -- not left with its
             // stale moveTarget and doomed to the next silent cancel.
-            CC_CHECK(ua->hasPath);
-            const cc::IVec2 rescueDest = cc::WorldToTile(cc::ToGlm(ua->moveTarget));
+            CC_CHECK(ma.hasPath);
+            const cc::IVec2 rescueDest = cc::WorldToTile(cc::ToGlm(ma.moveTarget));
             CC_CHECK(!(rescueDest == cc::IVec2(8, 8)));
             // B's healthy order must be completely untouched.
-            CC_CHECK(ub->moveTarget.x == cc::ToRaylib(cc::TileToWorld(8, 15)).x &&
-                    ub->moveTarget.y == cc::ToRaylib(cc::TileToWorld(8, 15)).y);
-            CC_CHECK(ub->blockedRepaths == 0);
+            CC_CHECK(mb.moveTarget.x == cc::ToRaylib(cc::TileToWorld(8, 15)).x &&
+                     mb.moveTarget.y == cc::ToRaylib(cc::TileToWorld(8, 15)).y);
+            CC_CHECK(mb.blockedRepaths == 0);
         }
     }
 }

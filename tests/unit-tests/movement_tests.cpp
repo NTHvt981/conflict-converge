@@ -2,6 +2,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "TileMap.h"
 #include "Unit.h"
 
@@ -11,15 +12,18 @@ void RunMovementTests()
 
     // --- order snaps the destination to the tile corner ---
     Unit unit;
+    Orders unitOrders;
+    Mover unitMover;
+    CombatState unitCombat;
     unit.position = { 0.0f, 0.0f };
-    IssueMoveOrder(unit, { 200.0f, 100.0f });
-    CC_CHECK(unit.hasMoveOrder);
-    CC_CHECK(unit.moveTarget.x == 192.0f);
-    CC_CHECK(unit.moveTarget.y == 64.0f);
+    IssueMoveOrder(unit, unitOrders, unitMover, { 200.0f, 100.0f });
+    CC_CHECK(unitMover.hasMoveOrder);
+    CC_CHECK(unitMover.moveTarget.x == 192.0f);
+    CC_CHECK(unitMover.moveTarget.y == 64.0f);
 
     // --- stepping advances toward the target, state + velocity set ---
-    UpdateUnitMovement(unit, map, 100.0f, 1.0f);
-    CC_CHECK(unit.hasMoveOrder);
+    UpdateUnitMovement(unit, unitOrders, unitMover, unitCombat, map, 100.0f, 1.0f);
+    CC_CHECK(unitMover.hasMoveOrder);
     CC_CHECK(unit.state == UnitState::Moving);
     CC_CHECK(unit.position.x > 0.0f);
     CC_CHECK(unit.position.y > 0.0f);
@@ -27,18 +31,25 @@ void RunMovementTests()
 
     // --- no order: no-op ---
     Unit idle;
+    Orders idleOrders;
+    Mover idleMover;
+    CombatState idleCombat;
     idle.position = { 64.0f, 64.0f };
-    UpdateUnitMovement(idle, map, 100.0f, 1.0f);
+    UpdateUnitMovement(idle, idleOrders, idleMover, idleCombat, map, 100.0f, 1.0f);
     CC_CHECK(idle.position.x == 64.0f);
     CC_CHECK(idle.position.y == 64.0f);
     CC_CHECK(idle.state == UnitState::Idle);
 
     // --- arrival lands exactly snapped, order cleared ---
     Unit arriving;
+    Orders arrivingOrders;
+    Mover arrivingMover;
+    CombatState arrivingCombat;
     arriving.position = { 0.0f, 0.0f };
-    IssueMoveOrder(arriving, { 64.0f, 0.0f });
-    UpdateUnitMovement(arriving, map, 1000.0f, 1.0f); // overshoot step
-    CC_CHECK(!arriving.hasMoveOrder);
+    IssueMoveOrder(arriving, arrivingOrders, arrivingMover, { 64.0f, 0.0f });
+    UpdateUnitMovement(arriving, arrivingOrders, arrivingMover, arrivingCombat, map, 1000.0f,
+                       1.0f); // overshoot step
+    CC_CHECK(!arrivingMover.hasMoveOrder);
     CC_CHECK(arriving.state == UnitState::Idle);
     CC_CHECK(arriving.position.x == 64.0f);
     CC_CHECK(arriving.position.y == 0.0f);
@@ -47,10 +58,13 @@ void RunMovementTests()
     TileMap blocked(8, 8);
     blocked.Set({ 1, 0 }, TerrainType::Water);
     Unit walker;
+    Orders walkerOrders;
+    Mover walkerMover;
+    CombatState walkerCombat;
     walker.position = { 0.0f, 0.0f };
-    IssueMoveOrder(walker, { 192.0f, 0.0f }); // path crosses the water tile
-    UpdateUnitMovement(walker, blocked, 64.0f, 1.0f);
-    CC_CHECK(!walker.hasMoveOrder);
+    IssueMoveOrder(walker, walkerOrders, walkerMover, { 192.0f, 0.0f }); // path crosses the water tile
+    UpdateUnitMovement(walker, walkerOrders, walkerMover, walkerCombat, blocked, 64.0f, 1.0f);
+    CC_CHECK(!walkerMover.hasMoveOrder);
     CC_CHECK(walker.state == UnitState::Idle);
     CC_CHECK(walker.position.x == 0.0f); // never entered tile (1,0)
     CC_CHECK(walker.position.y == 0.0f);
@@ -59,15 +73,20 @@ void RunMovementTests()
     TileMap footprint(8, 8);
     footprint.Set({ 0, 0 }, TerrainType::Building);
     Unit trapped;
+    Orders trappedOrders;
+    Mover trappedMover;
+    CombatState trappedCombat;
     trapped.position = { 0.0f, 0.0f };
-    IssueMoveOrder(trapped, { 320.0f, 0.0f });
-    UpdateUnitMovement(trapped, footprint, 64.0f, 1.0f);
-    CC_CHECK(trapped.hasMoveOrder); // order survives the escape step
+    IssueMoveOrder(trapped, trappedOrders, trappedMover, { 320.0f, 0.0f });
+    UpdateUnitMovement(trapped, trappedOrders, trappedMover, trappedCombat, footprint, 64.0f,
+                       1.0f);
+    CC_CHECK(trappedMover.hasMoveOrder); // order survives the escape step
     CC_CHECK(trapped.position.x > 0.0f); // stepped out of tile (0,0)
     // Full escape: keep walking until the order resolves off the footprint.
-    for (int i = 0; i < 30 && (trapped.hasMoveOrder || trapped.hasPath); ++i)
+    for (int i = 0; i < 30 && (trappedMover.hasMoveOrder || trappedMover.hasPath); ++i)
     {
-        UpdateUnitMovement(trapped, footprint, 64.0f, 1.0f);
+        UpdateUnitMovement(trapped, trappedOrders, trappedMover, trappedCombat, footprint, 64.0f,
+                           1.0f);
     }
     CC_CHECK(!footprint.IsBlocked(cc::WorldToTile(cc::ToGlm(trapped.position))));
 
@@ -86,13 +105,17 @@ void RunMovementTests()
 
     // --- facing tracks travel direction, persists on stop ---
     Unit marcher;
+    Orders marcherOrders;
+    Mover marcherMover;
+    CombatState marcherCombat;
     marcher.position = { 0.0f, 0.0f };
     CC_CHECK(marcher.facing == Facing::Right); // default matches old rendering
-    IssueMoveOrder(marcher, { 0.0f, 192.0f }); // straight south
-    UpdateUnitMovement(marcher, map, 64.0f, 1.0f);
+    IssueMoveOrder(marcher, marcherOrders, marcherMover, { 0.0f, 192.0f }); // straight south
+    UpdateUnitMovement(marcher, marcherOrders, marcherMover, marcherCombat, map, 64.0f, 1.0f);
     CC_CHECK(marcher.state == UnitState::Moving);
     CC_CHECK(marcher.facing == Facing::Bottom);
-    UpdateUnitMovement(marcher, map, 10000.0f, 1.0f); // arrive
+    UpdateUnitMovement(marcher, marcherOrders, marcherMover, marcherCombat, map, 10000.0f,
+                       1.0f); // arrive
     CC_CHECK(marcher.state == UnitState::Idle);
     CC_CHECK(marcher.facing == Facing::Bottom); // kept on stop
 }

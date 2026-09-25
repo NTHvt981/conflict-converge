@@ -14,17 +14,18 @@ float Effectiveness(DamageType dealt, ArmorType armor)
     return kMatrix[static_cast<int>(dealt)][static_cast<int>(armor)];
 }
 
-float ResolveAttack(Unit &attacker, Unit &defender)
+float ResolveAttack(Unit &attacker, CombatState &attackerCombat, Unit &defender,
+                    CombatState &defenderCombat)
 {
     const float effective = static_cast<float>(attacker.attackPower) *
                             Effectiveness(attacker.damageType, defender.armorType);
     defender.health -= effective;
     if (effective > 0.0f)
     {
-        defender.lastDamageTaken = effective;
-        defender.hitFlashTime = kHitFlashDuration;
+        defenderCombat.lastDamageTaken = effective;
+        defenderCombat.hitFlashTime = kHitFlashDuration;
     }
-    attacker.cooldown = attacker.cooldownTime;
+    attackerCombat.cooldown = attacker.cooldownTime;
     return effective;
 }
 
@@ -34,15 +35,16 @@ bool IsVehicleHull(UnitType attackerType)
            attackerType == UnitType::LightTank || attackerType == UnitType::HeavyTank;
 }
 
-float ResolveBuildingAttack(Unit &attacker, Building &building)
+float ResolveBuildingAttack(Unit &attacker, CombatState &attackerCombat, Building &building)
 {
     const float effective = static_cast<float>(attacker.attackPower);
     building.health -= effective;
-    attacker.cooldown = attacker.cooldownTime;
+    attackerCombat.cooldown = attacker.cooldownTime;
     return effective;
 }
 
-void ResolveGroundAttack(Registry &registry, Unit &attacker, Vector2 pos)
+void ResolveGroundAttack(Registry &registry, Unit &attacker, CombatState &attackerCombat,
+                         Vector2 pos)
 {
     Entity best = kInvalidEntity;
     float bestDistSq = 64.0f * 64.0f;
@@ -66,7 +68,8 @@ void ResolveGroundAttack(Registry &registry, Unit &attacker, Vector2 pos)
     }
     if (Unit *defender = registry.Get<Unit>(best))
     {
-        ResolveAttack(attacker, *defender);
+        ResolveAttack(attacker, attackerCombat, *defender,
+                      GetCombatState(registry, best));
     }
 }
 
@@ -113,7 +116,7 @@ bool IsArcing(const Unit &attacker, float &flightTime, int &splashTiles)
     return false;
 }
 
-void LaunchShell(Registry &registry, Unit &attacker, Vector2 landing)
+void LaunchShell(Registry &registry, Unit &attacker, CombatState &attackerCombat, Vector2 landing)
 {
     float flightTime = 0.0f;
     int splashTiles = 0;
@@ -130,12 +133,13 @@ void LaunchShell(Registry &registry, Unit &attacker, Vector2 landing)
     shell.teamID = attacker.teamID;
     shell.splashTiles = splashTiles;
     registry.Add(registry.Create(), shell);
-    attacker.cooldown = attacker.cooldownTime;
+    attackerCombat.cooldown = attacker.cooldownTime;
 }
 
 } // namespace
 
-void ResolveStrike(Registry &registry, Entity attackerId, Unit &attacker, Entity targetId)
+void ResolveStrike(Registry &registry, Entity attackerId, Unit &attacker,
+                    CombatState &attackerCombat, Entity targetId)
 {
     float flightTime = 0.0f;
     int splashTiles = 0;
@@ -143,33 +147,34 @@ void ResolveStrike(Registry &registry, Entity attackerId, Unit &attacker, Entity
     {
         if (const Unit *target = registry.Get<Unit>(targetId))
         {
-            LaunchShell(registry, attacker,
+            LaunchShell(registry, attacker, attackerCombat,
                         { target->position.x + 32.0f, target->position.y + 32.0f });
         }
         else
         {
-            attacker.cooldown = attacker.cooldownTime;
+            attackerCombat.cooldown = attacker.cooldownTime;
         }
         (void)attackerId;
         return;
     }
     if (Unit *target = registry.Get<Unit>(targetId))
     {
-        ResolveAttack(attacker, *target);
+        ResolveAttack(attacker, attackerCombat, *target, GetCombatState(registry, targetId));
     }
 }
 
-void ResolveStrikeGround(Registry &registry, Entity attackerId, Unit &attacker, Vector2 pos)
+void ResolveStrikeGround(Registry &registry, Entity attackerId, Unit &attacker,
+                         CombatState &attackerCombat, Vector2 pos)
 {
     float flightTime = 0.0f;
     int splashTiles = 0;
     if (IsArcing(attacker, flightTime, splashTiles))
     {
-        LaunchShell(registry, attacker, pos);
+        LaunchShell(registry, attacker, attackerCombat, pos);
         (void)attackerId;
         return;
     }
-    ResolveGroundAttack(registry, attacker, pos);
+    ResolveGroundAttack(registry, attacker, attackerCombat, pos);
 }
 
 void UpdateProjectiles(Registry &registry, TileMap &map, float dtSeconds)
@@ -206,8 +211,8 @@ void UpdateProjectiles(Registry &registry, TileMap &map, float dtSeconds)
             victim->health -= effective;
             if (effective > 0.0f)
             {
-                victim->lastDamageTaken = effective;
-                victim->hitFlashTime = kHitFlashDuration;
+                GetCombatState(registry, victimId).lastDamageTaken = effective;
+                GetCombatState(registry, victimId).hitFlashTime = kHitFlashDuration;
             }
         }
         std::vector<Entity> structures;

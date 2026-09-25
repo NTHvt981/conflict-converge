@@ -2,6 +2,7 @@
 #include "Simulation.h"
 
 #include "Building.h"
+#include "Extensions.h"
 #include "Shake.h"
 #include "Unit.h"
 #include <cmath>
@@ -134,22 +135,23 @@ void Simulation::Step(float dt)
         audio_.Play(SfxId::Explosion);
         shakeTrauma_ = AddShakeTrauma(shakeTrauma_, kShakeDeathTrauma);
     }
-    registry_.Each<Unit>([&](Entity, const Unit &unit) {
+    registry_.Each<Unit>([&](Entity id, const Unit &unit) {
         const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
-        if (unit.hitFlashTime > 0.20f)
+        const CombatState *combat = FindCombatState(registry_, id);
+        if (combat != nullptr && combat->hitFlashTime > 0.20f)
         {
             art_.ParticlesPool().SpawnBurst(center, YELLOW, 6, 90.0f, 0.25f);
             damageNumbers_.Spawn({ center.x, unit.position.y - 2.0f },
-                                 unit.lastDamageTaken);
+                                 combat->lastDamageTaken);
             shakeTrauma_ = AddShakeTrauma(shakeTrauma_, kShakeHitTrauma);
             if (unit.teamID == 0)
             {
                 pings_.Raise(center, PingKind::UnderAttack);
             }
         }
-        if (unit.phase == AttackPhase::WindUp)
+        if (combat != nullptr && combat->phase == AttackPhase::WindUp)
         {
-            if (const Unit *target = registry_.Get<Unit>(unit.target))
+            if (const Unit *target = registry_.Get<Unit>(combat->target))
             {
                 const Vector2 dir = { target->position.x - unit.position.x,
                                       target->position.y - unit.position.y };
@@ -167,8 +169,10 @@ void Simulation::Step(float dt)
     damageNumbers_.Update(dt);
     attackSfxTimer_ -= dt;
     bool windingUp = false;
-    registry_.Each<Unit>([&](Entity, const Unit &unit) {
-        if (unit.phase == AttackPhase::WindUp)
+    registry_.Each<Unit>([&](Entity id, const Unit &unit) {
+        (void)unit;
+        const CombatState *combat = FindCombatState(registry_, id);
+        if (combat != nullptr && combat->phase == AttackPhase::WindUp)
         {
             windingUp = true;
         }

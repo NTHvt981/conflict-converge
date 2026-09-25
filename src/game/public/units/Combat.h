@@ -18,22 +18,26 @@ float Effectiveness(DamageType dealt, ArmorType armor);
 // effective damage dealt. A landed hit stamps the defender's feedback fields.
 // Seconds a victim flashes after taking a hit (overlay + number).
 inline constexpr float kHitFlashDuration = 0.25f;
-float ResolveAttack(Unit &attacker, Unit &defender);
+float ResolveAttack(Unit &attacker, CombatState &attackerCombat, Unit &defender,
+                    CombatState &defenderCombat);
 
 // Structural damage: raw attackPower, no armor matrix. Restarts the cooldown.
-float ResolveBuildingAttack(Unit &attacker, Building &building);
+float ResolveBuildingAttack(Unit &attacker, CombatState &attackerCombat, Building &building);
 
 // Attack-ground: fires at a world position, hitting the nearest live enemy
 // within one tile; empty ground is a clean miss.
-void ResolveGroundAttack(Registry &registry, Unit &attacker, Vector2 pos);
+void ResolveGroundAttack(Registry &registry, Unit &attacker, CombatState &attackerCombat,
+                         Vector2 pos);
 
 // M3 strike dispatch: WindUp ends in ResolveStrike, which switches on
 // ability — direct ResolveAttack today, shell launch for arcing units,
 // single-sprite when per-sprite HP lands. attackPower <= 0 still means
 // "cannot attack". Shells are visible and dodgeable; in-flight shells are
 // NOT persisted (sub-second sim time).
-void ResolveStrike(Registry &registry, Entity attackerId, Unit &attacker, Entity targetId);
-void ResolveStrikeGround(Registry &registry, Entity attackerId, Unit &attacker, Vector2 pos);
+void ResolveStrike(Registry &registry, Entity attackerId, Unit &attacker,
+                    CombatState &attackerCombat, Entity targetId);
+void ResolveStrikeGround(Registry &registry, Entity attackerId, Unit &attacker,
+                         CombatState &attackerCombat, Vector2 pos);
 
 // G2 ballistics: step in-flight shells; landings splash enemy units and
 // operational enemy buildings (team-checked, no friendly fire). Call once

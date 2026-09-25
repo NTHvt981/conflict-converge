@@ -2,6 +2,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "Unit.h"
 
 #include "Combat.h"    // expected damage via the Effectiveness matrix
@@ -21,6 +22,9 @@ Entity AddSoldier(Registry &registry, UnitType type, int team, float x, float y)
     unit.position = { x, y };
     const Entity id = registry.Create();
     registry.Add(id, unit);
+    registry.Add(id, Orders{});
+    registry.Add(id, Mover{});
+    registry.Add(id, CombatState{});
     return id;
 }
 
@@ -46,7 +50,7 @@ void RunStateMachineTests()
         StepAll(registry, map, kDt, 10);
         const Unit *unit = registry.Get<Unit>(id);
         CC_CHECK(unit->state == UnitState::Idle);
-        CC_CHECK(unit->target == kInvalidEntity);
+        CC_CHECK(FindCombatState(registry, id)->target == kInvalidEntity);
     }
 
     // --- enemy inside attack range: acquires, attacks on cooldown ---
@@ -57,9 +61,10 @@ void RunStateMachineTests()
         const Entity victim = AddSoldier(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
         UpdateUnit(attacker, registry, map, kDt);
         const Unit *unit = registry.Get<Unit>(attacker);
-        CC_CHECK(unit->target == victim);
+        const CombatState *attackerCombat = FindCombatState(registry, attacker);
+        CC_CHECK(attackerCombat->target == victim);
         CC_CHECK(unit->state == UnitState::Attacking);
-        CC_CHECK(unit->phase == AttackPhase::WindUp); // Telegraph first, no instant hit
+        CC_CHECK(attackerCombat->phase == AttackPhase::WindUp); // Telegraph first, no instant hit
         CC_CHECK(registry.Get<Unit>(victim)->health == 100.0f);
 
         // Windup (0.15s) completes: the hit lands matrix-scaled, cooldown restarts.
@@ -67,8 +72,8 @@ void RunStateMachineTests()
         const float expected = 100.0f - 10.0f * Effectiveness(DamageType::KINETIC,
                                                              registry.Get<Unit>(victim)->armorType);
         CC_CHECK(registry.Get<Unit>(victim)->health == expected);
-        CC_CHECK(registry.Get<Unit>(attacker)->phase == AttackPhase::Recover);
-        CC_CHECK(registry.Get<Unit>(attacker)->cooldown > 0.0f);
+        CC_CHECK(FindCombatState(registry, attacker)->phase == AttackPhase::Recover);
+        CC_CHECK(FindCombatState(registry, attacker)->cooldown > 0.0f);
 
         // Cooldown gates the next shot: one frame later, no further damage.
         const float hpAfterFirst = registry.Get<Unit>(victim)->health;
@@ -88,9 +93,9 @@ void RunStateMachineTests()
         const Entity prey = AddSoldier(registry, UnitType::RifleInfantry, 1, 256.0f, 0.0f); // > 128 range, < 320 sight
         UpdateUnit(chaser, registry, map, kDt);
         const Unit *unit = registry.Get<Unit>(chaser);
-        CC_CHECK(unit->target == prey);
+        CC_CHECK(FindCombatState(registry, chaser)->target == prey);
         CC_CHECK(unit->state == UnitState::Moving);
-        CC_CHECK(unit->hasPath);
+        CC_CHECK(FindMover(registry, chaser)->hasPath);
 
         // Walking the chase to its end arrives in attack range, attacking.
         StepAll(registry, map, kDt, 60 * 30);
@@ -105,11 +110,12 @@ void RunStateMachineTests()
         TileMap map(10, 10);
         const Entity ordered = AddSoldier(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
         AddSoldier(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
-        IssueMoveOrder(*registry.Get<Unit>(ordered), { 5 * 64.0f, 0.0f });
+        IssueMoveOrder(*registry.Get<Unit>(ordered), GetOrders(registry, ordered),
+                       GetMover(registry, ordered), { 5 * 64.0f, 0.0f });
         StepAll(registry, map, kDt, 5);
         const Unit *unit = registry.Get<Unit>(ordered);
         CC_CHECK(unit->state == UnitState::Moving);
-        CC_CHECK(unit->target == kInvalidEntity);
+        CC_CHECK(FindCombatState(registry, ordered)->target == kInvalidEntity);
         CC_CHECK(unit->position.x > 0.0f);
     }
 
@@ -124,7 +130,7 @@ void RunStateMachineTests()
         CC_CHECK(registry.Get<Unit>(doomed)->health <= 0.0f);
         UpdateUnit(killer, registry, map, kDt); // notices the corpse
         const Unit *unit = registry.Get<Unit>(killer);
-        CC_CHECK(unit->target == kInvalidEntity);
+        CC_CHECK(FindCombatState(registry, killer)->target == kInvalidEntity);
         CC_CHECK(unit->state == UnitState::Idle);
     }
 

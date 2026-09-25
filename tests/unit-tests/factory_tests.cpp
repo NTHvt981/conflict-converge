@@ -44,7 +44,7 @@ void RunFactoryTests()
     CC_CHECK(unit->teamID == 2);
     CC_CHECK(unit->state == UnitState::Idle);
     CC_CHECK(unit->position.x == 64.0f && unit->position.y == 128.0f);
-    CC_CHECK(unit->target == kInvalidEntity);
+    CC_CHECK(FindCombatState(registry, id)->target == kInvalidEntity);
 
     // --- insufficient funds: nothing spent, created, or announced ---
     ResourceSystem broke;

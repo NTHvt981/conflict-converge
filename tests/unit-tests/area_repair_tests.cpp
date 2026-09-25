@@ -5,6 +5,7 @@
 #include "test_harness.h"
 
 #include "Building.h"
+#include "Extensions.h"
 #include "Targeting.h"
 #include "TileMap.h"
 #include "Unit.h"
@@ -200,18 +201,19 @@ void RunAreaRepairTests()
         const Entity medic = SpawnUnit(registry, UnitType::Medic, 0, 1, 1, 1.0f);
         const Entity hurt = SpawnUnit(registry, UnitType::RifleInfantry, 0, 2, 1, 0.5f);
         Unit *med = registry.Get<Unit>(medic);
+        Orders &medOrders = GetOrders(registry, medic);
         CC_CHECK(med != nullptr);
-        IssueHealOrder(*med, hurt);
-        CC_CHECK(med->hasRepairOrder && med->repairTarget == hurt);
+        IssueHealOrder(*med, medOrders, GetMover(registry, medic), hurt);
+        CC_CHECK(medOrders.hasRepairOrder && medOrders.repairTarget == hurt);
         const float before = registry.Get<Unit>(hurt)->health;
         UpdateUnit(medic, registry, map, 1.0f);
         CC_CHECK(registry.Get<Unit>(hurt)->health > before);
         CC_CHECK(med->state == UnitState::Idle);
-        for (int i = 0; i < 10 && med->hasRepairOrder; ++i)
+        for (int i = 0; i < 10 && medOrders.hasRepairOrder; ++i)
         {
             UpdateUnit(medic, registry, map, 1.0f);
         }
-        CC_CHECK(!med->hasRepairOrder); // full health drops the order
+        CC_CHECK(!medOrders.hasRepairOrder); // full health drops the order
         CC_CHECK(registry.Get<Unit>(hurt)->health ==
                  BaseStats(UnitType::RifleInfantry).health); // clamped, not overhealed
     }
@@ -244,8 +246,8 @@ void RunAreaRepairTests()
         }
         CC_CHECK(registry.Get<Unit>(foe)->health == foeMax);
         CC_CHECK(registry.Get<Unit>(medic)->state != UnitState::Attacking);
-        CC_CHECK(registry.Get<Unit>(medic)->target == kInvalidEntity);
+        CC_CHECK(FindCombatState(registry, medic)->target == kInvalidEntity);
         CC_CHECK(registry.Get<Unit>(eng)->state != UnitState::Attacking);
-        CC_CHECK(registry.Get<Unit>(eng)->target == kInvalidEntity);
+        CC_CHECK(FindCombatState(registry, eng)->target == kInvalidEntity);
     }
 }

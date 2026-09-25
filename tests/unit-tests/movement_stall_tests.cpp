@@ -15,6 +15,7 @@
 #include "test_harness.h"
 
 #include "Formation.h"
+#include "Extensions.h"
 #include "Pathfinder.h"
 #include "TileMap.h"
 #include "Unit.h"
@@ -63,19 +64,24 @@ void RunMovementStallTests()
 
         Unit *ua = registry.Get<Unit>(a);
         Unit *ub = registry.Get<Unit>(b);
-        IssuePathOrderFootprint(*ua, map, occ, cc::ToRaylib(cc::TileToWorld(4, 1)), a,
+        IssuePathOrderFootprint(*ua, GetOrders(registry, a), GetMover(registry, a), map, occ,
+                                cc::ToRaylib(cc::TileToWorld(4, 1)), a,
                                 registry.Generation(a));
-        IssuePathOrderFootprint(*ub, map, occ, cc::ToRaylib(cc::TileToWorld(0, 1)), b,
+        IssuePathOrderFootprint(*ub, GetOrders(registry, b), GetMover(registry, b), map, occ,
+                                cc::ToRaylib(cc::TileToWorld(0, 1)), b,
                                 registry.Generation(b));
-        CC_CHECK(ua->hasPath);
-        CC_CHECK(ub->hasPath);
+        CC_CHECK(FindMover(registry, a)->hasPath);
+        CC_CHECK(FindMover(registry, b)->hasPath);
 
         int frame = 0;
         constexpr int kBudget = 600; // 10s at 60fps
         for (; frame < kBudget; ++frame)
         {
             RunUnitMovementFrame(registry, map, occ, nullptr, kDt);
-            if (!ua->hasMoveOrder && !ua->hasPath && !ub->hasMoveOrder && !ub->hasPath)
+            const Mover *ma = FindMover(registry, a);
+            const Mover *mb = FindMover(registry, b);
+            if (ma != nullptr && mb != nullptr && !ma->hasMoveOrder && !ma->hasPath &&
+                !mb->hasMoveOrder && !mb->hasPath)
             {
                 break;
             }
@@ -88,8 +94,8 @@ void RunMovementStallTests()
         // outcome. What must never happen is a silent forever-freeze: both
         // orders must resolve (complete or cancel) well within budget, and
         // the units must not end up wedged on top of each other.
-        CC_CHECK(!ua->hasMoveOrder && !ua->hasPath);
-        CC_CHECK(!ub->hasMoveOrder && !ub->hasPath);
+        CC_CHECK(!FindMover(registry, a)->hasMoveOrder && !FindMover(registry, a)->hasPath);
+        CC_CHECK(!FindMover(registry, b)->hasMoveOrder && !FindMover(registry, b)->hasPath);
         CC_CHECK(!(cc::WorldToTile(cc::ToGlm(ua->position)) ==
                   cc::WorldToTile(cc::ToGlm(ub->position))));
         CC_CHECK(frame < kBudget);
@@ -124,8 +130,10 @@ void RunMovementStallTests()
         {
             RunUnitMovementFrame(registry, map, occ, nullptr, kDt);
             int stillMoving = 0;
-            registry.Each<Unit>([&](Entity, const Unit &u) {
-                if (u.hasMoveOrder || u.hasPath)
+            registry.Each<Unit>([&](Entity id, const Unit &u) {
+                (void)u;
+                const Mover *mover = FindMover(registry, id);
+                if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
                 {
                     ++stillMoving;
                 }
@@ -137,8 +145,10 @@ void RunMovementStallTests()
         }
 
         int arrived = 0;
-        registry.Each<Unit>([&](Entity, const Unit &u) {
-            if (!u.hasMoveOrder && !u.hasPath)
+        registry.Each<Unit>([&](Entity id, const Unit &u) {
+            (void)u;
+            const Mover *mover = FindMover(registry, id);
+            if (mover != nullptr && !mover->hasMoveOrder && !mover->hasPath)
             {
                 ++arrived;
             }

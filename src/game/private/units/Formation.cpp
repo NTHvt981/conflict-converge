@@ -1,5 +1,6 @@
 #include "Formation.h"
 
+#include "Extensions.h"
 #include "Pathfinder.h"
 #include "TileMap.h"
 
@@ -74,9 +75,10 @@ bool StaggerIfCoLocated(
                                       unit.footprintHeight, self, selfGen);
     }
     claimedEscapeTiles.push_back(escape);
-    IssuePathOrderFootprint(unit, map, occ, cc::ToRaylib(cc::TileToWorld(escape.x, escape.y)),
-                           self, selfGen);
-    unit.orderQueue.push_back(QueuedOrder{ QueuedOrderKind::Move, realSlotWorld, {}, kInvalidEntity });
+    IssuePathOrderFootprint(unit, GetOrders(registry, self), GetMover(registry, self), map, occ,
+                            cc::ToRaylib(cc::TileToWorld(escape.x, escape.y)), self, selfGen);
+    GetOrders(registry, self).orderQueue.push_back(
+        QueuedOrder{ QueuedOrderKind::Move, realSlotWorld, {}, kInvalidEntity });
     return true;
 }
 
@@ -317,7 +319,8 @@ void IssueFormationMove(Registry &registry, const std::vector<Entity> &units, co
             continue;
         }
         const cc::IVec2 slot = anchor + offsets[i];
-        IssuePathOrder(*unit, map, cc::ToRaylib(cc::TileToWorld(slot.x, slot.y)));
+        IssuePathOrder(*unit, GetOrders(registry, units[i]), GetMover(registry, units[i]), map,
+                       cc::ToRaylib(cc::TileToWorld(slot.x, slot.y)));
     }
 }
 
@@ -403,9 +406,11 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
     {
         Unit *unit = valid[static_cast<std::size_t>(i)].unit;
         const Entity self = valid[static_cast<std::size_t>(i)].id;
-        ClearOrders(*unit);
-        unit->orderQueue.clear();
-        unit->speedCapPixelsPerSec = slowestSpeed ? minSpeed : -1.0f;
+        Orders &orders = GetOrders(registry, self);
+        Mover &mover = GetMover(registry, self);
+        ClearOrders(*unit, orders, mover);
+        orders.orderQueue.clear();
+        mover.speedCapPixelsPerSec = slowestSpeed ? minSpeed : -1.0f;
         const cc::IVec2 want = baseSlots[static_cast<std::size_t>(
             assignment[static_cast<std::size_t>(i)])];
         const cc::IVec2 slot = NearestEnterableTile(
@@ -418,10 +423,10 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
         {
             continue;
         }
-        IssuePathOrderFootprint(*unit, map, formationOcc, slotWorld, self,
+        IssuePathOrderFootprint(*unit, orders, mover, map, formationOcc, slotWorld, self,
                                registry.Generation(self));
 
-		if (unit->hasPath)
+		if (mover.hasPath)
 		{
 			formationOcc.ReserveFootprintOwned(slot, unit->footprintWidth, unit->footprintHeight, self, registry.Generation(self));
 		}
@@ -484,9 +489,11 @@ void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &uni
         {
             continue;
         }
-        ClearOrders(*unit);
-        unit->orderQueue.clear();
-        unit->speedCapPixelsPerSec = slowestSpeed ? minSpeed : -1.0f;
+        Orders &orders = GetOrders(registry, units[i]);
+        Mover &mover = GetMover(registry, units[i]);
+        ClearOrders(*unit, orders, mover);
+        orders.orderQueue.clear();
+        mover.speedCapPixelsPerSec = slowestSpeed ? minSpeed : -1.0f;
         const cc::IVec2 want = cc::WorldToTile(positions[i]);
         const cc::IVec2 slot = NearestEnterableTile(
             map, occ, want, unit->footprintWidth, unit->footprintHeight, units[i],
@@ -497,7 +504,7 @@ void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &uni
         {
             continue;
         }
-        IssuePathOrderFootprint(*unit, map, occ, slotWorld, units[i],
+        IssuePathOrderFootprint(*unit, orders, mover, map, occ, slotWorld, units[i],
                                registry.Generation(units[i]));
     }
 }

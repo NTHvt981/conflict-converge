@@ -2,6 +2,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "GameCamera.h"
 #include "Selection.h"
 #include "Unit.h"
@@ -16,6 +17,8 @@ Entity SpawnAt(Registry &registry, float x, float y)
     unit.position = { x, y };
     SnapUnitToTile(unit);
     registry.Add(entity, unit);
+    registry.Add(entity, Orders{});
+    registry.Add(entity, Mover{});
     return entity;
 }
 
@@ -110,13 +113,13 @@ void RunSelectionTests()
     idleReg.Get<Unit>(idleEng)->type = UnitType::Engineer;
     const Entity busyEng = SpawnAt(idleReg, 256.0f, 64.0f);
     idleReg.Get<Unit>(busyEng)->type = UnitType::Engineer;
-    idleReg.Get<Unit>(busyEng)->hasRepairOrder = true; // channeling, still state Idle
+    GetOrders(idleReg, busyEng).hasRepairOrder = true; // channeling, still state Idle
     const Entity idleTank = SpawnAt(idleReg, 64.0f, 256.0f);
     idleReg.Get<Unit>(idleTank)->type = UnitType::LightTank;
     const Entity movingTank = SpawnAt(idleReg, 256.0f, 256.0f);
     idleReg.Get<Unit>(movingTank)->type = UnitType::LightTank;
     idleReg.Get<Unit>(movingTank)->state = UnitState::Moving;
-    idleReg.Get<Unit>(movingTank)->hasMoveOrder = true;
+    GetMover(idleReg, movingTank).hasMoveOrder = true;
     const Entity foe = SpawnAt(idleReg, 448.0f, 64.0f);
     idleReg.Get<Unit>(foe)->type = UnitType::Engineer;
     idleReg.Get<Unit>(foe)->teamID = 1;

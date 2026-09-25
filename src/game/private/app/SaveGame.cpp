@@ -83,13 +83,14 @@ void FillUnit(SaveUnit &out, const Registry &registry, Entity id, const Unit &u,
     out.damageType = static_cast<std::int32_t>(u.damageType);
     out.attackPower = u.attackPower;
     out.attackRange = u.attackRange;
-    out.cooldown = u.cooldown;
+    const CombatState *combat = FindCombatState(registry, id);
+    out.cooldown = combat != nullptr ? combat->cooldown : 0.0f;
     out.cooldownTime = u.cooldownTime;
-    out.phase = static_cast<std::int32_t>(u.phase);
-    out.phaseTime = u.phaseTime;
+    out.phase = combat != nullptr ? static_cast<std::int32_t>(combat->phase) : 0;
+    out.phaseTime = combat != nullptr ? combat->phaseTime : 0.0f;
     out.windupTime = u.windupTime;
-    out.lastDamage = u.lastDamageTaken;
-    out.hitFlash = u.hitFlashTime;
+    out.lastDamage = combat != nullptr ? combat->lastDamageTaken : 0.0f;
+    out.hitFlash = combat != nullptr ? combat->hitFlashTime : 0.0f;
     out.speed = u.speed;
     out.sightRange = u.sightRange;
     FillVec2(out.position, u.position);
@@ -98,18 +99,27 @@ void FillUnit(SaveUnit &out, const Registry &registry, Entity id, const Unit &u,
     out.team = u.teamID;
     out.type = static_cast<std::int32_t>(u.type);
     out.state = static_cast<std::int32_t>(u.state);
-    out.targetIndex = indexOf(u.target);
-    FillVec2(out.moveTarget, u.moveTarget);
-    out.hasMoveOrder = u.hasMoveOrder;
-    for (const cc::IVec2 &step : u.path)
+    out.targetIndex = indexOf(combat != nullptr ? combat->target : kInvalidEntity);
+    const Mover *mover = FindMover(registry, id);
+    FillVec2(out.moveTarget, mover != nullptr ? mover->moveTarget : Vector2{});
+    out.hasMoveOrder = mover != nullptr && mover->hasMoveOrder;
+    if (mover != nullptr)
     {
-        SaveIVec2 dst;
-        dst.x = step.x;
-        dst.y = step.y;
-        out.path.push_back(dst);
+        for (const cc::IVec2 &step : mover->path)
+        {
+            SaveIVec2 dst;
+            dst.x = step.x;
+            dst.y = step.y;
+            out.path.push_back(dst);
+        }
+        out.pathNext = static_cast<std::uint32_t>(mover->pathNext);
+        out.hasPath = mover->hasPath;
     }
-    out.pathNext = static_cast<std::uint32_t>(u.pathNext);
-    out.hasPath = u.hasPath;
+    else
+    {
+        out.pathNext = 0;
+        out.hasPath = false;
+    }
     out.hasTurret = false;
     out.turretFacing = 0.0f;
     out.facing = static_cast<std::int32_t>(u.facing);
@@ -140,6 +150,8 @@ void FillUnit(SaveUnit &out, const Registry &registry, Entity id, const Unit &u,
 struct SavedUnit
 {
     Unit unit;
+    Mover mover;
+    CombatState combat;
     std::int32_t targetIndex = -1;
     bool hasTurret = false;
     float turretFacing = 0.0f;
@@ -193,13 +205,14 @@ bool DecodeUnit(const SaveUnit &in, SavedUnit &out, std::int32_t mapWidth,
     u.damageType = static_cast<DamageType>(in.damageType);
     u.attackPower = in.attackPower;
     u.attackRange = in.attackRange;
-    u.cooldown = in.cooldown;
+    CombatState &combat = out.combat;
+    combat.cooldown = in.cooldown;
     u.cooldownTime = in.cooldownTime;
-    u.phase = static_cast<AttackPhase>(in.phase);
-    u.phaseTime = in.phaseTime;
+    combat.phase = static_cast<AttackPhase>(in.phase);
+    combat.phaseTime = in.phaseTime;
     u.windupTime = in.windupTime;
-    u.lastDamageTaken = in.lastDamage;
-    u.hitFlashTime = in.hitFlash;
+    combat.lastDamageTaken = in.lastDamage;
+    combat.hitFlashTime = in.hitFlash;
     u.speed = in.speed;
     u.sightRange = in.sightRange;
     u.position = ToVec2(in.position);
@@ -209,25 +222,26 @@ bool DecodeUnit(const SaveUnit &in, SavedUnit &out, std::int32_t mapWidth,
     u.type = static_cast<UnitType>(in.type);
     u.state = static_cast<UnitState>(in.state);
     out.targetIndex = in.targetIndex;
-    u.moveTarget = ToVec2(in.moveTarget);
-    u.hasMoveOrder = in.hasMoveOrder;
-    u.path.clear();
-    u.path.reserve(in.path.size());
+    Mover &mover = out.mover;
+    mover.moveTarget = ToVec2(in.moveTarget);
+    mover.hasMoveOrder = in.hasMoveOrder;
+    mover.path.clear();
+    mover.path.reserve(in.path.size());
     for (const SaveIVec2 &step : in.path)
     {
         if (step.x < 0 || step.x >= mapWidth || step.y < 0 || step.y >= mapHeight)
         {
             return false;
         }
-        u.path.push_back({ step.x, step.y });
+        mover.path.push_back({ step.x, step.y });
     }
-    if (in.pathNext > static_cast<std::uint32_t>(u.path.size()))
+    if (in.pathNext > static_cast<std::uint32_t>(mover.path.size()))
     {
         return false;
     }
-    u.pathNext = static_cast<std::size_t>(in.pathNext);
-    u.hasPath = in.hasPath;
-    u.target = kInvalidEntity;
+    mover.pathNext = static_cast<std::size_t>(in.pathNext);
+    mover.hasPath = in.hasPath;
+    combat.target = kInvalidEntity;
     if (in.facing >= 0 && in.facing < static_cast<std::int32_t>(Facing::Count))
     {
         u.facing = static_cast<Facing>(in.facing);
@@ -535,13 +549,17 @@ bool LoadWorld(const WorldState &world, const std::string &path)
     {
         freshIds.push_back(world.registry->Create());
         world.registry->Add(freshIds.back(), savedUnit.unit);
+        world.registry->Add(freshIds.back(), Orders{});
+        world.registry->Add(freshIds.back(), savedUnit.mover);
+        world.registry->Add(freshIds.back(), savedUnit.combat);
     }
     for (std::size_t i = 0; i < saved.units.size(); ++i)
     {
         const std::int32_t targetIndex = saved.units[i].targetIndex;
         if (targetIndex >= 0 && static_cast<std::size_t>(targetIndex) < freshIds.size())
         {
-            world.registry->Get<Unit>(freshIds[i])->target = freshIds[static_cast<std::size_t>(targetIndex)];
+            GetCombatState(*world.registry, freshIds[i]).target =
+                freshIds[static_cast<std::size_t>(targetIndex)];
         }
         // M2 extension restore: turret facing + cargo manifest + embarked
         // marker (same remap pattern as targetIndex; tolerant wire defaults

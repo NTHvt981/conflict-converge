@@ -2,6 +2,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "Formation.h"
 #include "TileMap.h"
 #include "Unit.h"      // Unit components under test
@@ -54,13 +55,15 @@ void RunFormationTests()
 
     std::set<std::pair<int, int>> targets;
     int ordered = 0;
-    registry.Each<Unit>([&](Entity, const Unit &unit) {
-        const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.moveTarget));
+    registry.Each<Unit>([&](Entity id, const Unit &unit) {
+        (void)unit;
+        const Mover *mover = FindMover(registry, id);
+        const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(mover->moveTarget));
         // Slot must be a live order near the anchor (offsets stay within the group box).
         CC_CHECK(tile.x >= 5 && tile.x <= 6);
         CC_CHECK(tile.y >= 5 && tile.y <= 6);
         targets.insert({ tile.x, tile.y });
-        if (unit.hasMoveOrder || unit.hasPath)
+        if (mover->hasMoveOrder || mover->hasPath)
         {
             ++ordered;
         }
@@ -73,8 +76,10 @@ void RunFormationTests()
     withGhost.push_back(kInvalidEntity);
     formation::IssueFormationMove(registry, withGhost, map, cc::ToRaylib(cc::TileToWorld(10, 10)));
     int reordered = 0;
-    registry.Each<Unit>([&](Entity, const Unit &unit) {
-        if (unit.hasMoveOrder || unit.hasPath)
+    registry.Each<Unit>([&](Entity id, const Unit &unit) {
+        (void)unit;
+        const Mover *mover = FindMover(registry, id);
+        if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
         {
             ++reordered;
         }
@@ -143,8 +148,10 @@ void RunFormationTests()
                                         cc::ToRaylib(cc::TileToWorld(10, 10)));
         // Both units should have orders
         int orderedCount = 0;
-        fpRegistry.Each<Unit>([&](Entity, const Unit &unit) {
-            if (unit.hasMoveOrder || unit.hasPath)
+        fpRegistry.Each<Unit>([&](Entity id, const Unit &unit) {
+            (void)unit;
+            const Mover *mover = FindMover(fpRegistry, id);
+            if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
             {
                 ++orderedCount;
             }
@@ -175,8 +182,9 @@ void RunFormationTests()
                                         cc::ToRaylib(cc::TileToWorld(10, 10)), true);
         for (Entity id : mixed)
         {
-            CC_CHECK(capRegistry.Get<Unit>(id)->speedCapPixelsPerSec == 50.0f);
-            CC_CHECK(EffectiveSpeed(*capRegistry.Get<Unit>(id)) == 50.0f);
+            CC_CHECK(FindMover(capRegistry, id)->speedCapPixelsPerSec == 50.0f);
+            CC_CHECK(EffectiveSpeed(*capRegistry.Get<Unit>(id), *FindMover(capRegistry, id)) ==
+                     50.0f);
         }
         // End to end: the 200-speed unit advances exactly 50px in one tick.
         const Vector2 before = capRegistry.Get<Unit>(mixed[0])->position;
@@ -190,7 +198,7 @@ void RunFormationTests()
                                         cc::ToRaylib(cc::TileToWorld(12, 12)), false);
         for (Entity id : mixed)
         {
-            CC_CHECK(capRegistry.Get<Unit>(id)->speedCapPixelsPerSec == -1.0f);
+            CC_CHECK(FindMover(capRegistry, id)->speedCapPixelsPerSec == -1.0f);
         }
     }
 
@@ -223,7 +231,7 @@ void RunFormationTests()
         const cc::IVec2 want[4] = { { 10, 10 }, { 11, 10 }, { 10, 11 }, { 11, 11 } };
         for (int i = 0; i < 4; ++i)
         {
-            const Unit *u = asRegistry.Get<Unit>(byPos[i]);
+            const Mover *u = FindMover(asRegistry, byPos[i]);
             CC_CHECK(u->hasMoveOrder || u->hasPath);
             CC_CHECK(cc::WorldToTile(cc::ToGlm(u->moveTarget)) == want[i]);
         }

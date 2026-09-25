@@ -324,7 +324,11 @@ void GameRenderer::DrawWorld()
                 }
                 if (!art_.UseRectangles())
                 {
-                    art_.DrawUnit(unit.type, unit.teamID, FrameForPhase(unit.phase), corner);
+                    const CombatState *combat = FindCombatState(registry_, id);
+                    art_.DrawUnit(unit.type, unit.teamID,
+                                  FrameForPhase(combat != nullptr ? combat->phase
+                                                                  : AttackPhase::Ready),
+                                  corner);
                 }
                 else
                 {
@@ -370,21 +374,28 @@ void GameRenderer::DrawWorld()
             Art::DrawUiText(&art_, TextFormat("%d", (lowestBit + 1) % 10), static_cast<int>(badgeBox.x),
                      static_cast<int>(badgeBox.y) - 14, 12, DARKBLUE);
         }
-        if (unit.hitFlashTime > 0.0f)
+        const CombatState *combat = FindCombatState(registry_, id);
+        if (combat != nullptr && combat->hitFlashTime > 0.0f)
         {
             DrawRectangleRec(body, Fade(WHITE, 0.7f));
         }
         if (unit.state == UnitState::Attacking)
         {
-            if (const Unit *target = registry_.Get<Unit>(unit.target))
+            if (combat != nullptr)
             {
-                const Vector2 targetCenter = { target->position.x + 32.0f, target->position.y + 32.0f };
-                DrawLineV(center, targetCenter, RED);
+                if (const Unit *target = registry_.Get<Unit>(combat->target))
+                {
+                    const Vector2 targetCenter = { target->position.x + 32.0f,
+                                                   target->position.y + 32.0f };
+                    DrawLineV(center, targetCenter, RED);
+                }
             }
         }
-        if (unit.hasMoveOrder)
+        const Mover *mover = FindMover(registry_, id);
+        if (mover != nullptr && mover->hasMoveOrder)
         {
-            DrawCircleV(cc::ToRaylib(cc::ToGlm(unit.moveTarget) + cc::Vec2(32.0f, 32.0f)), 5.0f, GREEN);
+            DrawCircleV(cc::ToRaylib(cc::ToGlm(mover->moveTarget) + cc::Vec2(32.0f, 32.0f)), 5.0f,
+                        GREEN);
         }
     });
     // G2 shells: visible and dodgeable — that is the gameplay payoff.
@@ -498,7 +509,8 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
                     fog_.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit->position)));
                 if (visible)
                 {
-                    const std::vector<std::string> lines = UnitTooltipLines(*unit);
+                    const std::vector<std::string> lines = UnitTooltipLines(
+                        *unit, GetOrders(registry_, hoverTip_.hovered));
                     int width = 0;
                     for (const std::string &line : lines)
                     {

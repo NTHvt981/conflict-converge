@@ -9,6 +9,7 @@
 
 #include <cstdlib>
 
+#include "Extensions.h"
 #include "Formation.h"
 #include "Pathfinder.h"
 #include "TileMap.h"
@@ -45,8 +46,8 @@ void RunFormationStackMoveTests()
                                     cc::ToRaylib(cc::TileToWorld(20, 20)), false);
     for (Entity id : squad)
     {
-        const Unit *u = registry.Get<Unit>(id);
-        CC_CHECK(u->hasMoveOrder || u->hasPath);
+        const Mover *mover = FindMover(registry, id);
+        CC_CHECK(mover != nullptr && (mover->hasMoveOrder || mover->hasPath));
     }
 
     // Infantry crosses one diagonal tile (~90.5px at 64px/s) in ~1.4s; the
@@ -61,8 +62,8 @@ void RunFormationStackMoveTests()
         bool allDone = true;
         for (Entity id : squad)
         {
-            const Unit *u = registry.Get<Unit>(id);
-            allDone = allDone && !u->hasMoveOrder && !u->hasPath;
+            const Mover *mover = FindMover(registry, id);
+            allDone = allDone && mover != nullptr && !mover->hasMoveOrder && !mover->hasPath;
         }
         if (allDone)
         {

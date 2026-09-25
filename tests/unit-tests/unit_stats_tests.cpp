@@ -2,6 +2,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "UnitStats.h"
 
 void RunUnitStatsTests()
@@ -65,7 +66,7 @@ void RunUnitStatsTests()
     CC_CHECK(unit.health == 300.0f);
     CC_CHECK(unit.attackPower == 20);
     CC_CHECK(unit.speed == 96.0f);
-    CC_CHECK(unit.cooldown == 0.0f);
+    CC_CHECK(CombatState{}.cooldown == 0.0f); // live cooldown starts at zero, not from stats
     CC_CHECK(unit.teamID == 2);
     CC_CHECK(unit.position.x == 128.0f);
     CC_CHECK(unit.position.y == 192.0f);

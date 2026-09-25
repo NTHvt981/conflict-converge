@@ -2,6 +2,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "Pathfinder.h"
 #include "UnitStats.h" // ApplyBaseStats for walkable test units
 
@@ -39,12 +40,13 @@ bool IsValidRoute(const TileMap &map, const TilePath &path, cc::IVec2 start, cc:
     return true;
 }
 
-int WalkUntilIdle(Unit &unit, const TileMap &map, float speed, float dt, int maxFrames)
+int WalkUntilIdle(Unit &unit, Orders &orders, Mover &mover, CombatState &combat,
+                  const TileMap &map, float speed, float dt, int maxFrames)
 {
     int frames = 0;
-    while ((unit.hasMoveOrder || unit.hasPath) && frames < maxFrames)
+    while ((mover.hasMoveOrder || mover.hasPath) && frames < maxFrames)
     {
-        UpdateUnitMovement(unit, map, speed, dt);
+        UpdateUnitMovement(unit, orders, mover, combat, map, speed, dt);
         ++frames;
     }
     return frames;
@@ -102,17 +104,22 @@ void RunPathfindTests()
         map.Set({ 4, y }, TerrainType::Water); // vertical wall, gap at y = 5
     }
     Unit unit;
+    Orders unitOrders;
+    Mover unitMover;
+    CombatState unitCombat;
     unit.type = UnitType::RifleInfantry;
     ApplyBaseStats(unit);
     unit.position = cc::ToRaylib(cc::TileToWorld(1, 1));
-    IssuePathOrder(unit, map, cc::ToRaylib(cc::Vec2(6 * 64.0f + 10.0f, 1 * 64.0f + 5.0f)));
-    CC_CHECK(unit.hasPath);
-    CC_CHECK(unit.hasMoveOrder);
-    CC_CHECK(unit.moveTarget.x == 6 * 64.0f); // target snapped to tile corner
-    CC_CHECK(unit.moveTarget.y == 1 * 64.0f);
+    IssuePathOrder(unit, unitOrders, unitMover, map,
+                   cc::ToRaylib(cc::Vec2(6 * 64.0f + 10.0f, 1 * 64.0f + 5.0f)));
+    CC_CHECK(unitMover.hasPath);
+    CC_CHECK(unitMover.hasMoveOrder);
+    CC_CHECK(unitMover.moveTarget.x == 6 * 64.0f); // target snapped to tile corner
+    CC_CHECK(unitMover.moveTarget.y == 1 * 64.0f);
 
-    const int frames = WalkUntilIdle(unit, map, unit.speed, 1.0f / 60.0f, 60 * 60);
-    CC_CHECK(!unit.hasMoveOrder && !unit.hasPath);
+    const int frames = WalkUntilIdle(unit, unitOrders, unitMover, unitCombat, map, unit.speed,
+                                     1.0f / 60.0f, 60 * 60);
+    CC_CHECK(!unitMover.hasMoveOrder && !unitMover.hasPath);
     CC_CHECK(unit.state == UnitState::Idle);
     CC_CHECK(unit.position.x == 6 * 64.0f);
     CC_CHECK(unit.position.y == 1 * 64.0f);
@@ -120,8 +127,10 @@ void RunPathfindTests()
 
     // --- unreachable target falls back to a straight order ---
     Unit stuck;
+    Orders stuckOrders;
+    Mover stuckMover;
     stuck.position = cc::ToRaylib(cc::TileToWorld(0, 0));
-    IssuePathOrder(stuck, pocket, cc::ToRaylib(cc::TileToWorld(4, 4)));
-    CC_CHECK(stuck.hasMoveOrder);
-    CC_CHECK(!stuck.hasPath);
+    IssuePathOrder(stuck, stuckOrders, stuckMover, pocket, cc::ToRaylib(cc::TileToWorld(4, 4)));
+    CC_CHECK(stuckMover.hasMoveOrder);
+    CC_CHECK(!stuckMover.hasPath);
 }

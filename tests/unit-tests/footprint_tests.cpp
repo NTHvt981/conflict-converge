@@ -3,6 +3,7 @@
 
 #include "test_harness.h"
 
+#include "Extensions.h"
 #include "Formation.h"
 #include "Pathfinder.h"
 #include "TileMap.h"
@@ -45,12 +46,13 @@ bool IsValidFootprintRoute(const TileMap &map, const OccupancyGrid &occ,
     return true;
 }
 
-int WalkUntilIdle(Unit &unit, const TileMap &map, float speed, float dt, int maxFrames)
+int WalkUntilIdle(Unit &unit, Orders &orders, Mover &mover, CombatState &combat,
+                  const TileMap &map, float speed, float dt, int maxFrames)
 {
     int frames = 0;
-    while ((unit.hasMoveOrder || unit.hasPath) && frames < maxFrames)
+    while ((mover.hasMoveOrder || mover.hasPath) && frames < maxFrames)
     {
-        UpdateUnitMovement(unit, map, speed, dt);
+        UpdateUnitMovement(unit, orders, mover, combat, map, speed, dt);
         ++frames;
     }
     return frames;
@@ -259,9 +261,13 @@ void RunFootprintTests()
         unit.position = cc::ToRaylib(cc::TileToWorld(0, 0));
         occ.ReserveFootprint({ 0, 0 }, 2, 2, 1, 1);
 
-        IssueMoveOrder(unit, cc::ToRaylib(cc::TileToWorld(3, 0)));
-        const int frames = WalkUntilIdle(unit, map, unit.speed, 1.0f / 60.0f, 300);
-        CC_CHECK(!unit.hasMoveOrder);
+        Orders orders;
+        Mover mover;
+        CombatState combat;
+        IssueMoveOrder(unit, orders, mover, cc::ToRaylib(cc::TileToWorld(3, 0)));
+        const int frames =
+            WalkUntilIdle(unit, orders, mover, combat, map, unit.speed, 1.0f / 60.0f, 300);
+        CC_CHECK(!mover.hasMoveOrder);
         CC_CHECK(unit.state == UnitState::Idle);
         CC_CHECK(frames < 300);
     }
@@ -306,10 +312,11 @@ void RunFootprintTests()
         occ.ReserveFootprint({ 5, 5 }, 1, 1, blocker, registry.Generation(blocker));
 
         Unit *m = registry.Get<Unit>(mover);
-        IssuePathOrderFootprint(*m, map, occ, cc::ToRaylib(cc::TileToWorld(5, 5)), mover,
+        IssuePathOrderFootprint(*m, GetOrders(registry, mover), GetMover(registry, mover), map,
+                                occ, cc::ToRaylib(cc::TileToWorld(5, 5)), mover,
                                 registry.Generation(mover));
-        CC_CHECK(m->hasPath); // routed, not straight-fallback-cancelled
-        const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(m->moveTarget));
+        CC_CHECK(GetMover(registry, mover).hasPath); // routed, not straight-fallback-cancelled
+        const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(GetMover(registry, mover).moveTarget));
         CC_CHECK(!(dest == cc::IVec2(5, 5)));
         CC_CHECK(occ.CanEnter(map, dest, 1, 1, mover, registry.Generation(mover)));
     }
@@ -341,11 +348,12 @@ void RunFootprintTests()
             {
                 return;
             }
-            if (u.hasMoveOrder || u.hasPath)
+            const Mover *mover = FindMover(registry, id);
+            if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
             {
                 ++orderedCount;
             }
-            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(u.moveTarget));
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(mover->moveTarget));
             CC_CHECK(!(dest == cc::IVec2(10, 10))); // nobody drives into the blocker
             dests.insert({ dest.x, dest.y });
         });
@@ -396,19 +404,22 @@ void RunFootprintTests()
         const Entity blocker = registry.Create();
 
         Unit *m = registry.Get<Unit>(mover);
-        IssuePathOrderFootprint(*m, map, occ, cc::ToRaylib(cc::TileToWorld(4, 0)), mover,
+        Mover &mm = GetMover(registry, mover);
+        CombatState &mc = GetCombatState(registry, mover);
+        IssuePathOrderFootprint(*m, GetOrders(registry, mover), mm, map, occ,
+                                cc::ToRaylib(cc::TileToWorld(4, 0)), mover,
                                 registry.Generation(mover));
-        CC_CHECK(m->hasPath);
+        CC_CHECK(mm.hasPath);
         // Drop a blocker onto the route mid-walk (old code cancels here).
         occ.ReserveFootprint({ 2, 0 }, 1, 1, blocker, registry.Generation(blocker));
         int frames = 0;
-        while ((m->hasMoveOrder || m->hasPath) && frames < 1200)
+        while ((mm.hasMoveOrder || mm.hasPath) && frames < 1200)
         {
-            UpdateUnitMovement(*m, map, m->speed, 1.0f / 60.0f, &occ, mover,
-                               registry.Generation(mover));
+            UpdateUnitMovement(*m, GetOrders(registry, mover), mm, mc, map, m->speed, 1.0f / 60.0f,
+                               &occ, mover, registry.Generation(mover));
             ++frames;
         }
-        CC_CHECK(!m->hasMoveOrder && !m->hasPath); // arrived, not stuck
+        CC_CHECK(!mm.hasMoveOrder && !mm.hasPath); // arrived, not stuck
         CC_CHECK(cc::WorldToTile(cc::ToGlm(m->position)) == cc::IVec2(4, 0));
         CC_CHECK(frames > 60); // survived the block (instant-cancel dies ~32)
         CC_CHECK(frames < 1200);
@@ -434,15 +445,18 @@ void RunFootprintTests()
         occ.ReserveFootprint({ 2, 1 }, 1, 1, wall, wallGen);
 
         Unit *m = registry.Get<Unit>(mover);
-        IssueMoveOrder(*m, cc::ToRaylib(cc::TileToWorld(2, 0))); // straight at the wall
+        Mover &mm = GetMover(registry, mover);
+        CombatState &mc = GetCombatState(registry, mover);
+        IssueMoveOrder(*m, GetOrders(registry, mover), mm,
+                       cc::ToRaylib(cc::TileToWorld(2, 0))); // straight at the wall
         int frames = 0;
-        while ((m->hasMoveOrder || m->hasPath) && frames < 600)
+        while ((mm.hasMoveOrder || mm.hasPath) && frames < 600)
         {
-            UpdateUnitMovement(*m, map, m->speed, 1.0f / 60.0f, &occ, mover,
-                               registry.Generation(mover));
+            UpdateUnitMovement(*m, GetOrders(registry, mover), mm, mc, map, m->speed, 1.0f / 60.0f,
+                               &occ, mover, registry.Generation(mover));
             ++frames;
         }
-        CC_CHECK(!m->hasMoveOrder && !m->hasPath); // gave up, order gone
+        CC_CHECK(!mm.hasMoveOrder && !mm.hasPath); // gave up, order gone
         CC_CHECK(m->state == UnitState::Idle);
         CC_CHECK(cc::WorldToTile(cc::ToGlm(m->position)) == cc::IVec2(0, 0));
         CC_CHECK(frames > 90); // waited through retries (3 x 0.5s), not instant
@@ -495,6 +509,7 @@ void RunFootprintTests()
             hunter.teamID = 0;
             hunter.position = cc::ToRaylib(cc::TileToWorld(0, 0));
             registry.Add(chaser, hunter);
+            registry.Add(chaser, Mover{});
             const Entity prey = registry.Create();
             Unit victim;
             victim.type = UnitType::RifleInfantry;
@@ -502,6 +517,7 @@ void RunFootprintTests()
             victim.teamID = 1;
             victim.position = cc::ToRaylib(cc::TileToWorld(4, 0));
             registry.Add(prey, victim);
+            registry.Add(prey, Mover{});
             return std::make_tuple(std::move(registry), chaser, prey);
         };
         // With occ (prey anchor reserved like the live pre-pass): the detour
@@ -512,26 +528,28 @@ void RunFootprintTests()
             TileMap map(10, 10);
             occ.ReserveFootprint({ 4, 0 }, 1, 1, prey, registry.Generation(prey));
             UpdateUnit(chaser, registry, map, kDt, nullptr, &occ);
-            const Unit *hunter = registry.Get<Unit>(chaser);
-            CC_CHECK(hunter->target == prey);
-            CC_CHECK(hunter->hasPath);
-            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(hunter->moveTarget));
+            const CombatState *chaserCombat = FindCombatState(registry, chaser);
+            const Mover *chaserMover = FindMover(registry, chaser);
+            CC_CHECK(chaserCombat->target == prey);
+            CC_CHECK(chaserMover->hasPath);
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(chaserMover->moveTarget));
             CC_CHECK(!(dest == cc::IVec2(4, 0)));
             CC_CHECK(occ.CanEnter(map, dest, 1, 1, chaser, registry.Generation(chaser)));
             // Second tick with an unmoved target: no re-issue churn.
-            const TilePath first = hunter->path;
+            const TilePath first = chaserMover->path;
             UpdateUnit(chaser, registry, map, kDt, nullptr, &occ);
-            CC_CHECK(registry.Get<Unit>(chaser)->path == first);
+            CC_CHECK(FindMover(registry, chaser)->path == first);
         }
         // Without occ: legacy blind detour drives at the target tile.
         {
             auto [registry, chaser, prey] = makeDuel();
             TileMap map(10, 10);
             UpdateUnit(chaser, registry, map, kDt);
-            const Unit *hunter = registry.Get<Unit>(chaser);
-            CC_CHECK(hunter->target == prey);
-            CC_CHECK(hunter->hasPath);
-            CC_CHECK(cc::WorldToTile(cc::ToGlm(hunter->moveTarget)) == cc::IVec2(4, 0));
+            const CombatState *chaserCombat = FindCombatState(registry, chaser);
+            const Mover *chaserMover = FindMover(registry, chaser);
+            CC_CHECK(chaserCombat->target == prey);
+            CC_CHECK(chaserMover->hasPath);
+            CC_CHECK(cc::WorldToTile(cc::ToGlm(chaserMover->moveTarget)) == cc::IVec2(4, 0));
         }
     }
 }

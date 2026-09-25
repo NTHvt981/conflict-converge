@@ -5,7 +5,7 @@
 #include "AICommander.h" // factory-gate test
 #include "Building.h" // PlaceBuilding, BuildingMaxHealth
 #include "Event.h"    // commander event routing
-#include "Extensions.h" // G4 transport components/orders
+#include "Extensions.h" // Orders pool (Unit split slice 1)
 #include "FogOfWar.h" // structure acquisition under fog
 #include "Nodes.h"    // ResourceNodes for the commander fixture
 #include "Selection.h" // G4 embarked pick/select guards
@@ -38,6 +38,9 @@ Entity AddUnit(Registry &registry, const Unit &unit)
 {
     const Entity id = registry.Create();
     registry.Add(id, unit);
+    registry.Add(id, Orders{});
+    registry.Add(id, Mover{});
+    registry.Add(id, CombatState{});
     return id;
 }
 
@@ -67,13 +70,16 @@ void RunOrdersTests()
         victim.attackPower = 0; // passive: never fights back
         const Entity victimId = AddUnit(registry, victim);
         Unit *seeker = registry.Get<Unit>(seekerId);
-        IssueAttackMoveOrder(*seeker, map, cc::ToRaylib(cc::TileToWorld(10, 2)));
-        CC_CHECK(seeker->attackMove);
+        Orders &seekerOrders = GetOrders(registry, seekerId);
+        Mover &seekerMover = GetMover(registry, seekerId);
+        IssueAttackMoveOrder(*seeker, seekerOrders, seekerMover, map,
+                             cc::ToRaylib(cc::TileToWorld(10, 2)));
+        CC_CHECK(seekerOrders.attackMove);
         bool engaged = false;
         for (int i = 0; i < 1200; ++i)
         {
             StepUnits(registry, map, 1);
-            if (registry.Get<Unit>(seekerId)->target != kInvalidEntity ||
+            if (FindCombatState(registry, seekerId)->target != kInvalidEntity ||
                 registry.Get<Unit>(seekerId)->state == UnitState::Attacking)
             {
                 engaged = true;
@@ -105,15 +111,16 @@ void RunOrdersTests()
         for (int i = 0; i < 1200; ++i)
         {
             StepUnits(registry, map, 1);
-            const Unit *s = registry.Get<Unit>(seekerId);
-            if (!s->hasMoveOrder && !s->hasPath)
+            const Mover *s = FindMover(registry, seekerId);
+            if (s == nullptr || (!s->hasMoveOrder && !s->hasPath))
             {
                 break;
             }
         }
-        const Unit *s = registry.Get<Unit>(seekerId);
-        CC_CHECK(!s->hasMoveOrder && !s->hasPath);
-        CC_CHECK(cc::WorldToTile(cc::ToGlm(s->position)) == cc::IVec2(10, 2));
+        CC_CHECK(!FindMover(registry, seekerId)->hasMoveOrder &&
+                 !FindMover(registry, seekerId)->hasPath);
+        CC_CHECK(cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(seekerId)->position)) ==
+                 cc::IVec2(10, 2));
     }
 
     // --- attack-move with no contact walks like a plain order ---
@@ -122,11 +129,12 @@ void RunOrdersTests()
         TileMap map(20, 15);
         const Entity id = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
         Unit *u = registry.Get<Unit>(id);
-        IssueAttackMoveOrder(*u, map, cc::ToRaylib(cc::TileToWorld(6, 2)));
+        IssueAttackMoveOrder(*u, GetOrders(registry, id), GetMover(registry, id), map,
+                             cc::ToRaylib(cc::TileToWorld(6, 2)));
         StepUnits(registry, map, 600);
-        const Unit *after = registry.Get<Unit>(id);
+        const Mover *after = FindMover(registry, id);
         CC_CHECK(!after->hasMoveOrder && !after->hasPath);
-        CC_CHECK(cc::WorldToTile(cc::ToGlm(after->position)) == cc::IVec2(6, 2));
+        CC_CHECK(cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(id)->position)) == cc::IVec2(6, 2));
     }
 
     // --- Hold: no chase out of range, fires in range ---
@@ -135,13 +143,14 @@ void RunOrdersTests()
         TileMap map(20, 15);
         const Entity holderId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
         Unit *holder = registry.Get<Unit>(holderId);
-        SetStance(*holder, Stance::Hold);
+        SetStance(*holder, GetOrders(registry, holderId), GetCombatState(registry, holderId),
+                  Stance::Hold);
         Unit foe = Soldier(1, UnitType::RifleInfantry, 5, 2);
         foe.attackPower = 0;
         const Entity foeId = AddUnit(registry, foe);
         StepUnits(registry, map, 120);
         const Unit *h = registry.Get<Unit>(holderId);
-        CC_CHECK(h->target == kInvalidEntity); // never chased
+        CC_CHECK(FindCombatState(registry, holderId)->target == kInvalidEntity); // never chased
         CC_CHECK(cc::WorldToTile(cc::ToGlm(h->position)) == cc::IVec2(2, 2));
         // Walk the foe into range: Hold opens fire without moving.
         registry.Get<Unit>(foeId)->position = cc::ToRaylib(cc::TileToWorld(3, 2));
@@ -157,16 +166,18 @@ void RunOrdersTests()
         TileMap map(20, 15);
         const Entity id = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
         Unit *u = registry.Get<Unit>(id);
-        IssuePatrolOrder(*u, map, cc::ToRaylib(cc::TileToWorld(2, 2)),
+        Orders &orders = GetOrders(registry, id);
+        Mover &mover = GetMover(registry, id);
+        IssuePatrolOrder(*u, orders, mover, map, cc::ToRaylib(cc::TileToWorld(2, 2)),
                          cc::ToRaylib(cc::TileToWorld(6, 2)));
-        CC_CHECK(u->stance == Stance::Patrol && u->hasPatrol);
+        CC_CHECK(orders.stance == Stance::Patrol && orders.hasPatrol);
         // Walk to B (bounded): arrival clears the leg order...
         bool arrived = false;
         for (int i = 0; i < 900; ++i)
         {
             StepUnits(registry, map, 1);
-            const Unit *p = registry.Get<Unit>(id);
-            if (!p->hasMoveOrder && !p->hasPath)
+            const Mover *p = FindMover(registry, id);
+            if (p == nullptr || (!p->hasMoveOrder && !p->hasPath))
             {
                 arrived = true;
                 break;
@@ -176,11 +187,12 @@ void RunOrdersTests()
         CC_CHECK(cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(id)->position)) == cc::IVec2(6, 2));
         // ...and the next idle tick issues the return leg.
         StepUnits(registry, map, 5);
-        const Unit *back = registry.Get<Unit>(id);
+        const Mover *back = FindMover(registry, id);
         CC_CHECK(back->hasMoveOrder || back->hasPath);
         // Leaving patrol drops the route.
-        SetStance(*registry.Get<Unit>(id), Stance::Guard);
-        CC_CHECK(!registry.Get<Unit>(id)->hasPatrol);
+        SetStance(*registry.Get<Unit>(id), GetOrders(registry, id),
+                  GetCombatState(registry, id), Stance::Guard);
+        CC_CHECK(!GetOrders(registry, id).hasPatrol);
     }
 
     // --- repair heals a damaged vehicle, then completes ---
@@ -195,12 +207,12 @@ void RunOrdersTests()
         const Entity engId = AddUnit(registry, Soldier(0, UnitType::Engineer, 2, 2));
         Unit *eng = registry.Get<Unit>(engId);
         eng->speed = 64.0f;
-        IssueRepairOrder(*eng, tankId);
-        CC_CHECK(eng->hasRepairOrder);
+        IssueRepairOrder(*eng, GetOrders(registry, engId), GetMover(registry, engId), tankId);
+        CC_CHECK(GetOrders(registry, engId).hasRepairOrder);
         StepUnits(registry, map, 3600);
         const Unit *fixed = registry.Get<Unit>(tankId);
         CC_CHECK(fixed->health == BaseStats(UnitType::LightTank).health);
-        CC_CHECK(!registry.Get<Unit>(engId)->hasRepairOrder); // job done, order clears
+        CC_CHECK(!GetOrders(registry, engId).hasRepairOrder); // job done, order clears
     }
 
     // --- repair approaches from range ---
@@ -217,11 +229,12 @@ void RunOrdersTests()
         Unit *eng = registry.Get<Unit>(engId);
         eng->speed = 64.0f;
         eng->attackPower = 0;
-        IssueRepairOrder(*eng, tankId);
+        IssueRepairOrder(*eng, GetOrders(registry, engId), GetMover(registry, engId), tankId);
         StepUnits(registry, map, 120);
         // Six tiles out: the engineer must be walking the approach, not idle.
         const Unit *e = registry.Get<Unit>(engId);
-        CC_CHECK(e->hasMoveOrder || e->hasPath || e->state == UnitState::Moving);
+        const Mover *em = FindMover(registry, engId);
+        CC_CHECK(em->hasMoveOrder || em->hasPath || e->state == UnitState::Moving);
         StepUnits(registry, map, 3600);
         CC_CHECK(registry.Get<Unit>(tankId)->health == BaseStats(UnitType::LightTank).health);
     }
@@ -237,8 +250,9 @@ void RunOrdersTests()
         const Entity tankId = AddUnit(registry, tank);
         // Non-engineer issuer: no-op.
         const Entity gruntId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 3, 2));
-        IssueRepairOrder(*registry.Get<Unit>(gruntId), tankId);
-        CC_CHECK(!registry.Get<Unit>(gruntId)->hasRepairOrder);
+        IssueRepairOrder(*registry.Get<Unit>(gruntId), GetOrders(registry, gruntId),
+                         GetMover(registry, gruntId), tankId);
+        CC_CHECK(!GetOrders(registry, gruntId).hasRepairOrder);
         // Enemy patient: order dies on the first tick.
         const Entity spyId = AddUnit(registry, Soldier(0, UnitType::Engineer, 3, 2));
         Unit foe = Soldier(1, UnitType::LightTank, 4, 2);
@@ -246,23 +260,26 @@ void RunOrdersTests()
         foe.teamID = 1;
         foe.health = 10.0f;
         const Entity foeId = AddUnit(registry, foe);
-        IssueRepairOrder(*registry.Get<Unit>(spyId), foeId);
+        IssueRepairOrder(*registry.Get<Unit>(spyId), GetOrders(registry, spyId),
+                         GetMover(registry, spyId), foeId);
         StepUnits(registry, map, 5);
-        CC_CHECK(!registry.Get<Unit>(spyId)->hasRepairOrder);
+        CC_CHECK(!GetOrders(registry, spyId).hasRepairOrder);
         // Healthy patient: nothing to fix.
         Unit whole = Soldier(0, UnitType::LightTank, 5, 2);
         ApplyBaseStats(whole);
         whole.teamID = 0;
         const Entity wholeId = AddUnit(registry, whole);
-        IssueRepairOrder(*registry.Get<Unit>(spyId), wholeId);
+        IssueRepairOrder(*registry.Get<Unit>(spyId), GetOrders(registry, spyId),
+                         GetMover(registry, spyId), wholeId);
         StepUnits(registry, map, 5);
-        CC_CHECK(!registry.Get<Unit>(spyId)->hasRepairOrder);
+        CC_CHECK(!GetOrders(registry, spyId).hasRepairOrder);
         // Flesh (infantry) is not repairable.
         const Entity mateId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 6, 2));
         registry.Get<Unit>(mateId)->health = 10.0f;
-        IssueRepairOrder(*registry.Get<Unit>(spyId), mateId);
+        IssueRepairOrder(*registry.Get<Unit>(spyId), GetOrders(registry, spyId),
+                         GetMover(registry, spyId), mateId);
         StepUnits(registry, map, 5);
-        CC_CHECK(!registry.Get<Unit>(spyId)->hasRepairOrder);
+        CC_CHECK(!GetOrders(registry, spyId).hasRepairOrder);
     }
 
     // --- repair heals damaged buildings ---
@@ -280,10 +297,10 @@ void RunOrdersTests()
         const Entity engId = AddUnit(registry, Soldier(0, UnitType::Engineer, 5, 4));
         Unit *eng = registry.Get<Unit>(engId);
         eng->speed = 64.0f;
-        IssueRepairOrder(*eng, baseId);
+        IssueRepairOrder(*eng, GetOrders(registry, engId), GetMover(registry, engId), baseId);
         StepUnits(registry, map, 3600);
         CC_CHECK(registry.Get<Building>(baseId)->health == 400.0f);
-        CC_CHECK(!registry.Get<Unit>(engId)->hasRepairOrder);
+        CC_CHECK(!GetOrders(registry, engId).hasRepairOrder);
     }
 
     // --- structures are acquired like targets (nearest, hostile, standing) ---
@@ -327,7 +344,7 @@ void RunOrdersTests()
         StepUnits(registry, map, 3600);
         CC_CHECK(registry.Get<Building>(depotId) == nullptr); // demolished at zero HP
         CC_CHECK(map.Get({ 5, 2 }) == TerrainType::Grass);     // footprint restored
-        CC_CHECK(registry.Get<Unit>(raiderId)->target == kInvalidEntity);
+        CC_CHECK(FindCombatState(registry, raiderId)->target == kInvalidEntity);
     }
 
     // --- production dies with the factory; the queue stalls ---
@@ -367,12 +384,13 @@ void RunOrdersTests()
         cargo.capacity = 2;
         registry.Add(carrierId, cargo);
         const Entity riderId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 3, 2));
-        IssueLoadOrder(*registry.Get<Unit>(carrierId), riderId);
+        IssueLoadOrder(*registry.Get<Unit>(carrierId), GetOrders(registry, carrierId),
+                       GetMover(registry, carrierId), riderId);
         StepUnits(registry, map, 5);
         CC_CHECK(registry.Has<EmbarkedOn>(riderId));
         CC_CHECK(registry.Get<EmbarkedOn>(riderId)->carrier == carrierId);
         CC_CHECK(registry.Get<Cargo>(carrierId)->passengers.size() == 1);
-        CC_CHECK(!registry.Get<Unit>(carrierId)->hasLoadOrder); // order consumed
+        CC_CHECK(!GetOrders(registry, carrierId).hasLoadOrder); // order consumed
     }
 
     // --- G4 load validation: enemies, vehicles, full, and carrier-less ---
@@ -409,12 +427,12 @@ void RunOrdersTests()
         registry.Add(carrierId, cargo);
         const Entity riderId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 5, 5));
         CC_CHECK(BoardTransport(registry, carrierId, riderId));
-        IssueUnloadOrder(*registry.Get<Unit>(carrierId), map,
-                         cc::ToRaylib(cc::TileToWorld(8, 8)));
+        IssueUnloadOrder(*registry.Get<Unit>(carrierId), GetOrders(registry, carrierId),
+                         GetMover(registry, carrierId), map, cc::ToRaylib(cc::TileToWorld(8, 8)));
         StepUnits(registry, map, 600); // drives there, then drops
         CC_CHECK(!registry.Has<EmbarkedOn>(riderId));
         CC_CHECK(registry.Get<Cargo>(carrierId)->passengers.empty());
-        CC_CHECK(!registry.Get<Unit>(carrierId)->hasUnloadOrder);
+        CC_CHECK(!GetOrders(registry, carrierId).hasUnloadOrder);
         CC_CHECK(registry.IsAlive(riderId));
     }
 

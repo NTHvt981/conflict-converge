@@ -32,36 +32,41 @@ void RunCombatTests()
     attacker.attackPower = 100;
     attacker.damageType = DamageType::KINETIC;
     attacker.cooldownTime = 1.5f;
-    attacker.cooldown = 0.0f;
+    CombatState attackerCombat;
     Unit defender;
     defender.health = 200.0f;
     defender.armorType = ArmorType::COMPOSITE; // 0.50x vs KINETIC
+    CombatState defenderCombat;
 
-    const float dealt = ResolveAttack(attacker, defender);
+    const float dealt = ResolveAttack(attacker, attackerCombat, defender, defenderCombat);
     CC_CHECK(dealt == 50.0f);
     CC_CHECK(defender.health == 150.0f);
-    CC_CHECK(attacker.cooldown == 1.5f);
+    CC_CHECK(attackerCombat.cooldown == 1.5f);
 
     // --- bonus matchup: EXPLOSIVE cracks STEEL ---
     Unit bomber;
     bomber.attackPower = 80;
     bomber.damageType = DamageType::EXPLOSIVE;
     bomber.cooldownTime = 2.0f;
+    CombatState bomberCombat;
     Unit tank;
     tank.health = 500.0f;
     tank.armorType = ArmorType::STEEL; // 1.25x vs EXPLOSIVE
-    CC_CHECK(ResolveAttack(bomber, tank) == 100.0f);
+    CombatState tankCombat;
+    CC_CHECK(ResolveAttack(bomber, bomberCombat, tank, tankCombat) == 100.0f);
     CC_CHECK(tank.health == 400.0f);
 
     // --- zero power deals nothing but still cycles the cooldown ---
     Unit peashooter;
     peashooter.attackPower = 0;
     peashooter.cooldownTime = 0.5f;
+    CombatState peashooterCombat;
     Unit wall;
     wall.health = 100.0f;
-    CC_CHECK(ResolveAttack(peashooter, wall) == 0.0f);
+    CombatState wallCombat;
+    CC_CHECK(ResolveAttack(peashooter, peashooterCombat, wall, wallCombat) == 0.0f);
     CC_CHECK(wall.health == 100.0f);
-    CC_CHECK(peashooter.cooldown == 0.5f);
+    CC_CHECK(peashooterCombat.cooldown == 0.5f);
 
     // --- G3 crush: overlapping enemy foot dies, friendlies/vehicles spared ---
     {
@@ -135,14 +140,16 @@ void RunCombatTests()
         Unit marksman;
         marksman.type = UnitType::AntiArmorInfantry;
         ApplyBaseStats(marksman);
+        CombatState marksmanCombat;
         Unit squad;
         squad.type = UnitType::RifleInfantry;
         ApplyBaseStats(squad);
         squad.health = 100.0f;
+        CombatState squadCombat;
         std::array<Vector2, 6> slots;
         float scale = 1.0f;
         CC_CHECK(SquadSlots(squad.type, 7, squad.health / 100.0f, slots, scale) == 5);
-        ResolveAttack(marksman, squad); // ~25% of max HP through the matrix
+        ResolveAttack(marksman, marksmanCombat, squad, squadCombat); // ~25% of max HP through the matrix
         CC_CHECK(SquadSlots(squad.type, 7, squad.health / 100.0f, slots, scale) == 4);
         ResetActiveUnitConfigs();
     }

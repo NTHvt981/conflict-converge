@@ -10,6 +10,7 @@
 
 enum class BuildingType;
 class HotkeyMap;
+struct Orders; // units/Extensions.h: stance lives in the Orders pool
 
 // HUD text content: pure functions (tested); the RmlUi HUD owns the panels.
 
@@ -29,7 +30,7 @@ struct HoverTooltipState
 constexpr float kHoverTooltipDelay = 0.4f;
 bool UpdateHoverTooltip(HoverTooltipState &state, Entity hovered, float dt, float delay);
 // Two-line stat block for a hovered unit (summary + stance/state).
-std::vector<std::string> UnitTooltipLines(const Unit &unit);
+std::vector<std::string> UnitTooltipLines(const Unit &unit, const Orders &orders);
 
 // Factory production UI. Display order for the 7 buildable types.
 std::vector<UnitType> ProductionMenuOrder();

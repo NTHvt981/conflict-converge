@@ -1,6 +1,7 @@
 #include "AICommander.h"
 
 #include "Building.h"
+#include "Extensions.h"
 #include "Formation.h"
 #include "Nodes.h"
 #include "Pathfinder.h"
@@ -173,11 +174,12 @@ void AICommander::OrderMove(Unit &unit, Entity id, Vector2 dest)
 {
     if (occ_ != nullptr)
     {
-        IssuePathOrderFootprint(unit, map_, *occ_, dest, id, registry_.Generation(id));
+        IssuePathOrderFootprint(unit, GetOrders(registry_, id), GetMover(registry_, id), map_,
+                                *occ_, dest, id, registry_.Generation(id));
     }
     else
     {
-        IssuePathOrder(unit, map_, dest);
+        IssuePathOrder(unit, GetOrders(registry_, id), GetMover(registry_, id), map_, dest);
     }
 }
 
@@ -309,14 +311,16 @@ void AICommander::MaybeLaunchWave()
         }
         const cc::IVec2 slot = lastSeenEnemy_ + offsets[i];
         const Vector2 dest = cc::ToRaylib(cc::TileToWorld(slot.x, slot.y));
+        Orders &orders = GetOrders(registry_, army[i]);
+        Mover &mover = GetMover(registry_, army[i]);
         if (occ_ != nullptr)
         {
-            IssueAttackMoveOrderFootprint(*unit, map_, *occ_, dest, army[i],
+            IssueAttackMoveOrderFootprint(*unit, orders, mover, map_, *occ_, dest, army[i],
                                           registry_.Generation(army[i]));
         }
         else
         {
-            IssueAttackMoveOrder(*unit, map_, dest);
+            IssueAttackMoveOrder(*unit, orders, mover, map_, dest);
         }
     }
     ++wavesLaunched_;

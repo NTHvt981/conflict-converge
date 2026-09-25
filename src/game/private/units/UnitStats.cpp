@@ -36,7 +36,6 @@ void ApplyBaseStats(Unit &unit)
     unit.attackPower = stats.attackPower;
     unit.attackRange = stats.attackRange;
     unit.cooldownTime = stats.cooldownTime;
-    unit.cooldown = 0.0f;
     unit.speed = stats.speed;
     unit.sightRange = stats.sightRange;
     const bool isVehicle = unit.type == UnitType::IFV || unit.type == UnitType::Artillery ||
