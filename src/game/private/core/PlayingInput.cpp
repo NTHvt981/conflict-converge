@@ -62,6 +62,12 @@ void PlayingInput::ToggleAreaBuild()
     placeDragActive_ = false;
 }
 
+void PlayingInput::SelectPlacingType(BuildingType type)
+{
+    placingType_ = type;
+    placeDragActive_ = false;
+}
+
 void PlayingInput::ToggleAreaRepair()
 {
     areaRepairMode_ = !areaRepairMode_;

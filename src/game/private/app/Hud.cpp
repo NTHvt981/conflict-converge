@@ -196,3 +196,48 @@ std::vector<UnitType> ProductionMenuOrder()
              UnitType::Medic,                 UnitType::IFV,               UnitType::Artillery,
              UnitType::LightTank,             UnitType::HeavyTank };
 }
+
+ProductionCategory ProductionCategoryOf(UnitType type)
+{
+    switch (type)
+    {
+    case UnitType::IFV:
+    case UnitType::Artillery:
+    case UnitType::LightTank:
+    case UnitType::HeavyTank:
+        return ProductionCategory::Vehicle;
+    default:
+        return ProductionCategory::Infantry;
+    }
+}
+
+std::vector<UnitType> InfantryMenuOrder()
+{
+    std::vector<UnitType> out;
+    for (UnitType type : ProductionMenuOrder())
+    {
+        if (ProductionCategoryOf(type) == ProductionCategory::Infantry)
+        {
+            out.push_back(type);
+        }
+    }
+    return out;
+}
+
+std::vector<UnitType> VehicleMenuOrder()
+{
+    std::vector<UnitType> out;
+    for (UnitType type : ProductionMenuOrder())
+    {
+        if (ProductionCategoryOf(type) == ProductionCategory::Vehicle)
+        {
+            out.push_back(type);
+        }
+    }
+    return out;
+}
+
+std::vector<BuildingType> BuildingMenuOrder()
+{
+    return { BuildingType::Base, BuildingType::ResourceDepot, BuildingType::Factory };
+}

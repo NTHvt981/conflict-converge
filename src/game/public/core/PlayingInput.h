@@ -31,6 +31,7 @@ public:
     void ToggleSettingRally();
     void ToggleSlowestSpeed();
     void ToggleAreaBuild();
+    void SelectPlacingType(BuildingType type);
     void ToggleAreaRepair();
     void ToggleAttackGround();
     bool IsDragging() const;

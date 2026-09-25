@@ -3,6 +3,7 @@
 
 #include "test_harness.h"
 
+#include "Building.h"
 #include "Hud.h"
 #include "UnitStats.h"
 
@@ -35,4 +36,29 @@ void RunHudTests()
     CC_CHECK(summary.find("Heavy Tank") != std::string::npos);
     CC_CHECK(summary.find("320/500") != std::string::npos);
     CC_CHECK(summary.find("Team 1") != std::string::npos);
+
+    // --- production tabs partition the factory menu order ---
+    CC_CHECK(ProductionCategoryOf(UnitType::RifleInfantry) == ProductionCategory::Infantry);
+    CC_CHECK(ProductionCategoryOf(UnitType::AntiArmorInfantry) == ProductionCategory::Infantry);
+    CC_CHECK(ProductionCategoryOf(UnitType::Engineer) == ProductionCategory::Infantry);
+    CC_CHECK(ProductionCategoryOf(UnitType::Medic) == ProductionCategory::Infantry);
+    CC_CHECK(ProductionCategoryOf(UnitType::PrototypeInfantry) == ProductionCategory::Infantry);
+    CC_CHECK(ProductionCategoryOf(UnitType::IFV) == ProductionCategory::Vehicle);
+    CC_CHECK(ProductionCategoryOf(UnitType::Artillery) == ProductionCategory::Vehicle);
+    CC_CHECK(ProductionCategoryOf(UnitType::LightTank) == ProductionCategory::Vehicle);
+    CC_CHECK(ProductionCategoryOf(UnitType::HeavyTank) == ProductionCategory::Vehicle);
+    const std::vector<UnitType> infantry = InfantryMenuOrder();
+    const std::vector<UnitType> vehicles = VehicleMenuOrder();
+    CC_CHECK(infantry.size() == 4);
+    CC_CHECK(vehicles.size() == 4);
+    CC_CHECK(infantry[0] == UnitType::RifleInfantry && infantry[3] == UnitType::Medic);
+    CC_CHECK(vehicles[0] == UnitType::IFV && vehicles[3] == UnitType::HeavyTank);
+    CC_CHECK(infantry.size() + vehicles.size() == ProductionMenuOrder().size());
+
+    // --- building tab covers all placeable types exactly once ---
+    const std::vector<BuildingType> buildings = BuildingMenuOrder();
+    CC_CHECK(buildings.size() == 3);
+    CC_CHECK(buildings[0] == BuildingType::Base);
+    CC_CHECK(buildings[1] == BuildingType::ResourceDepot);
+    CC_CHECK(buildings[2] == BuildingType::Factory);
 }
