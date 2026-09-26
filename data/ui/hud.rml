@@ -36,61 +36,61 @@ body {
 			<div class="hud-title">Abilities</div>
 			<div id="abilities-grid"><button class="ab-btn" id="ab-hold">Hold</button><button class="ab-btn" id="ab-guard">Guard</button><button class="ab-btn" id="ab-patrol">Patrol</button><button class="ab-btn" id="ab-attackmove">AtkMove</button><button class="ab-btn" id="ab-halt">Halt</button><button class="ab-btn" id="ab-repair">Repair</button><button class="ab-btn" id="ab-heal">Heal</button><button class="ab-btn" id="ab-rally">Rally</button><button class="ab-btn" id="ab-demolish">Raze</button></div>
 		</div>
-		<div class="hud-panel" id="hud-factory">
+		<div class="hud-panel" id="hud-production">
 			<div class="hud-title">Production</div>
-			<div id="factory-tabs"><button class="tab-btn" id="tab-infantry">Inf</button><button class="tab-btn" id="tab-vehicles">Veh</button><button class="tab-btn" id="tab-buildings">Bld</button></div>
+			<div id="production-tabs"><button class="tab-btn" id="tab-infantry">Inf</button><button class="tab-btn" id="tab-vehicles">Veh</button><button class="tab-btn" id="tab-buildings">Bld</button></div>
 			<div id="rows-infantry">
-				<div class="fac-row">
-					<button class="fac-btn" id="fac-i-0">Infantry 25/0</button>
-					<button class="fac-rep" id="repr-i-0">R</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="prod-i-0">Infantry 25/0</button>
+					<button class="prod-rep" id="repr-i-0">R</button>
 				</div>
-				<div class="fac-row">
-					<button class="fac-btn" id="fac-i-1">Anti-Armor 30/5</button>
-					<button class="fac-rep" id="repr-i-1">R</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="prod-i-1">Anti-Armor 30/5</button>
+					<button class="prod-rep" id="repr-i-1">R</button>
 				</div>
-				<div class="fac-row">
-					<button class="fac-btn" id="fac-i-2">Engineer 40/0</button>
-					<button class="fac-rep" id="repr-i-2">R</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="prod-i-2">Engineer 40/0</button>
+					<button class="prod-rep" id="repr-i-2">R</button>
 				</div>
-				<div class="fac-row">
-					<button class="fac-btn" id="fac-i-3">Medic 30/0</button>
-					<button class="fac-rep" id="repr-i-3">R</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="prod-i-3">Medic 30/0</button>
+					<button class="prod-rep" id="repr-i-3">R</button>
 				</div>
 			</div>
 			<div id="rows-vehicles">
-				<div class="fac-row">
-					<button class="fac-btn" id="fac-v-0">IFV 80/20</button>
-					<button class="fac-rep" id="repr-v-0">R</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="prod-v-0">IFV 80/20</button>
+					<button class="prod-rep" id="repr-v-0">R</button>
 				</div>
-				<div class="fac-row">
-					<button class="fac-btn" id="fac-v-1">Artillery 120/40</button>
-					<button class="fac-rep" id="repr-v-1">R</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="prod-v-1">Artillery 120/40</button>
+					<button class="prod-rep" id="repr-v-1">R</button>
 				</div>
-				<div class="fac-row">
-					<button class="fac-btn" id="fac-v-2">Light Tank 150/50</button>
-					<button class="fac-rep" id="repr-v-2">R</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="prod-v-2">Light Tank 150/50</button>
+					<button class="prod-rep" id="repr-v-2">R</button>
 				</div>
-				<div class="fac-row">
-					<button class="fac-btn" id="fac-v-3">Heavy Tank 250/100</button>
-					<button class="fac-rep" id="repr-v-3">R</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="prod-v-3">Heavy Tank 250/100</button>
+					<button class="prod-rep" id="repr-v-3">R</button>
 				</div>
 			</div>
 			<div id="rows-buildings">
-				<div class="fac-row">
-					<button class="fac-btn" id="place-0">Base</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="place-0">Base</button>
 				</div>
-				<div class="fac-row">
-					<button class="fac-btn" id="place-1">Depot</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="place-1">Depot</button>
 				</div>
-				<div class="fac-row">
-					<button class="fac-btn" id="place-2">Bootcamp</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="place-2">Bootcamp</button>
 				</div>
-				<div class="fac-row">
-					<button class="fac-btn" id="place-3">Workshop</button>
+				<div class="prod-row">
+					<button class="prod-btn" id="place-3">Workshop</button>
 				</div>
 			</div>
-			<div class="hud-line" id="need-factory">Need Bootcamp / Workshop</div>
-			<div id="fac-queue-row">
+			<div class="hud-line" id="need-production">Need Bootcamp / Workshop</div>
+			<div id="prod-queue-row">
 				<span id="queue-line">Queue: 2</span>
 				<button id="btn-cancel">Cancel</button>
 			</div>

@@ -104,8 +104,8 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
     };
     listen(hudDoc_, "click",
            { "tab-infantry", "tab-vehicles", "tab-buildings", "place-0", "place-1", "place-2",
-             "place-3", "fac-i-0", "fac-i-1", "fac-i-2", "fac-i-3", "fac-v-0", "fac-v-1",
-             "fac-v-2", "fac-v-3", "repr-i-0", "repr-i-1", "repr-i-2", "repr-i-3", "repr-v-0",
+              "place-3", "prod-i-0", "prod-i-1", "prod-i-2", "prod-i-3", "prod-v-0", "prod-v-1",
+              "prod-v-2", "prod-v-3", "repr-i-0", "repr-i-1", "repr-i-2", "repr-i-3", "repr-v-0",
              "repr-v-1", "repr-v-2", "repr-v-3", "ab-hold", "ab-guard", "ab-patrol",
              "ab-attackmove", "ab-halt", "ab-repair", "ab-heal", "ab-rally", "ab-demolish" });
     for (Rml::ElementDocument *doc : { pauseDoc_, outcomeDoc_ })

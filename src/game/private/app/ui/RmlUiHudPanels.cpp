@@ -85,7 +85,7 @@ void RmlUiHud::RefreshHud()
     {
         if (selectedProducer != lastSelectedProducer_)
         {
-            factoryTab_ = producerTab;
+            productionTab_ = producerTab;
             lastSelectedProducer_ = selectedProducer;
         }
     }
@@ -126,16 +126,16 @@ void RmlUiHud::RefreshHud()
     }
 
     const bool anyProducer = sim_.HasBootcamp() || sim_.HasWorkshop();
-    if (Rml::Element *stub = hudDoc_->GetElementById("need-factory"))
+    if (Rml::Element *stub = hudDoc_->GetElementById("need-production"))
     {
         stub->SetProperty("display", anyProducer ? "none" : "block");
     }
     ProductionQueue *active = ActiveQueue();
-    if (Rml::Element *queueRow = hudDoc_->GetElementById("fac-queue-row"))
+    if (Rml::Element *queueRow = hudDoc_->GetElementById("prod-queue-row"))
     {
         queueRow->SetProperty("display", active != nullptr ? "block" : "none");
     }
-    RefreshFactory();
+    RefreshProduction();
     RefreshAbilities();
     snprintf(label, sizeof(label), "Queue: %d", active != nullptr ? static_cast<int>(active->Size()) : 0);
     SetTextCached("queue-line", label);
@@ -163,14 +163,14 @@ void RmlUiHud::RefreshHud()
     RefreshHints();
 }
 
-void RmlUiHud::RefreshFactory()
+void RmlUiHud::RefreshProduction()
 {
     char label[64];
     const bool hasBootcamp = sim_.HasBootcamp();
     const bool hasWorkshop = sim_.HasWorkshop();
-    const bool infantryTab = factoryTab_ == ProductionTab::Infantry;
-    const bool vehiclesTab = factoryTab_ == ProductionTab::Vehicles;
-    const bool buildingsTab = factoryTab_ == ProductionTab::Buildings;
+    const bool infantryTab = productionTab_ == ProductionTab::Infantry;
+    const bool vehiclesTab = productionTab_ == ProductionTab::Vehicles;
+    const bool buildingsTab = productionTab_ == ProductionTab::Buildings;
     if (Rml::Element *rows = hudDoc_->GetElementById("rows-infantry"))
     {
         rows->SetProperty("display", hasBootcamp && infantryTab ? "block" : "none");
@@ -202,7 +202,7 @@ void RmlUiHud::RefreshFactory()
     {
         const UnitCost cost = CostOf(infantry[i]);
         char id[16];
-        snprintf(id, sizeof(id), "fac-i-%d", static_cast<int>(i));
+        snprintf(id, sizeof(id), "prod-i-%d", static_cast<int>(i));
         snprintf(label, sizeof(label), "%s %ld/%ld", UnitTypeName(infantry[i]), cost.iron,
                  cost.oil);
         SetTextCached(id, label);
@@ -218,7 +218,7 @@ void RmlUiHud::RefreshFactory()
     {
         const UnitCost cost = CostOf(vehicles[i]);
         char id[16];
-        snprintf(id, sizeof(id), "fac-v-%d", static_cast<int>(i));
+        snprintf(id, sizeof(id), "prod-v-%d", static_cast<int>(i));
         snprintf(label, sizeof(label), "%s %ld/%ld", UnitTypeName(vehicles[i]), cost.iron,
                  cost.oil);
         SetTextCached(id, label);
@@ -244,7 +244,7 @@ void RmlUiHud::RefreshFactory()
 
 ProductionQueue *RmlUiHud::ActiveQueue()
 {
-    switch (factoryTab_)
+    switch (productionTab_)
     {
     case ProductionTab::Infantry:
         return &bootcampQueue_;

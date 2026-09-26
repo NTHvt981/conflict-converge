@@ -72,7 +72,7 @@ private:
     ProductionQueue *ActiveQueue();
     std::string SelectionLine() const;
     void RefreshAbilities();
-    void RefreshFactory();
+    void RefreshProduction();
     void RefreshHints();
     void RefreshPause();
     void RefreshOutcome();
@@ -114,7 +114,7 @@ private:
     Rml::ElementDocument *confirmDoc_ = nullptr;
     bool ready_ = false;
     bool dragLatch_ = false;
-    ProductionTab factoryTab_ = ProductionTab::Infantry;
+    ProductionTab productionTab_ = ProductionTab::Infantry;
     int lastSelectedProducer_ = -1;
     ConfirmChoice pendingChoice_ = ConfirmChoice::None;
     std::unordered_map<std::string, std::string> textCache_;

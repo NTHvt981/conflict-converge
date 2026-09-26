@@ -97,17 +97,17 @@ void RmlUiHud::OnClick(const Rml::String &id)
     }
     if (id == "tab-infantry")
     {
-        factoryTab_ = ProductionTab::Infantry;
+        productionTab_ = ProductionTab::Infantry;
         return;
     }
     if (id == "tab-vehicles")
     {
-        factoryTab_ = ProductionTab::Vehicles;
+        productionTab_ = ProductionTab::Vehicles;
         return;
     }
     if (id == "tab-buildings")
     {
-        factoryTab_ = ProductionTab::Buildings;
+        productionTab_ = ProductionTab::Buildings;
         return;
     }
     if (id.compare(0, 6, "place-") == 0)
@@ -154,8 +154,8 @@ void RmlUiHud::OnClick(const Rml::String &id)
         }
         return true;
     };
-    if (enqueueRow("fac-i-", infantry, bootcampQueue_) ||
-        enqueueRow("fac-v-", vehicles, workshopQueue_) ||
+    if (enqueueRow("prod-i-", infantry, bootcampQueue_) ||
+        enqueueRow("prod-v-", vehicles, workshopQueue_) ||
         repeatRow("repr-i-", infantry, bootcampQueue_) ||
         repeatRow("repr-v-", vehicles, workshopQueue_))
     {
