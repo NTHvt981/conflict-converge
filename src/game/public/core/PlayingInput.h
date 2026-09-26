@@ -85,4 +85,16 @@ private:
     Vector2 repairDragStart_ = {};
     bool attackGroundMode_ = false;
     std::optional<AbilityId> armedAbility_;
+
+    void HandleLeftPress();
+    void HandleSelectDragRelease();
+    void HandleControlGroups();
+    void HandlePlacementKeys();
+    void HandlePlaceDragRelease();
+    void HandleRepairDragRelease();
+    void HandleRightPan();
+    void HandleRightPress();
+    void HandleRightRelease(bool cancelledPlacement);
+    void DispatchRightClickOrders();
+    void HandleLineDragRelease();
 };

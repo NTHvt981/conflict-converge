@@ -12,14 +12,16 @@ across subsystems need include edits. `Unit.h` fwd-declares `TileMap`; never inc
 
 ```
 core:    MathUtils, CcAssert, Registry, Event, Subsystem
-         Game, Simulation, PlayingInput, MenuScreens
+         Game, Simulation, PlayingInput (+PlayingInputSelect/PlayingInputOrders),
+         MenuScreens
 world:   TileMap, Pathfinder, MapFile, FogOfWar
-units:   Unit, UnitStats, Combat, UnitFactory, Targeting, Formation, AICommander,
-          Extensions, UnitCommands
+units:   Unit (+UnitInternal, UnitOrders/UnitCombat/UnitRepair/UnitMovement/
+          UnitTransport TUs), UnitStats, Combat, UnitFactory, Targeting, Formation,
+          AICommander, Extensions, UnitCommands
 economy: Building, Nodes, ResourceSystem, Production
 app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, RmlUiHost, RmlUiMenus,
-         RmlUiHud, RmlRaylibRenderInterface, RmlRaylibSystemInterface,
-         RmlRaylibFileInterface
+         (+RmlUiMenusRemap/RmlUiMenusDialogs), RmlUiHud (+RmlUiHudPanels/RmlUiHudEvents),
+         RmlRaylibRenderInterface, RmlRaylibSystemInterface, RmlRaylibFileInterface
 app/input: InputManager, Selection, Shortcuts, Hotkeys
 app/save: SaveGame, SaveWire
 app/data: Art, SpriteData, UnitConfig, Audio, Log, DataRoot
@@ -78,6 +80,9 @@ app/match: Menu, Skirmish
   overlap avoidance. Fwd-declares `TileMap`; never include `Pathfinder.h` from here.
   Gimmick drivers: `ResolveCrush`, turret traverse + fire-gate in `EngageTarget`,
   player-only `Load`/`Unload` orders (`CanLoadTarget`/`BoardTransport`/`UnloadTransport`)
+- `UnitInternal.h` - Helpers shared by the Unit TUs only (`UnitOrders`/`UnitCombat`/
+  `UnitRepair`/`UnitMovement`/`UnitTransport` + `Unit.cpp`): cross-TU targets, turret aim,
+  repair aim, order-queue advance, `UpdateAttackPhases` template. Not general API.
 - `UnitCommands.h` - Selection-batch orders shared by hotkeys, HUD ability
   buttons, and armed right-clicks: stances, halt, auto-retreat/repair toggles,
   attack-move/patrol/repair/heal issue
