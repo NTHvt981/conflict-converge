@@ -3,6 +3,7 @@
 
 #include "units/Unit.h"
 #include "app/input/Selection.h"
+#include "world/Pathfinder.h"
 #include "raylib.h"
 
 void PlayingInput::HandleLeftPress()
@@ -26,7 +27,9 @@ void PlayingInput::HandleLeftPress()
         }
         else if (settingRally_)
         {
-            rallyPos_ = input_.MouseWorld(camera_);
+            const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(input_.MouseWorld(camera_)));
+            const cc::IVec2 free = NearestFreeFootprintTile(map_, &occ_, tile, 1, 1);
+            rallyPos_ = cc::ToRaylib(cc::TileToWorld(free.x, free.y));
             settingRally_ = false;
         }
         else

@@ -11,6 +11,7 @@
 #include "world/TileMap.h"
 #include "units/Unit.h"
 #include "units/UnitFactory.h"
+#include "world/Pathfinder.h"
 
 SkirmishSpots SpotsForMap(const std::string &mapPath)
 {
@@ -269,7 +270,9 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 		}
 	}
 
-	*world.rallyPos = cc::ToRaylib(cc::TileToWorld(spots.playerHome.x + 4, spots.playerHome.y));
+	const cc::IVec2 rallyFree =
+		NearestFreeFootprintTile(map, &occ, { spots.playerHome.x + 4, spots.playerHome.y }, 1, 1);
+	*world.rallyPos = cc::ToRaylib(cc::TileToWorld(rallyFree.x, rallyFree.y));
 	world.camera->view.target = cc::ToRaylib(
 		cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) + cc::Vec2(32.0f, 32.0f));
 	return true;

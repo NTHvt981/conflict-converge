@@ -27,6 +27,20 @@ const UnitStats &BaseStats(UnitType type)
     return kTable[static_cast<int>(type)];
 }
 
+cc::IVec2 UnitFootprint(UnitType type)
+{
+    switch (type)
+    {
+    case UnitType::IFV:
+    case UnitType::Artillery:
+    case UnitType::LightTank:
+    case UnitType::HeavyTank:
+        return { 2, 2 };
+    default:
+        return { 1, 1 };
+    }
+}
+
 void ApplyBaseStats(Unit &unit)
 {
     const UnitStats &stats = BaseStats(unit.type);
@@ -38,10 +52,9 @@ void ApplyBaseStats(Unit &unit)
     unit.cooldownTime = stats.cooldownTime;
     unit.speed = stats.speed;
     unit.sightRange = stats.sightRange;
-    const bool isVehicle = unit.type == UnitType::IFV || unit.type == UnitType::Artillery ||
-                           unit.type == UnitType::LightTank || unit.type == UnitType::HeavyTank;
-    unit.footprintWidth = isVehicle ? 2 : 1;
-    unit.footprintHeight = isVehicle ? 2 : 1;
+    const cc::IVec2 fp = UnitFootprint(unit.type);
+    unit.footprintWidth = fp.x;
+    unit.footprintHeight = fp.y;
 }
 
 ProductionCategory ProductionCategoryOf(UnitType type)

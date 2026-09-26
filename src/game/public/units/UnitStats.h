@@ -18,6 +18,9 @@ struct UnitStats
 
 const UnitStats &BaseStats(UnitType type);
 
+// Anchor footprint in tiles: vehicles span 2x2, foot units 1x1.
+cc::IVec2 UnitFootprint(UnitType type);
+
 // Preserves position, team, selection, and orders.
 void ApplyBaseStats(Unit &unit);
 

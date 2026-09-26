@@ -235,11 +235,11 @@ void AICommander::Update(float dt)
     const Vector2 rally = cc::ToRaylib(cc::TileToWorld(rallyTile_.x, rallyTile_.y));
     if (HasBootcamp())
     {
-        queueBootcamp_.Update(factory_, resources_, teamID_, rally, dt);
+        queueBootcamp_.Update(factory_, resources_, teamID_, rally, dt, &map_, occ_);
     }
     if (HasWorkshop())
     {
-        queueWorkshop_.Update(factory_, resources_, teamID_, rally, dt);
+        queueWorkshop_.Update(factory_, resources_, teamID_, rally, dt, &map_, occ_);
     }
     MaintainHarvesters();
     MaintainProduction();

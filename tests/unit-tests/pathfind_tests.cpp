@@ -133,4 +133,55 @@ void RunPathfindTests()
     IssuePathOrder(stuck, stuckOrders, stuckMover, pocket, cc::ToRaylib(cc::TileToWorld(4, 4)));
     CC_CHECK(stuckMover.hasMoveOrder);
     CC_CHECK(!stuckMover.hasPath);
+
+    // --- NearestFreeFootprintTile keeps a free anchor, resolves blocked ones ---
+    TileMap terrain(9, 9);
+    terrain.Set({ 4, 4 }, TerrainType::Water);
+    terrain.Set({ 6, 6 }, TerrainType::Building);
+    OccupancyGrid occ(9, 9);
+    CC_CHECK(NearestFreeFootprintTile(terrain, &occ, { 0, 0 }, 1, 1) == cc::IVec2(0, 0));
+    const cc::IVec2 wet = NearestFreeFootprintTile(terrain, &occ, { 4, 4 }, 1, 1);
+    CC_CHECK(!(wet == cc::IVec2(4, 4)));
+    CC_CHECK(!terrain.IsBlocked(wet));
+    const cc::IVec2 built = NearestFreeFootprintTile(terrain, &occ, { 6, 6 }, 1, 1);
+    CC_CHECK(!(built == cc::IVec2(6, 6)));
+    CC_CHECK(!terrain.IsBlocked(built));
+    CC_CHECK(NearestFreeFootprintTile(terrain, nullptr, { 0, 0 }, 1, 1) == cc::IVec2(0, 0));
+    const cc::IVec2 bare = NearestFreeFootprintTile(terrain, nullptr, { 4, 4 }, 1, 1);
+    CC_CHECK(!(bare == cc::IVec2(4, 4)));
+    CC_CHECK(!terrain.IsBlocked(bare));
+    TileMap cluster(9, 9);
+    for (int dy = 0; dy < 2; ++dy)
+    {
+        for (int dx = 0; dx < 2; ++dx)
+        {
+            cluster.Set({ 3 + dx, 3 + dy }, TerrainType::Rock);
+        }
+    }
+    const cc::IVec2 wide = NearestFreeFootprintTile(cluster, nullptr, { 3, 3 }, 2, 2);
+    CC_CHECK(!cluster.IsBlocked(wide));
+    CC_CHECK(!cluster.IsBlocked(wide + cc::IVec2(1, 0)));
+    CC_CHECK(!cluster.IsBlocked(wide + cc::IVec2(0, 1)));
+    CC_CHECK(!cluster.IsBlocked(wide + cc::IVec2(1, 1)));
+
+    // --- IssuePathOrderFootprint from a fully-blocked start still orders out ---
+    TileMap trap(7, 7);
+    for (int y = 2; y <= 4; ++y)
+    {
+        for (int x = 2; x <= 4; ++x)
+        {
+            trap.Set({ x, y }, TerrainType::Building);
+        }
+    }
+    OccupancyGrid trapOcc(7, 7);
+    Unit wedged;
+    Orders wedgedOrders;
+    Mover wedgedMover;
+    wedged.type = UnitType::RifleInfantry;
+    ApplyBaseStats(wedged);
+    wedged.position = cc::ToRaylib(cc::TileToWorld(3, 3));
+    IssuePathOrderFootprint(wedged, wedgedOrders, wedgedMover, trap, trapOcc,
+                            cc::ToRaylib(cc::TileToWorld(0, 0)), kInvalidEntity, 0);
+    CC_CHECK(wedgedMover.hasMoveOrder);
+    CC_CHECK(!wedgedMover.hasPath);
 }

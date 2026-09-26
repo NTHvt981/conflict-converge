@@ -225,7 +225,7 @@ void Simulation::Step(float dt)
     nodes_.GatherTick(registry_, resources_, dt, 0);
     RefreshProducers();
     auto pumpQueue = [&](ProductionQueue &queue) {
-        const Entity spawned = queue.Update(factory_, resources_, 0, rallyPos_, dt);
+        const Entity spawned = queue.Update(factory_, resources_, 0, rallyPos_, dt, &map_, &occ_);
         if (spawned != kInvalidEntity && autoAddGroupBit_ >= 0)
         {
             if (Unit *fresh = registry_.Get<Unit>(spawned))

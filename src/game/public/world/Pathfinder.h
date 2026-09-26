@@ -24,6 +24,11 @@ cc::IVec2 NearestEnterableTile(const TileMap &map, const OccupancyGrid &occ,
                                cc::IVec2 want, int footprintW, int footprintH,
                                Entity self, std::uint32_t selfGen);
 
+// Nearest anchor tile whose footprint can be entered. Terrain-only when
+// occ is null (headless AI). Ring search, radius 8; returns `want` if none.
+cc::IVec2 NearestFreeFootprintTile(const TileMap &map, const OccupancyGrid *occ,
+                                   cc::IVec2 want, int footprintW, int footprintH);
+
 // Order a unit along an A* path to a world target; falls back to a straight
 // move order when no path exists.
 void IssuePathOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,

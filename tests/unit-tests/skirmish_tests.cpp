@@ -153,11 +153,13 @@ void RunSkirmishTests()
         game.nodes.GatherTick(game.registry, game.resources, dt, 0);
         if (game.ai.HasBootcamp())
         {
-            game.bootcampQueue.Update(game.factory, game.resources, 0, game.rallyPos, dt);
+            game.bootcampQueue.Update(game.factory, game.resources, 0, game.rallyPos, dt,
+                                      &game.map, &game.occ);
         }
         if (game.ai.HasWorkshop())
         {
-            game.workshopQueue.Update(game.factory, game.resources, 0, game.rallyPos, dt);
+            game.workshopQueue.Update(game.factory, game.resources, 0, game.rallyPos, dt,
+                                      &game.map, &game.occ);
         }
         game.ai.Update(dt);
     }
@@ -222,6 +224,60 @@ void RunSkirmishTests()
         CC_CHECK(!TeamHasUnits(sand.registry, 0));
     }
 
+    // --- prototype.map: rally avoids the Bootcamp, spawns land on free tiles ---
+    const std::string stuckMap = ShippedMap("prototype.map");
+    CC_CHECK(!stuckMap.empty());
+    if (!stuckMap.empty())
+    {
+        Harness stuck;
+        CC_CHECK(BuildSkirmish(stuck.world, stuckMap, AIDifficulty::Easy));
+        const cc::IVec2 rallyTile = cc::WorldToTile(cc::ToGlm(stuck.rallyPos));
+        CC_CHECK(!stuck.map.IsBlocked(rallyTile));
+        bool rallyInFootprint = false;
+        stuck.registry.Each<Building>([&](Entity, const Building &building) {
+            if (building.teamID != 0)
+            {
+                return;
+            }
+            const cc::IVec2 fp = Footprint(building.type);
+            if (rallyTile.x >= building.tileX && rallyTile.x < building.tileX + fp.x &&
+                rallyTile.y >= building.tileY && rallyTile.y < building.tileY + fp.y)
+            {
+                rallyInFootprint = true;
+            }
+        });
+        CC_CHECK(!rallyInFootprint);
+        for (int i = 0; i < 1200; ++i)
+        {
+            const float dt = 1.0f / 60.0f;
+            UpdateBuildingConstruction(stuck.registry, dt);
+            stuck.fog.Recompute(stuck.registry);
+            stuck.registry.Each<Unit>([&](Entity id, Unit &unit) {
+                UpdateUnit(id, stuck.registry, stuck.map, dt, &stuck.fog);
+            });
+            UpdateBaseIncome(stuck.registry, stuck.resources, dt, 0);
+            stuck.nodes.Update(dt);
+            stuck.nodes.GatherTick(stuck.registry, stuck.resources, dt, 0);
+            stuck.bootcampQueue.Update(stuck.factory, stuck.resources, 0, stuck.rallyPos, dt,
+                                       &stuck.map, &stuck.occ);
+            stuck.workshopQueue.Update(stuck.factory, stuck.resources, 0, stuck.rallyPos, dt,
+                                       &stuck.map, &stuck.occ);
+        }
+        bool allFree = true;
+        stuck.registry.Each<Unit>([&](Entity, const Unit &unit) {
+            if (unit.teamID != 0)
+            {
+                return;
+            }
+            if (stuck.map.IsBlocked(cc::WorldToTile(cc::ToGlm(unit.position))))
+            {
+                allFree = false;
+            }
+        });
+        CC_CHECK(allFree);
+        CC_CHECK(TeamHasUnits(stuck.registry, 0));
+    }
+
     // --- 2v2: twin-falls markers arm the allied + second enemy commanders ---
     const std::string falls = ShippedMap("twin_falls_2v2.map");
     CC_CHECK(!falls.empty());
@@ -260,11 +316,13 @@ void RunSkirmishTests()
             ally.nodes.GatherTick(ally.registry, ally.resources, dt, 0);
             if (ally.ai.HasBootcamp())
             {
-                ally.bootcampQueue.Update(ally.factory, ally.resources, 0, ally.rallyPos, dt);
+                ally.bootcampQueue.Update(ally.factory, ally.resources, 0, ally.rallyPos, dt,
+                                          &ally.map, &ally.occ);
             }
             if (ally.ai.HasWorkshop())
             {
-                ally.workshopQueue.Update(ally.factory, ally.resources, 0, ally.rallyPos, dt);
+                ally.workshopQueue.Update(ally.factory, ally.resources, 0, ally.rallyPos, dt,
+                                          &ally.map, &ally.occ);
             }
             ally.ai.Update(dt);
             ally.allyAI.Update(dt);

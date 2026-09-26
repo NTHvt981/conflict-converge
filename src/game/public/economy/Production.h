@@ -11,6 +11,8 @@
 
 class ResourceSystem;
 class UnitFactory;
+class TileMap;
+class OccupancyGrid;
 
 // Build times in seconds.
 float BuildTime(UnitType type);
@@ -25,7 +27,7 @@ public:
     void SetRepeatArmed(UnitType type, bool repeat);
     bool RepeatArmed(UnitType type) const;
     Entity Update(UnitFactory &factory, ResourceSystem &resources, int teamID, Vector2 rallyPos,
-                  float dt);
+                  float dt, const TileMap *map = nullptr, const OccupancyGrid *occ = nullptr);
 
     bool Empty() const;
     std::size_t Size() const;

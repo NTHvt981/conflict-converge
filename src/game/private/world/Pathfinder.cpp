@@ -246,6 +246,60 @@ cc::IVec2 NearestEnterableTile(const TileMap &map, const OccupancyGrid &occ,
     return want;
 }
 
+namespace
+{
+
+bool FootprintFree(const TileMap &map, const OccupancyGrid *occ, cc::IVec2 anchor,
+                   int footprintW, int footprintH)
+{
+    for (int dy = 0; dy < footprintH; ++dy)
+    {
+        for (int dx = 0; dx < footprintW; ++dx)
+        {
+            const cc::IVec2 tile{ anchor.x + dx, anchor.y + dy };
+            if (!map.InBounds(tile) || map.IsBlocked(tile))
+            {
+                return false;
+            }
+        }
+    }
+    if (occ != nullptr && !occ->CanEnter(map, anchor, footprintW, footprintH, kInvalidEntity, 0))
+    {
+        return false;
+    }
+    return true;
+}
+
+}
+
+cc::IVec2 NearestFreeFootprintTile(const TileMap &map, const OccupancyGrid *occ,
+                                   cc::IVec2 want, int footprintW, int footprintH)
+{
+    if (FootprintFree(map, occ, want, footprintW, footprintH))
+    {
+        return want;
+    }
+    for (int ring = 1; ring <= 8; ++ring)
+    {
+        for (int dy = -ring; dy <= ring; ++dy)
+        {
+            for (int dx = -ring; dx <= ring; ++dx)
+            {
+                if (dx > -ring && dx < ring && dy > -ring && dy < ring)
+                {
+                    continue;
+                }
+                const cc::IVec2 anchor{ want.x + dx, want.y + dy };
+                if (FootprintFree(map, occ, anchor, footprintW, footprintH))
+                {
+                    return anchor;
+                }
+            }
+        }
+    }
+    return want;
+}
+
 void IssuePathOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
                     Vector2 worldTarget)
 {
@@ -283,6 +337,7 @@ void IssuePathOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const Til
                                       self, selfGen);
     if (path.empty())
     {
+        IssueMoveOrder(unit, orders, mover, cc::ToRaylib(cc::TileToWorld(goal.x, goal.y)));
         mover.hasPath = false;
         mover.path.clear();
         mover.pathNext = 0;
