@@ -1,5 +1,8 @@
 #include "E2EGame.h"
 
+#include "core/Registry.h"
+#include "world/TileMap.h"
+
 MenuFlow &E2EGame::E2EMenu()
 {
     return menu;

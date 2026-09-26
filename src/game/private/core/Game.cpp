@@ -2,8 +2,25 @@
 #include "core/Game.h"
 
 #include "raygui.h"
+#include "app/data/Audio.h"
 #include "app/data/DataRoot.h"
 #include "app/data/Log.h"
+#include "core/Event.h"
+#include "world/FogOfWar.h"
+#include "app/ui/GameCamera.h"
+#include "app/input/Hotkeys.h"
+#include "app/input/InputManager.h"
+#include "core/MathUtils.h"
+#include "app/ui/Minimap.h"
+#include "economy/Nodes.h"
+#include "app/ui/Pings.h"
+#include "core/PlayingInput.h"
+#include "economy/Production.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "app/ui/Shake.h"
+#include "world/TileMap.h"
+#include "units/UnitFactory.h"
 
 Game::EngineScope::EngineScope()
 {
