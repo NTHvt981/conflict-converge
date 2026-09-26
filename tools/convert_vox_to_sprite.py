@@ -61,12 +61,11 @@ point in every row -- flipping through rows in order plays like an
 animation). A single-model file (the common case) is just one row, same
 as before.
 
-Rendering approach (matches the raycasting technique already used by this
-project's other preview/bake scripts, e.g. lighttank/preview_tank.py and
-lighttank/render_tank_sprites.py): per output pixel, cast a ray through the
-voxel cloud (bucketed by rounded rotated-X for speed) and shade the nearest
-hit by cardinal face (+y/-y/+z/-z only -- side +-x faces aren't
-distinguished, the same simplification the existing renderers use).
+Rendering approach: per output pixel, cast a ray through the voxel cloud
+(bucketed by rounded rotated-X for speed) and shade the nearest hit by the
+face the ray enters. The camera always looks down (-y) and away from the
+viewer (-z), so a ray enters either a voxel's top (+y) or its front (+z);
+side x faces run parallel to the rays and are never entered.
 
 Limitations (kept simple on purpose -- this is a flat, no-rig conversion
 tool, not a scene importer):
@@ -208,8 +207,8 @@ def load_viewer_frames(path):
 
 
 # --------------------------------------------------------------------------
-# Shading: same ambient + 3-light setup used by the project's other voxel
-# renderers, applied per cardinal face.
+# Shading: ambient + 3 directional lights, evaluated once per face a ray
+# can enter (see render_direction).
 # --------------------------------------------------------------------------
 AMBIENT = 0.42
 _LIGHTS_RAW = [((0.4, 0.9, 0.5), 0.9), ((-0.6, 0.3, 0.3), 0.22), ((0.0, 0.4, -0.8), 0.20)]
@@ -221,14 +220,19 @@ def _normalize(v):
 
 
 LIGHTS = [(_normalize(d), s) for d, s in _LIGHTS_RAW]
-FACE_NORMALS = {"+y": (0, 1, 0), "-y": (0, -1, 0), "+z": (0, 0, 1), "-z": (0, 0, -1)}
+FACE_NORMALS = {"+y": (0, 1, 0), "+z": (0, 0, 1)}
 
 
-def shade(rgb, normal):
+def face_intensity(normal):
+    """Brightness multiplier for a face with this normal (can exceed 1)."""
     d = AMBIENT
     for light_dir, strength in LIGHTS:
         d += max(0.0, sum(a * b for a, b in zip(normal, light_dir))) * strength
-    d = min(d, 1.45)
+    return min(d, 1.45)
+
+
+def shade(rgb, normal):
+    d = face_intensity(normal)
     return tuple(min(255, int(c * d)) for c in rgb)
 
 
@@ -241,8 +245,8 @@ def build_shade_table(palette_rgb):
 # Camera fit: figures out, for a given tilt, the world-space point the
 # camera looks at -- (cx, ground_y, cz), the bottom-center of the model
 # (ground level, halfway across its footprint), not its vertical middle --
-# and, per direction, how far the projected content extends from that
-# point (needed_x[d] horizontally, needed_yz[d] along the combined
+# and how far the projected content extends from that point across all
+# directions (needed_x horizontally, needed_yz along the combined
 # height/depth screen axis). These are affine in x/y/z, so checking the 8
 # bounding-box corners is sufficient to get the exact (not approximate)
 # extents; no sampling every voxel needed.
@@ -254,9 +258,13 @@ def build_shade_table(palette_rgb):
 # this tool's reference framing, not a bug.
 #
 # The look-at point (cx, cz) is the SAME point in world space for every
-# direction, and every tile is exactly `half_w`/`half_h` pixels wide/tall
-# centered on it -- so the model never shifts within the frame between
-# directions, it only rotates in place around a fixed screen-center point.
+# direction. Each facing rotates the model about the world origin, so the
+# point is re-expressed in rotated coordinates per direction: target_x
+# (screen-horizontal) and target_z (depth, which the tilt projects onto the
+# screen-vertical axis). Every tile is exactly `half_w`/`half_h` pixels
+# wide/tall centered on it -- so the model never shifts within the frame
+# between directions, it only rotates in place around a fixed screen-center
+# point.
 # --------------------------------------------------------------------------
 def compute_camera_fit(voxels, tilt_rad):
     xs = [v[0] for v in voxels]
@@ -271,22 +279,23 @@ def compute_camera_fit(voxels, tilt_rad):
     corners_xz = list(itertools.product([cx - hx, cx + hx], [cz - hz, cz + hz]))
     corners_y = [min(ys) - EPS, max(ys) + EPS]
 
-    target_x_per_dir = []
+    target_xz_per_dir = []
     needed_x = 0.0   # world half-extent needed along the screen-horizontal axis
     needed_yz = 0.0  # world half-extent needed along the screen-vertical axis
     for d in range(N_DIRS):
         facing = d * math.pi / 4
         fc, fs = math.cos(-facing), math.sin(-facing)
         target_x = cx * fc - cz * fs
-        target_x_per_dir.append(target_x)
+        target_z = cx * fs + cz * fc
+        target_xz_per_dir.append((target_x, target_z))
         for (x, z) in corners_xz:
             rx = x * fc - z * fs
             rz = x * fs + z * fc
             needed_x = max(needed_x, abs(rx - target_x))
             for y in corners_y:
-                needed_yz = max(needed_yz, abs(ct * (ground_y - y) + st * rz))
+                needed_yz = max(needed_yz, abs(ct * (ground_y - y) + st * (rz - target_z)))
 
-    return ground_y, target_x_per_dir, needed_x * MARGIN_FACTOR, needed_yz * MARGIN_FACTOR
+    return ground_y, target_xz_per_dir, needed_x * MARGIN_FACTOR, needed_yz * MARGIN_FACTOR
 
 
 def resolve_canvas(needed_x, needed_yz, scale):
@@ -302,9 +311,9 @@ def resolve_canvas(needed_x, needed_yz, scale):
 
 # --------------------------------------------------------------------------
 # Render one direction: bucket-by-column raycast, nearest hit per pixel,
-# cardinal-face shading. Same core technique as preview_tank.py.
+# shaded by the entered face (+y top or +z front).
 # --------------------------------------------------------------------------
-def render_direction(voxels, shade_table, facing_rad, tilt_rad, target_x, target_y,
+def render_direction(voxels, shade_table, facing_rad, tilt_rad, target_x, target_y, target_z,
                      ppu, width, height):
     st, ct = math.sin(tilt_rad), math.cos(tilt_rad)
     fc, fs = math.cos(-facing_rad), math.sin(-facing_rad)
@@ -322,13 +331,13 @@ def render_direction(voxels, shade_table, facing_rad, tilt_rad, target_x, target
     for py in range(height):
         dy_world = (py - half_h + 0.5) / ppu
         oy = target_y - dy_world * ct
-        oz = dy_world * st
+        oz = target_z + dy_world * st
         for pxi in range(width):
             dx_world = (pxi - half_w + 0.5) / ppu
             ox = target_x + dx_world
             xk = round(ox)
 
-            best_t, best_ci, best_is_y_face, best_vy, best_vz = 1e18, -1, True, 0.0, 0.0
+            best_t, best_ci, best_is_y_face = 1e18, -1, True
             for bk in (xk - 1, xk, xk + 1):
                 bucket = buckets.get(bk)
                 if not bucket:
@@ -345,17 +354,13 @@ def render_direction(voxels, shade_table, facing_rad, tilt_rad, target_x, target
                     t_enter, t_exit = max(ty0, tz0), min(ty1, tz1)
                     if t_enter > t_exit or t_enter >= best_t:
                         continue
-                    best_t, best_ci = t_enter, ci
-                    best_is_y_face, best_vy, best_vz = (ty0 >= tz0), vy, vz
+                    best_t, best_ci, best_is_y_face = t_enter, ci, (ty0 >= tz0)
 
             if best_ci < 0:
                 continue
-            if best_is_y_face:
-                hy = oy - best_t * st
-                face = "+y" if hy > best_vy else "-y"
-            else:
-                hz = oz - best_t * ct
-                face = "+z" if hz > best_vz else "-z"
+            # The ray travels -y and -z, so entering through a y slab means the top
+            # face and entering through a z slab means the front face.
+            face = "+y" if best_is_y_face else "+z"
             px[pxi, py] = shade_table[best_ci][face] + (255,)
 
     return img
@@ -488,7 +493,7 @@ def render_sheet(frames, palette_rgb, degree, scale, out_path, align_baseline=Fa
     # Fit the camera to every frame's combined bounding box, not each
     # frame's own -- see this function's docstring.
     all_voxels = [v for frame in frames for v in frame]
-    target_y, target_x_per_dir, needed_x, needed_yz = compute_camera_fit(all_voxels, tilt_rad)
+    target_y, target_xz_per_dir, needed_x, needed_yz = compute_camera_fit(all_voxels, tilt_rad)
 
     out_width, out_height, ppu = resolve_canvas(needed_x, needed_yz, scale)
     print(f"angle={degree}  tile size={out_width}x{out_height}px  scale={ppu:.2f}px/unit")
@@ -499,8 +504,9 @@ def render_sheet(frames, palette_rgb, degree, scale, out_path, align_baseline=Fa
     for f_idx, frame_voxels in enumerate(frames):
         for d in range(N_DIRS):
             facing = d * math.pi / 4
+            target_x, target_z = target_xz_per_dir[d]
             tile = render_direction(frame_voxels, shade_table, facing, tilt_rad,
-                                    target_x_per_dir[d], target_y, ppu, out_width, out_height)
+                                    target_x, target_y, target_z, ppu, out_width, out_height)
             sheet.paste(tile, (d * out_width, f_idx * out_height), tile)
         print(f"  frame {f_idx + 1}/{len(frames)} done ({time.time() - t0:.1f}s elapsed)")
 
