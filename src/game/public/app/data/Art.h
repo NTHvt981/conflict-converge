@@ -121,6 +121,7 @@ public:
                       Color tint = WHITE) const;
     void DrawNode(ResourceKind kind, Vector2 center) const;
     void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon
+    void DrawRallyMarker(int teamID, Vector2 worldCenter) const;
     // UI typeface; HasFont is false on the headless/rectangle path.
     bool HasFont() const;
     const Font &UiFont() const;
@@ -182,6 +183,8 @@ private:
     BuildingArt buildingArt_[static_cast<int>(BuildingType::Count)];
     Texture2D nodes_[2] = {};        // [kind]
     Texture2D icons_[2] = {};        // [kind]
+    Texture2D rallyBase_ = {};
+    Texture2D rallyMask_ = {};
     Texture2D terrain_[4] = {};      // [TerrainSlot]: grass/water/forest/rock
     Font uiFont_ = {};               // Porto Buena (valid only when fontReady_)
     bool fontReady_ = false;

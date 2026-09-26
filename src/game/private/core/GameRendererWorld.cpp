@@ -407,6 +407,20 @@ void GameRenderer::DrawUnitEntity(Entity id, Unit &unit)
     }
 }
 
+void GameRenderer::DrawRallyMarkers()
+{
+    registry_.Each<Building>([&](Entity, const Building &building) {
+        if (!building.isSelected || !ProducerCategory(building.type).has_value())
+        {
+            return;
+        }
+        const Vector2 center = cc::ToRaylib(cc::TileToWorld(building.rallyTile.x,
+                                                             building.rallyTile.y) +
+                                            cc::Vec2(32.0f, 32.0f));
+        art_.DrawRallyMarker(building.teamID, center);
+    });
+}
+
 void GameRenderer::DrawProjectiles()
 {
     registry_.Each<Projectile>([&](Entity, const Projectile &shell) {

@@ -54,6 +54,7 @@ void GameRenderer::DrawWorld()
     DrawPlacementGhost();
     DrawNodes();
     DrawUnits();
+    DrawRallyMarkers();
     DrawProjectiles();
     art_.ParticlesPool().Draw();
     damageNumbers_.Draw();

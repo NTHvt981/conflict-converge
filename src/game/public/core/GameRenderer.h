@@ -51,6 +51,7 @@ private:
     void DrawPlacementGhost();
     void DrawNodes();
     void DrawUnits();
+    void DrawRallyMarkers();
     void DrawUnitEntity(Entity id, Unit &unit);
     void DrawProjectiles();
     void DrawFogVeil();

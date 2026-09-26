@@ -387,6 +387,8 @@ bool Art::Init(bool withDevice)
             fallback_ = true;
         }
     }
+    rallyBase_ = LoadTexture("data/sprites/icons/rally-point_base.png");
+    rallyMask_ = LoadTexture("data/sprites/icons/rally-point_mask.png");
     for (int s = 0; s < 4; ++s)
     {
         const TerrainType type = s == 0   ? TerrainType::Grass
@@ -507,6 +509,16 @@ void Art::Shutdown()
             UnloadTexture(icons_[k]);
             icons_[k] = {};
         }
+    }
+    if (rallyBase_.id != 0)
+    {
+        UnloadTexture(rallyBase_);
+        rallyBase_ = {};
+    }
+    if (rallyMask_.id != 0)
+    {
+        UnloadTexture(rallyMask_);
+        rallyMask_ = {};
     }
     for (int s = 0; s < 4; ++s)
     {
@@ -804,4 +816,15 @@ void Art::DrawIcon(ResourceKind kind, Vector2 screenPos) const
         return;
     }
     DrawTextureV(icons_[static_cast<int>(kind)], screenPos, WHITE);
+}
+
+void Art::DrawRallyMarker(int teamID, Vector2 worldCenter) const
+{
+    if (fallback_ || rallyBase_.id == 0)
+    {
+        return;
+    }
+    const Vector2 corner = { worldCenter.x - 8.0f, worldCenter.y - 8.0f };
+    DrawTextureV(rallyBase_, corner, WHITE);
+    DrawTextureV(rallyMask_, corner, TeamTint(teamID));
 }
