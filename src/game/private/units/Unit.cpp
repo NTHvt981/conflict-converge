@@ -321,13 +321,33 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
     occ.ReleaseAllUnitFootprints();
 
     registry.Each<Unit>([&](Entity id, Unit &unit) {
-        if (unit.health > 0.0f && !IsEmbarked(registry, id))
-        {
-            const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(unit.position));
+		if (unit.health <= 0.0f)
+		{
+			return;
+		}
 
-            (void)occ.ReserveFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight, id,
-                                            registry.Generation(id));
+		if (IsEmbarked(registry, id))
+		{
+			return;
+		}
+
+        if (Mover* mover = registry.Get<Mover>(id); mover != nullptr)
+        {
+			if (mover->hasPath && unit.speed > 0)
+			{
+				const cc::IVec2 moveTargetAnchor = cc::WorldToTile(cc::ToGlm(mover->moveTarget));
+
+				(void) occ.ReserveFootprintOwned(moveTargetAnchor, unit.footprintWidth, unit.footprintHeight, id,
+					registry.Generation(id));
+
+				return;
+			}
         }
+
+		const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(unit.position));
+
+		(void) occ.ReserveFootprintOwned(anchor, unit.footprintWidth, unit.footprintHeight, id,
+			registry.Generation(id));
     });
 
     ReservedDamageMap reservedDamage;

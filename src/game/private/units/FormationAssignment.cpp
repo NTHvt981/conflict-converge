@@ -357,6 +357,10 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
     std::vector<cc::IVec2> claimedEscapeTiles;
 
 	OccupancyGrid formationOcc = occ;
+	for (const ValidUnit& entry : valid)
+	{
+		formationOcc.ReleaseFootprint(entry.anchorTile, entry.unit->footprintWidth, entry.unit->footprintHeight);
+	}
 
     for (int i = 0; i < n; ++i)
     {
@@ -385,6 +389,9 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
 		if (mover.hasPath)
 		{
 			formationOcc.ReserveFootprintOwned(slot, unit->footprintWidth, unit->footprintHeight, self, registry.Generation(self));
+
+			formationOcc.ReleaseFootprintOwned(cc::WorldToTile(cc::ToGlm(unit->position)), 
+											   unit->footprintWidth, unit->footprintHeight, self, registry.Generation(self));
 		}
     }
 }
