@@ -4,11 +4,11 @@ On-demand reference for per-header responsibilities. `AGENTS.md` carries only th
 compact module map; read this before touching an unfamiliar subsystem.
 
 `src/game/public/<core|world|units|economy|app>/` headers + `src/game/private/<same>/`
-sources per module. Entry is `src/game/main.cpp`; `Game` (core) owns state + loop. Every
-subsystem dir is on the include path (see `includedirs` in `premake5.lua`), so includes
-stay bare (`#include "Unit.h"`) from any TU and moves within a subsystem need no include
-edits. `Unit.h` fwd-declares `TileMap`; never include `Pathfinder.h` from `Unit.h` — no
-cycles.
+sources per module. Entry is `src/game/main.cpp`; `Game` (core) owns state + loop. Only
+`src/game/public` and `src/game/private` are on the include path (see `includedirs` in
+`premake5.lua`), so includes stay subsystem-qualified (`#include "units/Unit.h"`) and moves
+across subsystems need include edits. `Unit.h` fwd-declares `TileMap`; never include
+`Pathfinder.h` from `Unit.h` — no cycles.
 
 ```
 core:    MathUtils, CcAssert, Registry, Event, Subsystem

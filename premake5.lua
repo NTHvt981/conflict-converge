@@ -145,8 +145,6 @@ project "conflict-converge"
         "src/**.inl"
     }
     
-    -- Include directories (subsystem dirs keep includes bare: #include "Unit.h"
-    -- works from any TU, same as when the folders were flat)
     includedirs {
         "deps/raylib/src",
         "deps/raygui/src",
@@ -226,7 +224,6 @@ project "conflict-converge-test"
         "tests/e2e/**"
     }
     
-    -- Include directories (same subsystem dirs as the game project)
     includedirs {
         "deps/raylib/src",
         "deps/raygui/src",
