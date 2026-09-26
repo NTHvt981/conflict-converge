@@ -2,18 +2,18 @@
 
 #include "test_harness.h"
 
-#include "Building.h"
-#include "Extensions.h"
-#include "FogOfWar.h" // fixture carries fog memory for the team_fog roundtrip
-#include "GameCamera.h"
-#include "Nodes.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "SaveGame.h"
-#include "TileMap.h"
-#include "Unit.h"
-#include "UnitStats.h"
-#include "../../src/game/private/app/SaveWire.h" // wire structs for the version-99 probe
+#include "economy/Building.h"
+#include "units/Extensions.h"
+#include "world/FogOfWar.h" // fixture carries fog memory for the team_fog roundtrip
+#include "app/ui/GameCamera.h"
+#include "economy/Nodes.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "app/save/SaveGame.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
+#include "units/UnitStats.h"
+#include "app/save/SaveWire.h" // wire structs for the version-99 probe
 
 #include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>

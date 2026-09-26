@@ -2,9 +2,9 @@
 
 #include "test_harness.h"
 
-#include "Combat.h"
-#include "Extensions.h"
-#include "TileMap.h"
+#include "units/Combat.h"
+#include "units/Extensions.h"
+#include "world/TileMap.h"
 
 namespace
 {

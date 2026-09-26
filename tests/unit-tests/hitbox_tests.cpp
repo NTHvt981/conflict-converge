@@ -2,7 +2,7 @@
 
 #include "test_harness.h"
 
-#include "Combat.h"
+#include "units/Combat.h"
 
 void RunHitboxTests()
 {

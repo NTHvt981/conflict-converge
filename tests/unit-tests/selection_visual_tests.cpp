@@ -2,10 +2,10 @@
 
 #include "test_harness.h"
 
-#include "Extensions.h"
-#include "Hotkeys.h"
-#include "Hud.h"
-#include "UnitStats.h"
+#include "units/Extensions.h"
+#include "app/input/Hotkeys.h"
+#include "app/ui/Hud.h"
+#include "units/UnitStats.h"
 
 #include <set>
 

@@ -2,8 +2,8 @@
 
 #include "economy/Building.h"
 #include "units/Extensions.h"
-#include "app/Selection.h"
-#include "app/Shortcuts.h"
+#include "app/input/Selection.h"
+#include "app/input/Shortcuts.h"
 #include "units/Unit.h"
 #include "units/UnitCommands.h"
 

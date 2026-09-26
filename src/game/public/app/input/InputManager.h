@@ -2,8 +2,8 @@
 
 #include "raylib.h"
 
-#include "app/GameCamera.h"
-#include "app/Shortcuts.h"
+#include "app/ui/GameCamera.h"
+#include "app/input/Shortcuts.h"
 #include "core/Subsystem.h"
 
 // Single per-frame polling point for input: WASD camera pan, mouse click

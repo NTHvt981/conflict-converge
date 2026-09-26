@@ -2,9 +2,9 @@
 
 #include "test_harness.h"
 
-#include "Extensions.h"
-#include "Pathfinder.h"
-#include "UnitStats.h" // ApplyBaseStats for walkable test units
+#include "units/Extensions.h"
+#include "world/Pathfinder.h"
+#include "units/UnitStats.h" // ApplyBaseStats for walkable test units
 
 #include <cstdlib> // std::abs for adjacency checks
 

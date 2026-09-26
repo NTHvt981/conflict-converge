@@ -2,7 +2,7 @@
 
 #include "units/Extensions.h"
 #include "core/MathUtils.h"
-#include "app/UnitConfig.h"
+#include "app/data/UnitConfig.h"
 #include "units/UnitStats.h"
 
 UnitCost CostOf(UnitType type)

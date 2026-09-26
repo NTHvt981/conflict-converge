@@ -5,7 +5,7 @@
 
 #include "test_harness.h"
 
-#include "DataRoot.h"
+#include "app/data/DataRoot.h"
 
 #include <string>
 #include <vector>

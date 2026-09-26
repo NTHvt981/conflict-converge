@@ -2,12 +2,12 @@
 
 #include "test_harness.h"
 
-#include "Event.h"
-#include "Production.h"
-#include "ResourceSystem.h"
-#include "Selection.h"
-#include "Unit.h"
-#include "UnitFactory.h"
+#include "core/Event.h"
+#include "economy/Production.h"
+#include "economy/ResourceSystem.h"
+#include "app/input/Selection.h"
+#include "units/Unit.h"
+#include "units/UnitFactory.h"
 
 namespace
 {

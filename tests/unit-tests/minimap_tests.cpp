@@ -3,7 +3,7 @@
 
 #include "test_harness.h"
 
-#include "Minimap.h"
+#include "app/ui/Minimap.h"
 
 void RunMinimapTests()
 {

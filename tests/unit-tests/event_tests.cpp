@@ -2,7 +2,7 @@
 
 #include "test_harness.h"
 
-#include "Event.h"
+#include "core/Event.h"
 
 #include <string>
 #include <vector>

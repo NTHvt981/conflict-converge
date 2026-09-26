@@ -2,12 +2,12 @@
 
 #include "test_harness.h"
 
-#include "Combat.h"   // expected damage via Effectiveness
-#include "Extensions.h" // G1 turret traverse/fire-gate
-#include "Targeting.h" // InAttackRange sanity
-#include "TileMap.h"  // UpdateUnit needs the full map type
-#include "Unit.h"
-#include "UnitStats.h" // ApplyBaseStats for real power/range/cooldowns
+#include "units/Combat.h"   // expected damage via Effectiveness
+#include "units/Extensions.h" // G1 turret traverse/fire-gate
+#include "units/Targeting.h" // InAttackRange sanity
+#include "world/TileMap.h"  // UpdateUnit needs the full map type
+#include "units/Unit.h"
+#include "units/UnitStats.h" // ApplyBaseStats for real power/range/cooldowns
 
 #include <cmath>
 

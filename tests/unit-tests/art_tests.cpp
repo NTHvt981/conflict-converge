@@ -4,8 +4,8 @@
 
 #include "test_harness.h"
 
-#include "Art.h"
-#include "TileMap.h" // TerrainType for the terrain tile mapping
+#include "app/data/Art.h"
+#include "world/TileMap.h" // TerrainType for the terrain tile mapping
 
 void RunArtTests()
 {

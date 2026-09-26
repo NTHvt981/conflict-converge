@@ -2,9 +2,9 @@
 
 #include "test_harness.h"
 
-#include "Targeting.h"
+#include "units/Targeting.h"
 
-#include "UnitStats.h" // ApplyBaseStats for realistic power/sight values
+#include "units/UnitStats.h" // ApplyBaseStats for realistic power/sight values
 
 namespace
 {

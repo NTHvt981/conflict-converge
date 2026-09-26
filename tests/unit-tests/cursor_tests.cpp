@@ -5,10 +5,10 @@
 
 #include "test_harness.h"
 
-#include "Cursor.h"
-#include "Extensions.h"
-#include "Unit.h"
-#include "UnitStats.h"
+#include "app/ui/Cursor.h"
+#include "units/Extensions.h"
+#include "units/Unit.h"
+#include "units/UnitStats.h"
 
 namespace
 {

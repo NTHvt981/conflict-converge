@@ -4,22 +4,22 @@
 
 #include "../unit-tests/test_harness.h"
 
-#include "Building.h"
-#include "Combat.h" // G2: headless drivers step UpdateProjectiles
-#include "Event.h"
-#include "AICommander.h" // Difficulty ladder decides games
-#include "FogOfWar.h" // WorldState carries fog memory
-#include "GameCamera.h" // WorldState carries the camera
-#include "MathUtils.h"
-#include "Nodes.h"
-#include "Production.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "SaveGame.h"
-#include "TileMap.h"
-#include "Unit.h"
-#include "UnitFactory.h"
-#include "UnitStats.h"
+#include "economy/Building.h"
+#include "units/Combat.h" // G2: headless drivers step UpdateProjectiles
+#include "core/Event.h"
+#include "units/AICommander.h" // Difficulty ladder decides games
+#include "world/FogOfWar.h" // WorldState carries fog memory
+#include "app/ui/GameCamera.h" // WorldState carries the camera
+#include "core/MathUtils.h"
+#include "economy/Nodes.h"
+#include "economy/Production.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "app/save/SaveGame.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
+#include "units/UnitFactory.h"
+#include "units/UnitStats.h"
 
 #include <filesystem>
 #include <vector>

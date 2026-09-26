@@ -3,21 +3,21 @@
 
 #include "test_harness.h"
 
-#include "AICommander.h"
-#include "Building.h" // UpdateBaseIncome, HasFactory placement
-#include "Event.h"
-#include "FogOfWar.h"
-#include "GameCamera.h"
-#include "MapFile.h"
-#include "Menu.h" // TeamHasUnits
-#include "Nodes.h"
-#include "Production.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "Skirmish.h"
-#include "TileMap.h"
-#include "Unit.h" // UpdateUnit
-#include "UnitFactory.h"
+#include "units/AICommander.h"
+#include "economy/Building.h" // UpdateBaseIncome, HasFactory placement
+#include "core/Event.h"
+#include "world/FogOfWar.h"
+#include "app/ui/GameCamera.h"
+#include "world/MapFile.h"
+#include "app/match/Menu.h" // TeamHasUnits
+#include "economy/Nodes.h"
+#include "economy/Production.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "app/match/Skirmish.h"
+#include "world/TileMap.h"
+#include "units/Unit.h" // UpdateUnit
+#include "units/UnitFactory.h"
 
 #include <string>
 

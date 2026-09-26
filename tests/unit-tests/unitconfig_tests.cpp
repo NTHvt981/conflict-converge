@@ -5,9 +5,9 @@
 
 #include "test_harness.h"
 
-#include "UnitConfig.h"
-#include "UnitFactory.h"
-#include "UnitStats.h"
+#include "app/data/UnitConfig.h"
+#include "units/UnitFactory.h"
+#include "units/UnitStats.h"
 
 #include <filesystem>
 #include <fstream>

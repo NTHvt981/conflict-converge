@@ -1,4 +1,4 @@
-#include "app/SaveGame.h"
+#include "app/save/SaveGame.h"
 
 #include <cereal/archives/json.hpp>
 #include <cereal/cereal.hpp>
@@ -15,19 +15,19 @@
 #include <string>
 #include <vector>
 
-#include "SaveWire.h"
+#include "app/save/SaveWire.h"
 
 #include "economy/Building.h"
 #include "core/CcAssert.h"
 #include "units/Extensions.h"
 #include "world/FogOfWar.h"
-#include "app/GameCamera.h"
+#include "app/ui/GameCamera.h"
 #include "economy/Nodes.h"
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
 #include "world/TileMap.h"
 #include "units/Unit.h"
-#include "app/UnitConfig.h"
+#include "app/data/UnitConfig.h"
 
 namespace
 {

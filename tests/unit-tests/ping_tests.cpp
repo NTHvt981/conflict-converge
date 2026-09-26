@@ -3,12 +3,12 @@
 
 #include "test_harness.h"
 
-#include "Event.h"
-#include "Pings.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "Unit.h"
-#include "UnitFactory.h"
+#include "core/Event.h"
+#include "app/ui/Pings.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "units/Unit.h"
+#include "units/UnitFactory.h"
 
 void RunPingTests()
 {

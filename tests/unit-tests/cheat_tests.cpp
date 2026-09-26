@@ -1,6 +1,6 @@
 #include "test_harness.h"
 
-#include "Cheats.h"
+#include "core/Cheats.h"
 
 #include <cstring>
 

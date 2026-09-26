@@ -4,7 +4,7 @@
 #include "units/Extensions.h"
 #include "units/Formation.h"
 #include "world/Pathfinder.h"
-#include "app/Selection.h"
+#include "app/input/Selection.h"
 #include "units/Unit.h"
 #include "units/UnitCommands.h"
 #include <algorithm>

@@ -2,13 +2,13 @@
 
 #include "test_harness.h"
 
-#include "Extensions.h"
-#include "Unit.h"
+#include "units/Extensions.h"
+#include "units/Unit.h"
 
-#include "Combat.h"    // expected damage via the Effectiveness matrix
-#include "Targeting.h" // InAttackRange sanity in chase expectations
-#include "TileMap.h"   // UpdateUnit needs the full map type (Unit.h fwd-declares)
-#include "UnitStats.h" // ApplyBaseStats for real power/range/cooldowns
+#include "units/Combat.h"    // expected damage via the Effectiveness matrix
+#include "units/Targeting.h" // InAttackRange sanity in chase expectations
+#include "world/TileMap.h"   // UpdateUnit needs the full map type (Unit.h fwd-declares)
+#include "units/UnitStats.h" // ApplyBaseStats for real power/range/cooldowns
 
 namespace
 {

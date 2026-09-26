@@ -4,12 +4,12 @@
 
 #include "test_harness.h"
 
-#include "Building.h"
-#include "Extensions.h"
-#include "Targeting.h"
-#include "TileMap.h"
-#include "Unit.h"
-#include "UnitStats.h"
+#include "economy/Building.h"
+#include "units/Extensions.h"
+#include "units/Targeting.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
+#include "units/UnitStats.h"
 
 namespace
 {

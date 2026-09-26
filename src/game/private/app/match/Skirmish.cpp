@@ -1,8 +1,8 @@
-#include "app/Skirmish.h"
+#include "app/match/Skirmish.h"
 
 #include "economy/Building.h"
 #include "world/FogOfWar.h"
-#include "app/GameCamera.h"
+#include "app/ui/GameCamera.h"
 #include "world/MapFile.h"
 #include "economy/Nodes.h"
 #include "economy/Production.h"

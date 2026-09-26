@@ -1,6 +1,6 @@
 #pragma once
 
-#include "UnitConfig.h"
+#include "app/data/UnitConfig.h"
 
 // Standalone unit-config editor state. The UI edits configs[type]
 // in place; text-box buffers and dropdown actives are re-synced whenever

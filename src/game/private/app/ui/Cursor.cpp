@@ -1,7 +1,7 @@
-#include "app/Cursor.h"
+#include "app/ui/Cursor.h"
 
 #include "units/Extensions.h"
-#include "app/Selection.h"
+#include "app/input/Selection.h"
 #include "units/Unit.h"
 #include "units/UnitStats.h"
 

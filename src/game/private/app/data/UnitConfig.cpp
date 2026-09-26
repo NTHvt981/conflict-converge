@@ -1,4 +1,4 @@
-#include "app/UnitConfig.h"
+#include "app/data/UnitConfig.h"
 
 #define CEREAL_RAPIDJSON_ASSERT(x) \
     do { if (!(x)) throw std::runtime_error("malformed unit-config JSON"); } while (0)

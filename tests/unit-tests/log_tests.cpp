@@ -5,7 +5,7 @@
 
 #include "test_harness.h"
 
-#include "Log.h"
+#include "app/data/Log.h"
 #include "raylib.h"
 
 #include <filesystem>

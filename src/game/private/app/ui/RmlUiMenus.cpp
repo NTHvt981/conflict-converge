@@ -1,4 +1,4 @@
-#include "app/RmlUiMenus.h"
+#include "app/ui/RmlUiMenus.h"
 
 #include <cstdio>
 #include <filesystem>
@@ -14,13 +14,13 @@
 #include <RmlUi/Core/Elements/ElementFormControl.h>
 #include <RmlUi/Core/Input.h>
 
-#include "app/Art.h"
-#include "app/Audio.h"
-#include "app/Hotkeys.h"
+#include "app/data/Art.h"
+#include "app/data/Audio.h"
+#include "app/input/Hotkeys.h"
 #include "world/MapFile.h"
-#include "app/Menu.h"
-#include "app/RmlUiHost.h"
-#include "app/SaveGame.h"
+#include "app/match/Menu.h"
+#include "app/ui/RmlUiHost.h"
+#include "app/save/SaveGame.h"
 
 namespace {
 

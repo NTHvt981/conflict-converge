@@ -1,10 +1,10 @@
-#include "app/Hud.h"
+#include "app/ui/Hud.h"
 
 #include <cstdio>
 
 #include "economy/Building.h"
 #include "units/Extensions.h"
-#include "app/Hotkeys.h"
+#include "app/input/Hotkeys.h"
 #include "units/UnitStats.h"
 
 const char *UnitTypeName(UnitType type)

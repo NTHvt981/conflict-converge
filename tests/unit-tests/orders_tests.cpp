@@ -2,17 +2,17 @@
 
 #include "test_harness.h"
 
-#include "AICommander.h" // factory-gate test
-#include "Building.h" // PlaceBuilding, BuildingMaxHealth
-#include "Event.h"    // commander event routing
-#include "Extensions.h" // Orders pool (Unit split slice 1)
-#include "FogOfWar.h" // structure acquisition under fog
-#include "Nodes.h"    // ResourceNodes for the commander fixture
-#include "Selection.h" // G4 embarked pick/select guards
-#include "Targeting.h" // AcquireBuildingTarget
-#include "TileMap.h"
-#include "Unit.h"
-#include "UnitStats.h" // ApplyBaseStats, BaseStats max-health
+#include "units/AICommander.h" // factory-gate test
+#include "economy/Building.h" // PlaceBuilding, BuildingMaxHealth
+#include "core/Event.h"    // commander event routing
+#include "units/Extensions.h" // Orders pool (Unit split slice 1)
+#include "world/FogOfWar.h" // structure acquisition under fog
+#include "economy/Nodes.h"    // ResourceNodes for the commander fixture
+#include "app/input/Selection.h" // G4 embarked pick/select guards
+#include "units/Targeting.h" // AcquireBuildingTarget
+#include "world/TileMap.h"
+#include "units/Unit.h"
+#include "units/UnitStats.h" // ApplyBaseStats, BaseStats max-health
 
 namespace
 {

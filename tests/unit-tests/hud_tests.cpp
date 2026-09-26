@@ -3,10 +3,10 @@
 
 #include "test_harness.h"
 
-#include "Building.h"
-#include "Extensions.h"
-#include "Hud.h"
-#include "UnitStats.h"
+#include "economy/Building.h"
+#include "units/Extensions.h"
+#include "app/ui/Hud.h"
+#include "units/UnitStats.h"
 
 void RunHudAbilityTests();
 

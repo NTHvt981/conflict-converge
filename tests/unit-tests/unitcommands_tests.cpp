@@ -2,19 +2,19 @@
 
 #include "test_harness.h"
 
-#include "Audio.h"
-#include "Building.h"
-#include "Extensions.h"
-#include "GameCamera.h"
-#include "InputManager.h"
-#include "Minimap.h"
-#include "Menu.h"
-#include "Nodes.h"
-#include "PlayingInput.h"
-#include "TileMap.h"
-#include "Unit.h"
-#include "UnitCommands.h"
-#include "UnitStats.h"
+#include "app/data/Audio.h"
+#include "economy/Building.h"
+#include "units/Extensions.h"
+#include "app/ui/GameCamera.h"
+#include "app/input/InputManager.h"
+#include "app/ui/Minimap.h"
+#include "app/match/Menu.h"
+#include "economy/Nodes.h"
+#include "core/PlayingInput.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
+#include "units/UnitCommands.h"
+#include "units/UnitStats.h"
 
 namespace
 {

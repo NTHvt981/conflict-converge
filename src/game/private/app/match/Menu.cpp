@@ -1,11 +1,11 @@
-#include "app/Menu.h"
+#include "app/match/Menu.h"
 
 #include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <sstream>
 
-#include "app/Hotkeys.h"
+#include "app/input/Hotkeys.h"
 #include "rini.h"
 
 void MenuFlow::TogglePause()

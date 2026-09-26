@@ -5,7 +5,7 @@
 #include "raylib.h"
 #include "raygui.h"
 
-#include "Art.h"
+#include "app/data/Art.h"
 
 namespace
 {

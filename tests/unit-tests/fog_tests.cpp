@@ -3,10 +3,10 @@
 
 #include "test_harness.h"
 
-#include "Extensions.h"
-#include "FogOfWar.h"
-#include "Targeting.h" // Fog-gated acquisition
-#include "TileMap.h"   // UpdateUnit chase validation under fog
+#include "units/Extensions.h"
+#include "world/FogOfWar.h"
+#include "units/Targeting.h" // Fog-gated acquisition
+#include "world/TileMap.h"   // UpdateUnit chase validation under fog
 
 namespace
 {

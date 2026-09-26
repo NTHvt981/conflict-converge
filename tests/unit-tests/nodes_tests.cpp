@@ -2,9 +2,9 @@
 
 #include "test_harness.h"
 
-#include "Nodes.h"
-#include "TileMap.h"
-#include "UnitStats.h" // ApplyBaseStats for live Engineers
+#include "economy/Nodes.h"
+#include "world/TileMap.h"
+#include "units/UnitStats.h" // ApplyBaseStats for live Engineers
 
 namespace
 {

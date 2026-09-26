@@ -1,6 +1,6 @@
 #include "test_harness.h"
 
-#include "Subsystem.h"
+#include "core/Subsystem.h"
 
 #include <string>
 #include <vector>

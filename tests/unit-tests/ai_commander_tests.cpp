@@ -4,12 +4,12 @@
 
 #include "test_harness.h"
 
-#include "AICommander.h"
-#include "Building.h" // building-count query
-#include "Extensions.h"
-#include "Nodes.h"
-#include "TileMap.h"
-#include "UnitFactory.h"
+#include "units/AICommander.h"
+#include "economy/Building.h" // building-count query
+#include "units/Extensions.h"
+#include "economy/Nodes.h"
+#include "world/TileMap.h"
+#include "units/UnitFactory.h"
 
 namespace
 {

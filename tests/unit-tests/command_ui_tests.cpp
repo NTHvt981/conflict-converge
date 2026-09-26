@@ -3,12 +3,12 @@
 
 #include "test_harness.h"
 
-#include "GameCamera.h"
-#include "Hud.h" // ProductionMenuOrder
-#include "InputManager.h"
-#include "Minimap.h"
-#include "SaveGame.h" // SaveSlotPath
-#include "Shortcuts.h"
+#include "app/ui/GameCamera.h"
+#include "app/ui/Hud.h" // ProductionMenuOrder
+#include "app/input/InputManager.h"
+#include "app/ui/Minimap.h"
+#include "app/save/SaveGame.h" // SaveSlotPath
+#include "app/input/Shortcuts.h"
 
 void RunCommandUiTests()
 {

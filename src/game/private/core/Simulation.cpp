@@ -3,7 +3,7 @@
 
 #include "economy/Building.h"
 #include "units/Extensions.h"
-#include "app/Shake.h"
+#include "app/ui/Shake.h"
 #include "units/Unit.h"
 #include <cmath>
 #include <vector>

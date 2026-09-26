@@ -3,7 +3,7 @@
 
 #include "test_harness.h"
 
-#include "MathUtils.h"
+#include "core/MathUtils.h"
 
 static_assert(sizeof(cc::Vec2) == 8, "cc::Vec2 must be two floats");
 static_assert(cc::TILE_SIZE == 64.0f, "tile grid must be 64x64");

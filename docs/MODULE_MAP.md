@@ -3,8 +3,8 @@
 On-demand reference for per-header responsibilities. `AGENTS.md` carries only the
 compact module map; read this before touching an unfamiliar subsystem.
 
-`src/game/public/<core|world|units|economy|app>/` headers + `src/game/private/<same>/`
-sources per module. Entry is `src/game/main.cpp`; `Game` (core) owns state + loop. Only
+`src/game/public/<core|world|units|economy|app/...>/` headers + `src/game/private/<same>/`
+sources per module (`app` splits into `ui|input|save|data|match`). Entry is `src/game/main.cpp`; `Game` (core) owns state + loop. Only
 `src/game/public` and `src/game/private` are on the include path (see `includedirs` in
 `premake5.lua`), so includes stay subsystem-qualified (`#include "units/Unit.h"`) and moves
 across subsystems need include edits. `Unit.h` fwd-declares `TileMap`; never include
@@ -17,10 +17,13 @@ world:   TileMap, Pathfinder, MapFile, FogOfWar
 units:   Unit, UnitStats, Combat, UnitFactory, Targeting, Formation, AICommander,
           Extensions, UnitCommands
 economy: Building, Nodes, ResourceSystem, Production
-app:     GameCamera, InputManager, Selection, Shortcuts, Hotkeys, Minimap, Hud, Art,
-         SpriteData, UnitConfig, Menu, Skirmish, SaveGame, Audio, Log, Cursor, Pings,
-         Shake, DataRoot, RmlUiHost, RmlUiMenus, RmlUiHud, RmlRaylibRenderInterface,
-         RmlRaylibSystemInterface, RmlRaylibFileInterface
+app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, RmlUiHost, RmlUiMenus,
+         RmlUiHud, RmlRaylibRenderInterface, RmlRaylibSystemInterface,
+         RmlRaylibFileInterface
+app/input: InputManager, Selection, Shortcuts, Hotkeys
+app/save: SaveGame, SaveWire
+app/data: Art, SpriteData, UnitConfig, Audio, Log, DataRoot
+app/match: Menu, Skirmish
 ```
 
 ## core

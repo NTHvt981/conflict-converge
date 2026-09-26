@@ -10,7 +10,7 @@
 #include "raylib.h"
 #include "economy/Building.h"
 #include "economy/Nodes.h"
-#include "SpriteData.h"
+#include "app/data/SpriteData.h"
 #include "core/Subsystem.h"
 #include "units/Unit.h"
 

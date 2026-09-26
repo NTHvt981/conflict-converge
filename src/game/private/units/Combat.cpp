@@ -2,7 +2,7 @@
 
 #include "economy/Building.h"
 #include "units/Extensions.h"
-#include "app/UnitConfig.h"
+#include "app/data/UnitConfig.h"
 
 float Effectiveness(DamageType dealt, ArmorType armor)
 {

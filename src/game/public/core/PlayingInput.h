@@ -2,13 +2,13 @@
 
 #include <optional>
 
-#include "app/Audio.h"
+#include "app/data/Audio.h"
 #include "economy/Building.h"
-#include "app/GameCamera.h"
-#include "app/Hud.h"
-#include "app/InputManager.h"
-#include "app/Menu.h"
-#include "app/Minimap.h"
+#include "app/ui/GameCamera.h"
+#include "app/ui/Hud.h"
+#include "app/input/InputManager.h"
+#include "app/match/Menu.h"
+#include "app/ui/Minimap.h"
 #include "economy/Nodes.h"
 #include "core/Registry.h"
 #include "core/Subsystem.h"

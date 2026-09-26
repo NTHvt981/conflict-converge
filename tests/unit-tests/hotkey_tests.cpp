@@ -4,8 +4,8 @@
 
 #include "test_harness.h"
 
-#include "Hotkeys.h"
-#include "Shortcuts.h"
+#include "app/input/Hotkeys.h"
+#include "app/input/Shortcuts.h"
 
 void RunHotkeyTests()
 {

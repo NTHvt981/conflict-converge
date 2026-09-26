@@ -1,4 +1,4 @@
-#include "app/Shortcuts.h"
+#include "app/input/Shortcuts.h"
 
 #include <vector>
 

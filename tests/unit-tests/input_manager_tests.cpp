@@ -3,7 +3,7 @@
 
 #include "test_harness.h"
 
-#include "InputManager.h"
+#include "app/input/InputManager.h"
 
 void RunInputManagerTests()
 {

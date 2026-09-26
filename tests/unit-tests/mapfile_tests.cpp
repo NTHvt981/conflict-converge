@@ -3,18 +3,18 @@
 
 #include "test_harness.h"
 
-#include "AICommander.h" // demo smoke: SetupBase must fit on shipped maps
-#include "Building.h" // demo smoke: player placements must fit
-#include "Event.h"
-#include "FogOfWar.h"
-#include "GameCamera.h"
-#include "MapFile.h"
-#include "Nodes.h"
-#include "Pathfinder.h" // TerrainCost hook
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "SaveGame.h"
-#include "TileMap.h"
+#include "units/AICommander.h" // demo smoke: SetupBase must fit on shipped maps
+#include "economy/Building.h" // demo smoke: player placements must fit
+#include "core/Event.h"
+#include "world/FogOfWar.h"
+#include "app/ui/GameCamera.h"
+#include "world/MapFile.h"
+#include "economy/Nodes.h"
+#include "world/Pathfinder.h" // TerrainCost hook
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "app/save/SaveGame.h"
+#include "world/TileMap.h"
 
 #include <filesystem>
 #include <fstream>

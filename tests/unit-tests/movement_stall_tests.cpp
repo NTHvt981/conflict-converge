@@ -14,12 +14,12 @@
 
 #include "test_harness.h"
 
-#include "Formation.h"
-#include "Extensions.h"
-#include "Pathfinder.h"
-#include "TileMap.h"
-#include "Unit.h"
-#include "UnitStats.h"
+#include "units/Formation.h"
+#include "units/Extensions.h"
+#include "world/Pathfinder.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
+#include "units/UnitStats.h"
 
 #include <vector>
 

@@ -4,8 +4,8 @@
 
 #include "test_harness.h"
 
-#include "GameCamera.h"
-#include "Shake.h"
+#include "app/ui/GameCamera.h"
+#include "app/ui/Shake.h"
 
 void RunCameraTests()
 {

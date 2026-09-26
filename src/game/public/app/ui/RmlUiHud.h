@@ -6,9 +6,9 @@
 
 #include <RmlUi/Core/EventListener.h>
 
-#include "app/Art.h"
+#include "app/data/Art.h"
 #include "core/Event.h"
-#include "app/Hotkeys.h"
+#include "app/input/Hotkeys.h"
 #include "core/MenuScreens.h"
 #include "core/PlayingInput.h"
 #include "economy/Production.h"

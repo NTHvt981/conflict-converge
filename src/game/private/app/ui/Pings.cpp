@@ -1,4 +1,4 @@
-#include "app/Pings.h"
+#include "app/ui/Pings.h"
 
 namespace
 {

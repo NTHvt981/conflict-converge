@@ -4,8 +4,8 @@
 
 #include "test_harness.h"
 
-#include "Audio.h"
-#include "Menu.h" // MenuSettings volume defaults
+#include "app/data/Audio.h"
+#include "app/match/Menu.h" // MenuSettings volume defaults
 
 void RunAudioTests()
 {

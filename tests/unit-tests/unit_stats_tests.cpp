@@ -2,8 +2,8 @@
 
 #include "test_harness.h"
 
-#include "Extensions.h"
-#include "UnitStats.h"
+#include "units/Extensions.h"
+#include "units/UnitStats.h"
 
 void RunUnitStatsTests()
 {

@@ -5,7 +5,7 @@
 
 #include "test_harness.h"
 
-#include "CcAssert.h"
+#include "core/CcAssert.h"
 
 void RunCcAssertTests()
 {

@@ -2,11 +2,11 @@
 
 #include "test_harness.h"
 
-#include "Event.h"
-#include "Production.h"
-#include "ResourceSystem.h"
-#include "UnitFactory.h"
-#include "UnitStats.h"
+#include "core/Event.h"
+#include "economy/Production.h"
+#include "economy/ResourceSystem.h"
+#include "units/UnitFactory.h"
+#include "units/UnitStats.h"
 
 namespace
 {

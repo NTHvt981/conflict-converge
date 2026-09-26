@@ -2,10 +2,10 @@
 
 #include "test_harness.h"
 
-#include "Extensions.h"
-#include "GameCamera.h"
-#include "Selection.h"
-#include "Unit.h"
+#include "units/Extensions.h"
+#include "app/ui/GameCamera.h"
+#include "app/input/Selection.h"
+#include "units/Unit.h"
 
 namespace
 {

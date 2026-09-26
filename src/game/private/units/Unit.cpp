@@ -9,7 +9,7 @@
 #include "units/Targeting.h"
 #include "world/TileMap.h"
 #include "economy/Building.h"
-#include "app/UnitConfig.h"
+#include "app/data/UnitConfig.h"
 #include "units/UnitStats.h"
 
 #include <algorithm>

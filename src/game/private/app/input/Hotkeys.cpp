@@ -1,4 +1,4 @@
-#include "app/Hotkeys.h"
+#include "app/input/Hotkeys.h"
 
 #include <cstdio>
 

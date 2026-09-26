@@ -4,12 +4,12 @@
 
 #include "../unit-tests/test_harness.h"
 
-#include "MathUtils.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "TileMap.h"
-#include "Unit.h"
-#include "UnitFactory.h"
+#include "core/MathUtils.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
+#include "units/UnitFactory.h"
 
 #include <chrono>
 #include <cstdio>

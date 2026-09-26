@@ -3,12 +3,12 @@
 
 #include "test_harness.h"
 
-#include "Combat.h"
-#include "Extensions.h"
-#include "TileMap.h"
-#include "Unit.h"
-#include "UnitConfig.h"
-#include "UnitStats.h"
+#include "units/Combat.h"
+#include "units/Extensions.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
+#include "app/data/UnitConfig.h"
+#include "units/UnitStats.h"
 
 namespace
 {

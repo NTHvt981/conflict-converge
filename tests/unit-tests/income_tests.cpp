@@ -2,7 +2,7 @@
 
 #include "test_harness.h"
 
-#include "ResourceSystem.h"
+#include "economy/ResourceSystem.h"
 
 void RunIncomeTests()
 {

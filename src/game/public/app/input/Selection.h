@@ -4,7 +4,7 @@
 
 #include "raylib.h"
 
-#include "app/GameCamera.h"
+#include "app/ui/GameCamera.h"
 #include "core/Registry.h"
 
 enum class BuildingType;

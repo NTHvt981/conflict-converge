@@ -2,9 +2,9 @@
 
 #include "test_harness.h"
 
-#include "Extensions.h"
-#include "TileMap.h"
-#include "Unit.h"
+#include "units/Extensions.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
 
 void RunMovementTests()
 {

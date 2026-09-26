@@ -2,12 +2,12 @@
 
 #include "test_harness.h"
 
-#include "Event.h"
-#include "Extensions.h"
-#include "ResourceSystem.h"
-#include "UnitConfig.h"
-#include "UnitFactory.h"
-#include "UnitStats.h"
+#include "core/Event.h"
+#include "units/Extensions.h"
+#include "economy/ResourceSystem.h"
+#include "app/data/UnitConfig.h"
+#include "units/UnitFactory.h"
+#include "units/UnitStats.h"
 
 void RunFactoryTests()
 {

@@ -3,7 +3,7 @@
 
 #include "test_harness.h"
 
-#include "Shortcuts.h"
+#include "app/input/Shortcuts.h"
 
 void RunShortcutTests()
 {

@@ -2,11 +2,11 @@
 
 #include "test_harness.h"
 
-#include "Extensions.h"
-#include "Formation.h"
-#include "TileMap.h"
-#include "Unit.h"      // Unit components under test
-#include "UnitStats.h" // ApplyBaseStats
+#include "units/Extensions.h"
+#include "units/Formation.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"      // Unit components under test
+#include "units/UnitStats.h" // ApplyBaseStats
 
 #include <cmath>
 #include <set>

@@ -1,4 +1,4 @@
-#include "app/Minimap.h"
+#include "app/ui/Minimap.h"
 
 #include <algorithm>
 

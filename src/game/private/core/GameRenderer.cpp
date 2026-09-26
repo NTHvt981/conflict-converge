@@ -3,12 +3,12 @@
 
 #include "economy/Building.h"
 #include "core/Cheats.h"
-#include "app/Cursor.h"
+#include "app/ui/Cursor.h"
 #include "units/Extensions.h"
-#include "app/Hud.h"
-#include "app/RmlUiHost.h"
-#include "app/RmlUiMenus.h"
-#include "app/Selection.h"
+#include "app/ui/Hud.h"
+#include "app/ui/RmlUiHost.h"
+#include "app/ui/RmlUiMenus.h"
+#include "app/input/Selection.h"
 #include "units/Unit.h"
 #include <algorithm>
 #include <cmath>

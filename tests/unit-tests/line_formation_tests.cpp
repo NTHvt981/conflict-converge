@@ -2,10 +2,10 @@
 
 #include "test_harness.h"
 
-#include "Extensions.h"
-#include "Formation.h"
-#include "TileMap.h"
-#include "Unit.h"
+#include "units/Extensions.h"
+#include "units/Formation.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
 
 namespace
 {

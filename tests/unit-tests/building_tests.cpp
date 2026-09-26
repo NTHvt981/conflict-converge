@@ -2,10 +2,10 @@
 
 #include "test_harness.h"
 
-#include "Building.h"
-#include "Nodes.h"
-#include "Selection.h"
-#include "TileMap.h"
+#include "economy/Building.h"
+#include "economy/Nodes.h"
+#include "app/input/Selection.h"
+#include "world/TileMap.h"
 
 #include <vector>
 

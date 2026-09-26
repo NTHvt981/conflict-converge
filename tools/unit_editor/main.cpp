@@ -5,7 +5,7 @@
 
 #include <cstdio> // init-failure status message
 
-#include "Art.h"
+#include "app/data/Art.h"
 #include "unit_editor.h"
 
 int main()

@@ -1,4 +1,4 @@
-#include "app/RmlUiHud.h"
+#include "app/ui/RmlUiHud.h"
 
 #include <cstdio>
 #include <cstring>
@@ -13,9 +13,9 @@
 #include <RmlUi/Core/Elements/ElementFormControl.h>
 
 #include "economy/Building.h"
-#include "app/Hud.h"
-#include "app/RmlUiHost.h"
-#include "app/Selection.h"
+#include "app/ui/Hud.h"
+#include "app/ui/RmlUiHost.h"
+#include "app/input/Selection.h"
 #include "units/UnitCommands.h"
 #include "units/UnitFactory.h"
 

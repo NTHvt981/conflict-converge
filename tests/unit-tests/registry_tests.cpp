@@ -2,8 +2,8 @@
 
 #include "test_harness.h"
 
-#include "Registry.h"
-#include "Unit.h" // real component type
+#include "core/Registry.h"
+#include "units/Unit.h" // real component type
 
 namespace
 {

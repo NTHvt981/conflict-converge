@@ -7,11 +7,11 @@
 
 #include "test_harness.h"
 
-#include "Extensions.h"
-#include "Pathfinder.h" // IssuePathOrderFootprint (not used directly, transitively needed)
-#include "TileMap.h"
-#include "Unit.h"
-#include "UnitStats.h"
+#include "units/Extensions.h"
+#include "world/Pathfinder.h" // IssuePathOrderFootprint (not used directly, transitively needed)
+#include "world/TileMap.h"
+#include "units/Unit.h"
+#include "units/UnitStats.h"
 
 namespace
 {

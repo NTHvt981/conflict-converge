@@ -1,9 +1,9 @@
 #include "core/MatchController.h"
 
 #include "world/MapFile.h"
-#include "app/Skirmish.h"
-#include "app/SaveGame.h"
-#include "app/UnitConfig.h"
+#include "app/match/Skirmish.h"
+#include "app/save/SaveGame.h"
+#include "app/data/UnitConfig.h"
 #include <filesystem>
 
 MatchController::MatchController(Subsystems &world, GameCamera &camera, AICommander &ai, AICommander &allyAI,

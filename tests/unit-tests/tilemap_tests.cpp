@@ -2,7 +2,7 @@
 
 #include "test_harness.h"
 
-#include "TileMap.h"
+#include "world/TileMap.h"
 
 void RunTileMapTests()
 {

@@ -15,7 +15,7 @@
 #include "units/Extensions.h"
 #include "world/MapFile.h"
 #include "core/MathUtils.h" // TileToWorld for the mop-up march
-#include "app/Menu.h"
+#include "app/match/Menu.h"
 #include "world/Pathfinder.h" // IssuePathOrder drives the mop-up force
 #include "core/Registry.h"
 #include "units/Unit.h"
