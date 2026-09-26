@@ -39,7 +39,8 @@ Game::WorldScope::WorldScope(Subsystems &engine)
     Add<OccupancyGrid>(20, 15);
     Add<FogOfWar>();
     Add<ResourceNodes>();
-    Add<ProductionQueue>();
+    AddKeyed<ProductionQueue>("bootcamp", ProductionCategory::Infantry);
+    AddKeyed<ProductionQueue>("workshop", ProductionCategory::Vehicle);
     EventDispatcher &events = engine.Get<EventDispatcher>();
     Add<UnitFactory>(Get<Registry>(), Get<ResourceSystem>(), events);
     AddKeyed<AICommander>("ai", Get<Registry>(), Get<TileMap>(), Get<ResourceNodes>(), events,
@@ -65,7 +66,8 @@ Game::Game()
     : skirmish{ &world_.Get<Registry>(), &world_.Get<ResourceSystem>(),
                 &world_.Get<TileMap>(), &world_.Get<OccupancyGrid>(),
                 &world_.Get<FogOfWar>(), &world_.Get<ResourceNodes>(),
-                &world_.Get<ProductionQueue>(), &world_.Get<UnitFactory>(),
+                &world_.GetKeyed<ProductionQueue>("bootcamp"),
+                &world_.GetKeyed<ProductionQueue>("workshop"), &world_.Get<UnitFactory>(),
                 &world_.GetKeyed<AICommander>("ai"), &world_.GetKeyed<AICommander>("ally"),
                 &world_.GetKeyed<AICommander>("enemy2"), &player_.Get<GameCamera>(),
                 &rallyPos }
@@ -105,17 +107,18 @@ Game::Game()
                  menu.settings.showHints, [this]() { QuitToMenu(); },
                  [this](int dir) { match.StepReplay(dir); })
     , rmlUiHud(world_.Get<Registry>(), world_.Get<ResourceSystem>(),
-               world_.Get<ProductionQueue>(), sim, engine_.Get<HotkeyMap>(),
+               world_.GetKeyed<ProductionQueue>("bootcamp"),
+               world_.GetKeyed<ProductionQueue>("workshop"), sim, engine_.Get<HotkeyMap>(),
                player_.Get<PlayingInput>(), world_.Get<TileMap>(),
                world_.Get<OccupancyGrid>(), menu.settings.showHints,
                menu, engine_.Get<Art>(),
                engine_.Get<EventDispatcher>(),
                [this]() { QuitToMenu(); },
                [this](MenuState returnTo) { rmlUiMenus.BeginRemap(returnTo); })
-    , renderer(engine_.Get<Art>(), player_.Get<GameCamera>(), world_.Get<TileMap>(), world_.Get<Registry>(),
+     , renderer(engine_.Get<Art>(), player_.Get<GameCamera>(), world_.Get<TileMap>(), world_.Get<Registry>(),
                world_.Get<FogOfWar>(), world_.Get<ResourceNodes>(), world_.Get<Minimap>(),
                world_.Get<Pings>(), damageNumbers, player_.Get<PlayingInput>(), menu, sim,
-               world_.Get<ResourceSystem>(), world_.Get<ProductionQueue>(),
+               world_.Get<ResourceSystem>(),
                engine_.Get<HotkeyMap>(), engine_.Get<InputManager>(),
                world_.GetKeyed<AICommander>("ai"),
                engine_.Get<EventDispatcher>(), replayCursor, worldDifficulty, menuStateTime,

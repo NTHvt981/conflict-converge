@@ -58,6 +58,7 @@ public:
     bool HasScouted() const;
     cc::IVec2 LastSeenEnemy() const;
     bool HasBootcamp() const;
+    bool HasWorkshop() const;
 
 private:
     void MaintainHarvesters();
@@ -75,7 +76,8 @@ private:
     OccupancyGrid *occ_ = nullptr;
     ResourceSystem resources_; // owned fair-rules economy
     UnitFactory factory_;
-    ProductionQueue queue_;
+    ProductionQueue queueBootcamp_{ ProductionCategory::Infantry };
+    ProductionQueue queueWorkshop_{ ProductionCategory::Vehicle };
     AIDifficultyParams params_;
     int teamID_;
     AIDifficulty difficulty_;

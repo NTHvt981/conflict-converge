@@ -33,7 +33,7 @@ public:
     GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry &registry,
                  FogOfWar &fog, ResourceNodes &nodes, Minimap &minimap, Pings &pings,
                  DamageNumbers &damageNumbers, PlayingInput &playingInput, MenuFlow &menu,
-                 Simulation &sim, ResourceSystem &resources, ProductionQueue &queue,
+                 Simulation &sim, ResourceSystem &resources,
                  HotkeyMap &hotkeys, InputManager &input, AICommander &ai,
                  EventDispatcher &events, const int &replayCursor,
                  const AIDifficulty &worldDifficulty, const float &menuStateTime,
@@ -73,7 +73,6 @@ private:
     MenuFlow &menu_;
     Simulation &sim_;
     ResourceSystem &resources_;
-    ProductionQueue &queue_;
     HotkeyMap &hotkeys_;
     InputManager &input_;
     AICommander &ai_;

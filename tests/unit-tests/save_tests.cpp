@@ -74,6 +74,7 @@ void RunSaveGameTests()
     src.map.Set({ 6, 3 }, TerrainType::Water);
     PlaceBuilding(src.registry, src.map, BuildingType::Base, 0, 1, 10);
     PlaceBuilding(src.registry, src.map, BuildingType::Bootcamp, 1, 10, 10);
+    PlaceBuilding(src.registry, src.map, BuildingType::Workshop, 0, 5, 10);
     UpdateBuildingConstruction(src.registry, 20.0f); // save Operational structures
     src.nodes.SpawnNode(src.map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
     src.nodes.SpawnNode(src.map, ResourceKind::Oil, { 15, 12 }, 150.0f, 10.0f);
@@ -141,7 +142,7 @@ void RunSaveGameTests()
     CC_CHECK(dst.fog.IsExplored(0, { 2, 2 })); // team_fog survived the trip
     CC_CHECK(!dst.fog.IsExplored(0, { 19, 14 }));
 
-    CC_CHECK(dst.registry.EntityCount() == 4); // 2 units + 2 buildings, junk cleared
+    CC_CHECK(dst.registry.EntityCount() == 5); // 2 units + 3 buildings, junk cleared
     CC_CHECK(dst.nodes.Count() == 2);
     const ResourceNode *iron = dst.nodes.FindAt({ 15, 3 });
     CC_CHECK(iron != nullptr && iron->kind == ResourceKind::Iron);
@@ -179,13 +180,42 @@ void RunSaveGameTests()
     CC_CHECK(Near(loadedHunterCombat->phaseTime, 0.05f));
     CC_CHECK(loadedHunterCombat->phaseTime == 0.05f); // JSON round-trips exact floats
 
-    int bases = 0, bootcamps = 0;
+    int bases = 0, bootcamps = 0, workshops = 0;
     dst.registry.Each<Building>([&](Entity, const Building &b) {
         bases += (b.type == BuildingType::Base) ? 1 : 0;
         bootcamps += (b.type == BuildingType::Bootcamp) ? 1 : 0;
+        workshops += (b.type == BuildingType::Workshop) ? 1 : 0;
         CC_CHECK(b.health > 0.0f && b.health <= b.maxHealth); // HP roundtrips
     });
-    CC_CHECK(bases == 1 && bootcamps == 1);
+    CC_CHECK(bases == 1 && bootcamps == 1 && workshops == 1);
+
+    // --- wire value 2 decodes as Bootcamp ---
+    {
+        std::ostringstream wire2;
+        wire2 << "{\"value0\":{\"saveVersion\":3,"
+              << "\"map\":{\"width\":20,\"height\":15,\"terrain\":[";
+        for (int i = 0; i < 300; ++i)
+        {
+            wire2 << (i == 0 ? "0" : ",0");
+        }
+        wire2 << "]},"
+              << "\"buildings\":[{"
+              << "\"type\":2,\"state\":0,\"team\":0,\"tileX\":1,\"tileY\":1,"
+              << "\"health\":350.0,\"maxHealth\":350.0"
+              << "}]}}";
+        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        out.write("CCJ3", 4);
+        const std::string bytes = wire2.str();
+        out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+        out.close();
+        Fixture wireWorld;
+        CC_CHECK(LoadWorld(wireWorld.State(), path));
+        int wireBootcamps = 0;
+        wireWorld.registry.Each<Building>([&](Entity, const Building &b) {
+            wireBootcamps += (b.type == BuildingType::Bootcamp) ? 1 : 0;
+        });
+        CC_CHECK(wireBootcamps == 1);
+    }
 
     // --- loaded world keeps simulating (save is not a freeze-frame) ---
     const float hpBefore = lh->health;

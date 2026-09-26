@@ -43,3 +43,4 @@ int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add);
 int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType type,
                           int teamID, bool add);
 int SelectAllBuildings(Registry &registry, BuildingType type, int teamID);
+int SelectAllProductionBuildings(Registry &registry, int teamID);

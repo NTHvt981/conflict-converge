@@ -47,14 +47,16 @@ struct Harness
     OccupancyGrid occ{ 20, 15 };
     FogOfWar fog;
     ResourceNodes nodes;
-    ProductionQueue queue;
+    ProductionQueue bootcampQueue{ ProductionCategory::Infantry };
+    ProductionQueue workshopQueue{ ProductionCategory::Vehicle };
     EventDispatcher events;
     UnitFactory factory{ registry, resources, events };
     GameCamera camera;
     Vector2 rallyPos = {};
     AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     SkirmishWorld world{ &registry, &resources, &map, &occ, &fog, &nodes,
-                         &queue,   &factory,   &ai, nullptr, nullptr, &camera, &rallyPos };
+                         &bootcampQueue, &workshopQueue, &factory, &ai, nullptr, nullptr,
+                         &camera, &rallyPos };
 };
 
 // 2v2 overflow: allied commander (team 0) + second enemy (team 1) wired
@@ -67,7 +69,8 @@ struct Harness2v2
     OccupancyGrid occ{ 20, 15 };
     FogOfWar fog;
     ResourceNodes nodes;
-    ProductionQueue queue;
+    ProductionQueue bootcampQueue{ ProductionCategory::Infantry };
+    ProductionQueue workshopQueue{ ProductionCategory::Vehicle };
     EventDispatcher events;
     UnitFactory factory{ registry, resources, events };
     GameCamera camera;
@@ -76,7 +79,8 @@ struct Harness2v2
     AICommander allyAI{ registry, map, nodes, events, 0, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     AICommander enemyAI2{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     SkirmishWorld world{ &registry, &resources, &map, &occ, &fog, &nodes,
-                         &queue,   &factory,   &ai, &allyAI, &enemyAI2, &camera, &rallyPos };
+                         &bootcampQueue, &workshopQueue, &factory, &ai, &allyAI, &enemyAI2,
+                         &camera, &rallyPos };
 };
 
 } // namespace
@@ -118,9 +122,11 @@ void RunSkirmishTests()
     CC_CHECK(game.ai.Difficulty() == AIDifficulty::Hard);
     CC_CHECK(TeamHasUnits(game.registry, 0));
     CC_CHECK(TeamHasUnits(game.registry, 1));
-    CC_CHECK(!game.queue.Empty());
+    CC_CHECK(!game.bootcampQueue.Empty());
+    CC_CHECK(!game.workshopQueue.Empty());
     UpdateBuildingConstruction(game.registry, 20.0f); // sites -> Operational
     CC_CHECK(game.ai.HasBootcamp());
+    CC_CHECK(game.ai.HasWorkshop());
     CC_CHECK(game.resources.iron >= 0 && game.resources.oil >= 0);
     // Camera + rally aim at the player home.
     const Vector2 expectTarget =
@@ -147,7 +153,11 @@ void RunSkirmishTests()
         game.nodes.GatherTick(game.registry, game.resources, dt, 0);
         if (game.ai.HasBootcamp())
         {
-            game.queue.Update(game.factory, game.resources, 0, game.rallyPos, dt);
+            game.bootcampQueue.Update(game.factory, game.resources, 0, game.rallyPos, dt);
+        }
+        if (game.ai.HasWorkshop())
+        {
+            game.workshopQueue.Update(game.factory, game.resources, 0, game.rallyPos, dt);
         }
         game.ai.Update(dt);
     }
@@ -158,7 +168,8 @@ void RunSkirmishTests()
     ResetSkirmish(game.world);
     CC_CHECK(!TeamHasUnits(game.registry, 0));
     CC_CHECK(!TeamHasUnits(game.registry, 1));
-    CC_CHECK(game.queue.Empty());
+    CC_CHECK(game.bootcampQueue.Empty());
+    CC_CHECK(game.workshopQueue.Empty());
     CC_CHECK(game.resources.iron == 0 && game.resources.oil == 0);
     CC_CHECK(game.ai.WavesLaunched() == 0);
     CC_CHECK(game.ai.Difficulty() == AIDifficulty::Medium); // parked default
@@ -195,7 +206,8 @@ void RunSkirmishTests()
         CC_CHECK(buildings == 0);
         CC_CHECK(!TeamHasUnits(sand.registry, 1));
         CC_CHECK(sand.resources.iron == 0 && sand.resources.oil == 0);
-        CC_CHECK(sand.queue.Empty());
+        CC_CHECK(sand.bootcampQueue.Empty());
+        CC_CHECK(sand.workshopQueue.Empty());
         // The squad parks on walkable ground at the marker (spawn tiles are
         // free by construction: BuildSandbox places units via NearestFreeTile
         // from the player spawn, so read the marker back instead of a
@@ -229,8 +241,10 @@ void RunSkirmishTests()
         CC_CHECK(ally.allyAI.CombatUnitCount() > 0); // allied guard fielded
         UpdateBuildingConstruction(ally.registry, 20.0f); // sites -> Operational
         CC_CHECK(ally.allyAI.HasBootcamp());          // allied base produces
+        CC_CHECK(ally.allyAI.HasWorkshop());
         CC_CHECK(ally.enemyAI2.CombatUnitCount() > 0);
         CC_CHECK(ally.enemyAI2.HasBootcamp());
+        CC_CHECK(ally.enemyAI2.HasWorkshop());
         CC_CHECK(TeamHasUnits(ally.registry, 0));
         CC_CHECK(TeamHasUnits(ally.registry, 1));
         for (int i = 0; i < 600; ++i)
@@ -246,7 +260,11 @@ void RunSkirmishTests()
             ally.nodes.GatherTick(ally.registry, ally.resources, dt, 0);
             if (ally.ai.HasBootcamp())
             {
-                ally.queue.Update(ally.factory, ally.resources, 0, ally.rallyPos, dt);
+                ally.bootcampQueue.Update(ally.factory, ally.resources, 0, ally.rallyPos, dt);
+            }
+            if (ally.ai.HasWorkshop())
+            {
+                ally.workshopQueue.Update(ally.factory, ally.resources, 0, ally.rallyPos, dt);
             }
             ally.ai.Update(dt);
             ally.allyAI.Update(dt);

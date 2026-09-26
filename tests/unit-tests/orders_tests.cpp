@@ -293,6 +293,7 @@ void RunOrdersTests()
         CC_CHECK(registry.Get<Building>(baseId)->health == 400.0f);
         CC_CHECK(BuildingMaxHealth(BuildingType::ResourceDepot) == 200.0f);
         CC_CHECK(BuildingMaxHealth(BuildingType::Bootcamp) == 350.0f);
+        CC_CHECK(BuildingMaxHealth(BuildingType::Workshop) == 500.0f);
         registry.Get<Building>(baseId)->health = 100.0f; // battle damage (simulated)
         const Entity engId = AddUnit(registry, Soldier(0, UnitType::Engineer, 5, 4));
         Unit *eng = registry.Get<Unit>(engId);
@@ -357,6 +358,7 @@ void RunOrdersTests()
         ai.SetupBase();
         UpdateBuildingConstruction(registry, 20.0f); // bootcamp must be Operational
         CC_CHECK(ai.HasBootcamp());
+        CC_CHECK(ai.HasWorkshop());
         Entity bootcampId = kInvalidEntity;
         registry.Each<Building>([&](Entity id, const Building &b) {
             if (b.teamID == 1 && b.type == BuildingType::Bootcamp)
@@ -367,12 +369,59 @@ void RunOrdersTests()
         CC_CHECK(bootcampId != kInvalidEntity);
         CC_CHECK(DemolishBuilding(registry, map, bootcampId));
         CC_CHECK(!ai.HasBootcamp());
+        CC_CHECK(ai.HasWorkshop());
         for (int i = 0; i < 300; ++i)
         {
             ai.Update(1.0f / 60.0f);
         }
         // Guard stands alone: no queue completions without a bootcamp.
         CC_CHECK(ai.CombatUnitCount() == 1);
+    }
+
+    // --- the workshop gates vehicles only; infantry keeps producing ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        ResourceNodes nodes;
+        EventDispatcher events;
+        AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 10, 10 },
+                       { 2, 2 });
+        ai.SetupBase();
+        UpdateBuildingConstruction(registry, 20.0f); // producers must be Operational
+        CC_CHECK(ai.HasBootcamp());
+        CC_CHECK(ai.HasWorkshop());
+        Entity workshopId = kInvalidEntity;
+        registry.Each<Building>([&](Entity id, const Building &b) {
+            if (b.teamID == 1 && b.type == BuildingType::Workshop)
+            {
+                workshopId = id;
+            }
+        });
+        CC_CHECK(workshopId != kInvalidEntity);
+        CC_CHECK(DemolishBuilding(registry, map, workshopId));
+        CC_CHECK(!ai.HasWorkshop());
+        CC_CHECK(ai.HasBootcamp());
+        for (int i = 0; i < 3600; ++i)
+        {
+            ai.Update(1.0f / 60.0f);
+        }
+        int tanks = 0, foot = 0;
+        registry.Each<Unit>([&](Entity, const Unit &unit) {
+            if (unit.teamID != 1 || unit.health <= 0.0f || unit.type == UnitType::Engineer)
+            {
+                return;
+            }
+            if (unit.type == UnitType::LightTank)
+            {
+                ++tanks;
+            }
+            else
+            {
+                ++foot;
+            }
+        });
+        CC_CHECK(tanks == 0);
+        CC_CHECK(foot > 0);
     }
 
     // --- G4 load: adjacent foot boards, carrier keeps the manifest ---

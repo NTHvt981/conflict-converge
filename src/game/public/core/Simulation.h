@@ -36,8 +36,9 @@ public:
     void SetReplayCount(int count);
     int ReplayCount() const;
     // Re-runnable for the paused HUD.
-    void RefreshBootcamp();
+    void RefreshProducers();
     bool HasBootcamp() const;
+    bool HasWorkshop() const;
     // Runs only while Playing.
     void Step(float dt);
 
@@ -49,7 +50,8 @@ private:
     OccupancyGrid &occ_;
     FogOfWar &fog_;
     ResourceNodes &nodes_;
-    ProductionQueue &queue_;
+    ProductionQueue &bootcampQueue_;
+    ProductionQueue &workshopQueue_;
     UnitFactory &factory_;
     ResourceSystem &resources_;
     AICommander &ai_;
@@ -74,6 +76,7 @@ private:
     int lastQueueSize_ = 0;
     float attackSfxTimer_ = 0.0f;
     bool hasBootcamp_ = false;
+    bool hasWorkshop_ = false;
     bool replayRecording_ = false;
     float replayTimer_ = 0.0f;
     int replayIndex_ = 0;

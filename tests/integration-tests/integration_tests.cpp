@@ -254,13 +254,9 @@ void RunIntegrationTests()
     }
 
     // --- Balance: the difficulty ladder decides games, no stalemates ---
-    // Easy-vs-Medium: accepted stalemate (gimmick sign-off). At HEAD this
-    // rung decided for Medium at 15639 frames; the G1 fire-only-when-aimed
-    // gate flips it into a stable replacement equilibrium (bisect-proven:
-    // gate off reproduces the HEAD trajectory frame-for-frame; shell
-    // flight/splash tuning has zero effect on this rung). Medium still
-    // out-kills Easy ~2:1 along the way; the rung pins the capped,
-    // both-alive trajectory instead of a wipe.
+    // Easy-vs-Medium: Medium wins outright. Split Bootcamp/Workshop queues
+    // produce infantry and LightTanks in parallel, compounding Medium's
+    // composition edge into a wipe.
     {
         Registry registry;
         TileMap map(24, 18);
@@ -273,8 +269,9 @@ void RunIntegrationTests()
         easy.SetupBase();
         medium.SetupBase();
         const int frames = RunAISoak(registry, map, nodes, easy, medium, "Easy-vs-Medium");
-        CC_CHECK(frames == 27000); // capped (deterministic): stable equilibrium
-        CC_CHECK(CountTeam(registry, 0) > 0 && CountTeam(registry, 1) > 0);
+        CC_CHECK(frames < 27000); // terminated: no stalemate
+        CC_CHECK(CountTeam(registry, 1) > 0); // Medium wins the first rung
+        CC_CHECK(CountTeam(registry, 0) == 0);
     }
     {
         Registry registry;

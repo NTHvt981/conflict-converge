@@ -70,7 +70,9 @@ void RunAICommanderTests()
     CC_CHECK(!ai.HasScouted());
     ai.SetupBase();
     UpdateBuildingConstruction(registry, 20.0f); // sites -> Operational (game ticks this)
-    CC_CHECK(CountBuildings(registry, 1) == 3);
+    CC_CHECK(CountBuildings(registry, 1) == 4);
+    CC_CHECK(ai.HasBootcamp());
+    CC_CHECK(ai.HasWorkshop());
     CC_CHECK(ai.CombatUnitCount() >= 1); // guard: team never starts empty
 
     // --- harvesters sustain to the difficulty count ---

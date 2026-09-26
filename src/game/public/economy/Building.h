@@ -1,11 +1,13 @@
 #pragma once
 
 #include <array>
+#include <optional>
 #include <vector>
 
 #include "core/MathUtils.h"
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
+#include "units/UnitStats.h"
 
 class TileMap;
 class ResourceNodes;
@@ -15,6 +17,7 @@ enum class BuildingType
     Base,
     ResourceDepot,
     Bootcamp,
+    Workshop,
     Count
 };
 
@@ -41,6 +44,7 @@ struct Building
 
 float BuildingMaxHealth(BuildingType type);
 float BuildingBuildTime(BuildingType type);
+std::optional<ProductionCategory> ProducerCategory(BuildingType type);
 void UpdateBuildingConstruction(Registry &registry, float dt);
 
 cc::IVec2 Footprint(BuildingType type);

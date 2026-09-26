@@ -44,7 +44,8 @@ static_assert(static_cast<int>(UnitType::Count) == 9, "UnitType grew: review sav
 static_assert(static_cast<int>(UnitState::Count) == 3, "UnitState grew: review save decode");
 static_assert(static_cast<int>(AttackPhase::Count) == 3, "AttackPhase grew: review save decode");
 static_assert(static_cast<int>(TerrainType::Count) == 5, "TerrainType grew: review save decode");
-static_assert(static_cast<int>(BuildingType::Count) == 3, "BuildingType grew: review save decode");
+static_assert(static_cast<int>(BuildingType::Count) == 4, "BuildingType grew: review save decode");
+// Wire value 2 decodes as Bootcamp.
 static_assert(static_cast<int>(BuildingState::Count) == 3, "BuildingState grew: review save decode");
 static_assert(static_cast<int>(ResourceKind::Count) == 2, "ResourceKind grew: review save decode");
 

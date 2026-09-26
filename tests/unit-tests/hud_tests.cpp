@@ -60,10 +60,11 @@ void RunHudTests()
 
     // --- building tab covers all placeable types exactly once ---
     const std::vector<BuildingType> buildings = BuildingMenuOrder();
-    CC_CHECK(buildings.size() == 3);
+    CC_CHECK(buildings.size() == 4);
     CC_CHECK(buildings[0] == BuildingType::Base);
     CC_CHECK(buildings[1] == BuildingType::ResourceDepot);
     CC_CHECK(buildings[2] == BuildingType::Bootcamp);
+    CC_CHECK(buildings[3] == BuildingType::Workshop);
 
     RunHudAbilityTests();
 }
@@ -165,7 +166,7 @@ void RunHudAbilityTests()
         CC_CHECK(!FindAbility(entries, AbilityId::Guard)->active);
     }
 
-    // --- bootcamp selection enables Rally, depot explains the disabled one ---
+    // --- either producer selection enables Rally, depot explains the disabled one ---
     {
         Registry registry;
         const Entity bootcamp = AddHudBuilding(registry, BuildingType::Bootcamp);
@@ -173,6 +174,10 @@ void RunHudAbilityTests()
             AbilitiesForSelection(registry, { bootcamp });
         CC_CHECK(FindAbility(entries, AbilityId::Rally)->enabled);
         CC_CHECK(FindAbility(entries, AbilityId::Demolish)->enabled);
+        const Entity workshop = AddHudBuilding(registry, BuildingType::Workshop);
+        const std::vector<AbilityEntry> shopEntries =
+            AbilitiesForSelection(registry, { workshop });
+        CC_CHECK(FindAbility(shopEntries, AbilityId::Rally)->enabled);
         const Entity depot = AddHudBuilding(registry, BuildingType::ResourceDepot);
         const std::vector<AbilityEntry> depotEntries =
             AbilitiesForSelection(registry, { depot });

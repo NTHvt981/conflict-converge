@@ -245,3 +245,17 @@ int SelectAllBuildings(Registry &registry, BuildingType type, int teamID)
     });
     return picked;
 }
+
+int SelectAllProductionBuildings(Registry &registry, int teamID)
+{
+    int picked = 0;
+    registry.Each<Building>([&](Entity, Building &building) {
+        building.isSelected =
+            (building.teamID == teamID && ProducerCategory(building.type).has_value());
+        if (building.isSelected)
+        {
+            ++picked;
+        }
+    });
+    return picked;
+}

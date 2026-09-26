@@ -18,7 +18,8 @@ Simulation::Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
     , occ_(world.Get<OccupancyGrid>())
     , fog_(world.Get<FogOfWar>())
     , nodes_(world.Get<ResourceNodes>())
-    , queue_(world.Get<ProductionQueue>())
+    , bootcampQueue_(world.GetKeyed<ProductionQueue>("bootcamp"))
+    , workshopQueue_(world.GetKeyed<ProductionQueue>("workshop"))
     , factory_(world.Get<UnitFactory>())
     , resources_(world.Get<ResourceSystem>())
     , ai_(world.GetKeyed<AICommander>("ai"))
@@ -48,6 +49,7 @@ void Simulation::ResetForMatch()
     lastQueueSize_ = 0;
     attackSfxTimer_ = 0.0f;
     hasBootcamp_ = false;
+    hasWorkshop_ = false;
     replayRecording_ = true;
     replayTimer_ = 0.0f;
     replayIndex_ = 0;
@@ -61,6 +63,7 @@ void Simulation::ResetEdgePolls()
     lastQueueSize_ = 0;
     attackSfxTimer_ = 0.0f;
     hasBootcamp_ = false;
+    hasWorkshop_ = false;
 }
 
 void Simulation::StopRecording()
@@ -78,14 +81,22 @@ int Simulation::ReplayCount() const
     return replayCount_;
 }
 
-void Simulation::RefreshBootcamp()
+void Simulation::RefreshProducers()
 {
     hasBootcamp_ = false;
+    hasWorkshop_ = false;
     registry_.Each<Building>([&](Entity, const Building &building) {
-        if (building.teamID == 0 && building.type == BuildingType::Bootcamp &&
-            building.state == BuildingState::Operational)
+        if (building.teamID != 0 || building.state != BuildingState::Operational)
+        {
+            return;
+        }
+        if (building.type == BuildingType::Bootcamp)
         {
             hasBootcamp_ = true;
+        }
+        else if (building.type == BuildingType::Workshop)
+        {
+            hasWorkshop_ = true;
         }
     });
 }
@@ -93,6 +104,11 @@ void Simulation::RefreshBootcamp()
 bool Simulation::HasBootcamp() const
 {
     return hasBootcamp_;
+}
+
+bool Simulation::HasWorkshop() const
+{
+    return hasWorkshop_;
 }
 
 void Simulation::Announce(EventType type)
@@ -207,10 +223,9 @@ void Simulation::Step(float dt)
     UpdateBaseIncome(registry_, resources_, dt, 0);
     nodes_.Update(dt);
     nodes_.GatherTick(registry_, resources_, dt, 0);
-    RefreshBootcamp();
-    if (hasBootcamp_)
-    {
-        const Entity spawned = queue_.Update(factory_, resources_, 0, rallyPos_, dt);
+    RefreshProducers();
+    auto pumpQueue = [&](ProductionQueue &queue) {
+        const Entity spawned = queue.Update(factory_, resources_, 0, rallyPos_, dt);
         if (spawned != kInvalidEntity && autoAddGroupBit_ >= 0)
         {
             if (Unit *fresh = registry_.Get<Unit>(spawned))
@@ -218,12 +233,22 @@ void Simulation::Step(float dt)
                 fresh->controlGroups |= (1u << static_cast<unsigned int>(autoAddGroupBit_));
             }
         }
+    };
+    if (hasBootcamp_)
+    {
+        pumpQueue(bootcampQueue_);
     }
-    if (queue_.Size() > static_cast<std::size_t>(lastQueueSize_))
+    if (hasWorkshop_)
+    {
+        pumpQueue(workshopQueue_);
+    }
+    const int queueSize =
+        static_cast<int>(bootcampQueue_.Size() + workshopQueue_.Size());
+    if (queueSize > lastQueueSize_)
     {
         Announce(EventType::ProductionOrdered);
     }
-    lastQueueSize_ = static_cast<int>(queue_.Size());
+    lastQueueSize_ = queueSize;
     if (replayRecording_)
     {
         replayTimer_ += dt;

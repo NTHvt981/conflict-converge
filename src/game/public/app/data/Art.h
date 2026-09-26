@@ -162,8 +162,8 @@ private:
     struct BuildingArt
     {
         Texture2D flat[2] = {}; // Base/Depot: blue/red
-        Texture2D base = {};    // Bootcamp: team-neutral base
-        Texture2D mask = {};    // Bootcamp: team-color mask
+        Texture2D base = {};    // masked producers: team-neutral base
+        Texture2D mask = {};    // masked producers: team-color mask
     };
     BuildingArt buildingArt_[static_cast<int>(BuildingType::Count)];
     Texture2D nodes_[2] = {};        // [kind]

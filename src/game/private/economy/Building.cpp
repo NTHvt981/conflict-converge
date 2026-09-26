@@ -18,6 +18,8 @@ cc::IVec2 Footprint(BuildingType type)
         return { 1, 1 };
     case BuildingType::Bootcamp:
         return { 2, 2 };
+    case BuildingType::Workshop:
+        return { 3, 3 };
     }
     return { 1, 1 };
 }
@@ -32,6 +34,8 @@ float BuildingMaxHealth(BuildingType type)
         return 200.0f;
     case BuildingType::Bootcamp:
         return 350.0f;
+    case BuildingType::Workshop:
+        return 500.0f;
     }
     return 200.0f;
 }
@@ -204,10 +208,25 @@ float BuildingBuildTime(BuildingType type)
         return 2.0f;
     case BuildingType::Bootcamp:
         return 4.0f;
+    case BuildingType::Workshop:
+        return 5.0f;
     case BuildingType::Count:
         return 3.0f;
     }
     return 3.0f;
+}
+
+std::optional<ProductionCategory> ProducerCategory(BuildingType type)
+{
+    switch (type)
+    {
+    case BuildingType::Bootcamp:
+        return ProductionCategory::Infantry;
+    case BuildingType::Workshop:
+        return ProductionCategory::Vehicle;
+    default:
+        return std::nullopt;
+    }
 }
 
 void UpdateBuildingConstruction(Registry &registry, float dt)

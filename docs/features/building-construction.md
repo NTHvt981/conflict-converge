@@ -8,7 +8,7 @@ times, then go operational — with a world-space progress bar.
 ## Behavior
 
 - `PlaceBuilding` starts `UnderConstruction`; `UpdateBuildingConstruction`
-   ramps health proportionally (Base 3s / Depot 2s / Bootcamp 4s), flipping
+   ramps health proportionally (Base 3s / Depot 2s / Bootcamp 4s / Workshop 5s), flipping
   to `Operational` at exact max. Ticked every sim step.
 - Income, targeting, and repair all gate on `== Operational`, unchanged.
 - Loaded sites restart at 0 HP (construction timer isn't serialized);

@@ -6,6 +6,7 @@
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
 #include "units/Unit.h"
+#include "units/UnitStats.h"
 #include "economy/Production.h"
 
 enum class BuildingType;
@@ -32,12 +33,6 @@ std::vector<std::string> UnitTooltipLines(const Unit &unit, const Orders &orders
 // Production UI. Display order for the 8 unit types; per-tab
 // filters partition that order. Building tab enters placement mode.
 std::vector<UnitType> ProductionMenuOrder();
-enum class ProductionCategory
-{
-    Infantry,
-    Vehicle
-};
-ProductionCategory ProductionCategoryOf(UnitType type);
 std::vector<UnitType> InfantryMenuOrder();
 std::vector<UnitType> VehicleMenuOrder();
 std::vector<BuildingType> BuildingMenuOrder();

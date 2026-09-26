@@ -68,9 +68,13 @@ void ResetSkirmish(SkirmishWorld &world)
 	{
 		*world.nodes = ResourceNodes();
 	}
-	if (world.queue != nullptr)
+	if (world.bootcampQueue != nullptr)
 	{
-		*world.queue = ProductionQueue();
+		world.bootcampQueue->ResetForMatch();
+	}
+	if (world.workshopQueue != nullptr)
+	{
+		world.workshopQueue->ResetForMatch();
 	}
 	if (world.ai != nullptr)
 	{
@@ -102,8 +106,9 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 {
 	if (world.registry == nullptr || world.resources == nullptr || world.map == nullptr ||
 		world.occ == nullptr || world.fog == nullptr || world.nodes == nullptr ||
-		world.queue == nullptr || world.factory == nullptr || world.ai == nullptr ||
-		world.camera == nullptr || world.rallyPos == nullptr)
+		world.bootcampQueue == nullptr || world.workshopQueue == nullptr ||
+		world.factory == nullptr || world.ai == nullptr || world.camera == nullptr ||
+		world.rallyPos == nullptr)
 	{
 		return false;
 	}
@@ -115,7 +120,8 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 	OccupancyGrid &occ = *world.occ;
 	FogOfWar &fog = *world.fog;
 	ResourceNodes &nodes = *world.nodes;
-	ProductionQueue &queue = *world.queue;
+	ProductionQueue &bootcampQueue = *world.bootcampQueue;
+	ProductionQueue &workshopQueue = *world.workshopQueue;
 	UnitFactory &factory = *world.factory;
 
 	resources.AddIron(1000);
@@ -222,14 +228,29 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 		{
 			trySpiral(BuildingType::Bootcamp, home);
 		}
+		const cc::IVec2 workshopSpots[] = { { 3, 2 }, { -3, 3 }, { 0, 5 }, { 0, -4 } };
+		placed = false;
+		for (const cc::IVec2 &spot : workshopSpots)
+		{
+			if (trySite(BuildingType::Workshop, { home.x + spot.x, home.y + spot.y }) !=
+				kInvalidEntity)
+			{
+				placed = true;
+				break;
+			}
+		}
+		if (!placed)
+		{
+			trySpiral(BuildingType::Workshop, home);
+		}
 	};
 	placeBase(0, spots.playerHome);
 	spawnDemo(UnitType::RifleInfantry, spots.playerHome.x, spots.playerHome.y, 0);
 	spawnDemo(UnitType::LightTank, spots.playerHome.x + 2, spots.playerHome.y, 0);
 	spawnDemo(UnitType::Artillery, spots.playerHome.x + 1, spots.playerHome.y + 3, 0);
 	spawnDemo(UnitType::Engineer, spots.harvest.x, spots.harvest.y, 0);
-	queue.Enqueue(resources, UnitType::RifleInfantry);
-	queue.Enqueue(resources, UnitType::LightTank);
+	bootcampQueue.Enqueue(resources, UnitType::RifleInfantry);
+	workshopQueue.Enqueue(resources, UnitType::LightTank);
 
 	world.ai->Reset(difficulty, spots.aiHome, spots.playerHome, 1);
 	world.ai->SetupBase();
@@ -258,8 +279,8 @@ bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath)
 {
 	if (world.registry == nullptr || world.resources == nullptr || world.map == nullptr ||
 		world.occ == nullptr || world.fog == nullptr || world.nodes == nullptr ||
-		world.queue == nullptr || world.factory == nullptr || world.camera == nullptr ||
-		world.rallyPos == nullptr)
+		world.bootcampQueue == nullptr || world.workshopQueue == nullptr ||
+		world.factory == nullptr || world.camera == nullptr || world.rallyPos == nullptr)
 	{
 		return false;
 	}

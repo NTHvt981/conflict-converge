@@ -59,7 +59,8 @@ struct Fixture
         world.Add<OccupancyGrid>(20, 15);
         world.Add<FogOfWar>();
         world.Add<ResourceNodes>();
-        world.Add<ProductionQueue>();
+        world.AddKeyed<ProductionQueue>("bootcamp", ProductionCategory::Infantry);
+        world.AddKeyed<ProductionQueue>("workshop", ProductionCategory::Vehicle);
         EventDispatcher &events = engine.Get<EventDispatcher>();
         world.Add<UnitFactory>(world.Get<Registry>(), world.Get<ResourceSystem>(), events);
         world.AddKeyed<AICommander>("ai", world.Get<Registry>(), world.Get<TileMap>(),
@@ -102,6 +103,7 @@ void RunSimulationTests()
         fx.sim->Step(1.0f / 60.0f);
         fx.sim->Step(1.0f / 60.0f);
         CC_CHECK(!fx.sim->HasBootcamp());
+        CC_CHECK(!fx.sim->HasWorkshop());
         CC_CHECK(fx.sim->ReplayCount() == 0);
         CC_CHECK(fx.shakeTrauma == 0.0f);
         CC_CHECK(fx.resources->iron == 0); // no Base: no base trickle
@@ -118,6 +120,7 @@ void RunSimulationTests()
         CC_CHECK(fx.sim->ReplayCount() == 5);
         fx.sim->ResetEdgePolls();
         CC_CHECK(!fx.sim->HasBootcamp());
+        CC_CHECK(!fx.sim->HasWorkshop());
         CC_CHECK(fx.sim->ReplayCount() == 5); // polls only: recording untouched
     }
 }

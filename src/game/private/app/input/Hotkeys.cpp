@@ -19,7 +19,7 @@ const HotkeyDef kHotkeyDefs[] = {
     { "Patrol", "Squad patrol", KEY_V, false },
     { "Rally", "Rally placement", KEY_R, false },
     { "SelectType", "Select all of type", KEY_C, false },
-    { "SelectFactories", "Select all factories", KEY_F, false },
+    { "SelectFactories", "Select all production", KEY_F, false },
     { "SlowestSpeed", "Move at slowest speed", KEY_B, false },
     { "AreaBuild", "Area-build mode", KEY_Z, false },
     { "AreaRepair", "Area-repair mode", KEY_E, false },

@@ -106,6 +106,19 @@ bool AICommander::HasBootcamp() const
     return found;
 }
 
+bool AICommander::HasWorkshop() const
+{
+    bool found = false;
+    registry_.Each<Building>([&](Entity, const Building &building) {
+        if (building.teamID == teamID_ && building.type == BuildingType::Workshop &&
+            building.state == BuildingState::Operational)
+        {
+            found = true;
+        }
+    });
+    return found;
+}
+
 bool AICommander::HasScouted() const
 {
     return scouted_;
@@ -127,7 +140,8 @@ void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 e
     rallyTile_ = homeTile + cc::IVec2(0, 3);
     lastSeenEnemy_ = enemyTile;
     resources_ = ResourceSystem();
-    queue_ = ProductionQueue();
+    queueBootcamp_.ResetForMatch();
+    queueWorkshop_.ResetForMatch();
     harvesters_.clear();
     compIndex_ = 0;
     scouted_ = false;
@@ -161,6 +175,33 @@ void AICommander::SetupBase()
             break;
         }
     }
+    const cc::IVec2 workshopSpots[] = { { 3, 2 }, { -3, 3 },  { 0, 5 },  { 0, -4 },
+                                        { 4, -3 }, { -4, -2 }, { 5, 1 }, { -4, 1 } };
+    bool workshopPlaced = false;
+    for (const cc::IVec2 &spot : workshopSpots)
+    {
+        if (PlaceBuilding(registry_, map_, BuildingType::Workshop, teamID_, homeTile_.x + spot.x,
+                          homeTile_.y + spot.y, &nodes_) != kInvalidEntity)
+        {
+            workshopPlaced = true;
+            break;
+        }
+    }
+    for (int ring = 1; !workshopPlaced && ring <= 8; ++ring)
+    {
+        for (int dy = -ring; !workshopPlaced && dy <= ring; ++dy)
+        {
+            for (int dx = -ring; !workshopPlaced && dx <= ring; ++dx)
+            {
+                if (PlaceBuilding(registry_, map_, BuildingType::Workshop, teamID_,
+                                  homeTile_.x + dx, homeTile_.y + dy,
+                                  &nodes_) != kInvalidEntity)
+                {
+                    workshopPlaced = true;
+                }
+            }
+        }
+    }
     factory_.Spawn(UnitType::RifleInfantry, teamID_,
                    cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
 }
@@ -191,10 +232,14 @@ void AICommander::Update(float dt)
     }
     UpdateBaseIncome(registry_, resources_, dt, teamID_);
     nodes_.GatherTick(registry_, resources_, dt, teamID_);
+    const Vector2 rally = cc::ToRaylib(cc::TileToWorld(rallyTile_.x, rallyTile_.y));
     if (HasBootcamp())
     {
-        queue_.Update(factory_, resources_, teamID_,
-                      cc::ToRaylib(cc::TileToWorld(rallyTile_.x, rallyTile_.y)), dt);
+        queueBootcamp_.Update(factory_, resources_, teamID_, rally, dt);
+    }
+    if (HasWorkshop())
+    {
+        queueWorkshop_.Update(factory_, resources_, teamID_, rally, dt);
     }
     MaintainHarvesters();
     MaintainProduction();
@@ -273,16 +318,24 @@ void AICommander::MaintainProduction()
         return;
     }
     const int desired = params_.waveThreshold + 2 + params_.reserveUnits;
-    int pipeline = CombatUnitCount() + static_cast<int>(queue_.Size());
+    int pipeline = CombatUnitCount() + static_cast<int>(queueBootcamp_.Size()) +
+                   static_cast<int>(queueWorkshop_.Size());
     int guard = 0;
     while (pipeline < desired && guard < desired)
     {
         ++guard;
-        if (!queue_.Enqueue(resources_, params_.composition[compIndex_ % params_.composition.size()]))
+        const UnitType type = params_.composition[compIndex_ % params_.composition.size()];
+        ++compIndex_;
+        const bool infantry = ProductionCategoryOf(type) == ProductionCategory::Infantry;
+        ProductionQueue &queue = infantry ? queueBootcamp_ : queueWorkshop_;
+        if (infantry ? !HasBootcamp() : !HasWorkshop())
+        {
+            continue;
+        }
+        if (!queue.Enqueue(resources_, type))
         {
             break;
         }
-        ++compIndex_;
         ++pipeline;
     }
 }

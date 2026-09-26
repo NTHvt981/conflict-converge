@@ -41,7 +41,8 @@ unit roles and pacing, not faction asymmetry. All values from
 |----------|-----------|----|
 | Base | 2x2 | 400 (base income: 2 iron/s + 1 oil/s) |
 | Depot | 1x1 | 200 |
-| Bootcamp | 2x2 | 350 |
+| Bootcamp | 2x2 | 350 (trains infantry) |
+| Workshop | 3x3 | 500 (trains vehicles) |
 
 Harvest: 10 iron/s or 8 oil/s per Engineer on a live node. Starting funds:
 1000 iron / 500 oil (both sides, fair rules).

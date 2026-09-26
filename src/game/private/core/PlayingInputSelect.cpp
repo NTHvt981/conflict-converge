@@ -129,5 +129,9 @@ void PlayingInput::HandlePlacementKeys()
         {
             placingType_ = BuildingType::Bootcamp;
         }
+        else if (IsKeyPressed(KEY_FOUR))
+        {
+            placingType_ = BuildingType::Workshop;
+        }
     }
 }

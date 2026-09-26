@@ -41,7 +41,8 @@ void PumpMouse(Rml::Context *context)
 
 } // namespace
 
-RmlUiHud::RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueue &queue,
+RmlUiHud::RmlUiHud(Registry &registry, ResourceSystem &resources,
+                   ProductionQueue &bootcampQueue, ProductionQueue &workshopQueue,
                    Simulation &sim, HotkeyMap &hotkeys, PlayingInput &playingInput,
                    TileMap &map, OccupancyGrid &occ, const bool &showHints,
                    MenuFlow &menu, Art &art, EventDispatcher &events,
@@ -49,7 +50,8 @@ RmlUiHud::RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueu
                    std::function<void(MenuState)> beginRemap)
     : registry_(registry)
     , resources_(resources)
-    , queue_(queue)
+    , bootcampQueue_(bootcampQueue)
+    , workshopQueue_(workshopQueue)
     , sim_(sim)
     , hotkeys_(hotkeys)
     , playingInput_(playingInput)
@@ -102,10 +104,10 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
     };
     listen(hudDoc_, "click",
            { "tab-infantry", "tab-vehicles", "tab-buildings", "place-0", "place-1", "place-2",
-             "fac-i-0", "fac-i-1", "fac-i-2", "fac-i-3", "fac-v-0", "fac-v-1", "fac-v-2",
-             "fac-v-3", "repr-i-0", "repr-i-1", "repr-i-2", "repr-i-3", "repr-v-0", "repr-v-1",
-             "repr-v-2", "repr-v-3", "ab-hold", "ab-guard", "ab-patrol", "ab-attackmove",
-             "ab-halt", "ab-repair", "ab-heal", "ab-rally", "ab-demolish" });
+             "place-3", "fac-i-0", "fac-i-1", "fac-i-2", "fac-i-3", "fac-v-0", "fac-v-1",
+             "fac-v-2", "fac-v-3", "repr-i-0", "repr-i-1", "repr-i-2", "repr-i-3", "repr-v-0",
+             "repr-v-1", "repr-v-2", "repr-v-3", "ab-hold", "ab-guard", "ab-patrol",
+             "ab-attackmove", "ab-halt", "ab-repair", "ab-heal", "ab-rally", "ab-demolish" });
     for (Rml::ElementDocument *doc : { pauseDoc_, outcomeDoc_ })
     {
         (void)doc;

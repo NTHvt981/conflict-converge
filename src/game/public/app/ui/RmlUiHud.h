@@ -37,11 +37,11 @@ enum class ProductionTab
 class RmlUiHud : public Rml::EventListener
 {
 public:
-    RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueue &queue,
-             Simulation &sim, HotkeyMap &hotkeys, PlayingInput &playingInput,
-             TileMap &map, OccupancyGrid &occ, const bool &showHints, MenuFlow &menu,
-             Art &art, EventDispatcher &events, std::function<void()> quitToMenu,
-             std::function<void(MenuState)> beginRemap);
+    RmlUiHud(Registry &registry, ResourceSystem &resources, ProductionQueue &bootcampQueue,
+             ProductionQueue &workshopQueue, Simulation &sim, HotkeyMap &hotkeys,
+             PlayingInput &playingInput, TileMap &map, OccupancyGrid &occ,
+             const bool &showHints, MenuFlow &menu, Art &art, EventDispatcher &events,
+             std::function<void()> quitToMenu, std::function<void(MenuState)> beginRemap);
     RmlUiHud(const RmlUiHud &) = delete;
     RmlUiHud &operator=(const RmlUiHud &) = delete;
 
@@ -69,6 +69,7 @@ public:
 
 private:
     void RefreshHud();
+    ProductionQueue *ActiveQueue();
     std::string SelectionLine() const;
     void RefreshAbilities();
     void RefreshFactory();
@@ -92,7 +93,8 @@ private:
 
     Registry &registry_;
     ResourceSystem &resources_;
-    ProductionQueue &queue_;
+    ProductionQueue &bootcampQueue_;
+    ProductionQueue &workshopQueue_;
     Simulation &sim_;
     HotkeyMap &hotkeys_;
     PlayingInput &playingInput_;
@@ -113,6 +115,7 @@ private:
     bool ready_ = false;
     bool dragLatch_ = false;
     ProductionTab factoryTab_ = ProductionTab::Infantry;
+    int lastSelectedProducer_ = -1;
     ConfirmChoice pendingChoice_ = ConfirmChoice::None;
     std::unordered_map<std::string, std::string> textCache_;
     std::string hintsCache_;

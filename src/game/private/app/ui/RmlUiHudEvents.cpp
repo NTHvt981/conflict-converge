@@ -89,7 +89,10 @@ void RmlUiHud::OnClick(const Rml::String &id)
 {
     if (id == "btn-cancel")
     {
-        queue_.CancelTop(resources_);
+        if (ProductionQueue *active = ActiveQueue())
+        {
+            active->CancelTop(resources_);
+        }
         return;
     }
     if (id == "tab-infantry")
@@ -121,7 +124,8 @@ void RmlUiHud::OnClick(const Rml::String &id)
     // is visual-only, matching the raygui panel.
     const std::vector<UnitType> infantry = InfantryMenuOrder();
     const std::vector<UnitType> vehicles = VehicleMenuOrder();
-    auto enqueueRow = [&](const char *prefix, const std::vector<UnitType> &order) {
+    auto enqueueRow = [&](const char *prefix, const std::vector<UnitType> &order,
+                          ProductionQueue &queue) {
         const std::size_t width = std::strlen(prefix);
         if (id.compare(0, width, prefix) != 0)
         {
@@ -130,12 +134,13 @@ void RmlUiHud::OnClick(const Rml::String &id)
         const int row = std::atoi(id.c_str() + width);
         if (row >= 0 && row < static_cast<int>(order.size()))
         {
-            queue_.Enqueue(resources_, order[static_cast<std::size_t>(row)],
-                           queue_.RepeatArmed(order[static_cast<std::size_t>(row)]));
+            queue.Enqueue(resources_, order[static_cast<std::size_t>(row)],
+                          queue.RepeatArmed(order[static_cast<std::size_t>(row)]));
         }
         return true;
     };
-    auto repeatRow = [&](const char *prefix, const std::vector<UnitType> &order) {
+    auto repeatRow = [&](const char *prefix, const std::vector<UnitType> &order,
+                         ProductionQueue &queue) {
         const std::size_t width = std::strlen(prefix);
         if (id.compare(0, width, prefix) != 0)
         {
@@ -145,12 +150,14 @@ void RmlUiHud::OnClick(const Rml::String &id)
         if (row >= 0 && row < static_cast<int>(order.size()))
         {
             const UnitType type = order[static_cast<std::size_t>(row)];
-            queue_.SetRepeatArmed(type, !queue_.RepeatArmed(type));
+            queue.SetRepeatArmed(type, !queue.RepeatArmed(type));
         }
         return true;
     };
-    if (enqueueRow("fac-i-", infantry) || enqueueRow("fac-v-", vehicles) ||
-        repeatRow("repr-i-", infantry) || repeatRow("repr-v-", vehicles))
+    if (enqueueRow("fac-i-", infantry, bootcampQueue_) ||
+        enqueueRow("fac-v-", vehicles, workshopQueue_) ||
+        repeatRow("repr-i-", infantry, bootcampQueue_) ||
+        repeatRow("repr-v-", vehicles, workshopQueue_))
     {
         return;
     }

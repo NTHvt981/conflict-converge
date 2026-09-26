@@ -4,7 +4,7 @@
 GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry &registry,
                            FogOfWar &fog, ResourceNodes &nodes, Minimap &minimap, Pings &pings,
                            DamageNumbers &damageNumbers, PlayingInput &playingInput, MenuFlow &menu,
-                           Simulation &sim, ResourceSystem &resources, ProductionQueue &queue,
+                           Simulation &sim, ResourceSystem &resources,
                             HotkeyMap &hotkeys, InputManager &input, AICommander &ai,
                             EventDispatcher &events, const int &replayCursor,
                             const AIDifficulty &worldDifficulty, const float &menuStateTime,
@@ -23,7 +23,6 @@ GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry 
     , menu_(menu)
     , sim_(sim)
     , resources_(resources)
-    , queue_(queue)
     , hotkeys_(hotkeys)
     , input_(input)
     , ai_(ai)
@@ -66,7 +65,7 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
 {
     DrawDragPreviews();
     DrawMinimapOverlays(screenWidth, screenHeight);
-    sim_.RefreshBootcamp();
+    sim_.RefreshProducers();
     ConfirmChoice hudChoice = ConfirmChoice::None;
     if (rmlUiHud_.IsReady())
     {

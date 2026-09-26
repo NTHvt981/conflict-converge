@@ -163,11 +163,15 @@ void GameRenderer::DrawBuildings()
         {
             const float w = static_cast<float>(size.x) * cc::TILE_SIZE;
             const float h = static_cast<float>(size.y) * cc::TILE_SIZE;
-            const Color tint =
-                building.type == BuildingType::Base ? DARKGRAY : building.type == BuildingType::Bootcamp ? BROWN : GRAY;
+            const Color tint = building.type == BuildingType::Base         ? DARKGRAY
+                               : building.type == BuildingType::Bootcamp ? BROWN
+                               : building.type == BuildingType::Workshop ? DARKGREEN
+                                                                         : GRAY;
             DrawRectangleV(corner, { w, h }, tint);
-            const char *label =
-                building.type == BuildingType::Base ? "B" : building.type == BuildingType::Bootcamp ? "C" : "D";
+            const char *label = building.type == BuildingType::Base         ? "B"
+                                : building.type == BuildingType::Bootcamp ? "C"
+                                : building.type == BuildingType::Workshop ? "W"
+                                                                          : "D";
             Art::DrawUiText(&art_, label, static_cast<int>(corner.x) + 6, static_cast<int>(corner.y) + 4, 24, WHITE);
         }
         else
@@ -205,7 +209,7 @@ void GameRenderer::DrawPlacementGhost()
                                static_cast<float>(fp.x) * cc::TILE_SIZE,
                                static_cast<float>(fp.y) * cc::TILE_SIZE },
                              2.0f, ok ? GREEN : RED);
-        Art::DrawUiText(&art_, TextFormat("Placing: %s (1/2/3 type, Z/Esc done)",
+        Art::DrawUiText(&art_, TextFormat("Placing: %s (1-4 type, Z/Esc done)",
                             BuildingTypeName(*playingInput_.PlacingType())),
                  static_cast<int>(ghostCorner.x), static_cast<int>(ghostCorner.y) - 20, 14,
                  ok ? DARKGREEN : RED);

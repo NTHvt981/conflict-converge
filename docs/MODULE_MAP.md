@@ -40,7 +40,7 @@ app/match: Menu, Skirmish
   shared teams wake parked commanders); `E2E*` seam is for tests/e2e only
 - `Simulation.h` - Per-frame match tick extracted from `Game::Update` (no input/menus/
    rendering, so unit tests drive `Step` headlessly); `ResetForMatch`/`ResetEdgePolls`, team-0
-   Bootcamp gate, replay recording
+   Bootcamp/Workshop gates, replay recording
 - `PlayingInput.h` - In-match input dispatch extracted from `Game`: drag-box select,
   area-build/repair, right-click orders, line formation, control groups, sticky gesture
   modes, armed HUD abilities. Runs only while Playing; advances no simulation
@@ -105,10 +105,12 @@ app/match: Menu, Skirmish
 
 ## economy
 
-- `Building.h` - Base/Depot/Bootcamp footprints, tile-grid placement (marks
-  `TerrainType::Building`), demolish, base income, M13 structure HP (`BuildingMaxHealth`)
-- `Production.h` - Production queue: upfront charge, FIFO, prepaid spawn at rally (main + AI
-  gate `Update` on a live Bootcamp)
+- `Building.h` - Base/Depot/Bootcamp/Workshop footprints, tile-grid placement (marks
+  `TerrainType::Building`), demolish, base income, M13 structure HP (`BuildingMaxHealth`),
+  producer categories (`ProducerCategory`)
+- `Production.h` - Per-category production queues (Bootcamp/Infantry,
+  Workshop/Vehicle; unbound default accepts anything): upfront charge, FIFO, prepaid spawn
+  at rally (main + AI gate `Update` on a live producer)
 - `ResourceSystem.h` - Iron/oil ledger: `Add`/`TrySpend` + `TickIncome` (fractional carry,
   no cap)
 - `Nodes.h` - Resource nodes: spawn/gather/deplete/respawn, Engineer harvesting, `Each`

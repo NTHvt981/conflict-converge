@@ -63,6 +63,37 @@ void RmlUiHud::RefreshHud()
     SetTextCached("res-line", FormatResources(resources_));
     SetTextCached("sel-line", SelectionLine());
 
+    int selectedProducer = -1;
+    ProductionTab producerTab = ProductionTab::Infantry;
+    bool haveProducer = false;
+    registry_.Each<Building>([&](Entity id, const Building &building) {
+        if (haveProducer || !building.isSelected)
+        {
+            return;
+        }
+        const std::optional<ProductionCategory> category = ProducerCategory(building.type);
+        if (!category.has_value())
+        {
+            return;
+        }
+        selectedProducer = static_cast<int>(id);
+        producerTab = *category == ProductionCategory::Infantry ? ProductionTab::Infantry
+                                                                : ProductionTab::Vehicles;
+        haveProducer = true;
+    });
+    if (haveProducer)
+    {
+        if (selectedProducer != lastSelectedProducer_)
+        {
+            factoryTab_ = producerTab;
+            lastSelectedProducer_ = selectedProducer;
+        }
+    }
+    else
+    {
+        lastSelectedProducer_ = -1;
+    }
+
     char label[64];
     const int autoBit = playingInput_.AutoAddGroupBit();
     for (int bit = 0; bit < 10; ++bit)
@@ -94,29 +125,31 @@ void RmlUiHud::RefreshHud()
         }
     }
 
-    const bool showRows = sim_.HasBootcamp();
+    const bool anyProducer = sim_.HasBootcamp() || sim_.HasWorkshop();
     if (Rml::Element *stub = hudDoc_->GetElementById("need-factory"))
     {
-        stub->SetProperty("display", showRows ? "none" : "block");
+        stub->SetProperty("display", anyProducer ? "none" : "block");
     }
+    ProductionQueue *active = ActiveQueue();
     if (Rml::Element *queueRow = hudDoc_->GetElementById("fac-queue-row"))
     {
-        queueRow->SetProperty("display", showRows ? "block" : "none");
+        queueRow->SetProperty("display", active != nullptr ? "block" : "none");
     }
     RefreshFactory();
     RefreshAbilities();
-    snprintf(label, sizeof(label), "Queue: %d", static_cast<int>(queue_.Size()));
+    snprintf(label, sizeof(label), "Queue: %d", active != nullptr ? static_cast<int>(active->Size()) : 0);
     SetTextCached("queue-line", label);
 
     if (Rml::Element *producing = hudDoc_->GetElementById("hud-producing"))
     {
-        producing->SetProperty("display", queue_.Empty() ? "none" : "block");
+        producing->SetProperty("display",
+                               (active == nullptr || active->Empty()) ? "none" : "block");
     }
     if (Rml::Element *fill = hudDoc_->GetElementById("producing-fill"))
     {
         char width[32];
         snprintf(width, sizeof(width), "%g%%",
-                 static_cast<double>(queue_.HeadProgress() * 100.0f));
+                 static_cast<double>(active != nullptr ? active->HeadProgress() : 0.0f) * 100.0);
         fill->SetProperty(Rml::String("width"), Rml::String(width));
     }
 
@@ -133,17 +166,18 @@ void RmlUiHud::RefreshHud()
 void RmlUiHud::RefreshFactory()
 {
     char label[64];
-    const bool showRows = sim_.HasBootcamp();
+    const bool hasBootcamp = sim_.HasBootcamp();
+    const bool hasWorkshop = sim_.HasWorkshop();
     const bool infantryTab = factoryTab_ == ProductionTab::Infantry;
     const bool vehiclesTab = factoryTab_ == ProductionTab::Vehicles;
     const bool buildingsTab = factoryTab_ == ProductionTab::Buildings;
     if (Rml::Element *rows = hudDoc_->GetElementById("rows-infantry"))
     {
-        rows->SetProperty("display", showRows && infantryTab ? "block" : "none");
+        rows->SetProperty("display", hasBootcamp && infantryTab ? "block" : "none");
     }
     if (Rml::Element *rows = hudDoc_->GetElementById("rows-vehicles"))
     {
-        rows->SetProperty("display", showRows && vehiclesTab ? "block" : "none");
+        rows->SetProperty("display", hasWorkshop && vehiclesTab ? "block" : "none");
     }
     if (Rml::Element *rows = hudDoc_->GetElementById("rows-buildings"))
     {
@@ -152,10 +186,12 @@ void RmlUiHud::RefreshFactory()
     if (Rml::Element *tab = hudDoc_->GetElementById("tab-infantry"))
     {
         tab->SetClass("selected", infantryTab);
+        SetDisabled(tab, !hasBootcamp);
     }
     if (Rml::Element *tab = hudDoc_->GetElementById("tab-vehicles"))
     {
         tab->SetClass("selected", vehiclesTab);
+        SetDisabled(tab, !hasWorkshop);
     }
     if (Rml::Element *tab = hudDoc_->GetElementById("tab-buildings"))
     {
@@ -175,7 +211,7 @@ void RmlUiHud::RefreshFactory()
             SetDisabled(el, resources_.iron < cost.iron || resources_.oil < cost.oil);
         }
         snprintf(id, sizeof(id), "repr-i-%d", static_cast<int>(i));
-        SetTextCached(id, queue_.RepeatArmed(infantry[i]) ? "R*" : "R");
+        SetTextCached(id, bootcampQueue_.RepeatArmed(infantry[i]) ? "R*" : "R");
     }
     const std::vector<UnitType> vehicles = VehicleMenuOrder();
     for (std::size_t i = 0; i < vehicles.size() && i < 4; ++i)
@@ -191,17 +227,33 @@ void RmlUiHud::RefreshFactory()
             SetDisabled(el, resources_.iron < cost.iron || resources_.oil < cost.oil);
         }
         snprintf(id, sizeof(id), "repr-v-%d", static_cast<int>(i));
-        SetTextCached(id, queue_.RepeatArmed(vehicles[i]) ? "R*" : "R");
+        SetTextCached(id, workshopQueue_.RepeatArmed(vehicles[i]) ? "R*" : "R");
     }
     const std::vector<BuildingType> buildings = BuildingMenuOrder();
-    for (std::size_t i = 0; i < buildings.size() && i < 3; ++i)
+    for (std::size_t i = 0; i < buildings.size() && i < 4; ++i)
     {
         char id[16];
         snprintf(id, sizeof(id), "place-%d", static_cast<int>(i));
         SetTextCached(id, BuildingTypeName(buildings[i]));
     }
-    snprintf(label, sizeof(label), "Queue: %d", static_cast<int>(queue_.Size()));
+    ProductionQueue *active = ActiveQueue();
+    snprintf(label, sizeof(label), "Queue: %d",
+             active != nullptr ? static_cast<int>(active->Size()) : 0);
     SetTextCached("queue-line", label);
+}
+
+ProductionQueue *RmlUiHud::ActiveQueue()
+{
+    switch (factoryTab_)
+    {
+    case ProductionTab::Infantry:
+        return &bootcampQueue_;
+    case ProductionTab::Vehicles:
+        return &workshopQueue_;
+    case ProductionTab::Buildings:
+        return nullptr;
+    }
+    return nullptr;
 }
 
 std::string RmlUiHud::SelectionLine() const

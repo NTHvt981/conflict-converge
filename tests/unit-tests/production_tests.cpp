@@ -147,4 +147,30 @@ void RunProductionTests()
     CC_CHECK(freeFactory.SpawnPrepaid(UnitType::HeavyTank, 1, { 64.0f, 64.0f }) !=
              kInvalidEntity);
     CC_CHECK(empty.iron == 0 && empty.oil == 0);
+
+    // --- bound queues reject the other category without charging ---
+    Rig bound;
+    ProductionQueue bootcamp{ ProductionCategory::Infantry };
+    ProductionQueue workshop{ ProductionCategory::Vehicle };
+    CC_CHECK(bootcamp.Enqueue(bound.resources, UnitType::RifleInfantry));
+    const long afterInfantry = bound.resources.iron;
+    CC_CHECK(!bootcamp.Enqueue(bound.resources, UnitType::LightTank));
+    CC_CHECK(bound.resources.iron == afterInfantry);
+    CC_CHECK(bootcamp.Size() == 1);
+    CC_CHECK(workshop.Enqueue(bound.resources, UnitType::LightTank));
+    const long afterTank = bound.resources.iron;
+    CC_CHECK(!workshop.Enqueue(bound.resources, UnitType::RifleInfantry));
+    CC_CHECK(bound.resources.iron == afterTank);
+    CC_CHECK(workshop.Size() == 1);
+
+    // --- ResetForMatch clears items but keeps the binding ---
+    bootcamp.ResetForMatch();
+    workshop.ResetForMatch();
+    CC_CHECK(bootcamp.Empty() && workshop.Empty());
+    CC_CHECK(bootcamp.Category() == ProductionCategory::Infantry);
+    CC_CHECK(workshop.Category() == ProductionCategory::Vehicle);
+    CC_CHECK(!bootcamp.Enqueue(bound.resources, UnitType::LightTank));
+    CC_CHECK(!workshop.Enqueue(bound.resources, UnitType::RifleInfantry));
+    CC_CHECK(bootcamp.Enqueue(bound.resources, UnitType::RifleInfantry));
+    CC_CHECK(workshop.Enqueue(bound.resources, UnitType::LightTank));
 }

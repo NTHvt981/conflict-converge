@@ -43,3 +43,17 @@ void ApplyBaseStats(Unit &unit)
     unit.footprintWidth = isVehicle ? 2 : 1;
     unit.footprintHeight = isVehicle ? 2 : 1;
 }
+
+ProductionCategory ProductionCategoryOf(UnitType type)
+{
+    switch (type)
+    {
+    case UnitType::IFV:
+    case UnitType::Artillery:
+    case UnitType::LightTank:
+    case UnitType::HeavyTank:
+        return ProductionCategory::Vehicle;
+    default:
+        return ProductionCategory::Infantry;
+    }
+}

@@ -3,6 +3,20 @@
 #include "economy/ResourceSystem.h"
 #include "units/UnitFactory.h"
 
+ProductionQueue::ProductionQueue(std::optional<ProductionCategory> category)
+    : category_(category)
+{
+}
+
+void ProductionQueue::ResetForMatch()
+{
+    items_.clear();
+    for (int i = 0; i < kTypeCount; ++i)
+    {
+        repeatArmed_[i] = false;
+    }
+}
+
 float BuildTime(UnitType type)
 {
     const UnitCost cost = CostOf(type);
@@ -12,6 +26,10 @@ float BuildTime(UnitType type)
 
 bool ProductionQueue::Enqueue(ResourceSystem &resources, UnitType type, bool repeat)
 {
+    if (category_.has_value() && ProductionCategoryOf(type) != *category_)
+    {
+        return false;
+    }
     const UnitCost cost = CostOf(type);
     if (!resources.TrySpend(cost.iron, cost.oil))
     {

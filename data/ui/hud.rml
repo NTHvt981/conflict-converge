@@ -85,8 +85,11 @@ body {
 				<div class="fac-row">
 					<button class="fac-btn" id="place-2">Bootcamp</button>
 				</div>
+				<div class="fac-row">
+					<button class="fac-btn" id="place-3">Workshop</button>
+				</div>
 			</div>
-			<div class="hud-line" id="need-factory">Need Bootcamp</div>
+			<div class="hud-line" id="need-factory">Need Bootcamp / Workshop</div>
 			<div id="fac-queue-row">
 				<span id="queue-line">Queue: 2</span>
 				<button id="btn-cancel">Cancel</button>

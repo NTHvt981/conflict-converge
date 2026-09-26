@@ -261,6 +261,23 @@ void RunMapFileTests()
                                    home.x + 2, home.y) != kInvalidEntity);
             CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::Bootcamp, 0, home.x,
                                    home.y + 2) != kInvalidEntity);
+            Entity workshop = kInvalidEntity;
+            for (int ring = 0; workshop == kInvalidEntity && ring <= 6; ++ring)
+            {
+                for (int dy = -ring; dy <= ring && workshop == kInvalidEntity; ++dy)
+                {
+                    for (int dx = -ring; dx <= ring; ++dx)
+                    {
+                        workshop = PlaceBuilding(demoRegistry, demoMap, BuildingType::Workshop,
+                                                 0, home.x + dx, home.y + dy);
+                        if (workshop != kInvalidEntity)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+            CC_CHECK(workshop != kInvalidEntity);
             AICommander demoAI(demoRegistry, demoMap, demoNodes, demoEvents, 1,
                                AIDifficulty::Medium, demo.aiSpawns[0], home);
             demoAI.SetupBase();
@@ -272,7 +289,7 @@ void RunMapFileTests()
                     ++aiBuildings;
                 }
             });
-            CC_CHECK(aiBuildings == 3); // AI bootcamp fits the corner too
+            CC_CHECK(aiBuildings == 4); // AI bootcamp + workshop fit the corner too
         }
     }
 

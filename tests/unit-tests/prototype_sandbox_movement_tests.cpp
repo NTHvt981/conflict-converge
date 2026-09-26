@@ -57,14 +57,16 @@ struct Harness
     OccupancyGrid occ{ 20, 15 };
     FogOfWar fog;
     ResourceNodes nodes;
-    ProductionQueue queue;
+    ProductionQueue bootcampQueue{ ProductionCategory::Infantry };
+    ProductionQueue workshopQueue{ ProductionCategory::Vehicle };
     EventDispatcher events;
     UnitFactory factory{ registry, resources, events };
     GameCamera camera;
     Vector2 rallyPos = {};
     AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     SkirmishWorld world{ &registry, &resources, &map, &occ, &fog, &nodes,
-                         &queue,   &factory,   &ai, nullptr, nullptr, &camera, &rallyPos };
+                         &bootcampQueue, &workshopQueue, &factory, &ai, nullptr, nullptr,
+                         &camera, &rallyPos };
 };
 
 } // namespace

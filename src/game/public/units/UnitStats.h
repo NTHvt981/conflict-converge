@@ -20,3 +20,10 @@ const UnitStats &BaseStats(UnitType type);
 
 // Preserves position, team, selection, and orders.
 void ApplyBaseStats(Unit &unit);
+
+enum class ProductionCategory
+{
+    Infantry,
+    Vehicle
+};
+ProductionCategory ProductionCategoryOf(UnitType type);

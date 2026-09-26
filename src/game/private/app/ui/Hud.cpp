@@ -43,6 +43,8 @@ const char *BuildingTypeName(BuildingType type)
         return "Depot";
     case BuildingType::Bootcamp:
         return "Bootcamp";
+    case BuildingType::Workshop:
+        return "Workshop";
     }
     return "Unknown";
 }
@@ -197,20 +199,6 @@ std::vector<UnitType> ProductionMenuOrder()
              UnitType::LightTank,             UnitType::HeavyTank };
 }
 
-ProductionCategory ProductionCategoryOf(UnitType type)
-{
-    switch (type)
-    {
-    case UnitType::IFV:
-    case UnitType::Artillery:
-    case UnitType::LightTank:
-    case UnitType::HeavyTank:
-        return ProductionCategory::Vehicle;
-    default:
-        return ProductionCategory::Infantry;
-    }
-}
-
 std::vector<UnitType> InfantryMenuOrder()
 {
     std::vector<UnitType> out;
@@ -239,7 +227,8 @@ std::vector<UnitType> VehicleMenuOrder()
 
 std::vector<BuildingType> BuildingMenuOrder()
 {
-    return { BuildingType::Base, BuildingType::ResourceDepot, BuildingType::Bootcamp };
+    return { BuildingType::Base, BuildingType::ResourceDepot, BuildingType::Bootcamp,
+             BuildingType::Workshop };
 }
 
 const char *AbilityName(AbilityId id)
@@ -338,18 +327,18 @@ std::vector<AbilityEntry> AbilitiesForSelection(const Registry &registry,
     }
     if (!buildings.empty())
     {
-        bool anyBootcamp = false;
+        bool anyProducer = false;
         for (Entity entity : buildings)
         {
             if (const Building *building = registry.Get<Building>(entity);
-                building != nullptr && building->type == BuildingType::Bootcamp)
+                building != nullptr && ProducerCategory(building->type).has_value())
             {
-                anyBootcamp = true;
+                anyProducer = true;
             }
         }
         return {
-            AbilityEntry{ AbilityId::Rally, anyBootcamp, false,
-                          anyBootcamp ? std::string{} : std::string{ "Requires Bootcamp" } },
+            AbilityEntry{ AbilityId::Rally, anyProducer, false,
+                          anyProducer ? std::string{} : std::string{ "Requires Bootcamp / Workshop" } },
             AbilityEntry{ AbilityId::Demolish },
         };
     }

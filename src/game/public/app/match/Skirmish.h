@@ -42,7 +42,8 @@ struct SkirmishWorld
     OccupancyGrid *occ = nullptr; // tile occupancy
     FogOfWar *fog = nullptr;
     ResourceNodes *nodes = nullptr;
-    ProductionQueue *queue = nullptr;
+    ProductionQueue *bootcampQueue = nullptr;
+    ProductionQueue *workshopQueue = nullptr;
     UnitFactory *factory = nullptr;
     AICommander *ai = nullptr;
     // 2v2 overflow: allied (team 0) + second enemy (team 1). Null in 1v1.

@@ -15,6 +15,19 @@ void RunBuildingTests()
     CC_CHECK(Footprint(BuildingType::Base) == cc::IVec2(2, 2));
     CC_CHECK(Footprint(BuildingType::ResourceDepot) == cc::IVec2(1, 1));
     CC_CHECK(Footprint(BuildingType::Bootcamp) == cc::IVec2(2, 2));
+    CC_CHECK(Footprint(BuildingType::Workshop) == cc::IVec2(3, 3));
+
+    // --- producers bind one category each; other types bind none ---
+    CC_CHECK(ProducerCategory(BuildingType::Bootcamp) == ProductionCategory::Infantry);
+    CC_CHECK(ProducerCategory(BuildingType::Workshop) == ProductionCategory::Vehicle);
+    CC_CHECK(!ProducerCategory(BuildingType::Base).has_value());
+    CC_CHECK(!ProducerCategory(BuildingType::ResourceDepot).has_value());
+
+    // --- structure health per type ---
+    CC_CHECK(BuildingMaxHealth(BuildingType::Base) == 400.0f);
+    CC_CHECK(BuildingMaxHealth(BuildingType::ResourceDepot) == 200.0f);
+    CC_CHECK(BuildingMaxHealth(BuildingType::Bootcamp) == 350.0f);
+    CC_CHECK(BuildingMaxHealth(BuildingType::Workshop) == 500.0f);
 
     // --- valid placement marks terrain + stores the component ---
     Registry registry;
@@ -94,6 +107,7 @@ void RunBuildingTests()
         CC_CHECK(BuildingBuildTime(BuildingType::Base) == 3.0f);
         CC_CHECK(BuildingBuildTime(BuildingType::ResourceDepot) == 2.0f);
         CC_CHECK(BuildingBuildTime(BuildingType::Bootcamp) == 4.0f);
+        CC_CHECK(BuildingBuildTime(BuildingType::Workshop) == 5.0f);
         // Half the depot's build time: proportional ramp, still building.
         UpdateBuildingConstruction(site, 1.0f);
         CC_CHECK(depotB->state == BuildingState::UnderConstruction);
@@ -212,6 +226,24 @@ void RunBuildingTests()
         CC_CHECK(SelectAllBuildings(lots, BuildingType::ResourceDepot, 0) == 1);
         CC_CHECK(!lots.Get<Building>(bootA)->isSelected); // replaced
         CC_CHECK(lots.Get<Building>(depot)->isSelected);
+    }
+
+    // --- QoL SelectAllProductionBuildings: both producers, one pass ---
+    {
+        Registry lots;
+        TileMap lotsMap(20, 15);
+        const Entity boot = PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 0, 1, 1);
+        const Entity shop = PlaceBuilding(lots, lotsMap, BuildingType::Workshop, 0, 5, 5);
+        const Entity depot =
+            PlaceBuilding(lots, lotsMap, BuildingType::ResourceDepot, 0, 10, 10);
+        const Entity foe = PlaceBuilding(lots, lotsMap, BuildingType::Workshop, 1, 12, 12);
+        CC_CHECK(boot != kInvalidEntity && shop != kInvalidEntity);
+        CC_CHECK(depot != kInvalidEntity && foe != kInvalidEntity);
+        CC_CHECK(SelectAllProductionBuildings(lots, 0) == 2);
+        CC_CHECK(lots.Get<Building>(boot)->isSelected);
+        CC_CHECK(lots.Get<Building>(shop)->isSelected);
+        CC_CHECK(!lots.Get<Building>(depot)->isSelected);
+        CC_CHECK(!lots.Get<Building>(foe)->isSelected);
     }
 
     // --- QoL CanPlaceBuilding: mirrors PlaceBuilding's validation ---

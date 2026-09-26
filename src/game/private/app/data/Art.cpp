@@ -139,6 +139,8 @@ const char *BuildingMaskedStem(BuildingType type)
     {
     case BuildingType::Bootcamp:
         return "bootcamp_stack_down_left";
+    case BuildingType::Workshop:
+        return "workshop_stack_down_left";
     case BuildingType::Base:
     case BuildingType::ResourceDepot:
         return nullptr;
