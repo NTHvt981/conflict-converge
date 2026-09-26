@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "economy/Nodes.h"
+#include "world/Pathfinder.h"
 #include "world/TileMap.h"
 
 inline constexpr float kBaseIronPerSecond = 2.0f;
@@ -22,6 +23,13 @@ cc::IVec2 Footprint(BuildingType type)
         return { 3, 3 };
     }
     return { 1, 1 };
+}
+
+cc::IVec2 DefaultRallyTile(const TileMap &map, const Building &building)
+{
+    const cc::IVec2 fp = Footprint(building.type);
+    const cc::IVec2 exit{ building.tileX + fp.x / 2, building.tileY + fp.y };
+    return NearestFreeFootprintTile(map, nullptr, exit, 1, 1);
 }
 
 float BuildingMaxHealth(BuildingType type)
@@ -160,6 +168,7 @@ Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int te
     building.tileY = tileY;
     building.health = 0.0f;
     building.maxHealth = BuildingMaxHealth(type);
+    building.rallyTile = DefaultRallyTile(map, building);
 
     const Entity id = registry.Create();
     registry.Add(id, building);

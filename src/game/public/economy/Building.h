@@ -37,6 +37,7 @@ struct Building
     bool isSelected = false;
     int tileX = 0; // top-left of the footprint
     int tileY = 0;
+    cc::IVec2 rallyTile{ -1, -1 };
     float health = 400.0f;
     float maxHealth = 400.0f;
     float constructionTime = 0.0f;
@@ -50,6 +51,7 @@ void UpdateBuildingConstruction(Registry &registry, float dt);
 void UpdateBuildingFlash(Registry &registry, float dt);
 
 cc::IVec2 Footprint(BuildingType type);
+cc::IVec2 DefaultRallyTile(const TileMap &map, const Building &building);
 
 Rectangle BuildingFootprintRect(const Building &building);
 

@@ -253,6 +253,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
         b.teamID = in.team;
         b.tileX = in.tileX;
         b.tileY = in.tileY;
+        b.rallyTile = { in.rallyX, in.rallyY };
         const float full = BuildingMaxHealth(b.type);
         b.maxHealth = in.maxHealth > 0.0f ? in.maxHealth : full;
         if (b.state == BuildingState::Destroyed)
@@ -424,8 +425,12 @@ bool LoadWorld(const WorldState &world, const std::string &path)
             world.registry->Add(freshIds[i], ride);
         }
     }
-    for (const Building &b : saved.buildings)
+    for (Building b : saved.buildings)
     {
+        if (b.rallyTile.x < 0)
+        {
+            b.rallyTile = DefaultRallyTile(*world.map, b);
+        }
         world.registry->Add(world.registry->Create(), b);
     }
     *world.nodes = ResourceNodes();

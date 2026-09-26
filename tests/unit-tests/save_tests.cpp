@@ -118,6 +118,9 @@ void RunSaveGameTests()
 
     const std::string path = ScratchPath();
     src.fog.Recompute(src.registry); // bank explored memory for team_fog
+    std::vector<std::pair<BuildingType, cc::IVec2>> srcRallies;
+    src.registry.Each<Building>(
+        [&](Entity, const Building &b) { srcRallies.push_back({ b.type, b.rallyTile }); });
     CC_CHECK(SaveWorld(src.State(), path));
 
     // --- load into a differently-shaped world (tests Resize + Clear) ---
@@ -186,6 +189,16 @@ void RunSaveGameTests()
         bootcamps += (b.type == BuildingType::Bootcamp) ? 1 : 0;
         workshops += (b.type == BuildingType::Workshop) ? 1 : 0;
         CC_CHECK(b.health > 0.0f && b.health <= b.maxHealth); // HP roundtrips
+        CC_CHECK(!(b.rallyTile == cc::IVec2(-1, -1)));
+        CC_CHECK(dst.map.InBounds(b.rallyTile));
+        CC_CHECK(!dst.map.IsBlocked(b.rallyTile));
+        for (const auto &srcRally : srcRallies)
+        {
+            if (srcRally.first == b.type)
+            {
+                CC_CHECK(b.rallyTile == srcRally.second);
+            }
+        }
     });
     CC_CHECK(bases == 1 && bootcamps == 1 && workshops == 1);
 
@@ -213,8 +226,23 @@ void RunSaveGameTests()
         int wireBootcamps = 0;
         wireWorld.registry.Each<Building>([&](Entity, const Building &b) {
             wireBootcamps += (b.type == BuildingType::Bootcamp) ? 1 : 0;
+            CC_CHECK(!(b.rallyTile == cc::IVec2(-1, -1)));
+            CC_CHECK(wireWorld.map.InBounds(b.rallyTile));
+            CC_CHECK(!wireWorld.map.IsBlocked(b.rallyTile));
         });
         CC_CHECK(wireBootcamps == 1);
+    }
+
+    // --- a building payload without rally fields keeps the -1,-1 sentinel ---
+    {
+        SaveBuilding old;
+        {
+            std::istringstream in("{\"value0\":{\"type\":2,\"state\":0,\"team\":0,\"tileX\":1,"
+                                   "\"tileY\":1,\"health\":350.0,\"maxHealth\":350.0}}");
+            cereal::JSONInputArchive ar(in);
+            ar(old);
+        }
+        CC_CHECK(old.rallyX == -1 && old.rallyY == -1);
     }
 
     // --- loaded world keeps simulating (save is not a freeze-frame) ---

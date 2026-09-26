@@ -244,13 +244,16 @@ struct SaveBuilding
     std::int32_t tileY = 0;
     float health = 0.0f;
     float maxHealth = 0.0f;
+    std::int32_t rallyX = -1;
+    std::int32_t rallyY = -1;
     template <class Archive>
     void save(Archive &ar) const
     {
         ar(cereal::make_nvp("type", type), cereal::make_nvp("state", state),
            cereal::make_nvp("team", team), cereal::make_nvp("tileX", tileX),
            cereal::make_nvp("tileY", tileY), cereal::make_nvp("health", health),
-           cereal::make_nvp("maxHealth", maxHealth));
+           cereal::make_nvp("maxHealth", maxHealth),
+           cereal::make_nvp("rallyX", rallyX), cereal::make_nvp("rallyY", rallyY));
     }
     template <class Archive>
     void load(Archive &ar)
@@ -262,6 +265,8 @@ struct SaveBuilding
         save_detail::TryLoadValue(ar, "tileY", tileY);
         save_detail::TryLoadValue(ar, "health", health);
         save_detail::TryLoadValue(ar, "maxHealth", maxHealth);
+        save_detail::TryLoadValue(ar, "rallyX", rallyX);
+        save_detail::TryLoadValue(ar, "rallyY", rallyY);
     }
 };
 

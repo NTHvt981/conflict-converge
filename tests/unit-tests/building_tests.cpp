@@ -354,4 +354,35 @@ void RunBuildingTests()
         UpdateBuildingFlash(flash, -1.0f);
         CC_CHECK(building->hitFlashTime == 0.2f);
     }
+
+    {
+        Registry rally;
+        TileMap rallyMap(20, 15);
+        const Entity boot = PlaceBuilding(rally, rallyMap, BuildingType::Bootcamp, 0, 5, 5);
+        CC_CHECK(boot != kInvalidEntity);
+        const Building *bootB = rally.Get<Building>(boot);
+        const cc::IVec2 bootFp = Footprint(BuildingType::Bootcamp);
+        CC_CHECK(!(bootB->rallyTile == cc::IVec2(-1, -1)));
+        CC_CHECK(rallyMap.InBounds(bootB->rallyTile));
+        CC_CHECK(!rallyMap.IsBlocked(bootB->rallyTile));
+        const bool bootInside = bootB->rallyTile.x >= 5 &&
+                                bootB->rallyTile.x < 5 + bootFp.x &&
+                                bootB->rallyTile.y >= 5 &&
+                                bootB->rallyTile.y < 5 + bootFp.y;
+        CC_CHECK(!bootInside);
+
+        const Entity shop =
+            PlaceBuilding(rally, rallyMap, BuildingType::Workshop, 0, 10, 5);
+        CC_CHECK(shop != kInvalidEntity);
+        const Building *shopB = rally.Get<Building>(shop);
+        const cc::IVec2 shopFp = Footprint(BuildingType::Workshop);
+        CC_CHECK(!(shopB->rallyTile == cc::IVec2(-1, -1)));
+        CC_CHECK(rallyMap.InBounds(shopB->rallyTile));
+        CC_CHECK(!rallyMap.IsBlocked(shopB->rallyTile));
+        const bool shopInside = shopB->rallyTile.x >= 10 &&
+                                shopB->rallyTile.x < 10 + shopFp.x &&
+                                shopB->rallyTile.y >= 5 &&
+                                shopB->rallyTile.y < 5 + shopFp.y;
+        CC_CHECK(!shopInside);
+    }
 }

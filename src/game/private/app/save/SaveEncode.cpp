@@ -162,6 +162,8 @@ bool SaveWorld(const WorldState &world, const std::string &path)
         out.tileY = b.tileY;
         out.health = b.health;
         out.maxHealth = b.maxHealth;
+        out.rallyX = b.rallyTile.x;
+        out.rallyY = b.rallyTile.y;
     });
     world.nodes->Each([&](const ResourceNode &node) {
         SaveNode &out = msg.nodes.emplace_back();
