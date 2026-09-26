@@ -13,18 +13,19 @@ across subsystems need include edits. `Unit.h` fwd-declares `TileMap`; never inc
 ```
 core:    MathUtils, CcAssert, Registry, Event, Subsystem
          Game, Simulation, PlayingInput (+PlayingInputSelect/PlayingInputOrders),
-         MenuScreens
+         GameRenderer (+GameRendererWorld/GameRendererHud), MenuScreens
 world:   TileMap, Pathfinder, MapFile, FogOfWar
 units:   Unit (+UnitInternal, UnitOrders/UnitCombat/UnitRepair/UnitMovement/
-          UnitTransport TUs), UnitStats, Combat, UnitFactory, Targeting, Formation,
-          AICommander, Extensions, UnitCommands
+          UnitTransport TUs), UnitStats, Combat, UnitFactory, Targeting, Formation
+          (+FormationAssignment), AICommander, Extensions, UnitCommands
 economy: Building, Nodes, ResourceSystem, Production
 app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, RmlUiHost, RmlUiMenus,
          (+RmlUiMenusRemap/RmlUiMenusDialogs), RmlUiHud (+RmlUiHudPanels/RmlUiHudEvents),
          RmlRaylibRenderInterface, RmlRaylibSystemInterface, RmlRaylibFileInterface
 app/input: InputManager, Selection, Shortcuts, Hotkeys
-app/save: SaveGame, SaveWire
-app/data: Art, SpriteData, UnitConfig, Audio, Log, DataRoot
+app/save: SaveGame (+SaveEncode/SaveDecode), SaveWire
+app/data: Art (+ArtEffects), SpriteData, UnitConfig (+UnitConfigParse/UnitConfigCatalog),
+          Audio, Log, DataRoot
 app/match: Menu, Skirmish
 ```
 

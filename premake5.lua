@@ -340,9 +340,11 @@ project "conflict-converge-editor"
         "tools/unit_editor/**.h",
         "src/game/private/core/MathUtils.cpp",
         "src/game/private/units/UnitStats.cpp",
-        "src/game/private/app/UnitConfig.cpp",
-        "src/game/private/app/SpriteData.cpp",
-        "src/game/private/app/Art.cpp"
+        "src/game/private/app/data/UnitConfig.cpp",
+        "src/game/private/app/data/UnitConfigParse.cpp",
+        "src/game/private/app/data/SpriteData.cpp",
+        "src/game/private/app/data/Art.cpp",
+        "src/game/private/app/data/ArtEffects.cpp"
     }
 
     includedirs {

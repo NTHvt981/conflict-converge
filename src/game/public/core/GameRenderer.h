@@ -45,6 +45,21 @@ public:
     ConfirmChoice DrawHudAndOverlays(int screenWidth, int screenHeight, float uiScale);
 
 private:
+    void UpdateCursor();
+    void DrawTerrainTiles();
+    void DrawBuildings();
+    void DrawPlacementGhost();
+    void DrawNodes();
+    void DrawUnits();
+    void DrawUnitEntity(Entity id, Unit &unit);
+    void DrawProjectiles();
+    void DrawFogVeil();
+    void DrawDragPreviews();
+    void DrawMinimapOverlays(int screenWidth, int screenHeight);
+    void DrawHoverTooltip();
+    void DrawStateOverlays(int screenWidth, int screenHeight);
+
+private:
     Art &art_;
     GameCamera &camera_;
     TileMap &map_;
