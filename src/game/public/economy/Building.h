@@ -40,12 +40,14 @@ struct Building
     float health = 400.0f;
     float maxHealth = 400.0f;
     float constructionTime = 0.0f;
+    float hitFlashTime = 0.0f;
 };
 
 float BuildingMaxHealth(BuildingType type);
 float BuildingBuildTime(BuildingType type);
 std::optional<ProductionCategory> ProducerCategory(BuildingType type);
 void UpdateBuildingConstruction(Registry &registry, float dt);
+void UpdateBuildingFlash(Registry &registry, float dt);
 
 cc::IVec2 Footprint(BuildingType type);
 

@@ -252,6 +252,25 @@ void UpdateBuildingConstruction(Registry &registry, float dt)
     });
 }
 
+void UpdateBuildingFlash(Registry &registry, float dt)
+{
+    if (dt <= 0.0f)
+    {
+        return;
+    }
+    registry.Each<Building>([&](Entity, Building &building) {
+        if (building.hitFlashTime <= 0.0f)
+        {
+            return;
+        }
+        building.hitFlashTime -= dt;
+        if (building.hitFlashTime < 0.0f)
+        {
+            building.hitFlashTime = 0.0f;
+        }
+    });
+}
+
 std::vector<cc::IVec2> BuildingEntrances(const TileMap &map, int tileX, int tileY,
                                           int fpW, int fpH)
 {

@@ -80,6 +80,20 @@ float UnitHealthFraction(const Unit &unit)
     return fraction >= 1.0f ? 1.0f : fraction;
 }
 
+float BuildingHealthFraction(const Building &building)
+{
+    if (building.maxHealth <= 0.0f)
+    {
+        return 0.0f;
+    }
+    const float fraction = building.health / building.maxHealth;
+    if (fraction <= 0.0f)
+    {
+        return 0.0f;
+    }
+    return fraction >= 1.0f ? 1.0f : fraction;
+}
+
 namespace
 {
 std::string HintKey(const HotkeyMap &hotkeys, const char *action, bool applyChord = true)

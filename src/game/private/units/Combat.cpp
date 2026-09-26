@@ -39,6 +39,7 @@ float ResolveBuildingAttack(Unit &attacker, CombatState &attackerCombat, Buildin
 {
     const float effective = static_cast<float>(attacker.attackPower);
     building.health -= effective;
+    building.hitFlashTime = kHitFlashDuration;
     attackerCombat.cooldown = attacker.cooldownTime;
     return effective;
 }

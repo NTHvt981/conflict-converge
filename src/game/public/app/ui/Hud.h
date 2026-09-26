@@ -10,6 +10,7 @@
 #include "economy/Production.h"
 
 enum class BuildingType;
+struct Building;
 class HotkeyMap;
 struct Orders;
 
@@ -20,6 +21,7 @@ const char *BuildingTypeName(BuildingType type);
 std::string FormatResources(const ResourceSystem &resources);
 std::string SelectionSummary(const Unit &unit);
 float UnitHealthFraction(const Unit &unit);
+float BuildingHealthFraction(const Building &building);
 std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys);
 struct HoverTooltipState
 {

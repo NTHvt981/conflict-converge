@@ -29,6 +29,13 @@ enum class UnitFrame
 };
 UnitFrame FrameForPhase(AttackPhase phase);
 
+enum class BuildingFrame
+{
+    Operational,
+    UnderConstruction,
+    Count
+};
+
 // Rifle-infantry squad visual. Returns the number of soldier sprites to draw
 // (driven by healthFraction, capped per type) and fills outOffsets with that
 // many pixel offsets from the unit's tile-corner position. Deterministic
@@ -109,7 +116,9 @@ public:
     // the blit around the body center (turret layer, 0 = unrotated).
     void DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
                         float scale = 1.0f, float rotationDeg = 0.0f) const;
-    void DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const;
+    void DrawBuilding(BuildingType type, int teamID, int tileX, int tileY,
+                      BuildingFrame frame = BuildingFrame::Operational,
+                      Color tint = WHITE) const;
     void DrawNode(ResourceKind kind, Vector2 center) const;
     void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon
     // UI typeface; HasFont is false on the headless/rectangle path.
@@ -159,11 +168,16 @@ private:
     std::unordered_map<std::string, Texture2D> atlas_; // SpriteTextureInfo.id -> sheet
     Particles particles_;
     Texture2D units_[static_cast<int>(UnitType::Count)][2][2] = {}; // [type][team][frame]
+    struct BuildingFrameArt
+    {
+        Texture2D flat[2] = {};
+        Texture2D base = {};
+        Texture2D mask = {};
+    };
     struct BuildingArt
     {
-        Texture2D flat[2] = {}; // Base/Depot: blue/red
-        Texture2D base = {};    // masked producers: team-neutral base
-        Texture2D mask = {};    // masked producers: team-color mask
+        BuildingFrameArt frames[static_cast<int>(BuildingFrame::Count)];
+        bool hasFrame[static_cast<int>(BuildingFrame::Count)] = {};
     };
     BuildingArt buildingArt_[static_cast<int>(BuildingType::Count)];
     Texture2D nodes_[2] = {};        // [kind]

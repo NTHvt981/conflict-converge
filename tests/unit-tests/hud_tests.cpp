@@ -66,6 +66,30 @@ void RunHudTests()
     CC_CHECK(buildings[2] == BuildingType::Bootcamp);
     CC_CHECK(buildings[3] == BuildingType::Workshop);
 
+    // --- BuildingHealthFraction: full, half, over-max clamp, max guard ---
+    {
+        Building full;
+        full.health = 400.0f;
+        full.maxHealth = 400.0f;
+        CC_CHECK(BuildingHealthFraction(full) == 1.0f);
+        Building half;
+        half.health = 100.0f;
+        half.maxHealth = 200.0f;
+        CC_CHECK(BuildingHealthFraction(half) == 0.5f);
+        Building over;
+        over.health = 500.0f;
+        over.maxHealth = 400.0f;
+        CC_CHECK(BuildingHealthFraction(over) == 1.0f);
+        Building zeroMax;
+        zeroMax.health = 10.0f;
+        zeroMax.maxHealth = 0.0f;
+        CC_CHECK(BuildingHealthFraction(zeroMax) == 0.0f);
+        Building negativeMax;
+        negativeMax.health = 10.0f;
+        negativeMax.maxHealth = -5.0f;
+        CC_CHECK(BuildingHealthFraction(negativeMax) == 0.0f);
+    }
+
     RunHudAbilityTests();
 }
 

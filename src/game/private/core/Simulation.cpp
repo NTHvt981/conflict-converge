@@ -264,6 +264,7 @@ void Simulation::Step(float dt)
         }
     }
     UpdateBuildingConstruction(registry_, dt);
+    UpdateBuildingFlash(registry_, dt);
     {
         const Vector2 home = ResolvePlayerRetreatHome(registry_, rallyPos_);
         RetreatIfLowHP(registry_, map_, &occ_, home, 0, kRetreatHealthFraction, true);

@@ -148,6 +148,27 @@ const char *BuildingMaskedStem(BuildingType type)
     return nullptr;
 }
 
+const char *BuildingFrameSuffix(BuildingFrame frame)
+{
+    switch (frame)
+    {
+    case BuildingFrame::UnderConstruction:
+        return "construction";
+    case BuildingFrame::Operational:
+    case BuildingFrame::Count:
+        return "";
+    }
+    return "";
+}
+
+Color MultiplyColor(Color a, Color b)
+{
+    return { static_cast<unsigned char>(a.r * b.r / 255),
+             static_cast<unsigned char>(a.g * b.g / 255),
+             static_cast<unsigned char>(a.b * b.b / 255),
+             static_cast<unsigned char>(a.a * b.a / 255) };
+}
+
 const char *NodeFile(ResourceKind kind)
 {
     return kind == ResourceKind::Iron ? "iron" : "oil";
@@ -246,26 +267,106 @@ bool Art::Init(bool withDevice)
         const BuildingType type = static_cast<BuildingType>(t);
         if (const char *flat = BuildingFlatStem(type); flat != nullptr)
         {
-            for (int team = 0; team < 2; ++team)
+            for (int f = 0; f < static_cast<int>(BuildingFrame::Count); ++f)
             {
-                std::snprintf(path, sizeof(path), "data/sprites/buildings/%s_%s.png", flat,
-                              team == 0 ? "blue" : "red");
-                buildingArt_[t].flat[team] = LoadTexture(path);
-                if (buildingArt_[t].flat[team].id == 0)
+                const BuildingFrame frame = static_cast<BuildingFrame>(f);
+                const char *suffix = BuildingFrameSuffix(frame);
+                Texture2D loaded[2] = {};
+                bool complete = true;
+                for (int team = 0; team < 2; ++team)
                 {
-                    fallback_ = true;
+                    if (f == 0)
+                    {
+                        std::snprintf(path, sizeof(path), "data/sprites/buildings/%s_%s.png",
+                                      flat, team == 0 ? "blue" : "red");
+                    }
+                    else
+                    {
+                        std::snprintf(path, sizeof(path),
+                                      "data/sprites/buildings/%s_%s_%s.png", flat, suffix,
+                                      team == 0 ? "blue" : "red");
+                    }
+                    loaded[team] = LoadTexture(path);
+                    if (loaded[team].id == 0)
+                    {
+                        complete = false;
+                    }
+                }
+                if (f == 0)
+                {
+                    buildingArt_[t].frames[0].flat[0] = loaded[0];
+                    buildingArt_[t].frames[0].flat[1] = loaded[1];
+                    buildingArt_[t].hasFrame[0] = true;
+                    if (!complete)
+                    {
+                        fallback_ = true;
+                    }
+                }
+                else if (complete)
+                {
+                    buildingArt_[t].frames[f].flat[0] = loaded[0];
+                    buildingArt_[t].frames[f].flat[1] = loaded[1];
+                    buildingArt_[t].hasFrame[f] = true;
+                }
+                else
+                {
+                    for (int team = 0; team < 2; ++team)
+                    {
+                        if (loaded[team].id != 0)
+                        {
+                            UnloadTexture(loaded[team]);
+                        }
+                    }
                 }
             }
         }
         else if (const char *masked = BuildingMaskedStem(type); masked != nullptr)
         {
-            std::snprintf(path, sizeof(path), "data/sprites/buildings/%s_base.png", masked);
-            buildingArt_[t].base = LoadTexture(path);
-            std::snprintf(path, sizeof(path), "data/sprites/buildings/%s_mask.png", masked);
-            buildingArt_[t].mask = LoadTexture(path);
-            if (buildingArt_[t].base.id == 0 || buildingArt_[t].mask.id == 0)
+            for (int f = 0; f < static_cast<int>(BuildingFrame::Count); ++f)
             {
-                fallback_ = true;
+                const BuildingFrame frame = static_cast<BuildingFrame>(f);
+                const char *suffix = BuildingFrameSuffix(frame);
+                Texture2D base = {};
+                Texture2D mask = {};
+                if (f == 0)
+                {
+                    std::snprintf(path, sizeof(path), "data/sprites/buildings/%s_base.png",
+                                  masked);
+                    base = LoadTexture(path);
+                    std::snprintf(path, sizeof(path), "data/sprites/buildings/%s_mask.png",
+                                  masked);
+                    mask = LoadTexture(path);
+                }
+                else
+                {
+                    std::snprintf(path, sizeof(path),
+                                  "data/sprites/buildings/%s_%s_base.png", masked, suffix);
+                    base = LoadTexture(path);
+                    std::snprintf(path, sizeof(path),
+                                  "data/sprites/buildings/%s_%s_mask.png", masked, suffix);
+                    mask = LoadTexture(path);
+                }
+                if (base.id != 0 && mask.id != 0)
+                {
+                    buildingArt_[t].frames[f].base = base;
+                    buildingArt_[t].frames[f].mask = mask;
+                    buildingArt_[t].hasFrame[f] = true;
+                }
+                else
+                {
+                    if (base.id != 0)
+                    {
+                        UnloadTexture(base);
+                    }
+                    if (mask.id != 0)
+                    {
+                        UnloadTexture(mask);
+                    }
+                    if (f == 0)
+                    {
+                        fallback_ = true;
+                    }
+                }
             }
         }
         else
@@ -370,23 +471,28 @@ void Art::Shutdown()
     }
     for (int t = 0; t < static_cast<int>(BuildingType::Count); ++t)
     {
-        for (int team = 0; team < 2; ++team)
+        for (int f = 0; f < static_cast<int>(BuildingFrame::Count); ++f)
         {
-            if (buildingArt_[t].flat[team].id != 0)
+            BuildingFrameArt &frame = buildingArt_[t].frames[f];
+            for (int team = 0; team < 2; ++team)
             {
-                UnloadTexture(buildingArt_[t].flat[team]);
-                buildingArt_[t].flat[team] = {};
+                if (frame.flat[team].id != 0)
+                {
+                    UnloadTexture(frame.flat[team]);
+                    frame.flat[team] = {};
+                }
             }
-        }
-        if (buildingArt_[t].base.id != 0)
-        {
-            UnloadTexture(buildingArt_[t].base);
-            buildingArt_[t].base = {};
-        }
-        if (buildingArt_[t].mask.id != 0)
-        {
-            UnloadTexture(buildingArt_[t].mask);
-            buildingArt_[t].mask = {};
+            if (frame.base.id != 0)
+            {
+                UnloadTexture(frame.base);
+                frame.base = {};
+            }
+            if (frame.mask.id != 0)
+            {
+                UnloadTexture(frame.mask);
+                frame.mask = {};
+            }
+            buildingArt_[t].hasFrame[f] = false;
         }
     }
     for (int k = 0; k < 2; ++k)
@@ -629,21 +735,25 @@ void Art::DrawOneAtlasSprite(const SpriteDefInfo &s, Vector2 tileCorner, Color t
     DrawTexturePro(it->second, src, dest, pivot, rotationDeg, tint);
 }
 
-void Art::DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) const
+void Art::DrawBuilding(BuildingType type, int teamID, int tileX, int tileY,
+                       BuildingFrame frame, Color tint) const
 {
     if (fallback_)
     {
         return;
     }
     const Vector2 corner = cc::ToRaylib(cc::TileToWorld(tileX, tileY));
-    const BuildingArt &art = buildingArt_[static_cast<int>(type)];
+    const int t = static_cast<int>(type);
+    const int f = static_cast<int>(frame);
+    const BuildingFrameArt &art =
+        buildingArt_[t].hasFrame[f] ? buildingArt_[t].frames[f] : buildingArt_[t].frames[0];
     if (art.mask.id != 0)
     {
-        DrawTextureV(art.base, corner, WHITE);
-        DrawTextureV(art.mask, corner, TeamTint(teamID));
+        DrawTextureV(art.base, corner, tint);
+        DrawTextureV(art.mask, corner, MultiplyColor(TeamTint(teamID), tint));
         return;
     }
-    DrawTextureV(art.flat[TeamSlot(teamID)], corner, WHITE);
+    DrawTextureV(art.flat[TeamSlot(teamID)], corner, tint);
 }
 
 void Art::DrawTerrain(TerrainType type, Vector2 corner) const

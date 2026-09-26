@@ -2,6 +2,7 @@
 #include "core/GameRenderer.h"
 
 #include "economy/Building.h"
+#include "units/Combat.h"
 #include "core/Cheats.h"
 #include "app/ui/Cursor.h"
 #include "units/Extensions.h"
@@ -143,7 +144,14 @@ void GameRenderer::DrawTerrainTiles()
             }
             else
             {
-                art_.DrawTerrain(terrain, corner);
+                if (terrain == TerrainType::Building)
+                {
+                    art_.DrawTerrain(TerrainType::Grass, corner);
+                }
+                else
+                {
+                    art_.DrawTerrain(terrain, corner);
+                }
             }
         }
     }
@@ -176,7 +184,21 @@ void GameRenderer::DrawBuildings()
         }
         else
         {
-            art_.DrawBuilding(building.type, building.teamID, building.tileX, building.tileY);
+            const BuildingFrame frame =
+                building.state == BuildingState::UnderConstruction
+                    ? BuildingFrame::UnderConstruction
+                    : BuildingFrame::Operational;
+            art_.DrawBuilding(building.type, building.teamID, building.tileX, building.tileY,
+                              frame);
+            if (building.hitFlashTime > 0.0f)
+            {
+                BeginBlendMode(BLEND_ADDITIVE);
+                art_.DrawBuilding(building.type, building.teamID, building.tileX,
+                                  building.tileY, frame,
+                                  Fade(WHITE, (building.hitFlashTime / kHitFlashDuration) *
+                                                  0.8f));
+                EndBlendMode();
+            }
         }
         if (building.isSelected)
         {
@@ -193,6 +215,18 @@ void GameRenderer::DrawBuildings()
                           static_cast<int>(w), 6, LIGHTGRAY);
             DrawRectangle(static_cast<int>(corner.x), static_cast<int>(corner.y) - 10,
                           static_cast<int>(w * clamped), 6, DARKGREEN);
+        }
+        else if (building.state == BuildingState::Operational)
+        {
+            const float fraction = BuildingHealthFraction(building);
+            if (building.isSelected || fraction < 1.0f)
+            {
+                const float w = static_cast<float>(size.x) * cc::TILE_SIZE;
+                DrawRectangle(static_cast<int>(corner.x), static_cast<int>(corner.y) - 7,
+                              static_cast<int>(w), 5, Fade(RED, 0.6f));
+                DrawRectangle(static_cast<int>(corner.x), static_cast<int>(corner.y) - 7,
+                              static_cast<int>(w * fraction), 5, GREEN);
+            }
         }
     });
 }

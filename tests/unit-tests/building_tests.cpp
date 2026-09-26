@@ -336,4 +336,22 @@ void RunBuildingTests()
                              found);
         CC_CHECK(found.size() == 1 && found[0] == foeBase);
     }
+
+    // --- UpdateBuildingFlash: decays by dt, clamps at 0, no-op for dt <= 0 ---
+    {
+        Registry flash;
+        TileMap flashMap(20, 15);
+        const Entity id = PlaceBuilding(flash, flashMap, BuildingType::Base, 0, 1, 1);
+        Building *building = flash.Get<Building>(id);
+        building->hitFlashTime = 0.25f;
+        UpdateBuildingFlash(flash, 0.1f);
+        CC_CHECK(building->hitFlashTime > 0.14f && building->hitFlashTime < 0.16f);
+        UpdateBuildingFlash(flash, 0.2f);
+        CC_CHECK(building->hitFlashTime == 0.0f);
+        building->hitFlashTime = 0.2f;
+        UpdateBuildingFlash(flash, 0.0f);
+        CC_CHECK(building->hitFlashTime == 0.2f);
+        UpdateBuildingFlash(flash, -1.0f);
+        CC_CHECK(building->hitFlashTime == 0.2f);
+    }
 }
