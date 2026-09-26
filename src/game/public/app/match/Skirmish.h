@@ -50,7 +50,6 @@ struct SkirmishWorld
     AICommander *allyAI = nullptr;
     AICommander *enemyAI2 = nullptr;
     GameCamera *camera = nullptr;
-    Vector2 *rallyPos = nullptr;
 };
 
 // Drop all match content (units, buildings, nodes, queues, AI state).

@@ -229,12 +229,10 @@ struct InputRig
     InputManager input;
     Audio audio;
     MenuSettings settings;
-    Vector2 rallyPos = {};
     PlayingInput playing;
 
     InputRig()
-        : playing(registry, map, occ, nodes, camera, minimap, input, audio, settings,
-                  rallyPos)
+        : playing(registry, map, occ, nodes, camera, minimap, input, audio, settings)
     {
     }
 };

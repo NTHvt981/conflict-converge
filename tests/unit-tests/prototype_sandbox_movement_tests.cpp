@@ -62,11 +62,10 @@ struct Harness
     EventDispatcher events;
     UnitFactory factory{ registry, resources, events };
     GameCamera camera;
-    Vector2 rallyPos = {};
     AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     SkirmishWorld world{ &registry, &resources, &map, &occ, &fog, &nodes,
                          &bootcampQueue, &workshopQueue, &factory, &ai, nullptr, nullptr,
-                         &camera, &rallyPos };
+                         &camera };
 };
 
 } // namespace

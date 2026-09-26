@@ -26,7 +26,7 @@ public:
     void CancelTop(ResourceSystem &resources);
     void SetRepeatArmed(UnitType type, bool repeat);
     bool RepeatArmed(UnitType type) const;
-    Entity Update(UnitFactory &factory, ResourceSystem &resources, int teamID, Vector2 rallyPos,
+    Entity Update(UnitFactory &factory, ResourceSystem &resources, int teamID, Vector2 spawnPos,
                   float dt, const TileMap *map = nullptr, const OccupancyGrid *occ = nullptr);
 
     bool Empty() const;

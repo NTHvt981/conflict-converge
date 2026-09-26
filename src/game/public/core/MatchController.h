@@ -23,7 +23,7 @@ public:
                     AICommander &enemyAI2, MenuFlow &menu, Minimap &minimap,
                     PlayingInput &playingInput, Simulation &sim, EventDispatcher &events,
                     SkirmishWorld &skirmish, WorldState &worldState, HotkeyMap &hotkeys,
-                    Vector2 &rallyPos, bool &worldActive, bool &worldIs2v2,
+                    bool &worldActive, bool &worldIs2v2,
                     bool &sandboxMode, AIDifficulty &worldDifficulty,
                     std::string &worldMapPath, MenuState &lastOutcomeState,
                     int &replayCursor, float &replayPlayTimer, ConfirmChoice &pendingConfirm);
@@ -54,7 +54,6 @@ private:
     SkirmishWorld &skirmish_;
     WorldState &worldState_;
     HotkeyMap &hotkeys_;
-    Vector2 &rallyPos_;
     bool &worldActive_;
     bool &worldIs2v2_;
     bool &sandboxMode_;

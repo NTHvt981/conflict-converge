@@ -10,7 +10,7 @@ MatchController::MatchController(Subsystems &world, GameCamera &camera, AIComman
                                  AICommander &enemyAI2, MenuFlow &menu, Minimap &minimap,
                                  PlayingInput &playingInput, Simulation &sim,
                                  EventDispatcher &events, SkirmishWorld &skirmish,
-                                 WorldState &worldState, HotkeyMap &hotkeys, Vector2 &rallyPos,
+                                 WorldState &worldState, HotkeyMap &hotkeys,
                                  bool &worldActive, bool &worldIs2v2, bool &sandboxMode,
                                  AIDifficulty &worldDifficulty, std::string &worldMapPath,
                                  MenuState &lastOutcomeState, int &replayCursor,
@@ -28,7 +28,6 @@ MatchController::MatchController(Subsystems &world, GameCamera &camera, AIComman
     , skirmish_(skirmish)
     , worldState_(worldState)
     , hotkeys_(hotkeys)
-    , rallyPos_(rallyPos)
     , worldActive_(worldActive)
     , worldIs2v2_(worldIs2v2)
     , sandboxMode_(sandboxMode)
@@ -153,7 +152,6 @@ void MatchController::LoadGameFromSlot(const std::string &slotPath)
         allyAI_.Reset(menu_.setup.difficulty, spots.allyHome, spots.aiHome, 0);
         enemyAI2_.Reset(menu_.setup.difficulty, spots.enemyHome2, spots.playerHome, 1);
     }
-    rallyPos_ = camera_.view.target;
     worldDifficulty_ = menu_.setup.difficulty;
     worldActive_ = true;
     worldIs2v2_ = spots.is2v2;

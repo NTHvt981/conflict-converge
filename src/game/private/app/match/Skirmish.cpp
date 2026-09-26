@@ -108,8 +108,7 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 	if (world.registry == nullptr || world.resources == nullptr || world.map == nullptr ||
 		world.occ == nullptr || world.fog == nullptr || world.nodes == nullptr ||
 		world.bootcampQueue == nullptr || world.workshopQueue == nullptr ||
-		world.factory == nullptr || world.ai == nullptr || world.camera == nullptr ||
-		world.rallyPos == nullptr)
+		world.factory == nullptr || world.ai == nullptr || world.camera == nullptr)
 	{
 		return false;
 	}
@@ -270,9 +269,6 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 		}
 	}
 
-	const cc::IVec2 rallyFree =
-		NearestFreeFootprintTile(map, &occ, { spots.playerHome.x + 4, spots.playerHome.y }, 1, 1);
-	*world.rallyPos = cc::ToRaylib(cc::TileToWorld(rallyFree.x, rallyFree.y));
 	world.camera->view.target = cc::ToRaylib(
 		cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) + cc::Vec2(32.0f, 32.0f));
 	return true;
@@ -283,7 +279,7 @@ bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath)
 	if (world.registry == nullptr || world.resources == nullptr || world.map == nullptr ||
 		world.occ == nullptr || world.fog == nullptr || world.nodes == nullptr ||
 		world.bootcampQueue == nullptr || world.workshopQueue == nullptr ||
-		world.factory == nullptr || world.camera == nullptr || world.rallyPos == nullptr)
+		world.factory == nullptr || world.camera == nullptr)
 	{
 		return false;
 	}
@@ -320,7 +316,6 @@ bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath)
 	factory.SpawnPrepaid(UnitType::AntiArmorInfantry, 0,
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
 
-	*world.rallyPos = cc::ToRaylib(cc::TileToWorld(free.x, free.y));
 	world.camera->view.target = cc::ToRaylib(cc::TileToWorld(free.x, free.y) +
 											 cc::Vec2(32.0f, 32.0f));
 	return true;

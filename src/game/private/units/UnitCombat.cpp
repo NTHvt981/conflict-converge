@@ -178,12 +178,8 @@ bool EngageTarget(Entity self, Unit &attacker, CombatState &combat, Registry &re
     return false;
 }
 
-Vector2 ResolvePlayerRetreatHome(Registry &registry, Vector2 rallyPos)
+Vector2 ResolvePlayerRetreatHome(Registry &registry)
 {
-    if (rallyPos.x != 0.0f || rallyPos.y != 0.0f)
-    {
-        return rallyPos;
-    }
     Vector2 armyCentroid = { 0.0f, 0.0f };
     int aliveCount = 0;
     registry.Each<Unit>([&](Entity, const Unit &unit) {

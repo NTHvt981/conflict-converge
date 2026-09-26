@@ -75,7 +75,7 @@ bool ProductionQueue::RepeatArmed(UnitType type) const
 }
 
 Entity ProductionQueue::Update(UnitFactory &factory, ResourceSystem &resources, int teamID,
-                               Vector2 rallyPos, float dt, const TileMap *map,
+                               Vector2 spawnPos, float dt, const TileMap *map,
                                const OccupancyGrid *occ)
 {
     if (items_.empty() || dt <= 0.0f)
@@ -88,13 +88,13 @@ Entity ProductionQueue::Update(UnitFactory &factory, ResourceSystem &resources, 
     {
         return kInvalidEntity;
     }
-    Vector2 spawnPos = rallyPos;
+    Vector2 resolved = spawnPos;
     if (map != nullptr)
     {
         const cc::IVec2 fp = UnitFootprint(head.type);
         const cc::IVec2 free =
-            NearestFreeFootprintTile(*map, occ, cc::WorldToTile(cc::ToGlm(rallyPos)), fp.x, fp.y);
-        spawnPos = cc::ToRaylib(cc::TileToWorld(free.x, free.y));
+            NearestFreeFootprintTile(*map, occ, cc::WorldToTile(cc::ToGlm(spawnPos)), fp.x, fp.y);
+        resolved = cc::ToRaylib(cc::TileToWorld(free.x, free.y));
     }
     if (head.repeat)
     {
@@ -104,12 +104,12 @@ Entity ProductionQueue::Update(UnitFactory &factory, ResourceSystem &resources, 
             head.progress = head.buildTime;
             return kInvalidEntity;
         }
-        const Entity spawned = factory.SpawnPrepaid(head.type, teamID, spawnPos);
+        const Entity spawned = factory.SpawnPrepaid(head.type, teamID, resolved);
         head.progress = 0.0f;
         return spawned;
     }
     const Item done = head;
-    const Entity spawned = factory.SpawnPrepaid(done.type, teamID, spawnPos);
+    const Entity spawned = factory.SpawnPrepaid(done.type, teamID, resolved);
     const float overflow = done.progress - done.buildTime;
     items_.erase(items_.begin());
     if (!items_.empty() && overflow > 0.0f)

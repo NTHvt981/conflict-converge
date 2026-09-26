@@ -11,6 +11,7 @@
 
 class TileMap;
 class ResourceNodes;
+class OccupancyGrid;
 
 enum class BuildingType
 {
@@ -52,6 +53,9 @@ void UpdateBuildingFlash(Registry &registry, float dt);
 
 cc::IVec2 Footprint(BuildingType type);
 cc::IVec2 DefaultRallyTile(const TileMap &map, const Building &building);
+cc::IVec2 BuildingSpawnTile(const TileMap &map, const OccupancyGrid *occ,
+                             const Building &building);
+Entity ProducerBuildingAt(Registry &registry, BuildingType type, int teamID, int index);
 
 Rectangle BuildingFootprintRect(const Building &building);
 

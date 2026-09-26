@@ -107,10 +107,12 @@ app/match: Menu, Skirmish
 
 - `Building.h` - Base/Depot/Bootcamp/Workshop footprints, tile-grid placement (marks
   `TerrainType::Building`), demolish, base income, M13 structure HP (`BuildingMaxHealth`),
-  producer categories (`ProducerCategory`)
+  producer categories (`ProducerCategory`), per-building rally tiles
+  (`rallyTile`, `DefaultRallyTile`, `BuildingSpawnTile`, `ProducerBuildingAt`)
 - `Production.h` - Per-category production queues (Bootcamp/Infantry,
   Workshop/Vehicle; unbound default accepts anything): upfront charge, FIFO, prepaid spawn
-  at rally (main + AI gate `Update` on a live producer)
+  at the producing building's exit tile, then a move order to that building's rally
+  (main + AI gate `Update` on a live producer, round-robin across producers)
 - `ResourceSystem.h` - Iron/oil ledger: `Add`/`TrySpend` + `TickIncome` (fractional carry,
   no cap)
 - `Nodes.h` - Resource nodes: spawn/gather/deplete/respawn, Engineer harvesting, `Each`
@@ -152,7 +154,7 @@ app/match: Menu, Skirmish
   persistence (Q86); pause overlay shares MenuSettings, quit-to-menu teardown
 - `Skirmish.h` - M14 match build/teardown over `Game`'s boot-level objects: `SpotsForMap`
   markers, `BuildSkirmish` (funds, map, both bases, units, queue, AI Reset+SetupBase,
-  camera/rally aim), `ResetSkirmish` (empty shell; loader rebuilds over it); 2v2 maps
+   camera aim), `ResetSkirmish` (empty shell; loader rebuilds over it); 2v2 maps
   (twin_falls_2v2: two `1`+`2` markers) auto-arm allyAI/enemyAI2, `data/` postbuild-copied
   beside the exe
 - `SaveGame.h` - Versioned binary save/load (`CCB2` magic, v2, cereal-binary via

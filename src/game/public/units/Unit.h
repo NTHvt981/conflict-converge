@@ -212,8 +212,8 @@ int UnloadTransport(Registry &registry, const TileMap &map, Entity carrier, Vect
 // Shared retreat threshold: fraction of type-max HP below which units fall back.
 inline constexpr float kRetreatHealthFraction = 0.3f;
 
-// Resolve the player's retreat home: rally point, else nearest owned Base.
-Vector2 ResolvePlayerRetreatHome(Registry &registry, Vector2 rallyPos);
+// Resolve the player's retreat home: nearest owned Base to the army centroid.
+Vector2 ResolvePlayerRetreatHome(Registry &registry);
 
 void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector2 home, int teamID,
                     float healthFraction, bool onlyAutoRetreat);

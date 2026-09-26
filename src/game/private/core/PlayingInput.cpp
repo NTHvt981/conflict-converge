@@ -6,8 +6,7 @@
 
 PlayingInput::PlayingInput(Registry &registry, TileMap &map, OccupancyGrid &occ,
                            ResourceNodes &nodes, GameCamera &camera, Minimap &minimap,
-                           InputManager &input, Audio &audio, const MenuSettings &settings,
-                           Vector2 &rallyPos)
+                           InputManager &input, Audio &audio, const MenuSettings &settings)
     : registry_(registry)
     , map_(map)
     , occ_(occ)
@@ -17,7 +16,6 @@ PlayingInput::PlayingInput(Registry &registry, TileMap &map, OccupancyGrid &occ,
     , input_(input)
     , audio_(audio)
     , settings_(settings)
-    , rallyPos_(rallyPos)
 {
 }
 

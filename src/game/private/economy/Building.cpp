@@ -32,6 +32,32 @@ cc::IVec2 DefaultRallyTile(const TileMap &map, const Building &building)
     return NearestFreeFootprintTile(map, nullptr, exit, 1, 1);
 }
 
+cc::IVec2 BuildingSpawnTile(const TileMap &map, const OccupancyGrid *occ,
+                             const Building &building)
+{
+    const cc::IVec2 fp = Footprint(building.type);
+    const cc::IVec2 exit{ building.tileX + fp.x / 2, building.tileY + fp.y };
+    return NearestFreeFootprintTile(map, occ, exit, 1, 1);
+}
+
+Entity ProducerBuildingAt(Registry &registry, BuildingType type, int teamID, int index)
+{
+    std::vector<Entity> producers;
+    registry.Each<Building>([&](Entity id, const Building &building) {
+        if (building.type == type && building.teamID == teamID &&
+            building.state == BuildingState::Operational)
+        {
+            producers.push_back(id);
+        }
+    });
+    if (producers.empty())
+    {
+        return kInvalidEntity;
+    }
+    return producers[static_cast<std::size_t>(index) %
+                     producers.size()];
+}
+
 float BuildingMaxHealth(BuildingType type)
 {
     switch (type)

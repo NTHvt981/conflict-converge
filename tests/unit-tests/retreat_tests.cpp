@@ -136,23 +136,11 @@ void RunRetreatTests()
         // Single retreating unit: army centroid == its own position, so the
         // "nearest to centroid" and "nearest to the unit" answers agree and
         // both disagree with the old "nearest to map center" (Base B).
-        const Vector2 home = ResolvePlayerRetreatHome(registry, { 0.0f, 0.0f });
+        const Vector2 home = ResolvePlayerRetreatHome(registry);
         CC_CHECK(cc::WorldToTile(cc::ToGlm(home)) == cc::IVec2(2, 2));
 
         RetreatIfLowHP(registry, map, nullptr, home, 0, kRetreatHealthFraction, true);
         CC_CHECK(orders.attackMove);
         CC_CHECK(cc::WorldToTile(cc::ToGlm(orders.attackMoveDest)) == cc::IVec2(2, 2));
-    }
-
-    // --- Bugfix: a placed rally still beats every Base ---
-    {
-        Registry registry;
-        TileMap map(20, 15);
-        SpawnBase(registry, 2, 2);
-        SpawnBase(registry, 16, 12);
-        SpawnTeam(registry, UnitType::RifleInfantry, 0, 2, 5, 0.2f);
-
-        const Vector2 home = ResolvePlayerRetreatHome(registry, HomeTile(10, 3));
-        CC_CHECK(cc::WorldToTile(cc::ToGlm(home)) == cc::IVec2(10, 3));
     }
 }

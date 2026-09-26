@@ -24,7 +24,7 @@ class Simulation
 public:
     Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
                const WorldState &worldState, DamageNumbers &damageNumbers,
-               const Vector2 &rallyPos, const int &autoAddGroupBit,
+               const int &autoAddGroupBit,
                 const bool &sandboxMode, const bool &worldIs2v2,
                 float &shakeTrauma, MenuState &lastOutcomeState);
     Simulation(const Simulation &) = delete;
@@ -65,7 +65,6 @@ private:
     const WorldState &worldState_;
     DamageNumbers &damageNumbers_;
     EventDispatcher &events_;
-    const Vector2 &rallyPos_;
     const int &autoAddGroupBit_;
     const bool &sandboxMode_;
     const bool &worldIs2v2_;
@@ -77,6 +76,8 @@ private:
     float attackSfxTimer_ = 0.0f;
     bool hasBootcamp_ = false;
     bool hasWorkshop_ = false;
+    int bootcampCursor_ = 0;
+    int workshopCursor_ = 0;
     bool replayRecording_ = false;
     float replayTimer_ = 0.0f;
     int replayIndex_ = 0;

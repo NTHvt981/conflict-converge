@@ -89,6 +89,8 @@ private:
     float scoutTimer_ = 0.0f;
     float timeSinceLaunch_ = 0.0f;
     int wavesLaunched_ = 0;
+    int bootcampCursor_ = 0;
+    int workshopCursor_ = 0;
     std::size_t compIndex_ = 0;
     std::vector<Entity> harvesters_; // tracked for replacement
 };

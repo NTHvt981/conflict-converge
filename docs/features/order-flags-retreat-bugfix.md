@@ -20,8 +20,7 @@ of the QoL work: two real, reachable bugs no test covered.
 - `src/game/private/units/Formation.cpp`,
   `src/game/private/core/PlayingInput.cpp`,
   `src/game/private/core/Simulation.cpp` — call sites.
-- Tests: `OrderQueue` (flag/queue clears), `Retreat` (multi-base,
-  rally priority) suites.
+- Tests: `OrderQueue` (flag/queue clears), `Retreat` (multi-base) suites.
 
 ## Decisions
 

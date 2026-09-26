@@ -7,6 +7,7 @@
 #include "app/data/Art.h"
 #include "app/data/Audio.h"
 #include "core/Event.h"
+#include "economy/Building.h"
 #include "world/FogOfWar.h"
 #include "app/ui/GameCamera.h"
 #include "app/match/Menu.h"
@@ -20,9 +21,12 @@
 #include "core/Simulation.h"
 #include "core/Subsystem.h"
 #include "world/TileMap.h"
+#include "units/Extensions.h"
+#include "units/Unit.h"
 #include "units/UnitFactory.h"
 
 #include <optional>
+#include <vector>
 
 namespace
 {
@@ -35,7 +39,6 @@ struct Fixture
     GameCamera camera;
     WorldState worldState{};
     DamageNumbers damageNumbers;
-    Vector2 rallyPos = {};
     int autoAddGroupBit = -1;
     bool sandboxMode = true; // skip AI + outcome: covered by soak/integration tests
     bool worldIs2v2 = false;
@@ -87,7 +90,7 @@ struct Fixture
                                 &world.Get<TileMap>(), &camera,
                                 &world.Get<ResourceNodes>(), &world.Get<FogOfWar>(),
                                 &world.Get<OccupancyGrid>() };
-        sim.emplace(world, engine, menu, worldState, damageNumbers, rallyPos,
+        sim.emplace(world, engine, menu, worldState, damageNumbers,
                     autoAddGroupBit, sandboxMode, worldIs2v2, shakeTrauma, lastOutcomeState);
     }
 };
@@ -122,5 +125,70 @@ void RunSimulationTests()
         CC_CHECK(!fx.sim->HasBootcamp());
         CC_CHECK(!fx.sim->HasWorkshop());
         CC_CHECK(fx.sim->ReplayCount() == 5); // polls only: recording untouched
+    }
+    // --- round-robin production: alternating exits, units walk to their rally ---
+    {
+        Fixture fx;
+        TileMap &map = fx.world.Get<TileMap>();
+        const Entity bootA = PlaceBuilding(*fx.registry, map, BuildingType::Bootcamp, 0, 2, 2);
+        const Entity bootB =
+            PlaceBuilding(*fx.registry, map, BuildingType::Bootcamp, 0, 12, 10);
+        CC_CHECK(bootA != kInvalidEntity && bootB != kInvalidEntity);
+        UpdateBuildingConstruction(*fx.registry, 20.0f);
+        fx.registry->Get<Building>(bootA)->rallyTile = { 2, 6 };
+        fx.registry->Get<Building>(bootB)->rallyTile = { 12, 14 };
+        fx.resources->AddIron(1000);
+        fx.resources->AddOil(500);
+        ProductionQueue &queue = fx.world.GetKeyed<ProductionQueue>("bootcamp");
+        CC_CHECK(queue.Enqueue(*fx.resources, UnitType::RifleInfantry));
+        CC_CHECK(queue.Enqueue(*fx.resources, UnitType::RifleInfantry));
+
+        constexpr float kDt = 1.0f / 60.0f;
+        std::vector<Entity> spawned;
+        std::vector<cc::IVec2> spawnTiles;
+        std::vector<bool> hadOrder;
+        for (int i = 0; i < 3600 && spawned.size() < 2; ++i)
+        {
+            fx.sim->Step(kDt);
+            fx.registry->Each<Unit>([&](Entity id, const Unit &unit) {
+                if (unit.teamID != 0)
+                {
+                    return;
+                }
+                for (Entity seen : spawned)
+                {
+                    if (seen == id)
+                    {
+                        return;
+                    }
+                }
+                spawned.push_back(id);
+                spawnTiles.push_back(cc::WorldToTile(cc::ToGlm(unit.position)));
+                const Mover *mover = FindMover(*fx.registry, id);
+                hadOrder.push_back(mover != nullptr &&
+                                   (mover->hasMoveOrder || mover->hasPath));
+            });
+        }
+        CC_CHECK(spawned.size() == 2);
+        CC_CHECK(spawnTiles[0] == cc::IVec2(3, 4));
+        CC_CHECK(spawnTiles[1] == cc::IVec2(13, 12));
+        CC_CHECK(hadOrder[0] && hadOrder[1]);
+
+        bool arrived = false;
+        for (int i = 0; i < 3600 && !arrived; ++i)
+        {
+            fx.sim->Step(kDt);
+            arrived = true;
+            for (std::size_t k = 0; k < spawned.size(); ++k)
+            {
+                const Unit *unit = fx.registry->Get<Unit>(spawned[k]);
+                const cc::IVec2 want = (k == 0) ? cc::IVec2(2, 6) : cc::IVec2(12, 14);
+                if (unit == nullptr || !(cc::WorldToTile(cc::ToGlm(unit->position)) == want))
+                {
+                    arrived = false;
+                }
+            }
+        }
+        CC_CHECK(arrived);
     }
 }

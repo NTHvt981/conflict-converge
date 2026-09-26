@@ -54,12 +54,12 @@ Game::WorldScope::WorldScope(Subsystems &engine)
 }
 
 Game::PlayerScope::PlayerScope(Subsystems &engine, Subsystems &world,
-                               const MenuSettings &settings, Vector2 &rallyPos)
+                               const MenuSettings &settings)
 {
     Add<GameCamera>();
     Add<PlayingInput>(world.Get<Registry>(), world.Get<TileMap>(), world.Get<OccupancyGrid>(),
                       world.Get<ResourceNodes>(), Get<GameCamera>(), world.Get<Minimap>(),
-                      engine.Get<InputManager>(), engine.Get<Audio>(), settings, rallyPos);
+                      engine.Get<InputManager>(), engine.Get<Audio>(), settings);
 }
 
 Game::Game()
@@ -69,13 +69,12 @@ Game::Game()
                 &world_.GetKeyed<ProductionQueue>("bootcamp"),
                 &world_.GetKeyed<ProductionQueue>("workshop"), &world_.Get<UnitFactory>(),
                 &world_.GetKeyed<AICommander>("ai"), &world_.GetKeyed<AICommander>("ally"),
-                &world_.GetKeyed<AICommander>("enemy2"), &player_.Get<GameCamera>(),
-                &rallyPos }
+                &world_.GetKeyed<AICommander>("enemy2"), &player_.Get<GameCamera>() }
     , worldState{ &world_.Get<Registry>(), &world_.Get<ResourceSystem>(),
                   &world_.Get<TileMap>(), &player_.Get<GameCamera>(),
                   &world_.Get<ResourceNodes>(), &world_.Get<FogOfWar>(),
                   &world_.Get<OccupancyGrid>() }
-    , sim(world_, engine_, menu, worldState, damageNumbers, rallyPos,
+    , sim(world_, engine_, menu, worldState, damageNumbers,
           player_.Get<PlayingInput>().AutoAddGroupBit(), sandboxMode, worldIs2v2,
           shakeTrauma, lastOutcomeState)
     , menuScreens(menu, engine_.Get<Art>(), engine_.Get<Audio>(), engine_.Get<InputManager>(),
@@ -129,7 +128,7 @@ Game::Game()
             world_.GetKeyed<AICommander>("enemy2"), menu, world_.Get<Minimap>(),
             player_.Get<PlayingInput>(), sim,
             engine_.Get<EventDispatcher>(), skirmish, worldState, engine_.Get<HotkeyMap>(),
-            rallyPos, worldActive, worldIs2v2, sandboxMode, worldDifficulty, worldMapPath,
+            worldActive, worldIs2v2, sandboxMode, worldDifficulty, worldMapPath,
             lastOutcomeState, replayCursor, replayPlayTimer, pendingConfirm)
 {
 }

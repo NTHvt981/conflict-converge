@@ -14,7 +14,7 @@ non-goal (economy soak-tuned without it).
 - Target priority: armor-hunters (vehicle hulls, AntiArmorInfantry) weight
   vehicle targets 1.5x in the threat score.
 - Auto-retreat: opted-in player units withdraw at 30% HP
-  (`RetreatIfLowHP`, home = rally or nearest owned Base centroid);
+   (`RetreatIfLowHP`, home = nearest owned Base centroid);
   AI retreats on its own path (`RetreatTick`).
 - Building auto-repair: per-Engineer `Orders::autoRepair` toggle —
   idle Engineers acquire the nearest damaged same-team vehicle or

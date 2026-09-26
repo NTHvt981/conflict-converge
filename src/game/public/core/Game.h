@@ -62,16 +62,14 @@ protected:
     WorldScope world_{engine_}; // E2EGame seam (registry/map access)
     MenuFlow menu;    // E2EGame seam (moved before player_: PlayerScope binds menu.settings)
 private:
-    Vector2 rallyPos = {}; // moved before player_: PlayerScope forwards it to PlayingInput
     // Player/view-state scope: owns GameCamera + PlayingInput. Declared after
-    // engine_/world_/menu/rallyPos (PlayingInput binds them all) and before
+    // engine_/world_/menu (PlayingInput binds them all) and before
     // every consumer, so init-list expressions may bind player_.Get<T>().
     struct PlayerScope : public Subsystems
     {
-        PlayerScope(Subsystems &engine, Subsystems &world, const MenuSettings &settings,
-                    Vector2 &rallyPos);
+        PlayerScope(Subsystems &engine, Subsystems &world, const MenuSettings &settings);
     };
-    PlayerScope player_{engine_, world_, menu.settings, rallyPos};
+    PlayerScope player_{engine_, world_, menu.settings};
     SkirmishWorld skirmish;
     WorldState worldState;
 protected:

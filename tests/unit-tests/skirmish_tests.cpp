@@ -15,6 +15,7 @@
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
 #include "app/match/Skirmish.h"
+#include "world/Pathfinder.h"
 #include "world/TileMap.h"
 #include "units/Unit.h" // UpdateUnit
 #include "units/UnitFactory.h"
@@ -52,11 +53,10 @@ struct Harness
     EventDispatcher events;
     UnitFactory factory{ registry, resources, events };
     GameCamera camera;
-    Vector2 rallyPos = {};
     AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     SkirmishWorld world{ &registry, &resources, &map, &occ, &fog, &nodes,
                          &bootcampQueue, &workshopQueue, &factory, &ai, nullptr, nullptr,
-                         &camera, &rallyPos };
+                         &camera };
 };
 
 // 2v2 overflow: allied commander (team 0) + second enemy (team 1) wired
@@ -74,14 +74,29 @@ struct Harness2v2
     EventDispatcher events;
     UnitFactory factory{ registry, resources, events };
     GameCamera camera;
-    Vector2 rallyPos = {};
     AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     AICommander allyAI{ registry, map, nodes, events, 0, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     AICommander enemyAI2{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
     SkirmishWorld world{ &registry, &resources, &map, &occ, &fog, &nodes,
                          &bootcampQueue, &workshopQueue, &factory, &ai, &allyAI, &enemyAI2,
-                         &camera, &rallyPos };
+                         &camera };
 };
+
+template <typename T>
+Vector2 ProducerSpawnPos(T &game, BuildingType type)
+{
+    cc::IVec2 tile = { 2, 2 };
+    const Entity producer = ProducerBuildingAt(game.registry, type, 0, 0);
+    if (const Building *building = game.registry.Get<Building>(producer))
+    {
+        tile = BuildingSpawnTile(game.map, &game.occ, *building);
+    }
+    else
+    {
+        tile = NearestFreeFootprintTile(game.map, &game.occ, tile, 1, 1);
+    }
+    return cc::ToRaylib(cc::TileToWorld(tile.x, tile.y));
+}
 
 } // namespace
 
@@ -128,16 +143,12 @@ void RunSkirmishTests()
     CC_CHECK(game.ai.HasBootcamp());
     CC_CHECK(game.ai.HasWorkshop());
     CC_CHECK(game.resources.iron >= 0 && game.resources.oil >= 0);
-    // Camera + rally aim at the player home.
+    // Camera aims at the player home.
     const Vector2 expectTarget =
         cc::ToRaylib(cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) +
                      cc::Vec2(32.0f, 32.0f));
     CC_CHECK(game.camera.view.target.x == expectTarget.x);
     CC_CHECK(game.camera.view.target.y == expectTarget.y);
-    const Vector2 expectRally =
-        cc::ToRaylib(cc::TileToWorld(spots.playerHome.x + 4, spots.playerHome.y));
-    CC_CHECK(game.rallyPos.x == expectRally.x);
-    CC_CHECK(game.rallyPos.y == expectRally.y);
 
     // --- headless Start simulates: 10 seconds, both sides live ---
     for (int i = 0; i < 600; ++i)
@@ -153,12 +164,14 @@ void RunSkirmishTests()
         game.nodes.GatherTick(game.registry, game.resources, dt, 0);
         if (game.ai.HasBootcamp())
         {
-            game.bootcampQueue.Update(game.factory, game.resources, 0, game.rallyPos, dt,
+            game.bootcampQueue.Update(game.factory, game.resources, 0,
+                                      ProducerSpawnPos(game, BuildingType::Bootcamp), dt,
                                       &game.map, &game.occ);
         }
         if (game.ai.HasWorkshop())
         {
-            game.workshopQueue.Update(game.factory, game.resources, 0, game.rallyPos, dt,
+            game.workshopQueue.Update(game.factory, game.resources, 0,
+                                      ProducerSpawnPos(game, BuildingType::Workshop), dt,
                                       &game.map, &game.occ);
         }
         game.ai.Update(dt);
@@ -224,29 +237,28 @@ void RunSkirmishTests()
         CC_CHECK(!TeamHasUnits(sand.registry, 0));
     }
 
-    // --- prototype.map: rally avoids the Bootcamp, spawns land on free tiles ---
+    // --- prototype.map: producer rallies avoid footprints, spawns land on free tiles ---
     const std::string stuckMap = ShippedMap("prototype.map");
     CC_CHECK(!stuckMap.empty());
     if (!stuckMap.empty())
     {
         Harness stuck;
         CC_CHECK(BuildSkirmish(stuck.world, stuckMap, AIDifficulty::Easy));
-        const cc::IVec2 rallyTile = cc::WorldToTile(cc::ToGlm(stuck.rallyPos));
-        CC_CHECK(!stuck.map.IsBlocked(rallyTile));
-        bool rallyInFootprint = false;
         stuck.registry.Each<Building>([&](Entity, const Building &building) {
-            if (building.teamID != 0)
+            if (building.teamID != 0 || !ProducerCategory(building.type).has_value())
             {
                 return;
             }
+            CC_CHECK(stuck.map.InBounds(building.rallyTile));
+            CC_CHECK(!stuck.map.IsBlocked(building.rallyTile));
             const cc::IVec2 fp = Footprint(building.type);
-            if (rallyTile.x >= building.tileX && rallyTile.x < building.tileX + fp.x &&
-                rallyTile.y >= building.tileY && rallyTile.y < building.tileY + fp.y)
-            {
-                rallyInFootprint = true;
-            }
+            const bool rallyInFootprint =
+                building.rallyTile.x >= building.tileX &&
+                building.rallyTile.x < building.tileX + fp.x &&
+                building.rallyTile.y >= building.tileY &&
+                building.rallyTile.y < building.tileY + fp.y;
+            CC_CHECK(!rallyInFootprint);
         });
-        CC_CHECK(!rallyInFootprint);
         for (int i = 0; i < 1200; ++i)
         {
             const float dt = 1.0f / 60.0f;
@@ -258,9 +270,11 @@ void RunSkirmishTests()
             UpdateBaseIncome(stuck.registry, stuck.resources, dt, 0);
             stuck.nodes.Update(dt);
             stuck.nodes.GatherTick(stuck.registry, stuck.resources, dt, 0);
-            stuck.bootcampQueue.Update(stuck.factory, stuck.resources, 0, stuck.rallyPos, dt,
+            stuck.bootcampQueue.Update(stuck.factory, stuck.resources, 0,
+                                       ProducerSpawnPos(stuck, BuildingType::Bootcamp), dt,
                                        &stuck.map, &stuck.occ);
-            stuck.workshopQueue.Update(stuck.factory, stuck.resources, 0, stuck.rallyPos, dt,
+            stuck.workshopQueue.Update(stuck.factory, stuck.resources, 0,
+                                       ProducerSpawnPos(stuck, BuildingType::Workshop), dt,
                                        &stuck.map, &stuck.occ);
         }
         bool allFree = true;
@@ -316,12 +330,14 @@ void RunSkirmishTests()
             ally.nodes.GatherTick(ally.registry, ally.resources, dt, 0);
             if (ally.ai.HasBootcamp())
             {
-                ally.bootcampQueue.Update(ally.factory, ally.resources, 0, ally.rallyPos, dt,
+                ally.bootcampQueue.Update(ally.factory, ally.resources, 0,
+                                          ProducerSpawnPos(ally, BuildingType::Bootcamp), dt,
                                           &ally.map, &ally.occ);
             }
             if (ally.ai.HasWorkshop())
             {
-                ally.workshopQueue.Update(ally.factory, ally.resources, 0, ally.rallyPos, dt,
+                ally.workshopQueue.Update(ally.factory, ally.resources, 0,
+                                          ProducerSpawnPos(ally, BuildingType::Workshop), dt,
                                           &ally.map, &ally.occ);
             }
             ally.ai.Update(dt);

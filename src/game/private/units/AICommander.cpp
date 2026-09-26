@@ -144,6 +144,8 @@ void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 e
     queueWorkshop_.ResetForMatch();
     harvesters_.clear();
     compIndex_ = 0;
+    bootcampCursor_ = 0;
+    workshopCursor_ = 0;
     scouted_ = false;
     scoutTimer_ = params_.scoutInterval;
     timeSinceLaunch_ = params_.relaunchCooldown;
@@ -169,9 +171,11 @@ void AICommander::SetupBase()
                                         { -2, 0 }, { 0, -2 }, { 2, -2 }, { -3, 0 } };
     for (const cc::IVec2 &spot : bootcampSpots)
     {
-        if (PlaceBuilding(registry_, map_, BuildingType::Bootcamp, teamID_, homeTile_.x + spot.x,
-                          homeTile_.y + spot.y, &nodes_) != kInvalidEntity)
+        const Entity id = PlaceBuilding(registry_, map_, BuildingType::Bootcamp, teamID_,
+                                        homeTile_.x + spot.x, homeTile_.y + spot.y, &nodes_);
+        if (id != kInvalidEntity)
         {
+            registry_.Get<Building>(id)->rallyTile = rallyTile_;
             break;
         }
     }
@@ -180,9 +184,11 @@ void AICommander::SetupBase()
     bool workshopPlaced = false;
     for (const cc::IVec2 &spot : workshopSpots)
     {
-        if (PlaceBuilding(registry_, map_, BuildingType::Workshop, teamID_, homeTile_.x + spot.x,
-                          homeTile_.y + spot.y, &nodes_) != kInvalidEntity)
+        const Entity id = PlaceBuilding(registry_, map_, BuildingType::Workshop, teamID_,
+                                        homeTile_.x + spot.x, homeTile_.y + spot.y, &nodes_);
+        if (id != kInvalidEntity)
         {
+            registry_.Get<Building>(id)->rallyTile = rallyTile_;
             workshopPlaced = true;
             break;
         }
@@ -193,10 +199,12 @@ void AICommander::SetupBase()
         {
             for (int dx = -ring; !workshopPlaced && dx <= ring; ++dx)
             {
-                if (PlaceBuilding(registry_, map_, BuildingType::Workshop, teamID_,
-                                  homeTile_.x + dx, homeTile_.y + dy,
-                                  &nodes_) != kInvalidEntity)
+                const Entity id =
+                    PlaceBuilding(registry_, map_, BuildingType::Workshop, teamID_,
+                                  homeTile_.x + dx, homeTile_.y + dy, &nodes_);
+                if (id != kInvalidEntity)
                 {
+                    registry_.Get<Building>(id)->rallyTile = rallyTile_;
                     workshopPlaced = true;
                 }
             }
@@ -232,14 +240,42 @@ void AICommander::Update(float dt)
     }
     UpdateBaseIncome(registry_, resources_, dt, teamID_);
     nodes_.GatherTick(registry_, resources_, dt, teamID_);
-    const Vector2 rally = cc::ToRaylib(cc::TileToWorld(rallyTile_.x, rallyTile_.y));
+    auto pumpQueue = [&](ProductionQueue &queue, BuildingType type, int &cursor) {
+        const Entity producerId = ProducerBuildingAt(registry_, type, teamID_, cursor);
+        if (producerId == kInvalidEntity)
+        {
+            return;
+        }
+        const Building *producer = registry_.Get<Building>(producerId);
+        if (producer == nullptr)
+        {
+            return;
+        }
+        const cc::IVec2 rally = producer->rallyTile;
+        const cc::IVec2 spawnTile = BuildingSpawnTile(map_, occ_, *producer);
+        const Vector2 spawnPos = cc::ToRaylib(cc::TileToWorld(spawnTile.x, spawnTile.y));
+        const Entity spawned = queue.Update(factory_, resources_, teamID_, spawnPos, dt, &map_, occ_);
+        if (spawned == kInvalidEntity)
+        {
+            return;
+        }
+        ++cursor;
+        if (Unit *fresh = registry_.Get<Unit>(spawned))
+        {
+            if (!(cc::WorldToTile(cc::ToGlm(fresh->position)) == rally))
+            {
+                OrderMove(*fresh, spawned,
+                          cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)));
+            }
+        }
+    };
     if (HasBootcamp())
     {
-        queueBootcamp_.Update(factory_, resources_, teamID_, rally, dt, &map_, occ_);
+        pumpQueue(queueBootcamp_, BuildingType::Bootcamp, bootcampCursor_);
     }
     if (HasWorkshop())
     {
-        queueWorkshop_.Update(factory_, resources_, teamID_, rally, dt, &map_, occ_);
+        pumpQueue(queueWorkshop_, BuildingType::Workshop, workshopCursor_);
     }
     MaintainHarvesters();
     MaintainProduction();

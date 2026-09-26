@@ -5,12 +5,13 @@
 #include "units/Extensions.h"
 #include "app/ui/Shake.h"
 #include "units/Unit.h"
+#include "world/Pathfinder.h"
 #include <cmath>
 #include <vector>
 
 Simulation::Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
                        const WorldState &worldState, DamageNumbers &damageNumbers,
-                       const Vector2 &rallyPos, const int &autoAddGroupBit,
+                       const int &autoAddGroupBit,
                        const bool &sandboxMode, const bool &worldIs2v2,
                        float &shakeTrauma, MenuState &lastOutcomeState)
     : registry_(world.Get<Registry>())
@@ -33,7 +34,6 @@ Simulation::Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
     , worldState_(worldState)
     , damageNumbers_(damageNumbers)
     , events_(engine.Get<EventDispatcher>())
-    , rallyPos_(rallyPos)
     , autoAddGroupBit_(autoAddGroupBit)
     , sandboxMode_(sandboxMode)
     , worldIs2v2_(worldIs2v2)
@@ -224,11 +224,36 @@ void Simulation::Step(float dt)
     nodes_.Update(dt);
     nodes_.GatherTick(registry_, resources_, dt, 0);
     RefreshProducers();
-    auto pumpQueue = [&](ProductionQueue &queue) {
-        const Entity spawned = queue.Update(factory_, resources_, 0, rallyPos_, dt, &map_, &occ_);
-        if (spawned != kInvalidEntity && autoAddGroupBit_ >= 0)
+    auto pumpQueue = [&](ProductionQueue &queue, BuildingType type, int &cursor) {
+        const Entity producerId = ProducerBuildingAt(registry_, type, 0, cursor);
+        if (producerId == kInvalidEntity)
         {
-            if (Unit *fresh = registry_.Get<Unit>(spawned))
+            return;
+        }
+        const Building *producer = registry_.Get<Building>(producerId);
+        if (producer == nullptr)
+        {
+            return;
+        }
+        const cc::IVec2 rally = producer->rallyTile;
+        const cc::IVec2 spawnTile = BuildingSpawnTile(map_, &occ_, *producer);
+        const Vector2 spawnPos = cc::ToRaylib(cc::TileToWorld(spawnTile.x, spawnTile.y));
+        const Entity spawned = queue.Update(factory_, resources_, 0, spawnPos, dt, &map_, &occ_);
+        if (spawned == kInvalidEntity)
+        {
+            return;
+        }
+        ++cursor;
+        if (Unit *fresh = registry_.Get<Unit>(spawned))
+        {
+            if (!(cc::WorldToTile(cc::ToGlm(fresh->position)) == rally))
+            {
+                IssuePathOrderFootprint(*fresh, GetOrders(registry_, spawned),
+                                        GetMover(registry_, spawned), map_, occ_,
+                                        cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)),
+                                        spawned, registry_.Generation(spawned));
+            }
+            if (autoAddGroupBit_ >= 0)
             {
                 fresh->controlGroups |= (1u << static_cast<unsigned int>(autoAddGroupBit_));
             }
@@ -236,11 +261,11 @@ void Simulation::Step(float dt)
     };
     if (hasBootcamp_)
     {
-        pumpQueue(bootcampQueue_);
+        pumpQueue(bootcampQueue_, BuildingType::Bootcamp, bootcampCursor_);
     }
     if (hasWorkshop_)
     {
-        pumpQueue(workshopQueue_);
+        pumpQueue(workshopQueue_, BuildingType::Workshop, workshopCursor_);
     }
     const int queueSize =
         static_cast<int>(bootcampQueue_.Size() + workshopQueue_.Size());
@@ -266,7 +291,7 @@ void Simulation::Step(float dt)
     UpdateBuildingConstruction(registry_, dt);
     UpdateBuildingFlash(registry_, dt);
     {
-        const Vector2 home = ResolvePlayerRetreatHome(registry_, rallyPos_);
+        const Vector2 home = ResolvePlayerRetreatHome(registry_);
         RetreatIfLowHP(registry_, map_, &occ_, home, 0, kRetreatHealthFraction, true);
     }
     if (!sandboxMode_)

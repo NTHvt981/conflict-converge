@@ -385,4 +385,50 @@ void RunBuildingTests()
                                 shopB->rallyTile.y < 5 + shopFp.y;
         CC_CHECK(!shopInside);
     }
+
+    // --- ProducerBuildingAt: operational producers of type/team in registry order ---
+    {
+        Registry producers;
+        TileMap producerMap(20, 15);
+        const Entity bootA =
+            PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 0, 1, 1);
+        const Entity bootB =
+            PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 0, 5, 5);
+        const Entity foe =
+            PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 1, 12, 12);
+        const Entity shop =
+            PlaceBuilding(producers, producerMap, BuildingType::Workshop, 0, 1, 10);
+        CC_CHECK(bootA != kInvalidEntity && bootB != kInvalidEntity);
+        CC_CHECK(foe != kInvalidEntity && shop != kInvalidEntity);
+        UpdateBuildingConstruction(producers, 20.0f);
+        const Entity site =
+            PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 0, 10, 1);
+        CC_CHECK(site != kInvalidEntity);
+        CC_CHECK(producers.Get<Building>(site)->state == BuildingState::UnderConstruction);
+        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 0, 0) == bootA);
+        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 0, 1) == bootB);
+        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 0, 2) == bootA);
+        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 1, 0) == foe);
+        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Workshop, 0, 0) == shop);
+        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Workshop, 1, 0) ==
+                 kInvalidEntity);
+        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Base, 0, 0) == kInvalidEntity);
+    }
+
+    // --- BuildingSpawnTile: unblocked exit tile outside the footprint ---
+    {
+        Registry spawns;
+        TileMap spawnMap(20, 15);
+        OccupancyGrid spawnOcc(20, 15);
+        const Entity boot = PlaceBuilding(spawns, spawnMap, BuildingType::Bootcamp, 0, 5, 5);
+        CC_CHECK(boot != kInvalidEntity);
+        const Building *bootB = spawns.Get<Building>(boot);
+        const cc::IVec2 tile = BuildingSpawnTile(spawnMap, &spawnOcc, *bootB);
+        CC_CHECK(spawnMap.InBounds(tile));
+        CC_CHECK(!spawnMap.IsBlocked(tile));
+        const cc::IVec2 fp = Footprint(BuildingType::Bootcamp);
+        const bool inside = tile.x >= 5 && tile.x < 5 + fp.x && tile.y >= 5 &&
+                            tile.y < 5 + fp.y;
+        CC_CHECK(!inside);
+    }
 }

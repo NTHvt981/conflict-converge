@@ -29,7 +29,13 @@ void PlayingInput::HandleLeftPress()
         {
             const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(input_.MouseWorld(camera_)));
             const cc::IVec2 free = NearestFreeFootprintTile(map_, &occ_, tile, 1, 1);
-            rallyPos_ = cc::ToRaylib(cc::TileToWorld(free.x, free.y));
+            registry_.Each<Building>([&](Entity, Building &building) {
+                if (building.isSelected && building.teamID == 0 &&
+                    ProducerCategory(building.type).has_value())
+                {
+                    building.rallyTile = free;
+                }
+            });
             settingRally_ = false;
         }
         else
