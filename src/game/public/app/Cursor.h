@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Registry.h"
+#include "core/Registry.h"
 
 #include "raylib.h"
 

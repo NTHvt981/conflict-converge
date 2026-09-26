@@ -1,4 +1,4 @@
-#include "InputManager.h"
+#include "app/InputManager.h"
 
 void InputManager::Update(GameCamera &camera, float cameraSpeedPixelsPerSec, float dtSeconds)
 {

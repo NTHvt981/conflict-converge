@@ -3,8 +3,8 @@
 #include <cstddef>
 #include <vector>
 
-#include "MathUtils.h"
-#include "Registry.h"
+#include "core/MathUtils.h"
+#include "core/Registry.h"
 #include "raylib.h"
 
 class TileMap;

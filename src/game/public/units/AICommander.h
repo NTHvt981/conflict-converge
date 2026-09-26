@@ -3,13 +3,13 @@
 #include <cstddef>
 #include <vector>
 
-#include "MathUtils.h"
-#include "Production.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "Subsystem.h"
-#include "Unit.h"
-#include "UnitFactory.h"
+#include "core/MathUtils.h"
+#include "economy/Production.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "core/Subsystem.h"
+#include "units/Unit.h"
+#include "units/UnitFactory.h"
 
 class TileMap;
 class OccupancyGrid;

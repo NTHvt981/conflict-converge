@@ -3,10 +3,10 @@
 #include <string>
 #include <vector>
 
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "Unit.h"
-#include "Production.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "units/Unit.h"
+#include "economy/Production.h"
 
 enum class BuildingType;
 class HotkeyMap;

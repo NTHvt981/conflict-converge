@@ -1,4 +1,4 @@
-#include "Registry.h"
+#include "core/Registry.h"
 
 Entity Registry::Create()
 {

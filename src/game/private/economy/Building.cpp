@@ -1,9 +1,9 @@
-#include "Building.h"
+#include "economy/Building.h"
 
 #include <cmath>
 
-#include "Nodes.h"
-#include "TileMap.h"
+#include "economy/Nodes.h"
+#include "world/TileMap.h"
 
 inline constexpr float kBaseIronPerSecond = 2.0f;
 inline constexpr float kBaseOilPerSecond = 1.0f;

@@ -2,9 +2,9 @@
 
 #include <vector>
 
-#include "MathUtils.h"
-#include "TileMap.h"
-#include "Unit.h"
+#include "core/MathUtils.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
 
 using TilePath = std::vector<cc::IVec2>;
 

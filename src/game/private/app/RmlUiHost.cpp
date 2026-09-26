@@ -1,4 +1,4 @@
-#include "RmlUiHost.h"
+#include "app/RmlUiHost.h"
 
 // raylib.h before rlgl.h: rlgl defines its own Matrix only when
 // RL_MATRIX_TYPE is absent (raylib.h sets it), so the reverse order
@@ -10,9 +10,9 @@
 #include <RmlUi/Core/Context.h>
 #include <RmlUi/Debugger.h>
 
-#include "RmlRaylibFileInterface.h"
-#include "RmlRaylibRenderInterface.h"
-#include "RmlRaylibSystemInterface.h"
+#include "app/RmlRaylibFileInterface.h"
+#include "app/RmlRaylibRenderInterface.h"
+#include "app/RmlRaylibSystemInterface.h"
 
 RmlUiHost::RmlUiHost() = default;
 

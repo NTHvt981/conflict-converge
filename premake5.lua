@@ -158,19 +158,8 @@ project "conflict-converge"
         "deps/cereal/include",
         "deps/RmlUi/Include",
         "..",
-        "src/game",
         "src/game/public",
-        "src/game/private",
-        "src/game/public/core",
-        "src/game/public/world",
-        "src/game/public/units",
-        "src/game/public/economy",
-        "src/game/public/app",
-        "src/game/private/core",
-        "src/game/private/world",
-        "src/game/private/units",
-        "src/game/private/economy",
-        "src/game/private/app"
+        "src/game/private"
     }
     
     -- Link with raylib, raygui and RmlUi static libraries, plus the Windows
@@ -249,12 +238,7 @@ project "conflict-converge-test"
         "deps/cereal/include",
         "deps/RmlUi/Include",
         "..",
-        "src/game/public",
-        "src/game/public/core",
-        "src/game/public/world",
-        "src/game/public/units",
-        "src/game/public/economy",
-        "src/game/public/app"
+        "src/game/public"
     }
     
     -- Link with raylib and raygui static libraries, plus the Windows system
@@ -312,11 +296,6 @@ project "conflict-converge-e2e"
         "deps/cereal/include",
         "..",
         "src/game/public",
-        "src/game/public/core",
-        "src/game/public/world",
-        "src/game/public/units",
-        "src/game/public/economy",
-        "src/game/public/app",
         "tests/unit-tests",
         "deps/RmlUi/Include"
     }
@@ -377,11 +356,6 @@ project "conflict-converge-editor"
         "deps/cereal/include",
         "..",
         "src/game/public",
-        "src/game/public/core",
-        "src/game/public/world",
-        "src/game/public/units",
-        "src/game/public/economy",
-        "src/game/public/app",
         "tools/unit_editor"
     }
 

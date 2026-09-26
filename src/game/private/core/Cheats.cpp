@@ -1,4 +1,4 @@
-#include "Cheats.h"
+#include "core/Cheats.h"
 
 #if defined(CC_DEBUG)
 

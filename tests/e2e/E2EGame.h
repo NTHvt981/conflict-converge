@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Game.h"
+#include "core/Game.h"
 
 // Test-only subclass: exposes the Game internals the Tier-1 harness drives
 // directly. Lives in the e2e project so Game itself carries no test seam;

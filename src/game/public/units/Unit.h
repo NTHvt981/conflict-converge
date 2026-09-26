@@ -6,8 +6,8 @@
 
 #include "raylib.h"
 
-#include "MathUtils.h"
-#include "Registry.h"
+#include "core/MathUtils.h"
+#include "core/Registry.h"
 
 class TileMap;
 class OccupancyGrid;

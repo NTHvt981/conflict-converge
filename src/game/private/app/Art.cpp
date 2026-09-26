@@ -1,11 +1,11 @@
-#include "Art.h"
+#include "app/Art.h"
 
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 
-#include "MathUtils.h"
-#include "TileMap.h"
+#include "core/MathUtils.h"
+#include "world/TileMap.h"
 
 UnitFrame FrameForPhase(AttackPhase phase)
 {

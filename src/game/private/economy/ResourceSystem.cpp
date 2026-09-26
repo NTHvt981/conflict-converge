@@ -1,4 +1,4 @@
-#include "ResourceSystem.h"
+#include "economy/ResourceSystem.h"
 
 void ResourceSystem::AddIron(long amount)
 {

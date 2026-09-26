@@ -1,8 +1,8 @@
-#include "Combat.h"
+#include "units/Combat.h"
 
-#include "Building.h"
-#include "Extensions.h"
-#include "UnitConfig.h"
+#include "economy/Building.h"
+#include "units/Extensions.h"
+#include "app/UnitConfig.h"
 
 float Effectiveness(DamageType dealt, ArmorType armor)
 {

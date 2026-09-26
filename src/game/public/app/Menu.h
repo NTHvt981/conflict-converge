@@ -3,10 +3,10 @@
 #include <string>
 #include <vector>
 
-#include "AICommander.h"
-#include "MapFile.h"
-#include "Registry.h"
-#include "Unit.h"
+#include "units/AICommander.h"
+#include "world/MapFile.h"
+#include "core/Registry.h"
+#include "units/Unit.h"
 #include "reasings.h"
 
 // The sim is skipped while paused; the world builds only after Start

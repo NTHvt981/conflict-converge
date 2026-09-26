@@ -1,11 +1,11 @@
-#include "ShortcutBindings.h"
+#include "core/ShortcutBindings.h"
 
-#include "Building.h"
-#include "Extensions.h"
-#include "Selection.h"
-#include "Shortcuts.h"
-#include "Unit.h"
-#include "UnitCommands.h"
+#include "economy/Building.h"
+#include "units/Extensions.h"
+#include "app/Selection.h"
+#include "app/Shortcuts.h"
+#include "units/Unit.h"
+#include "units/UnitCommands.h"
 
 ShortcutBindings::ShortcutBindings(InputManager &input, HotkeyMap &hotkeys, MenuFlow &menu,
                                    RmlUiMenus &rmlUiMenus,

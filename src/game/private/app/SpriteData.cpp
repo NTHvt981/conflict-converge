@@ -1,4 +1,4 @@
-#include "SpriteData.h"
+#include "app/SpriteData.h"
 
 #define CEREAL_RAPIDJSON_ASSERT(x) \
     do { if (!(x)) throw std::runtime_error("malformed sprite JSON"); } while (0)

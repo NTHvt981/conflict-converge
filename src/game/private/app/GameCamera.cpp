@@ -1,4 +1,4 @@
-#include "GameCamera.h"
+#include "app/GameCamera.h"
 
 void GameCamera::UpdateWASD(float speedPixelsPerSec, float dtSeconds)
 {

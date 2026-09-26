@@ -8,11 +8,11 @@
 #include <vector>
 
 #include "raylib.h"
-#include "Building.h"
-#include "Nodes.h"
+#include "economy/Building.h"
+#include "economy/Nodes.h"
 #include "SpriteData.h"
-#include "Subsystem.h"
-#include "Unit.h"
+#include "core/Subsystem.h"
+#include "units/Unit.h"
 
 enum class TerrainType : std::uint8_t;
 

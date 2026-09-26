@@ -1,9 +1,9 @@
 
-#include "Game.h"
+#include "core/Game.h"
 
 #include "raygui.h"
-#include "DataRoot.h"
-#include "Log.h"
+#include "app/DataRoot.h"
+#include "app/Log.h"
 
 Game::EngineScope::EngineScope()
 {

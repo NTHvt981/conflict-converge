@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "AICommander.h"
-#include "MathUtils.h"
+#include "units/AICommander.h"
+#include "core/MathUtils.h"
 #include "raylib.h"
 
 class Registry;

@@ -1,4 +1,4 @@
-#include "RmlUiHud.h"
+#include "app/RmlUiHud.h"
 
 #include <cstdio>
 #include <cstring>
@@ -12,12 +12,12 @@
 #include <RmlUi/Core/ElementDocument.h>
 #include <RmlUi/Core/Elements/ElementFormControl.h>
 
-#include "Building.h"
-#include "Hud.h"
-#include "RmlUiHost.h"
-#include "Selection.h"
-#include "UnitCommands.h"
-#include "UnitFactory.h"
+#include "economy/Building.h"
+#include "app/Hud.h"
+#include "app/RmlUiHost.h"
+#include "app/Selection.h"
+#include "units/UnitCommands.h"
+#include "units/UnitFactory.h"
 
 namespace {
 

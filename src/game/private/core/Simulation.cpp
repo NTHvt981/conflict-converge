@@ -1,10 +1,10 @@
 
-#include "Simulation.h"
+#include "core/Simulation.h"
 
-#include "Building.h"
-#include "Extensions.h"
-#include "Shake.h"
-#include "Unit.h"
+#include "economy/Building.h"
+#include "units/Extensions.h"
+#include "app/Shake.h"
+#include "units/Unit.h"
 #include <cmath>
 #include <vector>
 

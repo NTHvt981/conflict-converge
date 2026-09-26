@@ -1,6 +1,6 @@
-#include "UnitCommands.h"
+#include "units/UnitCommands.h"
 
-#include "Extensions.h"
+#include "units/Extensions.h"
 
 void SetSelectionStance(Registry &registry, Stance stance)
 {

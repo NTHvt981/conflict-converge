@@ -2,8 +2,8 @@
 
 #include <unordered_map>
 
-#include "Registry.h"
-#include "Unit.h"
+#include "core/Registry.h"
+#include "units/Unit.h"
 
 class FogOfWar;
 struct Building;

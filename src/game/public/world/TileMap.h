@@ -3,9 +3,9 @@
 #include <cstdint>
 #include <vector>
 
-#include "CcAssert.h"
-#include "MathUtils.h"
-#include "Subsystem.h"
+#include "core/CcAssert.h"
+#include "core/MathUtils.h"
+#include "core/Subsystem.h"
 
 enum class TerrainType : std::uint8_t
 {

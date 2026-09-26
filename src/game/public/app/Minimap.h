@@ -1,7 +1,7 @@
 #pragma once
 
 #include "raylib.h"
-#include "Subsystem.h"
+#include "core/Subsystem.h"
 
 // Periodic refresh, not per-frame; unit positions draw as markers.
 // The frame is square, sized by screen height; rectangle maps letterbox

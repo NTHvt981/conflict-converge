@@ -1,7 +1,7 @@
 #pragma once
 
 #include "raylib.h"
-#include "Subsystem.h"
+#include "core/Subsystem.h"
 
 // Named GameCamera because raylib already defines Camera.
 

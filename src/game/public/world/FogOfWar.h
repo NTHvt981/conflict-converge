@@ -5,10 +5,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "MathUtils.h"
-#include "Registry.h"
-#include "Subsystem.h"
-#include "Unit.h"
+#include "core/MathUtils.h"
+#include "core/Registry.h"
+#include "core/Subsystem.h"
+#include "units/Unit.h"
 
 // Fog of war. Per-team visibility: `visible` is recomputed from living units'
 // sightRange circles every Recompute; `explored` latches forever.

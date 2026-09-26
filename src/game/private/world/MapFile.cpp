@@ -1,11 +1,11 @@
-#include "MapFile.h"
+#include "world/MapFile.h"
 
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 
-#include "Nodes.h"
+#include "economy/Nodes.h"
 
 namespace
 {

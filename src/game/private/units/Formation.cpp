@@ -1,8 +1,8 @@
-#include "Formation.h"
+#include "units/Formation.h"
 
-#include "Extensions.h"
-#include "Pathfinder.h"
-#include "TileMap.h"
+#include "units/Extensions.h"
+#include "world/Pathfinder.h"
+#include "world/TileMap.h"
 
 #include <algorithm>
 #include <cmath>

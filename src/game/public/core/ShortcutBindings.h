@@ -2,21 +2,21 @@
 
 #include <functional>
 
-#include "Audio.h"
-#include "Event.h"
-#include "FogOfWar.h"
-#include "GameCamera.h"
-#include "Hotkeys.h"
-#include "InputManager.h"
-#include "Menu.h"
-#include "Nodes.h"
-#include "Pings.h"
-#include "PlayingInput.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "RmlUiMenus.h"
-#include "SaveGame.h"
-#include "TileMap.h"
+#include "app/Audio.h"
+#include "core/Event.h"
+#include "world/FogOfWar.h"
+#include "app/GameCamera.h"
+#include "app/Hotkeys.h"
+#include "app/InputManager.h"
+#include "app/Menu.h"
+#include "economy/Nodes.h"
+#include "app/Pings.h"
+#include "core/PlayingInput.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "app/RmlUiMenus.h"
+#include "app/SaveGame.h"
+#include "world/TileMap.h"
 
 class ShortcutBindings
 {

@@ -1,12 +1,12 @@
 
-#include "PlayingInput.h"
+#include "core/PlayingInput.h"
 
-#include "Extensions.h"
-#include "Formation.h"
-#include "Pathfinder.h"
-#include "Selection.h"
-#include "Unit.h"
-#include "UnitCommands.h"
+#include "units/Extensions.h"
+#include "units/Formation.h"
+#include "world/Pathfinder.h"
+#include "app/Selection.h"
+#include "units/Unit.h"
+#include "units/UnitCommands.h"
 #include <algorithm>
 #include <cmath>
 #include <vector>

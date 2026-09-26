@@ -3,9 +3,9 @@
 #include <array>
 #include <vector>
 
-#include "MathUtils.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
+#include "core/MathUtils.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
 
 class TileMap;
 class ResourceNodes;

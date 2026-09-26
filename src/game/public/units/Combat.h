@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "Registry.h"
-#include "Unit.h"
+#include "core/Registry.h"
+#include "units/Unit.h"
 
 struct Building;
 class TileMap;

@@ -1,8 +1,8 @@
 
-#include "MenuScreens.h"
+#include "core/MenuScreens.h"
 
 #include "raygui.h"
-#include "Nodes.h"
+#include "economy/Nodes.h"
 
 MenuScreens::MenuScreens(MenuFlow &menu, Art &art, Audio &audio, InputManager &input,
                          HotkeyMap &hotkeys, EventDispatcher &events, MenuCallbacks callbacks)

@@ -1,9 +1,9 @@
-#include "UnitFactory.h"
+#include "units/UnitFactory.h"
 
-#include "Extensions.h"
-#include "MathUtils.h"
-#include "UnitConfig.h"
-#include "UnitStats.h"
+#include "units/Extensions.h"
+#include "core/MathUtils.h"
+#include "app/UnitConfig.h"
+#include "units/UnitStats.h"
 
 UnitCost CostOf(UnitType type)
 {

@@ -1,12 +1,12 @@
-#include "AICommander.h"
+#include "units/AICommander.h"
 
-#include "Building.h"
-#include "Extensions.h"
-#include "Formation.h"
-#include "Nodes.h"
-#include "Pathfinder.h"
-#include "TileMap.h"
-#include "UnitStats.h"
+#include "economy/Building.h"
+#include "units/Extensions.h"
+#include "units/Formation.h"
+#include "economy/Nodes.h"
+#include "world/Pathfinder.h"
+#include "world/TileMap.h"
+#include "units/UnitStats.h"
 
 AIDifficultyParams ParamsFor(AIDifficulty difficulty)
 {

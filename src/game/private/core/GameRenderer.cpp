@@ -1,15 +1,15 @@
 
-#include "GameRenderer.h"
+#include "core/GameRenderer.h"
 
-#include "Building.h"
-#include "Cheats.h"
-#include "Cursor.h"
-#include "Extensions.h"
-#include "Hud.h"
-#include "RmlUiHost.h"
-#include "RmlUiMenus.h"
-#include "Selection.h"
-#include "Unit.h"
+#include "economy/Building.h"
+#include "core/Cheats.h"
+#include "app/Cursor.h"
+#include "units/Extensions.h"
+#include "app/Hud.h"
+#include "app/RmlUiHost.h"
+#include "app/RmlUiMenus.h"
+#include "app/Selection.h"
+#include "units/Unit.h"
 #include <algorithm>
 #include <cmath>
 #include <vector>

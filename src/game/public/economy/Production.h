@@ -3,8 +3,8 @@
 #include <cstddef>
 #include <vector>
 
-#include "Subsystem.h"
-#include "Unit.h"
+#include "core/Subsystem.h"
+#include "units/Unit.h"
 #include "raylib.h"
 
 class ResourceSystem;

@@ -11,14 +11,14 @@
 #include "../unit-tests/test_harness.h"
 
 #include "E2EGame.h"
-#include "Building.h" // RazeTeamBuildings arranges demolition-first outcomes
-#include "Extensions.h"
-#include "MapFile.h"
-#include "MathUtils.h" // TileToWorld for the mop-up march
-#include "Menu.h"
-#include "Pathfinder.h" // IssuePathOrder drives the mop-up force
-#include "Registry.h"
-#include "Unit.h"
+#include "economy/Building.h" // RazeTeamBuildings arranges demolition-first outcomes
+#include "units/Extensions.h"
+#include "world/MapFile.h"
+#include "core/MathUtils.h" // TileToWorld for the mop-up march
+#include "app/Menu.h"
+#include "world/Pathfinder.h" // IssuePathOrder drives the mop-up force
+#include "core/Registry.h"
+#include "units/Unit.h"
 #include "raylib.h"
 
 #include <cstdio>

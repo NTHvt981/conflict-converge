@@ -1,22 +1,22 @@
-#include "Unit.h"
+#include "units/Unit.h"
 
-#include "Combat.h"
-#include "Extensions.h"
-#include "FogOfWar.h"
-#include "MapFile.h"
-#include "MathUtils.h"
-#include "Pathfinder.h"
-#include "Targeting.h"
-#include "TileMap.h"
-#include "Building.h"
-#include "UnitConfig.h"
-#include "UnitStats.h"
+#include "units/Combat.h"
+#include "units/Extensions.h"
+#include "world/FogOfWar.h"
+#include "world/MapFile.h"
+#include "core/MathUtils.h"
+#include "world/Pathfinder.h"
+#include "units/Targeting.h"
+#include "world/TileMap.h"
+#include "economy/Building.h"
+#include "app/UnitConfig.h"
+#include "units/UnitStats.h"
 
 #include <algorithm>
 #include <cmath>
 #include <unordered_map>
 
-#include "UnitStats.h"
+#include "units/UnitStats.h"
 
 void IssueMoveOrder(Unit &unit, Orders &orders, Mover &mover, Vector2 worldTarget)
 {

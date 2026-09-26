@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 
-#include "MathUtils.h"
-#include "Nodes.h"
-#include "TileMap.h"
+#include "core/MathUtils.h"
+#include "economy/Nodes.h"
+#include "world/TileMap.h"
 
 class ResourceNodes;
 class OccupancyGrid;

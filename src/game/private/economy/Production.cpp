@@ -1,7 +1,7 @@
-#include "Production.h"
+#include "economy/Production.h"
 
-#include "ResourceSystem.h"
-#include "UnitFactory.h"
+#include "economy/ResourceSystem.h"
+#include "units/UnitFactory.h"
 
 float BuildTime(UnitType type)
 {

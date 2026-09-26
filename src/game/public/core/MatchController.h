@@ -2,18 +2,18 @@
 
 #include <string>
 
-#include "AICommander.h"
-#include "Event.h"
-#include "GameCamera.h"
-#include "Hotkeys.h"
-#include "Menu.h"
-#include "MenuScreens.h"
-#include "Minimap.h"
-#include "PlayingInput.h"
-#include "SaveGame.h"
-#include "Simulation.h"
-#include "Skirmish.h"
-#include "Subsystem.h"
+#include "units/AICommander.h"
+#include "core/Event.h"
+#include "app/GameCamera.h"
+#include "app/Hotkeys.h"
+#include "app/Menu.h"
+#include "core/MenuScreens.h"
+#include "app/Minimap.h"
+#include "core/PlayingInput.h"
+#include "app/SaveGame.h"
+#include "core/Simulation.h"
+#include "app/Skirmish.h"
+#include "core/Subsystem.h"
 #include "raylib.h"
 
 class MatchController

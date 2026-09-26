@@ -1,7 +1,7 @@
-#include "Nodes.h"
+#include "economy/Nodes.h"
 
-#include "TileMap.h"
-#include "Unit.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
 
 inline constexpr float kGatherIronPerSecond = 10.0f;
 inline constexpr float kGatherOilPerSecond = 8.0f;

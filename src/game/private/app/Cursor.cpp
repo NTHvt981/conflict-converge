@@ -1,9 +1,9 @@
-#include "Cursor.h"
+#include "app/Cursor.h"
 
-#include "Extensions.h"
-#include "Selection.h"
-#include "Unit.h"
-#include "UnitStats.h"
+#include "units/Extensions.h"
+#include "app/Selection.h"
+#include "units/Unit.h"
+#include "units/UnitStats.h"
 
 CursorIntent PredictCursorIntent(Registry &registry, const Unit *selected, Vector2 worldPos)
 {

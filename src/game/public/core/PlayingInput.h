@@ -2,17 +2,17 @@
 
 #include <optional>
 
-#include "Audio.h"
-#include "Building.h"
-#include "GameCamera.h"
-#include "Hud.h"
-#include "InputManager.h"
-#include "Menu.h"
-#include "Minimap.h"
-#include "Nodes.h"
-#include "Registry.h"
-#include "Subsystem.h"
-#include "TileMap.h"
+#include "app/Audio.h"
+#include "economy/Building.h"
+#include "app/GameCamera.h"
+#include "app/Hud.h"
+#include "app/InputManager.h"
+#include "app/Menu.h"
+#include "app/Minimap.h"
+#include "economy/Nodes.h"
+#include "core/Registry.h"
+#include "core/Subsystem.h"
+#include "world/TileMap.h"
 
 // In-match input dispatch. Runs only while Playing; advances no simulation itself.
 class PlayingInput : public Subsystem

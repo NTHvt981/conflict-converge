@@ -6,15 +6,15 @@
 
 #include <RmlUi/Core/EventListener.h>
 
-#include "Art.h"
-#include "Event.h"
-#include "Hotkeys.h"
-#include "MenuScreens.h"
-#include "PlayingInput.h"
-#include "Production.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "Simulation.h"
+#include "app/Art.h"
+#include "core/Event.h"
+#include "app/Hotkeys.h"
+#include "core/MenuScreens.h"
+#include "core/PlayingInput.h"
+#include "economy/Production.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "core/Simulation.h"
 
 namespace Rml {
 class Context;

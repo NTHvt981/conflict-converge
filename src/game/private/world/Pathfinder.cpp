@@ -1,6 +1,6 @@
-#include "Pathfinder.h"
+#include "world/Pathfinder.h"
 
-#include "Extensions.h"
+#include "units/Extensions.h"
 
 #include <cmath>
 #include <queue>

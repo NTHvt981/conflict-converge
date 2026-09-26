@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "raylib.h"
-#include "Subsystem.h"
+#include "core/Subsystem.h"
 
 // Pure logic, headless-testable; Game owns draw calls and triggers.
 

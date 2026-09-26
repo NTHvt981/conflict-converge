@@ -4,7 +4,7 @@
 
 #include "../unit-tests/test_harness.h"
 
-#include "SpriteData.h"
+#include "app/SpriteData.h"
 
 namespace
 {

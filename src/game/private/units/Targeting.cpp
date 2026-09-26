@@ -1,10 +1,10 @@
-#include "Targeting.h"
+#include "units/Targeting.h"
 
-#include "Building.h"
-#include "Combat.h"
-#include "Extensions.h"
-#include "FogOfWar.h"
-#include "MathUtils.h"
+#include "economy/Building.h"
+#include "units/Combat.h"
+#include "units/Extensions.h"
+#include "world/FogOfWar.h"
+#include "core/MathUtils.h"
 
 float DistanceBetween(const Unit &a, const Unit &b)
 {

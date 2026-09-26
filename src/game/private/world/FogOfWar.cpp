@@ -1,6 +1,6 @@
-#include "FogOfWar.h"
+#include "world/FogOfWar.h"
 
-#include "CcAssert.h"
+#include "core/CcAssert.h"
 
 #include <cmath>
 

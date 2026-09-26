@@ -1,8 +1,8 @@
-#include "Minimap.h"
+#include "app/Minimap.h"
 
 #include <algorithm>
 
-#include "MathUtils.h"
+#include "core/MathUtils.h"
 
 void Minimap::Init(Rectangle rect)
 {

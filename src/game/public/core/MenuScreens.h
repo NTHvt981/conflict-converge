@@ -3,14 +3,14 @@
 #include <functional>
 #include <string>
 
-#include "AICommander.h"
-#include "Art.h"
-#include "Audio.h"
-#include "Event.h"
-#include "Hotkeys.h"
-#include "InputManager.h"
-#include "MapFile.h"
-#include "Menu.h"
+#include "units/AICommander.h"
+#include "app/Art.h"
+#include "app/Audio.h"
+#include "core/Event.h"
+#include "app/Hotkeys.h"
+#include "app/InputManager.h"
+#include "world/MapFile.h"
+#include "app/Menu.h"
 
 // World-transition callbacks: MenuScreens owns every menu pixel, Game owns
 // every world mutation.

@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "raylib.h"
-#include "Subsystem.h"
+#include "core/Subsystem.h"
 
 // Fully remappable Tier-1 hotkeys: single source of truth for action ids,
 // labels, and default keys. Game::BindShortcuts, the remap screen, and

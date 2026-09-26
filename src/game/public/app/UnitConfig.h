@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "UnitStats.h"
+#include "units/UnitStats.h"
 
 // Gimmick abilities (M1 schema, all optional, default off). Tolerant
 // per-field load over DefaultUnitConfig; unknown ability keys reject.

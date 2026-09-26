@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-#include "CcAssert.h"
+#include "core/CcAssert.h"
 
 // Auto-instanced service base (UE5-inspired, no reflection). Subsystems are
 // owned by a Subsystems container; lifetime is explicit Add + InitAll/Shutdown.

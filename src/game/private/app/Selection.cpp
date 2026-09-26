@@ -1,9 +1,9 @@
-#include "Selection.h"
+#include "app/Selection.h"
 
-#include "Building.h"
-#include "Extensions.h"
-#include "MathUtils.h"
-#include "Unit.h"
+#include "economy/Building.h"
+#include "units/Extensions.h"
+#include "core/MathUtils.h"
+#include "units/Unit.h"
 
 Entity PickUnitAt(Registry &registry, Vector2 worldPos)
 {

@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <vector>
 
-#include "Combat.h"
-#include "Registry.h"
-#include "Unit.h"
+#include "units/Combat.h"
+#include "core/Registry.h"
+#include "units/Unit.h"
 
 // Header-only: no TU, no premake regen.
 

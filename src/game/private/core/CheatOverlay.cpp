@@ -1,7 +1,7 @@
 #if defined(CC_DEBUG)
 
-#include "CheatOverlay.h"
-#include "Cheats.h"
+#include "core/CheatOverlay.h"
+#include "core/Cheats.h"
 #include "raylib.h"
 #include "rlImGui.h"
 #include "imgui.h"

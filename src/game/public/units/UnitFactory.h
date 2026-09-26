@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Event.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "Subsystem.h"
-#include "Unit.h"
+#include "core/Event.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "core/Subsystem.h"
+#include "units/Unit.h"
 #include "raylib.h"
 
 struct UnitCost

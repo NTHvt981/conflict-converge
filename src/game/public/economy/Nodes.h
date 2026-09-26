@@ -3,10 +3,10 @@
 #include <functional>
 #include <vector>
 
-#include "MathUtils.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "Subsystem.h"
+#include "core/MathUtils.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "core/Subsystem.h"
 
 class TileMap;
 

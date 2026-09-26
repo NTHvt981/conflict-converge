@@ -1,16 +1,16 @@
-#include "Skirmish.h"
+#include "app/Skirmish.h"
 
-#include "Building.h"
-#include "FogOfWar.h"
-#include "GameCamera.h"
-#include "MapFile.h"
-#include "Nodes.h"
-#include "Production.h"
-#include "Registry.h"
-#include "ResourceSystem.h"
-#include "TileMap.h"
-#include "Unit.h"
-#include "UnitFactory.h"
+#include "economy/Building.h"
+#include "world/FogOfWar.h"
+#include "app/GameCamera.h"
+#include "world/MapFile.h"
+#include "economy/Nodes.h"
+#include "economy/Production.h"
+#include "core/Registry.h"
+#include "economy/ResourceSystem.h"
+#include "world/TileMap.h"
+#include "units/Unit.h"
+#include "units/UnitFactory.h"
 
 SkirmishSpots SpotsForMap(const std::string &mapPath)
 {
