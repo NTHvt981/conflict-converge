@@ -47,7 +47,7 @@ void Simulation::ResetForMatch()
     lastDepletedCount_ = 0;
     lastQueueSize_ = 0;
     attackSfxTimer_ = 0.0f;
-    hasFactory_ = false;
+    hasBootcamp_ = false;
     replayRecording_ = true;
     replayTimer_ = 0.0f;
     replayIndex_ = 0;
@@ -60,7 +60,7 @@ void Simulation::ResetEdgePolls()
     lastDepletedCount_ = 0;
     lastQueueSize_ = 0;
     attackSfxTimer_ = 0.0f;
-    hasFactory_ = false;
+    hasBootcamp_ = false;
 }
 
 void Simulation::StopRecording()
@@ -78,21 +78,21 @@ int Simulation::ReplayCount() const
     return replayCount_;
 }
 
-void Simulation::RefreshFactory()
+void Simulation::RefreshBootcamp()
 {
-    hasFactory_ = false;
+    hasBootcamp_ = false;
     registry_.Each<Building>([&](Entity, const Building &building) {
-        if (building.teamID == 0 && building.type == BuildingType::Factory &&
+        if (building.teamID == 0 && building.type == BuildingType::Bootcamp &&
             building.state == BuildingState::Operational)
         {
-            hasFactory_ = true;
+            hasBootcamp_ = true;
         }
     });
 }
 
-bool Simulation::HasFactory() const
+bool Simulation::HasBootcamp() const
 {
-    return hasFactory_;
+    return hasBootcamp_;
 }
 
 void Simulation::Announce(EventType type)
@@ -207,8 +207,8 @@ void Simulation::Step(float dt)
     UpdateBaseIncome(registry_, resources_, dt, 0);
     nodes_.Update(dt);
     nodes_.GatherTick(registry_, resources_, dt, 0);
-    RefreshFactory();
-    if (hasFactory_)
+    RefreshBootcamp();
+    if (hasBootcamp_)
     {
         const Entity spawned = queue_.Update(factory_, resources_, 0, rallyPos_, dt);
         if (spawned != kInvalidEntity && autoAddGroupBit_ >= 0)

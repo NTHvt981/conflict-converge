@@ -164,10 +164,10 @@ void GameRenderer::DrawBuildings()
             const float w = static_cast<float>(size.x) * cc::TILE_SIZE;
             const float h = static_cast<float>(size.y) * cc::TILE_SIZE;
             const Color tint =
-                building.type == BuildingType::Base ? DARKGRAY : building.type == BuildingType::Factory ? BROWN : GRAY;
+                building.type == BuildingType::Base ? DARKGRAY : building.type == BuildingType::Bootcamp ? BROWN : GRAY;
             DrawRectangleV(corner, { w, h }, tint);
             const char *label =
-                building.type == BuildingType::Base ? "B" : building.type == BuildingType::Factory ? "F" : "D";
+                building.type == BuildingType::Base ? "B" : building.type == BuildingType::Bootcamp ? "C" : "D";
             Art::DrawUiText(&art_, label, static_cast<int>(corner.x) + 6, static_cast<int>(corner.y) + 4, 24, WHITE);
         }
         else

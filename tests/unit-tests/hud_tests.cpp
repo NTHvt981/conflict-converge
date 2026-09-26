@@ -40,7 +40,7 @@ void RunHudTests()
     CC_CHECK(summary.find("320/500") != std::string::npos);
     CC_CHECK(summary.find("Team 1") != std::string::npos);
 
-    // --- production tabs partition the factory menu order ---
+    // --- production tabs partition the production menu order ---
     CC_CHECK(ProductionCategoryOf(UnitType::RifleInfantry) == ProductionCategory::Infantry);
     CC_CHECK(ProductionCategoryOf(UnitType::AntiArmorInfantry) == ProductionCategory::Infantry);
     CC_CHECK(ProductionCategoryOf(UnitType::Engineer) == ProductionCategory::Infantry);
@@ -63,7 +63,7 @@ void RunHudTests()
     CC_CHECK(buildings.size() == 3);
     CC_CHECK(buildings[0] == BuildingType::Base);
     CC_CHECK(buildings[1] == BuildingType::ResourceDepot);
-    CC_CHECK(buildings[2] == BuildingType::Factory);
+    CC_CHECK(buildings[2] == BuildingType::Bootcamp);
 
     RunHudAbilityTests();
 }
@@ -165,12 +165,12 @@ void RunHudAbilityTests()
         CC_CHECK(!FindAbility(entries, AbilityId::Guard)->active);
     }
 
-    // --- factory selection enables Rally, depot explains the disabled one ---
+    // --- bootcamp selection enables Rally, depot explains the disabled one ---
     {
         Registry registry;
-        const Entity factory = AddHudBuilding(registry, BuildingType::Factory);
+        const Entity bootcamp = AddHudBuilding(registry, BuildingType::Bootcamp);
         const std::vector<AbilityEntry> entries =
-            AbilitiesForSelection(registry, { factory });
+            AbilitiesForSelection(registry, { bootcamp });
         CC_CHECK(FindAbility(entries, AbilityId::Rally)->enabled);
         CC_CHECK(FindAbility(entries, AbilityId::Demolish)->enabled);
         const Entity depot = AddHudBuilding(registry, BuildingType::ResourceDepot);
@@ -184,9 +184,9 @@ void RunHudAbilityTests()
     {
         Registry registry;
         const Entity soldier = AddHudUnit(registry, UnitType::RifleInfantry);
-        const Entity factory = AddHudBuilding(registry, BuildingType::Factory);
+        const Entity bootcamp = AddHudBuilding(registry, BuildingType::Bootcamp);
         const std::vector<AbilityEntry> entries =
-            AbilitiesForSelection(registry, { soldier, factory });
+            AbilitiesForSelection(registry, { soldier, bootcamp });
         CC_CHECK(entries.size() == 1 && entries[0].id == AbilityId::Halt);
     }
 }

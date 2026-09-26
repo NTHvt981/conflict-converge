@@ -119,7 +119,7 @@ const char *UnitFile(UnitType type)
     return "rifle_infantry";
 }
 
-const char *BuildingFile(BuildingType type)
+const char *BuildingFlatStem(BuildingType type)
 {
     switch (type)
     {
@@ -127,10 +127,23 @@ const char *BuildingFile(BuildingType type)
         return "base";
     case BuildingType::ResourceDepot:
         return "depot";
-    case BuildingType::Factory:
-        return "factory";
+    case BuildingType::Bootcamp:
+        return nullptr;
     }
-    return "depot";
+    return nullptr;
+}
+
+const char *BuildingMaskedStem(BuildingType type)
+{
+    switch (type)
+    {
+    case BuildingType::Bootcamp:
+        return "bootcamp_stack_down_left";
+    case BuildingType::Base:
+    case BuildingType::ResourceDepot:
+        return nullptr;
+    }
+    return nullptr;
 }
 
 const char *NodeFile(ResourceKind kind)
@@ -226,17 +239,36 @@ bool Art::Init(bool withDevice)
             }
         }
     }
-    for (int t = 0; t < 3; ++t)
+    for (int t = 0; t < static_cast<int>(BuildingType::Count); ++t)
     {
-        for (int team = 0; team < 2; ++team)
+        const BuildingType type = static_cast<BuildingType>(t);
+        if (const char *flat = BuildingFlatStem(type); flat != nullptr)
         {
-            std::snprintf(path, sizeof(path), "data/sprites/buildings/%s_%s.png",
-                          BuildingFile(static_cast<BuildingType>(t)), team == 0 ? "blue" : "red");
-            buildings_[t][team] = LoadTexture(path);
-            if (buildings_[t][team].id == 0)
+            for (int team = 0; team < 2; ++team)
+            {
+                std::snprintf(path, sizeof(path), "data/sprites/buildings/%s_%s.png", flat,
+                              team == 0 ? "blue" : "red");
+                buildingArt_[t].flat[team] = LoadTexture(path);
+                if (buildingArt_[t].flat[team].id == 0)
+                {
+                    fallback_ = true;
+                }
+            }
+        }
+        else if (const char *masked = BuildingMaskedStem(type); masked != nullptr)
+        {
+            std::snprintf(path, sizeof(path), "data/sprites/buildings/%s_base.png", masked);
+            buildingArt_[t].base = LoadTexture(path);
+            std::snprintf(path, sizeof(path), "data/sprites/buildings/%s_mask.png", masked);
+            buildingArt_[t].mask = LoadTexture(path);
+            if (buildingArt_[t].base.id == 0 || buildingArt_[t].mask.id == 0)
             {
                 fallback_ = true;
             }
+        }
+        else
+        {
+            fallback_ = true;
         }
     }
     for (int k = 0; k < 2; ++k)
@@ -334,15 +366,25 @@ void Art::Shutdown()
             }
         }
     }
-    for (int t = 0; t < 3; ++t)
+    for (int t = 0; t < static_cast<int>(BuildingType::Count); ++t)
     {
         for (int team = 0; team < 2; ++team)
         {
-            if (buildings_[t][team].id != 0)
+            if (buildingArt_[t].flat[team].id != 0)
             {
-                UnloadTexture(buildings_[t][team]);
-                buildings_[t][team] = {};
+                UnloadTexture(buildingArt_[t].flat[team]);
+                buildingArt_[t].flat[team] = {};
             }
+        }
+        if (buildingArt_[t].base.id != 0)
+        {
+            UnloadTexture(buildingArt_[t].base);
+            buildingArt_[t].base = {};
+        }
+        if (buildingArt_[t].mask.id != 0)
+        {
+            UnloadTexture(buildingArt_[t].mask);
+            buildingArt_[t].mask = {};
         }
     }
     for (int k = 0; k < 2; ++k)
@@ -592,7 +634,14 @@ void Art::DrawBuilding(BuildingType type, int teamID, int tileX, int tileY) cons
         return;
     }
     const Vector2 corner = cc::ToRaylib(cc::TileToWorld(tileX, tileY));
-    DrawTextureV(buildings_[static_cast<int>(type)][TeamSlot(teamID)], corner, WHITE);
+    const BuildingArt &art = buildingArt_[static_cast<int>(type)];
+    if (art.mask.id != 0)
+    {
+        DrawTextureV(art.base, corner, WHITE);
+        DrawTextureV(art.mask, corner, TeamTint(teamID));
+        return;
+    }
+    DrawTextureV(art.flat[TeamSlot(teamID)], corner, WHITE);
 }
 
 void Art::DrawTerrain(TerrainType type, Vector2 corner) const

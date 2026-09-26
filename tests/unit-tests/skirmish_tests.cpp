@@ -4,7 +4,7 @@
 #include "test_harness.h"
 
 #include "units/AICommander.h"
-#include "economy/Building.h" // UpdateBaseIncome, HasFactory placement
+#include "economy/Building.h" // UpdateBaseIncome, HasBootcamp placement
 #include "core/Event.h"
 #include "world/FogOfWar.h"
 #include "app/ui/GameCamera.h"
@@ -120,7 +120,7 @@ void RunSkirmishTests()
     CC_CHECK(TeamHasUnits(game.registry, 1));
     CC_CHECK(!game.queue.Empty());
     UpdateBuildingConstruction(game.registry, 20.0f); // sites -> Operational
-    CC_CHECK(game.ai.HasFactory());
+    CC_CHECK(game.ai.HasBootcamp());
     CC_CHECK(game.resources.iron >= 0 && game.resources.oil >= 0);
     // Camera + rally aim at the player home.
     const Vector2 expectTarget =
@@ -145,7 +145,7 @@ void RunSkirmishTests()
         UpdateBaseIncome(game.registry, game.resources, dt, 0);
         game.nodes.Update(dt);
         game.nodes.GatherTick(game.registry, game.resources, dt, 0);
-        if (game.ai.HasFactory())
+        if (game.ai.HasBootcamp())
         {
             game.queue.Update(game.factory, game.resources, 0, game.rallyPos, dt);
         }
@@ -228,9 +228,9 @@ void RunSkirmishTests()
         CC_CHECK(ally.enemyAI2.TeamID() == 1);
         CC_CHECK(ally.allyAI.CombatUnitCount() > 0); // allied guard fielded
         UpdateBuildingConstruction(ally.registry, 20.0f); // sites -> Operational
-        CC_CHECK(ally.allyAI.HasFactory());          // allied base produces
+        CC_CHECK(ally.allyAI.HasBootcamp());          // allied base produces
         CC_CHECK(ally.enemyAI2.CombatUnitCount() > 0);
-        CC_CHECK(ally.enemyAI2.HasFactory());
+        CC_CHECK(ally.enemyAI2.HasBootcamp());
         CC_CHECK(TeamHasUnits(ally.registry, 0));
         CC_CHECK(TeamHasUnits(ally.registry, 1));
         for (int i = 0; i < 600; ++i)
@@ -244,7 +244,7 @@ void RunSkirmishTests()
             UpdateBaseIncome(ally.registry, ally.resources, dt, 0);
             ally.nodes.Update(dt);
             ally.nodes.GatherTick(ally.registry, ally.resources, dt, 0);
-            if (ally.ai.HasFactory())
+            if (ally.ai.HasBootcamp())
             {
                 ally.queue.Update(ally.factory, ally.resources, 0, ally.rallyPos, dt);
             }

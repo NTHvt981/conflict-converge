@@ -2,7 +2,7 @@
 
 #include "test_harness.h"
 
-#include "units/AICommander.h" // factory-gate test
+#include "units/AICommander.h" // bootcamp-gate test
 #include "economy/Building.h" // PlaceBuilding, BuildingMaxHealth
 #include "core/Event.h"    // commander event routing
 #include "units/Extensions.h" // Orders pool (Unit split slice 1)
@@ -292,7 +292,7 @@ void RunOrdersTests()
         UpdateBuildingConstruction(registry, 20.0f); // Operational before wounding
         CC_CHECK(registry.Get<Building>(baseId)->health == 400.0f);
         CC_CHECK(BuildingMaxHealth(BuildingType::ResourceDepot) == 200.0f);
-        CC_CHECK(BuildingMaxHealth(BuildingType::Factory) == 350.0f);
+        CC_CHECK(BuildingMaxHealth(BuildingType::Bootcamp) == 350.0f);
         registry.Get<Building>(baseId)->health = 100.0f; // battle damage (simulated)
         const Entity engId = AddUnit(registry, Soldier(0, UnitType::Engineer, 5, 4));
         Unit *eng = registry.Get<Unit>(engId);
@@ -314,12 +314,12 @@ void RunOrdersTests()
             PlaceBuilding(registry, map, BuildingType::Base, 1, 7, 2);
         const Entity nearDepot =
             PlaceBuilding(registry, map, BuildingType::ResourceDepot, 1, 5, 2);
-        const Entity ownFactory =
-            PlaceBuilding(registry, map, BuildingType::Factory, 0, 2, 5);
+        const Entity ownBootcamp =
+            PlaceBuilding(registry, map, BuildingType::Bootcamp, 0, 2, 5);
         UpdateBuildingConstruction(registry, 20.0f); // targets must be Operational
         CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) == nearDepot);
         // Own structures are never targets.
-        CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) != ownFactory);
+        CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) != ownBootcamp);
         // Wrecks drop out: demolish the depot, the base becomes the target.
         DemolishBuilding(registry, map, nearDepot);
         CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) == farBase);
@@ -347,7 +347,7 @@ void RunOrdersTests()
         CC_CHECK(FindCombatState(registry, raiderId)->target == kInvalidEntity);
     }
 
-    // --- production dies with the factory; the queue stalls ---
+    // --- production dies with the bootcamp; the queue stalls ---
     {
         Registry registry;
         TileMap map(20, 15);
@@ -355,23 +355,23 @@ void RunOrdersTests()
         EventDispatcher events;
         AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 10, 10 }, { 2, 2 });
         ai.SetupBase();
-        UpdateBuildingConstruction(registry, 20.0f); // factory must be Operational
-        CC_CHECK(ai.HasFactory());
-        Entity factoryId = kInvalidEntity;
+        UpdateBuildingConstruction(registry, 20.0f); // bootcamp must be Operational
+        CC_CHECK(ai.HasBootcamp());
+        Entity bootcampId = kInvalidEntity;
         registry.Each<Building>([&](Entity id, const Building &b) {
-            if (b.teamID == 1 && b.type == BuildingType::Factory)
+            if (b.teamID == 1 && b.type == BuildingType::Bootcamp)
             {
-                factoryId = id;
+                bootcampId = id;
             }
         });
-        CC_CHECK(factoryId != kInvalidEntity);
-        CC_CHECK(DemolishBuilding(registry, map, factoryId));
-        CC_CHECK(!ai.HasFactory());
+        CC_CHECK(bootcampId != kInvalidEntity);
+        CC_CHECK(DemolishBuilding(registry, map, bootcampId));
+        CC_CHECK(!ai.HasBootcamp());
         for (int i = 0; i < 300; ++i)
         {
             ai.Update(1.0f / 60.0f);
         }
-        // Guard stands alone: no queue completions without a factory.
+        // Guard stands alone: no queue completions without a bootcamp.
         CC_CHECK(ai.CombatUnitCount() == 1);
     }
 

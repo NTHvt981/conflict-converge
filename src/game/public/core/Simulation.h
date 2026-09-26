@@ -36,8 +36,8 @@ public:
     void SetReplayCount(int count);
     int ReplayCount() const;
     // Re-runnable for the paused HUD.
-    void RefreshFactory();
-    bool HasFactory() const;
+    void RefreshBootcamp();
+    bool HasBootcamp() const;
     // Runs only while Playing.
     void Step(float dt);
 
@@ -73,7 +73,7 @@ private:
     int lastDepletedCount_ = 0;
     int lastQueueSize_ = 0;
     float attackSfxTimer_ = 0.0f;
-    bool hasFactory_ = false;
+    bool hasBootcamp_ = false;
     bool replayRecording_ = false;
     float replayTimer_ = 0.0f;
     int replayIndex_ = 0;

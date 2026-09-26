@@ -73,7 +73,7 @@ void RunSaveGameTests()
     src.camera.view.zoom = 1.5f;
     src.map.Set({ 6, 3 }, TerrainType::Water);
     PlaceBuilding(src.registry, src.map, BuildingType::Base, 0, 1, 10);
-    PlaceBuilding(src.registry, src.map, BuildingType::Factory, 1, 10, 10);
+    PlaceBuilding(src.registry, src.map, BuildingType::Bootcamp, 1, 10, 10);
     UpdateBuildingConstruction(src.registry, 20.0f); // save Operational structures
     src.nodes.SpawnNode(src.map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
     src.nodes.SpawnNode(src.map, ResourceKind::Oil, { 15, 12 }, 150.0f, 10.0f);
@@ -179,13 +179,13 @@ void RunSaveGameTests()
     CC_CHECK(Near(loadedHunterCombat->phaseTime, 0.05f));
     CC_CHECK(loadedHunterCombat->phaseTime == 0.05f); // JSON round-trips exact floats
 
-    int bases = 0, factories = 0;
+    int bases = 0, bootcamps = 0;
     dst.registry.Each<Building>([&](Entity, const Building &b) {
         bases += (b.type == BuildingType::Base) ? 1 : 0;
-        factories += (b.type == BuildingType::Factory) ? 1 : 0;
+        bootcamps += (b.type == BuildingType::Bootcamp) ? 1 : 0;
         CC_CHECK(b.health > 0.0f && b.health <= b.maxHealth); // HP roundtrips
     });
-    CC_CHECK(bases == 1 && factories == 1);
+    CC_CHECK(bases == 1 && bootcamps == 1);
 
     // --- loaded world keeps simulating (save is not a freeze-frame) ---
     const float hpBefore = lh->health;

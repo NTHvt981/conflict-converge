@@ -4,7 +4,7 @@
 
 A 2D real-time strategy demo built with [raylib](https://www.raylib.com/) (+ glm, raygui, cereal).
 Tile-grid movement and A\* orders, 7 unit types, damage-matrix combat, iron/oil economy with
-bases and factory queues, fog of war, map files, an AI commander (Easy/Medium/Hard), synthesized
+bases and production queues, fog of war, map files, an AI commander (Easy/Medium/Hard), synthesized
 audio, sprite art with a rectangle fallback, and a boot-to-menu shell with skirmish setup,
 settings persistence, and save slots. All milestones M1–M15 are complete — see
 [`docs/history/milestones.md`](docs/history/milestones.md) and [`docs/history/decisions.md`](docs/history/decisions.md).

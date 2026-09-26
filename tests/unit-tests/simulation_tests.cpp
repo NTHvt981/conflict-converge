@@ -101,7 +101,7 @@ void RunSimulationTests()
         fx.sim->Step(1.0f / 60.0f);
         fx.sim->Step(1.0f / 60.0f);
         fx.sim->Step(1.0f / 60.0f);
-        CC_CHECK(!fx.sim->HasFactory());
+        CC_CHECK(!fx.sim->HasBootcamp());
         CC_CHECK(fx.sim->ReplayCount() == 0);
         CC_CHECK(fx.shakeTrauma == 0.0f);
         CC_CHECK(fx.resources->iron == 0); // no Base: no base trickle
@@ -117,7 +117,7 @@ void RunSimulationTests()
         fx.sim->SetReplayCount(5);
         CC_CHECK(fx.sim->ReplayCount() == 5);
         fx.sim->ResetEdgePolls();
-        CC_CHECK(!fx.sim->HasFactory());
+        CC_CHECK(!fx.sim->HasBootcamp());
         CC_CHECK(fx.sim->ReplayCount() == 5); // polls only: recording untouched
     }
 }

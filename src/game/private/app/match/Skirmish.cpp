@@ -207,11 +207,11 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 		{
 			trySpiral(BuildingType::ResourceDepot, home);
 		}
-		const cc::IVec2 factorySpots[] = { { 0, 2 }, { 3, 0 }, { -2, 2 } };
+		const cc::IVec2 bootcampSpots[] = { { 0, 2 }, { 3, 0 }, { -2, 2 } };
 		placed = false;
-		for (const cc::IVec2 &spot : factorySpots)
+		for (const cc::IVec2 &spot : bootcampSpots)
 		{
-			if (trySite(BuildingType::Factory, { home.x + spot.x, home.y + spot.y }) !=
+			if (trySite(BuildingType::Bootcamp, { home.x + spot.x, home.y + spot.y }) !=
 				kInvalidEntity)
 			{
 				placed = true;
@@ -220,7 +220,7 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 		}
 		if (!placed)
 		{
-			trySpiral(BuildingType::Factory, home);
+			trySpiral(BuildingType::Bootcamp, home);
 		}
 	};
 	placeBase(0, spots.playerHome);

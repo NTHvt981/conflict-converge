@@ -41,7 +41,7 @@ unit roles and pacing, not faction asymmetry. All values from
 |----------|-----------|----|
 | Base | 2x2 | 400 (base income: 2 iron/s + 1 oil/s) |
 | Depot | 1x1 | 200 |
-| Factory | 2x2 | 350 |
+| Bootcamp | 2x2 | 350 |
 
 Harvest: 10 iron/s or 8 oil/s per Engineer on a live node. Starting funds:
 1000 iron / 500 oil (both sides, fair rules).
@@ -62,7 +62,7 @@ Harvest: 10 iron/s or 8 oil/s per Engineer on a live node. Starting funds:
   Medium's LightTanks kite and accumulate instead of trading at contact.
 - Medium-vs-Hard, same arena: Hard wins in 15912 frames (~265 sim-seconds);
   no stalemate. Even attrition to ~t=180, then Hard's production compounds
-  (10-12 fielded vs 2-3) once Medium's Factory falls. Kill telemetry is
+   (10-12 fielded vs 2-3) once Medium's Bootcamp falls. Kill telemetry is
   tracked per rung in the soak (`RunAISoak` helper).
 - Tune deltas that earned the second rung (each measured against the soak,
   one variable at a time):
@@ -89,10 +89,10 @@ Harvest: 10 iron/s or 8 oil/s per Engineer on a live node. Starting funds:
   decisively in 4916 frames (~82 sim-seconds); no stalemate. Kill telemetry
   showed the pre-tune equilibrium (44-17 kills over 3 min, counts flat:
   serial production out-replaced attrition), so the tune targeted the real
-  terminator — demolition: Base 600→400, Factory 500→350, Depot 250→200
+   terminator — demolition: Base 600→400, Bootcamp 500→350, Depot 250→200
   (a LightTank levels a Base in ~20s now). Unit stats untouched.
 - Drivers of decisiveness, in order: attack-move waves (plain move orders
   walked past defenders — measured walk-through stalemate), destructible
-  production (razed AI stays down via factory-gated queues), fair-rules
+   production (razed AI stays down via production-gated queues), fair-rules
   harvest routing (AI crews used to feed the player pool).
 - Retune if playtesting disagrees; the soak asserts termination + Medium win.

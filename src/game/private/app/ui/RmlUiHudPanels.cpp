@@ -94,7 +94,7 @@ void RmlUiHud::RefreshHud()
         }
     }
 
-    const bool showRows = sim_.HasFactory();
+    const bool showRows = sim_.HasBootcamp();
     if (Rml::Element *stub = hudDoc_->GetElementById("need-factory"))
     {
         stub->SetProperty("display", showRows ? "none" : "block");
@@ -133,7 +133,7 @@ void RmlUiHud::RefreshHud()
 void RmlUiHud::RefreshFactory()
 {
     char label[64];
-    const bool showRows = sim_.HasFactory();
+    const bool showRows = sim_.HasBootcamp();
     const bool infantryTab = factoryTab_ == ProductionTab::Infantry;
     const bool vehiclesTab = factoryTab_ == ProductionTab::Vehicles;
     const bool buildingsTab = factoryTab_ == ProductionTab::Buildings;

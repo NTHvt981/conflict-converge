@@ -66,7 +66,7 @@ void RunCommandUiTests()
     }
 
     // --- production menu covers all 8 buildables exactly once ---
-    // (PrototypeInfantry is sandbox-only, never in factory menus.)
+    // (PrototypeInfantry is sandbox-only, never in production menus.)
     {
         const std::vector<UnitType> order = ProductionMenuOrder();
         CC_CHECK(order.size() == 8);

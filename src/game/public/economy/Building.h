@@ -14,7 +14,7 @@ enum class BuildingType
 {
     Base,
     ResourceDepot,
-    Factory,
+    Bootcamp,
     Count
 };
 

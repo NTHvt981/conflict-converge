@@ -66,7 +66,7 @@ ConfirmChoice GameRenderer::DrawHudAndOverlays(int screenWidth, int screenHeight
 {
     DrawDragPreviews();
     DrawMinimapOverlays(screenWidth, screenHeight);
-    sim_.RefreshFactory();
+    sim_.RefreshBootcamp();
     ConfirmChoice hudChoice = ConfirmChoice::None;
     if (rmlUiHud_.IsReady())
     {

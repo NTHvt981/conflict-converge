@@ -93,11 +93,11 @@ int AICommander::WavesLaunched() const
     return wavesLaunched_;
 }
 
-bool AICommander::HasFactory() const
+bool AICommander::HasBootcamp() const
 {
     bool found = false;
     registry_.Each<Building>([&](Entity, const Building &building) {
-        if (building.teamID == teamID_ && building.type == BuildingType::Factory &&
+        if (building.teamID == teamID_ && building.type == BuildingType::Bootcamp &&
             building.state == BuildingState::Operational)
         {
             found = true;
@@ -151,11 +151,11 @@ void AICommander::SetupBase()
             break;
         }
     }
-    const cc::IVec2 factorySpots[] = { { 0, 2 }, { 3, 0 },  { -2, 2 }, { 0, -3 },
-                                       { -2, 0 }, { 0, -2 }, { 2, -2 }, { -3, 0 } };
-    for (const cc::IVec2 &spot : factorySpots)
+    const cc::IVec2 bootcampSpots[] = { { 0, 2 }, { 3, 0 },  { -2, 2 }, { 0, -3 },
+                                        { -2, 0 }, { 0, -2 }, { 2, -2 }, { -3, 0 } };
+    for (const cc::IVec2 &spot : bootcampSpots)
     {
-        if (PlaceBuilding(registry_, map_, BuildingType::Factory, teamID_, homeTile_.x + spot.x,
+        if (PlaceBuilding(registry_, map_, BuildingType::Bootcamp, teamID_, homeTile_.x + spot.x,
                           homeTile_.y + spot.y, &nodes_) != kInvalidEntity)
         {
             break;
@@ -191,7 +191,7 @@ void AICommander::Update(float dt)
     }
     UpdateBaseIncome(registry_, resources_, dt, teamID_);
     nodes_.GatherTick(registry_, resources_, dt, teamID_);
-    if (HasFactory())
+    if (HasBootcamp())
     {
         queue_.Update(factory_, resources_, teamID_,
                       cc::ToRaylib(cc::TileToWorld(rallyTile_.x, rallyTile_.y)), dt);

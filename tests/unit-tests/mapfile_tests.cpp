@@ -259,7 +259,7 @@ void RunMapFileTests()
                                    home.y) != kInvalidEntity);
             CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::ResourceDepot, 0,
                                    home.x + 2, home.y) != kInvalidEntity);
-            CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::Factory, 0, home.x,
+            CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::Bootcamp, 0, home.x,
                                    home.y + 2) != kInvalidEntity);
             AICommander demoAI(demoRegistry, demoMap, demoNodes, demoEvents, 1,
                                AIDifficulty::Medium, demo.aiSpawns[0], home);
@@ -272,7 +272,7 @@ void RunMapFileTests()
                     ++aiBuildings;
                 }
             });
-            CC_CHECK(aiBuildings == 3); // AI factory fits the corner too
+            CC_CHECK(aiBuildings == 3); // AI bootcamp fits the corner too
         }
     }
 

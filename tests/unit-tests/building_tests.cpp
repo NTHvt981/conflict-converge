@@ -14,7 +14,7 @@ void RunBuildingTests()
     // --- footprints ---
     CC_CHECK(Footprint(BuildingType::Base) == cc::IVec2(2, 2));
     CC_CHECK(Footprint(BuildingType::ResourceDepot) == cc::IVec2(1, 1));
-    CC_CHECK(Footprint(BuildingType::Factory) == cc::IVec2(2, 2));
+    CC_CHECK(Footprint(BuildingType::Bootcamp) == cc::IVec2(2, 2));
 
     // --- valid placement marks terrain + stores the component ---
     Registry registry;
@@ -32,7 +32,7 @@ void RunBuildingTests()
     CC_CHECK(map.Get({ 3, 1 }) == TerrainType::Grass);
 
     // --- overlap with the placed footprint is rejected ---
-    CC_CHECK(PlaceBuilding(registry, map, BuildingType::Factory, 0, 2, 2) == kInvalidEntity);
+    CC_CHECK(PlaceBuilding(registry, map, BuildingType::Bootcamp, 0, 2, 2) == kInvalidEntity);
     CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, 0, 1, 1) ==
              kInvalidEntity);
 
@@ -52,13 +52,13 @@ void RunBuildingTests()
     CC_CHECK(!DemolishBuilding(registry, map, kInvalidEntity));
 
     // --- the freed footprint accepts a new building ---
-    CC_CHECK(PlaceBuilding(registry, map, BuildingType::Factory, 1, 1, 1) != kInvalidEntity);
+    CC_CHECK(PlaceBuilding(registry, map, BuildingType::Bootcamp, 1, 1, 1) != kInvalidEntity);
 
     // --- base income: per-Operational-Base trickle, team-filtered ---
     Registry economy;
     TileMap emap(20, 15);
     PlaceBuilding(economy, emap, BuildingType::Base, 0, 0, 0);
-    PlaceBuilding(economy, emap, BuildingType::Factory, 0, 5, 5); // no income
+    PlaceBuilding(economy, emap, BuildingType::Bootcamp, 0, 5, 5); // no income
     PlaceBuilding(economy, emap, BuildingType::Base, 1, 10, 10);
     UpdateBuildingConstruction(economy, 20.0f); // sites -> Operational (game ticks this)
     ResourceSystem resources;
@@ -93,7 +93,7 @@ void RunBuildingTests()
         CC_CHECK(baseB->health == 0.0f && baseB->maxHealth == 400.0f);
         CC_CHECK(BuildingBuildTime(BuildingType::Base) == 3.0f);
         CC_CHECK(BuildingBuildTime(BuildingType::ResourceDepot) == 2.0f);
-        CC_CHECK(BuildingBuildTime(BuildingType::Factory) == 4.0f);
+        CC_CHECK(BuildingBuildTime(BuildingType::Bootcamp) == 4.0f);
         // Half the depot's build time: proportional ramp, still building.
         UpdateBuildingConstruction(site, 1.0f);
         CC_CHECK(depotB->state == BuildingState::UnderConstruction);
@@ -194,23 +194,23 @@ void RunBuildingTests()
     {
         Registry lots;
         TileMap lotsMap(20, 15);
-        const Entity facA =
-            PlaceBuilding(lots, lotsMap, BuildingType::Factory, 0, 1, 1);
-        const Entity facB =
-            PlaceBuilding(lots, lotsMap, BuildingType::Factory, 0, 5, 5);
+        const Entity bootA =
+            PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 0, 1, 1);
+        const Entity bootB =
+            PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 0, 5, 5);
         const Entity depot =
             PlaceBuilding(lots, lotsMap, BuildingType::ResourceDepot, 0, 10, 10);
-        const Entity foeFac =
-            PlaceBuilding(lots, lotsMap, BuildingType::Factory, 1, 12, 12);
-        CC_CHECK(facA != kInvalidEntity && facB != kInvalidEntity);
-        CC_CHECK(depot != kInvalidEntity && foeFac != kInvalidEntity);
-        CC_CHECK(SelectAllBuildings(lots, BuildingType::Factory, 0) == 2);
-        CC_CHECK(lots.Get<Building>(facA)->isSelected);
-        CC_CHECK(lots.Get<Building>(facB)->isSelected);
+        const Entity foeBoot =
+            PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 1, 12, 12);
+        CC_CHECK(bootA != kInvalidEntity && bootB != kInvalidEntity);
+        CC_CHECK(depot != kInvalidEntity && foeBoot != kInvalidEntity);
+        CC_CHECK(SelectAllBuildings(lots, BuildingType::Bootcamp, 0) == 2);
+        CC_CHECK(lots.Get<Building>(bootA)->isSelected);
+        CC_CHECK(lots.Get<Building>(bootB)->isSelected);
         CC_CHECK(!lots.Get<Building>(depot)->isSelected);
-        CC_CHECK(!lots.Get<Building>(foeFac)->isSelected);
+        CC_CHECK(!lots.Get<Building>(foeBoot)->isSelected);
         CC_CHECK(SelectAllBuildings(lots, BuildingType::ResourceDepot, 0) == 1);
-        CC_CHECK(!lots.Get<Building>(facA)->isSelected); // replaced
+        CC_CHECK(!lots.Get<Building>(bootA)->isSelected); // replaced
         CC_CHECK(lots.Get<Building>(depot)->isSelected);
     }
 

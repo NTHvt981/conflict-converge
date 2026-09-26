@@ -16,7 +16,7 @@ cc::IVec2 Footprint(BuildingType type)
         return { 2, 2 };
     case BuildingType::ResourceDepot:
         return { 1, 1 };
-    case BuildingType::Factory:
+    case BuildingType::Bootcamp:
         return { 2, 2 };
     }
     return { 1, 1 };
@@ -30,7 +30,7 @@ float BuildingMaxHealth(BuildingType type)
         return 400.0f;
     case BuildingType::ResourceDepot:
         return 200.0f;
-    case BuildingType::Factory:
+    case BuildingType::Bootcamp:
         return 350.0f;
     }
     return 200.0f;
@@ -202,7 +202,7 @@ float BuildingBuildTime(BuildingType type)
         return 3.0f;
     case BuildingType::ResourceDepot:
         return 2.0f;
-    case BuildingType::Factory:
+    case BuildingType::Bootcamp:
         return 4.0f;
     case BuildingType::Count:
         return 3.0f;

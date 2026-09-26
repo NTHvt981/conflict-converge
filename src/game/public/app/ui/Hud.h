@@ -29,7 +29,7 @@ constexpr float kHoverTooltipDelay = 0.4f;
 bool UpdateHoverTooltip(HoverTooltipState &state, Entity hovered, float dt, float delay);
 std::vector<std::string> UnitTooltipLines(const Unit &unit, const Orders &orders);
 
-// Factory production UI. Display order for the 8 unit types; per-tab
+// Production UI. Display order for the 8 unit types; per-tab
 // filters partition that order. Building tab enters placement mode.
 std::vector<UnitType> ProductionMenuOrder();
 enum class ProductionCategory

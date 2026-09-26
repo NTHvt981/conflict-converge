@@ -8,7 +8,7 @@ times, then go operational — with a world-space progress bar.
 ## Behavior
 
 - `PlaceBuilding` starts `UnderConstruction`; `UpdateBuildingConstruction`
-  ramps health proportionally (Base 3s / Depot 2s / Factory 4s), flipping
+   ramps health proportionally (Base 3s / Depot 2s / Bootcamp 4s), flipping
   to `Operational` at exact max. Ticked every sim step.
 - Income, targeting, and repair all gate on `== Operational`, unchanged.
 - Loaded sites restart at 0 HP (construction timer isn't serialized);
@@ -28,4 +28,4 @@ times, then go operational — with a world-space progress bar.
 
 - `UnderConstruction` appended AFTER `Destroyed` so wire values 0/1
   decode like legacy saves (save-compat by enum order).
-- Short build times: a 12s factory broke the soak ladder.
+- Short build times: a 12s production building broke the soak ladder.

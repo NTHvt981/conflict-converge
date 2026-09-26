@@ -66,7 +66,7 @@ private:
     InputManager &input_;
     Audio &audio_;
     const MenuSettings &settings_;
-    // Factory rally point (owned by Game: sim + load path share it).
+    // Production rally point (owned by Game: sim + load path share it).
     Vector2 &rallyPos_;
     std::optional<BuildingType> placingType_;
     bool areaRepairMode_ = false;

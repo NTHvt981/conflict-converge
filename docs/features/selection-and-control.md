@@ -12,7 +12,7 @@ pure helpers in `Selection`/`Formation` covered headless.
 - Click selects, drag-box selects (`Shift` extends); sub-6px drags resolve
   as clicks (`SelectInRect`, center-hit).
 - Control groups: `Ctrl+N` assign, `Shift+N` add, `N` recall,
-  multi-membership via `Unit.controlGroups` bitmask; factory output
+   multi-membership via `Unit.controlGroups` bitmask; production output
   auto-adds to a group armed with `Ctrl+Shift+N`.
 - Double-click selects all same-type units on screen (0.35s / 8px pair
   window, team 0); whole-map variant stays on `C`.

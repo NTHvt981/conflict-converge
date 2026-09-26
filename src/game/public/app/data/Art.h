@@ -159,7 +159,13 @@ private:
     std::unordered_map<std::string, Texture2D> atlas_; // SpriteTextureInfo.id -> sheet
     Particles particles_;
     Texture2D units_[static_cast<int>(UnitType::Count)][2][2] = {}; // [type][team][frame]
-    Texture2D buildings_[3][2] = {}; // [type][team]
+    struct BuildingArt
+    {
+        Texture2D flat[2] = {}; // Base/Depot: blue/red
+        Texture2D base = {};    // Bootcamp: team-neutral base
+        Texture2D mask = {};    // Bootcamp: team-color mask
+    };
+    BuildingArt buildingArt_[static_cast<int>(BuildingType::Count)];
     Texture2D nodes_[2] = {};        // [kind]
     Texture2D icons_[2] = {};        // [kind]
     Texture2D terrain_[4] = {};      // [TerrainSlot]: grass/water/forest/rock

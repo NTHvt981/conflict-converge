@@ -11,7 +11,7 @@ splits at `EndMode2D`.
 ## Behavior
 
 - `Simulation::Step` owns the per-frame match tick (construction,
-  retreat, factory refresh, replay counters, match reset/stop).
+  retreat, bootcamp refresh, replay counters, match reset/stop).
 - `PlayingInput::Dispatch` owns all gesture handling, held by `Game`.
 - `MenuScreens::Draw` owns the menu branch, held by `Game`.
 - Render: `Game::DrawWorld` + `Game::DrawHudAndOverlays`, split at

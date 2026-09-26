@@ -52,7 +52,7 @@ void WipeTeam(Registry &registry, int team)
     });
 }
 
-// Raze a side's production first: otherwise the factory queue replaces the
+// Raze a side's production first: otherwise the production queue replaces the
 // wiped units mid-scenario and the outcome never fires (correct game
 // behavior — games end by demolition, not by one good battle). Real
 // demolition (tiles freed) so the mop-up force can path into the base.

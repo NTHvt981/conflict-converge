@@ -37,7 +37,7 @@ body {
 			<div id="abilities-grid"><button class="ab-btn" id="ab-hold">Hold</button><button class="ab-btn" id="ab-guard">Guard</button><button class="ab-btn" id="ab-patrol">Patrol</button><button class="ab-btn" id="ab-attackmove">AtkMove</button><button class="ab-btn" id="ab-halt">Halt</button><button class="ab-btn" id="ab-repair">Repair</button><button class="ab-btn" id="ab-heal">Heal</button><button class="ab-btn" id="ab-rally">Rally</button><button class="ab-btn" id="ab-demolish">Raze</button></div>
 		</div>
 		<div class="hud-panel" id="hud-factory">
-			<div class="hud-title">Factory</div>
+			<div class="hud-title">Production</div>
 			<div id="factory-tabs"><button class="tab-btn" id="tab-infantry">Inf</button><button class="tab-btn" id="tab-vehicles">Veh</button><button class="tab-btn" id="tab-buildings">Bld</button></div>
 			<div id="rows-infantry">
 				<div class="fac-row">
@@ -83,10 +83,10 @@ body {
 					<button class="fac-btn" id="place-1">Depot</button>
 				</div>
 				<div class="fac-row">
-					<button class="fac-btn" id="place-2">Factory</button>
+					<button class="fac-btn" id="place-2">Bootcamp</button>
 				</div>
 			</div>
-			<div class="hud-line" id="need-factory">Need Factory</div>
+			<div class="hud-line" id="need-factory">Need Bootcamp</div>
 			<div id="fac-queue-row">
 				<span id="queue-line">Queue: 2</span>
 				<button id="btn-cancel">Cancel</button>
@@ -115,7 +115,7 @@ body {
 			<p class="hint-line">V Patrol</p>
 			<p class="hint-line">R Rally</p>
 			<p class="hint-line">C SelectType</p>
-			<p class="hint-line">F Factories</p>
+			<p class="hint-line">F Production</p>
 			<p class="hint-line">B SlowMove</p>
 			<p class="hint-line">Z Place</p>
 			<p class="hint-line">Alt+RDrag Line</p>

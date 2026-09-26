@@ -41,8 +41,8 @@ const char *BuildingTypeName(BuildingType type)
         return "Base";
     case BuildingType::ResourceDepot:
         return "Depot";
-    case BuildingType::Factory:
-        return "Factory";
+    case BuildingType::Bootcamp:
+        return "Bootcamp";
     }
     return "Unknown";
 }
@@ -113,7 +113,7 @@ std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys)
     lines.push_back(HintKey(hotkeys, "Patrol") + " Patrol");
     lines.push_back(HintKey(hotkeys, "Rally") + " Rally");
     lines.push_back(HintKey(hotkeys, "SelectType") + " SelectType");
-    lines.push_back(HintKey(hotkeys, "SelectFactories") + " Factories");
+    lines.push_back(HintKey(hotkeys, "SelectFactories") + " Production");
     lines.push_back(HintKey(hotkeys, "SlowestSpeed") + " SlowMove");
     lines.push_back(HintKey(hotkeys, "AreaBuild") + " Place");
     lines.push_back("Alt+RDrag Line");
@@ -239,7 +239,7 @@ std::vector<UnitType> VehicleMenuOrder()
 
 std::vector<BuildingType> BuildingMenuOrder()
 {
-    return { BuildingType::Base, BuildingType::ResourceDepot, BuildingType::Factory };
+    return { BuildingType::Base, BuildingType::ResourceDepot, BuildingType::Bootcamp };
 }
 
 const char *AbilityName(AbilityId id)
@@ -338,18 +338,18 @@ std::vector<AbilityEntry> AbilitiesForSelection(const Registry &registry,
     }
     if (!buildings.empty())
     {
-        bool anyFactory = false;
+        bool anyBootcamp = false;
         for (Entity entity : buildings)
         {
             if (const Building *building = registry.Get<Building>(entity);
-                building != nullptr && building->type == BuildingType::Factory)
+                building != nullptr && building->type == BuildingType::Bootcamp)
             {
-                anyFactory = true;
+                anyBootcamp = true;
             }
         }
         return {
-            AbilityEntry{ AbilityId::Rally, anyFactory, false,
-                          anyFactory ? std::string{} : std::string{ "Requires Factory" } },
+            AbilityEntry{ AbilityId::Rally, anyBootcamp, false,
+                          anyBootcamp ? std::string{} : std::string{ "Requires Bootcamp" } },
             AbilityEntry{ AbilityId::Demolish },
         };
     }

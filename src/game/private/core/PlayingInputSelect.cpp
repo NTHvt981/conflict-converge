@@ -127,7 +127,7 @@ void PlayingInput::HandlePlacementKeys()
         }
         else if (IsKeyPressed(KEY_THREE))
         {
-            placingType_ = BuildingType::Factory;
+            placingType_ = BuildingType::Bootcamp;
         }
     }
 }

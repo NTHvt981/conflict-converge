@@ -176,7 +176,7 @@ void ShortcutBindings::Bind()
         {
             return;
         }
-        SelectAllBuildings(registry_, BuildingType::Factory, 0);
+        SelectAllBuildings(registry_, BuildingType::Bootcamp, 0);
     });
     input_.shortcuts.Bind(hotkeys_.KeyFor("SlowestSpeed"), [&] {
         if (worldActive_ && menu_.state == MenuState::Playing)

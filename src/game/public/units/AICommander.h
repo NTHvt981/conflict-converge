@@ -57,7 +57,7 @@ public:
     int WavesLaunched() const;
     bool HasScouted() const;
     cc::IVec2 LastSeenEnemy() const;
-    bool HasFactory() const;
+    bool HasBootcamp() const;
 
 private:
     void MaintainHarvesters();
