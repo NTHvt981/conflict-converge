@@ -173,6 +173,12 @@ void RunFootprintTests()
         ApplyBaseStats(ifv);
         CC_CHECK(ifv.footprintWidth == 2);
         CC_CHECK(ifv.footprintHeight == 2);
+
+        Unit light;
+        light.type = UnitType::LightTank;
+        ApplyBaseStats(light);
+        CC_CHECK(light.footprintWidth == 1);
+        CC_CHECK(light.footprintHeight == 1);
     }
 
     // --- 1x1 pathfinding still works (backward compat) ---

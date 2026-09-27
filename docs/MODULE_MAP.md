@@ -138,7 +138,8 @@ app/match: Menu, Skirmish
 - `Hud.h` - Pure text builders (`UnitTypeName`, `FormatResources`, `SelectionSummary`,
   `ShortcutHintLines`, production category/tab orders, `AbilitiesForSelection`
   panel data); the RmlUi HUD owns the panels
-- `Art.h` - M12 sprites + particles (`data/sprites/` via `tools/gen_sprites.py`); `Init(false)`
+- `Art.h` - M12 sprites + particles (`data/sprites/` via `tools/gen_sprites.py`) + tank
+  body/head layered atlas art; `Init(false)`
   is the headless rectangle-fallback path
 - `SpriteData.h` - Sprite-atlas data (JSON in `data/configs/`: textures/sprites/animations
   merged at load); `LoadSpriteSheet`/`ParseSpriteSheetJson` + name/id lookups

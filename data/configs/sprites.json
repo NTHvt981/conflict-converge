@@ -66,6 +66,18 @@
       "origin": { "x": 16, "y": 16 } },
     { "texture": "prototype_infantry_run", "prefix": "prototypeinfantry_walk", "startId": 300,
       "rows": 4, "cols": 8, "cellW": 32, "cellH": 32,
-      "origin": { "x": 16, "y": 16 } }
+      "origin": { "x": 16, "y": 16 } },
+    { "texture": "lighttank_body_idle_base", "prefix": "lighttank_body_idle", "startId": 1500,
+      "rows": 1, "cols": 8, "cellW": 80, "cellH": 64,
+      "origin": { "x": 40, "y": 32 }, "maskGridStartId": 1550 },
+    { "texture": "lighttank_body_idle_mask", "prefix": "lighttank_body_idle_mask", "startId": 1550,
+      "rows": 1, "cols": 8, "cellW": 80, "cellH": 64,
+      "origin": { "x": 40, "y": 32 } },
+    { "texture": "lighttank_head_base", "prefix": "lighttank_head", "startId": 1600,
+      "rows": 1, "cols": 8, "cellW": 48, "cellH": 48,
+      "origin": { "x": 24, "y": 31 }, "maskGridStartId": 1650 },
+    { "texture": "lighttank_head_mask", "prefix": "lighttank_head_mask", "startId": 1650,
+      "rows": 1, "cols": 8, "cellW": 48, "cellH": 48,
+      "origin": { "x": 24, "y": 31 } }
   ]
 }

@@ -282,6 +282,32 @@ void RunArtTests()
         CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f, 0).empty());
     }
 
+    // --- layered tank art: lighttank body/head grids, heavytank fallback ---
+    {
+        Art art;
+        CC_CHECK(!art.HasTankArt(UnitType::LightTank));
+        CC_CHECK(art.LoadAtlas());
+        CC_CHECK(art.HasTankArt(UnitType::LightTank));
+        CC_CHECK(!art.HasTankArt(UnitType::HeavyTank));
+        CC_CHECK(art.TankBodySprite(UnitType::LightTank, 0) == "lighttank_body_idle_0_0");
+        CC_CHECK(art.TankBodySprite(UnitType::LightTank, 7) == "lighttank_body_idle_0_7");
+        CC_CHECK(art.TankBodySprite(UnitType::LightTank, 9) == "lighttank_body_idle_0_6");
+        CC_CHECK(art.TankHeadSprite(UnitType::LightTank, 0) == "lighttank_head_0_0");
+        CC_CHECK(art.TankHeadSprite(UnitType::LightTank, 3) == "lighttank_head_0_3");
+        CC_CHECK(art.TankHeadSprite(UnitType::LightTank, -1) == "lighttank_head_0_6");
+        CC_CHECK(art.TankBodySprite(UnitType::HeavyTank, 0).empty());
+        CC_CHECK(art.TankHeadSprite(UnitType::HeavyTank, 0).empty());
+        SpriteSheetData sheet;
+        CC_CHECK(LoadSpriteSheet(sheet));
+        const SpriteDefInfo *body = FindSpriteByName(sheet, "lighttank_body_idle_0_6");
+        CC_CHECK(body != nullptr);
+        CC_CHECK(body->maskSprite == 1556);
+        Rectangle frame = {};
+        CC_CHECK(!art.SpriteDrawRect("lighttank_body_idle_0_0", { 0.0f, 0.0f }, frame));
+        art.DrawAtlasFrame(art.TankBodySprite(UnitType::LightTank, 0), { 0.0f, 0.0f },
+                           WHITE); // no crash
+    }
+
     // --- BaseArtScale: prototype infantry's 2x is baked into its 32px art ---
     {
         CC_CHECK(Art::BaseArtScale(UnitType::PrototypeInfantry) == 1.0f);

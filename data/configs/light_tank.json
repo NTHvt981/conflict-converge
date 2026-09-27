@@ -11,7 +11,7 @@
     "sightRange": 320
   },
   "collision": {
-    "bounds": { "left": 0, "top": 0, "right": 2, "bottom": 2 },
+    "bounds": { "left": 0, "top": 0, "right": 1, "bottom": 1 },
     "origin": { "x": 0, "y": 0 }
   },
   "art": {

@@ -33,7 +33,6 @@ cc::IVec2 UnitFootprint(UnitType type)
     {
     case UnitType::IFV:
     case UnitType::Artillery:
-    case UnitType::LightTank:
     case UnitType::HeavyTank:
         return { 2, 2 };
     default:

@@ -18,7 +18,7 @@ struct UnitStats
 
 const UnitStats &BaseStats(UnitType type);
 
-// Anchor footprint in tiles: vehicles span 2x2, foot units 1x1.
+// Anchor footprint in tiles: LightTank is 1x1; IFV/Artillery/HeavyTank span 2x2.
 cc::IVec2 UnitFootprint(UnitType type);
 
 // Preserves position, team, selection, and orders.

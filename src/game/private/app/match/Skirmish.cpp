@@ -304,17 +304,15 @@ bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath)
 	const cc::IVec2 home = data.playerSpawns[0];
 	const cc::IVec2 free = NearestFreeTile(map, home.x, home.y);
 	factory.SpawnPrepaid(UnitType::Engineer, 0,
-		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
+		cc::ToRaylib(cc::TileToWorld(free.x - 1, free.y)));
 	factory.SpawnPrepaid(UnitType::RifleInfantry, 0,
-		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
+		cc::ToRaylib(cc::TileToWorld(free.x, free.y - 1)));
 	factory.SpawnPrepaid(UnitType::AntiArmorInfantry, 0,
-		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
+		cc::ToRaylib(cc::TileToWorld(free.x + 1, free.y - 1)));
 	factory.SpawnPrepaid(UnitType::Medic, 0,
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
-	factory.SpawnPrepaid(UnitType::RifleInfantry, 0,
-		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
-	factory.SpawnPrepaid(UnitType::AntiArmorInfantry, 0,
-		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
+	factory.SpawnPrepaid(UnitType::LightTank, 0,
+		cc::ToRaylib(cc::TileToWorld(free.x, free.y + 1)));
 
 	world.camera->view.target = cc::ToRaylib(cc::TileToWorld(free.x, free.y) +
 											 cc::Vec2(32.0f, 32.0f));

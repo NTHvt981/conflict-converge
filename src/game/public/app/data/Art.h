@@ -116,6 +116,11 @@ public:
     // the blit around the body center (turret layer, 0 = unrotated).
     void DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
                         float scale = 1.0f, float rotationDeg = 0.0f) const;
+    // Screen rectangle a named sprite occupies when drawn at tileCorner, so a
+    // selection box can match art larger than the 32x32 body inset. False when
+    // the atlas is down or the name is unknown.
+    bool SpriteDrawRect(const std::string &spriteName, Vector2 tileCorner, Rectangle &out,
+                        float scale = 1.0f) const;
     void DrawBuilding(BuildingType type, int teamID, int tileX, int tileY,
                       BuildingFrame frame = BuildingFrame::Operational,
                       Color tint = WHITE) const;
@@ -143,6 +148,12 @@ public:
     // directional-to-base fallback. Empty when no sheet or no entries.
     std::string UnitSprite(UnitType type, bool moving, unsigned int id,
                            float timeSeconds, int facingDir, bool attacking = false) const;
+    // Layered tank art: body follows movement facing, head follows turret aim.
+    // facingDir is a Facing octant (0..7); "" when the type has no layered art.
+    std::string TankBodySprite(UnitType type, int facingDir) const;
+    std::string TankHeadSprite(UnitType type, int facingDir) const;
+    // True when the type has layered body art loaded in the atlas.
+    bool HasTankArt(UnitType type) const;
     // Base art scale multiplier (prototype infantry renders at 2x).
     static float BaseArtScale(UnitType type);
     // Terrain filename stem + tile slot per type (`<stem>_64px.png`).

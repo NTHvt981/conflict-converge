@@ -1,13 +1,12 @@
-// Regression coverage for stacked-spawn separation (Skirmish.cpp
-// BuildSandbox): the sandbox spawns its squad stacked on the exact same
-// tile (BuildSandbox computes the free tile once, reuses it for every
-// SpawnPrepaid call), then this test sends the team-0 prototype squad to
-// scattered destinations around the real prototype.map layout -- crossing
-// paths around its water blob and tree cluster -- to catch
-// collision/pathing regressions the same way movement_stall_tests.cpp does
-// for hand-built maps, but against the actual shipped map and the real
-// BuildSandbox spawn path. The test adapts to whatever the sandbox spawns
-// (up to 6 units driven); spawn composition itself is not asserted here.
+// Regression coverage for sandbox squad pathing (Skirmish.cpp
+// BuildSandbox): the sandbox spawns a team-0 squad near the player home,
+// then this test sends the foot squad to scattered destinations around the
+// real prototype.map layout -- crossing paths around its water blob and tree
+// cluster -- to catch collision/pathing regressions the same way
+// movement_stall_tests.cpp does for hand-built maps, but against the actual
+// shipped map and the real BuildSandbox spawn path. The test adapts to
+// whatever the sandbox spawns (up to 6 units driven); spawn composition
+// itself is not asserted here.
 
 #include "test_harness.h"
 
@@ -102,13 +101,6 @@ void RunPrototypeSandboxMovementTests()
     if (squad.size() > 6)
     {
         squad.resize(6);
-    }
-
-    // The squad spawns stacked at the exact same tile (see BuildSandbox).
-    const cc::IVec2 spawnTile = cc::WorldToTile(cc::ToGlm(sand.registry.Get<Unit>(squad[0])->position));
-    for (Entity id : squad)
-    {
-        CC_CHECK(cc::WorldToTile(cc::ToGlm(sand.registry.Get<Unit>(id)->position)) == spawnTile);
     }
 
     // 6 destinations spread around the 20x10 map's corners/mid-edges, well

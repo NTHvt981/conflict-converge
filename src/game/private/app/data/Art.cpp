@@ -186,6 +186,19 @@ const char *UnitDir(UnitType type)
     return type == UnitType::RifleInfantry ? "rifle" : UnitFile(type);
 }
 
+const char *TankArtPrefix(UnitType type)
+{
+    switch (type)
+    {
+    case UnitType::LightTank:
+        return "lighttank";
+    case UnitType::HeavyTank:
+        return "heavytank";
+    default:
+        return nullptr;
+    }
+}
+
 }
 
 const char *Art::TerrainFile(TerrainType type)
@@ -678,6 +691,41 @@ std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
     return {};
 }
 
+bool Art::HasTankArt(UnitType type) const
+{
+    const char *prefix = TankArtPrefix(type);
+    if (prefix == nullptr || !sheetLoaded_)
+    {
+        return false;
+    }
+    return FindSpriteByName(sheet_, std::string(prefix) + "_body_idle_0_0") != nullptr;
+}
+
+std::string Art::TankBodySprite(UnitType type, int facingDir) const
+{
+    const char *prefix = TankArtPrefix(type);
+    if (prefix == nullptr || !sheetLoaded_)
+    {
+        return {};
+    }
+    const int dir = (facingDir < 0 || facingDir > 7) ? 6 : facingDir;
+    const std::string name =
+        std::string(prefix) + "_body_idle_0_" + std::to_string(dir);
+    return FindSpriteByName(sheet_, name) != nullptr ? name : std::string{};
+}
+
+std::string Art::TankHeadSprite(UnitType type, int facingDir) const
+{
+    const char *prefix = TankArtPrefix(type);
+    if (prefix == nullptr || !sheetLoaded_)
+    {
+        return {};
+    }
+    const int dir = (facingDir < 0 || facingDir > 7) ? 6 : facingDir;
+    const std::string name = std::string(prefix) + "_head_0_" + std::to_string(dir);
+    return FindSpriteByName(sheet_, name) != nullptr ? name : std::string{};
+}
+
 Color Art::TeamTint(int teamID) const
 {
     if (colorBlindMode_)
@@ -719,6 +767,26 @@ void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Colo
     {
         DrawOneAtlasSprite(*mask, tileCorner, tint, scale, rotationDeg);
     }
+}
+
+bool Art::SpriteDrawRect(const std::string &spriteName, Vector2 tileCorner, Rectangle &out,
+                         float scale) const
+{
+    if (!atlasReady_ || spriteName.empty())
+    {
+        return false;
+    }
+    const SpriteDefInfo *s = FindSpriteByName(sheet_, spriteName);
+    if (s == nullptr)
+    {
+        return false;
+    }
+    const float w = static_cast<float>(s->bounds.right - s->bounds.left);
+    const float h = static_cast<float>(s->bounds.bottom - s->bounds.top);
+    const Vector2 anchor = { tileCorner.x + 32.0f, tileCorner.y + 32.0f };
+    out = { anchor.x - static_cast<float>(s->origin.x) * scale,
+            anchor.y - static_cast<float>(s->origin.y) * scale, w * scale, h * scale };
+    return true;
 }
 
 void Art::DrawOneAtlasSprite(const SpriteDefInfo &s, Vector2 tileCorner, Color tint,

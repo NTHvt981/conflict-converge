@@ -192,19 +192,20 @@ void RunSpriteDataTests()
         CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
     }
 
-    // --- real data/configs atlas files: 22 sheets, 472 sprites, 56 anims ---
+    // --- real data/configs atlas files: 26 sheets, 504 sprites, 56 anims ---
     // Rifle-infantry renders from base+mask team-tint sheets (8 idle +
     // 8 dirs x 4 walk frames + 8 dirs x 2 attack frames, each with a mask);
     // antiarmor mirrors it on taller 32x48 cells (8 idle + 8 dirs x 4 walk
     // + 8 dirs x 3 attack, each with a mask); engineer adds idle plus a
     // 4-frame walk on 32x32 cells (each with a mask); medic adds the same
-    // idle + 4-frame walk pair; prototype keeps its untinted sheets.
+    // idle + 4-frame walk pair; lighttank adds body + head 8-column stacks
+    // (each with a mask); prototype keeps its untinted sheets.
     // PrototypeInfantry resolves its own namespace, not rifle_infantry's.
     {
         SpriteSheetData sheet;
         CC_CHECK(LoadSpriteSheet(sheet));
-        CC_CHECK(sheet.textures.size() == 22);
-        CC_CHECK(sheet.sprites.size() == 472);
+        CC_CHECK(sheet.textures.size() == 26);
+        CC_CHECK(sheet.sprites.size() == 504);
         CC_CHECK(sheet.animations.size() == 56);
         const SpriteDefInfo *first = FindSpriteByName(sheet, "rifle_infantry_idle_0_0");
         CC_CHECK(first != nullptr && first->id == 0 && first->texture == "rifle_idle_base");

@@ -299,6 +299,9 @@ void GameRenderer::DrawUnitEntity(Entity id, Unit &unit)
     )
     const Rectangle body = { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };
     const Vector2 center = { body.x + 16.0f, body.y + 16.0f };
+    bool tankArtDrawn = false;
+    bool haveTankBox = false;
+    Rectangle tankBox = {};
     if (art_.UseRectangles() && !art_.UseAtlas())
     {
         DrawRectangleRec(body, art_.TeamTint(unit.teamID));
@@ -320,6 +323,38 @@ void GameRenderer::DrawUnitEntity(Entity id, Unit &unit)
         {
             const Vector2 corner = { unit.position.x + slots[i].x,
                                      unit.position.y + slots[i].y };
+            if (art_.UseAtlas() && art_.HasTankArt(unit.type))
+            {
+                const int bodyDir = static_cast<int>(unit.facing);
+                int headDir = bodyDir;
+                const CombatState *combat = FindCombatState(registry_, id);
+                const bool aiming =
+                    attacking || (combat != nullptr && combat->target != kInvalidEntity);
+                if (aiming)
+                {
+                    if (const Turret *turret = registry_.Get<Turret>(id))
+                    {
+                        headDir = static_cast<int>(FacingFromVelocity(
+                            { std::cos(turret->facing), std::sin(turret->facing) }));
+                    }
+                }
+                const std::string bodySprite = art_.TankBodySprite(unit.type, bodyDir);
+                if (!bodySprite.empty())
+                {
+                    art_.DrawAtlasFrame(bodySprite, corner, tint,
+                                        Art::BaseArtScale(unit.type));
+                    const std::string headSprite = art_.TankHeadSprite(unit.type, headDir);
+                    if (!headSprite.empty())
+                    {
+                        art_.DrawAtlasFrame(headSprite, corner, tint,
+                                            Art::BaseArtScale(unit.type));
+                    }
+                    haveTankBox = art_.SpriteDrawRect(
+                        bodySprite, corner, tankBox, Art::BaseArtScale(unit.type));
+                    tankArtDrawn = true;
+                    continue;
+                }
+            }
             if (art_.UseAtlas())
             {
                 const std::string sprite = art_.UnitSprite(unit.type, moving, id, animTime,
@@ -347,16 +382,24 @@ void GameRenderer::DrawUnitEntity(Entity id, Unit &unit)
             }
         }
     }
-    if (const Turret *turret = registry_.Get<Turret>(id))
+    if (!tankArtDrawn)
     {
-        const Vector2 muzzle = { center.x + std::cos(turret->facing) * 22.0f,
-                                 center.y + std::sin(turret->facing) * 22.0f };
-        DrawLineEx(center, muzzle, 4.0f, art_.TeamTint(unit.teamID));
+        if (const Turret *turret = registry_.Get<Turret>(id))
+        {
+            const Vector2 muzzle = { center.x + std::cos(turret->facing) * 22.0f,
+                                     center.y + std::sin(turret->facing) * 22.0f };
+            DrawLineEx(center, muzzle, 4.0f, art_.TeamTint(unit.teamID));
+        }
     }
     if (unit.isSelected)
     {
-        const Rectangle selBox = SquadSelectionBox(
+        Rectangle selBox = SquadSelectionBox(
             art_, unit, id, !(art_.UseRectangles() && !art_.UseAtlas()), body);
+        if (haveTankBox)
+        {
+            selBox = { tankBox.x - 2.0f, tankBox.y - 2.0f, tankBox.width + 4.0f,
+                       tankBox.height + 4.0f };
+        }
         DrawRectangleLinesEx(selBox, 3.0f, RED);
         const float fraction = UnitHealthFraction(unit);
         const float barY = selBox.y - 7.0f;
