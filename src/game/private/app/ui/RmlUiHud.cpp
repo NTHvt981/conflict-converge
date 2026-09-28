@@ -168,6 +168,7 @@ void RmlUiHud::Shutdown()
     host_ = nullptr;
     ready_ = false;
     textCache_.clear();
+    displayCache_.clear();
     hintsCache_.clear();
 }
 
@@ -297,6 +298,21 @@ void RmlUiHud::SetTextCached(const char *id, const std::string &text)
     {
         el->SetInnerRML(text.c_str());
     }
+}
+
+void RmlUiHud::SetDisplay(Rml::Element *el, const std::string &value)
+{
+    if (el == nullptr)
+    {
+        return;
+    }
+    auto it = displayCache_.find(el);
+    if (it != displayCache_.end() && it->second == value)
+    {
+        return;
+    }
+    displayCache_[el] = value;
+    el->SetProperty("display", value.c_str());
 }
 
 void RmlUiHud::SetRangeIn(Rml::ElementDocument *doc, const char *id, float value)

@@ -65,12 +65,12 @@ void RmlUiHud::RefreshAbilities()
                 break;
             }
         }
-        el->SetProperty("display", entry != nullptr ? "inline-block" : "none");
+        SetDisplay(el, entry != nullptr ? "inline-block" : "none");
         if (entry == nullptr)
         {
             continue;
         }
-        el->SetInnerRML(AbilityName(ability));
+        SetTextCached(buttonId, AbilityName(ability));
         bool active = entry->active;
         if (ability == AbilityId::Rally && playingInput_.IsSettingRally())
         {

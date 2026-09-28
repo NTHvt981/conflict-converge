@@ -96,22 +96,29 @@ void RmlUiHud::RefreshHud()
 
     char label[64];
     const int autoBit = playingInput_.AutoAddGroupBit();
+    int counts[10] = {};
+    bool partial[10] = {};
+    registry_.Each<Unit>([&](Entity, const Unit &unit) {
+        if (unit.teamID != kPlayerTeam)
+        {
+            return;
+        }
+        for (int bit = 0; bit < 10; ++bit)
+        {
+            if ((unit.controlGroups & (1u << static_cast<unsigned int>(bit))) != 0)
+            {
+                ++counts[bit];
+                if (!unit.isSelected)
+                {
+                    partial[bit] = true;
+                }
+            }
+        }
+    });
     for (int bit = 0; bit < 10; ++bit)
     {
-        const unsigned int mask = 1u << static_cast<unsigned int>(bit);
-        int count = 0;
-        bool allSelected = true;
-        registry_.Each<Unit>([&](Entity, const Unit &unit) {
-            if (unit.teamID != kPlayerTeam || (unit.controlGroups & mask) == 0)
-            {
-                return;
-            }
-            ++count;
-            if (!unit.isSelected)
-            {
-                allSelected = false;
-            }
-        });
+        const int count = counts[bit];
+        const bool allSelected = !partial[bit];
         char id[16];
         snprintf(id, sizeof(id), "cg-%d", bit);
         snprintf(label, sizeof(label), "%d:%d", (bit + 1) % 10, count);
@@ -128,12 +135,12 @@ void RmlUiHud::RefreshHud()
     const bool anyProducer = sim_.HasBootcamp() || sim_.HasWorkshop();
     if (Rml::Element *stub = hudDoc_->GetElementById("need-production"))
     {
-        stub->SetProperty("display", anyProducer ? "none" : "block");
+        SetDisplay(stub, anyProducer ? "none" : "block");
     }
     ProductionQueue *active = ActiveQueue();
     if (Rml::Element *queueRow = hudDoc_->GetElementById("prod-queue-row"))
     {
-        queueRow->SetProperty("display", active != nullptr ? "block" : "none");
+        SetDisplay(queueRow, active != nullptr ? "block" : "none");
     }
     RefreshProduction();
     RefreshAbilities();
@@ -142,8 +149,7 @@ void RmlUiHud::RefreshHud()
 
     if (Rml::Element *producing = hudDoc_->GetElementById("hud-producing"))
     {
-        producing->SetProperty("display",
-                               (active == nullptr || active->Empty()) ? "none" : "block");
+        SetDisplay(producing, (active == nullptr || active->Empty()) ? "none" : "block");
     }
     if (Rml::Element *fill = hudDoc_->GetElementById("producing-fill"))
     {
@@ -158,7 +164,7 @@ void RmlUiHud::RefreshHud()
 
     if (Rml::Element *hints = hudDoc_->GetElementById("hud-hints"))
     {
-        hints->SetProperty("display", showHints_ ? "block" : "none");
+        SetDisplay(hints, showHints_ ? "block" : "none");
     }
     RefreshHints();
 }
@@ -173,15 +179,15 @@ void RmlUiHud::RefreshProduction()
     const bool buildingsTab = productionTab_ == ProductionTab::Buildings;
     if (Rml::Element *rows = hudDoc_->GetElementById("rows-infantry"))
     {
-        rows->SetProperty("display", hasBootcamp && infantryTab ? "block" : "none");
+        SetDisplay(rows, hasBootcamp && infantryTab ? "block" : "none");
     }
     if (Rml::Element *rows = hudDoc_->GetElementById("rows-vehicles"))
     {
-        rows->SetProperty("display", hasWorkshop && vehiclesTab ? "block" : "none");
+        SetDisplay(rows, hasWorkshop && vehiclesTab ? "block" : "none");
     }
     if (Rml::Element *rows = hudDoc_->GetElementById("rows-buildings"))
     {
-        rows->SetProperty("display", buildingsTab ? "block" : "none");
+        SetDisplay(rows, buildingsTab ? "block" : "none");
     }
     if (Rml::Element *tab = hudDoc_->GetElementById("tab-infantry"))
     {

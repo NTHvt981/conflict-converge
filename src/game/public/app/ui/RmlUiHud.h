@@ -89,6 +89,7 @@ private:
     static float ReadRange(Rml::Element *el);
     static bool IsInteractiveTag(const Rml::String &tag);
     void SetTextCached(const char *id, const std::string &text);
+    void SetDisplay(Rml::Element *el, const std::string &value);
     void SetRangeIn(Rml::ElementDocument *doc, const char *id, float value);
     void SetCheckIn(Rml::ElementDocument *doc, const char *id, bool checked);
     void SetTextIn(Rml::ElementDocument *doc, const char *id, const std::string &text);
@@ -120,5 +121,6 @@ private:
     int lastSelectedProducer_ = -1;
     ConfirmChoice pendingChoice_ = ConfirmChoice::None;
     std::unordered_map<std::string, std::string> textCache_;
+    std::unordered_map<Rml::Element *, std::string> displayCache_;
     std::string hintsCache_;
 };
