@@ -238,7 +238,8 @@
 
 #pause-box {
 	width: 300dp;
-	height: 580dp;
+	max-height: 88%;
+	overflow-y: auto;
 	background: #f5f5f5;
 	border: 1dp #838383;
 }
