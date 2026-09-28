@@ -47,12 +47,6 @@ span {
 	margin-top: 6dp;
 }
 
-/* Tall menu content (large uiScale, short windows) scrolls inside the
-   viewport instead of stranding buttons below the fold. */
-.col, .col-tight {
-	max-height: 90%;
-	overflow-y: auto;
-}
 
 h1.title {
 	text-align: center;
