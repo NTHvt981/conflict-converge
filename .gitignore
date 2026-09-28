@@ -11,3 +11,4 @@ test_sandbox/
 **.log
 imgui.ini
 **.pyc
+data/settings.cfg
