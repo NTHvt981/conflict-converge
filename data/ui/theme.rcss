@@ -7,8 +7,8 @@
    background #f5f5f5, line #90abb5. Titles use raylib DARKGRAY
    (#505050), subtitles GRAY (#828282), like MenuScreens.cpp.
    All lengths use dp so the context dp_ratio (uiScale) scales buttons
-   and text together; dialogs center with left/top 50% + negative
-   margins so they stay centered at any window size.
+   and text together; modal veils flex-center their dialog so it stays
+   centered at any window size and content height.
    Renderer coverage: geometry, textures and scissor clips render;
    transforms, clip masks, filters, shaders and layers warn once and
    render without the effect, so live documents avoid those properties. */
@@ -312,18 +312,16 @@ button.hkkey {
 	top: 0;
 	width: 100%;
 	height: 100%;
-	background: #000000;
-	opacity: 0.5;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 128);
 }
 
 #confirm-box {
-	position: absolute;
-	left: 50%;
-	top: 50%;
+	position: relative;
 	width: 380dp;
 	height: 170dp;
-	margin-left: -190dp;
-	margin-top: -85dp;
 	background: #f5f5f5;
 	border: 1dp #838383;
 }

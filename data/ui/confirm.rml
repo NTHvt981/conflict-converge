@@ -11,12 +11,13 @@ body {
 </style>
 	</head>
 	<body>
-		<div id="dim"></div>
-		<div id="confirm-box">
-			<div id="confirm-titlebar"><span id="confirm-title">Quit Conflict Converge?</span></div>
-			<p id="confirm-sub">Close the game?</p>
-			<button id="btn-yes">Yes</button>
-			<button id="btn-no">No</button>
+		<div id="dim">
+			<div id="confirm-box">
+				<div id="confirm-titlebar"><span id="confirm-title">Quit Conflict Converge?</span></div>
+				<p id="confirm-sub">Close the game?</p>
+				<button id="btn-yes">Yes</button>
+				<button id="btn-no">No</button>
+			</div>
 		</div>
 	</body>
 </rml>

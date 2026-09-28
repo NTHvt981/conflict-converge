@@ -11,12 +11,13 @@ body {
 </style>
 	</head>
 	<body>
-		<div class="hud-dim"></div>
-		<div id="outcome-box">
-			<div id="outcome-titlebar"><span id="outcome-title">Victory!</span></div>
-			<p id="outcome-body">Enemy force destroyed.</p>
-			<button class="pause-btn" id="btn-o-tomenu">Return to menu</button>
-			<button class="pause-btn" id="btn-o-todesktop">Quit to desktop</button>
+		<div class="hud-dim">
+			<div id="outcome-box">
+				<div id="outcome-titlebar"><span id="outcome-title">Victory!</span></div>
+				<p id="outcome-body">Enemy force destroyed.</p>
+				<button class="pause-btn" id="btn-o-tomenu">Return to menu</button>
+				<button class="pause-btn" id="btn-o-todesktop">Quit to desktop</button>
+			</div>
 		</div>
 	</body>
 </rml>
