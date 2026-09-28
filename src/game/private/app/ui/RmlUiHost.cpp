@@ -45,9 +45,9 @@ bool RmlUiHost::Init(const std::string &dataDir, const std::string &fontsDir)
         Rml::Shutdown();
         return false;
     }
-    // Manual uiScale-only policy (base 1.0): raylib upscales the framebuffer
-    // itself, so OS DPI stays out of the dp-ratio. Phase 2 binds uiScale to
-    // the settings value every frame via BeginFrame.
+    // Auto-fit dp policy from the 1280x720 base times uiScale: raylib
+    // upscales the framebuffer itself, so OS DPI stays out of the dp-ratio.
+    // Callers pass the settings uiScale every frame via BeginFrame.
     context_->SetDensityIndependentPixelRatio(1.0f);
     if (!Rml::Debugger::Initialise(context_))
     {
@@ -82,6 +82,29 @@ void RmlUiHost::Shutdown()
     Rml::Shutdown();
 }
 
+namespace {
+
+constexpr float kBaseWidth = 1280.0f;
+constexpr float kBaseHeight = 720.0f;
+constexpr float kMinDpRatio = 0.5f;
+constexpr float kMaxDpRatio = 3.0f;
+
+} // namespace
+
+float RmlUiHost::AutoDpRatio(int width, int height, float uiScale)
+{
+    float base = static_cast<float>(width) / kBaseWidth;
+    const float heightBase = static_cast<float>(height) / kBaseHeight;
+    if (heightBase < base)
+        base = heightBase;
+    float ratio = base * uiScale;
+    if (ratio < kMinDpRatio)
+        ratio = kMinDpRatio;
+    if (ratio > kMaxDpRatio)
+        ratio = kMaxDpRatio;
+    return ratio;
+}
+
 void RmlUiHost::BeginFrame(int width, int height, float uiScale)
 {
     if (!ready_ || context_ == nullptr)
@@ -94,7 +117,7 @@ void RmlUiHost::BeginFrame(int width, int height, float uiScale)
         lastHeight_ = height;
         context_->SetDimensions(Rml::Vector2i(width, height));
     }
-    context_->SetDensityIndependentPixelRatio(uiScale);
+    context_->SetDensityIndependentPixelRatio(AutoDpRatio(width, height, uiScale));
     context_->Update();
 }
 

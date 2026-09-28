@@ -29,11 +29,14 @@ public:
     bool IsReady() const { return ready_; }
     Rml::Context *context() { return context_; }
 
-    // Syncs dimensions/dp-ratio (manual uiScale-only policy, base 1.0) and
-    // ticks the context. Render draws it screen-space: call inside
-    // BeginDrawing, after the world.
+    // Syncs dimensions/dp-ratio (auto-fit of the 1280x720 base times the
+    // uiScale setting, clamped) and ticks the context. Render draws it
+    // screen-space: call inside BeginDrawing, after the world.
     void BeginFrame(int width, int height, float uiScale);
     void Render();
+
+    // Headless-testable dp-ratio math behind BeginFrame.
+    static float AutoDpRatio(int width, int height, float uiScale);
 
 private:
     std::unique_ptr<RmlRaylibRenderInterface> render_;
