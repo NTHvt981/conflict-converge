@@ -278,6 +278,7 @@ void Game::Update()
     // shown over the game.
     rmlUiMenus.HideAll();
 
+    double simMs = 0.0;
     if (menu.state == MenuState::Playing && !menu.ConfirmOpen() && !cheats.CapturingInput())
     {
         // Presses on RmlUi controls never reach world dispatch. The sim always steps.
@@ -285,7 +286,9 @@ void Game::Update()
         {
             player_.Get<PlayingInput>().Dispatch();
         }
+        const double simStart = GetTime();
         sim.Step(GetFrameTime());
+        simMs = (GetTime() - simStart) * 1000.0;
     }
 
     engine_.Get<Audio>().ApplySettings(menu.settings.masterVolume, menu.settings.musicVolume,
@@ -313,7 +316,7 @@ void Game::Update()
     renderer.DrawWorld();
 
     pendingConfirm = renderer.DrawHudAndOverlays(screenWidth, screenHeight, menu.settings.uiScale);
-    cheats.Frame();
+    cheats.Frame(PerfSample{ simMs, rmlUi.LastUpdateMs(), rmlUi.LastRenderMs(), rmlUi.LastTriangles() });
     EndDrawing();
 }
 

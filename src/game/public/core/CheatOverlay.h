@@ -1,5 +1,13 @@
 #pragma once
 
+struct PerfSample
+{
+    double simMs = 0.0;
+    double uiUpdateMs = 0.0;
+    double uiRenderMs = 0.0;
+    int uiTriangles = 0;
+};
+
 class CheatOverlay
 {
 public:
@@ -10,12 +18,12 @@ public:
 #if defined(CC_DEBUG)
     void Init();
     void Shutdown();
-    void Frame();
+    void Frame(const PerfSample &perf);
     bool CapturingInput() const;
 #else
     void Init() {}
     void Shutdown() {}
-    void Frame() {}
+    void Frame(const PerfSample &) {}
     bool CapturingInput() const { return false; }
 #endif
 

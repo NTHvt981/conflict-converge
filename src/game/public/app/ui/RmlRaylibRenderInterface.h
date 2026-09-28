@@ -25,6 +25,9 @@ public:
 	void EnableScissorRegion(bool enable) override;
 	void SetScissorRegion(Rml::Rectanglei region) override;
 
+	int LastTriangles() const { return trianglesDrawn_; }
+	void ResetTriangles() { trianglesDrawn_ = 0; }
+
 	void EnableClipMask(bool enable) override;
 	void SetTransform(const Rml::Matrix4f* transform) override;
 
@@ -35,4 +38,5 @@ public:
 
 private:
 	std::unordered_map<Rml::TextureHandle, Texture2D> textures;
+	int trianglesDrawn_ = 0;
 };

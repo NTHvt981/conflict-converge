@@ -118,7 +118,14 @@ void RmlUiHost::BeginFrame(int width, int height, float uiScale)
         context_->SetDimensions(Rml::Vector2i(width, height));
     }
     context_->SetDensityIndependentPixelRatio(AutoDpRatio(width, height, uiScale));
+    const double updateStart = GetTime();
     context_->Update();
+    updateMs_ = (GetTime() - updateStart) * 1000.0;
+}
+
+int RmlUiHost::LastTriangles() const
+{
+    return render_ != nullptr ? render_->LastTriangles() : 0;
 }
 
 void RmlUiHost::ToggleDebugger()
@@ -140,7 +147,10 @@ void RmlUiHost::Render()
     // GL state (scissor/texture/blend) active right now, then restore alpha
     // blending for the raylib/raygui draws that follow.
     rlDrawRenderBatchActive();
+    render_->ResetTriangles();
+    const double renderStart = GetTime();
     context_->Render();
+    renderMs_ = (GetTime() - renderStart) * 1000.0;
     rlDrawRenderBatchActive();
     rlSetBlendMode(RL_BLEND_ALPHA);
 }

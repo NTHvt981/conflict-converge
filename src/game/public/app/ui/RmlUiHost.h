@@ -35,6 +35,9 @@ public:
     void BeginFrame(int width, int height, float uiScale);
     void Render();
     void ToggleDebugger();
+    double LastUpdateMs() const { return updateMs_; }
+    double LastRenderMs() const { return renderMs_; }
+    int LastTriangles() const;
 
     // Headless-testable dp-ratio math behind BeginFrame.
     static float AutoDpRatio(int width, int height, float uiScale);
@@ -48,4 +51,6 @@ private:
     bool ready_ = false;
     int lastWidth_ = 0;
     int lastHeight_ = 0;
+    double updateMs_ = 0.0;
+    double renderMs_ = 0.0;
 };

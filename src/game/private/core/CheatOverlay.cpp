@@ -18,12 +18,18 @@ void CheatOverlay::Shutdown()
     rlImGuiShutdown();
 }
 
-void CheatOverlay::Frame()
+void CheatOverlay::Frame(const PerfSample &perf)
 {
     if (IsKeyPressed(KEY_GRAVE) && (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL))) open_ = !open_;
     if (!open_) return;
     rlImGuiBegin();
     ImGui::Begin("Cheats", &open_);
+    if (ImGui::CollapsingHeader("Perf", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Text("sim %.3f ms", perf.simMs);
+        ImGui::Text("rmlui update %.3f ms", perf.uiUpdateMs);
+        ImGui::Text("rmlui render %.3f ms (%d tris)", perf.uiRenderMs, perf.uiTriangles);
+    }
     const std::vector<cc::cheat::CheatWidgetBase *> &widgets =
         cc::cheat::CheatRegistry::Instance().Widgets();
     std::vector<std::string> files;

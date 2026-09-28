@@ -25,6 +25,7 @@ void RmlRaylibRenderInterface::RenderGeometry(
 
 	auto* compiled = reinterpret_cast<RmlRaylibCompiledGeometry*>(geometry);
 
+	trianglesDrawn_ += static_cast<int>(compiled->indices.size() / 3);
 	rlBegin(RL_TRIANGLES);
 	for (int index : compiled->indices)
 	{
