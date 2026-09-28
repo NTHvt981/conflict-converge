@@ -104,6 +104,59 @@ void RmlRaylibRenderInterface::ReleaseTexture(Rml::TextureHandle texture)
 	}
 }
 
+void RmlRaylibRenderInterface::EnableClipMask(bool enable)
+{
+	static bool warned = false;
+	if (enable && !warned)
+	{
+		warned = true;
+		TraceLog(LOG_WARNING, "RmlUi: clip masks lack raylib renderer support, rendering without the mask effect");
+	}
+}
+
+void RmlRaylibRenderInterface::SetTransform(const Rml::Matrix4f* transform)
+{
+	static bool warned = false;
+	if (transform != nullptr && !warned)
+	{
+		warned = true;
+		TraceLog(LOG_WARNING, "RmlUi: transforms lack raylib renderer support, rendering untransformed");
+	}
+}
+
+Rml::LayerHandle RmlRaylibRenderInterface::PushLayer()
+{
+	static bool warned = false;
+	if (!warned)
+	{
+		warned = true;
+		TraceLog(LOG_WARNING, "RmlUi: layers lack raylib renderer support, compositing into the base layer");
+	}
+	return {};
+}
+
+Rml::CompiledFilterHandle RmlRaylibRenderInterface::CompileFilter(const Rml::String&, const Rml::Dictionary&)
+{
+	static bool warned = false;
+	if (!warned)
+	{
+		warned = true;
+		TraceLog(LOG_WARNING, "RmlUi: filters lack raylib renderer support, rendering unfiltered");
+	}
+	return {};
+}
+
+Rml::CompiledShaderHandle RmlRaylibRenderInterface::CompileShader(const Rml::String&, const Rml::Dictionary&)
+{
+	static bool warned = false;
+	if (!warned)
+	{
+		warned = true;
+		TraceLog(LOG_WARNING, "RmlUi: shaders lack raylib renderer support, skipping the shader effect");
+	}
+	return {};
+}
+
 void RmlRaylibRenderInterface::EnableScissorRegion(bool enable)
 {
 	if (enable)

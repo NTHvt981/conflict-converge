@@ -8,7 +8,10 @@
    (#505050), subtitles GRAY (#828282), like MenuScreens.cpp.
    All lengths use dp so the context dp_ratio (uiScale) scales buttons
    and text together; dialogs center with left/top 50% + negative
-   margins so they stay centered at any window size. */
+   margins so they stay centered at any window size.
+   Renderer coverage: geometry, textures and scissor clips render;
+   transforms, clip masks, filters, shaders and layers warn once and
+   render without the effect, so live documents avoid those properties. */
 
 body {
 	margin: 0;

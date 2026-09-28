@@ -25,6 +25,14 @@ public:
 	void EnableScissorRegion(bool enable) override;
 	void SetScissorRegion(Rml::Rectanglei region) override;
 
+	void EnableClipMask(bool enable) override;
+	void SetTransform(const Rml::Matrix4f* transform) override;
+
+	Rml::LayerHandle PushLayer() override;
+
+	Rml::CompiledFilterHandle CompileFilter(const Rml::String& name, const Rml::Dictionary& parameters) override;
+	Rml::CompiledShaderHandle CompileShader(const Rml::String& name, const Rml::Dictionary& parameters) override;
+
 private:
 	std::unordered_map<Rml::TextureHandle, Texture2D> textures;
 };
