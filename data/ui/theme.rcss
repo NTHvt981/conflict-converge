@@ -127,6 +127,31 @@ button.disabled:hover {
 	margin-top: 10dp;
 }
 
+/* Fixed-height buttons center single-line labels with a matching line-height. */
+.menu-btn, .row-2btn button, .wide-btn, .slot-btn {
+	line-height: 40dp;
+}
+
+.wide-btn-short, .diff-row button {
+	line-height: 30dp;
+}
+
+.pause-btn {
+	line-height: 26dp;
+}
+
+.ab-btn, button.hkkey {
+	line-height: 24dp;
+}
+
+.tab-btn, .prod-btn, .prod-rep, #btn-cancel {
+	line-height: 22dp;
+}
+
+#btn-yes, #btn-no {
+	line-height: 34dp;
+}
+
 .row-2btn {
 	width: 400dp;
 	margin-top: 10dp;
