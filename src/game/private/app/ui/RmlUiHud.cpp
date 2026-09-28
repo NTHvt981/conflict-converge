@@ -135,6 +135,21 @@ void RmlUiHud::Hide()
     }
 }
 
+void RmlUiHud::ReloadStyleSheets()
+{
+    if (!ready_)
+    {
+        return;
+    }
+    for (Rml::ElementDocument *doc : { hudDoc_, pauseDoc_, outcomeDoc_, confirmDoc_ })
+    {
+        if (doc != nullptr)
+        {
+            doc->ReloadStyleSheet();
+        }
+    }
+}
+
 void RmlUiHud::Shutdown()
 {
     if (context_ != nullptr)

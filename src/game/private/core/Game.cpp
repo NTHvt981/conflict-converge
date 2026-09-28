@@ -211,6 +211,18 @@ void Game::Update()
         pendingConfirm = ConfirmChoice::None;
     }
     match.PollConfirmKeys();
+#if defined(CC_DEBUG)
+    // Hard-wired UI debug keys: deliberately outside the remappable hotkeys.
+    if (IsKeyPressed(KEY_F10))
+    {
+        rmlUi.ToggleDebugger();
+    }
+    if (IsKeyPressed(KEY_F11))
+    {
+        rmlUiHud.ReloadStyleSheets();
+        rmlUiMenus.ReloadStyleSheets();
+    }
+#endif
     engine_.Get<InputManager>().shortcuts.SetEnabled(!menu.ConfirmOpen() && !cheats.CapturingInput());
     engine_.Get<InputManager>().Update(player_.Get<GameCamera>(), menu.settings.cameraSpeed,
                                        GetFrameTime());

@@ -52,6 +52,8 @@ public:
     bool HandlesState() const;
     // Hides every document (call when falling back to another branch).
     void HideAll();
+    // RCSS-only restyle of every owned document: DOM, state and listeners survive.
+    void ReloadStyleSheets();
     // One menu-branch frame: audio parity, input pump, doc sync, own
     // Begin/EndDrawing pair. Returns the confirm-modal button pressed.
     // HotkeyRemap routes internally to the remap screen.

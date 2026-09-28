@@ -52,6 +52,8 @@ public:
     void Shutdown();
     bool IsReady() const { return ready_; }
     void Hide();
+    // RCSS-only restyle of every owned document: DOM, state and listeners survive.
+    void ReloadStyleSheets();
 
     // First-refusal gate for PlayingInput (Phase 4 preview): true while the
     // pointer is over an interactive control, latched while its mouse button

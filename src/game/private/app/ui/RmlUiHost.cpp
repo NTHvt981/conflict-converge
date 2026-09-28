@@ -121,6 +121,15 @@ void RmlUiHost::BeginFrame(int width, int height, float uiScale)
     context_->Update();
 }
 
+void RmlUiHost::ToggleDebugger()
+{
+    if (!ready_)
+    {
+        return;
+    }
+    Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
+}
+
 void RmlUiHost::Render()
 {
     if (!ready_ || context_ == nullptr)

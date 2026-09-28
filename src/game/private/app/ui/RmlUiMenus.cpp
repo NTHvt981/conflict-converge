@@ -274,6 +274,22 @@ void RmlUiMenus::HideAll()
     }
 }
 
+void RmlUiMenus::ReloadStyleSheets()
+{
+    if (!ready_)
+    {
+        return;
+    }
+    for (Rml::ElementDocument *doc :
+         { menuDoc_, setupDoc_, settingsDoc_, loadDoc_, confirmDoc_, remapDoc_ })
+    {
+        if (doc != nullptr)
+        {
+            doc->ReloadStyleSheet();
+        }
+    }
+}
+
 ConfirmChoice RmlUiMenus::Draw(int screenWidth, int screenHeight)
 {
     if (menu_.state == MenuState::HotkeyRemap)

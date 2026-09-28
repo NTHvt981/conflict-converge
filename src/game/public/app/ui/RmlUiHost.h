@@ -34,6 +34,7 @@ public:
     // screen-space: call inside BeginDrawing, after the world.
     void BeginFrame(int width, int height, float uiScale);
     void Render();
+    void ToggleDebugger();
 
     // Headless-testable dp-ratio math behind BeginFrame.
     static float AutoDpRatio(int width, int height, float uiScale);
