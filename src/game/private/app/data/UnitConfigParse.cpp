@@ -284,18 +284,18 @@ struct JsonArt
 {
     std::string spritePrefix;
     std::string atlasIdlePrefix;
-    std::string atlasWalkPrefix;
+    std::string atlasMovePrefix;
     template <class Archive>
     void load(Archive &ar)
     {
         TryLoadValue(ar, "spritePrefix", "sprite_prefix", spritePrefix);
         TryLoadValue(ar, "atlasIdlePrefix", "atlas_idle_prefix", atlasIdlePrefix);
-        TryLoadValue(ar, "atlasWalkPrefix", "atlas_walk_prefix", atlasWalkPrefix);
+        TryLoadValue(ar, "atlasMovePrefix", "atlas_move_prefix", atlasMovePrefix);
     }
     template <class Archive>
     void save(Archive &ar) const
     {
-        ar(CEREAL_NVP(spritePrefix), CEREAL_NVP(atlasIdlePrefix), CEREAL_NVP(atlasWalkPrefix));
+        ar(CEREAL_NVP(spritePrefix), CEREAL_NVP(atlasIdlePrefix), CEREAL_NVP(atlasMovePrefix));
     }
 };
 
@@ -529,22 +529,22 @@ UnitConfig DefaultUnitConfig(UnitType type)
     if (type == UnitType::RifleInfantry)
     {
         config.atlasIdlePrefix = "rifle_infantry_idle";
-        config.atlasWalkPrefix = "rifle_infantry_walk";
+        config.atlasMovePrefix = "rifle_infantry_move";
     }
     if (type == UnitType::AntiArmorInfantry)
     {
         config.atlasIdlePrefix = "antiarmor_idle";
-        config.atlasWalkPrefix = "antiarmor_walk";
+        config.atlasMovePrefix = "antiarmor_move";
     }
     if (type == UnitType::Engineer)
     {
         config.atlasIdlePrefix = "engineer_idle";
-        config.atlasWalkPrefix = "engineer_walk";
+        config.atlasMovePrefix = "engineer_move";
     }
     if (type == UnitType::Medic)
     {
         config.atlasIdlePrefix = "medic_idle";
-        config.atlasWalkPrefix = "medic_walk";
+        config.atlasMovePrefix = "medic_move";
     }
     return config;
 }
@@ -803,7 +803,7 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
         config.spritePrefix = cfg.art.spritePrefix;
     }
     config.atlasIdlePrefix = cfg.art.atlasIdlePrefix;
-    config.atlasWalkPrefix = cfg.art.atlasWalkPrefix;
+    config.atlasMovePrefix = cfg.art.atlasMovePrefix;
 
     out = config;
     return true;
@@ -849,7 +849,7 @@ std::string UnitConfigToJson(const UnitConfig &config)
     out.collision.origin = origin;
     out.art.spritePrefix = config.spritePrefix;
     out.art.atlasIdlePrefix = config.atlasIdlePrefix;
-    out.art.atlasWalkPrefix = config.atlasWalkPrefix;
+    out.art.atlasMovePrefix = config.atlasMovePrefix;
 
     std::ostringstream json;
     {

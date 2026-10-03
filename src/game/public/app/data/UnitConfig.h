@@ -37,7 +37,7 @@ struct UnitConfig
     int originY = 0;         // tiles
     std::string spritePrefix;
     std::string atlasIdlePrefix; // "" = flat-PNG fallback
-    std::string atlasWalkPrefix; // "" = flat-PNG fallback
+    std::string atlasMovePrefix; // "" = flat-PNG fallback
 };
 
 // Hardcoded baseline for `type`; used when a type has no file and as the

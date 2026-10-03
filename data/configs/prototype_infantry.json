@@ -17,6 +17,6 @@
   "art": {
     "spritePrefix": "prototypeinfantry",
     "atlasIdlePrefix": "prototypeinfantry_idle",
-    "atlasWalkPrefix": "prototypeinfantry_walk"
+    "atlasMovePrefix": "prototypeinfantry_move"
   }
 }

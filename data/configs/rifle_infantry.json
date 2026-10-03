@@ -17,6 +17,6 @@
   "art": {
     "spritePrefix": "rifle_infantry",
     "atlasIdlePrefix": "rifle_infantry_idle",
-    "atlasWalkPrefix": "rifle_infantry_walk"
+    "atlasMovePrefix": "rifle_infantry_move"
   }
 }

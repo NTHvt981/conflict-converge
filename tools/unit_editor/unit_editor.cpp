@@ -38,8 +38,8 @@ void SyncBuffers(EditorState &editor)
                   config.spritePrefix.c_str());
     std::snprintf(editor.atlasIdle, sizeof(editor.atlasIdle), "%s",
                   config.atlasIdlePrefix.c_str());
-    std::snprintf(editor.atlasWalk, sizeof(editor.atlasWalk), "%s",
-                  config.atlasWalkPrefix.c_str());
+    std::snprintf(editor.atlasMove, sizeof(editor.atlasMove), "%s",
+                  config.atlasMovePrefix.c_str());
     editor.armorActive = ArmorIndex(config.stats.armorType);
     editor.damageActive = DamageIndex(config.stats.damageType);
     editor.attackPowerBox = config.stats.attackPower;
@@ -50,7 +50,7 @@ void SyncBuffers(EditorState &editor)
     editor.boundBBox = config.boundTop + config.footprintHeight;
     editor.originXBox = config.originX;
     editor.originYBox = config.originY;
-    editor.spriteEdit = editor.idleEdit = editor.walkEdit = false;
+    editor.spriteEdit = editor.idleEdit = editor.moveEdit = false;
     editor.armorEdit = editor.damageEdit = false;
     editor.attackPowerEdit = editor.attackRangeEdit = false;
     editor.boundLEdit = editor.boundTEdit = editor.boundREdit = false;
@@ -199,13 +199,13 @@ void DrawSpritesTab(EditorState &editor, Art &art)
         editor.idleEdit = !editor.idleEdit;
     }
     config.atlasIdlePrefix = editor.atlasIdle;
-    GuiLabel({ kX, 136.0f, 150.0f, 20.0f }, "Atlas walk prefix");
-    if (GuiTextBox({ kX + 155.0f, 136.0f, 220.0f, 20.0f }, editor.atlasWalk,
-                   static_cast<int>(sizeof(editor.atlasWalk)), editor.walkEdit))
+    GuiLabel({ kX, 136.0f, 150.0f, 20.0f }, "Atlas move prefix");
+    if (GuiTextBox({ kX + 155.0f, 136.0f, 220.0f, 20.0f }, editor.atlasMove,
+                   static_cast<int>(sizeof(editor.atlasMove)), editor.moveEdit))
     {
-        editor.walkEdit = !editor.walkEdit;
+        editor.moveEdit = !editor.moveEdit;
     }
-    config.atlasWalkPrefix = editor.atlasWalk;
+    config.atlasMovePrefix = editor.atlasMove;
     GuiLabel({ kX, 162.0f, 380.0f, 20.0f },
              "Empty atlas prefix = flat PNG fallback (valid).");
     GuiCheckBox({ kX, 188.0f, 16.0f, 16.0f }, "Animate preview",

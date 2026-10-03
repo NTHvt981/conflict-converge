@@ -17,6 +17,6 @@
   "art": {
     "spritePrefix": "engineer",
     "atlasIdlePrefix": "engineer_idle",
-    "atlasWalkPrefix": "engineer_walk"
+    "atlasMovePrefix": "engineer_move"
   }
 }

@@ -7,14 +7,14 @@ Usage:
     python split_vox.py <model>.vox [<model2>.vox ...]
 
 Output goes to a folder named after the input file, next to it:
-    medic/run.vox  ->  medic/run/run1.vox, run2.vox, run3.vox, run4.vox
+    medic/move.vox  ->  medic/move/move1.vox, move2.vox, move3.vox, move4.vox
 
 Numbering follows the animation frame order (each model's _f tag in the
 scene graph), falling back to the models' order in the file for untagged
 models; 1-based, zero-padded when there are 10 or more so an alphabetical
 listing keeps frame order. That
 matches convert_vox_to_sprite.py's folder input, which sorts alphabetically
-and names the combined sheet after the shared prefix (run1..run4 -> run_2d.png).
+and names the combined sheet after the shared prefix (move1..move4 -> move_2d.png).
 
 Each output keeps everything from the source that is not per-model: palette
 (RGBA), materials (MATL), layers (LAYR), render/camera settings (rOBJ,

@@ -17,6 +17,6 @@
   "art": {
     "spritePrefix": "antiarmor",
     "atlasIdlePrefix": "antiarmor_idle",
-    "atlasWalkPrefix": "antiarmor_walk"
+    "atlasMovePrefix": "antiarmor_move"
   }
 }

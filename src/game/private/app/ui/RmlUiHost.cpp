@@ -56,8 +56,8 @@ bool RmlUiHost::Init(const std::string &dataDir, const std::string &fontsDir)
         return false;
     }
     Rml::Debugger::SetVisible(false);
-    if (!Rml::LoadFontFace(fontsDir + "/OpenSansPX.ttf", "opensanspx", Rml::Style::FontStyle::Normal, Rml::Style::FontWeight::Normal) ||
-        !Rml::LoadFontFace(fontsDir + "/OpenSansPXBold.ttf", "opensanspx", Rml::Style::FontStyle::Normal, Rml::Style::FontWeight::Bold))
+    if (!Rml::LoadFontFace(fontsDir + "/open_sans_px.ttf", "opensanspx", Rml::Style::FontStyle::Normal, Rml::Style::FontWeight::Normal) ||
+        !Rml::LoadFontFace(fontsDir + "/open_sans_px_bold.ttf", "opensanspx", Rml::Style::FontStyle::Normal, Rml::Style::FontWeight::Bold))
     {
         Rml::Shutdown();
         context_ = nullptr;

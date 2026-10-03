@@ -10,9 +10,9 @@ animation column, falling back to legacy sheets.
 
 - `Unit.facing` (8-way, default Right), maintained from nonzero velocity
   (`FacingFromVelocity`) and kept on stop.
-- `Art::UnitSprite` resolves `<prefix>_walk_<dir>` / `<prefix>_idle_0_<dir>`
+- `Art::UnitSprite` resolves `<prefix>_move_<dir>` / `<prefix>_idle_0_<dir>`
   with legacy fallback and column clamp; render passes `unit.facing`.
-- 8 `infantry_walk_0..7` anims in `data/configs/animations.json` (the dead
+- 8 `infantry_move_0..7` anims in `data/configs/animations.json` (the dead
   `infantry_idle` anim is gone); the unit editor previews facings 0–7.
 
 ## Key files

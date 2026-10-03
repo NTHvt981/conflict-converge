@@ -138,9 +138,9 @@ const char *BuildingMaskedStem(BuildingType type)
     switch (type)
     {
     case BuildingType::Bootcamp:
-        return "bootcamp_stack_down_left";
+        return "bootcamp";
     case BuildingType::Workshop:
-        return "workshop_stack_down_left";
+        return "workshop";
     case BuildingType::Base:
     case BuildingType::ResourceDepot:
         return nullptr;
@@ -400,8 +400,8 @@ bool Art::Init(bool withDevice)
             fallback_ = true;
         }
     }
-    rallyBase_ = LoadTexture("data/sprites/icons/rally-point_base.png");
-    rallyMask_ = LoadTexture("data/sprites/icons/rally-point_mask.png");
+    rallyBase_ = LoadTexture("data/sprites/icons/rally_point_base.png");
+    rallyMask_ = LoadTexture("data/sprites/icons/rally_point_mask.png");
     for (int s = 0; s < 4; ++s)
     {
         const TerrainType type = s == 0   ? TerrainType::Grass
@@ -454,7 +454,7 @@ bool Art::Init(bool withDevice)
             continue;
         }
         // Idle-sprite presence guarantees UnitSprite never resolves empty
-        // (attack/walk fall back to idle), so missing flats are harmless
+        // (attack/move fall back to idle), so missing flats are harmless
         // while the atlas is up. Without atlas cover the type would have
         // no visual at all: keep the rectangle fallback.
         const std::string idleName =
@@ -666,8 +666,8 @@ std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
     }
     if (moving)
     {
-        const std::string names[] = { prefix + "_walk_" + std::to_string(dir),
-                                      prefix + "_walk" };
+        const std::string names[] = { prefix + "_move_" + std::to_string(dir),
+                                      prefix + "_move" };
         for (const std::string &name : names)
         {
             if (std::string sprite = animSprite(name); !sprite.empty())

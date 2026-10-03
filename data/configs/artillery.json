@@ -17,6 +17,6 @@
   "art": {
     "spritePrefix": "artillery",
     "atlasIdlePrefix": "",
-    "atlasWalkPrefix": ""
+    "atlasMovePrefix": ""
   }
 }

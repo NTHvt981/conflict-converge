@@ -17,6 +17,6 @@
   "art": {
     "spritePrefix": "ifv",
     "atlasIdlePrefix": "",
-    "atlasWalkPrefix": ""
+    "atlasMovePrefix": ""
   }
 }

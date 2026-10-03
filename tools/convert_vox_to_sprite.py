@@ -15,12 +15,12 @@ Usage:
         inside it (alphabetically, non-recursive) -- combine into ONE
         multi-frame sheet, one input file per row, sharing a single camera
         fit -- for this project's hand-authored-separate-pose-files
-        convention (e.g. infantry_generic's run1.vox..run4.vox), the same
+        convention (e.g. infantry_generic's move1.vox..move4.vox), the same
         treatment a single multi-model .vox file already gets (see below).
         All files must share the same palette; the first file's is used for
         every frame's colors, with a warning if a later file's differs.
         Output defaults to a name derived from the files' shared prefix
-        (e.g. run1..run4 -> run_2d.png), overridable with --out.
+        (e.g. move1..move4 -> move_2d.png), overridable with --out.
 
 --angle / -a is the camera's elevation angle above the ground plane, in
 degrees: 0 = horizontal (pure side view), 90 = straight top-down. Default
@@ -554,7 +554,7 @@ def convert(vox_path, degree, scale, align_baseline=False):
 def derive_multi_out_path(vox_paths):
     """Picks an output filename for a combined multi-file sheet: the
     longest common alphabetic prefix of the input basenames, with any
-    trailing digits/underscore trimmed (e.g. run1.vox..run4.vox -> "run"),
+    trailing digits/underscore trimmed (e.g. move1.vox..move4.vox -> "move"),
     falling back to the first file's own name if the inputs don't share
     one (e.g. genuinely different models rendered together for a
     side-by-side comparison, not frames of one animation)."""
@@ -568,7 +568,7 @@ def derive_multi_out_path(vox_paths):
 def convert_many(vox_paths, degree, scale, out_path=None, align_baseline=False):
     """Combines several standalone single-pose .vox files (this project's
     convention for hand-authored animation frames, e.g. infantry_generic's
-    run1..run4.vox) into ONE multi-frame sheet, one input file per row,
+    move1..move4.vox) into ONE multi-frame sheet, one input file per row,
     sharing a single camera fit -- the same treatment a single multi-model
     .vox file gets from `convert`, just sourced from separate files instead
     of separate MAIN-chunk models."""
@@ -596,7 +596,7 @@ def main():
                         help="path to the input .vox file. Give more than one -- or a "
                              "folder, expanded to every .vox file directly inside it, "
                              "alphabetically -- to combine several standalone single-pose "
-                             "files (e.g. hand-authored run1.vox..run4.vox) into one "
+                             "files (e.g. hand-authored move1.vox..move4.vox) into one "
                              "multi-frame sheet, one file per row, sharing a single camera "
                              "fit -- the same treatment a single multi-model .vox file "
                              "already gets. A folder argument can be mixed with explicit "

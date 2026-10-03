@@ -208,7 +208,7 @@ void RunArtTests()
         CC_CHECK(backToBlue.r == BLUE.r && backToBlue.g == BLUE.g && backToBlue.b == BLUE.b);
     }
 
-    // --- atlas: idle sprite + walk cycle from the data/configs atlas ---
+    // --- atlas: idle sprite + move cycle from the data/configs atlas ---
     {
         Art art;
         CC_CHECK(art.LoadAtlas());
@@ -217,64 +217,64 @@ void RunArtTests()
         CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 0) == "rifle_infantry_idle_0_0");
         CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6) == "rifle_infantry_idle_0_6");
         CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 3) == "rifle_infantry_idle_0_3");
-        // Walk anim is 4x120ms per direction column (column 6 = right);
+        // Move anim is 4x120ms per direction column (column 6 = right);
         // id 1 offsets 37ms in: t=0 -> frame 0.
-        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 6) == "rifle_infantry_walk_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 6) == "rifle_infantry_move_0_6");
         // t=130ms + 37 offset = 167 -> frame 1.
-        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6) == "rifle_infantry_walk_1_6");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6) == "rifle_infantry_move_1_6");
         // Per-entity desync: id 200 offsets 200*37%480=200ms in -> frame 1 at t=0.
-        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 200, 0.0f, 6) == "rifle_infantry_walk_1_6");
-        // Direction 0 walks column 0 (sprites 100/108/116/124).
-        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 0) == "rifle_infantry_walk_0_0");
-        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 0) == "rifle_infantry_walk_1_0");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 200, 0.0f, 6) == "rifle_infantry_move_1_6");
+        // Direction 0 moves column 0 (sprites 100/108/116/124).
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 0) == "rifle_infantry_move_0_0");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 0) == "rifle_infantry_move_1_0");
         // Out-of-range facing clamps to Right (column 6).
-        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 9) == "rifle_infantry_walk_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 9) == "rifle_infantry_move_0_6");
         CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, -1) == "rifle_infantry_idle_0_6");
         // PrototypeInfantry resolves its own namespace, not rifle_infantry's.
         CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, false, 1, 0.0f, 0) ==
                  "prototypeinfantry_idle_0_0");
         CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, true, 1, 0.0f, 6) ==
-                 "prototypeinfantry_walk_0_6");
+                 "prototypeinfantry_move_0_6");
         CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, true, 1, 0.13f, 6) ==
-                 "prototypeinfantry_walk_1_6");
+                 "prototypeinfantry_move_1_6");
         // Deterministic: same args -> same frame.
         CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6) ==
                  art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6));
         // Attack anim is 2x120ms per direction column and wins over
-        // walk/idle while attacking (column 6 = right: sprites 406/414).
+        // move/idle while attacking (column 6 = right: sprites 406/414).
         CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6, true) ==
                  "rifle_infantry_attack_0_6");
         CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.13f, 6, true) ==
                  "rifle_infantry_attack_1_6");
         CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 6, true) ==
                  "rifle_infantry_attack_0_6");
-        // Types without attack anims fall back to walk/idle when attacking.
+        // Types without attack anims fall back to move/idle when attacking.
         CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, false, 1, 0.0f, 6, true) ==
                  "prototypeinfantry_idle_0_6");
         // AntiArmorInfantry resolves the antiarmor namespace (32x48 cells):
-        // idle is sprite-direct, walk is 4x120ms, attack 3x120ms per column.
+        // idle is sprite-direct, move is 4x120ms, attack 3x120ms per column.
         CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, false, 1, 0.0f, 6) ==
                  "antiarmor_idle_0_6");
         CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, true, 1, 0.0f, 6) ==
-                 "antiarmor_walk_0_6");
+                 "antiarmor_move_0_6");
         CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, true, 1, 0.13f, 6) ==
-                 "antiarmor_walk_1_6");
+                 "antiarmor_move_1_6");
         CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, false, 1, 0.0f, 6, true) ==
                  "antiarmor_attack_0_6");
         CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, false, 1, 0.25f, 6, true) ==
                  "antiarmor_attack_2_6");
         // Engineer resolves the engineer namespace (32x32 cells, 4-frame
-        // walk; no attack sheets, so attacking falls back to walk/idle).
+        // move; no attack sheets, so attacking falls back to move/idle).
         CC_CHECK(art.UnitSprite(UnitType::Engineer, false, 1, 0.0f, 6) == "engineer_idle_0_6");
-        CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.0f, 6) == "engineer_walk_0_6");
-        CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.13f, 6) == "engineer_walk_1_6");
+        CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.0f, 6) == "engineer_move_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.13f, 6) == "engineer_move_1_6");
         CC_CHECK(art.UnitSprite(UnitType::Engineer, false, 1, 0.0f, 6, true) ==
                  "engineer_idle_0_6");
-        // Medic resolves the medic namespace (32x32 cells, 4-frame walk;
-        // no attack sheets, so attacking falls back to walk/idle).
+        // Medic resolves the medic namespace (32x32 cells, 4-frame move;
+        // no attack sheets, so attacking falls back to move/idle).
         CC_CHECK(art.UnitSprite(UnitType::Medic, false, 1, 0.0f, 6) == "medic_idle_0_6");
-        CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.0f, 6) == "medic_walk_0_6");
-        CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.13f, 6) == "medic_walk_1_6");
+        CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.0f, 6) == "medic_move_0_6");
+        CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.13f, 6) == "medic_move_1_6");
         CC_CHECK(art.UnitSprite(UnitType::Medic, false, 1, 0.0f, 6, true) ==
                  "medic_idle_0_6");
         // Types without atlas entries resolve empty (legacy DrawUnit covers).

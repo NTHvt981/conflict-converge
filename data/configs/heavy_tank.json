@@ -17,6 +17,6 @@
   "art": {
     "spritePrefix": "heavytank",
     "atlasIdlePrefix": "",
-    "atlasWalkPrefix": ""
+    "atlasMovePrefix": ""
   }
 }

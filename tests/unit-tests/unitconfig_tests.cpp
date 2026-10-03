@@ -35,7 +35,7 @@ bool ConfigsEqual(const UnitConfig &a, const UnitConfig &b)
            a.footprintHeight == b.footprintHeight && a.boundLeft == b.boundLeft &&
            a.boundTop == b.boundTop && a.originX == b.originX && a.originY == b.originY &&
            a.spritePrefix == b.spritePrefix && a.atlasIdlePrefix == b.atlasIdlePrefix &&
-           a.atlasWalkPrefix == b.atlasWalkPrefix;
+           a.atlasMovePrefix == b.atlasMovePrefix;
 }
 
 bool AbilitiesEqual(const UnitAbilities &a, const UnitAbilities &b)
@@ -152,14 +152,14 @@ void RunUnitConfigTests()
                 {
                     CC_CHECK(config.spritePrefix == "antiarmor");
                     CC_CHECK(config.atlasIdlePrefix == "antiarmor_idle");
-                    CC_CHECK(config.atlasWalkPrefix == "antiarmor_walk");
+                    CC_CHECK(config.atlasMovePrefix == "antiarmor_move");
                     antiarmorOk = true;
                 }
                 if (config.type == "Engineer")
                 {
                     CC_CHECK(config.spritePrefix == "engineer");
                     CC_CHECK(config.atlasIdlePrefix == "engineer_idle");
-                    CC_CHECK(config.atlasWalkPrefix == "engineer_walk");
+                    CC_CHECK(config.atlasMovePrefix == "engineer_move");
                     engineerOk = true;
                 }
                 if (config.type == "Medic")
@@ -167,7 +167,7 @@ void RunUnitConfigTests()
                     CC_CHECK(config.stats.attackPower == 0); // support: cannot attack
                     CC_CHECK(config.spritePrefix == "medic");
                     CC_CHECK(config.atlasIdlePrefix == "medic_idle");
-                    CC_CHECK(config.atlasWalkPrefix == "medic_walk");
+                    CC_CHECK(config.atlasMovePrefix == "medic_move");
                     medicOk = true;
                 }
                 if (config.type == "HeavyTank")

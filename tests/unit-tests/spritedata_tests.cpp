@@ -17,12 +17,12 @@ const char *kValid = R"({
       "origin": { "x": 16, "y": 16 } }
   ],
   "grids": [
-    { "texture": "x", "prefix": "walk", "startId": 10,
+    { "texture": "x", "prefix": "move", "startId": 10,
       "rows": 2, "cols": 2, "cellW": 32, "cellH": 32,
       "origin": { "x": 16, "y": 16 } }
   ],
   "animations": [
-    { "name": "walk", "id": 0, "loop": true,
+    { "name": "move", "id": 0, "loop": true,
       "frames": [{ "sprite": 10, "durationMs": 100 },
                  { "sprite": 13, "durationMs": 100 }] }
   ]
@@ -54,17 +54,17 @@ void RunSpriteDataTests()
         CC_CHECK(hero != nullptr && hero->id == 0);
         CC_CHECK(hero->bounds.right == 32 && hero->bounds.bottom == 32);
         CC_CHECK(hero->origin.x == 16 && hero->origin.y == 16);
-        const SpriteDefInfo *cell = FindSpriteByName(sheet, "walk_1_1");
+        const SpriteDefInfo *cell = FindSpriteByName(sheet, "move_1_1");
         CC_CHECK(cell != nullptr && cell->id == 13);
         CC_CHECK(cell->bounds.left == 32 && cell->bounds.top == 32);
         CC_CHECK(cell->bounds.right == 64 && cell->bounds.bottom == 64);
         CC_CHECK(FindSpriteById(sheet, 10) != nullptr);
         CC_CHECK(FindSpriteById(sheet, 11) != nullptr);
         CC_CHECK(FindSpriteById(sheet, 12) != nullptr);
-        const SpriteAnimInfo *walk = FindAnimByName(sheet, "walk");
-        CC_CHECK(walk != nullptr && walk->loop && walk->frames.size() == 2);
-        CC_CHECK(walk->frames[0].sprite == 10 && walk->frames[0].durationMs == 100);
-        CC_CHECK(FindAnimById(sheet, 0) == walk);
+        const SpriteAnimInfo *move = FindAnimByName(sheet, "move");
+        CC_CHECK(move != nullptr && move->loop && move->frames.size() == 2);
+        CC_CHECK(move->frames[0].sprite == 10 && move->frames[0].durationMs == 100);
+        CC_CHECK(FindAnimById(sheet, 0) == move);
         CC_CHECK(FindSpriteByName(sheet, "missing") == nullptr);
         CC_CHECK(FindSpriteById(sheet, 999) == nullptr);
         CC_CHECK(FindAnimByName(sheet, "missing") == nullptr);
@@ -194,11 +194,11 @@ void RunSpriteDataTests()
 
     // --- real data/configs atlas files: 26 sheets, 504 sprites, 56 anims ---
     // Rifle-infantry renders from base+mask team-tint sheets (8 idle +
-    // 8 dirs x 4 walk frames + 8 dirs x 2 attack frames, each with a mask);
-    // antiarmor mirrors it on taller 32x48 cells (8 idle + 8 dirs x 4 walk
+    // 8 dirs x 4 move frames + 8 dirs x 2 attack frames, each with a mask);
+    // antiarmor mirrors it on taller 32x48 cells (8 idle + 8 dirs x 4 move
     // + 8 dirs x 3 attack, each with a mask); engineer adds idle plus a
-    // 4-frame walk on 32x32 cells (each with a mask); medic adds the same
-    // idle + 4-frame walk pair; lighttank adds body + head 8-column stacks
+    // 4-frame move on 32x32 cells (each with a mask); medic adds the same
+    // idle + 4-frame move pair; lighttank adds body + head 8-column stacks
     // (each with a mask); prototype keeps its untinted sheets.
     // PrototypeInfantry resolves its own namespace, not rifle_infantry's.
     {
@@ -216,19 +216,19 @@ void RunSpriteDataTests()
         const SpriteDefInfo *firstMask = FindSpriteById(sheet, 500);
         CC_CHECK(firstMask != nullptr && firstMask->name == "rifle_infantry_idle_mask_0_0" &&
                  firstMask->texture == "rifle_idle_mask" && firstMask->maskSprite == 0);
-        // Walk grid is 8 direction columns x 4 frames; the wired anim uses
+        // Move grid is 8 direction columns x 4 frames; the wired anim uses
         // column 6 (right): ids 106/114/122/130.
-        const SpriteDefInfo *last = FindSpriteByName(sheet, "rifle_infantry_walk_3_6");
-        CC_CHECK(last != nullptr && last->id == 130 && last->texture == "rifle_run_base");
+        const SpriteDefInfo *last = FindSpriteByName(sheet, "rifle_infantry_move_3_6");
+        CC_CHECK(last != nullptr && last->id == 130 && last->texture == "rifle_move_base");
         CC_CHECK(last->bounds.left == 192 && last->bounds.top == 96);
         CC_CHECK(last->bounds.right == 224 && last->bounds.bottom == 128);
         CC_CHECK(last->maskSprite == 630);
-        const SpriteAnimInfo *walk = FindAnimByName(sheet, "rifle_infantry_walk_6");
-        CC_CHECK(walk != nullptr && walk->loop && walk->frames.size() == 4);
-        CC_CHECK(walk->frames[0].sprite == 106 && walk->frames[3].sprite == 130);
-        const SpriteAnimInfo *walkTop = FindAnimByName(sheet, "rifle_infantry_walk_0");
-        CC_CHECK(walkTop != nullptr && walkTop->frames.size() == 4);
-        CC_CHECK(walkTop->frames[0].sprite == 100 && walkTop->frames[3].sprite == 124);
+        const SpriteAnimInfo *move = FindAnimByName(sheet, "rifle_infantry_move_6");
+        CC_CHECK(move != nullptr && move->loop && move->frames.size() == 4);
+        CC_CHECK(move->frames[0].sprite == 106 && move->frames[3].sprite == 130);
+        const SpriteAnimInfo *moveTop = FindAnimByName(sheet, "rifle_infantry_move_0");
+        CC_CHECK(moveTop != nullptr && moveTop->frames.size() == 4);
+        CC_CHECK(moveTop->frames[0].sprite == 100 && moveTop->frames[3].sprite == 124);
         // Attack grid is 8 direction columns x 2 frames (column 6: 406/414).
         const SpriteDefInfo *strike = FindSpriteByName(sheet, "rifle_infantry_attack_1_6");
         CC_CHECK(strike != nullptr && strike->id == 414 &&
@@ -239,11 +239,11 @@ void RunSpriteDataTests()
         const SpriteAnimInfo *attack = FindAnimByName(sheet, "rifle_infantry_attack_6");
         CC_CHECK(attack != nullptr && attack->loop && attack->frames.size() == 2);
         CC_CHECK(attack->frames[0].sprite == 406 && attack->frames[1].sprite == 414);
-        CC_CHECK(FindAnimByName(sheet, "rifle_infantry_walk") == nullptr); // split by direction
+        CC_CHECK(FindAnimByName(sheet, "rifle_infantry_move") == nullptr); // split by direction
         CC_CHECK(FindAnimByName(sheet, "rifle_infantry_idle") == nullptr); // idle is sprite-direct
         CC_CHECK(FindAnimByName(sheet, "rifle_infantry_attack") == nullptr); // split by direction
         // Antiarmor namespace on 32x48 cells (ids 800+/900+/1000+, masks
-        // 850+/950+/1050+; walk column 6: 906/914/922/930).
+        // 850+/950+/1050+; move column 6: 906/914/922/930).
         const SpriteDefInfo *aaIdle = FindSpriteByName(sheet, "antiarmor_idle_0_0");
         CC_CHECK(aaIdle != nullptr && aaIdle->id == 800 &&
                  aaIdle->texture == "antiarmor_idle_base");
@@ -251,15 +251,15 @@ void RunSpriteDataTests()
         CC_CHECK(aaIdle->bounds.right == 32 && aaIdle->bounds.bottom == 48);
         CC_CHECK(aaIdle->origin.x == 16 && aaIdle->origin.y == 24);
         CC_CHECK(aaIdle->maskSprite == 850);
-        const SpriteDefInfo *aaWalk = FindSpriteByName(sheet, "antiarmor_walk_3_6");
-        CC_CHECK(aaWalk != nullptr && aaWalk->id == 930 &&
-                 aaWalk->texture == "antiarmor_run_base");
-        CC_CHECK(aaWalk->bounds.left == 192 && aaWalk->bounds.top == 144);
-        CC_CHECK(aaWalk->bounds.right == 224 && aaWalk->bounds.bottom == 192);
-        CC_CHECK(aaWalk->maskSprite == 980);
-        const SpriteAnimInfo *aaWalkAnim = FindAnimByName(sheet, "antiarmor_walk_6");
-        CC_CHECK(aaWalkAnim != nullptr && aaWalkAnim->loop && aaWalkAnim->frames.size() == 4);
-        CC_CHECK(aaWalkAnim->frames[0].sprite == 906 && aaWalkAnim->frames[3].sprite == 930);
+        const SpriteDefInfo *aaMove = FindSpriteByName(sheet, "antiarmor_move_3_6");
+        CC_CHECK(aaMove != nullptr && aaMove->id == 930 &&
+                 aaMove->texture == "antiarmor_move_base");
+        CC_CHECK(aaMove->bounds.left == 192 && aaMove->bounds.top == 144);
+        CC_CHECK(aaMove->bounds.right == 224 && aaMove->bounds.bottom == 192);
+        CC_CHECK(aaMove->maskSprite == 980);
+        const SpriteAnimInfo *aaMoveAnim = FindAnimByName(sheet, "antiarmor_move_6");
+        CC_CHECK(aaMoveAnim != nullptr && aaMoveAnim->loop && aaMoveAnim->frames.size() == 4);
+        CC_CHECK(aaMoveAnim->frames[0].sprite == 906 && aaMoveAnim->frames[3].sprite == 930);
         // Attack grid is 8 direction columns x 3 frames (column 6:
         // 1006/1014/1022).
         const SpriteDefInfo *aaStrike = FindSpriteByName(sheet, "antiarmor_attack_2_6");
@@ -272,7 +272,7 @@ void RunSpriteDataTests()
         CC_CHECK(aaAttack != nullptr && aaAttack->loop && aaAttack->frames.size() == 3);
         CC_CHECK(aaAttack->frames[0].sprite == 1006 && aaAttack->frames[2].sprite == 1022);
         // Engineer namespace on 32x32 cells (ids 1100+/1200+, masks
-        // 1150+/1250+; walk column 6 across 6 frames: 1206..1246).
+        // 1150+/1250+; move column 6 across 6 frames: 1206..1246).
         const SpriteDefInfo *engIdle = FindSpriteByName(sheet, "engineer_idle_0_0");
         CC_CHECK(engIdle != nullptr && engIdle->id == 1100 &&
                  engIdle->texture == "engineer_idle_base");
@@ -280,19 +280,19 @@ void RunSpriteDataTests()
         CC_CHECK(engIdle->bounds.right == 32 && engIdle->bounds.bottom == 32);
         CC_CHECK(engIdle->origin.x == 16 && engIdle->origin.y == 16);
         CC_CHECK(engIdle->maskSprite == 1150);
-        const SpriteDefInfo *engWalk = FindSpriteByName(sheet, "engineer_walk_5_6");
-        CC_CHECK(engWalk != nullptr && engWalk->id == 1246 &&
-                 engWalk->texture == "engineer_run_base");
-        CC_CHECK(engWalk->bounds.left == 192 && engWalk->bounds.top == 160);
-        CC_CHECK(engWalk->bounds.right == 224 && engWalk->bounds.bottom == 192);
-        CC_CHECK(engWalk->maskSprite == 1296);
-        const SpriteAnimInfo *engWalkAnim = FindAnimByName(sheet, "engineer_walk_6");
-        CC_CHECK(engWalkAnim != nullptr && engWalkAnim->loop &&
-                 engWalkAnim->frames.size() == 4);
-        CC_CHECK(engWalkAnim->frames[0].sprite == 1206 &&
-                 engWalkAnim->frames[3].sprite == 1230);
+        const SpriteDefInfo *engMove = FindSpriteByName(sheet, "engineer_move_5_6");
+        CC_CHECK(engMove != nullptr && engMove->id == 1246 &&
+                 engMove->texture == "engineer_move_base");
+        CC_CHECK(engMove->bounds.left == 192 && engMove->bounds.top == 160);
+        CC_CHECK(engMove->bounds.right == 224 && engMove->bounds.bottom == 192);
+        CC_CHECK(engMove->maskSprite == 1296);
+        const SpriteAnimInfo *engMoveAnim = FindAnimByName(sheet, "engineer_move_6");
+        CC_CHECK(engMoveAnim != nullptr && engMoveAnim->loop &&
+                 engMoveAnim->frames.size() == 4);
+        CC_CHECK(engMoveAnim->frames[0].sprite == 1206 &&
+                 engMoveAnim->frames[3].sprite == 1230);
         // Medic namespace on 32x32 cells (ids 1300+/1400+, masks
-        // 1350+/1450+; walk column 6 across 4 frames: 1406..1430).
+        // 1350+/1450+; move column 6 across 4 frames: 1406..1430).
         const SpriteDefInfo *medIdle = FindSpriteByName(sheet, "medic_idle_0_0");
         CC_CHECK(medIdle != nullptr && medIdle->id == 1300 &&
                  medIdle->texture == "medic_idle_base");
@@ -300,25 +300,25 @@ void RunSpriteDataTests()
         CC_CHECK(medIdle->bounds.right == 32 && medIdle->bounds.bottom == 32);
         CC_CHECK(medIdle->origin.x == 16 && medIdle->origin.y == 16);
         CC_CHECK(medIdle->maskSprite == 1350);
-        const SpriteDefInfo *medWalk = FindSpriteByName(sheet, "medic_walk_3_6");
-        CC_CHECK(medWalk != nullptr && medWalk->id == 1430 &&
-                 medWalk->texture == "medic_run_base");
-        CC_CHECK(medWalk->bounds.left == 192 && medWalk->bounds.top == 96);
-        CC_CHECK(medWalk->bounds.right == 224 && medWalk->bounds.bottom == 128);
-        CC_CHECK(medWalk->maskSprite == 1480);
-        const SpriteAnimInfo *medWalkAnim = FindAnimByName(sheet, "medic_walk_6");
-        CC_CHECK(medWalkAnim != nullptr && medWalkAnim->loop &&
-                 medWalkAnim->frames.size() == 4);
-        CC_CHECK(medWalkAnim->frames[0].sprite == 1406 &&
-                 medWalkAnim->frames[3].sprite == 1430);
+        const SpriteDefInfo *medMove = FindSpriteByName(sheet, "medic_move_3_6");
+        CC_CHECK(medMove != nullptr && medMove->id == 1430 &&
+                 medMove->texture == "medic_move_base");
+        CC_CHECK(medMove->bounds.left == 192 && medMove->bounds.top == 96);
+        CC_CHECK(medMove->bounds.right == 224 && medMove->bounds.bottom == 128);
+        CC_CHECK(medMove->maskSprite == 1480);
+        const SpriteAnimInfo *medMoveAnim = FindAnimByName(sheet, "medic_move_6");
+        CC_CHECK(medMoveAnim != nullptr && medMoveAnim->loop &&
+                 medMoveAnim->frames.size() == 4);
+        CC_CHECK(medMoveAnim->frames[0].sprite == 1406 &&
+                 medMoveAnim->frames[3].sprite == 1430);
         // Prototype namespace mirrors it (own textures, ids 200+/300+).
         const SpriteDefInfo *protoIdle = FindSpriteByName(sheet, "prototypeinfantry_idle_0_0");
         CC_CHECK(protoIdle != nullptr && protoIdle->id == 200 &&
                  protoIdle->texture == "prototype_infantry_idle");
-        const SpriteDefInfo *protoWalk = FindSpriteByName(sheet, "prototypeinfantry_walk_3_6");
-        CC_CHECK(protoWalk != nullptr && protoWalk->id == 330 &&
-                 protoWalk->texture == "prototype_infantry_run");
-        const SpriteAnimInfo *protoAnim = FindAnimByName(sheet, "prototypeinfantry_walk_6");
+        const SpriteDefInfo *protoMove = FindSpriteByName(sheet, "prototypeinfantry_move_3_6");
+        CC_CHECK(protoMove != nullptr && protoMove->id == 330 &&
+                 protoMove->texture == "prototype_infantry_move");
+        const SpriteAnimInfo *protoAnim = FindAnimByName(sheet, "prototypeinfantry_move_6");
         CC_CHECK(protoAnim != nullptr && protoAnim->frames.size() == 4);
         CC_CHECK(protoAnim->frames[0].sprite == 306 && protoAnim->frames[3].sprite == 330);
     }

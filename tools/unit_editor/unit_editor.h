@@ -20,10 +20,10 @@ struct EditorState
     // Sprite-tab text buffers (synced from configs[selected] on select).
     char spritePrefix[64] = {};
     char atlasIdle[128] = {};
-    char atlasWalk[128] = {};
+    char atlasMove[128] = {};
     bool spriteEdit = false;
     bool idleEdit = false;
-    bool walkEdit = false;
+    bool moveEdit = false;
 
     // Dropdown / checkbox UI state.
     int armorActive = 0;
