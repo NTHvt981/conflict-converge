@@ -13,3 +13,4 @@ imgui.ini
 **.pyc
 data/settings.cfg
 .audits/
+tools/thirdparty/
