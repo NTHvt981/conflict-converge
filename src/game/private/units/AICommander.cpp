@@ -616,6 +616,7 @@ void AICommander::LaunchTeams()
             team.step = 0;
             team.stepTime = 0.0f;
             team.peakSize = team.members.size();
+            team.regrouping = false;
             team.active = true;
             IssueTeamStep(team);
         }
@@ -639,6 +640,17 @@ void AICommander::UpdateTeams(float dt)
             team.members.clear();
             continue;
         }
+        if (!team.regrouping && team.peakSize >= 3 &&
+            (team.role == AITeamRole::Main || team.role == AITeamRole::Harass) &&
+            team.members.size() * 3 <= team.peakSize)
+        {
+            team.regrouping = true;
+            team.script = { { AIMissionKind::Move, rallyTile_, 45.0f } };
+            team.step = 0;
+            team.stepTime = 0.0f;
+            IssueTeamStep(team);
+            continue;
+        }
         team.stepTime += dt;
         const AIMissionStep &mission = team.script[team.step];
         if (mission.timeout > 0.0f && team.stepTime >= mission.timeout)
@@ -656,21 +668,32 @@ void AICommander::UpdateTeams(float dt)
             }
             continue;
         }
-        if (team.step + 1 == team.script.size() &&
-            mission.kind == AIMissionKind::AttackMove && TeamAllIdle(team))
+        if (TeamAllIdle(team))
         {
-            const cc::IVec2 fresh = SelectTarget();
-            if (!(fresh == mission.target) && team.members.size() * 2 >= team.peakSize)
+            if (team.step + 1 < team.script.size())
             {
-                team.script[team.step].target = fresh;
+                ++team.step;
                 team.stepTime = 0.0f;
                 IssueTeamStep(team);
+                continue;
             }
-            else
+            if (mission.kind == AIMissionKind::Guard)
             {
-                team.active = false;
-                team.members.clear();
+                continue;
             }
+            if (mission.kind == AIMissionKind::AttackMove)
+            {
+                const cc::IVec2 fresh = SelectTarget();
+                if (!(fresh == mission.target) && team.members.size() * 2 >= team.peakSize)
+                {
+                    team.script[team.step].target = fresh;
+                    team.stepTime = 0.0f;
+                    IssueTeamStep(team);
+                    continue;
+                }
+            }
+            team.active = false;
+            team.members.clear();
         }
     }
 }

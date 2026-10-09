@@ -65,6 +65,7 @@ struct AITeam
     std::size_t step = 0;
     float stepTime = 0.0f;
     std::size_t peakSize = 0;
+    bool regrouping = false;
     bool active = false;
 };
 
