@@ -16,13 +16,6 @@ int TileKey(cc::IVec2 tile, int width)
     return tile.y * width + tile.x;
 }
 
-int Manhattan(cc::IVec2 a, cc::IVec2 b)
-{
-    const int dx = a.x >= b.x ? a.x - b.x : b.x - a.x;
-    const int dy = a.y >= b.y ? a.y - b.y : b.y - a.y;
-    return dx + dy;
-}
-
 float OctileDist(cc::IVec2 a, cc::IVec2 b)
 {
     const float dx = static_cast<float>(a.x >= b.x ? a.x - b.x : b.x - a.x);
@@ -42,12 +35,66 @@ bool operator<(const OpenNode &a, const OpenNode &b)
     return a.priority > b.priority;
 }
 
-const cc::IVec2 kDirs[] = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
-
 const cc::IVec2 kDirs8[] = {
     { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 },
     { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 }
 };
+
+template <typename Enter>
+TilePath FindPathCore(const TileMap &map, cc::IVec2 start, cc::IVec2 goal, Enter enter)
+{
+    const int width = map.Width();
+    std::priority_queue<OpenNode> open;
+    open.push({ OctileDist(start, goal), start });
+
+    std::unordered_map<int, float> costSoFar;
+    std::unordered_map<int, cc::IVec2> cameFrom;
+    costSoFar[TileKey(start, width)] = 0.0f;
+
+    while (!open.empty())
+    {
+        const cc::IVec2 current = open.top().tile;
+        open.pop();
+        if (current == goal)
+        {
+            break;
+        }
+
+        for (cc::IVec2 dir : kDirs8)
+        {
+            const cc::IVec2 next{ current.x + dir.x, current.y + dir.y };
+            float stepCost = 0.0f;
+            if (!enter(current, dir, next, stepCost))
+            {
+                continue;
+            }
+            const int nextKey = TileKey(next, width);
+            const float newCost = costSoFar[TileKey(current, width)] + stepCost;
+            const auto existing = costSoFar.find(nextKey);
+            if (existing == costSoFar.end() || newCost < existing->second)
+            {
+                costSoFar[nextKey] = newCost;
+                cameFrom[nextKey] = current;
+                open.push({ newCost + OctileDist(next, goal), next });
+            }
+        }
+    }
+
+    if (cameFrom.find(TileKey(goal, width)) == cameFrom.end())
+    {
+        return {};
+    }
+
+    TilePath reversed;
+    cc::IVec2 cursor = goal;
+    while (!(cursor == start))
+    {
+        reversed.push_back(cursor);
+        cursor = cameFrom[TileKey(cursor, width)];
+    }
+    reversed.push_back(start);
+    return TilePath(reversed.rbegin(), reversed.rend());
+}
 
 float FootprintCost(const TileMap &map, cc::IVec2 anchor, int footprintW, int footprintH,
                     Locomotor locomotor)
@@ -128,62 +175,30 @@ TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal,
         return { start };
     }
 
-    const int width = map.Width();
-    std::priority_queue<OpenNode> open;
-    open.push({ static_cast<float>(Manhattan(start, goal)), start });
-
-    std::unordered_map<int, float> costSoFar;
-    std::unordered_map<int, cc::IVec2> cameFrom;
-    costSoFar[TileKey(start, width)] = 0.0f;
-
-    while (!open.empty())
-    {
-        const cc::IVec2 current = open.top().tile;
-        open.pop();
-        if (current == goal)
+    auto enter = [&](cc::IVec2 current, cc::IVec2 dir, cc::IVec2 next, float &cost) {
+        if (!map.InBounds(next) || map.IsBlocked(next))
         {
-            break;
+            return false;
         }
-
-        for (cc::IVec2 dir : kDirs)
+        if (dir.x != 0 && dir.y != 0)
         {
-            const cc::IVec2 next{ current.x + dir.x, current.y + dir.y };
-            if (!map.InBounds(next) || map.IsBlocked(next))
+            const cc::IVec2 cardA{ current.x + dir.x, current.y };
+            const cc::IVec2 cardB{ current.x, current.y + dir.y };
+            if (!map.InBounds(cardA) || map.IsBlocked(cardA) || !map.InBounds(cardB) ||
+                map.IsBlocked(cardB))
             {
-                continue;
-            }
-            const int nextKey = TileKey(next, width);
-            const float stepCost = TerrainCost(map.Get(next), locomotor);
-            if (stepCost <= 0.0f)
-            {
-                continue;
-            }
-            const float newCost =
-                costSoFar[TileKey(current, width)] + stepCost;
-            const auto existing = costSoFar.find(nextKey);
-            if (existing == costSoFar.end() || newCost < existing->second)
-            {
-                costSoFar[nextKey] = newCost;
-                cameFrom[nextKey] = current;
-                open.push({ newCost + Manhattan(next, goal), next });
+                return false;
             }
         }
-    }
-
-    if (cameFrom.find(TileKey(goal, width)) == cameFrom.end())
-    {
-        return {};
-    }
-
-    TilePath reversed;
-    cc::IVec2 cursor = goal;
-    while (!(cursor == start))
-    {
-        reversed.push_back(cursor);
-        cursor = cameFrom[TileKey(cursor, width)];
-    }
-    reversed.push_back(start);
-    return TilePath(reversed.rbegin(), reversed.rend());
+        const float terrain = TerrainCost(map.Get(next), locomotor);
+        if (terrain <= 0.0f)
+        {
+            return false;
+        }
+        cost = ((dir.x != 0 && dir.y != 0) ? 1.41421356f : 1.0f) * terrain;
+        return true;
+    };
+    return FindPathCore(map, start, goal, enter);
 }
 
 TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
@@ -205,76 +220,30 @@ TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
         return { start };
     }
 
-    const int width = map.Width();
-    std::priority_queue<OpenNode> open;
-    open.push({ OctileDist(start, goal), start });
-
-    std::unordered_map<int, float> costSoFar;
-    std::unordered_map<int, cc::IVec2> cameFrom;
-    costSoFar[TileKey(start, width)] = 0.0f;
-
-    while (!open.empty())
-    {
-        const cc::IVec2 current = open.top().tile;
-        open.pop();
-        if (current == goal)
+    auto enter = [&](cc::IVec2 current, cc::IVec2 dir, cc::IVec2 next, float &cost) {
+        if (dir.x != 0 && dir.y != 0)
         {
-            break;
-        }
-
-        for (cc::IVec2 dir : kDirs8)
-        {
-            const cc::IVec2 next{ current.x + dir.x, current.y + dir.y };
-
-            if (dir.x != 0 && dir.y != 0)
+            const cc::IVec2 cardA{ current.x + dir.x, current.y };
+            const cc::IVec2 cardB{ current.x, current.y + dir.y };
+            if (!occ.CanEnter(map, cardA, footprintW, footprintH, self, selfGen) ||
+                !occ.CanEnter(map, cardB, footprintW, footprintH, self, selfGen))
             {
-                const cc::IVec2 cardA{ current.x + dir.x, current.y };
-                const cc::IVec2 cardB{ current.x, current.y + dir.y };
-                if (!occ.CanEnter(map, cardA, footprintW, footprintH, self, selfGen) ||
-                    !occ.CanEnter(map, cardB, footprintW, footprintH, self, selfGen))
-                {
-                    continue;
-                }
-            }
-
-            if (!occ.CanEnter(map, next, footprintW, footprintH, self, selfGen))
-            {
-                continue;
-            }
-
-            const float terrain = FootprintCost(map, next, footprintW, footprintH, locomotor);
-            if (terrain <= 0.0f)
-            {
-                continue;
-            }
-            const float stepCost =
-                ((dir.x != 0 && dir.y != 0) ? 1.41421356f : 1.0f) * terrain;
-            const int nextKey = TileKey(next, width);
-            const float newCost = costSoFar[TileKey(current, width)] + stepCost;
-            const auto existing = costSoFar.find(nextKey);
-            if (existing == costSoFar.end() || newCost < existing->second)
-            {
-                costSoFar[nextKey] = newCost;
-                cameFrom[nextKey] = current;
-                open.push({ newCost + OctileDist(next, goal), next });
+                return false;
             }
         }
-    }
-
-    if (cameFrom.find(TileKey(goal, width)) == cameFrom.end())
-    {
-        return {};
-    }
-
-    TilePath reversed;
-    cc::IVec2 cursor = goal;
-    while (!(cursor == start))
-    {
-        reversed.push_back(cursor);
-        cursor = cameFrom[TileKey(cursor, width)];
-    }
-    reversed.push_back(start);
-    return TilePath(reversed.rbegin(), reversed.rend());
+        if (!occ.CanEnter(map, next, footprintW, footprintH, self, selfGen))
+        {
+            return false;
+        }
+        const float terrain = FootprintCost(map, next, footprintW, footprintH, locomotor);
+        if (terrain <= 0.0f)
+        {
+            return false;
+        }
+        cost = ((dir.x != 0 && dir.y != 0) ? 1.41421356f : 1.0f) * terrain;
+        return true;
+    };
+    return FindPathCore(map, start, goal, enter);
 }
 
 cc::IVec2 NearestEnterableTile(const TileMap &map, const OccupancyGrid &occ,

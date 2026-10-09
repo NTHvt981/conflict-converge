@@ -22,7 +22,7 @@ float TerrainCost(TerrainType terrain, Locomotor locomotor);
 // Single-arg form reports the Tracked cost.
 float TerrainCost(TerrainType terrain);
 
-// 4-directional A* from start to goal (inclusive). Empty when unreachable,
+// 8-directional A* from start to goal (inclusive). Empty when unreachable,
 // either end blocked, or the map has no tiles.
 TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal,
                   Locomotor locomotor = Locomotor::Tracked);

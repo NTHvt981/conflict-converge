@@ -13,10 +13,11 @@ namespace
 
 bool Adjacent(cc::IVec2 a, cc::IVec2 b)
 {
-    return std::abs(a.x - b.x) + std::abs(a.y - b.y) == 1;
+    return std::abs(a.x - b.x) <= 1 && std::abs(a.y - b.y) <= 1 &&
+           (a.x != b.x || a.y != b.y);
 }
 
-// A valid route: endpoints match, every step is 4-adjacent, no step blocked.
+// A valid route: endpoints match, every step is 8-adjacent, no step blocked.
 bool IsValidRoute(const TileMap &map, const TilePath &path, cc::IVec2 start, cc::IVec2 goal)
 {
     if (path.empty() || !(path.front() == start) || !(path.back() == goal))
@@ -56,11 +57,11 @@ int WalkUntilIdle(Unit &unit, Orders &orders, Mover &mover, CombatState &combat,
 
 void RunPathfindTests()
 {
-    // --- open map: optimal Manhattan route ---
+    // --- open map: optimal octile route ---
     TileMap open(5, 5);
     TilePath route = FindPath(open, { 0, 0 }, { 3, 2 });
     CC_CHECK(IsValidRoute(open, route, { 0, 0 }, { 3, 2 }));
-    CC_CHECK(route.size() == 6); // 3 + 2 steps -> 6 nodes
+    CC_CHECK(route.size() == 4); // 2 diagonals + 1 straight -> 4 nodes
 
     // --- wall with a gap: route detours through it ---
     TileMap walled(5, 5);
@@ -95,7 +96,7 @@ void RunPathfindTests()
     CC_CHECK(footWoods.size() == 8); // straight: forest costs foot nothing
     const TilePath trackWoods = FindPath(woods, { 0, 3 }, { 7, 3 }, Locomotor::Tracked);
     CC_CHECK(IsValidRoute(woods, trackWoods, { 0, 3 }, { 7, 3 }));
-    CC_CHECK(trackWoods.size() == 10); // grass detour beats 6 forest tiles at 1.8x
+    CC_CHECK(trackWoods.size() == 8); // diagonal grass detour beats 6 forest tiles at 1.8x
     for (cc::IVec2 tile : trackWoods)
     {
         CC_CHECK(woods.Get(tile) == TerrainType::Grass);
