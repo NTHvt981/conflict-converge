@@ -3,7 +3,9 @@
 #include "test_harness.h"
 
 #include "economy/Nodes.h"
+#include "economy/Building.h"
 #include "world/TileMap.h"
+#include "units/Extensions.h"
 #include "units/UnitStats.h" // ApplyBaseStats for live Engineers
 
 namespace
@@ -98,4 +100,55 @@ void RunNodesTests()
     ResourceSystem quiet;
     trickle.GatherTick(morgue, quiet, 5.0f);
     CC_CHECK(quiet.iron == 0);
+
+    // --- loop harvesters fill at the field, ledger untouched until dock ---
+    ResourceNodes loop;
+    TileMap field(20, 15);
+    CC_CHECK(loop.SpawnNode(field, ResourceKind::Iron, { 3, 3 }, 1000.0f, 5.0f));
+    Registry crew2;
+    ResourceSystem bank;
+    CC_CHECK(PlaceBuilding(crew2, field, BuildingType::ResourceDepot, 0, 8, 8, &loop) !=
+             kInvalidEntity);
+    UpdateBuildingConstruction(crew2, 5.0f);
+    const Entity hauler = SpawnEngineer(crew2, { 3, 3 });
+    Harvester &plan = GetHarvester(crew2, hauler);
+    plan.phase = HarvestPhase::Loading;
+    plan.nodeTile = { 3, 3 };
+    loop.GatherTick(crew2, bank, 5.0f);
+    CC_CHECK(bank.iron == 0);
+    CC_CHECK(plan.load == 80.0f);
+    CC_CHECK(loop.FindAt({ 3, 3 })->amount == 920.0f);
+    loop.GatherTick(crew2, bank, 5.0f);
+    CC_CHECK(plan.load == 100.0f);
+    CC_CHECK(plan.phase == HarvestPhase::ToDepot);
+
+    // --- docked harvesters dump through the storage cap, overflow lost ---
+    crew2.Get<Unit>(hauler)->position = cc::ToRaylib(cc::TileToWorld(7, 8));
+    plan.phase = HarvestPhase::Unloading;
+    loop.GatherTick(crew2, bank, 1.0f);
+    CC_CHECK(bank.iron == 100);
+    CC_CHECK(plan.load == 0.0f);
+    CC_CHECK(plan.phase == HarvestPhase::ToField);
+    bank.iron = 1490;
+    plan.load = 100.0f;
+    plan.phase = HarvestPhase::Unloading;
+    loop.GatherTick(crew2, bank, 1.0f);
+    CC_CHECK(bank.iron == 1500); // 500 base + 1000 depot; 90 lost
+    CC_CHECK(plan.load == 90.0f);
+    CC_CHECK(plan.phase == HarvestPhase::Unloading);
+
+    // --- base income stalls at the cap ---
+    CC_CHECK(PlaceBuilding(crew2, field, BuildingType::Base, 0, 12, 12, &loop) !=
+             kInvalidEntity);
+    UpdateBuildingConstruction(crew2, 5.0f);
+    UpdateBaseIncome(crew2, bank, 60.0f, 0);
+    CC_CHECK(bank.iron == 1500);
+
+    // --- idle loop harvesters take orders to their field ---
+    plan.phase = HarvestPhase::ToField;
+    plan.load = 0.0f;
+    plan.nodeTile = { 3, 3 };
+    loop.UpdateHarvesters(crew2, field, nullptr, 1.0f / 60.0f, 0);
+    const Mover *haulMover = FindMover(crew2, hauler);
+    CC_CHECK(haulMover != nullptr && (haulMover->hasMoveOrder || haulMover->hasPath));
 }

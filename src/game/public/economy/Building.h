@@ -75,7 +75,12 @@ std::vector<cc::IVec2> AreaBuildSlots(BuildingType type, cc::IVec2 minTile,
 bool DemolishBuilding(Registry &registry, TileMap &map, Entity entity);
 
 void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float dt,
-                      int teamID = -1);
+                       int teamID = -1);
+
+// Storage cap: base allowance plus each operational depot; overflow deposits are lost.
+long StorageCapacity(const Registry &registry, int teamID);
+long DepositIron(const Registry &registry, ResourceSystem &resources, int teamID, long amount);
+long DepositOil(const Registry &registry, ResourceSystem &resources, int teamID, long amount);
 
 std::vector<cc::IVec2> BuildingEntrances(const TileMap &map, int tileX, int tileY,
                                           int fpW, int fpH);

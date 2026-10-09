@@ -228,9 +228,64 @@ void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float
     });
     if (bases > 0)
     {
-        resources.TickIncome(kBaseIronPerSecond * static_cast<float>(bases),
-                             kBaseOilPerSecond * static_cast<float>(bases), dt);
+        if (teamID < 0)
+        {
+            resources.TickIncome(kBaseIronPerSecond * static_cast<float>(bases),
+                                 kBaseOilPerSecond * static_cast<float>(bases), dt);
+        }
+        else
+        {
+            const long cap = StorageCapacity(registry, teamID);
+            resources.TickIncomeCapped(kBaseIronPerSecond * static_cast<float>(bases),
+                                       kBaseOilPerSecond * static_cast<float>(bases), dt, cap,
+                                       cap);
+        }
     }
+}
+
+long StorageCapacity(const Registry &registry, int teamID)
+{
+    long capacity = 500;
+    registry.Each<Building>([&](Entity, const Building &building) {
+        if (building.state == BuildingState::Operational &&
+            building.type == BuildingType::ResourceDepot && building.teamID == teamID)
+        {
+            capacity += 1000;
+        }
+    });
+    return capacity;
+}
+
+long DepositIron(const Registry &registry, ResourceSystem &resources, int teamID, long amount)
+{
+    if (amount <= 0)
+    {
+        return 0;
+    }
+    long space = teamID < 0 ? amount : StorageCapacity(registry, teamID) - resources.iron;
+    if (space <= 0)
+    {
+        return 0;
+    }
+    const long stored = amount < space ? amount : space;
+    resources.AddIron(stored);
+    return stored;
+}
+
+long DepositOil(const Registry &registry, ResourceSystem &resources, int teamID, long amount)
+{
+    if (amount <= 0)
+    {
+        return 0;
+    }
+    long space = teamID < 0 ? amount : StorageCapacity(registry, teamID) - resources.oil;
+    if (space <= 0)
+    {
+        return 0;
+    }
+    const long stored = amount < space ? amount : space;
+    resources.AddOil(stored);
+    return stored;
 }
 
 float BuildingBuildTime(BuildingType type)

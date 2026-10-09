@@ -15,6 +15,8 @@ public:
     bool TrySpend(long ironCost, long oilCost);
 
     void TickIncome(float ironPerSecond, float oilPerSecond, float dt);
+    void TickIncomeCapped(float ironPerSecond, float oilPerSecond, float dt, long ironCap,
+                          long oilCap);
 
     float IronCarry() const;
     float OilCarry() const;

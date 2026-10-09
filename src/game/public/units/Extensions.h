@@ -21,6 +21,38 @@ struct Cargo
     std::vector<Entity> passengers;
 };
 
+enum class HarvestPhase
+{
+    ToField,
+    Loading,
+    ToDepot,
+    Unloading
+};
+
+struct Harvester
+{
+    HarvestPhase phase = HarvestPhase::ToField;
+    float load = 0.0f;
+    float capacity = 100.0f;
+    int loadKind = 0; // ResourceKind as int; set from the node being worked
+    cc::IVec2 nodeTile{ -1, -1 };
+};
+
+inline Harvester &GetHarvester(Registry &registry, Entity entity)
+{
+    if (Harvester *harvester = registry.Get<Harvester>(entity))
+    {
+        return *harvester;
+    }
+    registry.Add(entity, Harvester{});
+    return *registry.Get<Harvester>(entity);
+}
+
+inline const Harvester *FindHarvester(const Registry &registry, Entity entity)
+{
+    return registry.Get<Harvester>(entity);
+}
+
 struct EmbarkedOn
 {
     Entity carrier = kInvalidEntity;

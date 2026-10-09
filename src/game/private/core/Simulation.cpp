@@ -222,6 +222,7 @@ void Simulation::Step(float dt)
     lastDepletedCount_ = depletedCount;
     UpdateBaseIncome(registry_, resources_, dt, 0);
     nodes_.Update(dt);
+    nodes_.UpdateHarvesters(registry_, map_, &occ_, dt, 0);
     nodes_.GatherTick(registry_, resources_, dt, 0);
     RefreshProducers();
     auto pumpQueue = [&](ProductionQueue &queue, BuildingType type, int &cursor) {

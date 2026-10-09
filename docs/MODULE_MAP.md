@@ -117,10 +117,11 @@ app/match: Menu, Skirmish
   Workshop/Vehicle; unbound default accepts anything): upfront charge, FIFO, prepaid spawn
   at the producing building's exit tile, then a move order to that building's rally
   (main + AI gate `Update` on a live producer, round-robin across producers)
-- `ResourceSystem.h` - Iron/oil ledger: `Add`/`TrySpend` + `TickIncome` (fractional carry,
-  no cap)
-- `Nodes.h` - Resource nodes: spawn/gather/deplete/respawn, Engineer harvesting, `Each`
-  iteration
+- `ResourceSystem.h` - Iron/oil ledger: `Add`/`TrySpend` + `TickIncome` (fractional carry);
+  storage cap (500 + 1000 per depot, overflow lost) via `Deposit*`/`TickIncomeCapped`
+- `Nodes.h` - Resource nodes: spawn/gather/deplete/respawn, loop harvesters
+  (`Harvester`: field load, depot dock, `UpdateHarvesters`) plus legacy stand-and-trickle
+  for engineers without the component, `Each` iteration
 
 ## app
 

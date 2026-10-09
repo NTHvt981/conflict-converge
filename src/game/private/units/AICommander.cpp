@@ -260,6 +260,7 @@ void AICommander::Update(float dt)
         return;
     }
     UpdateBaseIncome(registry_, resources_, dt, teamID_);
+    nodes_.UpdateHarvesters(registry_, map_, occ_, dt, teamID_);
     nodes_.GatherTick(registry_, resources_, dt, teamID_);
     auto pumpQueue = [&](ProductionQueue &queue, BuildingType type, int &cursor) {
         const Entity producerId = ProducerBuildingAt(registry_, type, teamID_, cursor);
@@ -356,9 +357,16 @@ void AICommander::OrderHarvesterToIron(Entity harvester)
     {
         return;
     }
+    Harvester &loop = GetHarvester(registry_, harvester);
+    loop.phase = HarvestPhase::ToField;
+    loop.load = 0.0f;
     cc::IVec2 iron{ 0, 0 };
-    const cc::IVec2 dest = FindLiveIron(iron) ? iron : homeTile_;
-    OrderMove(*unit, harvester, cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)));
+    loop.nodeTile = FindLiveIron(iron) ? iron : cc::IVec2{ -1, -1 };
+    if (!(loop.nodeTile == cc::IVec2{ -1, -1 }))
+    {
+        OrderMove(*unit, harvester,
+                  cc::ToRaylib(cc::TileToWorld(loop.nodeTile.x, loop.nodeTile.y)));
+    }
 }
 
 void AICommander::MaintainHarvesters()
@@ -374,6 +382,14 @@ void AICommander::MaintainHarvesters()
         }
     }
     harvesters_.swap(alive);
+    registry_.Each<Unit>([&](Entity id, const Unit &unit) {
+        if (unit.teamID != teamID_ || unit.health <= 0.0f || unit.type != UnitType::Engineer ||
+            FindHarvester(registry_, id) != nullptr)
+        {
+            return;
+        }
+        OrderHarvesterToIron(id);
+    });
     while (static_cast<int>(harvesters_.size()) < params_.harvesters)
     {
         const Entity id = factory_.Spawn(UnitType::Engineer, teamID_,

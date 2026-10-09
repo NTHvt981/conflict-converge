@@ -9,6 +9,7 @@
 #include "core/Subsystem.h"
 
 class TileMap;
+class OccupancyGrid;
 
 enum class ResourceKind
 {
@@ -37,7 +38,11 @@ public:
                    float respawnDelay);
     void Update(float dt);
     // teamID < 0 = all teams.
-    void GatherTick(const Registry &registry, ResourceSystem &resources, float dt, int teamID = -1);
+    void GatherTick(Registry &registry, ResourceSystem &resources, float dt, int teamID = -1);
+    // Drives loop harvesters between fields and depots; engineers without a
+    // Harvester component keep the legacy stand-and-trickle behavior.
+    void UpdateHarvesters(Registry &registry, const TileMap &map, const OccupancyGrid *occ,
+                          float dt, int teamID = -1);
 
     std::size_t Count() const;
     const ResourceNode *FindAt(cc::IVec2 tile) const;
