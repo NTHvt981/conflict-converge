@@ -1,5 +1,7 @@
 #include "units/AICommander.h"
 
+#include <algorithm>
+
 #include "economy/Building.h"
 #include "units/Extensions.h"
 #include "units/Formation.h"
@@ -143,6 +145,7 @@ void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 e
     queueBootcamp_.ResetForMatch();
     queueWorkshop_.ResetForMatch();
     harvesters_.clear();
+    teams_.clear();
     compIndex_ = 0;
     bootcampCursor_ = 0;
     workshopCursor_ = 0;
@@ -232,6 +235,19 @@ void AICommander::OrderMove(Unit &unit, Entity id, Vector2 dest)
     }
 }
 
+void AICommander::OrderAttackMove(Unit &unit, Entity id, Vector2 dest)
+{
+    if (occ_ != nullptr)
+    {
+        IssueAttackMoveOrderFootprint(unit, GetOrders(registry_, id), GetMover(registry_, id),
+                                      map_, *occ_, dest, id, registry_.Generation(id));
+    }
+    else
+    {
+        IssueAttackMoveOrder(unit, GetOrders(registry_, id), GetMover(registry_, id), map_, dest);
+    }
+}
+
 void AICommander::Update(float dt)
 {
     if (dt <= 0.0f)
@@ -281,6 +297,7 @@ void AICommander::Update(float dt)
     MaintainProduction();
     timeSinceLaunch_ += dt;
     MaybeLaunchWave();
+    UpdateTeams(dt);
     ScoutTick(dt);
     if (params_.retreats)
     {
@@ -376,44 +393,244 @@ void AICommander::MaintainProduction()
     }
 }
 
-void AICommander::MaybeLaunchWave()
+void AICommander::PruneTeam(AITeam &team)
 {
-    std::vector<Entity> army;
-    registry_.Each<Unit>([&](Entity id, const Unit &unit) {
-        if (unit.teamID == teamID_ && unit.health > 0.0f && unit.type != UnitType::Engineer)
+    std::vector<Entity> alive;
+    alive.reserve(team.members.size());
+    for (Entity id : team.members)
+    {
+        const Unit *unit = registry_.Get<Unit>(id);
+        if (unit != nullptr && unit->health > 0.0f && unit->teamID == teamID_)
         {
-            army.push_back(id);
+            alive.push_back(id);
         }
-    });
-    if (static_cast<int>(army.size()) < params_.waveThreshold ||
-        timeSinceLaunch_ < params_.relaunchCooldown)
+    }
+    team.members.swap(alive);
+}
+
+bool AICommander::TeamAllIdle(const AITeam &team)
+{
+    for (Entity id : team.members)
+    {
+        const Mover *mover = FindMover(registry_, id);
+        if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void AICommander::IssueTeamStep(AITeam &team)
+{
+    if (team.step >= team.script.size())
     {
         return;
     }
-    const std::vector<cc::IVec2> offsets = formation::FormationOffsets(army.size());
-    for (std::size_t i = 0; i < army.size(); ++i)
+    const AIMissionStep &mission = team.script[team.step];
+    const std::vector<cc::IVec2> offsets = formation::FormationOffsets(team.members.size());
+    for (std::size_t i = 0; i < team.members.size(); ++i)
     {
-        Unit *unit = registry_.Get<Unit>(army[i]);
+        Unit *unit = registry_.Get<Unit>(team.members[i]);
         if (unit == nullptr)
         {
             continue;
         }
-        const cc::IVec2 slot = lastSeenEnemy_ + offsets[i];
+        const cc::IVec2 slot = mission.target + offsets[i];
         const Vector2 dest = cc::ToRaylib(cc::TileToWorld(slot.x, slot.y));
-        Orders &orders = GetOrders(registry_, army[i]);
-        Mover &mover = GetMover(registry_, army[i]);
-        if (occ_ != nullptr)
+        switch (mission.kind)
         {
-            IssueAttackMoveOrderFootprint(*unit, orders, mover, map_, *occ_, dest, army[i],
-                                          registry_.Generation(army[i]));
+        case AIMissionKind::Move:
+            OrderMove(*unit, team.members[i], dest);
+            break;
+        case AIMissionKind::Guard:
+            OrderMove(*unit, team.members[i], dest);
+            if (CombatState *combat = registry_.Get<CombatState>(team.members[i]))
+            {
+                SetStance(*unit, GetOrders(registry_, team.members[i]), *combat, Stance::Guard);
+            }
+            break;
+        case AIMissionKind::AttackMove:
+        default:
+            OrderAttackMove(*unit, team.members[i], dest);
+            break;
+        }
+    }
+}
+
+void AICommander::MusterTeams()
+{
+    for (AITeam &team : teams_)
+    {
+        PruneTeam(team);
+    }
+    std::vector<Entity> unassigned;
+    registry_.Each<Unit>([&](Entity id, const Unit &unit) {
+        if (unit.teamID != teamID_ || unit.health <= 0.0f || unit.type == UnitType::Engineer)
+        {
+            return;
+        }
+        for (const AITeam &team : teams_)
+        {
+            if (std::find(team.members.begin(), team.members.end(), id) != team.members.end())
+            {
+                return;
+            }
+        }
+        unassigned.push_back(id);
+    });
+    if (unassigned.empty())
+    {
+        return;
+    }
+    bool hasGuard = false;
+    for (const AITeam &team : teams_)
+    {
+        if (team.role == AITeamRole::Guard && !team.members.empty())
+        {
+            hasGuard = true;
+        }
+    }
+    if (!hasGuard &&
+        static_cast<int>(unassigned.size()) >= params_.waveThreshold + 4)
+    {
+        AITeam guard;
+        guard.role = AITeamRole::Guard;
+        guard.members.assign(unassigned.end() - 2, unassigned.end());
+        unassigned.erase(unassigned.end() - 2, unassigned.end());
+        guard.script = { { AIMissionKind::Guard, rallyTile_, 0.0f } };
+        teams_.push_back(guard);
+    }
+    if (unassigned.size() >= 8)
+    {
+        std::sort(unassigned.begin(), unassigned.end(), [&](Entity a, Entity b) {
+            const Unit *ua = registry_.Get<Unit>(a);
+            const Unit *ub = registry_.Get<Unit>(b);
+            const float sa = ua != nullptr ? BaseStats(ua->type).speed : 0.0f;
+            const float sb = ub != nullptr ? BaseStats(ub->type).speed : 0.0f;
+            return sa > sb;
+        });
+        const std::size_t harassCount = std::max<std::size_t>(2, unassigned.size() / 3);
+        AITeam harass;
+        harass.role = AITeamRole::Harass;
+        harass.members.assign(unassigned.begin(), unassigned.begin() + harassCount);
+        const int dx = lastSeenEnemy_.x - homeTile_.x;
+        const int dy = lastSeenEnemy_.y - homeTile_.y;
+        cc::IVec2 flank{ lastSeenEnemy_.x - dy / 4, lastSeenEnemy_.y + dx / 4 };
+        flank.x = std::clamp(flank.x, 0, map_.Width() - 1);
+        flank.y = std::clamp(flank.y, 0, map_.Height() - 1);
+        harass.script = { { AIMissionKind::Move, flank, 30.0f },
+                          { AIMissionKind::AttackMove, lastSeenEnemy_, 120.0f } };
+        teams_.push_back(harass);
+        unassigned.erase(unassigned.begin(), unassigned.begin() + harassCount);
+    }
+    if (!unassigned.empty())
+    {
+        bool hasIdleMain = false;
+        for (const AITeam &team : teams_)
+        {
+            if (team.role == AITeamRole::Main && !team.active && !team.members.empty())
+            {
+                hasIdleMain = true;
+            }
+        }
+        if (!hasIdleMain)
+        {
+            AITeam main;
+            main.role = AITeamRole::Main;
+            main.members = unassigned;
+            main.script = { { AIMissionKind::AttackMove, lastSeenEnemy_, 120.0f } };
+            teams_.push_back(main);
         }
         else
         {
-            IssueAttackMoveOrder(*unit, orders, mover, map_, dest);
+            for (AITeam &team : teams_)
+            {
+                if (team.role == AITeamRole::Main && !team.active && !team.members.empty())
+                {
+                    team.members.insert(team.members.end(), unassigned.begin(), unassigned.end());
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void AICommander::LaunchTeams()
+{
+    for (AITeam &team : teams_)
+    {
+        if (!team.active && !team.members.empty())
+        {
+            team.step = 0;
+            team.stepTime = 0.0f;
+            team.active = true;
+            IssueTeamStep(team);
         }
     }
     ++wavesLaunched_;
     timeSinceLaunch_ = 0.0f;
+}
+
+void AICommander::UpdateTeams(float dt)
+{
+    for (AITeam &team : teams_)
+    {
+        if (!team.active)
+        {
+            continue;
+        }
+        PruneTeam(team);
+        if (team.members.empty() || team.step >= team.script.size())
+        {
+            team.active = false;
+            team.members.clear();
+            continue;
+        }
+        team.stepTime += dt;
+        const AIMissionStep &mission = team.script[team.step];
+        if (mission.timeout > 0.0f && team.stepTime >= mission.timeout)
+        {
+            ++team.step;
+            team.stepTime = 0.0f;
+            if (team.step < team.script.size())
+            {
+                IssueTeamStep(team);
+            }
+            else
+            {
+                team.active = false;
+                team.members.clear();
+            }
+            continue;
+        }
+        if (team.step + 1 == team.script.size() &&
+            mission.kind == AIMissionKind::AttackMove && TeamAllIdle(team))
+        {
+            team.active = false;
+            team.members.clear();
+        }
+    }
+}
+
+void AICommander::MaybeLaunchWave()
+{
+    MusterTeams();
+    const AITeam *main = nullptr;
+    for (const AITeam &team : teams_)
+    {
+        if (team.role == AITeamRole::Main && !team.active && !team.members.empty() &&
+            static_cast<int>(team.members.size()) >= params_.waveThreshold)
+        {
+            main = &team;
+            break;
+        }
+    }
+    if (main == nullptr || timeSinceLaunch_ < params_.relaunchCooldown)
+    {
+        return;
+    }
+    LaunchTeams();
 }
 
 void AICommander::ScoutTick(float dt)

@@ -36,6 +36,37 @@ struct AIDifficultyParams
 
 AIDifficultyParams ParamsFor(AIDifficulty difficulty);
 
+enum class AITeamRole
+{
+    Main,
+    Harass,
+    Guard
+};
+
+enum class AIMissionKind
+{
+    Move,
+    AttackMove,
+    Guard
+};
+
+struct AIMissionStep
+{
+    AIMissionKind kind = AIMissionKind::AttackMove;
+    cc::IVec2 target{ 0, 0 };
+    float timeout = 120.0f;
+};
+
+struct AITeam
+{
+    AITeamRole role = AITeamRole::Main;
+    std::vector<Entity> members;
+    std::vector<AIMissionStep> script;
+    std::size_t step = 0;
+    float stepTime = 0.0f;
+    bool active = false;
+};
+
 class AICommander : public Subsystem
 {
 public:
@@ -64,6 +95,13 @@ private:
     void MaintainHarvesters();
     void MaintainProduction();
     void MaybeLaunchWave();
+    void MusterTeams();
+    void LaunchTeams();
+    void UpdateTeams(float dt);
+    void IssueTeamStep(AITeam &team);
+    void OrderAttackMove(Unit &unit, Entity id, Vector2 dest);
+    bool TeamAllIdle(const AITeam &team);
+    void PruneTeam(AITeam &team);
     void ScoutTick(float dt);
     void RetreatTick();
     void OrderHarvesterToIron(Entity harvester);
@@ -93,4 +131,5 @@ private:
     int workshopCursor_ = 0;
     std::size_t compIndex_ = 0;
     std::vector<Entity> harvesters_; // tracked for replacement
+    std::vector<AITeam> teams_;
 };
