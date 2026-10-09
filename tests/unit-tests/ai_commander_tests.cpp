@@ -5,11 +5,16 @@
 #include "test_harness.h"
 
 #include "units/AICommander.h"
+#include "app/data/AIConfig.h"
 #include "economy/Building.h" // building-count query
 #include "units/Extensions.h"
 #include "economy/Nodes.h"
 #include "world/TileMap.h"
 #include "units/UnitFactory.h"
+
+#include <filesystem>
+#include <fstream>
+#include <string>
 
 namespace
 {
@@ -39,6 +44,14 @@ void SweepDead(Registry &registry, UnitFactory &factory)
     {
         factory.DestroyUnit(id);
     }
+}
+
+bool ParamsEqual(const AIDifficultyParams &a, const AIDifficultyParams &b)
+{
+    return a.harvesters == b.harvesters && a.waveThreshold == b.waveThreshold &&
+           a.reserveUnits == b.reserveUnits && a.scoutInterval == b.scoutInterval &&
+           a.relaunchCooldown == b.relaunchCooldown && a.retreats == b.retreats &&
+           a.composition == b.composition;
 }
 
 } // namespace
@@ -280,5 +293,56 @@ void RunAICommanderTests()
             }
         });
         CC_CHECK(droveAtBlocker);
+    }
+
+    // --- AI catalog: compiled defaults match ParamsFor until refreshed ---
+    CC_CHECK(ParamsEqual(ActiveAIDifficultyParams(AIDifficulty::Easy),
+                         ParamsFor(AIDifficulty::Easy)));
+    CC_CHECK(ParamsEqual(ActiveAIDifficultyParams(AIDifficulty::Medium),
+                         ParamsFor(AIDifficulty::Medium)));
+    CC_CHECK(ParamsEqual(ActiveAIDifficultyParams(AIDifficulty::Hard),
+                         ParamsFor(AIDifficulty::Hard)));
+
+    // --- AI parse: partial block overlays defaults, unknown types reject ---
+    {
+        AIDifficultyParams parsed;
+        const std::string json =
+            "{\"medium\": {\"waveThreshold\": 9, \"composition\": [\"LightTank\"]}}";
+        CC_CHECK(ParseAIDifficultyJson(json, AIDifficulty::Medium, parsed));
+        CC_CHECK(parsed.waveThreshold == 9);
+        CC_CHECK(parsed.composition.size() == 1 &&
+                 parsed.composition[0] == UnitType::LightTank);
+        CC_CHECK(parsed.harvesters == ParamsFor(AIDifficulty::Medium).harvesters);
+        AIDifficultyParams bad;
+        CC_CHECK(!ParseAIDifficultyJson("{\"medium\": {\"composition\": [\"Banana\"]}}",
+                                        AIDifficulty::Medium, bad));
+        CC_CHECK(!ParseAIDifficultyJson("not json", AIDifficulty::Medium, bad));
+        CC_CHECK(!ParseAIDifficultyJson("{\"easy\": {}}", AIDifficulty::Medium, bad));
+    }
+
+    // --- AI catalog: file round-trip then reset restores defaults ---
+    {
+        const std::string scratch =
+            (std::filesystem::temp_directory_path() / "cc_ai_roundtrip.json").string();
+        {
+            std::ofstream out(scratch, std::ios::binary | std::ios::trunc);
+            out << "{\"hard\": {\"waveThreshold\": 7}}";
+        }
+        AIDifficultyParams fromFile;
+        CC_CHECK(LoadAIDifficultyFile(scratch, AIDifficulty::Hard, fromFile));
+        CC_CHECK(fromFile.waveThreshold == 7);
+        CC_CHECK(fromFile.composition == ParamsFor(AIDifficulty::Hard).composition);
+        CC_CHECK(!LoadAIDifficultyFile(scratch + ".missing", AIDifficulty::Hard, fromFile));
+        std::error_code ec;
+        std::filesystem::remove(scratch, ec);
+    }
+    {
+        AIDifficultyParams custom = ParamsFor(AIDifficulty::Easy);
+        custom.waveThreshold = 11;
+        SetActiveAIDifficultyParams(AIDifficulty::Easy, custom);
+        CC_CHECK(ActiveAIDifficultyParams(AIDifficulty::Easy).waveThreshold == 11);
+        ResetAIDifficultyParams();
+        CC_CHECK(ParamsEqual(ActiveAIDifficultyParams(AIDifficulty::Easy),
+                             ParamsFor(AIDifficulty::Easy)));
     }
 }

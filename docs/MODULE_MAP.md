@@ -66,7 +66,9 @@ app/match: Menu, Skirmish
 - `TileMap.h` - Grid dims, `TerrainType` Grass/Water/Building/Forest/Rock (Forest passable,
   Rock blocks; new types append after Building so old saves still decode), `IsBlocked`
   (Water/Building/Rock + OOB = true)
-- `Pathfinder.h` - 4-dir A* (`FindPath`, float g-cost via `TerrainCost`, uniform 1.0) +
+- `Pathfinder.h` - 8-dir A* over one shared core (`FindPath` terrain-only,
+  `FindPathFootprint` occupancy-aware with corner-cut guard); locomotor table
+  (`LocomotorOf`: Grass 1.0 all, Forest 1.0 foot / 1.8 tracked / 1.6 wheeled) +
   `IssuePathOrder` (M2 straight fallback when unreachable)
 - `MapFile.h` - Text `.map` loader (`data/`): 5-line header, legend (Q79), markers,
   `ApplyMapData` (default node amounts), `NearestFreeTile` for spawns, M14 `ListMaps`
@@ -98,9 +100,11 @@ app/match: Menu, Skirmish
 - `Targeting.h` - Nearest-enemy/threat acquisition + range check (M9 fog gate, artillery
   exempt) + M13 `AcquireBuildingTarget`/`BuildingCenter`
 - `Formation.h` - Row-major offsets + `IssueFormationMove`
-- `AICommander.h` - M8 enemy commander: own fair-rules economy, build order, threshold waves,
-  scouting, Easy/Medium/Hard; M14 `Reset` (team + difficulty + homes; re-arm for a new match
-  or bare for the load path); 2v2 overflow via `allyAI` (team 0) + `enemyAI2` (team 1),
+- `AICommander.h` - Enemy commander: fair-rules economy, Main/Harass/Guard teams with
+  mission scripts, nearest-cluster targeting, low-strength regroup, difficulty-gated
+  behaviors, time/loss escalation; `data/configs/ai.json` catalog via `app/data/AIConfig.h`
+  (compiled `ParamsFor` fallback); M14 `Reset` (team + difficulty + homes; re-arm for a new
+  match or bare for the load path); 2v2 overflow via `allyAI` (team 0) + `enemyAI2` (team 1),
   shared-team economy credit
 
 ## economy

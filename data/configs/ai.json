@@ -1,0 +1,29 @@
+{
+    "easy": {
+        "harvesters": 1,
+        "waveThreshold": 3,
+        "reserveUnits": 0,
+        "scoutInterval": 60.0,
+        "relaunchCooldown": 30.0,
+        "retreats": false,
+        "composition": ["RifleInfantry"]
+    },
+    "medium": {
+        "harvesters": 2,
+        "waveThreshold": 5,
+        "reserveUnits": 0,
+        "scoutInterval": 30.0,
+        "relaunchCooldown": 20.0,
+        "retreats": false,
+        "composition": ["RifleInfantry", "RifleInfantry", "LightTank"]
+    },
+    "hard": {
+        "harvesters": 3,
+        "waveThreshold": 4,
+        "reserveUnits": 2,
+        "scoutInterval": 15.0,
+        "relaunchCooldown": 15.0,
+        "retreats": true,
+        "composition": ["RifleInfantry", "LightTank", "Artillery", "IFV"]
+    }
+}
