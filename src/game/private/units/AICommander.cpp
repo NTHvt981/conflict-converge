@@ -555,7 +555,7 @@ void AICommander::MusterTeams()
             hasGuard = true;
         }
     }
-    if (!hasGuard &&
+    if (!hasGuard && difficulty_ == AIDifficulty::Hard &&
         static_cast<int>(unassigned.size()) >= params_.waveThreshold + 4)
     {
         std::sort(unassigned.begin(), unassigned.end(), [&](Entity a, Entity b) {
@@ -572,7 +572,7 @@ void AICommander::MusterTeams()
         guard.script = { { AIMissionKind::Guard, rallyTile_, 0.0f } };
         teams_.push_back(guard);
     }
-    if (unassigned.size() >= 8)
+    if (unassigned.size() >= 8 && difficulty_ != AIDifficulty::Easy)
     {
         std::vector<Entity> willing;
         for (Entity id : unassigned)
