@@ -60,3 +60,6 @@ private:
     float ironCarry_ = 0.0f;
     float oilCarry_ = 0.0f;
 };
+
+// True when another live unit of the team works the tile.
+bool HarvestFieldClaimed(const Registry &registry, cc::IVec2 tile, Entity self, int teamID);

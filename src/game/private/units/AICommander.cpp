@@ -329,27 +329,6 @@ void AICommander::Update(float dt)
     }
 }
 
-bool AICommander::FindLiveIron(cc::IVec2 &outTile) const
-{
-    bool found = false;
-    int best = 0;
-    nodes_.Each([&](const ResourceNode &node) {
-        if (node.kind != ResourceKind::Iron || node.IsDepleted())
-        {
-            return;
-        }
-        const int dist = (node.tile.x - homeTile_.x) * (node.tile.x - homeTile_.x) +
-                         (node.tile.y - homeTile_.y) * (node.tile.y - homeTile_.y);
-        if (!found || dist < best)
-        {
-            found = true;
-            best = dist;
-            outTile = node.tile;
-        }
-    });
-    return found;
-}
-
 void AICommander::OrderHarvesterToIron(Entity harvester)
 {
     Unit *unit = registry_.Get<Unit>(harvester);
@@ -360,8 +339,22 @@ void AICommander::OrderHarvesterToIron(Entity harvester)
     Harvester &loop = GetHarvester(registry_, harvester);
     loop.phase = HarvestPhase::ToField;
     loop.load = 0.0f;
-    cc::IVec2 iron{ 0, 0 };
-    loop.nodeTile = FindLiveIron(iron) ? iron : cc::IVec2{ -1, -1 };
+    loop.nodeTile = { -1, -1 };
+    int best = 0;
+    nodes_.Each([&](const ResourceNode &node) {
+        if (node.kind != ResourceKind::Iron || node.IsDepleted() ||
+            HarvestFieldClaimed(registry_, node.tile, harvester, teamID_))
+        {
+            return;
+        }
+        const int dist = (node.tile.x - homeTile_.x) * (node.tile.x - homeTile_.x) +
+                         (node.tile.y - homeTile_.y) * (node.tile.y - homeTile_.y);
+        if (loop.nodeTile == cc::IVec2{ -1, -1 } || dist < best)
+        {
+            best = dist;
+            loop.nodeTile = node.tile;
+        }
+    });
     if (!(loop.nodeTile == cc::IVec2{ -1, -1 }))
     {
         OrderMove(*unit, harvester,

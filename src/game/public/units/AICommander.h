@@ -112,7 +112,6 @@ private:
     void ScoutTick(float dt);
     void RetreatTick();
     void OrderHarvesterToIron(Entity harvester);
-    bool FindLiveIron(cc::IVec2 &outTile) const;
     void OrderMove(Unit &unit, Entity id, Vector2 dest);
 
     Registry &registry_;

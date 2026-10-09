@@ -193,15 +193,27 @@ void RunAICommanderTests()
             ai.Update(1.0f / 60.0f);
         }
         CC_CHECK(ai.HarvesterCount() == medium.harvesters);
+        int working = 0;
+        int standby = 0;
         registry.Each<Unit>([&](Entity id, const Unit &unit) {
             if (id == blocker || unit.type != UnitType::Engineer)
             {
                 return;
             }
-            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(FindMover(registry, id)->moveTarget));
-            CC_CHECK(!(dest == cc::IVec2(15, 3))); // beside the node, not inside
-            CC_CHECK(FindMover(registry, id)->hasMoveOrder || FindMover(registry, id)->hasPath);
+            const Mover *mover = FindMover(registry, id);
+            if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
+            {
+                const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(mover->moveTarget));
+                CC_CHECK(!(dest == cc::IVec2(15, 3))); // beside the node, not inside
+                ++working;
+            }
+            else
+            {
+                ++standby; // one harvester per field: no free node, no orders
+            }
         });
+        CC_CHECK(working == 1);
+        CC_CHECK(standby == medium.harvesters - 1);
     }
 
     // --- bound occupancy: wave keeps attack-move, slots avoid blockers ---

@@ -160,4 +160,33 @@ void RunNodesTests()
     loop.UpdateHarvesters(crew2, field, nullptr, 1.0f / 60.0f, 0);
     const Mover *haulMover = FindMover(crew2, hauler);
     CC_CHECK(haulMover != nullptr && (haulMover->hasMoveOrder || haulMover->hasPath));
+
+    // --- one harvester per field: the second takes the free node ---
+    ResourceNodes shared;
+    TileMap duplex(20, 15);
+    CC_CHECK(shared.SpawnNode(duplex, ResourceKind::Iron, { 3, 3 }, 1000.0f, 5.0f));
+    CC_CHECK(shared.SpawnNode(duplex, ResourceKind::Iron, { 6, 3 }, 1000.0f, 5.0f));
+    Registry pair;
+    ResourceSystem kitty;
+    const Entity first = SpawnEngineer(pair, { 3, 3 });
+    const Entity second = SpawnEngineer(pair, { 3, 3 });
+    GetHarvester(pair, first).phase = HarvestPhase::ToField;
+    GetHarvester(pair, first).nodeTile = { 3, 3 };
+    GetHarvester(pair, second).phase = HarvestPhase::ToField;
+    GetHarvester(pair, second).nodeTile = { 3, 3 };
+    shared.UpdateHarvesters(pair, duplex, nullptr, 1.0f / 60.0f, 0);
+    const cc::IVec2 firstTile = pair.Get<Harvester>(first)->nodeTile;
+    const cc::IVec2 secondTile = pair.Get<Harvester>(second)->nodeTile;
+    CC_CHECK(!(firstTile == secondTile));
+    CC_CHECK(shared.FindAt(firstTile) != nullptr && shared.FindAt(secondTile) != nullptr);
+    int marching = 0;
+    for (Entity id : { first, second })
+    {
+        const Mover *mover = FindMover(pair, id);
+        if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
+        {
+            ++marching;
+        }
+    }
+    CC_CHECK(marching == 1);
 }

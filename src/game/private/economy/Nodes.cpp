@@ -98,6 +98,23 @@ void OrderHarvestMove(Registry &registry, Unit &unit, Entity id, const TileMap &
 
 } // namespace
 
+bool HarvestFieldClaimed(const Registry &registry, cc::IVec2 tile, Entity self, int teamID)
+{
+    bool claimed = false;
+    registry.Each<Unit>([&](Entity id, const Unit &unit) {
+        if (claimed || id == self || unit.teamID != teamID || unit.health <= 0.0f)
+        {
+            return;
+        }
+        const Harvester *other = registry.Get<Harvester>(id);
+        if (other != nullptr && other->nodeTile == tile)
+        {
+            claimed = true;
+        }
+    });
+    return claimed;
+}
+
 bool ResourceNode::IsDepleted() const
 {
     return amount <= 0.0f;
@@ -195,6 +212,7 @@ void ResourceNodes::GatherTick(Registry &registry, ResourceSystem &resources, fl
                     if (harvester->load >= harvester->capacity)
                     {
                         harvester->phase = HarvestPhase::ToDepot;
+                        harvester->nodeTile = { -1, -1 };
                     }
                     break;
                 }
@@ -285,17 +303,26 @@ void ResourceNodes::UpdateHarvesters(Registry &registry, const TileMap &map,
         case HarvestPhase::ToField:
         {
             const ResourceNode *node = FindAt(harvester->nodeTile);
-            if (here == harvester->nodeTile && node != nullptr && !node->IsDepleted())
+            const bool live = node != nullptr && !node->IsDepleted();
+            const bool taken =
+                live && here == harvester->nodeTile &&
+                HarvestFieldClaimed(registry, harvester->nodeTile, id, unit.teamID);
+            if (live && here == harvester->nodeTile && !taken)
             {
                 harvester->phase = HarvestPhase::Loading;
                 break;
             }
-            if (node == nullptr || node->IsDepleted())
+            if (!live || taken)
             {
+                if (taken)
+                {
+                    harvester->nodeTile = { -1, -1 };
+                }
                 const ResourceNode *best = nullptr;
                 int bestDist = 0;
                 Each([&](const ResourceNode &candidate) {
-                    if (candidate.IsDepleted())
+                    if (candidate.IsDepleted() ||
+                        HarvestFieldClaimed(registry, candidate.tile, id, unit.teamID))
                     {
                         return;
                     }
@@ -309,6 +336,7 @@ void ResourceNodes::UpdateHarvesters(Registry &registry, const TileMap &map,
                 });
                 if (best == nullptr)
                 {
+                    harvester->nodeTile = { -1, -1 };
                     break;
                 }
                 harvester->nodeTile = best->tile;
@@ -326,6 +354,7 @@ void ResourceNodes::UpdateHarvesters(Registry &registry, const TileMap &map,
             if (harvester->load >= harvester->capacity)
             {
                 harvester->phase = HarvestPhase::ToDepot;
+                harvester->nodeTile = { -1, -1 };
             }
             else
             {
