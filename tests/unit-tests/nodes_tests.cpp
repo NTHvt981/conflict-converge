@@ -93,6 +93,15 @@ void RunNodesTests()
     }
     CC_CHECK(pocket.iron == 1); // 10/s * 0.1s, carried across ticks
 
+    // --- negative respawn exhausts the node forever ---
+    CC_CHECK(trickle.SpawnNode(map, ResourceKind::Iron, { 9, 9 }, 20.0f, -1.0f));
+    Registry claim;
+    SpawnEngineer(claim, { 9, 9 });
+    trickle.GatherTick(claim, pocket, 3.0f); // 20 units at 10/s over 2s, then dry
+    CC_CHECK(trickle.FindAt({ 9, 9 })->IsDepleted());
+    trickle.Update(60.0f);
+    CC_CHECK(trickle.FindAt({ 9, 9 })->IsDepleted());
+
     // --- dead Engineers gather nothing ---
     Registry morgue;
     const Entity corpse = SpawnEngineer(morgue, { 8, 8 });

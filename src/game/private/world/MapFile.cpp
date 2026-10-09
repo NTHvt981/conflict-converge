@@ -12,7 +12,7 @@ namespace
 
 constexpr float kDefaultIron = 200.0f;
 constexpr float kDefaultOil = 150.0f;
-constexpr float kDefaultRespawn = 10.0f;
+constexpr float kDefaultRespawn = -1.0f;
 constexpr int kMaxDim = 1024;
 constexpr std::int64_t kMaxTiles = 1024 * 1024;
 

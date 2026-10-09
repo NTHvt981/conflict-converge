@@ -33,7 +33,7 @@ struct ResourceNode
 class ResourceNodes : public Subsystem
 {
 public:
-    // False leaves storage untouched.
+    // False leaves storage untouched. Negative respawnDelay exhausts forever.
     bool SpawnNode(const TileMap &map, ResourceKind kind, cc::IVec2 tile, float amount,
                    float respawnDelay);
     void Update(float dt);

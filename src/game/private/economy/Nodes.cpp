@@ -104,9 +104,9 @@ bool ResourceNode::IsDepleted() const
 }
 
 bool ResourceNodes::SpawnNode(const TileMap &map, ResourceKind kind, cc::IVec2 tile,
-                              float amount, float respawnDelay)
+                               float amount, float respawnDelay)
 {
-    if (amount <= 0.0f || respawnDelay < 0.0f || !map.InBounds(tile) ||
+    if (amount <= 0.0f || !map.InBounds(tile) ||
         map.Get(tile) != TerrainType::Grass || FindAt(tile) != nullptr)
     {
         return false;
@@ -130,7 +130,7 @@ void ResourceNodes::Update(float dt)
     }
     for (ResourceNode &node : nodes_)
     {
-        if (!node.IsDepleted())
+        if (!node.IsDepleted() || node.respawnDelay < 0.0f)
         {
             continue;
         }
