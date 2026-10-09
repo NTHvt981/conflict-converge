@@ -8,16 +8,30 @@
 
 using TilePath = std::vector<cc::IVec2>;
 
+enum class Locomotor
+{
+    Foot,
+    Tracked,
+    Wheeled
+};
+
+Locomotor LocomotorOf(UnitType type);
+
+float TerrainCost(TerrainType terrain, Locomotor locomotor);
+
+// Single-arg form reports the Tracked cost.
 float TerrainCost(TerrainType terrain);
 
 // 4-directional A* from start to goal (inclusive). Empty when unreachable,
 // either end blocked, or the map has no tiles.
-TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal);
+TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal,
+                  Locomotor locomotor = Locomotor::Tracked);
 
 TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
                            cc::IVec2 start, cc::IVec2 goal,
                            int footprintW, int footprintH,
-                           Entity self, std::uint32_t selfGen);
+                           Entity self, std::uint32_t selfGen,
+                           Locomotor locomotor = Locomotor::Tracked);
 
 // Nearest anchor tile the footprint can enter (ring search, radius 5).
 cc::IVec2 NearestEnterableTile(const TileMap &map, const OccupancyGrid &occ,

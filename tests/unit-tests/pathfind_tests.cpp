@@ -81,6 +81,34 @@ void RunPathfindTests()
     CC_CHECK(throughGap);
     CC_CHECK(detour.size() > 5); // detour costs more than the open 4-step run
 
+    // --- forest slows vehicles, not infantry ---
+    TileMap woods(8, 5);
+    for (int y = 2; y <= 3; ++y)
+    {
+        for (int x = 1; x <= 6; ++x)
+        {
+            woods.Set({ x, y }, TerrainType::Forest);
+        }
+    }
+    const TilePath footWoods = FindPath(woods, { 0, 3 }, { 7, 3 }, Locomotor::Foot);
+    CC_CHECK(IsValidRoute(woods, footWoods, { 0, 3 }, { 7, 3 }));
+    CC_CHECK(footWoods.size() == 8); // straight: forest costs foot nothing
+    const TilePath trackWoods = FindPath(woods, { 0, 3 }, { 7, 3 }, Locomotor::Tracked);
+    CC_CHECK(IsValidRoute(woods, trackWoods, { 0, 3 }, { 7, 3 }));
+    CC_CHECK(trackWoods.size() == 10); // grass detour beats 6 forest tiles at 1.8x
+    for (cc::IVec2 tile : trackWoods)
+    {
+        CC_CHECK(woods.Get(tile) == TerrainType::Grass);
+    }
+    OccupancyGrid woodsOcc(8, 5);
+    const TilePath trackFootprint =
+        FindPathFootprint(woods, woodsOcc, { 0, 3 }, { 7, 3 }, 1, 1, kInvalidEntity, 0);
+    CC_CHECK(!trackFootprint.empty());
+    for (cc::IVec2 tile : trackFootprint)
+    {
+        CC_CHECK(woods.Get(tile) == TerrainType::Grass);
+    }
+
     // --- unreachable goal (walled in): empty path ---
     TileMap pocket(5, 5);
     pocket.Set({ 0, 1 }, TerrainType::Water);

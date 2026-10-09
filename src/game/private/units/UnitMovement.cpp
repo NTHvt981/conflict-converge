@@ -125,11 +125,12 @@ bool TryBlockedRetryWithBudget(Unit &unit, Orders &orders, Mover &mover, const T
     if (occ != nullptr)
     {
         fresh = FindPathFootprint(map, *occ, start, goal, unit.footprintWidth,
-                                  unit.footprintHeight, self, selfGen);
+                                  unit.footprintHeight, self, selfGen,
+                                  LocomotorOf(unit.type));
     }
     else
     {
-        fresh = FindPath(map, start, goal);
+        fresh = FindPath(map, start, goal, LocomotorOf(unit.type));
     }
     if (fresh.empty())
     {

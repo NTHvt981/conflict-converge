@@ -108,8 +108,14 @@ void RunMapFileTests()
     CC_CHECK(!blocked.IsBlocked({ 0, 0 })); // forest passable
     CC_CHECK(blocked.IsBlocked({ 1, 0 }));  // rock walls
     CC_CHECK(TerrainCost(TerrainType::Grass) == 1.0f);
-    CC_CHECK(TerrainCost(TerrainType::Forest) == 1.0f); // uniform cost
-    CC_CHECK(TerrainCost(TerrainType::Water) == 1.0f);
+    CC_CHECK(TerrainCost(TerrainType::Grass, Locomotor::Foot) == 1.0f);
+    CC_CHECK(TerrainCost(TerrainType::Forest, Locomotor::Foot) == 1.0f);
+    CC_CHECK(TerrainCost(TerrainType::Forest, Locomotor::Tracked) == 1.8f);
+    CC_CHECK(TerrainCost(TerrainType::Forest, Locomotor::Wheeled) == 1.6f);
+    CC_CHECK(TerrainCost(TerrainType::Water) == 0.0f);
+    CC_CHECK(LocomotorOf(UnitType::RifleInfantry) == Locomotor::Foot);
+    CC_CHECK(LocomotorOf(UnitType::LightTank) == Locomotor::Tracked);
+    CC_CHECK(LocomotorOf(UnitType::IFV) == Locomotor::Wheeled);
 
     // --- NearestFreeTile: walkable spawn points around footprints ---
     TileMap freeMap(8, 8);

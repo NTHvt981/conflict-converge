@@ -49,15 +49,67 @@ const cc::IVec2 kDirs8[] = {
     { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 }
 };
 
+float FootprintCost(const TileMap &map, cc::IVec2 anchor, int footprintW, int footprintH,
+                    Locomotor locomotor)
+{
+    float cost = 0.0f;
+    for (int dy = 0; dy < footprintH; ++dy)
+    {
+        for (int dx = 0; dx < footprintW; ++dx)
+        {
+            const float tile = TerrainCost(map.Get({ anchor.x + dx, anchor.y + dy }), locomotor);
+            if (tile <= 0.0f)
+            {
+                return 0.0f;
+            }
+            if (tile > cost)
+            {
+                cost = tile;
+            }
+        }
+    }
+    return cost;
+}
+
+}
+
+Locomotor LocomotorOf(UnitType type)
+{
+    switch (type)
+    {
+    case UnitType::IFV:
+    case UnitType::Artillery:
+        return Locomotor::Wheeled;
+    case UnitType::LightTank:
+    case UnitType::HeavyTank:
+        return Locomotor::Tracked;
+    default:
+        return Locomotor::Foot;
+    }
+}
+
+float TerrainCost(TerrainType terrain, Locomotor locomotor)
+{
+    switch (terrain)
+    {
+    case TerrainType::Grass:
+        return 1.0f;
+    case TerrainType::Forest:
+        return locomotor == Locomotor::Foot ? 1.0f
+             : locomotor == Locomotor::Tracked ? 1.8f
+                                               : 1.6f;
+    default:
+        return 0.0f;
+    }
 }
 
 float TerrainCost(TerrainType terrain)
 {
-    (void)terrain;
-    return 1.0f;
+    return TerrainCost(terrain, Locomotor::Tracked);
 }
 
-TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal)
+TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal,
+                  Locomotor locomotor)
 {
     if (map.Width() <= 0 || map.Height() <= 0)
     {
@@ -101,8 +153,13 @@ TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal)
                 continue;
             }
             const int nextKey = TileKey(next, width);
+            const float stepCost = TerrainCost(map.Get(next), locomotor);
+            if (stepCost <= 0.0f)
+            {
+                continue;
+            }
             const float newCost =
-                costSoFar[TileKey(current, width)] + TerrainCost(map.Get(next));
+                costSoFar[TileKey(current, width)] + stepCost;
             const auto existing = costSoFar.find(nextKey);
             if (existing == costSoFar.end() || newCost < existing->second)
             {
@@ -132,7 +189,8 @@ TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal)
 TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
                            cc::IVec2 start, cc::IVec2 goal,
                            int footprintW, int footprintH,
-                           Entity self, std::uint32_t selfGen)
+                           Entity self, std::uint32_t selfGen,
+                           Locomotor locomotor)
 {
     if (map.Width() <= 0 || map.Height() <= 0)
     {
@@ -184,7 +242,13 @@ TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
                 continue;
             }
 
-            const float stepCost = (dir.x != 0 && dir.y != 0) ? 1.41421356f : 1.0f;
+            const float terrain = FootprintCost(map, next, footprintW, footprintH, locomotor);
+            if (terrain <= 0.0f)
+            {
+                continue;
+            }
+            const float stepCost =
+                ((dir.x != 0 && dir.y != 0) ? 1.41421356f : 1.0f) * terrain;
             const int nextKey = TileKey(next, width);
             const float newCost = costSoFar[TileKey(current, width)] + stepCost;
             const auto existing = costSoFar.find(nextKey);
@@ -305,7 +369,7 @@ void IssuePathOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map
 {
     const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
     const cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(worldTarget)));
-    TilePath path = FindPath(map, start, goal);
+    TilePath path = FindPath(map, start, goal, LocomotorOf(unit.type));
     if (path.empty())
     {
         IssueMoveOrder(unit, orders, mover, worldTarget);
@@ -334,7 +398,7 @@ void IssuePathOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const Til
                                 self, selfGen);
     TilePath path = FindPathFootprint(map, occ, start, goal,
                                       unit.footprintWidth, unit.footprintHeight,
-                                      self, selfGen);
+                                      self, selfGen, LocomotorOf(unit.type));
     if (path.empty())
     {
         IssueMoveOrder(unit, orders, mover, cc::ToRaylib(cc::TileToWorld(goal.x, goal.y)));
