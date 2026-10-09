@@ -226,6 +226,18 @@ void Simulation::Step(float dt)
     nodes_.GatherTick(registry_, resources_, dt, 0);
     RefreshProducers();
     auto pumpQueue = [&](ProductionQueue &queue, BuildingType type, int &cursor) {
+        int producers = 0;
+        registry_.Each<Building>([&](Entity, const Building &building) {
+            if (building.type == type && building.teamID == 0 &&
+                building.state == BuildingState::Operational)
+            {
+                ++producers;
+            }
+        });
+        if (producers == 0)
+        {
+            return;
+        }
         const Entity producerId = ProducerBuildingAt(registry_, type, 0, cursor);
         if (producerId == kInvalidEntity)
         {
@@ -239,24 +251,28 @@ void Simulation::Step(float dt)
         const cc::IVec2 rally = producer->rallyTile;
         const cc::IVec2 spawnTile = BuildingSpawnTile(map_, &occ_, *producer);
         const Vector2 spawnPos = cc::ToRaylib(cc::TileToWorld(spawnTile.x, spawnTile.y));
-        const Entity spawned = queue.Update(factory_, resources_, 0, spawnPos, dt, &map_, &occ_);
-        if (spawned == kInvalidEntity)
+        for (int n = 0; n < producers; ++n)
         {
-            return;
-        }
-        ++cursor;
-        if (Unit *fresh = registry_.Get<Unit>(spawned))
-        {
-            if (!(cc::WorldToTile(cc::ToGlm(fresh->position)) == rally))
+            const Entity spawned =
+                queue.Update(factory_, resources_, 0, spawnPos, dt, &map_, &occ_);
+            if (spawned == kInvalidEntity)
             {
-                IssuePathOrderFootprint(*fresh, GetOrders(registry_, spawned),
-                                        GetMover(registry_, spawned), map_, occ_,
-                                        cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)),
-                                        spawned, registry_.Generation(spawned));
+                continue;
             }
-            if (autoAddGroupBit_ >= 0)
+            ++cursor;
+            if (Unit *fresh = registry_.Get<Unit>(spawned))
             {
-                fresh->controlGroups |= (1u << static_cast<unsigned int>(autoAddGroupBit_));
+                if (!(cc::WorldToTile(cc::ToGlm(fresh->position)) == rally))
+                {
+                    IssuePathOrderFootprint(*fresh, GetOrders(registry_, spawned),
+                                            GetMover(registry_, spawned), map_, occ_,
+                                            cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)),
+                                            spawned, registry_.Generation(spawned));
+                }
+                if (autoAddGroupBit_ >= 0)
+                {
+                    fresh->controlGroups |= (1u << static_cast<unsigned int>(autoAddGroupBit_));
+                }
             }
         }
     };

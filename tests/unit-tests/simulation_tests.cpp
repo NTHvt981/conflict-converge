@@ -147,6 +147,7 @@ void RunSimulationTests()
         std::vector<Entity> spawned;
         std::vector<cc::IVec2> spawnTiles;
         std::vector<bool> hadOrder;
+        std::vector<int> spawnFrames;
         for (int i = 0; i < 3600 && spawned.size() < 2; ++i)
         {
             fx.sim->Step(kDt);
@@ -164,6 +165,7 @@ void RunSimulationTests()
                 }
                 spawned.push_back(id);
                 spawnTiles.push_back(cc::WorldToTile(cc::ToGlm(unit.position)));
+                spawnFrames.push_back(i);
                 const Mover *mover = FindMover(*fx.registry, id);
                 hadOrder.push_back(mover != nullptr &&
                                    (mover->hasMoveOrder || mover->hasPath));
@@ -172,6 +174,7 @@ void RunSimulationTests()
         CC_CHECK(spawned.size() == 2);
         CC_CHECK(spawnTiles[0] == cc::IVec2(3, 4));
         CC_CHECK(spawnTiles[1] == cc::IVec2(13, 12));
+        CC_CHECK(spawnFrames[1] < 200); // two producers share the head: ~150, not 300
         CC_CHECK(hadOrder[0] && hadOrder[1]);
 
         bool arrived = false;

@@ -263,6 +263,18 @@ void AICommander::Update(float dt)
     nodes_.UpdateHarvesters(registry_, map_, occ_, dt, teamID_);
     nodes_.GatherTick(registry_, resources_, dt, teamID_);
     auto pumpQueue = [&](ProductionQueue &queue, BuildingType type, int &cursor) {
+        int producers = 0;
+        registry_.Each<Building>([&](Entity, const Building &building) {
+            if (building.type == type && building.teamID == teamID_ &&
+                building.state == BuildingState::Operational)
+            {
+                ++producers;
+            }
+        });
+        if (producers == 0)
+        {
+            return;
+        }
         const Entity producerId = ProducerBuildingAt(registry_, type, teamID_, cursor);
         if (producerId == kInvalidEntity)
         {
@@ -276,18 +288,22 @@ void AICommander::Update(float dt)
         const cc::IVec2 rally = producer->rallyTile;
         const cc::IVec2 spawnTile = BuildingSpawnTile(map_, occ_, *producer);
         const Vector2 spawnPos = cc::ToRaylib(cc::TileToWorld(spawnTile.x, spawnTile.y));
-        const Entity spawned = queue.Update(factory_, resources_, teamID_, spawnPos, dt, &map_, occ_);
-        if (spawned == kInvalidEntity)
+        for (int n = 0; n < producers; ++n)
         {
-            return;
-        }
-        ++cursor;
-        if (Unit *fresh = registry_.Get<Unit>(spawned))
-        {
-            if (!(cc::WorldToTile(cc::ToGlm(fresh->position)) == rally))
+            const Entity spawned =
+                queue.Update(factory_, resources_, teamID_, spawnPos, dt, &map_, occ_);
+            if (spawned == kInvalidEntity)
             {
-                OrderMove(*fresh, spawned,
-                          cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)));
+                continue;
+            }
+            ++cursor;
+            if (Unit *fresh = registry_.Get<Unit>(spawned))
+            {
+                if (!(cc::WorldToTile(cc::ToGlm(fresh->position)) == rally))
+                {
+                    OrderMove(*fresh, spawned,
+                              cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)));
+                }
             }
         }
     };

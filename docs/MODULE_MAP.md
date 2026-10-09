@@ -116,7 +116,8 @@ app/match: Menu, Skirmish
 - `Production.h` - Per-category production queues (Bootcamp/Infantry,
   Workshop/Vehicle; unbound default accepts anything): upfront charge, FIFO, prepaid spawn
   at the producing building's exit tile, then a move order to that building's rally
-  (main + AI gate `Update` on a live producer, round-robin across producers)
+  (main + AI gate `Update` on a live producer; every live producer advances the head,
+  so output scales with factory count, spawns rotate exits)
 - `ResourceSystem.h` - Iron/oil ledger: `Add`/`TrySpend` + `TickIncome` (fractional carry);
   storage cap (500 + 1000 per depot, overflow lost) via `Deposit*`/`TickIncomeCapped`
 - `Nodes.h` - Resource nodes: spawn/gather/deplete/respawn, loop harvesters
