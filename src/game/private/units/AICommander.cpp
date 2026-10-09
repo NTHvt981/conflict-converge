@@ -508,6 +508,20 @@ cc::IVec2 AICommander::SelectTarget()
     return lastSeenEnemy_;
 }
 
+static bool HarassWantsType(UnitType type)
+{
+    switch (type)
+    {
+    case UnitType::RifleInfantry:
+    case UnitType::AntiArmorInfantry:
+    case UnitType::PrototypeInfantry:
+    case UnitType::IFV:
+        return true;
+    default:
+        return false;
+    }
+}
+
 void AICommander::MusterTeams()
 {
     for (AITeam &team : teams_)
@@ -544,16 +558,32 @@ void AICommander::MusterTeams()
     if (!hasGuard &&
         static_cast<int>(unassigned.size()) >= params_.waveThreshold + 4)
     {
+        std::sort(unassigned.begin(), unassigned.end(), [&](Entity a, Entity b) {
+            const Unit *ua = registry_.Get<Unit>(a);
+            const Unit *ub = registry_.Get<Unit>(b);
+            const float ha = ua != nullptr ? BaseStats(ua->type).health : 0.0f;
+            const float hb = ub != nullptr ? BaseStats(ub->type).health : 0.0f;
+            return ha > hb;
+        });
         AITeam guard;
         guard.role = AITeamRole::Guard;
-        guard.members.assign(unassigned.end() - 2, unassigned.end());
-        unassigned.erase(unassigned.end() - 2, unassigned.end());
+        guard.members.assign(unassigned.begin(), unassigned.begin() + 2);
+        unassigned.erase(unassigned.begin(), unassigned.begin() + 2);
         guard.script = { { AIMissionKind::Guard, rallyTile_, 0.0f } };
         teams_.push_back(guard);
     }
     if (unassigned.size() >= 8)
     {
-        std::sort(unassigned.begin(), unassigned.end(), [&](Entity a, Entity b) {
+        std::vector<Entity> willing;
+        for (Entity id : unassigned)
+        {
+            const Unit *unit = registry_.Get<Unit>(id);
+            if (unit != nullptr && HarassWantsType(unit->type))
+            {
+                willing.push_back(id);
+            }
+        }
+        std::sort(willing.begin(), willing.end(), [&](Entity a, Entity b) {
             const Unit *ua = registry_.Get<Unit>(a);
             const Unit *ub = registry_.Get<Unit>(b);
             const float sa = ua != nullptr ? BaseStats(ua->type).speed : 0.0f;
@@ -561,19 +591,27 @@ void AICommander::MusterTeams()
             return sa > sb;
         });
         const std::size_t harassCount = std::max<std::size_t>(2, unassigned.size() / 3);
-        AITeam harass;
-        harass.role = AITeamRole::Harass;
-        harass.members.assign(unassigned.begin(), unassigned.begin() + harassCount);
-        const cc::IVec2 target = SelectTarget();
-        const int dx = target.x - homeTile_.x;
-        const int dy = target.y - homeTile_.y;
-        cc::IVec2 flank{ target.x - dy / 4, target.y + dx / 4 };
-        flank.x = std::clamp(flank.x, 0, map_.Width() - 1);
-        flank.y = std::clamp(flank.y, 0, map_.Height() - 1);
-        harass.script = { { AIMissionKind::Move, flank, 30.0f },
-                          { AIMissionKind::AttackMove, target, 120.0f } };
-        teams_.push_back(harass);
-        unassigned.erase(unassigned.begin(), unassigned.begin() + harassCount);
+        if (willing.size() >= 2)
+        {
+            const std::size_t take = std::min(harassCount, willing.size());
+            AITeam harass;
+            harass.role = AITeamRole::Harass;
+            harass.members.assign(willing.begin(), willing.begin() + take);
+            for (Entity id : harass.members)
+            {
+                unassigned.erase(std::remove(unassigned.begin(), unassigned.end(), id),
+                                 unassigned.end());
+            }
+            const cc::IVec2 target = SelectTarget();
+            const int dx = target.x - homeTile_.x;
+            const int dy = target.y - homeTile_.y;
+            cc::IVec2 flank{ target.x - dy / 4, target.y + dx / 4 };
+            flank.x = std::clamp(flank.x, 0, map_.Width() - 1);
+            flank.y = std::clamp(flank.y, 0, map_.Height() - 1);
+            harass.script = { { AIMissionKind::Move, flank, 30.0f },
+                              { AIMissionKind::AttackMove, target, 120.0f } };
+            teams_.push_back(harass);
+        }
     }
     if (!unassigned.empty())
     {
