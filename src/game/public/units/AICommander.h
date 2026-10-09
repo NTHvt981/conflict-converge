@@ -64,6 +64,7 @@ struct AITeam
     std::vector<AIMissionStep> script;
     std::size_t step = 0;
     float stepTime = 0.0f;
+    std::size_t peakSize = 0;
     bool active = false;
 };
 
@@ -102,6 +103,7 @@ private:
     void OrderAttackMove(Unit &unit, Entity id, Vector2 dest);
     bool TeamAllIdle(const AITeam &team);
     void PruneTeam(AITeam &team);
+    cc::IVec2 SelectTarget();
     void ScoutTick(float dt);
     void RetreatTick();
     void OrderHarvesterToIron(Entity harvester);

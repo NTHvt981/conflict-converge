@@ -458,6 +458,56 @@ void AICommander::IssueTeamStep(AITeam &team)
     }
 }
 
+cc::IVec2 AICommander::SelectTarget()
+{
+    Entity nearest = kInvalidEntity;
+    int best = 0;
+    registry_.Each<Unit>([&](Entity id, const Unit &unit) {
+        if (unit.teamID == teamID_ || unit.health <= 0.0f)
+        {
+            return;
+        }
+        const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
+        const int dist = (tile.x - homeTile_.x) * (tile.x - homeTile_.x) +
+                         (tile.y - homeTile_.y) * (tile.y - homeTile_.y);
+        if (nearest == kInvalidEntity || dist < best)
+        {
+            nearest = id;
+            best = dist;
+        }
+    });
+    if (nearest == kInvalidEntity)
+    {
+        return lastSeenEnemy_;
+    }
+    const Unit *anchor = registry_.Get<Unit>(nearest);
+    const cc::IVec2 anchorTile = cc::WorldToTile(cc::ToGlm(anchor->position));
+    long sumX = 0;
+    long sumY = 0;
+    int count = 0;
+    registry_.Each<Unit>([&](Entity, const Unit &unit) {
+        if (unit.teamID == teamID_ || unit.health <= 0.0f)
+        {
+            return;
+        }
+        const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
+        const int dist = (tile.x - anchorTile.x) * (tile.x - anchorTile.x) +
+                         (tile.y - anchorTile.y) * (tile.y - anchorTile.y);
+        if (dist <= 36)
+        {
+            sumX += tile.x;
+            sumY += tile.y;
+            ++count;
+        }
+    });
+    if (count == 0)
+    {
+        return lastSeenEnemy_;
+    }
+    lastSeenEnemy_ = { static_cast<int>(sumX / count), static_cast<int>(sumY / count) };
+    return lastSeenEnemy_;
+}
+
 void AICommander::MusterTeams()
 {
     for (AITeam &team : teams_)
@@ -514,13 +564,14 @@ void AICommander::MusterTeams()
         AITeam harass;
         harass.role = AITeamRole::Harass;
         harass.members.assign(unassigned.begin(), unassigned.begin() + harassCount);
-        const int dx = lastSeenEnemy_.x - homeTile_.x;
-        const int dy = lastSeenEnemy_.y - homeTile_.y;
-        cc::IVec2 flank{ lastSeenEnemy_.x - dy / 4, lastSeenEnemy_.y + dx / 4 };
+        const cc::IVec2 target = SelectTarget();
+        const int dx = target.x - homeTile_.x;
+        const int dy = target.y - homeTile_.y;
+        cc::IVec2 flank{ target.x - dy / 4, target.y + dx / 4 };
         flank.x = std::clamp(flank.x, 0, map_.Width() - 1);
         flank.y = std::clamp(flank.y, 0, map_.Height() - 1);
         harass.script = { { AIMissionKind::Move, flank, 30.0f },
-                          { AIMissionKind::AttackMove, lastSeenEnemy_, 120.0f } };
+                          { AIMissionKind::AttackMove, target, 120.0f } };
         teams_.push_back(harass);
         unassigned.erase(unassigned.begin(), unassigned.begin() + harassCount);
     }
@@ -539,7 +590,7 @@ void AICommander::MusterTeams()
             AITeam main;
             main.role = AITeamRole::Main;
             main.members = unassigned;
-            main.script = { { AIMissionKind::AttackMove, lastSeenEnemy_, 120.0f } };
+            main.script = { { AIMissionKind::AttackMove, SelectTarget(), 120.0f } };
             teams_.push_back(main);
         }
         else
@@ -564,6 +615,7 @@ void AICommander::LaunchTeams()
         {
             team.step = 0;
             team.stepTime = 0.0f;
+            team.peakSize = team.members.size();
             team.active = true;
             IssueTeamStep(team);
         }
@@ -607,8 +659,18 @@ void AICommander::UpdateTeams(float dt)
         if (team.step + 1 == team.script.size() &&
             mission.kind == AIMissionKind::AttackMove && TeamAllIdle(team))
         {
-            team.active = false;
-            team.members.clear();
+            const cc::IVec2 fresh = SelectTarget();
+            if (!(fresh == mission.target) && team.members.size() * 2 >= team.peakSize)
+            {
+                team.script[team.step].target = fresh;
+                team.stepTime = 0.0f;
+                IssueTeamStep(team);
+            }
+            else
+            {
+                team.active = false;
+                team.members.clear();
+            }
         }
     }
 }
