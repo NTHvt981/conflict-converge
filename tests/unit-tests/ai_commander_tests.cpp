@@ -9,6 +9,7 @@
 #include "economy/Building.h" // building-count query
 #include "units/Extensions.h"
 #include "economy/Nodes.h"
+#include "world/FogOfWar.h"
 #include "world/TileMap.h"
 #include "units/UnitFactory.h"
 
@@ -305,6 +306,83 @@ void RunAICommanderTests()
             }
         });
         CC_CHECK(droveAtBlocker);
+    }
+
+    // --- fog-honest targeting: unseen enemies fall back to last-seen memory ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        ResourceNodes nodes;
+        EventDispatcher events;
+        ResourceSystem resources;
+        FogOfWar fog;
+        fog.Resize(20, 15);
+        AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 16, 9 },
+                       { 1, 10 });
+        ai.SetupBase();
+        UnitFactory factory(registry, resources, events);
+        factory.SpawnPrepaid(UnitType::RifleInfantry, 0,
+                             cc::ToRaylib(cc::TileToWorld(1, 10)));
+        for (int i = 0; i < 3; ++i)
+        {
+            factory.SpawnPrepaid(UnitType::RifleInfantry, 1,
+                                 cc::ToRaylib(cc::TileToWorld(15 + i, 8)));
+        }
+        fog.Recompute(registry); // home guard sees home only: (1,10) stays dark
+        ai.SetFog(&fog);
+        ai.Update(1.0f / 60.0f);
+        CC_CHECK(ai.WavesLaunched() == 1);
+        registry.Each<Unit>([&](Entity id, const Unit &unit) {
+            if (unit.teamID != 1 || unit.health <= 0.0f || unit.type == UnitType::Engineer)
+            {
+                return;
+            }
+            const Orders *orders = FindOrders(registry, id);
+            CC_CHECK(orders != nullptr && orders->attackMove);
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(FindMover(registry, id)->moveTarget));
+            const int off = (dest.x - 1) * (dest.x - 1) + (dest.y - 10) * (dest.y - 10);
+            CC_CHECK(off <= 4); // formation slots around remembered (1,10)
+        });
+    }
+
+    // --- visible enemies retarget the wave off stale memory ---
+    {
+        Registry registry;
+        TileMap map(20, 15);
+        ResourceNodes nodes;
+        EventDispatcher events;
+        ResourceSystem resources;
+        FogOfWar fog;
+        fog.Resize(20, 15);
+        AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 16, 9 },
+                       { 1, 10 });
+        ai.SetupBase();
+        UnitFactory factory(registry, resources, events);
+        factory.SpawnPrepaid(UnitType::RifleInfantry, 1, cc::ToRaylib(cc::TileToWorld(7, 5)));
+        factory.SpawnPrepaid(UnitType::RifleInfantry, 0, cc::ToRaylib(cc::TileToWorld(6, 4)));
+        factory.SpawnPrepaid(UnitType::RifleInfantry, 0, cc::ToRaylib(cc::TileToWorld(7, 4)));
+        for (int i = 0; i < 3; ++i)
+        {
+            factory.SpawnPrepaid(UnitType::RifleInfantry, 1,
+                                 cc::ToRaylib(cc::TileToWorld(15 + i, 8)));
+        }
+        fog.Recompute(registry); // scout at (7,5) lights the (6,4)+(7,4) pair
+        ai.SetFog(&fog);
+        ai.Update(1.0f / 60.0f);
+        CC_CHECK(ai.WavesLaunched() == 1);
+        registry.Each<Unit>([&](Entity id, const Unit &unit) {
+            if (unit.teamID != 1 || unit.health <= 0.0f || unit.type == UnitType::Engineer)
+            {
+                return;
+            }
+            const Orders *orders = FindOrders(registry, id);
+            CC_CHECK(orders != nullptr && orders->attackMove);
+            const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(FindMover(registry, id)->moveTarget));
+            const int seen = (dest.x - 6) * (dest.x - 6) + (dest.y - 4) * (dest.y - 4);
+            const int stale = (dest.x - 1) * (dest.x - 1) + (dest.y - 10) * (dest.y - 10);
+            CC_CHECK(seen <= 4);  // formation slots around the sighted cluster
+            CC_CHECK(stale > 25); // not marching on the stale memory
+        });
     }
 
     // --- AI catalog: compiled defaults match ParamsFor until refreshed ---

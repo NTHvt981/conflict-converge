@@ -97,11 +97,15 @@ app/match: Menu, Skirmish
   `UpdateProjectiles` ballistics (dodgeable AoE, no friendly fire, never persisted)
 - `UnitFactory.h` - Cost-validated `Spawn` / prepaid `SpawnPrepaid` / `DestroyUnit`
   (`UnitSpawned`/`UnitDestroyed` events)
-- `Targeting.h` - Nearest-enemy/threat acquisition + range check (M9 fog gate, artillery
-  exempt) + M13 `AcquireBuildingTarget`/`BuildingCenter`
+- `Targeting.h` - Worth-scored acquisition + range check (M9 fog gate, artillery
+  exempt): power x armor-preference dominates, build cost (`ThreatWorth`) breaks
+  near-ties; M13 `AcquireBuildingTarget`/`BuildingCenter`; wave destination scopes
+  (`ThreatScope`: units vs production)
 - `Formation.h` - Row-major offsets + `IssueFormationMove`
 - `AICommander.h` - Enemy commander: fair-rules economy, Main/Harass/Guard teams with
-  mission scripts, nearest-cluster targeting, low-strength regroup, difficulty-gated
+  mission scripts, fog-honest targeting (`SetFog`: unseen enemies fall back to
+  last-seen memory, guard posts react to sightings only), Main waves march on the
+  sighted army and raze production when the field is dark, low-strength regroup, difficulty-gated
   behaviors, time/loss escalation; `data/configs/ai.json` catalog via `app/data/AIConfig.h`
   (compiled `ParamsFor` fallback); M14 `Reset` (team + difficulty + homes; re-arm for a new
   match or bare for the load path); 2v2 overflow via `allyAI` (team 0) + `enemyAI2` (team 1),

@@ -7,6 +7,7 @@
 #include "units/Extensions.h"
 #include "units/Formation.h"
 #include "economy/Nodes.h"
+#include "world/FogOfWar.h"
 #include "world/Pathfinder.h"
 #include "world/TileMap.h"
 #include "units/UnitStats.h"
@@ -239,6 +240,61 @@ void AICommander::SetOccupancy(OccupancyGrid *occ)
     occ_ = occ;
 }
 
+void AICommander::SetFog(const FogOfWar *fog)
+{
+    fog_ = fog;
+}
+
+bool AICommander::Sees(cc::IVec2 tile) const
+{
+    return fog_ == nullptr || fog_->IsVisible(teamID_, tile);
+}
+
+bool AICommander::EnemyForceSighted() const
+{
+    bool sighted = false;
+    registry_.Each<Unit>([&](Entity, const Unit &unit) {
+        if (sighted || unit.teamID == teamID_ || unit.health <= 0.0f)
+        {
+            return;
+        }
+        if (Sees(cc::WorldToTile(cc::ToGlm(unit.position))))
+        {
+            sighted = true;
+        }
+    });
+    return sighted;
+}
+
+void AICommander::RefreshIntel()
+{
+    if (fog_ == nullptr)
+    {
+        return;
+    }
+    long sumX = 0;
+    long sumY = 0;
+    int count = 0;
+    registry_.Each<Unit>([&](Entity, const Unit &unit) {
+        if (unit.teamID == teamID_ || unit.health <= 0.0f)
+        {
+            return;
+        }
+        const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
+        if (!Sees(tile))
+        {
+            return;
+        }
+        sumX += tile.x;
+        sumY += tile.y;
+        ++count;
+    });
+    if (count > 0)
+    {
+        lastSeenEnemy_ = { static_cast<int>(sumX / count), static_cast<int>(sumY / count) };
+    }
+}
+
 void AICommander::OrderMove(Unit &unit, Entity id, Vector2 dest)
 {
     if (occ_ != nullptr)
@@ -347,6 +403,7 @@ void AICommander::Update(float dt)
         losses_ += liveCombat_ - liveCombat;
     }
     liveCombat_ = liveCombat;
+    RefreshIntel();
     MaybeLaunchWave();
     UpdateTeams(dt);
     UpdateGuardPost();
@@ -520,6 +577,50 @@ void AICommander::IssueTeamStep(AITeam &team)
 
 cc::IVec2 AICommander::SelectTarget()
 {
+    return SelectTarget(ThreatScope::Units);
+}
+
+cc::IVec2 AICommander::SelectTarget(ThreatScope scope)
+{
+    if (scope == ThreatScope::Buildings)
+    {
+        Entity richest = kInvalidEntity;
+        long bestWorth = 0;
+        float bestDist = 0.0f;
+        registry_.Each<Building>([&](Entity id, const Building &building) {
+            if (building.teamID == teamID_ || building.state != BuildingState::Operational)
+            {
+                return;
+            }
+            const cc::IVec2 tile{ building.tileX, building.tileY };
+            if (!Sees(tile))
+            {
+                return;
+            }
+            const UnitCost cost = BuildingCost(building.type);
+            long worth = cost.iron + cost.oil;
+            if (ProducerCategory(building.type).has_value())
+            {
+                worth *= 2;
+            }
+            const int dist = (tile.x - homeTile_.x) * (tile.x - homeTile_.x) +
+                             (tile.y - homeTile_.y) * (tile.y - homeTile_.y);
+            if (richest == kInvalidEntity || worth > bestWorth ||
+                (worth == bestWorth && dist < bestDist))
+            {
+                richest = id;
+                bestWorth = worth;
+                bestDist = static_cast<float>(dist);
+            }
+        });
+        if (richest == kInvalidEntity)
+        {
+            return lastSeenEnemy_;
+        }
+        const Building *target = registry_.Get<Building>(richest);
+        lastSeenEnemy_ = { target->tileX, target->tileY };
+        return lastSeenEnemy_;
+    }
     Entity nearest = kInvalidEntity;
     int best = 0;
     registry_.Each<Unit>([&](Entity id, const Unit &unit) {
@@ -528,6 +629,10 @@ cc::IVec2 AICommander::SelectTarget()
             return;
         }
         const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
+        if (!Sees(tile))
+        {
+            return;
+        }
         const int dist = (tile.x - homeTile_.x) * (tile.x - homeTile_.x) +
                          (tile.y - homeTile_.y) * (tile.y - homeTile_.y);
         if (nearest == kInvalidEntity || dist < best)
@@ -551,6 +656,10 @@ cc::IVec2 AICommander::SelectTarget()
             return;
         }
         const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
+        if (!Sees(tile))
+        {
+            return;
+        }
         const int dist = (tile.x - anchorTile.x) * (tile.x - anchorTile.x) +
                          (tile.y - anchorTile.y) * (tile.y - anchorTile.y);
         if (dist <= 36)
@@ -719,7 +828,10 @@ void AICommander::MusterTeams()
             AITeam main;
             main.role = AITeamRole::Main;
             main.members = unassigned;
-            main.script = { { AIMissionKind::AttackMove, SelectTarget(), 120.0f } };
+            // Fight the army in sight; raze production when the field is dark.
+            const ThreatScope scope =
+                EnemyForceSighted() ? ThreatScope::Units : ThreatScope::Buildings;
+            main.script = { { AIMissionKind::AttackMove, SelectTarget(scope), 120.0f } };
             teams_.push_back(main);
         }
         else
@@ -812,7 +924,12 @@ void AICommander::UpdateTeams(float dt)
             }
             if (mission.kind == AIMissionKind::AttackMove)
             {
-                const cc::IVec2 fresh = SelectTarget();
+                ThreatScope scope = ThreatScope::Units;
+                if (team.role == AITeamRole::Main && !EnemyForceSighted())
+                {
+                    scope = ThreatScope::Buildings;
+                }
+                const cc::IVec2 fresh = SelectTarget(scope);
                 if (!(fresh == mission.target) && team.members.size() * 2 >= team.peakSize)
                 {
                     team.script[team.step].target = fresh;
@@ -838,6 +955,10 @@ void AICommander::UpdateGuardPost()
             return;
         }
         const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
+        if (!Sees(tile))
+        {
+            return;
+        }
         const int dist = (tile.x - homeTile_.x) * (tile.x - homeTile_.x) +
                          (tile.y - homeTile_.y) * (tile.y - homeTile_.y);
         if (dist <= 36)

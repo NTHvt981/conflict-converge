@@ -101,6 +101,18 @@ void ResetSkirmish(SkirmishWorld &world)
 	{
 		world.enemyAI2->SetOccupancy(world.occ);
 	}
+	if (world.ai != nullptr)
+	{
+		world.ai->SetFog(world.fog);
+	}
+	if (world.allyAI != nullptr)
+	{
+		world.allyAI->SetFog(world.fog);
+	}
+	if (world.enemyAI2 != nullptr)
+	{
+		world.enemyAI2->SetFog(world.fog);
+	}
 }
 
 bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficulty difficulty)

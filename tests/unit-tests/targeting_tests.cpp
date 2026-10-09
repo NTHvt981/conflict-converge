@@ -54,9 +54,9 @@ void RunTargetingTests()
     const Entity strongFar = AddSoldier(registry, UnitType::LightTank, 1, 200.0f, 0.0f); // pow 20
     CC_CHECK(AcquireTarget(registry, seeker) == strongFar);
 
-    // --- equal threat: nearest wins ---
+    // --- equal power: costlier unit wins, exact ties go nearest ---
     registry.Get<Unit>(strongFar)->attackPower = 2;
-    CC_CHECK(AcquireTarget(registry, seeker) == weakNear);
+    CC_CHECK(AcquireTarget(registry, seeker) == strongFar); // 200-iron threat out-pulls 25
 
     // --- target priority: armor hunters prefer vehicles at equal power ---
     {
@@ -68,7 +68,7 @@ void RunTargetingTests()
         duel.Get<Unit>(foot)->attackPower = 10;
         CC_CHECK(AcquireTarget(duel, heavy) == tank); // 10*1.5 beats 10*1.0
         const Entity grunt = AddSoldier(duel, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
-        CC_CHECK(AcquireTarget(duel, grunt) == foot); // neutral: nearest wins
+        CC_CHECK(AcquireTarget(duel, grunt) == tank); // neutral: cost breaks the tie
         CC_CHECK(TargetPriorityWeight(UnitType::AntiArmorInfantry, UnitType::HeavyTank) > 1.0f);
         CC_CHECK(TargetPriorityWeight(UnitType::RifleInfantry, UnitType::HeavyTank) == 1.0f);
         CC_CHECK(TargetPriorityWeight(UnitType::HeavyTank, UnitType::RifleInfantry) == 1.0f);
@@ -79,7 +79,7 @@ void RunTargetingTests()
     const Entity corpse = AddSoldier(registry, UnitType::HeavyTank, 1, 60.0f, 0.0f);
     registry.Get<Unit>(corpse)->health = 0.0f;
     AddSoldier(registry, UnitType::HeavyTank, 1, 1000.0f, 0.0f); // beyond sight 320
-    CC_CHECK(AcquireTarget(registry, seeker) == weakNear);
+    CC_CHECK(AcquireTarget(registry, seeker) == strongFar);
 
     // --- nobody qualifies: invalid ---
     registry.Destroy(weakNear);
@@ -114,5 +114,28 @@ void RunTargetingTests()
         CC_CHECK(AcquireTarget(battle, hunter, nullptr, &reserved) == doomed);
         // Null map (legacy callers, direct UpdateUnit tests): unchanged.
         CC_CHECK(AcquireTarget(battle, hunter, nullptr, nullptr) == doomed);
+    }
+
+    // --- cost breaks equal-power ties at equal distance ---
+    {
+        Registry duel;
+        const Entity seeker = AddSoldier(duel, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
+        const Entity rifle = AddSoldier(duel, UnitType::RifleInfantry, 1, 150.0f, 0.0f);
+        const Entity tank = AddSoldier(duel, UnitType::LightTank, 1, -150.0f, 0.0f);
+        duel.Get<Unit>(rifle)->attackPower = 10;
+        duel.Get<Unit>(tank)->attackPower = 10;
+        CC_CHECK(AcquireTarget(duel, seeker) == tank); // 200-iron threat out-pulls 25
+        CC_CHECK(ThreatWorth(UnitType::LightTank) > ThreatWorth(UnitType::RifleInfantry));
+    }
+
+    // --- identical threats: nearest wins ---
+    {
+        Registry field;
+        const Entity seeker = AddSoldier(field, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
+        const Entity near = AddSoldier(field, UnitType::RifleInfantry, 1, 50.0f, 0.0f);
+        const Entity far = AddSoldier(field, UnitType::RifleInfantry, 1, 200.0f, 0.0f);
+        field.Get<Unit>(near)->attackPower = 10;
+        field.Get<Unit>(far)->attackPower = 10;
+        CC_CHECK(AcquireTarget(field, seeker) == near);
     }
 }

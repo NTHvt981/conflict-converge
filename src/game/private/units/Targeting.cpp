@@ -3,6 +3,7 @@
 #include "economy/Building.h"
 #include "units/Combat.h"
 #include "units/Extensions.h"
+#include "units/UnitFactory.h"
 #include "world/FogOfWar.h"
 #include "core/MathUtils.h"
 
@@ -22,6 +23,12 @@ float TargetPriorityWeight(UnitType seekerType, UnitType candidateType)
         return 1.5f;
     }
     return 1.0f;
+}
+
+float ThreatWorth(UnitType type)
+{
+    const UnitCost cost = CostOf(type);
+    return static_cast<float>(cost.iron + cost.oil);
 }
 
 Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fog,
@@ -61,8 +68,10 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
         {
             return;
         }
-        const float threat =
-            static_cast<float>(unit.attackPower) * TargetPriorityWeight(self->type, unit.type);
+        // Power dominates; build cost breaks near-ties.
+        const float threat = static_cast<float>(unit.attackPower) *
+                                 TargetPriorityWeight(self->type, unit.type) +
+                             ThreatWorth(unit.type) / 500.0f;
         if (threat > bestThreat || (threat == bestThreat && dist < bestDist))
         {
             best = candidate;

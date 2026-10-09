@@ -8,6 +8,7 @@
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
 #include "core/Subsystem.h"
+#include "units/Targeting.h"
 #include "units/Unit.h"
 #include "units/UnitFactory.h"
 
@@ -15,6 +16,7 @@ class TileMap;
 class OccupancyGrid;
 class ResourceNodes;
 class EventDispatcher;
+class FogOfWar;
 
 enum class AIDifficulty
 {
@@ -82,6 +84,8 @@ public:
     void Update(float dt);
     // Bind shared unit occupancy for footprint-aware orders (null = plain point orders).
     void SetOccupancy(OccupancyGrid *occ);
+    // Bind live fog for honest targeting (null = legacy omniscient).
+    void SetFog(const FogOfWar *fog);
 
     int TeamID() const;
     AIDifficulty Difficulty() const;
@@ -106,6 +110,11 @@ private:
     bool TeamAllIdle(const AITeam &team);
     void PruneTeam(AITeam &team);
     cc::IVec2 SelectTarget();
+    cc::IVec2 SelectTarget(ThreatScope scope);
+    // Fog-gated visibility: omniscient when no fog is bound.
+    bool Sees(cc::IVec2 tile) const;
+    bool EnemyForceSighted() const;
+    void RefreshIntel();
     int Escalation() const;
     int EffectiveThreshold() const;
     float EffectiveCooldown() const;
@@ -118,6 +127,7 @@ private:
     TileMap &map_;
     ResourceNodes &nodes_;
     OccupancyGrid *occ_ = nullptr;
+    const FogOfWar *fog_ = nullptr;
     ResourceSystem resources_; // owned fair-rules economy
     UnitFactory factory_;
     ProductionQueue queueBootcamp_{ ProductionCategory::Infantry };

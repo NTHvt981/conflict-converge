@@ -14,6 +14,17 @@ float DistanceBetween(const Unit &a, const Unit &b);
 // AntiArmorInfantry prefer vehicles. 1.0 = neutral.
 float TargetPriorityWeight(UnitType seekerType, UnitType candidateType);
 
+// Build cost (iron + oil) as target worth: expensive units out-pull cheap
+// ones when power is close.
+float ThreatWorth(UnitType type);
+
+// Wave destination scope: sighted field forces vs production worth razing.
+enum class ThreatScope
+{
+    Units,
+    Buildings
+};
+
 // Frame-scoped reserved lethal damage per target (overkill protection).
 using ReservedDamageMap = std::unordered_map<Entity, float>;
 
