@@ -100,6 +100,7 @@ private:
     void MusterTeams();
     void LaunchTeams();
     void UpdateTeams(float dt);
+    void UpdateGuardPost();
     void IssueTeamStep(AITeam &team);
     void OrderAttackMove(Unit &unit, Entity id, Vector2 dest);
     bool TeamAllIdle(const AITeam &team);

@@ -319,6 +319,7 @@ void AICommander::Update(float dt)
     liveCombat_ = liveCombat;
     MaybeLaunchWave();
     UpdateTeams(dt);
+    UpdateGuardPost();
     ScoutTick(dt);
     if (params_.retreats)
     {
@@ -784,6 +785,50 @@ void AICommander::UpdateTeams(float dt)
             }
             team.active = false;
             team.members.clear();
+        }
+    }
+}
+
+void AICommander::UpdateGuardPost()
+{
+    long sumX = 0;
+    long sumY = 0;
+    int count = 0;
+    registry_.Each<Unit>([&](Entity, const Unit &unit) {
+        if (unit.teamID == teamID_ || unit.health <= 0.0f)
+        {
+            return;
+        }
+        const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
+        const int dist = (tile.x - homeTile_.x) * (tile.x - homeTile_.x) +
+                         (tile.y - homeTile_.y) * (tile.y - homeTile_.y);
+        if (dist <= 36)
+        {
+            sumX += tile.x;
+            sumY += tile.y;
+            ++count;
+        }
+    });
+    const bool intrusion = count > 0;
+    const cc::IVec2 post = intrusion
+                               ? cc::IVec2{ static_cast<int>(sumX / count),
+                                            static_cast<int>(sumY / count) }
+                               : rallyTile_;
+    for (AITeam &team : teams_)
+    {
+        if (team.role != AITeamRole::Guard || team.members.empty() || team.script.empty())
+        {
+            continue;
+        }
+        if (!(team.script[0].target == post))
+        {
+            team.script[0].target = post;
+            team.step = 0;
+            team.stepTime = 0.0f;
+            if (team.active)
+            {
+                IssueTeamStep(team);
+            }
         }
     }
 }
