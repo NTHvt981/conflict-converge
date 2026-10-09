@@ -216,6 +216,38 @@ bool DemolishBuilding(Registry &registry, TileMap &map, Entity entity)
     return true;
 }
 
+UnitCost BuildingCost(BuildingType type)
+{
+    switch (type)
+    {
+    case BuildingType::Base:
+        return { 350, 100 };
+    case BuildingType::ResourceDepot:
+        return { 150, 0 };
+    case BuildingType::Bootcamp:
+        return { 200, 0 };
+    case BuildingType::Workshop:
+        return { 300, 0 };
+    case BuildingType::Count:
+        return { 0, 0 };
+    }
+    return { 0, 0 };
+}
+
+bool SellBuilding(Registry &registry, TileMap &map, ResourceSystem &resources, int teamID,
+                  Entity entity)
+{
+    const Building *building = registry.Get<Building>(entity);
+    if (building == nullptr)
+    {
+        return false;
+    }
+    const UnitCost cost = BuildingCost(building->type);
+    DepositIron(registry, resources, teamID, cost.iron / 2);
+    DepositOil(registry, resources, teamID, cost.oil / 2);
+    return DemolishBuilding(registry, map, entity);
+}
+
 void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float dt, int teamID)
 {
     int bases = 0;

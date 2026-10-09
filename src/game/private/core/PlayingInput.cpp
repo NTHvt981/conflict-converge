@@ -6,7 +6,8 @@
 
 PlayingInput::PlayingInput(Registry &registry, TileMap &map, OccupancyGrid &occ,
                            ResourceNodes &nodes, GameCamera &camera, Minimap &minimap,
-                           InputManager &input, Audio &audio, const MenuSettings &settings)
+                           InputManager &input, Audio &audio, const MenuSettings &settings,
+                           ResourceSystem &resources)
     : registry_(registry)
     , map_(map)
     , occ_(occ)
@@ -16,6 +17,7 @@ PlayingInput::PlayingInput(Registry &registry, TileMap &map, OccupancyGrid &occ,
     , input_(input)
     , audio_(audio)
     , settings_(settings)
+    , resources_(resources)
 {
 }
 

@@ -227,7 +227,7 @@ void RmlUiHud::OnAbility(AbilityId ability)
         registry_.Each<Building>([&](Entity id, const Building &building) {
             if (building.isSelected)
             {
-                DemolishBuilding(registry_, map_, id);
+                SellBuilding(registry_, map_, resources_, 0, id);
             }
         });
         break;

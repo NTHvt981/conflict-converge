@@ -25,9 +25,12 @@ void PlayingInput::HandlePlaceDragRelease()
             {
                 const cc::IVec2 tile =
                     cc::WorldToTile(cc::ToGlm(input_.MouseWorld(camera_)));
-                if (PlaceBuilding(registry_, map_, *placingType_, 0, tile.x, tile.y,
+                const UnitCost cost = BuildingCost(*placingType_);
+                if (resources_.iron >= cost.iron && resources_.oil >= cost.oil &&
+                    PlaceBuilding(registry_, map_, *placingType_, 0, tile.x, tile.y,
                                   &nodes_) != kInvalidEntity)
                 {
+                    resources_.TrySpend(cost.iron, cost.oil);
                     audio_.Play(SfxId::Place);
                 }
             }
@@ -38,14 +41,20 @@ void PlayingInput::HandlePlaceDragRelease()
                 const cc::IVec2 b = cc::WorldToTile(
                     cc::ToGlm({ box.x + box.width, box.y + box.height }));
                 int placed = 0;
+                const UnitCost areaCost = BuildingCost(*placingType_);
                 for (const cc::IVec2 &slot :
                      AreaBuildSlots(*placingType_, { std::min(a.x, b.x),
                                                     std::min(a.y, b.y) },
                                     { std::max(a.x, b.x), std::max(a.y, b.y) }))
                 {
+                    if (resources_.iron < areaCost.iron || resources_.oil < areaCost.oil)
+                    {
+                        break;
+                    }
                     if (PlaceBuilding(registry_, map_, *placingType_, 0, slot.x, slot.y,
                                       &nodes_) != kInvalidEntity)
                     {
+                        resources_.TrySpend(areaCost.iron, areaCost.oil);
                         ++placed;
                     }
                 }

@@ -20,7 +20,8 @@ class PlayingInput : public Subsystem
 public:
     PlayingInput(Registry &registry, TileMap &map, OccupancyGrid &occ,
                  ResourceNodes &nodes, GameCamera &camera, Minimap &minimap,
-                 InputManager &input, Audio &audio, const MenuSettings &settings);
+                 InputManager &input, Audio &audio, const MenuSettings &settings,
+                 ResourceSystem &resources);
     PlayingInput(const PlayingInput &) = delete;
     PlayingInput &operator=(const PlayingInput &) = delete;
 
@@ -65,6 +66,7 @@ private:
     InputManager &input_;
     Audio &audio_;
     const MenuSettings &settings_;
+    ResourceSystem &resources_;
     std::optional<BuildingType> placingType_;
     bool areaRepairMode_ = false;
     bool moveAtSlowestSpeed_ = false;

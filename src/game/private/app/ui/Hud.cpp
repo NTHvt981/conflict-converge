@@ -266,7 +266,7 @@ const char *AbilityName(AbilityId id)
     case AbilityId::Rally:
         return "Rally";
     case AbilityId::Demolish:
-        return "Demolish";
+        return "Sell";
     }
     return "Unknown";
 }

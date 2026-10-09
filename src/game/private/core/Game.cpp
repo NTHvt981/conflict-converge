@@ -59,7 +59,8 @@ Game::PlayerScope::PlayerScope(Subsystems &engine, Subsystems &world,
     Add<GameCamera>();
     Add<PlayingInput>(world.Get<Registry>(), world.Get<TileMap>(), world.Get<OccupancyGrid>(),
                       world.Get<ResourceNodes>(), Get<GameCamera>(), world.Get<Minimap>(),
-                      engine.Get<InputManager>(), engine.Get<Audio>(), settings);
+                      engine.Get<InputManager>(), engine.Get<Audio>(), settings,
+                      world.Get<ResourceSystem>());
 }
 
 Game::Game()

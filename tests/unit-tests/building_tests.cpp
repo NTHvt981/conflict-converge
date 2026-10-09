@@ -64,6 +64,31 @@ void RunBuildingTests()
     CC_CHECK(!DemolishBuilding(registry, map, base)); // already gone: no-op
     CC_CHECK(!DemolishBuilding(registry, map, kInvalidEntity));
 
+    // --- sell refunds half cost through the cap, then clears the footprint ---
+    CC_CHECK(BuildingCost(BuildingType::Base).iron == 350);
+    CC_CHECK(BuildingCost(BuildingType::Workshop).iron == 300);
+    {
+        Registry sale;
+        TileMap smap(20, 15);
+        ResourceSystem funds;
+        const Entity depot =
+            PlaceBuilding(sale, smap, BuildingType::ResourceDepot, 0, 4, 4, nullptr);
+        CC_CHECK(depot != kInvalidEntity);
+        UpdateBuildingConstruction(sale, 5.0f);
+        CC_CHECK(SellBuilding(sale, smap, funds, 0, depot)); // 150/2 = 75
+        CC_CHECK(funds.iron == 75 && funds.oil == 0);
+        CC_CHECK(!sale.IsAlive(depot));
+        CC_CHECK(smap.Get({ 4, 4 }) == TerrainType::Grass);
+        CC_CHECK(!SellBuilding(sale, smap, funds, 0, depot)); // already gone
+        CC_CHECK(!SellBuilding(sale, smap, funds, 0, kInvalidEntity));
+        funds.iron = 100000; // overflow refunds are lost to the cap
+        const Entity camp =
+            PlaceBuilding(sale, smap, BuildingType::Bootcamp, 0, 10, 10, nullptr);
+        UpdateBuildingConstruction(sale, 5.0f);
+        CC_CHECK(SellBuilding(sale, smap, funds, 0, camp)); // depot gone: cap 500
+        CC_CHECK(funds.iron == 100000); // +100 would overflow: lost
+    }
+
     // --- the freed footprint accepts a new building ---
     CC_CHECK(PlaceBuilding(registry, map, BuildingType::Bootcamp, 1, 1, 1) != kInvalidEntity);
 

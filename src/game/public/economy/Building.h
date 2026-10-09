@@ -7,6 +7,7 @@
 #include "core/MathUtils.h"
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
+#include "units/UnitFactory.h"
 #include "units/UnitStats.h"
 
 class TileMap;
@@ -47,6 +48,7 @@ struct Building
 
 float BuildingMaxHealth(BuildingType type);
 float BuildingBuildTime(BuildingType type);
+UnitCost BuildingCost(BuildingType type);
 std::optional<ProductionCategory> ProducerCategory(BuildingType type);
 void UpdateBuildingConstruction(Registry &registry, float dt);
 void UpdateBuildingFlash(Registry &registry, float dt);
@@ -73,6 +75,10 @@ std::vector<cc::IVec2> AreaBuildSlots(BuildingType type, cc::IVec2 minTile,
                                       cc::IVec2 maxTile);
 
 bool DemolishBuilding(Registry &registry, TileMap &map, Entity entity);
+
+// Sells for half cost through the storage cap, then demolishes.
+bool SellBuilding(Registry &registry, TileMap &map, ResourceSystem &resources, int teamID,
+                  Entity entity);
 
 void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float dt,
                        int teamID = -1);

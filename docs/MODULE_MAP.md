@@ -110,7 +110,8 @@ app/match: Menu, Skirmish
 ## economy
 
 - `Building.h` - Base/Depot/Bootcamp/Workshop footprints, tile-grid placement (marks
-  `TerrainType::Building`), demolish, base income, M13 structure HP (`BuildingMaxHealth`),
+  `TerrainType::Building`), build costs (`BuildingCost`), demolish, half-refund sell
+  (`SellBuilding`, capped), base income, M13 structure HP (`BuildingMaxHealth`),
   producer categories (`ProducerCategory`), per-building rally tiles
   (`rallyTile`, `DefaultRallyTile`, `BuildingSpawnTile`, `ProducerBuildingAt`)
 - `Production.h` - Per-category production queues (Bootcamp/Infantry,

@@ -162,15 +162,28 @@ void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 e
 
 void AICommander::SetupBase()
 {
-    resources_.AddIron(1000);
-    resources_.AddOil(500);
+    resources_.AddIron(2000);
+    resources_.AddOil(600);
 
-    PlaceBuilding(registry_, map_, BuildingType::Base, teamID_, homeTile_.x, homeTile_.y, &nodes_);
+    auto placePaid = [&](BuildingType type, int tileX, int tileY) -> Entity {
+        const UnitCost cost = BuildingCost(type);
+        if (resources_.iron < cost.iron || resources_.oil < cost.oil)
+        {
+            return kInvalidEntity;
+        }
+        const Entity id = PlaceBuilding(registry_, map_, type, teamID_, tileX, tileY, &nodes_);
+        if (id != kInvalidEntity)
+        {
+            resources_.TrySpend(cost.iron, cost.oil);
+        }
+        return id;
+    };
+    placePaid(BuildingType::Base, homeTile_.x, homeTile_.y);
     const cc::IVec2 depotSpots[] = { { 2, 0 }, { 0, 2 }, { -1, 0 }, { 0, -2 } };
     for (const cc::IVec2 &spot : depotSpots)
     {
-        if (PlaceBuilding(registry_, map_, BuildingType::ResourceDepot, teamID_, homeTile_.x + spot.x,
-                          homeTile_.y + spot.y, &nodes_) != kInvalidEntity)
+        if (placePaid(BuildingType::ResourceDepot, homeTile_.x + spot.x, homeTile_.y + spot.y) !=
+            kInvalidEntity)
         {
             break;
         }
@@ -179,8 +192,8 @@ void AICommander::SetupBase()
                                         { -2, 0 }, { 0, -2 }, { 2, -2 }, { -3, 0 } };
     for (const cc::IVec2 &spot : bootcampSpots)
     {
-        const Entity id = PlaceBuilding(registry_, map_, BuildingType::Bootcamp, teamID_,
-                                        homeTile_.x + spot.x, homeTile_.y + spot.y, &nodes_);
+        const Entity id = placePaid(BuildingType::Bootcamp, homeTile_.x + spot.x,
+                                    homeTile_.y + spot.y);
         if (id != kInvalidEntity)
         {
             registry_.Get<Building>(id)->rallyTile = rallyTile_;
@@ -192,8 +205,8 @@ void AICommander::SetupBase()
     bool workshopPlaced = false;
     for (const cc::IVec2 &spot : workshopSpots)
     {
-        const Entity id = PlaceBuilding(registry_, map_, BuildingType::Workshop, teamID_,
-                                        homeTile_.x + spot.x, homeTile_.y + spot.y, &nodes_);
+        const Entity id = placePaid(BuildingType::Workshop, homeTile_.x + spot.x,
+                                    homeTile_.y + spot.y);
         if (id != kInvalidEntity)
         {
             registry_.Get<Building>(id)->rallyTile = rallyTile_;
@@ -207,9 +220,8 @@ void AICommander::SetupBase()
         {
             for (int dx = -ring; !workshopPlaced && dx <= ring; ++dx)
             {
-                const Entity id =
-                    PlaceBuilding(registry_, map_, BuildingType::Workshop, teamID_,
-                                  homeTile_.x + dx, homeTile_.y + dy, &nodes_);
+                const Entity id = placePaid(BuildingType::Workshop, homeTile_.x + dx,
+                                            homeTile_.y + dy);
                 if (id != kInvalidEntity)
                 {
                     registry_.Get<Building>(id)->rallyTile = rallyTile_;

@@ -229,10 +229,12 @@ struct InputRig
     InputManager input;
     Audio audio;
     MenuSettings settings;
+    ResourceSystem resources;
     PlayingInput playing;
 
     InputRig()
-        : playing(registry, map, occ, nodes, camera, minimap, input, audio, settings)
+        : playing(registry, map, occ, nodes, camera, minimap, input, audio, settings,
+                  resources)
     {
     }
 };
