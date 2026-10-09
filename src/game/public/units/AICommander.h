@@ -105,6 +105,9 @@ private:
     bool TeamAllIdle(const AITeam &team);
     void PruneTeam(AITeam &team);
     cc::IVec2 SelectTarget();
+    int Escalation() const;
+    int EffectiveThreshold() const;
+    float EffectiveCooldown() const;
     void ScoutTick(float dt);
     void RetreatTick();
     void OrderHarvesterToIron(Entity harvester);
@@ -129,6 +132,10 @@ private:
     bool scouted_ = false;
     float scoutTimer_ = 0.0f;
     float timeSinceLaunch_ = 0.0f;
+    float matchTime_ = 0.0f;
+    int losses_ = 0;
+    int liveCombat_ = -1;
+    bool contact_ = false;
     int wavesLaunched_ = 0;
     int bootcampCursor_ = 0;
     int workshopCursor_ = 0;

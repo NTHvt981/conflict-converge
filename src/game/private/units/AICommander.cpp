@@ -152,6 +152,10 @@ void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 e
     scouted_ = false;
     scoutTimer_ = params_.scoutInterval;
     timeSinceLaunch_ = params_.relaunchCooldown;
+    matchTime_ = 0.0f;
+    losses_ = 0;
+    liveCombat_ = -1;
+    contact_ = false;
     wavesLaunched_ = 0;
 }
 
@@ -296,6 +300,23 @@ void AICommander::Update(float dt)
     MaintainHarvesters();
     MaintainProduction();
     timeSinceLaunch_ += dt;
+    matchTime_ += dt;
+    int liveCombat = 0;
+    registry_.Each<Unit>([&](Entity, const Unit &unit) {
+        if (unit.teamID == teamID_ && unit.health > 0.0f && unit.type != UnitType::Engineer)
+        {
+            ++liveCombat;
+            if (unit.state == UnitState::Attacking)
+            {
+                contact_ = true;
+            }
+        }
+    });
+    if (liveCombat_ >= 0 && liveCombat < liveCombat_)
+    {
+        losses_ += liveCombat_ - liveCombat;
+    }
+    liveCombat_ = liveCombat;
     MaybeLaunchWave();
     UpdateTeams(dt);
     ScoutTick(dt);
@@ -522,6 +543,37 @@ static bool HarassWantsType(UnitType type)
     }
 }
 
+int AICommander::Escalation() const
+{
+    if (matchTime_ >= 240.0f || losses_ >= 8)
+    {
+        return 2;
+    }
+    if (contact_ || matchTime_ >= 45.0f)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+int AICommander::EffectiveThreshold() const
+{
+    if (Escalation() >= 2)
+    {
+        return params_.waveThreshold > 2 ? params_.waveThreshold - 1 : 2;
+    }
+    return params_.waveThreshold;
+}
+
+float AICommander::EffectiveCooldown() const
+{
+    if (Escalation() >= 2)
+    {
+        return params_.relaunchCooldown * 0.75f;
+    }
+    return params_.relaunchCooldown;
+}
+
 void AICommander::MusterTeams()
 {
     for (AITeam &team : teams_)
@@ -572,7 +624,7 @@ void AICommander::MusterTeams()
         guard.script = { { AIMissionKind::Guard, rallyTile_, 0.0f } };
         teams_.push_back(guard);
     }
-    if (unassigned.size() >= 8 && difficulty_ != AIDifficulty::Easy)
+    if (unassigned.size() >= 8 && difficulty_ != AIDifficulty::Easy && Escalation() >= 1)
     {
         std::vector<Entity> willing;
         for (Entity id : unassigned)
@@ -743,13 +795,13 @@ void AICommander::MaybeLaunchWave()
     for (const AITeam &team : teams_)
     {
         if (team.role == AITeamRole::Main && !team.active && !team.members.empty() &&
-            static_cast<int>(team.members.size()) >= params_.waveThreshold)
+            static_cast<int>(team.members.size()) >= EffectiveThreshold())
         {
             main = &team;
             break;
         }
     }
-    if (main == nullptr || timeSinceLaunch_ < params_.relaunchCooldown)
+    if (main == nullptr || timeSinceLaunch_ < EffectiveCooldown())
     {
         return;
     }
