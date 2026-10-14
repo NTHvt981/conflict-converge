@@ -15,20 +15,20 @@ class OccupancyGrid;
 
 struct MapNodeSpawn
 {
-    ResourceKind kind = ResourceKind::Iron;
-    cc::IVec2 tile{ 0, 0 };
+	ResourceKind kind = ResourceKind::Iron;
+	cc::IVec2 tile{ 0, 0 };
 };
 
 struct MapData
 {
-    std::string name;
-    std::string author;
-    int width = 0;
-    int height = 0;
-    std::vector<TerrainType> terrain;
-    std::vector<MapNodeSpawn> nodes;
-    std::vector<cc::IVec2> playerSpawns;
-    std::vector<cc::IVec2> aiSpawns;
+	std::string name;
+	std::string author;
+	int width = 0;
+	int height = 0;
+	std::vector<TerrainType> terrain;
+	std::vector<MapNodeSpawn> nodes;
+	std::vector<cc::IVec2> playerSpawns;
+	std::vector<cc::IVec2> aiSpawns;
 };
 
 // Parse a .map file; false leaves `out` untouched.
@@ -38,7 +38,7 @@ bool ParseMapFile(const std::string &path, MapData &out);
 // clears the grid to the new dims.
 bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes);
 bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes,
-                  OccupancyGrid *occ);
+				  OccupancyGrid *occ);
 
 // QoL map editor: inverse of ParseMapFile. False (writing nothing) on data
 // that would not load back.
@@ -55,11 +55,11 @@ bool IsValidMapSaveName(const std::string &name);
 
 struct MapEntry
 {
-    std::string path;
-    std::string name;
-    std::string author;
-    int width = 0;
-    int height = 0;
+	std::string path;
+	std::string name;
+	std::string author;
+	int width = 0;
+	int height = 0;
 };
 
 std::vector<MapEntry> ListMaps(const std::string &dir);

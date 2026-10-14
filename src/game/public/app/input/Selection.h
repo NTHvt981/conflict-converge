@@ -26,7 +26,7 @@ Rectangle NormalizeRect(Vector2 a, Vector2 b);
 Rectangle DraggedWorldBox(const GameCamera &camera, Vector2 screenStart, Vector2 screenEnd);
 // No normalization: a line has direction, unlike a box.
 std::pair<Vector2, Vector2> DraggedWorldLine(const GameCamera &camera, Vector2 screenStart,
-                                             Vector2 screenEnd);
+											 Vector2 screenEnd);
 
 // Box-select every unit whose body center falls inside worldBox; add=false
 // replaces, true extends. Returns how many units the box picked.
@@ -41,6 +41,6 @@ int RecallControlGroup(Registry &registry, int groupBit);
 
 int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add);
 int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType type,
-                          int teamID, bool add);
+						  int teamID, bool add);
 int SelectAllBuildings(Registry &registry, BuildingType type, int teamID);
 int SelectAllProductionBuildings(Registry &registry, int teamID);

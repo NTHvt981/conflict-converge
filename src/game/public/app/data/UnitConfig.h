@@ -9,35 +9,35 @@
 // per-field load over DefaultUnitConfig; unknown ability keys reject.
 struct UnitAbilities
 {
-    float turretTurnRate = 0.0f;    // >0 = turreted (rad/s traverse)
-    float arcingFlightTime = 0.0f;  // >0 = arcing shell (seconds)
-    int arcingSplashTiles = 0;      // AoE radius in tiles
-    bool crushesFlesh = false;      // heavy-tank crush rule
-    int transportCapacity = 0;      // >0 = IFV transport seats (foot only)
-    bool sniper = false;            // one-shot-a-sprite tuning flag
+	float turretTurnRate = 0.0f;    // >0 = turreted (rad/s traverse)
+	float arcingFlightTime = 0.0f;  // >0 = arcing shell (seconds)
+	int arcingSplashTiles = 0;      // AoE radius in tiles
+	bool crushesFlesh = false;      // heavy-tank crush rule
+	int transportCapacity = 0;      // >0 = IFV transport seats (foot only)
+	bool sniper = false;            // one-shot-a-sprite tuning flag
 };
 
 // Standalone unit-config editor data layer: one UnitConfig per
 // data/configs/<type>.json file. Pure logic, no raylib.
 struct UnitConfig
 {
-    std::string type; // UnitType enum name, e.g. "RifleInfantry"
-    UnitStats stats;
-    int costIron = 0;
-    int costOil = 0;
-    UnitAbilities abilities;
-    // Collision, bounds/origin style: footprint size is derived as
-    // (right-left) x (bottom-top); boundLeft/Top is the offset from the
-    // anchor tile; originX/Y is the anchor within the footprint.
-    int footprintWidth = 1;  // tiles, derived
-    int footprintHeight = 1; // tiles, derived
-    int boundLeft = 0;       // tiles
-    int boundTop = 0;        // tiles
-    int originX = 0;         // tiles
-    int originY = 0;         // tiles
-    std::string spritePrefix;
-    std::string atlasIdlePrefix; // "" = flat-PNG fallback
-    std::string atlasMovePrefix; // "" = flat-PNG fallback
+	std::string type; // UnitType enum name, e.g. "RifleInfantry"
+	UnitStats stats;
+	int costIron = 0;
+	int costOil = 0;
+	UnitAbilities abilities;
+	// Collision, bounds/origin style: footprint size is derived as
+	// (right-left) x (bottom-top); boundLeft/Top is the offset from the
+	// anchor tile; originX/Y is the anchor within the footprint.
+	int footprintWidth = 1;  // tiles, derived
+	int footprintHeight = 1; // tiles, derived
+	int boundLeft = 0;       // tiles
+	int boundTop = 0;        // tiles
+	int originX = 0;         // tiles
+	int originY = 0;         // tiles
+	std::string spritePrefix;
+	std::string atlasIdlePrefix; // "" = flat-PNG fallback
+	std::string atlasMovePrefix; // "" = flat-PNG fallback
 };
 
 // Hardcoded baseline for `type`; used when a type has no file and as the
@@ -59,7 +59,7 @@ const char *UnitConfigFilename(UnitType type);
 // Parse one file's contents; `filenameStem` is the file's own stem.
 // Unknown/mismatched type or unparseable JSON returns false.
 bool ParseUnitConfigJson(const std::string &json, const std::string &filenameStem,
-                         UnitConfig &out);
+						 UnitConfig &out);
 
 // Single-file load/save; Save pretty-prints the hand-editable JSON style.
 bool LoadUnitConfig(const std::string &path, UnitConfig &out);

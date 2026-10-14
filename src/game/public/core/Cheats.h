@@ -29,63 +29,63 @@ template <> constexpr CheatWidgetKind CheatKindOf<BUTTON>() { return CheatWidget
 class CheatWidgetBase
 {
 public:
-    CheatWidgetBase(const char *name, const char *file, CheatWidgetKind kind);
-    CheatWidgetBase(const CheatWidgetBase &) = delete;
-    CheatWidgetBase &operator=(const CheatWidgetBase &) = delete;
-    virtual ~CheatWidgetBase();
-    const char *Name() const;
-    const char *File() const;
-    CheatWidgetKind Kind() const;
+	CheatWidgetBase(const char *name, const char *file, CheatWidgetKind kind);
+	CheatWidgetBase(const CheatWidgetBase &) = delete;
+	CheatWidgetBase &operator=(const CheatWidgetBase &) = delete;
+	virtual ~CheatWidgetBase();
+	const char *Name() const;
+	const char *File() const;
+	CheatWidgetKind Kind() const;
 
 private:
-    std::string name_;
-    std::string file_;
-    CheatWidgetKind kind_;
+	std::string name_;
+	std::string file_;
+	CheatWidgetKind kind_;
 };
 
 class CheatRegistry
 {
 public:
-    static CheatRegistry &Instance();
-    void Add(CheatWidgetBase *widget);
-    const std::vector<CheatWidgetBase *> &Widgets() const;
+	static CheatRegistry &Instance();
+	void Add(CheatWidgetBase *widget);
+	const std::vector<CheatWidgetBase *> &Widgets() const;
 
 private:
-    std::vector<CheatWidgetBase *> widgets_;
+	std::vector<CheatWidgetBase *> widgets_;
 };
 
 template <class Tag> class CheatWidget : public CheatWidgetBase
 {
 public:
-    using ValueT = typename CheatValueType<Tag>::type;
-    CheatWidget(const char *name, const char *file, ValueT defaultValue)
-        : CheatWidgetBase(name, file, CheatKindOf<Tag>())
-        , value_(defaultValue)
-    {
-        CheatRegistry::Instance().Add(this);
-    }
-    ValueT &value()
-    {
-        return value_;
-    }
-    const ValueT &value() const
-    {
-        return value_;
-    }
-    void Set(const ValueT &v)
-    {
-        value_ = v;
-    }
+	using ValueT = typename CheatValueType<Tag>::type;
+	CheatWidget(const char *name, const char *file, ValueT defaultValue)
+		: CheatWidgetBase(name, file, CheatKindOf<Tag>())
+		, value_(defaultValue)
+	{
+		CheatRegistry::Instance().Add(this);
+	}
+	ValueT &value()
+	{
+		return value_;
+	}
+	const ValueT &value() const
+	{
+		return value_;
+	}
+	void Set(const ValueT &v)
+	{
+		value_ = v;
+	}
 
 private:
-    ValueT value_;
+	ValueT value_;
 };
 
 } // namespace cc::cheat
 
 #if defined(CC_DEBUG)
 #define DEFINE_CHEAT_WIDGET(name, type, default_value) \
-    static ::cc::cheat::CheatWidget<::cc::cheat::type> name(#name, __FILE__, default_value);
+	static ::cc::cheat::CheatWidget<::cc::cheat::type> name(#name, __FILE__, default_value);
 #define DEFINE_CHEAT_CODE(...) __VA_ARGS__
 #else
 #define DEFINE_CHEAT_WIDGET(name, type, default_value)

@@ -10,17 +10,17 @@ constexpr float kShakeDeathTrauma = 0.5f; // unit wipe (~3px jolt)
 
 inline float AddShakeTrauma(float trauma, float amount)
 {
-    const float raised = trauma + amount;
-    return raised >= 1.0f ? 1.0f : raised;
+	const float raised = trauma + amount;
+	return raised >= 1.0f ? 1.0f : raised;
 }
 
 inline float DecayShakeTrauma(float trauma, float dt, float decayRate = kShakeDecayRate)
 {
-    const float aged = trauma - decayRate * dt;
-    return aged <= 0.0f ? 0.0f : aged;
+	const float aged = trauma - decayRate * dt;
+	return aged <= 0.0f ? 0.0f : aged;
 }
 
 inline float ShakeMagnitude(float trauma, float maxPixels = kShakeMaxPixels)
 {
-    return trauma * trauma * maxPixels;
+	return trauma * trauma * maxPixels;
 }

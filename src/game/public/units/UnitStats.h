@@ -6,14 +6,14 @@
 
 struct UnitStats
 {
-    float health = 100.0f;
-    ArmorType armorType = ArmorType::STEEL;
-    DamageType damageType = DamageType::KINETIC;
-    int attackPower = 0;
-    int attackRange = 0;
-    float cooldownTime = 1.0f;
-    float speed = 64.0f;
-    float sightRange = 320.0f;
+	float health = 100.0f;
+	ArmorType armorType = ArmorType::STEEL;
+	DamageType damageType = DamageType::KINETIC;
+	int attackPower = 0;
+	int attackRange = 0;
+	float cooldownTime = 1.0f;
+	float speed = 64.0f;
+	float sightRange = 320.0f;
 };
 
 const UnitStats &BaseStats(UnitType type);
@@ -26,7 +26,7 @@ void ApplyBaseStats(Unit &unit);
 
 enum class ProductionCategory
 {
-    Infantry,
-    Vehicle
+	Infantry,
+	Vehicle
 };
 ProductionCategory ProductionCategoryOf(UnitType type);

@@ -11,11 +11,11 @@ class TileMap;
 class E2EGame : public Game
 {
 public:
-    MenuFlow &E2EMenu();
-    Registry &E2ERegistry();
-    TileMap &E2EMap();
-    bool IsWorldActive() const;
-    // SelectedMap + difficulty -> StartMatch; false when nothing selected.
-    bool E2EStartSelectedMatch();
-    void E2EQuitToMenu();
+	MenuFlow &E2EMenu();
+	Registry &E2ERegistry();
+	TileMap &E2EMap();
+	bool IsWorldActive() const;
+	// SelectedMap + difficulty -> StartMatch; false when nothing selected.
+	bool E2EStartSelectedMatch();
+	void E2EQuitToMenu();
 };

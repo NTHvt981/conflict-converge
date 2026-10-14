@@ -7,22 +7,22 @@
 class ResourceSystem : public Subsystem
 {
 public:
-    long iron = 0;
-    long oil = 0;
+	long iron = 0;
+	long oil = 0;
 
-    void AddIron(long amount);
-    void AddOil(long amount);
-    bool TrySpend(long ironCost, long oilCost);
+	void AddIron(long amount);
+	void AddOil(long amount);
+	bool TrySpend(long ironCost, long oilCost);
 
-    void TickIncome(float ironPerSecond, float oilPerSecond, float dt);
-    void TickIncomeCapped(float ironPerSecond, float oilPerSecond, float dt, long ironCap,
-                          long oilCap);
+	void TickIncome(float ironPerSecond, float oilPerSecond, float dt);
+	void TickIncomeCapped(float ironPerSecond, float oilPerSecond, float dt, long ironCap,
+						  long oilCap);
 
-    float IronCarry() const;
-    float OilCarry() const;
-    void SetCarry(float ironCarry, float oilCarry);
+	float IronCarry() const;
+	float OilCarry() const;
+	void SetCarry(float ironCarry, float oilCarry);
 
 private:
-    float ironCarry_ = 0.0f;
-    float oilCarry_ = 0.0f;
+	float ironCarry_ = 0.0f;
+	float oilCarry_ = 0.0f;
 };

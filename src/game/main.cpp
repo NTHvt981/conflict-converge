@@ -3,6 +3,6 @@
 
 int main(void)
 {
-    Game game;
-    return game.Run();
+	Game game;
+	return game.Run();
 }

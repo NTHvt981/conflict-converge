@@ -12,121 +12,121 @@ namespace
 
 struct SpawnedEvent : Event
 {
-    int teamID = 0;
+	int teamID = 0;
 };
 
 } // namespace
 
 void RunEventTests()
 {
-    // --- routing + subscription order ---
-    EventDispatcher dispatcher;
-    std::vector<std::string> calls;
-    dispatcher.Subscribe(EventType::UnitSpawned, [&](const Event &) { calls.push_back("first"); });
-    dispatcher.Subscribe(EventType::UnitSpawned, [&](const Event &) { calls.push_back("second"); });
+	// --- routing + subscription order ---
+	EventDispatcher dispatcher;
+	std::vector<std::string> calls;
+	dispatcher.Subscribe(EventType::UnitSpawned, [&](const Event &) { calls.push_back("first"); });
+	dispatcher.Subscribe(EventType::UnitSpawned, [&](const Event &) { calls.push_back("second"); });
 
-    SpawnedEvent spawned;
-    spawned.type = EventType::UnitSpawned;
-    spawned.teamID = 3;
-    dispatcher.Dispatch(spawned);
+	SpawnedEvent spawned;
+	spawned.type = EventType::UnitSpawned;
+	spawned.teamID = 3;
+	dispatcher.Dispatch(spawned);
 
-    CC_CHECK(calls.size() == 2);
-    CC_CHECK(calls[0] == "first");
-    CC_CHECK(calls[1] == "second");
+	CC_CHECK(calls.size() == 2);
+	CC_CHECK(calls[0] == "first");
+	CC_CHECK(calls[1] == "second");
 
-    // --- handlers receive the concrete payload via downcast ---
-    int seenTeam = -1;
-    dispatcher.Subscribe(EventType::UnitDestroyed, [&](const Event &e) {
-        seenTeam = static_cast<const SpawnedEvent &>(e).teamID;
-    });
-    SpawnedEvent destroyed;
-    destroyed.type = EventType::UnitDestroyed;
-    destroyed.teamID = 7;
-    dispatcher.Dispatch(destroyed);
-    CC_CHECK(seenTeam == 7);
+	// --- handlers receive the concrete payload via downcast ---
+	int seenTeam = -1;
+	dispatcher.Subscribe(EventType::UnitDestroyed, [&](const Event &e) {
+		seenTeam = static_cast<const SpawnedEvent &>(e).teamID;
+	});
+	SpawnedEvent destroyed;
+	destroyed.type = EventType::UnitDestroyed;
+	destroyed.teamID = 7;
+	dispatcher.Dispatch(destroyed);
+	CC_CHECK(seenTeam == 7);
 
-    // --- event types are isolated: UnitSpawned handlers did not re-fire ---
-    CC_CHECK(calls.size() == 2);
+	// --- event types are isolated: UnitSpawned handlers did not re-fire ---
+	CC_CHECK(calls.size() == 2);
 
-    // --- dispatch with no listeners is a safe no-op ---
-    EventDispatcher empty;
-    Event none;
-    none.type = EventType::ResourceChanged;
-    empty.Dispatch(none);
-    CC_CHECK(true);
+	// --- dispatch with no listeners is a safe no-op ---
+	EventDispatcher empty;
+	Event none;
+	none.type = EventType::ResourceChanged;
+	empty.Dispatch(none);
+	CC_CHECK(true);
 
-    // --- Clear drops every subscription ---
-    dispatcher.Clear();
-    dispatcher.Dispatch(spawned);
-    dispatcher.Dispatch(destroyed);
-    CC_CHECK(calls.size() == 2);
-    CC_CHECK(seenTeam == 7);
+	// --- Clear drops every subscription ---
+	dispatcher.Clear();
+	dispatcher.Dispatch(spawned);
+	dispatcher.Dispatch(destroyed);
+	CC_CHECK(calls.size() == 2);
+	CC_CHECK(seenTeam == 7);
 
-    // --- Game-state + UI categories ride the same dispatcher ---
-    EventDispatcher flow;
-    std::vector<EventType> seen;
-    flow.Subscribe(EventType::MatchStarted,
-                   [&](const Event &e) { seen.push_back(e.type); });
-    flow.Subscribe(EventType::MatchPaused, [&](const Event &e) { seen.push_back(e.type); });
-    flow.Subscribe(EventType::GameOver, [&](const Event &e) { seen.push_back(e.type); });
-    flow.Subscribe(EventType::Victory, [&](const Event &e) { seen.push_back(e.type); });
-    flow.Subscribe(EventType::MenuAction, [&](const Event &e) { seen.push_back(e.type); });
-    flow.Subscribe(EventType::ProductionOrdered,
-                   [&](const Event &e) { seen.push_back(e.type); });
-    Event bare;
-    bare.type = EventType::MenuAction;
-    flow.Dispatch(bare);
-    bare.type = EventType::MatchStarted;
-    flow.Dispatch(bare);
-    bare.type = EventType::MatchPaused;
-    flow.Dispatch(bare);
-    bare.type = EventType::ProductionOrdered;
-    flow.Dispatch(bare);
-    bare.type = EventType::Victory;
-    flow.Dispatch(bare);
-    CC_CHECK(seen.size() == 5);
-    CC_CHECK(seen[0] == EventType::MenuAction);
-    CC_CHECK(seen[1] == EventType::MatchStarted);
-    CC_CHECK(seen[2] == EventType::MatchPaused);
-    CC_CHECK(seen[3] == EventType::ProductionOrdered);
-    CC_CHECK(seen[4] == EventType::Victory);
+	// --- Game-state + UI categories ride the same dispatcher ---
+	EventDispatcher flow;
+	std::vector<EventType> seen;
+	flow.Subscribe(EventType::MatchStarted,
+				   [&](const Event &e) { seen.push_back(e.type); });
+	flow.Subscribe(EventType::MatchPaused, [&](const Event &e) { seen.push_back(e.type); });
+	flow.Subscribe(EventType::GameOver, [&](const Event &e) { seen.push_back(e.type); });
+	flow.Subscribe(EventType::Victory, [&](const Event &e) { seen.push_back(e.type); });
+	flow.Subscribe(EventType::MenuAction, [&](const Event &e) { seen.push_back(e.type); });
+	flow.Subscribe(EventType::ProductionOrdered,
+				   [&](const Event &e) { seen.push_back(e.type); });
+	Event bare;
+	bare.type = EventType::MenuAction;
+	flow.Dispatch(bare);
+	bare.type = EventType::MatchStarted;
+	flow.Dispatch(bare);
+	bare.type = EventType::MatchPaused;
+	flow.Dispatch(bare);
+	bare.type = EventType::ProductionOrdered;
+	flow.Dispatch(bare);
+	bare.type = EventType::Victory;
+	flow.Dispatch(bare);
+	CC_CHECK(seen.size() == 5);
+	CC_CHECK(seen[0] == EventType::MenuAction);
+	CC_CHECK(seen[1] == EventType::MatchStarted);
+	CC_CHECK(seen[2] == EventType::MatchPaused);
+	CC_CHECK(seen[3] == EventType::ProductionOrdered);
+	CC_CHECK(seen[4] == EventType::Victory);
 
-    // --- re-entrant Subscribe during Dispatch is safe ---
-    // A handler that subscribes mid-dispatch reallocates the listener
-    // vector; iterating the live vector would be UB (checked iterators
-    // abort in Debug). Snapshot semantics: the newcomer runs from the
-    // NEXT dispatch, the in-flight one completes untouched.
-    EventDispatcher reentrant;
-    std::vector<std::string> order;
-    reentrant.Subscribe(EventType::MenuAction, [&](const Event &) {
-        order.push_back("host");
-        reentrant.Subscribe(EventType::MenuAction,
-                            [&](const Event &) { order.push_back("guest"); });
-    });
-    Event ping;
-    ping.type = EventType::MenuAction;
-    reentrant.Dispatch(ping);
-    CC_CHECK(order.size() == 1);
-    CC_CHECK(order[0] == "host");
-    reentrant.Dispatch(ping);
-    CC_CHECK(order.size() == 3);
-    CC_CHECK(order[1] == "host");
-    CC_CHECK(order[2] == "guest");
+	// --- re-entrant Subscribe during Dispatch is safe ---
+	// A handler that subscribes mid-dispatch reallocates the listener
+	// vector; iterating the live vector would be UB (checked iterators
+	// abort in Debug). Snapshot semantics: the newcomer runs from the
+	// NEXT dispatch, the in-flight one completes untouched.
+	EventDispatcher reentrant;
+	std::vector<std::string> order;
+	reentrant.Subscribe(EventType::MenuAction, [&](const Event &) {
+		order.push_back("host");
+		reentrant.Subscribe(EventType::MenuAction,
+							[&](const Event &) { order.push_back("guest"); });
+	});
+	Event ping;
+	ping.type = EventType::MenuAction;
+	reentrant.Dispatch(ping);
+	CC_CHECK(order.size() == 1);
+	CC_CHECK(order[0] == "host");
+	reentrant.Dispatch(ping);
+	CC_CHECK(order.size() == 3);
+	CC_CHECK(order[1] == "host");
+	CC_CHECK(order[2] == "guest");
 
-    // --- stress: many mid-dispatch subscriptions force reallocations ---
-    EventDispatcher storm;
-    int fired = 0;
-    storm.Subscribe(EventType::Victory, [&](const Event &) {
-        ++fired;
-        for (int i = 0; i < 64; ++i)
-        {
-            storm.Subscribe(EventType::Victory, [&](const Event &) { ++fired; });
-        }
-    });
-    Event boom;
-    boom.type = EventType::Victory;
-    storm.Dispatch(boom); // must not crash; only the host ran
-    CC_CHECK(fired == 1);
-    storm.Dispatch(boom); // host + 64 guests, each guest adds 64 more (unrun)
-    CC_CHECK(fired == 66);
+	// --- stress: many mid-dispatch subscriptions force reallocations ---
+	EventDispatcher storm;
+	int fired = 0;
+	storm.Subscribe(EventType::Victory, [&](const Event &) {
+		++fired;
+		for (int i = 0; i < 64; ++i)
+		{
+			storm.Subscribe(EventType::Victory, [&](const Event &) { ++fired; });
+		}
+	});
+	Event boom;
+	boom.type = EventType::Victory;
+	storm.Dispatch(boom); // must not crash; only the host ran
+	CC_CHECK(fired == 1);
+	storm.Dispatch(boom); // host + 64 guests, each guest adds 64 more (unrun)
+	CC_CHECK(fired == 66);
 }

@@ -18,82 +18,82 @@
 class PlayingInput : public Subsystem
 {
 public:
-    PlayingInput(Registry &registry, TileMap &map, OccupancyGrid &occ,
-                 ResourceNodes &nodes, GameCamera &camera, Minimap &minimap,
-                 InputManager &input, Audio &audio, const MenuSettings &settings,
-                 ResourceSystem &resources);
-    PlayingInput(const PlayingInput &) = delete;
-    PlayingInput &operator=(const PlayingInput &) = delete;
+	PlayingInput(Registry &registry, TileMap &map, OccupancyGrid &occ,
+				 ResourceNodes &nodes, GameCamera &camera, Minimap &minimap,
+				 InputManager &input, Audio &audio, const MenuSettings &settings,
+				 ResourceSystem &resources);
+	PlayingInput(const PlayingInput &) = delete;
+	PlayingInput &operator=(const PlayingInput &) = delete;
 
-    void Dispatch();
-    // Sticky modes persist.
-    void ResetForMatch();
-    // Shortcut toggles (guards live in Game's BindShortcuts).
-    void ToggleSettingRally();
-    void ToggleSlowestSpeed();
-    void ToggleAreaBuild();
-    void SelectPlacingType(BuildingType type);
-    // HUD ability buttons arm targeted orders (attack-move, patrol, heal);
-    // the next right-click issues them. Re-arming the same id disarms.
-    void ArmAbility(AbilityId id);
-    void ClearArmedAbility();
-    const std::optional<AbilityId> &ArmedAbility() const;
-    // Issues the armed ability at a world target; false when nothing acted
-    // (ability stays armed). Headless-testable; Dispatch calls it on right-click.
-    bool IssueArmedAbilityAt(Vector2 worldTarget, bool queued);
-    void ToggleAreaRepair();
-    void ToggleAttackGround();
-    bool IsDragging() const;
-    Vector2 DragStart() const;
-    bool IsRightDragging() const;
-    Vector2 RightDragStart() const;
-    bool RepairDragActive() const;
-    Vector2 RepairDragStart() const;
-    bool PlaceDragActive() const;
-    const std::optional<BuildingType> &PlacingType() const;
-    bool AreaRepairMode() const;
-    bool AttackGroundMode() const;
-    bool IsSettingRally() const;
-    const int &AutoAddGroupBit() const;
+	void Dispatch();
+	// Sticky modes persist.
+	void ResetForMatch();
+	// Shortcut toggles (guards live in Game's BindShortcuts).
+	void ToggleSettingRally();
+	void ToggleSlowestSpeed();
+	void ToggleAreaBuild();
+	void SelectPlacingType(BuildingType type);
+	// HUD ability buttons arm targeted orders (attack-move, patrol, heal);
+	// the next right-click issues them. Re-arming the same id disarms.
+	void ArmAbility(AbilityId id);
+	void ClearArmedAbility();
+	const std::optional<AbilityId> &ArmedAbility() const;
+	// Issues the armed ability at a world target; false when nothing acted
+	// (ability stays armed). Headless-testable; Dispatch calls it on right-click.
+	bool IssueArmedAbilityAt(Vector2 worldTarget, bool queued);
+	void ToggleAreaRepair();
+	void ToggleAttackGround();
+	bool IsDragging() const;
+	Vector2 DragStart() const;
+	bool IsRightDragging() const;
+	Vector2 RightDragStart() const;
+	bool RepairDragActive() const;
+	Vector2 RepairDragStart() const;
+	bool PlaceDragActive() const;
+	const std::optional<BuildingType> &PlacingType() const;
+	bool AreaRepairMode() const;
+	bool AttackGroundMode() const;
+	bool IsSettingRally() const;
+	const int &AutoAddGroupBit() const;
 
 private:
-    Registry &registry_;
-    TileMap &map_;
-    OccupancyGrid &occ_;
-    ResourceNodes &nodes_;
-    GameCamera &camera_;
-    Minimap &minimap_;
-    InputManager &input_;
-    Audio &audio_;
-    const MenuSettings &settings_;
-    ResourceSystem &resources_;
-    std::optional<BuildingType> placingType_;
-    bool areaRepairMode_ = false;
-    bool moveAtSlowestSpeed_ = false;
-    int autoAddGroupBit_ = -1;
-    bool settingRally_ = false;
-    bool dragging_ = false;
-    Vector2 dragStart_ = {};
-    bool rightDragging_ = false;
-    Vector2 rightDragStart_ = {};
-    bool pendingRightClick_ = false;
-    float rightDragDist_ = 0.0f;
-    bool placeDragActive_ = false;
-    Vector2 placeDragStart_ = {};
-    bool repairDragActive_ = false;
-    Vector2 repairDragStart_ = {};
-    bool attackGroundMode_ = false;
-    std::optional<AbilityId> armedAbility_;
+	Registry &registry_;
+	TileMap &map_;
+	OccupancyGrid &occ_;
+	ResourceNodes &nodes_;
+	GameCamera &camera_;
+	Minimap &minimap_;
+	InputManager &input_;
+	Audio &audio_;
+	const MenuSettings &settings_;
+	ResourceSystem &resources_;
+	std::optional<BuildingType> placingType_;
+	bool areaRepairMode_ = false;
+	bool moveAtSlowestSpeed_ = false;
+	int autoAddGroupBit_ = -1;
+	bool settingRally_ = false;
+	bool dragging_ = false;
+	Vector2 dragStart_ = {};
+	bool rightDragging_ = false;
+	Vector2 rightDragStart_ = {};
+	bool pendingRightClick_ = false;
+	float rightDragDist_ = 0.0f;
+	bool placeDragActive_ = false;
+	Vector2 placeDragStart_ = {};
+	bool repairDragActive_ = false;
+	Vector2 repairDragStart_ = {};
+	bool attackGroundMode_ = false;
+	std::optional<AbilityId> armedAbility_;
 
-    void HandleLeftPress();
-    void HandleSelectDragRelease();
-    void HandleControlGroups();
-    void HandlePlacementKeys();
-    void HandlePlaceDragRelease();
-    void HandleRepairDragRelease();
-    void HandleRightPan();
-    void HandleRightPress();
-    void HandleRightRelease(bool cancelledPlacement);
-    void DispatchRightClickOrders();
-    void HandleLineDragRelease();
+	void HandleLeftPress();
+	void HandleSelectDragRelease();
+	void HandleControlGroups();
+	void HandlePlacementKeys();
+	void HandlePlaceDragRelease();
+	void HandleRepairDragRelease();
+	void HandleRightPan();
+	void HandleRightPress();
+	void HandleRightRelease(bool cancelledPlacement);
+	void DispatchRightClickOrders();
+	void HandleLineDragRelease();
 };

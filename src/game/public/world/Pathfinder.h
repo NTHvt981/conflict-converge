@@ -10,9 +10,9 @@ using TilePath = std::vector<cc::IVec2>;
 
 enum class Locomotor
 {
-    Foot,
-    Tracked,
-    Wheeled
+	Foot,
+	Tracked,
+	Wheeled
 };
 
 Locomotor LocomotorOf(UnitType type);
@@ -25,29 +25,29 @@ float TerrainCost(TerrainType terrain);
 // 8-directional A* from start to goal (inclusive). Empty when unreachable,
 // either end blocked, or the map has no tiles.
 TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal,
-                  Locomotor locomotor = Locomotor::Tracked);
+				  Locomotor locomotor = Locomotor::Tracked);
 
 TilePath FindPathFootprint(const TileMap &map, const OccupancyGrid &occ,
-                           cc::IVec2 start, cc::IVec2 goal,
-                           int footprintW, int footprintH,
-                           Entity self, std::uint32_t selfGen,
-                           Locomotor locomotor = Locomotor::Tracked);
+						   cc::IVec2 start, cc::IVec2 goal,
+						   int footprintW, int footprintH,
+						   Entity self, std::uint32_t selfGen,
+						   Locomotor locomotor = Locomotor::Tracked);
 
 // Nearest anchor tile the footprint can enter (ring search, radius 5).
 cc::IVec2 NearestEnterableTile(const TileMap &map, const OccupancyGrid &occ,
-                               cc::IVec2 want, int footprintW, int footprintH,
-                               Entity self, std::uint32_t selfGen);
+							   cc::IVec2 want, int footprintW, int footprintH,
+							   Entity self, std::uint32_t selfGen);
 
 // Nearest anchor tile whose footprint can be entered. Terrain-only when
 // occ is null (headless AI). Ring search, radius 8; returns `want` if none.
 cc::IVec2 NearestFreeFootprintTile(const TileMap &map, const OccupancyGrid *occ,
-                                   cc::IVec2 want, int footprintW, int footprintH);
+								   cc::IVec2 want, int footprintW, int footprintH);
 
 // Order a unit along an A* path to a world target; falls back to a straight
 // move order when no path exists.
 void IssuePathOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-                    Vector2 worldTarget);
+					Vector2 worldTarget);
 
 void IssuePathOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-                             const OccupancyGrid &occ, Vector2 worldTarget, Entity self,
-                             std::uint32_t selfGen);
+							 const OccupancyGrid &occ, Vector2 worldTarget, Entity self,
+							 std::uint32_t selfGen);

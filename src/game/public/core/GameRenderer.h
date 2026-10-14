@@ -30,61 +30,61 @@ class RmlUiMenus;
 class GameRenderer
 {
 public:
-    GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry &registry,
-                 FogOfWar &fog, ResourceNodes &nodes, Minimap &minimap, Pings &pings,
-                 DamageNumbers &damageNumbers, PlayingInput &playingInput, MenuFlow &menu,
-                 Simulation &sim, ResourceSystem &resources,
-                 HotkeyMap &hotkeys, InputManager &input, AICommander &ai,
-                 EventDispatcher &events, const int &replayCursor,
-                 const AIDifficulty &worldDifficulty, const float &menuStateTime,
-                 const float &shakeTrauma, RmlUiHost &rmlUi, RmlUiHud &rmlUiHud,
-                 RmlUiMenus &rmlUiMenus, std::function<void()> quitToMenu);    GameRenderer(const GameRenderer &) = delete;
-    GameRenderer &operator=(const GameRenderer &) = delete;
+	GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry &registry,
+				 FogOfWar &fog, ResourceNodes &nodes, Minimap &minimap, Pings &pings,
+				 DamageNumbers &damageNumbers, PlayingInput &playingInput, MenuFlow &menu,
+				 Simulation &sim, ResourceSystem &resources,
+				 HotkeyMap &hotkeys, InputManager &input, AICommander &ai,
+				 EventDispatcher &events, const int &replayCursor,
+				 const AIDifficulty &worldDifficulty, const float &menuStateTime,
+				 const float &shakeTrauma, RmlUiHost &rmlUi, RmlUiHud &rmlUiHud,
+				 RmlUiMenus &rmlUiMenus, std::function<void()> quitToMenu);    GameRenderer(const GameRenderer &) = delete;
+	GameRenderer &operator=(const GameRenderer &) = delete;
 
-    void DrawWorld();
-    ConfirmChoice DrawHudAndOverlays(int screenWidth, int screenHeight, float uiScale);
-
-private:
-    void UpdateCursor();
-    void DrawTerrainTiles();
-    void DrawBuildings();
-    void DrawPlacementGhost();
-    void DrawNodes();
-    void DrawUnits();
-    void DrawRallyMarkers();
-    void DrawUnitEntity(Entity id, Unit &unit);
-    void DrawProjectiles();
-    void DrawFogVeil();
-    void DrawDragPreviews();
-    void DrawMinimapOverlays(int screenWidth, int screenHeight);
-    void DrawHoverTooltip();
-    void DrawStateOverlays(int screenWidth, int screenHeight);
+	void DrawWorld();
+	ConfirmChoice DrawHudAndOverlays(int screenWidth, int screenHeight, float uiScale);
 
 private:
-    Art &art_;
-    GameCamera &camera_;
-    TileMap &map_;
-    Registry &registry_;
-    FogOfWar &fog_;
-    ResourceNodes &nodes_;
-    Minimap &minimap_;
-    Pings &pings_;
-    DamageNumbers &damageNumbers_;
-    PlayingInput &playingInput_;
-    MenuFlow &menu_;
-    Simulation &sim_;
-    ResourceSystem &resources_;
-    HotkeyMap &hotkeys_;
-    InputManager &input_;
-    AICommander &ai_;
-    EventDispatcher &events_;
-    const int &replayCursor_;
-    const AIDifficulty &worldDifficulty_;
-    const float &menuStateTime_;
-    const float &shakeTrauma_;
-    RmlUiHost &rmlUi_;
-    RmlUiHud &rmlUiHud_;
-    RmlUiMenus &rmlUiMenus_;
-    std::function<void()> quitToMenu_;
-    HoverTooltipState hoverTip_;
+	void UpdateCursor();
+	void DrawTerrainTiles();
+	void DrawBuildings();
+	void DrawPlacementGhost();
+	void DrawNodes();
+	void DrawUnits();
+	void DrawRallyMarkers();
+	void DrawUnitEntity(Entity id, Unit &unit);
+	void DrawProjectiles();
+	void DrawFogVeil();
+	void DrawDragPreviews();
+	void DrawMinimapOverlays(int screenWidth, int screenHeight);
+	void DrawHoverTooltip();
+	void DrawStateOverlays(int screenWidth, int screenHeight);
+
+private:
+	Art &art_;
+	GameCamera &camera_;
+	TileMap &map_;
+	Registry &registry_;
+	FogOfWar &fog_;
+	ResourceNodes &nodes_;
+	Minimap &minimap_;
+	Pings &pings_;
+	DamageNumbers &damageNumbers_;
+	PlayingInput &playingInput_;
+	MenuFlow &menu_;
+	Simulation &sim_;
+	ResourceSystem &resources_;
+	HotkeyMap &hotkeys_;
+	InputManager &input_;
+	AICommander &ai_;
+	EventDispatcher &events_;
+	const int &replayCursor_;
+	const AIDifficulty &worldDifficulty_;
+	const float &menuStateTime_;
+	const float &shakeTrauma_;
+	RmlUiHost &rmlUi_;
+	RmlUiHud &rmlUiHud_;
+	RmlUiMenus &rmlUiMenus_;
+	std::function<void()> quitToMenu_;
+	HoverTooltipState hoverTip_;
 };

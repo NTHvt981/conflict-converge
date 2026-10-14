@@ -9,30 +9,30 @@
 
 struct TestStats
 {
-    int checks = 0;
-    int failures = 0;
+	int checks = 0;
+	int failures = 0;
 };
 
 inline TestStats &CcTestStats()
 {
-    static TestStats stats;
-    return stats;
+	static TestStats stats;
+	return stats;
 }
 
 #define CC_CHECK(cond)                                                                                   \
-    do                                                                                                   \
-    {                                                                                                    \
-        ++CcTestStats().checks;                                                                          \
-        if (!(cond))                                                                                     \
-        {                                                                                                \
-            ++CcTestStats().failures;                                                                    \
-            std::printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #cond);                                  \
-            std::fflush(stdout); /* survive crashes/aborts later in the run */                           \
-        }                                                                                                \
-    } while (0)
+	do                                                                                                   \
+	{                                                                                                    \
+		++CcTestStats().checks;                                                                          \
+		if (!(cond))                                                                                     \
+		{                                                                                                \
+			++CcTestStats().failures;                                                                    \
+			std::printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #cond);                                  \
+			std::fflush(stdout); /* survive crashes/aborts later in the run */                           \
+		}                                                                                                \
+	} while (0)
 
 inline bool CcNear(float a, float b, float eps = 1e-5f)
 {
-    float d = a >= b ? a - b : b - a;
-    return d <= eps;
+	float d = a >= b ? a - b : b - a;
+	return d <= eps;
 }
