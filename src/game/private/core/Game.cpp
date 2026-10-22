@@ -282,11 +282,7 @@ void Game::Update()
 	double simMs = 0.0;
 	if (menu.state == MenuState::Playing && !menu.ConfirmOpen() && !cheats.CapturingInput())
 	{
-		// Presses on RmlUi controls never reach world dispatch. The sim always steps.
-		if (!rmlUiHud.IsPointerOverUI())
-		{
-			player_.Get<PlayingInput>().Dispatch();
-		}
+		player_.Get<PlayingInput>().Dispatch(rmlUiHud.IsPointerOverUI());
 		const double simStart = GetTime();
 		sim.Step(GetFrameTime());
 		simMs = (GetTime() - simStart) * 1000.0;

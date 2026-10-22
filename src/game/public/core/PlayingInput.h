@@ -25,7 +25,7 @@ public:
 	PlayingInput(const PlayingInput &) = delete;
 	PlayingInput &operator=(const PlayingInput &) = delete;
 
-	void Dispatch();
+	void Dispatch(bool pointerOverUi);
 	// Sticky modes persist.
 	void ResetForMatch();
 	// Shortcut toggles (guards live in Game's BindShortcuts).
