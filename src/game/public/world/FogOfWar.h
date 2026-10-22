@@ -16,27 +16,27 @@
 class FogOfWar : public Subsystem
 {
 public:
-    void Resize(int width, int height);
-    int Width() const;
-    int Height() const;
+	void Resize(int width, int height);
+	int Width() const;
+	int Height() const;
 
-    void Recompute(const Registry &registry);
+	void Recompute(const Registry &registry);
 
-    bool IsVisible(int teamID, cc::IVec2 tile) const;
-    bool IsExplored(int teamID, cc::IVec2 tile) const;
+	bool IsVisible(int teamID, cc::IVec2 tile) const;
+	bool IsExplored(int teamID, cc::IVec2 tile) const;
 
-    // Save/load support (team_fog): row-major explored bytes, w*h long.
-    std::vector<std::uint8_t> ExploredBytes(int teamID) const;
-    void SetExplored(int teamID, const std::uint8_t *bytes, std::size_t size);
-    std::vector<int> Teams() const;
+	// Save/load support (team_fog): row-major explored bytes, w*h long.
+	std::vector<std::uint8_t> ExploredBytes(int teamID) const;
+	void SetExplored(int teamID, const std::uint8_t *bytes, std::size_t size);
+	std::vector<int> Teams() const;
 
 private:
-    bool InBounds(cc::IVec2 tile) const;
-    std::vector<std::uint8_t> &ExploredRow(int teamID);
-    const std::vector<std::uint8_t> *FindVisible(int teamID) const;
+	bool InBounds(cc::IVec2 tile) const;
+	std::vector<std::uint8_t> &ExploredRow(int teamID);
+	const std::vector<std::uint8_t> *FindVisible(int teamID) const;
 
-    int width_ = 0;
-    int height_ = 0;
-    std::unordered_map<int, std::vector<std::uint8_t>> explored_;
-    std::unordered_map<int, std::vector<std::uint8_t>> visible_;
+	int width_ = 0;
+	int height_ = 0;
+	std::unordered_map<int, std::vector<std::uint8_t>> explored_;
+	std::unordered_map<int, std::vector<std::uint8_t>> visible_;
 };

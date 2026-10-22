@@ -17,366 +17,366 @@ namespace
 
 bool ConfigsEqual(const UnitConfig &a, const UnitConfig &b)
 {
-    return a.type == b.type && a.stats.health == b.stats.health &&
-           a.stats.armorType == b.stats.armorType &&
-           a.stats.damageType == b.stats.damageType &&
-           a.stats.attackPower == b.stats.attackPower &&
-           a.stats.attackRange == b.stats.attackRange &&
-           a.stats.cooldownTime == b.stats.cooldownTime &&
-           a.stats.speed == b.stats.speed && a.stats.sightRange == b.stats.sightRange &&
-           a.costIron == b.costIron && a.costOil == b.costOil &&
-           a.abilities.turretTurnRate == b.abilities.turretTurnRate &&
-           a.abilities.arcingFlightTime == b.abilities.arcingFlightTime &&
-           a.abilities.arcingSplashTiles == b.abilities.arcingSplashTiles &&
-           a.abilities.crushesFlesh == b.abilities.crushesFlesh &&
-           a.abilities.transportCapacity == b.abilities.transportCapacity &&
-           a.abilities.sniper == b.abilities.sniper &&
-           a.footprintWidth == b.footprintWidth &&
-           a.footprintHeight == b.footprintHeight && a.boundLeft == b.boundLeft &&
-           a.boundTop == b.boundTop && a.originX == b.originX && a.originY == b.originY &&
-           a.spritePrefix == b.spritePrefix && a.atlasIdlePrefix == b.atlasIdlePrefix &&
-           a.atlasMovePrefix == b.atlasMovePrefix;
+	return a.type == b.type && a.stats.health == b.stats.health &&
+		   a.stats.armorType == b.stats.armorType &&
+		   a.stats.damageType == b.stats.damageType &&
+		   a.stats.attackPower == b.stats.attackPower &&
+		   a.stats.attackRange == b.stats.attackRange &&
+		   a.stats.cooldownTime == b.stats.cooldownTime &&
+		   a.stats.speed == b.stats.speed && a.stats.sightRange == b.stats.sightRange &&
+		   a.costIron == b.costIron && a.costOil == b.costOil &&
+		   a.abilities.turretTurnRate == b.abilities.turretTurnRate &&
+		   a.abilities.arcingFlightTime == b.abilities.arcingFlightTime &&
+		   a.abilities.arcingSplashTiles == b.abilities.arcingSplashTiles &&
+		   a.abilities.crushesFlesh == b.abilities.crushesFlesh &&
+		   a.abilities.transportCapacity == b.abilities.transportCapacity &&
+		   a.abilities.sniper == b.abilities.sniper &&
+		   a.footprintWidth == b.footprintWidth &&
+		   a.footprintHeight == b.footprintHeight && a.boundLeft == b.boundLeft &&
+		   a.boundTop == b.boundTop && a.originX == b.originX && a.originY == b.originY &&
+		   a.spritePrefix == b.spritePrefix && a.atlasIdlePrefix == b.atlasIdlePrefix &&
+		   a.atlasMovePrefix == b.atlasMovePrefix;
 }
 
 bool AbilitiesEqual(const UnitAbilities &a, const UnitAbilities &b)
 {
-    return a.turretTurnRate == b.turretTurnRate &&
-           a.arcingFlightTime == b.arcingFlightTime &&
-           a.arcingSplashTiles == b.arcingSplashTiles &&
-           a.crushesFlesh == b.crushesFlesh &&
-           a.transportCapacity == b.transportCapacity && a.sniper == b.sniper;
+	return a.turretTurnRate == b.turretTurnRate &&
+		   a.arcingFlightTime == b.arcingFlightTime &&
+		   a.arcingSplashTiles == b.arcingSplashTiles &&
+		   a.crushesFlesh == b.crushesFlesh &&
+		   a.transportCapacity == b.transportCapacity && a.sniper == b.sniper;
 }
 
 std::string TempDir(const char *name)
 {
-    return (std::filesystem::temp_directory_path() / name).string();
+	return (std::filesystem::temp_directory_path() / name).string();
 }
 
 void WriteFile(const std::string &path, const char *contents)
 {
-    std::ofstream out(path, std::ios::binary | std::ios::trunc);
-    out << contents;
+	std::ofstream out(path, std::ios::binary | std::ios::trunc);
+	out << contents;
 }
 
 // data/configs at repo root; the test binary may run from prj/bin/Debug.
 const char *kConfigDirs[] = { "data/configs", "../../data/configs",
-                              "../../../data/configs" };
+							  "../../../data/configs" };
 
 } // namespace
 
 void RunUnitConfigTests()
 {
-    // --- single-file round-trip: save, reload, field-for-field equal ---
-    {
-        UnitConfig heavy = DefaultUnitConfig(UnitType::HeavyTank);
-        const std::string json = UnitConfigToJson(heavy);
-        CC_CHECK(!json.empty());
-        UnitConfig reloaded;
-        CC_CHECK(ParseUnitConfigJson(json, "heavy_tank", reloaded));
-        CC_CHECK(ConfigsEqual(heavy, reloaded));
-    }
+	// --- single-file round-trip: save, reload, field-for-field equal ---
+	{
+		UnitConfig heavy = DefaultUnitConfig(UnitType::HeavyTank);
+		const std::string json = UnitConfigToJson(heavy);
+		CC_CHECK(!json.empty());
+		UnitConfig reloaded;
+		CC_CHECK(ParseUnitConfigJson(json, "heavy_tank", reloaded));
+		CC_CHECK(ConfigsEqual(heavy, reloaded));
+	}
 
-    // --- round-trip preserves edited (non-default) values ---
-    {
-        UnitConfig edited = DefaultUnitConfig(UnitType::RifleInfantry);
-        edited.stats.health = 150.0f;
-        edited.stats.armorType = ArmorType::COMPOSITE;
-        edited.stats.attackPower = 0; // explicit zero survives (not a default)
-        edited.boundLeft = 1;       // bounds {1,0,3,1}: footprint derives 2x1
-        edited.footprintWidth = 2;
-        edited.originX = 1; // stored + round-trips, no gameplay effect yet
-        edited.spritePrefix = "custom";
-        edited.atlasIdlePrefix = "custom_idle";
-        const std::string json = UnitConfigToJson(edited);
-        UnitConfig reloaded;
-        CC_CHECK(ParseUnitConfigJson(json, "rifle_infantry", reloaded));
-        CC_CHECK(ConfigsEqual(edited, reloaded));
-    }
+	// --- round-trip preserves edited (non-default) values ---
+	{
+		UnitConfig edited = DefaultUnitConfig(UnitType::RifleInfantry);
+		edited.stats.health = 150.0f;
+		edited.stats.armorType = ArmorType::COMPOSITE;
+		edited.stats.attackPower = 0; // explicit zero survives (not a default)
+		edited.boundLeft = 1;       // bounds {1,0,3,1}: footprint derives 2x1
+		edited.footprintWidth = 2;
+		edited.originX = 1; // stored + round-trips, no gameplay effect yet
+		edited.spritePrefix = "custom";
+		edited.atlasIdlePrefix = "custom_idle";
+		const std::string json = UnitConfigToJson(edited);
+		UnitConfig reloaded;
+		CC_CHECK(ParseUnitConfigJson(json, "rifle_infantry", reloaded));
+		CC_CHECK(ConfigsEqual(edited, reloaded));
+	}
 
-    // --- canonical filenames: snake_case stems, underscore-tolerant match ---
-    {
-        CC_CHECK(std::string(UnitConfigFilename(UnitType::RifleInfantry)) == "rifle_infantry");
-        CC_CHECK(std::string(UnitConfigFilename(UnitType::AntiArmorInfantry)) ==
-                 "antiarmor_infantry");
-        CC_CHECK(std::string(UnitConfigFilename(UnitType::Engineer)) == "engineer");
-        CC_CHECK(std::string(UnitConfigFilename(UnitType::IFV)) == "ifv");
-        CC_CHECK(std::string(UnitConfigFilename(UnitType::Artillery)) == "artillery");
-        CC_CHECK(std::string(UnitConfigFilename(UnitType::LightTank)) == "light_tank");
-        CC_CHECK(std::string(UnitConfigFilename(UnitType::HeavyTank)) == "heavy_tank");
-        CC_CHECK(std::string(UnitConfigFilename(UnitType::PrototypeInfantry)) ==
-                 "prototype_infantry");
+	// --- canonical filenames: snake_case stems, underscore-tolerant match ---
+	{
+		CC_CHECK(std::string(UnitConfigFilename(UnitType::RifleInfantry)) == "rifle_infantry");
+		CC_CHECK(std::string(UnitConfigFilename(UnitType::AntiArmorInfantry)) ==
+				 "antiarmor_infantry");
+		CC_CHECK(std::string(UnitConfigFilename(UnitType::Engineer)) == "engineer");
+		CC_CHECK(std::string(UnitConfigFilename(UnitType::IFV)) == "ifv");
+		CC_CHECK(std::string(UnitConfigFilename(UnitType::Artillery)) == "artillery");
+		CC_CHECK(std::string(UnitConfigFilename(UnitType::LightTank)) == "light_tank");
+		CC_CHECK(std::string(UnitConfigFilename(UnitType::HeavyTank)) == "heavy_tank");
+		CC_CHECK(std::string(UnitConfigFilename(UnitType::PrototypeInfantry)) ==
+				 "prototype_infantry");
 
-        // Underscored stems validate; a genuinely different type still fails.
-        UnitConfig config;
-        const std::string heavy = UnitConfigToJson(DefaultUnitConfig(UnitType::HeavyTank));
-        CC_CHECK(ParseUnitConfigJson(heavy, "heavy_tank", config));
-        CC_CHECK(ParseUnitConfigJson(heavy, "HEAVY_TANK", config)); // case-insensitive
-        CC_CHECK(!ParseUnitConfigJson(heavy, "light_tank", config));
-    }
+		// Underscored stems validate; a genuinely different type still fails.
+		UnitConfig config;
+		const std::string heavy = UnitConfigToJson(DefaultUnitConfig(UnitType::HeavyTank));
+		CC_CHECK(ParseUnitConfigJson(heavy, "heavy_tank", config));
+		CC_CHECK(ParseUnitConfigJson(heavy, "HEAVY_TANK", config)); // case-insensitive
+		CC_CHECK(!ParseUnitConfigJson(heavy, "light_tank", config));
+	}
 
-    // --- shipped seed files load with the compiled-in values ---
-    {
-        const std::vector<UnitConfig> *found = nullptr;
-        std::vector<UnitConfig> configs;
-        for (const char *dir : kConfigDirs)
-        {
-            configs = LoadAllUnitConfigs(dir);
-            if (!configs.empty())
-            {
-                found = &configs;
-                break;
-            }
-        }
-        CC_CHECK(found != nullptr);
-        if (found != nullptr)
-        {
-            CC_CHECK(found->size() == 9);
-            bool rifleOk = false;
-            bool antiarmorOk = false;
-            bool engineerOk = false;
-            bool medicOk = false;
-            bool tankOk = false;
-            for (const UnitConfig &config : *found)
-            {
-                if (config.type == "RifleInfantry")
-                {
-                    const UnitStats &base = BaseStats(UnitType::RifleInfantry);
-                    CC_CHECK(config.stats.health == base.health);
-                    CC_CHECK(config.stats.attackPower == base.attackPower);
-                    CC_CHECK(config.footprintWidth == 1);
-                    CC_CHECK(config.spritePrefix == "rifle_infantry");
-                    CC_CHECK(config.atlasIdlePrefix == "rifle_infantry_idle");
-                    rifleOk = true;
-                }
-                if (config.type == "AntiArmorInfantry")
-                {
-                    CC_CHECK(config.spritePrefix == "antiarmor");
-                    CC_CHECK(config.atlasIdlePrefix == "antiarmor_idle");
-                    CC_CHECK(config.atlasMovePrefix == "antiarmor_move");
-                    antiarmorOk = true;
-                }
-                if (config.type == "Engineer")
-                {
-                    CC_CHECK(config.spritePrefix == "engineer");
-                    CC_CHECK(config.atlasIdlePrefix == "engineer_idle");
-                    CC_CHECK(config.atlasMovePrefix == "engineer_move");
-                    engineerOk = true;
-                }
-                if (config.type == "Medic")
-                {
-                    CC_CHECK(config.stats.attackPower == 0); // support: cannot attack
-                    CC_CHECK(config.spritePrefix == "medic");
-                    CC_CHECK(config.atlasIdlePrefix == "medic_idle");
-                    CC_CHECK(config.atlasMovePrefix == "medic_move");
-                    medicOk = true;
-                }
-                if (config.type == "HeavyTank")
-                {
-                    CC_CHECK(config.stats.armorType == ArmorType::COMPOSITE);
-                    CC_CHECK(config.footprintWidth == 2);
-                    CC_CHECK(config.atlasIdlePrefix.empty()); // PNG fallback
-                    tankOk = true;
-                }
-            }
-            CC_CHECK(rifleOk);
-            CC_CHECK(antiarmorOk);
-            CC_CHECK(engineerOk);
-            CC_CHECK(medicOk);
-            CC_CHECK(tankOk);
-        }
-    }
+	// --- shipped seed files load with the compiled-in values ---
+	{
+		const std::vector<UnitConfig> *found = nullptr;
+		std::vector<UnitConfig> configs;
+		for (const char *dir : kConfigDirs)
+		{
+			configs = LoadAllUnitConfigs(dir);
+			if (!configs.empty())
+			{
+				found = &configs;
+				break;
+			}
+		}
+		CC_CHECK(found != nullptr);
+		if (found != nullptr)
+		{
+			CC_CHECK(found->size() == 9);
+			bool rifleOk = false;
+			bool antiarmorOk = false;
+			bool engineerOk = false;
+			bool medicOk = false;
+			bool tankOk = false;
+			for (const UnitConfig &config : *found)
+			{
+				if (config.type == "RifleInfantry")
+				{
+					const UnitStats &base = BaseStats(UnitType::RifleInfantry);
+					CC_CHECK(config.stats.health == base.health);
+					CC_CHECK(config.stats.attackPower == base.attackPower);
+					CC_CHECK(config.footprintWidth == 1);
+					CC_CHECK(config.spritePrefix == "rifle_infantry");
+					CC_CHECK(config.atlasIdlePrefix == "rifle_infantry_idle");
+					rifleOk = true;
+				}
+				if (config.type == "AntiArmorInfantry")
+				{
+					CC_CHECK(config.spritePrefix == "antiarmor");
+					CC_CHECK(config.atlasIdlePrefix == "antiarmor_idle");
+					CC_CHECK(config.atlasMovePrefix == "antiarmor_move");
+					antiarmorOk = true;
+				}
+				if (config.type == "Engineer")
+				{
+					CC_CHECK(config.spritePrefix == "engineer");
+					CC_CHECK(config.atlasIdlePrefix == "engineer_idle");
+					CC_CHECK(config.atlasMovePrefix == "engineer_move");
+					engineerOk = true;
+				}
+				if (config.type == "Medic")
+				{
+					CC_CHECK(config.stats.attackPower == 0); // support: cannot attack
+					CC_CHECK(config.spritePrefix == "medic");
+					CC_CHECK(config.atlasIdlePrefix == "medic_idle");
+					CC_CHECK(config.atlasMovePrefix == "medic_move");
+					medicOk = true;
+				}
+				if (config.type == "HeavyTank")
+				{
+					CC_CHECK(config.stats.armorType == ArmorType::COMPOSITE);
+					CC_CHECK(config.footprintWidth == 2);
+					CC_CHECK(config.atlasIdlePrefix.empty()); // PNG fallback
+					tankOk = true;
+				}
+			}
+			CC_CHECK(rifleOk);
+			CC_CHECK(antiarmorOk);
+			CC_CHECK(engineerOk);
+			CC_CHECK(medicOk);
+			CC_CHECK(tankOk);
+		}
+	}
 
-    // --- directory discovery: 3 valid + 1 garbage -> exactly 3 ---
-    {
-        const std::string dir = TempDir("cc_unitconfig_discovery");
-        std::error_code ec;
-        std::filesystem::create_directories(dir, ec);
-        WriteFile(dir + "/rifle_infantry.json",
-                  UnitConfigToJson(DefaultUnitConfig(UnitType::RifleInfantry)).c_str());
-        WriteFile(dir + "/engineer.json",
-                  UnitConfigToJson(DefaultUnitConfig(UnitType::Engineer)).c_str());
-        WriteFile(dir + "/ifv.json",
-                  UnitConfigToJson(DefaultUnitConfig(UnitType::IFV)).c_str());
-        WriteFile(dir + "/garbage.json", "{ this is not json");
-        WriteFile(dir + "/notes.txt", "wrong extension, ignored");
+	// --- directory discovery: 3 valid + 1 garbage -> exactly 3 ---
+	{
+		const std::string dir = TempDir("cc_unitconfig_discovery");
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		WriteFile(dir + "/rifle_infantry.json",
+				  UnitConfigToJson(DefaultUnitConfig(UnitType::RifleInfantry)).c_str());
+		WriteFile(dir + "/engineer.json",
+				  UnitConfigToJson(DefaultUnitConfig(UnitType::Engineer)).c_str());
+		WriteFile(dir + "/ifv.json",
+				  UnitConfigToJson(DefaultUnitConfig(UnitType::IFV)).c_str());
+		WriteFile(dir + "/garbage.json", "{ this is not json");
+		WriteFile(dir + "/notes.txt", "wrong extension, ignored");
 
-        const std::vector<UnitConfig> configs = LoadAllUnitConfigs(dir);
-        CC_CHECK(configs.size() == 3);
+		const std::vector<UnitConfig> configs = LoadAllUnitConfigs(dir);
+		CC_CHECK(configs.size() == 3);
 
-        std::filesystem::remove_all(dir, ec);
-    }
+		std::filesystem::remove_all(dir, ec);
+	}
 
-    // --- missing dir -> empty, not a crash ---
-    {
-        CC_CHECK(LoadAllUnitConfigs(TempDir("cc_unitconfig_no_such_dir")).empty());
-    }
+	// --- missing dir -> empty, not a crash ---
+	{
+		CC_CHECK(LoadAllUnitConfigs(TempDir("cc_unitconfig_no_such_dir")).empty());
+	}
 
-    // --- tolerant load: missing file -> false (caller falls back) ---
-    {
-        UnitConfig config;
-        CC_CHECK(!LoadUnitConfig(TempDir("cc_unitconfig_missing.json"), config));
-    }
+	// --- tolerant load: missing file -> false (caller falls back) ---
+	{
+		UnitConfig config;
+		CC_CHECK(!LoadUnitConfig(TempDir("cc_unitconfig_missing.json"), config));
+	}
 
-    // --- tolerant load: type/filename mismatch + unknown type skipped ---
-    {
-        UnitConfig config;
-        const std::string rifle =
-            UnitConfigToJson(DefaultUnitConfig(UnitType::RifleInfantry));
-        CC_CHECK(!ParseUnitConfigJson(rifle, "engineer", config)); // mismatch
-        CC_CHECK(!ParseUnitConfigJson("{\"type\":\"Spaceship\"}", "spaceship",
-                                      config)); // unknown
-        CC_CHECK(!ParseUnitConfigJson("{ nope", "rifle_infantry", config)); // garbage
-        CC_CHECK(!ParseUnitConfigJson("{\"stats\":{}}", "rifle_infantry", config)); // no type
-    }
+	// --- tolerant load: type/filename mismatch + unknown type skipped ---
+	{
+		UnitConfig config;
+		const std::string rifle =
+			UnitConfigToJson(DefaultUnitConfig(UnitType::RifleInfantry));
+		CC_CHECK(!ParseUnitConfigJson(rifle, "engineer", config)); // mismatch
+		CC_CHECK(!ParseUnitConfigJson("{\"type\":\"Spaceship\"}", "spaceship",
+									  config)); // unknown
+		CC_CHECK(!ParseUnitConfigJson("{ nope", "rifle_infantry", config)); // garbage
+		CC_CHECK(!ParseUnitConfigJson("{\"stats\":{}}", "rifle_infantry", config)); // no type
+	}
 
-    // --- tolerant load: missing/unknown/out-of-range fields -> defaults ---
-    {
-        UnitConfig config;
-        // Missing everything but type: full baseline.
-        CC_CHECK(ParseUnitConfigJson("{\"type\":\"Artillery\"}", "artillery", config));
-        const UnitConfig baseline = DefaultUnitConfig(UnitType::Artillery);
-        CC_CHECK(ConfigsEqual(baseline, config));
+	// --- tolerant load: missing/unknown/out-of-range fields -> defaults ---
+	{
+		UnitConfig config;
+		// Missing everything but type: full baseline.
+		CC_CHECK(ParseUnitConfigJson("{\"type\":\"Artillery\"}", "artillery", config));
+		const UnitConfig baseline = DefaultUnitConfig(UnitType::Artillery);
+		CC_CHECK(ConfigsEqual(baseline, config));
 
-        // Unknown enum names + bad bounds fall back per-field; the
-        // well-formed remainder still loads.
-        CC_CHECK(ParseUnitConfigJson(
-            "{\"type\":\"LightTank\",\"stats\":{\"health\":-5,\"armorType\":\"WOOD\","
-            "\"damageType\":\"\",\"attackPower\":21},\"collision\":{\"bounds\":{"
-            "\"left\":0,\"top\":0,\"right\":0,\"bottom\":3},\"origin\":{\"x\":1,\"y\":0}},"
-            "\"art\":{\"spritePrefix\":\"\",\"atlasIdlePrefix\":\"x\"}}",
-            "light_tank", config));
-        const UnitConfig tankBase = DefaultUnitConfig(UnitType::LightTank);
-        CC_CHECK(config.stats.health == tankBase.stats.health); // -5 rejected
-        CC_CHECK(config.stats.armorType == tankBase.stats.armorType); // WOOD rejected
-        CC_CHECK(config.stats.damageType == tankBase.stats.damageType); // "" rejected
-        CC_CHECK(config.stats.attackPower == 21); // explicit honored
-        CC_CHECK(config.footprintWidth == tankBase.footprintWidth); // degenerate rejected
-        CC_CHECK(config.footprintHeight == tankBase.footprintHeight);
-        CC_CHECK(config.boundLeft == 0 && config.boundTop == 0);
-        CC_CHECK(config.originX == 1 && config.originY == 0); // origin always stored
-        CC_CHECK(config.spritePrefix == tankBase.spritePrefix); // "" rejected
-        CC_CHECK(config.atlasIdlePrefix == "x"); // "" is valid: explicit honored
+		// Unknown enum names + bad bounds fall back per-field; the
+		// well-formed remainder still loads.
+		CC_CHECK(ParseUnitConfigJson(
+			"{\"type\":\"LightTank\",\"stats\":{\"health\":-5,\"armorType\":\"WOOD\","
+			"\"damageType\":\"\",\"attackPower\":21},\"collision\":{\"bounds\":{"
+			"\"left\":0,\"top\":0,\"right\":0,\"bottom\":3},\"origin\":{\"x\":1,\"y\":0}},"
+			"\"art\":{\"spritePrefix\":\"\",\"atlasIdlePrefix\":\"x\"}}",
+			"light_tank", config));
+		const UnitConfig tankBase = DefaultUnitConfig(UnitType::LightTank);
+		CC_CHECK(config.stats.health == tankBase.stats.health); // -5 rejected
+		CC_CHECK(config.stats.armorType == tankBase.stats.armorType); // WOOD rejected
+		CC_CHECK(config.stats.damageType == tankBase.stats.damageType); // "" rejected
+		CC_CHECK(config.stats.attackPower == 21); // explicit honored
+		CC_CHECK(config.footprintWidth == tankBase.footprintWidth); // degenerate rejected
+		CC_CHECK(config.footprintHeight == tankBase.footprintHeight);
+		CC_CHECK(config.boundLeft == 0 && config.boundTop == 0);
+		CC_CHECK(config.originX == 1 && config.originY == 0); // origin always stored
+		CC_CHECK(config.spritePrefix == tankBase.spritePrefix); // "" rejected
+		CC_CHECK(config.atlasIdlePrefix == "x"); // "" is valid: explicit honored
 
-        // Well-formed bounds derive the footprint (offset rect, not just size).
-        CC_CHECK(ParseUnitConfigJson(
-            "{\"type\":\"LightTank\",\"collision\":{\"bounds\":{"
-            "\"left\":1,\"top\":0,\"right\":3,\"bottom\":2},\"origin\":{\"x\":0,\"y\":0}}}",
-            "light_tank", config));
-        CC_CHECK(config.footprintWidth == 2 && config.footprintHeight == 2);
-        CC_CHECK(config.boundLeft == 1 && config.boundTop == 0);
-    }
+		// Well-formed bounds derive the footprint (offset rect, not just size).
+		CC_CHECK(ParseUnitConfigJson(
+			"{\"type\":\"LightTank\",\"collision\":{\"bounds\":{"
+			"\"left\":1,\"top\":0,\"right\":3,\"bottom\":2},\"origin\":{\"x\":0,\"y\":0}}}",
+			"light_tank", config));
+		CC_CHECK(config.footprintWidth == 2 && config.footprintHeight == 2);
+		CC_CHECK(config.boundLeft == 1 && config.boundTop == 0);
+	}
 
-    // --- enum round-trips: every value serializes and parses back ---
-    {
-        for (int i = 0; i < static_cast<int>(ArmorType::Count); ++i)
-        {
-            const ArmorType armor = static_cast<ArmorType>(i);
-            ArmorType back = ArmorType::STEEL;
-            CC_CHECK(ParseArmorTypeName(ArmorTypeName(armor), back));
-            CC_CHECK(back == armor);
-        }
-        for (int i = 0; i < static_cast<int>(DamageType::Count); ++i)
-        {
-            const DamageType damage = static_cast<DamageType>(i);
-            DamageType back = DamageType::KINETIC;
-            CC_CHECK(ParseDamageTypeName(DamageTypeName(damage), back));
-            CC_CHECK(back == damage);
-        }
-        for (int i = 0; i < static_cast<int>(UnitType::Count); ++i)
-        {
-            const UnitType type = static_cast<UnitType>(i);
-            const UnitConfig baseline = DefaultUnitConfig(type);
-            UnitType back = UnitType::RifleInfantry;
-            CC_CHECK(ParseUnitTypeName(baseline.type, back));
-            CC_CHECK(back == type);
-        }
-        ArmorType noArmor = ArmorType::STEEL;
-        DamageType noDamage = DamageType::KINETIC;
-        UnitType noUnit = UnitType::RifleInfantry;
-        CC_CHECK(!ParseArmorTypeName("WOOD", noArmor));
-        CC_CHECK(!ParseDamageTypeName("NUCLEAR", noDamage));
-        CC_CHECK(!ParseUnitTypeName("Spaceship", noUnit));
-        // Pre-rename "Infantry" stays a valid alias for old configs/saves.
-        CC_CHECK(ParseUnitTypeName("Infantry", noUnit));
-        CC_CHECK(noUnit == UnitType::RifleInfantry);
-    }
+	// --- enum round-trips: every value serializes and parses back ---
+	{
+		for (int i = 0; i < static_cast<int>(ArmorType::Count); ++i)
+		{
+			const ArmorType armor = static_cast<ArmorType>(i);
+			ArmorType back = ArmorType::STEEL;
+			CC_CHECK(ParseArmorTypeName(ArmorTypeName(armor), back));
+			CC_CHECK(back == armor);
+		}
+		for (int i = 0; i < static_cast<int>(DamageType::Count); ++i)
+		{
+			const DamageType damage = static_cast<DamageType>(i);
+			DamageType back = DamageType::KINETIC;
+			CC_CHECK(ParseDamageTypeName(DamageTypeName(damage), back));
+			CC_CHECK(back == damage);
+		}
+		for (int i = 0; i < static_cast<int>(UnitType::Count); ++i)
+		{
+			const UnitType type = static_cast<UnitType>(i);
+			const UnitConfig baseline = DefaultUnitConfig(type);
+			UnitType back = UnitType::RifleInfantry;
+			CC_CHECK(ParseUnitTypeName(baseline.type, back));
+			CC_CHECK(back == type);
+		}
+		ArmorType noArmor = ArmorType::STEEL;
+		DamageType noDamage = DamageType::KINETIC;
+		UnitType noUnit = UnitType::RifleInfantry;
+		CC_CHECK(!ParseArmorTypeName("WOOD", noArmor));
+		CC_CHECK(!ParseDamageTypeName("NUCLEAR", noDamage));
+		CC_CHECK(!ParseUnitTypeName("Spaceship", noUnit));
+		// Pre-rename "Infantry" stays a valid alias for old configs/saves.
+		CC_CHECK(ParseUnitTypeName("Infantry", noUnit));
+		CC_CHECK(noUnit == UnitType::RifleInfantry);
+	}
 
-    // --- M1 abilities: defaults off, tolerant parse, round-trip ---
-    {
-        const UnitConfig baseline = DefaultUnitConfig(UnitType::HeavyTank);
-        CC_CHECK(baseline.abilities.turretTurnRate == 3.0f); // G1: tanks turreted
-        CC_CHECK(baseline.abilities.arcingFlightTime == 0.0f);
-        CC_CHECK(baseline.abilities.crushesFlesh); // G3: heavies crush flesh
-        CC_CHECK(DefaultUnitConfig(UnitType::RifleInfantry).abilities.crushesFlesh == false);
-        CC_CHECK(DefaultUnitConfig(UnitType::RifleInfantry).abilities.turretTurnRate == 0.0f);
-        CC_CHECK(baseline.abilities.transportCapacity == 0);
-        CC_CHECK(!baseline.abilities.sniper);
-        CC_CHECK(baseline.costIron == 250 && baseline.costOil == 100);
+	// --- M1 abilities: defaults off, tolerant parse, round-trip ---
+	{
+		const UnitConfig baseline = DefaultUnitConfig(UnitType::HeavyTank);
+		CC_CHECK(baseline.abilities.turretTurnRate == 3.0f); // G1: tanks turreted
+		CC_CHECK(baseline.abilities.arcingFlightTime == 0.0f);
+		CC_CHECK(baseline.abilities.crushesFlesh); // G3: heavies crush flesh
+		CC_CHECK(DefaultUnitConfig(UnitType::RifleInfantry).abilities.crushesFlesh == false);
+		CC_CHECK(DefaultUnitConfig(UnitType::RifleInfantry).abilities.turretTurnRate == 0.0f);
+		CC_CHECK(baseline.abilities.transportCapacity == 0);
+		CC_CHECK(!baseline.abilities.sniper);
+		CC_CHECK(baseline.costIron == 250 && baseline.costOil == 100);
 
-        UnitConfig config;
-        CC_CHECK(ParseUnitConfigJson(
-            "{\"type\":\"HeavyTank\",\"abilities\":{\"turret\":{\"turnRate\":2.5},"
-            "\"arcingShell\":{\"flightTime\":1.2,\"splashTiles\":1},"
-            "\"crushesFlesh\":true,\"transport\":{\"capacity\":6},\"sniper\":true}}",
-            "heavy_tank", config));
-        CC_CHECK(config.abilities.turretTurnRate == 2.5f);
-        CC_CHECK(config.abilities.arcingFlightTime == 1.2f);
-        CC_CHECK(config.abilities.arcingSplashTiles == 1);
-        CC_CHECK(config.abilities.crushesFlesh);
-        CC_CHECK(config.abilities.transportCapacity == 6);
-        CC_CHECK(config.abilities.sniper);
+		UnitConfig config;
+		CC_CHECK(ParseUnitConfigJson(
+			"{\"type\":\"HeavyTank\",\"abilities\":{\"turret\":{\"turnRate\":2.5},"
+			"\"arcingShell\":{\"flightTime\":1.2,\"splashTiles\":1},"
+			"\"crushesFlesh\":true,\"transport\":{\"capacity\":6},\"sniper\":true}}",
+			"heavy_tank", config));
+		CC_CHECK(config.abilities.turretTurnRate == 2.5f);
+		CC_CHECK(config.abilities.arcingFlightTime == 1.2f);
+		CC_CHECK(config.abilities.arcingSplashTiles == 1);
+		CC_CHECK(config.abilities.crushesFlesh);
+		CC_CHECK(config.abilities.transportCapacity == 6);
+		CC_CHECK(config.abilities.sniper);
 
-        const std::string json = UnitConfigToJson(config);
-        UnitConfig reloaded;
-        CC_CHECK(ParseUnitConfigJson(json, "heavy_tank", reloaded));
-        CC_CHECK(ConfigsEqual(config, reloaded));
+		const std::string json = UnitConfigToJson(config);
+		UnitConfig reloaded;
+		CC_CHECK(ParseUnitConfigJson(json, "heavy_tank", reloaded));
+		CC_CHECK(ConfigsEqual(config, reloaded));
 
-        // Missing abilities block -> defaults (old files keep working).
-        CC_CHECK(ParseUnitConfigJson("{\"type\":\"HeavyTank\"}", "heavy_tank", config));
-        CC_CHECK(AbilitiesEqual(config.abilities,
-                                DefaultUnitConfig(UnitType::HeavyTank).abilities));
-    }
+		// Missing abilities block -> defaults (old files keep working).
+		CC_CHECK(ParseUnitConfigJson("{\"type\":\"HeavyTank\"}", "heavy_tank", config));
+		CC_CHECK(AbilitiesEqual(config.abilities,
+								DefaultUnitConfig(UnitType::HeavyTank).abilities));
+	}
 
-    // --- M1 abilities: unknown keys reject (fail fast on typos) ---
-    {
-        UnitConfig config;
-        CC_CHECK(!ParseUnitConfigJson(
-            "{\"type\":\"HeavyTank\",\"abilities\":{\"turboTurret\":1.0}}",
-            "heavy_tank", config));
-        CC_CHECK(!ParseUnitConfigJson(
-            "{\"type\":\"IFV\",\"abilities\":{\"transport\":{\"seats\":6}}}",
-            "ifv", config));
-    }
+	// --- M1 abilities: unknown keys reject (fail fast on typos) ---
+	{
+		UnitConfig config;
+		CC_CHECK(!ParseUnitConfigJson(
+			"{\"type\":\"HeavyTank\",\"abilities\":{\"turboTurret\":1.0}}",
+			"heavy_tank", config));
+		CC_CHECK(!ParseUnitConfigJson(
+			"{\"type\":\"IFV\",\"abilities\":{\"transport\":{\"seats\":6}}}",
+			"ifv", config));
+	}
 
-    // --- M1 cost: per-field fallback, negative rejected ---
-    {
-        UnitConfig config;
-        CC_CHECK(ParseUnitConfigJson(
-            "{\"type\":\"IFV\",\"cost\":{\"iron\":90}}", "ifv", config));
-        CC_CHECK(config.costIron == 90);
-        CC_CHECK(config.costOil == DefaultUnitConfig(UnitType::IFV).costOil);
-        CC_CHECK(ParseUnitConfigJson(
-            "{\"type\":\"IFV\",\"cost\":{\"iron\":-5,\"oil\":-1}}", "ifv", config));
-        CC_CHECK(config.costIron == DefaultUnitConfig(UnitType::IFV).costIron);
-        CC_CHECK(config.costOil == DefaultUnitConfig(UnitType::IFV).costOil);
-    }
+	// --- M1 cost: per-field fallback, negative rejected ---
+	{
+		UnitConfig config;
+		CC_CHECK(ParseUnitConfigJson(
+			"{\"type\":\"IFV\",\"cost\":{\"iron\":90}}", "ifv", config));
+		CC_CHECK(config.costIron == 90);
+		CC_CHECK(config.costOil == DefaultUnitConfig(UnitType::IFV).costOil);
+		CC_CHECK(ParseUnitConfigJson(
+			"{\"type\":\"IFV\",\"cost\":{\"iron\":-5,\"oil\":-1}}", "ifv", config));
+		CC_CHECK(config.costIron == DefaultUnitConfig(UnitType::IFV).costIron);
+		CC_CHECK(config.costOil == DefaultUnitConfig(UnitType::IFV).costOil);
+	}
 
-    // --- M1 catalog: CostOf reads active configs, reset restores defaults ---
-    {
-        ResetActiveUnitConfigs();
-        const UnitCost before = CostOf(UnitType::RifleInfantry);
-        CC_CHECK(before.iron == 25 && before.oil == 0);
-        std::vector<UnitConfig> override;
-        UnitConfig rifle = DefaultUnitConfig(UnitType::RifleInfantry);
-        rifle.costIron = 77;
-        rifle.costOil = 11;
-        override.push_back(rifle);
-        SetActiveUnitConfigs(override);
-        const UnitCost after = CostOf(UnitType::RifleInfantry);
-        CC_CHECK(after.iron == 77 && after.oil == 11);
-        // Types missing from the override fall back per-type.
-        CC_CHECK(ActiveUnitConfig(UnitType::HeavyTank).costIron == 250);
-        ResetActiveUnitConfigs();
-        CC_CHECK(CostOf(UnitType::RifleInfantry).iron == 25);
-    }
+	// --- M1 catalog: CostOf reads active configs, reset restores defaults ---
+	{
+		ResetActiveUnitConfigs();
+		const UnitCost before = CostOf(UnitType::RifleInfantry);
+		CC_CHECK(before.iron == 25 && before.oil == 0);
+		std::vector<UnitConfig> override;
+		UnitConfig rifle = DefaultUnitConfig(UnitType::RifleInfantry);
+		rifle.costIron = 77;
+		rifle.costOil = 11;
+		override.push_back(rifle);
+		SetActiveUnitConfigs(override);
+		const UnitCost after = CostOf(UnitType::RifleInfantry);
+		CC_CHECK(after.iron == 77 && after.oil == 11);
+		// Types missing from the override fall back per-type.
+		CC_CHECK(ActiveUnitConfig(UnitType::HeavyTank).costIron == 250);
+		ResetActiveUnitConfigs();
+		CC_CHECK(CostOf(UnitType::RifleInfantry).iron == 25);
+	}
 }

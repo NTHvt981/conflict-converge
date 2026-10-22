@@ -139,17 +139,74 @@
 
 .prod-btn {
 	display: inline-block;
-	width: 68%;
+	width: 76%;
 	height: 22dp;
 	padding: 0;
 }
 
 .prod-rep {
 	display: inline-block;
-	width: 20%;
+	width: 12%;
 	height: 22dp;
 	margin-left: 6dp;
 	padding: 0;
+}
+
+/* Production icons (24px). Decorator survives the RefreshProduction text
+   refresh; paths resolve relative to this file. */
+#prod-i-0, #prod-i-1, #prod-i-2, #prod-i-3, #prod-v-0, #prod-v-1, #prod-v-2,
+#prod-v-3, #place-0, #place-1, #place-2, #place-3 {
+	padding-left: 28dp;
+	text-align: left;
+	white-space: nowrap;
+}
+
+#prod-i-0 {
+	decorator: image("../sprites/icons/rifle_infantry.png" scale-down left center);
+}
+
+#prod-i-1 {
+	decorator: image("../sprites/icons/antiarmor.png" scale-down left center);
+}
+
+#prod-i-2 {
+	decorator: image("../sprites/icons/engineer.png" scale-down left center);
+}
+
+#prod-i-3 {
+	decorator: image("../sprites/icons/medic.png" scale-down left center);
+}
+
+#prod-v-0 {
+	decorator: image("../sprites/icons/ifv.png" scale-down left center);
+}
+
+#prod-v-1 {
+	decorator: image("../sprites/icons/artillery.png" scale-down left center);
+}
+
+#prod-v-2 {
+	decorator: image("../sprites/icons/lighttank.png" scale-down left center);
+}
+
+#prod-v-3 {
+	decorator: image("../sprites/icons/heavytank.png" scale-down left center);
+}
+
+#place-0 {
+	decorator: image("../sprites/icons/building_base.png" scale-down left center);
+}
+
+#place-1 {
+	decorator: image("../sprites/icons/building_depot.png" scale-down left center);
+}
+
+#place-2 {
+	decorator: image("../sprites/icons/building_bootcamp.png" scale-down left center);
+}
+
+#place-3 {
+	decorator: image("../sprites/icons/building_workshop.png" scale-down left center);
 }
 
 #need-production {

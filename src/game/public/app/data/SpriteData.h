@@ -8,57 +8,57 @@
 
 struct SpriteRect
 {
-    int left = 0;
-    int top = 0;
-    int right = 0;
-    int bottom = 0;
+	int left = 0;
+	int top = 0;
+	int right = 0;
+	int bottom = 0;
 };
 
 struct SpriteOriginPx
 {
-    int x = 0;
-    int y = 0;
+	int x = 0;
+	int y = 0;
 };
 
 struct SpriteTextureInfo
 {
-    std::string id;   // human-readable key, e.g. "infantry_idle_base"
-    std::string file; // relative to data/sprites/
-    int width = 0;
-    int height = 0;
+	std::string id;   // human-readable key, e.g. "infantry_idle_base"
+	std::string file; // relative to data/sprites/
+	int width = 0;
+	int height = 0;
 };
 
 struct SpriteDefInfo
 {
-    std::string name;
-    int id = 0;
-    std::string texture; // SpriteTextureInfo.id
-    SpriteRect bounds;
-    SpriteOriginPx origin;
-    // Team-color mask: SpriteDefInfo.id of the paired mask sprite; 0 = no
-    // mask (whole sprite tinted).
-    int maskSprite = 0;
+	std::string name;
+	int id = 0;
+	std::string texture; // SpriteTextureInfo.id
+	SpriteRect bounds;
+	SpriteOriginPx origin;
+	// Team-color mask: SpriteDefInfo.id of the paired mask sprite; 0 = no
+	// mask (whole sprite tinted).
+	int maskSprite = 0;
 };
 
 struct SpriteAnimFrame
 {
-    int sprite = 0; // SpriteDefInfo.id
-    int durationMs = 0;
+	int sprite = 0; // SpriteDefInfo.id
+	int durationMs = 0;
 };
 
 struct SpriteAnimInfo
 {
-    std::string name;
-    int id = 0;
-    bool loop = false;
-    std::vector<SpriteAnimFrame> frames;
+	std::string name;
+	int id = 0;
+	bool loop = false;
+	std::vector<SpriteAnimFrame> frames;
 };
 
 struct SpriteSheetData
 {
-    std::vector<SpriteTextureInfo> textures;
-    std::vector<SpriteDefInfo> sprites; // explicit + grid-expanded, load order
-    std::vector<SpriteAnimInfo> animations;
+	std::vector<SpriteTextureInfo> textures;
+	std::vector<SpriteDefInfo> sprites; // explicit + grid-expanded, load order
+	std::vector<SpriteAnimInfo> animations;
 };
 
 // Load the three atlas files merged as one sheet. False when any file is

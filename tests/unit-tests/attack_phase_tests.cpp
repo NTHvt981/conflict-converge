@@ -16,136 +16,136 @@ namespace
 
 Entity AddPhaser(Registry &registry, UnitType type, int team, float x, float y)
 {
-    Unit unit;
-    unit.type = type;
-    ApplyBaseStats(unit);
-    unit.teamID = team;
-    unit.position = { x, y };
-    const Entity id = registry.Create();
-    registry.Add(id, unit);
-    registry.Add(id, Orders{});
-    registry.Add(id, Mover{});
-    registry.Add(id, CombatState{});
-    return id;
+	Unit unit;
+	unit.type = type;
+	ApplyBaseStats(unit);
+	unit.teamID = team;
+	unit.position = { x, y };
+	const Entity id = registry.Create();
+	registry.Add(id, unit);
+	registry.Add(id, Orders{});
+	registry.Add(id, Mover{});
+	registry.Add(id, CombatState{});
+	return id;
 }
 
 void StepPhasers(Registry &registry, TileMap &map, float dt, int frames)
 {
-    for (int i = 0; i < frames; ++i)
-    {
-        registry.Each<Unit>([&](Entity id, Unit &) { UpdateUnit(id, registry, map, dt); });
-    }
+	for (int i = 0; i < frames; ++i)
+	{
+		registry.Each<Unit>([&](Entity id, Unit &) { UpdateUnit(id, registry, map, dt); });
+	}
 }
 
 } // namespace
 
 void RunAttackPhaseTests()
 {
-    constexpr float kDt = 1.0f / 60.0f;
+	constexpr float kDt = 1.0f / 60.0f;
 
-    // --- full strike cycle: telegraph, single hit, recover, re-fire ---
-    {
-        Registry registry;
-        TileMap map(10, 10);
-        const Entity attacker = AddPhaser(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
-        const Entity victim = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
+	// --- full strike cycle: telegraph, single hit, recover, re-fire ---
+	{
+		Registry registry;
+		TileMap map(10, 10);
+		const Entity attacker = AddPhaser(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
+		const Entity victim = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
 
-        UpdateUnit(attacker, registry, map, kDt);
-        CC_CHECK(FindCombatState(registry, attacker)->phase == AttackPhase::WindUp);
-        CC_CHECK(registry.Get<Unit>(victim)->health == 100.0f); // telegraphed, not landed
+		UpdateUnit(attacker, registry, map, kDt);
+		CC_CHECK(FindCombatState(registry, attacker)->phase == AttackPhase::WindUp);
+		CC_CHECK(registry.Get<Unit>(victim)->health == 100.0f); // telegraphed, not landed
 
-        StepPhasers(registry, map, kDt, 4); // mid-windup: still nothing
-        CC_CHECK(registry.Get<Unit>(victim)->health == 100.0f);
+		StepPhasers(registry, map, kDt, 4); // mid-windup: still nothing
+		CC_CHECK(registry.Get<Unit>(victim)->health == 100.0f);
 
-        StepPhasers(registry, map, kDt, 6); // 0.15s windup expires: hit lands once
-        const float expected = 100.0f - 10.0f * Effectiveness(DamageType::KINETIC,
-                                                             registry.Get<Unit>(victim)->armorType);
-        CC_CHECK(registry.Get<Unit>(victim)->health == expected);
-        CC_CHECK(FindCombatState(registry, attacker)->phase == AttackPhase::Recover);
-        CC_CHECK(FindCombatState(registry, attacker)->cooldown > 0.0f);
+		StepPhasers(registry, map, kDt, 6); // 0.15s windup expires: hit lands once
+		const float expected = 100.0f - 10.0f * Effectiveness(DamageType::KINETIC,
+															 registry.Get<Unit>(victim)->armorType);
+		CC_CHECK(registry.Get<Unit>(victim)->health == expected);
+		CC_CHECK(FindCombatState(registry, attacker)->phase == AttackPhase::Recover);
+		CC_CHECK(FindCombatState(registry, attacker)->cooldown > 0.0f);
 
-        const float hpAfterFirst = registry.Get<Unit>(victim)->health;
-        StepPhasers(registry, map, kDt, 30); // recovering: no second hit
-        CC_CHECK(registry.Get<Unit>(victim)->health == hpAfterFirst);
+		const float hpAfterFirst = registry.Get<Unit>(victim)->health;
+		StepPhasers(registry, map, kDt, 30); // recovering: no second hit
+		CC_CHECK(registry.Get<Unit>(victim)->health == hpAfterFirst);
 
-        StepPhasers(registry, map, kDt, 61); // cooled: Ready -> WindUp -> second hit
-        CC_CHECK(registry.Get<Unit>(victim)->health < hpAfterFirst);
-    }
+		StepPhasers(registry, map, kDt, 61); // cooled: Ready -> WindUp -> second hit
+		CC_CHECK(registry.Get<Unit>(victim)->health < hpAfterFirst);
+	}
 
-    // --- unarmed units never leave Ready ---
-    // Acquisition refuses power-0 seekers, so the target is assigned
-    // directly to isolate the fire gate below.
-    {
-        Registry registry;
-        TileMap map(10, 10);
-        Unit unarmed;
-        unarmed.attackPower = 0;
-        unarmed.attackRange = 256;
-        unarmed.sightRange = 320.0f;
-        unarmed.teamID = 0;
-        unarmed.position = { 0.0f, 0.0f };
-        const Entity pacifist = registry.Create();
-        registry.Add(pacifist, unarmed);
-        const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
-        GetCombatState(registry, pacifist).target = foe; // bypass acquisition
-        StepPhasers(registry, map, kDt, 30);
-        const Unit *unit = registry.Get<Unit>(pacifist);
-        CC_CHECK(FindCombatState(registry, pacifist)->phase == AttackPhase::Ready);
-        CC_CHECK(unit->state == UnitState::Attacking); // engaged, but holds fire
-    }
+	// --- unarmed units never leave Ready ---
+	// Acquisition refuses power-0 seekers, so the target is assigned
+	// directly to isolate the fire gate below.
+	{
+		Registry registry;
+		TileMap map(10, 10);
+		Unit unarmed;
+		unarmed.attackPower = 0;
+		unarmed.attackRange = 256;
+		unarmed.sightRange = 320.0f;
+		unarmed.teamID = 0;
+		unarmed.position = { 0.0f, 0.0f };
+		const Entity pacifist = registry.Create();
+		registry.Add(pacifist, unarmed);
+		const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
+		GetCombatState(registry, pacifist).target = foe; // bypass acquisition
+		StepPhasers(registry, map, kDt, 30);
+		const Unit *unit = registry.Get<Unit>(pacifist);
+		CC_CHECK(FindCombatState(registry, pacifist)->phase == AttackPhase::Ready);
+		CC_CHECK(unit->state == UnitState::Attacking); // engaged, but holds fire
+	}
 
-    // --- moving cancels the telegraph ---
-    {
-        Registry registry;
-        TileMap map(10, 10);
-        const Entity walker = AddPhaser(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
-        const Entity gone = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
-        UpdateUnit(walker, registry, map, kDt); // acquires, starts WindUp
-        CC_CHECK(FindCombatState(registry, walker)->phase == AttackPhase::WindUp);
-        registry.Destroy(gone); // target lost...
-        IssueMoveOrder(*registry.Get<Unit>(walker), GetOrders(registry, walker),
-                       GetMover(registry, walker), { 5 * 64.0f, 0.0f }); // ...walk instead
-        StepPhasers(registry, map, kDt, 3);
-        const Unit *unit = registry.Get<Unit>(walker);
-        CC_CHECK(FindCombatState(registry, walker)->phase == AttackPhase::Ready);
-        CC_CHECK(unit->state == UnitState::Moving);
-        CC_CHECK(unit->position.x > 0.0f);
-    }
+	// --- moving cancels the telegraph ---
+	{
+		Registry registry;
+		TileMap map(10, 10);
+		const Entity walker = AddPhaser(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
+		const Entity gone = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
+		UpdateUnit(walker, registry, map, kDt); // acquires, starts WindUp
+		CC_CHECK(FindCombatState(registry, walker)->phase == AttackPhase::WindUp);
+		registry.Destroy(gone); // target lost...
+		IssueMoveOrder(*registry.Get<Unit>(walker), GetOrders(registry, walker),
+					   GetMover(registry, walker), { 5 * 64.0f, 0.0f }); // ...walk instead
+		StepPhasers(registry, map, kDt, 3);
+		const Unit *unit = registry.Get<Unit>(walker);
+		CC_CHECK(FindCombatState(registry, walker)->phase == AttackPhase::Ready);
+		CC_CHECK(unit->state == UnitState::Moving);
+		CC_CHECK(unit->position.x > 0.0f);
+	}
 
-    // --- G1 traverse: head turns at turnRate, body facing untouched ---
-    {
-        Registry registry;
-        TileMap map(10, 10);
-        const Entity tank = AddPhaser(registry, UnitType::LightTank, 0, 0.0f, 0.0f);
-        const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 192.0f, 0.0f);
-        Turret turret;
-        turret.facing = 3.141592653589793f; // aimed away (desired = 0)
-        turret.turnRate = 3.0f;
-        registry.Add(tank, turret);
-        const Facing bodyBefore = registry.Get<Unit>(tank)->facing;
-        UpdateUnit(tank, registry, map, kDt);
-        const Turret *moved = registry.Get<Turret>(tank);
-        CC_CHECK(CcNear(std::fabs(moved->facing - 3.141592653589793f), 3.0f * kDt));
-        CC_CHECK(registry.Get<Unit>(tank)->facing == bodyBefore);
-    }
+	// --- G1 traverse: head turns at turnRate, body facing untouched ---
+	{
+		Registry registry;
+		TileMap map(10, 10);
+		const Entity tank = AddPhaser(registry, UnitType::LightTank, 0, 0.0f, 0.0f);
+		const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 192.0f, 0.0f);
+		Turret turret;
+		turret.facing = 3.141592653589793f; // aimed away (desired = 0)
+		turret.turnRate = 3.0f;
+		registry.Add(tank, turret);
+		const Facing bodyBefore = registry.Get<Unit>(tank)->facing;
+		UpdateUnit(tank, registry, map, kDt);
+		const Turret *moved = registry.Get<Turret>(tank);
+		CC_CHECK(CcNear(std::fabs(moved->facing - 3.141592653589793f), 3.0f * kDt));
+		CC_CHECK(registry.Get<Unit>(tank)->facing == bodyBefore);
+	}
 
-    // --- G1 fire-only-when-aimed: traversing holds WindUp, aligned fires ---
-    {
-        Registry registry;
-        TileMap map(10, 10);
-        const Entity tank = AddPhaser(registry, UnitType::LightTank, 0, 0.0f, 0.0f);
-        const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 192.0f, 0.0f);
-        Turret turret;
-        turret.facing = 3.141592653589793f;
-        turret.turnRate = 3.0f;
-        registry.Add(tank, turret);
-        StepPhasers(registry, map, kDt, 5); // 0.25 rad traversed: still off-aim
-        CC_CHECK(FindCombatState(registry, tank)->phase == AttackPhase::Ready);
-        CC_CHECK(registry.Get<Unit>(tank)->state == UnitState::Attacking);
-        CC_CHECK(registry.Get<Unit>(foe)->health == 100.0f); // no free hits
+	// --- G1 fire-only-when-aimed: traversing holds WindUp, aligned fires ---
+	{
+		Registry registry;
+		TileMap map(10, 10);
+		const Entity tank = AddPhaser(registry, UnitType::LightTank, 0, 0.0f, 0.0f);
+		const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 192.0f, 0.0f);
+		Turret turret;
+		turret.facing = 3.141592653589793f;
+		turret.turnRate = 3.0f;
+		registry.Add(tank, turret);
+		StepPhasers(registry, map, kDt, 5); // 0.25 rad traversed: still off-aim
+		CC_CHECK(FindCombatState(registry, tank)->phase == AttackPhase::Ready);
+		CC_CHECK(registry.Get<Unit>(tank)->state == UnitState::Attacking);
+		CC_CHECK(registry.Get<Unit>(foe)->health == 100.0f); // no free hits
 
-        registry.Get<Turret>(tank)->facing = 0.0f; // pre-aimed
-        UpdateUnit(tank, registry, map, kDt);
-        CC_CHECK(FindCombatState(registry, tank)->phase == AttackPhase::WindUp);
-    }
+		registry.Get<Turret>(tank)->facing = 0.0f; // pre-aimed
+		UpdateUnit(tank, registry, map, kDt);
+		CC_CHECK(FindCombatState(registry, tank)->phase == AttackPhase::WindUp);
+	}
 }

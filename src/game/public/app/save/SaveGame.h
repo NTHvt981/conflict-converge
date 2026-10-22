@@ -21,15 +21,15 @@ inline constexpr char kMagic[4] = { 'C', 'C', 'J', '3' };
 
 struct WorldState
 {
-    Registry *registry = nullptr;
-    ResourceSystem *resources = nullptr;
-    TileMap *map = nullptr;
-    GameCamera *camera = nullptr;
-    ResourceNodes *nodes = nullptr;
-    FogOfWar *fog = nullptr; // per-team explored memory (saved via team_fog)
-    // Tile occupancy; optional (null for bare tests). LoadWorld resyncs it to
-    // the save's dims when present.
-    OccupancyGrid *occ = nullptr;
+	Registry *registry = nullptr;
+	ResourceSystem *resources = nullptr;
+	TileMap *map = nullptr;
+	GameCamera *camera = nullptr;
+	ResourceNodes *nodes = nullptr;
+	FogOfWar *fog = nullptr; // per-team explored memory (saved via team_fog)
+	// Tile occupancy; optional (null for bare tests). LoadWorld resyncs it to
+	// the save's dims when present.
+	OccupancyGrid *occ = nullptr;
 };
 
 // Every WorldState pointer must be non-null. Save returns false on I/O

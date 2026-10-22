@@ -30,296 +30,296 @@ const char *kValid = R"({
 
 bool Parses(const char *json, SpriteSheetData &out)
 {
-    return ParseSpriteSheetJson(json, out);
+	return ParseSpriteSheetJson(json, out);
 }
 
 bool Rejects(const char *json)
 {
-    SpriteSheetData out;
-    return !ParseSpriteSheetJson(json, out);
+	SpriteSheetData out;
+	return !ParseSpriteSheetJson(json, out);
 }
 
 } // namespace
 
 void RunSpriteDataTests()
 {
-    // --- valid doc: explicit sprite + 2x2 grid + animation ---
-    {
-        SpriteSheetData sheet;
-        CC_CHECK(Parses(kValid, sheet));
-        CC_CHECK(sheet.textures.size() == 1);
-        CC_CHECK(sheet.textures[0].file == "units/x.png");
-        CC_CHECK(sheet.sprites.size() == 5); // 1 explicit + 4 grid
-        const SpriteDefInfo *hero = FindSpriteByName(sheet, "hero");
-        CC_CHECK(hero != nullptr && hero->id == 0);
-        CC_CHECK(hero->bounds.right == 32 && hero->bounds.bottom == 32);
-        CC_CHECK(hero->origin.x == 16 && hero->origin.y == 16);
-        const SpriteDefInfo *cell = FindSpriteByName(sheet, "move_1_1");
-        CC_CHECK(cell != nullptr && cell->id == 13);
-        CC_CHECK(cell->bounds.left == 32 && cell->bounds.top == 32);
-        CC_CHECK(cell->bounds.right == 64 && cell->bounds.bottom == 64);
-        CC_CHECK(FindSpriteById(sheet, 10) != nullptr);
-        CC_CHECK(FindSpriteById(sheet, 11) != nullptr);
-        CC_CHECK(FindSpriteById(sheet, 12) != nullptr);
-        const SpriteAnimInfo *move = FindAnimByName(sheet, "move");
-        CC_CHECK(move != nullptr && move->loop && move->frames.size() == 2);
-        CC_CHECK(move->frames[0].sprite == 10 && move->frames[0].durationMs == 100);
-        CC_CHECK(FindAnimById(sheet, 0) == move);
-        CC_CHECK(FindSpriteByName(sheet, "missing") == nullptr);
-        CC_CHECK(FindSpriteById(sheet, 999) == nullptr);
-        CC_CHECK(FindAnimByName(sheet, "missing") == nullptr);
-        CC_CHECK(FindAnimById(sheet, 999) == nullptr);
-    }
+	// --- valid doc: explicit sprite + 2x2 grid + animation ---
+	{
+		SpriteSheetData sheet;
+		CC_CHECK(Parses(kValid, sheet));
+		CC_CHECK(sheet.textures.size() == 1);
+		CC_CHECK(sheet.textures[0].file == "units/x.png");
+		CC_CHECK(sheet.sprites.size() == 5); // 1 explicit + 4 grid
+		const SpriteDefInfo *hero = FindSpriteByName(sheet, "hero");
+		CC_CHECK(hero != nullptr && hero->id == 0);
+		CC_CHECK(hero->bounds.right == 32 && hero->bounds.bottom == 32);
+		CC_CHECK(hero->origin.x == 16 && hero->origin.y == 16);
+		const SpriteDefInfo *cell = FindSpriteByName(sheet, "move_1_1");
+		CC_CHECK(cell != nullptr && cell->id == 13);
+		CC_CHECK(cell->bounds.left == 32 && cell->bounds.top == 32);
+		CC_CHECK(cell->bounds.right == 64 && cell->bounds.bottom == 64);
+		CC_CHECK(FindSpriteById(sheet, 10) != nullptr);
+		CC_CHECK(FindSpriteById(sheet, 11) != nullptr);
+		CC_CHECK(FindSpriteById(sheet, 12) != nullptr);
+		const SpriteAnimInfo *move = FindAnimByName(sheet, "move");
+		CC_CHECK(move != nullptr && move->loop && move->frames.size() == 2);
+		CC_CHECK(move->frames[0].sprite == 10 && move->frames[0].durationMs == 100);
+		CC_CHECK(FindAnimById(sheet, 0) == move);
+		CC_CHECK(FindSpriteByName(sheet, "missing") == nullptr);
+		CC_CHECK(FindSpriteById(sheet, 999) == nullptr);
+		CC_CHECK(FindAnimByName(sheet, "missing") == nullptr);
+		CC_CHECK(FindAnimById(sheet, 999) == nullptr);
+	}
 
-    // --- malformed JSON fails cleanly (missing atlas files fail the
-    // same way: LoadSpriteSheet is all-or-nothing over data/configs) ---
-    {
-        SpriteSheetData untouched;
-        untouched.textures.push_back({ "sentinel", "sentinel.png", 1, 1 });
-        SpriteSheetData out = untouched;
-        CC_CHECK(!ParseSpriteSheetJson("{ not json", out));
-        CC_CHECK(out.textures.size() == 1 && out.textures[0].id == "sentinel"); // untouched
-    }
+	// --- malformed JSON fails cleanly (missing atlas files fail the
+	// same way: LoadSpriteSheet is all-or-nothing over data/configs) ---
+	{
+		SpriteSheetData untouched;
+		untouched.textures.push_back({ "sentinel", "sentinel.png", 1, 1 });
+		SpriteSheetData out = untouched;
+		CC_CHECK(!ParseSpriteSheetJson("{ not json", out));
+		CC_CHECK(out.textures.size() == 1 && out.textures[0].id == "sentinel"); // untouched
+	}
 
-    // --- duplicate texture id (and empty ids) ---
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 },
-      { "id": "a", "file": "b.png", "width": 32, "height": 32 } ] })"));
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "", "file": "a.png", "width": 32, "height": 32 } ] })"));
+	// --- duplicate texture id (and empty ids) ---
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 },
+	  { "id": "a", "file": "b.png", "width": 32, "height": 32 } ] })"));
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "", "file": "a.png", "width": 32, "height": 32 } ] })"));
 
-    // --- zero-size texture dims ---
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 0, "height": 32 } ] })"));
+	// --- zero-size texture dims ---
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 0, "height": 32 } ] })"));
 
-    // --- sprite referencing a missing texture ---
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
-      "sprites": [{ "name": "s", "id": 0, "texture": "nope",
-        "bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 } }] })"));
+	// --- sprite referencing a missing texture ---
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
+	  "sprites": [{ "name": "s", "id": 0, "texture": "nope",
+		"bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 } }] })"));
 
-    // --- out-of-bounds and degenerate rects ---
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
-      "sprites": [{ "name": "s", "id": 0, "texture": "a",
-        "bounds": { "left": 0, "top": 0, "right": 64, "bottom": 64 } }] })"));
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
-      "sprites": [{ "name": "s", "id": 0, "texture": "a",
-        "bounds": { "left": 8, "top": 8, "right": 8, "bottom": 16 } }] })"));
+	// --- out-of-bounds and degenerate rects ---
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
+	  "sprites": [{ "name": "s", "id": 0, "texture": "a",
+		"bounds": { "left": 0, "top": 0, "right": 64, "bottom": 64 } }] })"));
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
+	  "sprites": [{ "name": "s", "id": 0, "texture": "a",
+		"bounds": { "left": 8, "top": 8, "right": 8, "bottom": 16 } }] })"));
 
-    // --- duplicate sprite ids and names ---
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
-      "sprites": [
-        { "name": "a", "id": 0, "texture": "a",
-          "bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 } },
-        { "name": "b", "id": 0, "texture": "a",
-          "bounds": { "left": 8, "top": 0, "right": 16, "bottom": 8 } } ] })"));
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
-      "sprites": [
-        { "name": "same", "id": 0, "texture": "a",
-          "bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 } },
-        { "name": "same", "id": 1, "texture": "a",
-          "bounds": { "left": 8, "top": 0, "right": 16, "bottom": 8 } } ] })"));
+	// --- duplicate sprite ids and names ---
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
+	  "sprites": [
+		{ "name": "a", "id": 0, "texture": "a",
+		  "bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 } },
+		{ "name": "b", "id": 0, "texture": "a",
+		  "bounds": { "left": 8, "top": 0, "right": 16, "bottom": 8 } } ] })"));
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
+	  "sprites": [
+		{ "name": "same", "id": 0, "texture": "a",
+		  "bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 } },
+		{ "name": "same", "id": 1, "texture": "a",
+		  "bounds": { "left": 8, "top": 0, "right": 16, "bottom": 8 } } ] })"));
 
-    // --- grid overflowing its texture ---
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
-      "grids": [{ "texture": "a", "prefix": "g", "startId": 0,
-        "rows": 2, "cols": 2, "cellW": 32, "cellH": 32 }] })"));
+	// --- grid overflowing its texture ---
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
+	  "grids": [{ "texture": "a", "prefix": "g", "startId": 0,
+		"rows": 2, "cols": 2, "cellW": 32, "cellH": 32 }] })"));
 
-    // --- grid colliding with an explicit sprite id ---
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 64, "height": 64 } ],
-      "sprites": [{ "name": "s", "id": 1, "texture": "a",
-        "bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 } }],
-      "grids": [{ "texture": "a", "prefix": "g", "startId": 0,
-        "rows": 1, "cols": 2, "cellW": 32, "cellH": 32 }] })"));
+	// --- grid colliding with an explicit sprite id ---
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 64, "height": 64 } ],
+	  "sprites": [{ "name": "s", "id": 1, "texture": "a",
+		"bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 } }],
+	  "grids": [{ "texture": "a", "prefix": "g", "startId": 0,
+		"rows": 1, "cols": 2, "cellW": 32, "cellH": 32 }] })"));
 
-    // --- empty animation, bad duration, dangling sprite ref ---
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
-      "animations": [{ "name": "a", "id": 0, "loop": true, "frames": [] }] })"));
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
-      "sprites": [{ "name": "s", "id": 0, "texture": "a",
-        "bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 } }],
-      "animations": [{ "name": "a", "id": 0, "loop": true,
-        "frames": [{ "sprite": 0, "durationMs": 0 }] }] })"));
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
-      "animations": [{ "name": "a", "id": 0, "loop": true,
-        "frames": [{ "sprite": 42, "durationMs": 100 }] }] })"));
+	// --- empty animation, bad duration, dangling sprite ref ---
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
+	  "animations": [{ "name": "a", "id": 0, "loop": true, "frames": [] }] })"));
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
+	  "sprites": [{ "name": "s", "id": 0, "texture": "a",
+		"bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 } }],
+	  "animations": [{ "name": "a", "id": 0, "loop": true,
+		"frames": [{ "sprite": 0, "durationMs": 0 }] }] })"));
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
+	  "animations": [{ "name": "a", "id": 0, "loop": true,
+		"frames": [{ "sprite": 42, "durationMs": 100 }] }] })"));
 
-    // --- dangling mask ref ---
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
-      "sprites": [{ "name": "s", "id": 0, "texture": "a",
-        "bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 },
-        "maskSprite": 42 }] })"));
+	// --- dangling mask ref ---
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
+	  "sprites": [{ "name": "s", "id": 0, "texture": "a",
+		"bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 },
+		"maskSprite": 42 }] })"));
 
-    // --- mask/base size mismatch ---
-    CC_CHECK(Rejects(R"({ "textures": [
-      { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
-      "sprites": [
-        { "name": "s", "id": 0, "texture": "a",
-          "bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 },
-          "maskSprite": 1 },
-        { "name": "m", "id": 1, "texture": "a",
-          "bounds": { "left": 0, "top": 0, "right": 16, "bottom": 16 } } ] })"));
+	// --- mask/base size mismatch ---
+	CC_CHECK(Rejects(R"({ "textures": [
+	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
+	  "sprites": [
+		{ "name": "s", "id": 0, "texture": "a",
+		  "bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 },
+		  "maskSprite": 1 },
+		{ "name": "m", "id": 1, "texture": "a",
+		  "bounds": { "left": 0, "top": 0, "right": 16, "bottom": 16 } } ] })"));
 
-    // --- valid mask pair + mask grid pairing ---
-    {
-        SpriteSheetData sheet;
-        CC_CHECK(ParseSpriteSheetJson(R"({ "textures": [
-          { "id": "base", "file": "base.png", "width": 64, "height": 32 },
-          { "id": "mask", "file": "mask.png", "width": 64, "height": 32 } ],
-          "sprites": [],
-          "grids": [
-            { "texture": "base", "prefix": "u", "startId": 0,
-              "rows": 1, "cols": 2, "cellW": 32, "cellH": 32,
-              "origin": { "x": 16, "y": 16 }, "maskGridStartId": 100 },
-            { "texture": "mask", "prefix": "u_mask", "startId": 100,
-              "rows": 1, "cols": 2, "cellW": 32, "cellH": 32,
-              "origin": { "x": 16, "y": 16 } } ],
-          "animations": [] })",
-                                        sheet));
-        const SpriteDefInfo *cell = FindSpriteByName(sheet, "u_0_1");
-        CC_CHECK(cell != nullptr && cell->maskSprite == 101);
-        const SpriteDefInfo *mask = FindSpriteById(sheet, 101);
-        CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
-    }
+	// --- valid mask pair + mask grid pairing ---
+	{
+		SpriteSheetData sheet;
+		CC_CHECK(ParseSpriteSheetJson(R"({ "textures": [
+		  { "id": "base", "file": "base.png", "width": 64, "height": 32 },
+		  { "id": "mask", "file": "mask.png", "width": 64, "height": 32 } ],
+		  "sprites": [],
+		  "grids": [
+			{ "texture": "base", "prefix": "u", "startId": 0,
+			  "rows": 1, "cols": 2, "cellW": 32, "cellH": 32,
+			  "origin": { "x": 16, "y": 16 }, "maskGridStartId": 100 },
+			{ "texture": "mask", "prefix": "u_mask", "startId": 100,
+			  "rows": 1, "cols": 2, "cellW": 32, "cellH": 32,
+			  "origin": { "x": 16, "y": 16 } } ],
+		  "animations": [] })",
+										sheet));
+		const SpriteDefInfo *cell = FindSpriteByName(sheet, "u_0_1");
+		CC_CHECK(cell != nullptr && cell->maskSprite == 101);
+		const SpriteDefInfo *mask = FindSpriteById(sheet, 101);
+		CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
+	}
 
-    // --- real data/configs atlas files: 26 sheets, 504 sprites, 56 anims ---
-    // Rifle-infantry renders from base+mask team-tint sheets (8 idle +
-    // 8 dirs x 4 move frames + 8 dirs x 2 attack frames, each with a mask);
-    // antiarmor mirrors it on taller 32x48 cells (8 idle + 8 dirs x 4 move
-    // + 8 dirs x 3 attack, each with a mask); engineer adds idle plus a
-    // 4-frame move on 32x32 cells (each with a mask); medic adds the same
-    // idle + 4-frame move pair; lighttank adds body + head 8-column stacks
-    // (each with a mask); prototype keeps its untinted sheets.
-    // PrototypeInfantry resolves its own namespace, not rifle_infantry's.
-    {
-        SpriteSheetData sheet;
-        CC_CHECK(LoadSpriteSheet(sheet));
-        CC_CHECK(sheet.textures.size() == 26);
-        CC_CHECK(sheet.sprites.size() == 504);
-        CC_CHECK(sheet.animations.size() == 56);
-        const SpriteDefInfo *first = FindSpriteByName(sheet, "rifle_infantry_idle_0_0");
-        CC_CHECK(first != nullptr && first->id == 0 && first->texture == "rifle_idle_base");
-        CC_CHECK(first->bounds.left == 0 && first->bounds.top == 0);
-        CC_CHECK(first->bounds.right == 32 && first->bounds.bottom == 32);
-        CC_CHECK(first->origin.x == 16 && first->origin.y == 16);
-        CC_CHECK(first->maskSprite == 500); // team-tint mask grid
-        const SpriteDefInfo *firstMask = FindSpriteById(sheet, 500);
-        CC_CHECK(firstMask != nullptr && firstMask->name == "rifle_infantry_idle_mask_0_0" &&
-                 firstMask->texture == "rifle_idle_mask" && firstMask->maskSprite == 0);
-        // Move grid is 8 direction columns x 4 frames; the wired anim uses
-        // column 6 (right): ids 106/114/122/130.
-        const SpriteDefInfo *last = FindSpriteByName(sheet, "rifle_infantry_move_3_6");
-        CC_CHECK(last != nullptr && last->id == 130 && last->texture == "rifle_move_base");
-        CC_CHECK(last->bounds.left == 192 && last->bounds.top == 96);
-        CC_CHECK(last->bounds.right == 224 && last->bounds.bottom == 128);
-        CC_CHECK(last->maskSprite == 630);
-        const SpriteAnimInfo *move = FindAnimByName(sheet, "rifle_infantry_move_6");
-        CC_CHECK(move != nullptr && move->loop && move->frames.size() == 4);
-        CC_CHECK(move->frames[0].sprite == 106 && move->frames[3].sprite == 130);
-        const SpriteAnimInfo *moveTop = FindAnimByName(sheet, "rifle_infantry_move_0");
-        CC_CHECK(moveTop != nullptr && moveTop->frames.size() == 4);
-        CC_CHECK(moveTop->frames[0].sprite == 100 && moveTop->frames[3].sprite == 124);
-        // Attack grid is 8 direction columns x 2 frames (column 6: 406/414).
-        const SpriteDefInfo *strike = FindSpriteByName(sheet, "rifle_infantry_attack_1_6");
-        CC_CHECK(strike != nullptr && strike->id == 414 &&
-                 strike->texture == "rifle_attack_base");
-        CC_CHECK(strike->bounds.left == 192 && strike->bounds.top == 32);
-        CC_CHECK(strike->bounds.right == 224 && strike->bounds.bottom == 64);
-        CC_CHECK(strike->maskSprite == 714);
-        const SpriteAnimInfo *attack = FindAnimByName(sheet, "rifle_infantry_attack_6");
-        CC_CHECK(attack != nullptr && attack->loop && attack->frames.size() == 2);
-        CC_CHECK(attack->frames[0].sprite == 406 && attack->frames[1].sprite == 414);
-        CC_CHECK(FindAnimByName(sheet, "rifle_infantry_move") == nullptr); // split by direction
-        CC_CHECK(FindAnimByName(sheet, "rifle_infantry_idle") == nullptr); // idle is sprite-direct
-        CC_CHECK(FindAnimByName(sheet, "rifle_infantry_attack") == nullptr); // split by direction
-        // Antiarmor namespace on 32x48 cells (ids 800+/900+/1000+, masks
-        // 850+/950+/1050+; move column 6: 906/914/922/930).
-        const SpriteDefInfo *aaIdle = FindSpriteByName(sheet, "antiarmor_idle_0_0");
-        CC_CHECK(aaIdle != nullptr && aaIdle->id == 800 &&
-                 aaIdle->texture == "antiarmor_idle_base");
-        CC_CHECK(aaIdle->bounds.left == 0 && aaIdle->bounds.top == 0);
-        CC_CHECK(aaIdle->bounds.right == 32 && aaIdle->bounds.bottom == 48);
-        CC_CHECK(aaIdle->origin.x == 16 && aaIdle->origin.y == 24);
-        CC_CHECK(aaIdle->maskSprite == 850);
-        const SpriteDefInfo *aaMove = FindSpriteByName(sheet, "antiarmor_move_3_6");
-        CC_CHECK(aaMove != nullptr && aaMove->id == 930 &&
-                 aaMove->texture == "antiarmor_move_base");
-        CC_CHECK(aaMove->bounds.left == 192 && aaMove->bounds.top == 144);
-        CC_CHECK(aaMove->bounds.right == 224 && aaMove->bounds.bottom == 192);
-        CC_CHECK(aaMove->maskSprite == 980);
-        const SpriteAnimInfo *aaMoveAnim = FindAnimByName(sheet, "antiarmor_move_6");
-        CC_CHECK(aaMoveAnim != nullptr && aaMoveAnim->loop && aaMoveAnim->frames.size() == 4);
-        CC_CHECK(aaMoveAnim->frames[0].sprite == 906 && aaMoveAnim->frames[3].sprite == 930);
-        // Attack grid is 8 direction columns x 3 frames (column 6:
-        // 1006/1014/1022).
-        const SpriteDefInfo *aaStrike = FindSpriteByName(sheet, "antiarmor_attack_2_6");
-        CC_CHECK(aaStrike != nullptr && aaStrike->id == 1022 &&
-                 aaStrike->texture == "antiarmor_attack_base");
-        CC_CHECK(aaStrike->bounds.left == 192 && aaStrike->bounds.top == 96);
-        CC_CHECK(aaStrike->bounds.right == 224 && aaStrike->bounds.bottom == 144);
-        CC_CHECK(aaStrike->maskSprite == 1072);
-        const SpriteAnimInfo *aaAttack = FindAnimByName(sheet, "antiarmor_attack_6");
-        CC_CHECK(aaAttack != nullptr && aaAttack->loop && aaAttack->frames.size() == 3);
-        CC_CHECK(aaAttack->frames[0].sprite == 1006 && aaAttack->frames[2].sprite == 1022);
-        // Engineer namespace on 32x32 cells (ids 1100+/1200+, masks
-        // 1150+/1250+; move column 6 across 6 frames: 1206..1246).
-        const SpriteDefInfo *engIdle = FindSpriteByName(sheet, "engineer_idle_0_0");
-        CC_CHECK(engIdle != nullptr && engIdle->id == 1100 &&
-                 engIdle->texture == "engineer_idle_base");
-        CC_CHECK(engIdle->bounds.left == 0 && engIdle->bounds.top == 0);
-        CC_CHECK(engIdle->bounds.right == 32 && engIdle->bounds.bottom == 32);
-        CC_CHECK(engIdle->origin.x == 16 && engIdle->origin.y == 16);
-        CC_CHECK(engIdle->maskSprite == 1150);
-        const SpriteDefInfo *engMove = FindSpriteByName(sheet, "engineer_move_5_6");
-        CC_CHECK(engMove != nullptr && engMove->id == 1246 &&
-                 engMove->texture == "engineer_move_base");
-        CC_CHECK(engMove->bounds.left == 192 && engMove->bounds.top == 160);
-        CC_CHECK(engMove->bounds.right == 224 && engMove->bounds.bottom == 192);
-        CC_CHECK(engMove->maskSprite == 1296);
-        const SpriteAnimInfo *engMoveAnim = FindAnimByName(sheet, "engineer_move_6");
-        CC_CHECK(engMoveAnim != nullptr && engMoveAnim->loop &&
-                 engMoveAnim->frames.size() == 4);
-        CC_CHECK(engMoveAnim->frames[0].sprite == 1206 &&
-                 engMoveAnim->frames[3].sprite == 1230);
-        // Medic namespace on 32x32 cells (ids 1300+/1400+, masks
-        // 1350+/1450+; move column 6 across 4 frames: 1406..1430).
-        const SpriteDefInfo *medIdle = FindSpriteByName(sheet, "medic_idle_0_0");
-        CC_CHECK(medIdle != nullptr && medIdle->id == 1300 &&
-                 medIdle->texture == "medic_idle_base");
-        CC_CHECK(medIdle->bounds.left == 0 && medIdle->bounds.top == 0);
-        CC_CHECK(medIdle->bounds.right == 32 && medIdle->bounds.bottom == 32);
-        CC_CHECK(medIdle->origin.x == 16 && medIdle->origin.y == 16);
-        CC_CHECK(medIdle->maskSprite == 1350);
-        const SpriteDefInfo *medMove = FindSpriteByName(sheet, "medic_move_3_6");
-        CC_CHECK(medMove != nullptr && medMove->id == 1430 &&
-                 medMove->texture == "medic_move_base");
-        CC_CHECK(medMove->bounds.left == 192 && medMove->bounds.top == 96);
-        CC_CHECK(medMove->bounds.right == 224 && medMove->bounds.bottom == 128);
-        CC_CHECK(medMove->maskSprite == 1480);
-        const SpriteAnimInfo *medMoveAnim = FindAnimByName(sheet, "medic_move_6");
-        CC_CHECK(medMoveAnim != nullptr && medMoveAnim->loop &&
-                 medMoveAnim->frames.size() == 4);
-        CC_CHECK(medMoveAnim->frames[0].sprite == 1406 &&
-                 medMoveAnim->frames[3].sprite == 1430);
-        // Prototype namespace mirrors it (own textures, ids 200+/300+).
-        const SpriteDefInfo *protoIdle = FindSpriteByName(sheet, "prototypeinfantry_idle_0_0");
-        CC_CHECK(protoIdle != nullptr && protoIdle->id == 200 &&
-                 protoIdle->texture == "prototype_infantry_idle");
-        const SpriteDefInfo *protoMove = FindSpriteByName(sheet, "prototypeinfantry_move_3_6");
-        CC_CHECK(protoMove != nullptr && protoMove->id == 330 &&
-                 protoMove->texture == "prototype_infantry_move");
-        const SpriteAnimInfo *protoAnim = FindAnimByName(sheet, "prototypeinfantry_move_6");
-        CC_CHECK(protoAnim != nullptr && protoAnim->frames.size() == 4);
-        CC_CHECK(protoAnim->frames[0].sprite == 306 && protoAnim->frames[3].sprite == 330);
-    }
+	// --- real data/configs atlas files: 26 sheets, 504 sprites, 56 anims ---
+	// Rifle-infantry renders from base+mask team-tint sheets (8 idle +
+	// 8 dirs x 4 move frames + 8 dirs x 2 attack frames, each with a mask);
+	// antiarmor mirrors it on taller 32x48 cells (8 idle + 8 dirs x 4 move
+	// + 8 dirs x 3 attack, each with a mask); engineer adds idle plus a
+	// 4-frame move on 32x32 cells (each with a mask); medic adds the same
+	// idle + 4-frame move pair; lighttank adds body + head 8-column stacks
+	// (each with a mask); prototype keeps its untinted sheets.
+	// PrototypeInfantry resolves its own namespace, not rifle_infantry's.
+	{
+		SpriteSheetData sheet;
+		CC_CHECK(LoadSpriteSheet(sheet));
+		CC_CHECK(sheet.textures.size() == 26);
+		CC_CHECK(sheet.sprites.size() == 504);
+		CC_CHECK(sheet.animations.size() == 56);
+		const SpriteDefInfo *first = FindSpriteByName(sheet, "rifle_infantry_idle_0_0");
+		CC_CHECK(first != nullptr && first->id == 0 && first->texture == "rifle_idle_base");
+		CC_CHECK(first->bounds.left == 0 && first->bounds.top == 0);
+		CC_CHECK(first->bounds.right == 32 && first->bounds.bottom == 32);
+		CC_CHECK(first->origin.x == 16 && first->origin.y == 16);
+		CC_CHECK(first->maskSprite == 500); // team-tint mask grid
+		const SpriteDefInfo *firstMask = FindSpriteById(sheet, 500);
+		CC_CHECK(firstMask != nullptr && firstMask->name == "rifle_infantry_idle_mask_0_0" &&
+				 firstMask->texture == "rifle_idle_mask" && firstMask->maskSprite == 0);
+		// Move grid is 8 direction columns x 4 frames; the wired anim uses
+		// column 6 (right): ids 106/114/122/130.
+		const SpriteDefInfo *last = FindSpriteByName(sheet, "rifle_infantry_move_3_6");
+		CC_CHECK(last != nullptr && last->id == 130 && last->texture == "rifle_move_base");
+		CC_CHECK(last->bounds.left == 192 && last->bounds.top == 96);
+		CC_CHECK(last->bounds.right == 224 && last->bounds.bottom == 128);
+		CC_CHECK(last->maskSprite == 630);
+		const SpriteAnimInfo *move = FindAnimByName(sheet, "rifle_infantry_move_6");
+		CC_CHECK(move != nullptr && move->loop && move->frames.size() == 4);
+		CC_CHECK(move->frames[0].sprite == 106 && move->frames[3].sprite == 130);
+		const SpriteAnimInfo *moveTop = FindAnimByName(sheet, "rifle_infantry_move_0");
+		CC_CHECK(moveTop != nullptr && moveTop->frames.size() == 4);
+		CC_CHECK(moveTop->frames[0].sprite == 100 && moveTop->frames[3].sprite == 124);
+		// Attack grid is 8 direction columns x 2 frames (column 6: 406/414).
+		const SpriteDefInfo *strike = FindSpriteByName(sheet, "rifle_infantry_attack_1_6");
+		CC_CHECK(strike != nullptr && strike->id == 414 &&
+				 strike->texture == "rifle_attack_base");
+		CC_CHECK(strike->bounds.left == 192 && strike->bounds.top == 32);
+		CC_CHECK(strike->bounds.right == 224 && strike->bounds.bottom == 64);
+		CC_CHECK(strike->maskSprite == 714);
+		const SpriteAnimInfo *attack = FindAnimByName(sheet, "rifle_infantry_attack_6");
+		CC_CHECK(attack != nullptr && attack->loop && attack->frames.size() == 2);
+		CC_CHECK(attack->frames[0].sprite == 406 && attack->frames[1].sprite == 414);
+		CC_CHECK(FindAnimByName(sheet, "rifle_infantry_move") == nullptr); // split by direction
+		CC_CHECK(FindAnimByName(sheet, "rifle_infantry_idle") == nullptr); // idle is sprite-direct
+		CC_CHECK(FindAnimByName(sheet, "rifle_infantry_attack") == nullptr); // split by direction
+		// Antiarmor namespace on 32x48 cells (ids 800+/900+/1000+, masks
+		// 850+/950+/1050+; move column 6: 906/914/922/930).
+		const SpriteDefInfo *aaIdle = FindSpriteByName(sheet, "antiarmor_idle_0_0");
+		CC_CHECK(aaIdle != nullptr && aaIdle->id == 800 &&
+				 aaIdle->texture == "antiarmor_idle_base");
+		CC_CHECK(aaIdle->bounds.left == 0 && aaIdle->bounds.top == 0);
+		CC_CHECK(aaIdle->bounds.right == 32 && aaIdle->bounds.bottom == 48);
+		CC_CHECK(aaIdle->origin.x == 16 && aaIdle->origin.y == 24);
+		CC_CHECK(aaIdle->maskSprite == 850);
+		const SpriteDefInfo *aaMove = FindSpriteByName(sheet, "antiarmor_move_3_6");
+		CC_CHECK(aaMove != nullptr && aaMove->id == 930 &&
+				 aaMove->texture == "antiarmor_move_base");
+		CC_CHECK(aaMove->bounds.left == 192 && aaMove->bounds.top == 144);
+		CC_CHECK(aaMove->bounds.right == 224 && aaMove->bounds.bottom == 192);
+		CC_CHECK(aaMove->maskSprite == 980);
+		const SpriteAnimInfo *aaMoveAnim = FindAnimByName(sheet, "antiarmor_move_6");
+		CC_CHECK(aaMoveAnim != nullptr && aaMoveAnim->loop && aaMoveAnim->frames.size() == 4);
+		CC_CHECK(aaMoveAnim->frames[0].sprite == 906 && aaMoveAnim->frames[3].sprite == 930);
+		// Attack grid is 8 direction columns x 3 frames (column 6:
+		// 1006/1014/1022).
+		const SpriteDefInfo *aaStrike = FindSpriteByName(sheet, "antiarmor_attack_2_6");
+		CC_CHECK(aaStrike != nullptr && aaStrike->id == 1022 &&
+				 aaStrike->texture == "antiarmor_attack_base");
+		CC_CHECK(aaStrike->bounds.left == 192 && aaStrike->bounds.top == 96);
+		CC_CHECK(aaStrike->bounds.right == 224 && aaStrike->bounds.bottom == 144);
+		CC_CHECK(aaStrike->maskSprite == 1072);
+		const SpriteAnimInfo *aaAttack = FindAnimByName(sheet, "antiarmor_attack_6");
+		CC_CHECK(aaAttack != nullptr && aaAttack->loop && aaAttack->frames.size() == 3);
+		CC_CHECK(aaAttack->frames[0].sprite == 1006 && aaAttack->frames[2].sprite == 1022);
+		// Engineer namespace on 32x32 cells (ids 1100+/1200+, masks
+		// 1150+/1250+; move column 6 across 6 frames: 1206..1246).
+		const SpriteDefInfo *engIdle = FindSpriteByName(sheet, "engineer_idle_0_0");
+		CC_CHECK(engIdle != nullptr && engIdle->id == 1100 &&
+				 engIdle->texture == "engineer_idle_base");
+		CC_CHECK(engIdle->bounds.left == 0 && engIdle->bounds.top == 0);
+		CC_CHECK(engIdle->bounds.right == 32 && engIdle->bounds.bottom == 32);
+		CC_CHECK(engIdle->origin.x == 16 && engIdle->origin.y == 16);
+		CC_CHECK(engIdle->maskSprite == 1150);
+		const SpriteDefInfo *engMove = FindSpriteByName(sheet, "engineer_move_5_6");
+		CC_CHECK(engMove != nullptr && engMove->id == 1246 &&
+				 engMove->texture == "engineer_move_base");
+		CC_CHECK(engMove->bounds.left == 192 && engMove->bounds.top == 160);
+		CC_CHECK(engMove->bounds.right == 224 && engMove->bounds.bottom == 192);
+		CC_CHECK(engMove->maskSprite == 1296);
+		const SpriteAnimInfo *engMoveAnim = FindAnimByName(sheet, "engineer_move_6");
+		CC_CHECK(engMoveAnim != nullptr && engMoveAnim->loop &&
+				 engMoveAnim->frames.size() == 4);
+		CC_CHECK(engMoveAnim->frames[0].sprite == 1206 &&
+				 engMoveAnim->frames[3].sprite == 1230);
+		// Medic namespace on 32x32 cells (ids 1300+/1400+, masks
+		// 1350+/1450+; move column 6 across 4 frames: 1406..1430).
+		const SpriteDefInfo *medIdle = FindSpriteByName(sheet, "medic_idle_0_0");
+		CC_CHECK(medIdle != nullptr && medIdle->id == 1300 &&
+				 medIdle->texture == "medic_idle_base");
+		CC_CHECK(medIdle->bounds.left == 0 && medIdle->bounds.top == 0);
+		CC_CHECK(medIdle->bounds.right == 32 && medIdle->bounds.bottom == 32);
+		CC_CHECK(medIdle->origin.x == 16 && medIdle->origin.y == 16);
+		CC_CHECK(medIdle->maskSprite == 1350);
+		const SpriteDefInfo *medMove = FindSpriteByName(sheet, "medic_move_3_6");
+		CC_CHECK(medMove != nullptr && medMove->id == 1430 &&
+				 medMove->texture == "medic_move_base");
+		CC_CHECK(medMove->bounds.left == 192 && medMove->bounds.top == 96);
+		CC_CHECK(medMove->bounds.right == 224 && medMove->bounds.bottom == 128);
+		CC_CHECK(medMove->maskSprite == 1480);
+		const SpriteAnimInfo *medMoveAnim = FindAnimByName(sheet, "medic_move_6");
+		CC_CHECK(medMoveAnim != nullptr && medMoveAnim->loop &&
+				 medMoveAnim->frames.size() == 4);
+		CC_CHECK(medMoveAnim->frames[0].sprite == 1406 &&
+				 medMoveAnim->frames[3].sprite == 1430);
+		// Prototype namespace mirrors it (own textures, ids 200+/300+).
+		const SpriteDefInfo *protoIdle = FindSpriteByName(sheet, "prototypeinfantry_idle_0_0");
+		CC_CHECK(protoIdle != nullptr && protoIdle->id == 200 &&
+				 protoIdle->texture == "prototype_infantry_idle");
+		const SpriteDefInfo *protoMove = FindSpriteByName(sheet, "prototypeinfantry_move_3_6");
+		CC_CHECK(protoMove != nullptr && protoMove->id == 330 &&
+				 protoMove->texture == "prototype_infantry_move");
+		const SpriteAnimInfo *protoAnim = FindAnimByName(sheet, "prototypeinfantry_move_6");
+		CC_CHECK(protoAnim != nullptr && protoAnim->frames.size() == 4);
+		CC_CHECK(protoAnim->frames[0].sprite == 306 && protoAnim->frames[3].sprite == 330);
+	}
 }

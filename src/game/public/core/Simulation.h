@@ -22,64 +22,64 @@
 class Simulation
 {
 public:
-    Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
-               const WorldState &worldState, DamageNumbers &damageNumbers,
-               const int &autoAddGroupBit,
-                const bool &sandboxMode, const bool &worldIs2v2,
-                float &shakeTrauma, MenuState &lastOutcomeState);
-    Simulation(const Simulation &) = delete;
-    Simulation &operator=(const Simulation &) = delete;
+	Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
+			   const WorldState &worldState, DamageNumbers &damageNumbers,
+			   const int &autoAddGroupBit,
+				const bool &sandboxMode, const bool &worldIs2v2,
+				float &shakeTrauma, MenuState &lastOutcomeState);
+	Simulation(const Simulation &) = delete;
+	Simulation &operator=(const Simulation &) = delete;
 
-    void ResetForMatch();
-    void ResetEdgePolls();
-    void StopRecording();
-    void SetReplayCount(int count);
-    int ReplayCount() const;
-    // Re-runnable for the paused HUD.
-    void RefreshProducers();
-    bool HasBootcamp() const;
-    bool HasWorkshop() const;
-    // Runs only while Playing.
-    void Step(float dt);
+	void ResetForMatch();
+	void ResetEdgePolls();
+	void StopRecording();
+	void SetReplayCount(int count);
+	int ReplayCount() const;
+	// Re-runnable for the paused HUD.
+	void RefreshProducers();
+	bool HasBootcamp() const;
+	bool HasWorkshop() const;
+	// Runs only while Playing.
+	void Step(float dt);
 
 private:
-    void Announce(EventType type);
+	void Announce(EventType type);
 
-    Registry &registry_;
-    TileMap &map_;
-    OccupancyGrid &occ_;
-    FogOfWar &fog_;
-    ResourceNodes &nodes_;
-    ProductionQueue &bootcampQueue_;
-    ProductionQueue &workshopQueue_;
-    UnitFactory &factory_;
-    ResourceSystem &resources_;
-    AICommander &ai_;
-    AICommander &allyAI_;
-    AICommander &enemyAI2_;
-    Art &art_;
-    Audio &audio_;
-    Pings &pings_;
-    MenuFlow &menu_;
-    Minimap &minimap_;
-    const WorldState &worldState_;
-    DamageNumbers &damageNumbers_;
-    EventDispatcher &events_;
-    const int &autoAddGroupBit_;
-    const bool &sandboxMode_;
-    const bool &worldIs2v2_;
-    float &shakeTrauma_;
-    MenuState &lastOutcomeState_;
-    int lastBuildingCount_ = 0;
-    int lastDepletedCount_ = 0;
-    int lastQueueSize_ = 0;
-    float attackSfxTimer_ = 0.0f;
-    bool hasBootcamp_ = false;
-    bool hasWorkshop_ = false;
-    int bootcampCursor_ = 0;
-    int workshopCursor_ = 0;
-    bool replayRecording_ = false;
-    float replayTimer_ = 0.0f;
-    int replayIndex_ = 0;
-    int replayCount_ = 0;
+	Registry &registry_;
+	TileMap &map_;
+	OccupancyGrid &occ_;
+	FogOfWar &fog_;
+	ResourceNodes &nodes_;
+	ProductionQueue &bootcampQueue_;
+	ProductionQueue &workshopQueue_;
+	UnitFactory &factory_;
+	ResourceSystem &resources_;
+	AICommander &ai_;
+	AICommander &allyAI_;
+	AICommander &enemyAI2_;
+	Art &art_;
+	Audio &audio_;
+	Pings &pings_;
+	MenuFlow &menu_;
+	Minimap &minimap_;
+	const WorldState &worldState_;
+	DamageNumbers &damageNumbers_;
+	EventDispatcher &events_;
+	const int &autoAddGroupBit_;
+	const bool &sandboxMode_;
+	const bool &worldIs2v2_;
+	float &shakeTrauma_;
+	MenuState &lastOutcomeState_;
+	int lastBuildingCount_ = 0;
+	int lastDepletedCount_ = 0;
+	int lastQueueSize_ = 0;
+	float attackSfxTimer_ = 0.0f;
+	bool hasBootcamp_ = false;
+	bool hasWorkshop_ = false;
+	int bootcampCursor_ = 0;
+	int workshopCursor_ = 0;
+	bool replayRecording_ = false;
+	float replayTimer_ = 0.0f;
+	int replayIndex_ = 0;
+	int replayCount_ = 0;
 };

@@ -13,10 +13,10 @@
 // settings persistence all read this table.
 struct HotkeyDef
 {
-    const char *action; // stable id used in settings (hotkey.<action>=<key>)
-    const char *label;  // remap-screen display text
-    int defaultKey;     // raylib key code
-    bool chord;         // true = Shift+key via BindChord
+	const char *action; // stable id used in settings (hotkey.<action>=<key>)
+	const char *label;  // remap-screen display text
+	int defaultKey;     // raylib key code
+	bool chord;         // true = Shift+key via BindChord
 };
 
 extern const HotkeyDef kHotkeyDefs[];
@@ -30,14 +30,14 @@ const char *HotkeyDisplayName(int key);
 class HotkeyMap : public Subsystem
 {
 public:
-    int KeyFor(const std::string &action) const;
-    void Rebind(const std::string &action, int newKey);
-    void ClearOverrides();
-    // Reverse lookup over effective keys (table order wins).
-    std::optional<std::string> ActionForKey(int key) const;
-    // Overrides only, in table order — what settings persistence saves.
-    std::vector<std::pair<std::string, int>> Overrides() const;
+	int KeyFor(const std::string &action) const;
+	void Rebind(const std::string &action, int newKey);
+	void ClearOverrides();
+	// Reverse lookup over effective keys (table order wins).
+	std::optional<std::string> ActionForKey(int key) const;
+	// Overrides only, in table order — what settings persistence saves.
+	std::vector<std::pair<std::string, int>> Overrides() const;
 
 private:
-    std::unordered_map<std::string, int> overrides_;
+	std::unordered_map<std::string, int> overrides_;
 };

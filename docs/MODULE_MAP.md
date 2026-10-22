@@ -66,7 +66,9 @@ app/match: Menu, Skirmish
 - `TileMap.h` - Grid dims, `TerrainType` Grass/Water/Building/Forest/Rock (Forest passable,
   Rock blocks; new types append after Building so old saves still decode), `IsBlocked`
   (Water/Building/Rock + OOB = true)
-- `Pathfinder.h` - 4-dir A* (`FindPath`, float g-cost via `TerrainCost`, uniform 1.0) +
+- `Pathfinder.h` - 8-dir A* over one shared core (`FindPath` terrain-only,
+  `FindPathFootprint` occupancy-aware with corner-cut guard); locomotor table
+  (`LocomotorOf`: Grass 1.0 all, Forest 1.0 foot / 1.8 tracked / 1.6 wheeled) +
   `IssuePathOrder` (M2 straight fallback when unreachable)
 - `MapFile.h` - Text `.map` loader (`data/`): 5-line header, legend (Q79), markers,
   `ApplyMapData` (default node amounts), `NearestFreeTile` for spawns, M14 `ListMaps`
@@ -95,28 +97,37 @@ app/match: Menu, Skirmish
   `UpdateProjectiles` ballistics (dodgeable AoE, no friendly fire, never persisted)
 - `UnitFactory.h` - Cost-validated `Spawn` / prepaid `SpawnPrepaid` / `DestroyUnit`
   (`UnitSpawned`/`UnitDestroyed` events)
-- `Targeting.h` - Nearest-enemy/threat acquisition + range check (M9 fog gate, artillery
-  exempt) + M13 `AcquireBuildingTarget`/`BuildingCenter`
+- `Targeting.h` - Worth-scored acquisition + range check (M9 fog gate, artillery
+  exempt): power x armor-preference dominates, build cost (`ThreatWorth`) breaks
+  near-ties; M13 `AcquireBuildingTarget`/`BuildingCenter`; wave destination scopes
+  (`ThreatScope`: units vs production)
 - `Formation.h` - Row-major offsets + `IssueFormationMove`
-- `AICommander.h` - M8 enemy commander: own fair-rules economy, build order, threshold waves,
-  scouting, Easy/Medium/Hard; M14 `Reset` (team + difficulty + homes; re-arm for a new match
-  or bare for the load path); 2v2 overflow via `allyAI` (team 0) + `enemyAI2` (team 1),
+- `AICommander.h` - Enemy commander: fair-rules economy, Main/Harass/Guard teams with
+  mission scripts, fog-honest targeting (`SetFog`: unseen enemies fall back to
+  last-seen memory, guard posts react to sightings only), Main waves march on the
+  sighted army and raze production when the field is dark, low-strength regroup, difficulty-gated
+  behaviors, time/loss escalation; `data/configs/ai.json` catalog via `app/data/AIConfig.h`
+  (compiled `ParamsFor` fallback); M14 `Reset` (team + difficulty + homes; re-arm for a new
+  match or bare for the load path); 2v2 overflow via `allyAI` (team 0) + `enemyAI2` (team 1),
   shared-team economy credit
 
 ## economy
 
 - `Building.h` - Base/Depot/Bootcamp/Workshop footprints, tile-grid placement (marks
-  `TerrainType::Building`), demolish, base income, M13 structure HP (`BuildingMaxHealth`),
+  `TerrainType::Building`), build costs (`BuildingCost`), demolish, half-refund sell
+  (`SellBuilding`, capped), base income, M13 structure HP (`BuildingMaxHealth`),
   producer categories (`ProducerCategory`), per-building rally tiles
   (`rallyTile`, `DefaultRallyTile`, `BuildingSpawnTile`, `ProducerBuildingAt`)
 - `Production.h` - Per-category production queues (Bootcamp/Infantry,
   Workshop/Vehicle; unbound default accepts anything): upfront charge, FIFO, prepaid spawn
   at the producing building's exit tile, then a move order to that building's rally
-  (main + AI gate `Update` on a live producer, round-robin across producers)
-- `ResourceSystem.h` - Iron/oil ledger: `Add`/`TrySpend` + `TickIncome` (fractional carry,
-  no cap)
-- `Nodes.h` - Resource nodes: spawn/gather/deplete/respawn, Engineer harvesting, `Each`
-  iteration
+  (main + AI gate `Update` on a live producer; every live producer advances the head,
+  so output scales with factory count, spawns rotate exits)
+- `ResourceSystem.h` - Iron/oil ledger: `Add`/`TrySpend` + `TickIncome` (fractional carry);
+  storage cap (500 + 1000 per depot, overflow lost) via `Deposit*`/`TickIncomeCapped`
+- `Nodes.h` - Resource nodes: spawn/gather/deplete/respawn, loop harvesters
+  (`Harvester`: field load, depot dock, `UpdateHarvesters`) plus legacy stand-and-trickle
+  for engineers without the component, `Each` iteration
 
 ## app
 

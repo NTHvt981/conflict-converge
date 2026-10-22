@@ -11,424 +11,449 @@
 
 void RunBuildingTests()
 {
-    // --- footprints ---
-    CC_CHECK(Footprint(BuildingType::Base) == cc::IVec2(2, 2));
-    CC_CHECK(Footprint(BuildingType::ResourceDepot) == cc::IVec2(1, 1));
-    CC_CHECK(Footprint(BuildingType::Bootcamp) == cc::IVec2(2, 2));
-    CC_CHECK(Footprint(BuildingType::Workshop) == cc::IVec2(3, 3));
+	// --- footprints ---
+	CC_CHECK(Footprint(BuildingType::Base) == cc::IVec2(2, 2));
+	CC_CHECK(Footprint(BuildingType::ResourceDepot) == cc::IVec2(1, 1));
+	CC_CHECK(Footprint(BuildingType::Bootcamp) == cc::IVec2(2, 2));
+	CC_CHECK(Footprint(BuildingType::Workshop) == cc::IVec2(3, 3));
 
-    // --- producers bind one category each; other types bind none ---
-    CC_CHECK(ProducerCategory(BuildingType::Bootcamp) == ProductionCategory::Infantry);
-    CC_CHECK(ProducerCategory(BuildingType::Workshop) == ProductionCategory::Vehicle);
-    CC_CHECK(!ProducerCategory(BuildingType::Base).has_value());
-    CC_CHECK(!ProducerCategory(BuildingType::ResourceDepot).has_value());
+	// --- producers bind one category each; other types bind none ---
+	CC_CHECK(ProducerCategory(BuildingType::Bootcamp) == ProductionCategory::Infantry);
+	CC_CHECK(ProducerCategory(BuildingType::Workshop) == ProductionCategory::Vehicle);
+	CC_CHECK(!ProducerCategory(BuildingType::Base).has_value());
+	CC_CHECK(!ProducerCategory(BuildingType::ResourceDepot).has_value());
 
-    // --- structure health per type ---
-    CC_CHECK(BuildingMaxHealth(BuildingType::Base) == 400.0f);
-    CC_CHECK(BuildingMaxHealth(BuildingType::ResourceDepot) == 200.0f);
-    CC_CHECK(BuildingMaxHealth(BuildingType::Bootcamp) == 350.0f);
-    CC_CHECK(BuildingMaxHealth(BuildingType::Workshop) == 500.0f);
+	// --- structure health per type ---
+	CC_CHECK(BuildingMaxHealth(BuildingType::Base) == 400.0f);
+	CC_CHECK(BuildingMaxHealth(BuildingType::ResourceDepot) == 200.0f);
+	CC_CHECK(BuildingMaxHealth(BuildingType::Bootcamp) == 350.0f);
+	CC_CHECK(BuildingMaxHealth(BuildingType::Workshop) == 500.0f);
 
-    // --- valid placement marks terrain + stores the component ---
-    Registry registry;
-    TileMap map(20, 15);
-    const Entity base = PlaceBuilding(registry, map, BuildingType::Base, 0, 1, 1);
-    CC_CHECK(base != kInvalidEntity);
-    const Building *stored = registry.Get<Building>(base);
-    CC_CHECK(stored != nullptr);
-    CC_CHECK(stored->type == BuildingType::Base);
-    CC_CHECK(stored->state == BuildingState::UnderConstruction); // sites ramp, not instant
-    CC_CHECK(stored->health == 0.0f);
-    CC_CHECK(stored->teamID == 0);
-    CC_CHECK(map.Get({ 1, 1 }) == TerrainType::Building);
-    CC_CHECK(map.Get({ 2, 2 }) == TerrainType::Building);
-    CC_CHECK(map.Get({ 3, 1 }) == TerrainType::Grass);
+	// --- valid placement marks terrain + stores the component ---
+	Registry registry;
+	TileMap map(20, 15);
+	const Entity base = PlaceBuilding(registry, map, BuildingType::Base, 0, 1, 1);
+	CC_CHECK(base != kInvalidEntity);
+	const Building *stored = registry.Get<Building>(base);
+	CC_CHECK(stored != nullptr);
+	CC_CHECK(stored->type == BuildingType::Base);
+	CC_CHECK(stored->state == BuildingState::UnderConstruction); // sites ramp, not instant
+	CC_CHECK(stored->health == 0.0f);
+	CC_CHECK(stored->teamID == 0);
+	CC_CHECK(map.Get({ 1, 1 }) == TerrainType::Building);
+	CC_CHECK(map.Get({ 2, 2 }) == TerrainType::Building);
+	CC_CHECK(map.Get({ 3, 1 }) == TerrainType::Grass);
 
-    // --- overlap with the placed footprint is rejected ---
-    CC_CHECK(PlaceBuilding(registry, map, BuildingType::Bootcamp, 0, 2, 2) == kInvalidEntity);
-    CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, 0, 1, 1) ==
-             kInvalidEntity);
+	// --- overlap with the placed footprint is rejected ---
+	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Bootcamp, 0, 2, 2) == kInvalidEntity);
+	CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, 0, 1, 1) ==
+			 kInvalidEntity);
 
-    // --- water and out-of-bounds rejected ---
-    map.Set({ 5, 5 }, TerrainType::Water);
-    CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, 0, 5, 5) ==
-             kInvalidEntity);
-    CC_CHECK(PlaceBuilding(registry, map, BuildingType::Base, 0, 19, 14) == kInvalidEntity);
-    CC_CHECK(PlaceBuilding(registry, map, BuildingType::Base, 0, -1, 0) == kInvalidEntity);
+	// --- water and out-of-bounds rejected ---
+	map.Set({ 5, 5 }, TerrainType::Water);
+	CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, 0, 5, 5) ==
+			 kInvalidEntity);
+	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Base, 0, 19, 14) == kInvalidEntity);
+	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Base, 0, -1, 0) == kInvalidEntity);
 
-    // --- demolish restores terrain and removes the entity ---
-    CC_CHECK(DemolishBuilding(registry, map, base));
-    CC_CHECK(!registry.IsAlive(base));
-    CC_CHECK(map.Get({ 1, 1 }) == TerrainType::Grass);
-    CC_CHECK(map.Get({ 2, 2 }) == TerrainType::Grass);
-    CC_CHECK(!DemolishBuilding(registry, map, base)); // already gone: no-op
-    CC_CHECK(!DemolishBuilding(registry, map, kInvalidEntity));
+	// --- demolish restores terrain and removes the entity ---
+	CC_CHECK(DemolishBuilding(registry, map, base));
+	CC_CHECK(!registry.IsAlive(base));
+	CC_CHECK(map.Get({ 1, 1 }) == TerrainType::Grass);
+	CC_CHECK(map.Get({ 2, 2 }) == TerrainType::Grass);
+	CC_CHECK(!DemolishBuilding(registry, map, base)); // already gone: no-op
+	CC_CHECK(!DemolishBuilding(registry, map, kInvalidEntity));
 
-    // --- the freed footprint accepts a new building ---
-    CC_CHECK(PlaceBuilding(registry, map, BuildingType::Bootcamp, 1, 1, 1) != kInvalidEntity);
+	// --- sell refunds half cost through the cap, then clears the footprint ---
+	CC_CHECK(BuildingCost(BuildingType::Base).iron == 350);
+	CC_CHECK(BuildingCost(BuildingType::Workshop).iron == 300);
+	{
+		Registry sale;
+		TileMap smap(20, 15);
+		ResourceSystem funds;
+		const Entity depot =
+			PlaceBuilding(sale, smap, BuildingType::ResourceDepot, 0, 4, 4, nullptr);
+		CC_CHECK(depot != kInvalidEntity);
+		UpdateBuildingConstruction(sale, 5.0f);
+		CC_CHECK(SellBuilding(sale, smap, funds, 0, depot)); // 150/2 = 75
+		CC_CHECK(funds.iron == 75 && funds.oil == 0);
+		CC_CHECK(!sale.IsAlive(depot));
+		CC_CHECK(smap.Get({ 4, 4 }) == TerrainType::Grass);
+		CC_CHECK(!SellBuilding(sale, smap, funds, 0, depot)); // already gone
+		CC_CHECK(!SellBuilding(sale, smap, funds, 0, kInvalidEntity));
+		funds.iron = 100000; // overflow refunds are lost to the cap
+		const Entity camp =
+			PlaceBuilding(sale, smap, BuildingType::Bootcamp, 0, 10, 10, nullptr);
+		UpdateBuildingConstruction(sale, 5.0f);
+		CC_CHECK(SellBuilding(sale, smap, funds, 0, camp)); // depot gone: cap 500
+		CC_CHECK(funds.iron == 100000); // +100 would overflow: lost
+	}
 
-    // --- base income: per-Operational-Base trickle, team-filtered ---
-    Registry economy;
-    TileMap emap(20, 15);
-    PlaceBuilding(economy, emap, BuildingType::Base, 0, 0, 0);
-    PlaceBuilding(economy, emap, BuildingType::Bootcamp, 0, 5, 5); // no income
-    PlaceBuilding(economy, emap, BuildingType::Base, 1, 10, 10);
-    UpdateBuildingConstruction(economy, 20.0f); // sites -> Operational (game ticks this)
-    ResourceSystem resources;
-    UpdateBaseIncome(economy, resources, 1.0f);
-    CC_CHECK(resources.iron == 4 && resources.oil == 2);
+	// --- the freed footprint accepts a new building ---
+	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Bootcamp, 1, 1, 1) != kInvalidEntity);
 
-    ResourceSystem team0;
-    UpdateBaseIncome(economy, team0, 1.0f, 0);
-    CC_CHECK(team0.iron == 2 && team0.oil == 1);
+	// --- base income: per-Operational-Base trickle, team-filtered ---
+	Registry economy;
+	TileMap emap(20, 15);
+	PlaceBuilding(economy, emap, BuildingType::Base, 0, 0, 0);
+	PlaceBuilding(economy, emap, BuildingType::Bootcamp, 0, 5, 5); // no income
+	PlaceBuilding(economy, emap, BuildingType::Base, 1, 10, 10);
+	UpdateBuildingConstruction(economy, 20.0f); // sites -> Operational (game ticks this)
+	ResourceSystem resources;
+	UpdateBaseIncome(economy, resources, 1.0f);
+	CC_CHECK(resources.iron == 4 && resources.oil == 2);
 
-    // --- demolished bases stop generating ---
-    ResourceSystem after;
-    std::vector<Entity> doomed;
-    economy.Each<Building>([&](Entity id, const Building &) { doomed.push_back(id); });
-    for (Entity id : doomed)
-    {
-        DemolishBuilding(economy, emap, id);
-    }
-    UpdateBaseIncome(economy, after, 10.0f);
-    CC_CHECK(after.iron == 0 && after.oil == 0);
+	ResourceSystem team0;
+	UpdateBaseIncome(economy, team0, 1.0f, 0);
+	CC_CHECK(team0.iron == 2 && team0.oil == 1);
 
-    // --- construction: sites ramp 0 -> max, then go Operational exactly ---
-    {
-        Registry site;
-        TileMap siteMap(20, 15);
-        const Entity baseId = PlaceBuilding(site, siteMap, BuildingType::Base, 0, 1, 1);
-        const Entity depotId =
-            PlaceBuilding(site, siteMap, BuildingType::ResourceDepot, 0, 5, 5);
-        Building *baseB = site.Get<Building>(baseId);
-        Building *depotB = site.Get<Building>(depotId);
-        CC_CHECK(baseB->state == BuildingState::UnderConstruction);
-        CC_CHECK(baseB->health == 0.0f && baseB->maxHealth == 400.0f);
-        CC_CHECK(BuildingBuildTime(BuildingType::Base) == 3.0f);
-        CC_CHECK(BuildingBuildTime(BuildingType::ResourceDepot) == 2.0f);
-        CC_CHECK(BuildingBuildTime(BuildingType::Bootcamp) == 4.0f);
-        CC_CHECK(BuildingBuildTime(BuildingType::Workshop) == 5.0f);
-        // Half the depot's build time: proportional ramp, still building.
-        UpdateBuildingConstruction(site, 1.0f);
-        CC_CHECK(depotB->state == BuildingState::UnderConstruction);
-        CC_CHECK(depotB->health == 100.0f); // 200 * 1/2
-        CC_CHECK(baseB->state == BuildingState::UnderConstruction);
-        CC_CHECK(baseB->health > 0.0f && baseB->health < baseB->maxHealth); // 400 * 1/3
-        // Sites earn no income while building.
-        ResourceSystem siteFunds;
-        UpdateBaseIncome(site, siteFunds, 10.0f, 0);
-        CC_CHECK(siteFunds.iron == 0 && siteFunds.oil == 0);
-        // Depot finishes first (2s); base still ramping.
-        UpdateBuildingConstruction(site, 1.0f);
-        CC_CHECK(depotB->state == BuildingState::Operational);
-        CC_CHECK(depotB->health == depotB->maxHealth); // exact, never overshoots
-        CC_CHECK(baseB->state == BuildingState::UnderConstruction);
-        // Base completes; income flows again.
-        UpdateBuildingConstruction(site, 2.0f);
-        CC_CHECK(baseB->state == BuildingState::Operational);
-        CC_CHECK(baseB->health == baseB->maxHealth);
-        ResourceSystem flowing;
-        UpdateBaseIncome(site, flowing, 1.0f, 0);
-        CC_CHECK(flowing.iron == 2 && flowing.oil == 1);
-        // Non-positive dt never advances or completes.
-        const Entity lateId =
-            PlaceBuilding(site, siteMap, BuildingType::ResourceDepot, 0, 8, 8);
-        UpdateBuildingConstruction(site, 0.0f);
-        UpdateBuildingConstruction(site, -1.0f);
-        CC_CHECK(site.Get<Building>(lateId)->state == BuildingState::UnderConstruction);
-        CC_CHECK(site.Get<Building>(lateId)->health == 0.0f);
-    }
+	// --- demolished bases stop generating ---
+	ResourceSystem after;
+	std::vector<Entity> doomed;
+	economy.Each<Building>([&](Entity id, const Building &) { doomed.push_back(id); });
+	for (Entity id : doomed)
+	{
+		DemolishBuilding(economy, emap, id);
+	}
+	UpdateBaseIncome(economy, after, 10.0f);
+	CC_CHECK(after.iron == 0 && after.oil == 0);
 
-    // --- : BuildingEntrances ---
-    {
-        // 20x15 map, base at (5,5) footprint 2x2 → tiles (5,5)(6,5)(5,6)(6,6)
-        TileMap map2(20, 15);
-        auto entrances = BuildingEntrances(map2, 5, 5, 2, 2);
-        // All 12 one-ring tiles should be walkable on an empty grass map
-        CC_CHECK(static_cast<int>(entrances.size()) == 12);
-        // Verify none of the footprint tiles appear
-        for (const cc::IVec2 &e : entrances)
-        {
-            bool insideFootprint = (e.x >= 5 && e.x <= 6 && e.y >= 5 && e.y <= 6);
-            CC_CHECK(!insideFootprint);
-        }
-    }
-    {
-        // Building at (0,0): corner reduces ring size (out-of-bounds excluded)
-        TileMap map2(20, 15);
-        auto entrances = BuildingEntrances(map2, 0, 0, 2, 2);
-        // Only 5 walkable tiles: (2,0)(0,2)(1,2)(2,1)(2,2)
-        // (0,1),(1,1) are inside; (-1,*) and (*,-1) are OOB
-        CC_CHECK(static_cast<int>(entrances.size()) == 5);
-    }
-    {
-        // Water blocks entrance tiles
-        TileMap map2(20, 15);
-        map2.Set({ 7, 5 }, TerrainType::Water);
-        map2.Set({ 4, 5 }, TerrainType::Water);
-        auto entrances = BuildingEntrances(map2, 5, 5, 2, 2);
-        // (7,5) and (4,5) blocked → 12 - 2 = 10
-        CC_CHECK(static_cast<int>(entrances.size()) == 10);
-    }
+	// --- construction: sites ramp 0 -> max, then go Operational exactly ---
+	{
+		Registry site;
+		TileMap siteMap(20, 15);
+		const Entity baseId = PlaceBuilding(site, siteMap, BuildingType::Base, 0, 1, 1);
+		const Entity depotId =
+			PlaceBuilding(site, siteMap, BuildingType::ResourceDepot, 0, 5, 5);
+		Building *baseB = site.Get<Building>(baseId);
+		Building *depotB = site.Get<Building>(depotId);
+		CC_CHECK(baseB->state == BuildingState::UnderConstruction);
+		CC_CHECK(baseB->health == 0.0f && baseB->maxHealth == 400.0f);
+		CC_CHECK(BuildingBuildTime(BuildingType::Base) == 3.0f);
+		CC_CHECK(BuildingBuildTime(BuildingType::ResourceDepot) == 2.0f);
+		CC_CHECK(BuildingBuildTime(BuildingType::Bootcamp) == 4.0f);
+		CC_CHECK(BuildingBuildTime(BuildingType::Workshop) == 5.0f);
+		// Half the depot's build time: proportional ramp, still building.
+		UpdateBuildingConstruction(site, 1.0f);
+		CC_CHECK(depotB->state == BuildingState::UnderConstruction);
+		CC_CHECK(depotB->health == 100.0f); // 200 * 1/2
+		CC_CHECK(baseB->state == BuildingState::UnderConstruction);
+		CC_CHECK(baseB->health > 0.0f && baseB->health < baseB->maxHealth); // 400 * 1/3
+		// Sites earn no income while building.
+		ResourceSystem siteFunds;
+		UpdateBaseIncome(site, siteFunds, 10.0f, 0);
+		CC_CHECK(siteFunds.iron == 0 && siteFunds.oil == 0);
+		// Depot finishes first (2s); base still ramping.
+		UpdateBuildingConstruction(site, 1.0f);
+		CC_CHECK(depotB->state == BuildingState::Operational);
+		CC_CHECK(depotB->health == depotB->maxHealth); // exact, never overshoots
+		CC_CHECK(baseB->state == BuildingState::UnderConstruction);
+		// Base completes; income flows again.
+		UpdateBuildingConstruction(site, 2.0f);
+		CC_CHECK(baseB->state == BuildingState::Operational);
+		CC_CHECK(baseB->health == baseB->maxHealth);
+		ResourceSystem flowing;
+		UpdateBaseIncome(site, flowing, 1.0f, 0);
+		CC_CHECK(flowing.iron == 2 && flowing.oil == 1);
+		// Non-positive dt never advances or completes.
+		const Entity lateId =
+			PlaceBuilding(site, siteMap, BuildingType::ResourceDepot, 0, 8, 8);
+		UpdateBuildingConstruction(site, 0.0f);
+		UpdateBuildingConstruction(site, -1.0f);
+		CC_CHECK(site.Get<Building>(lateId)->state == BuildingState::UnderConstruction);
+		CC_CHECK(site.Get<Building>(lateId)->health == 0.0f);
+	}
 
-    // --- : BuildingAttackPositions ---
-    {
-        TileMap map2(20, 15);
-        auto positions = BuildingAttackPositions(map2, 5, 5, 2, 2, 8);
-        // 12 available, max 8 → should return exactly 8
-        CC_CHECK(static_cast<int>(positions.size()) == 8);
-        // All returned positions are walkable
-        for (const cc::IVec2 &p : positions)
-        {
-            CC_CHECK(map2.InBounds(p));
-            CC_CHECK(!map2.IsBlocked(p));
-        }
-    }
-    {
-        // Fewer available than max → returns all available
-        TileMap map2(20, 15);
-        // Block most tiles around the building
-        for (int dy = -1; dy <= 2; ++dy)
-        {
-            for (int dx = -1; dx <= 2; ++dx)
-            {
-                if (dx >= 0 && dx < 2 && dy >= 0 && dy < 2)
-                    continue;
-                int x = 5 + dx;
-                int y = 5 + dy;
-                if (map2.InBounds({ x, y }))
-                    map2.Set({ x, y }, TerrainType::Water);
-            }
-        }
-        auto positions = BuildingAttackPositions(map2, 5, 5, 2, 2, 12);
-        CC_CHECK(static_cast<int>(positions.size()) == 0);
-    }
+	// --- : BuildingEntrances ---
+	{
+		// 20x15 map, base at (5,5) footprint 2x2 → tiles (5,5)(6,5)(5,6)(6,6)
+		TileMap map2(20, 15);
+		auto entrances = BuildingEntrances(map2, 5, 5, 2, 2);
+		// All 12 one-ring tiles should be walkable on an empty grass map
+		CC_CHECK(static_cast<int>(entrances.size()) == 12);
+		// Verify none of the footprint tiles appear
+		for (const cc::IVec2 &e : entrances)
+		{
+			bool insideFootprint = (e.x >= 5 && e.x <= 6 && e.y >= 5 && e.y <= 6);
+			CC_CHECK(!insideFootprint);
+		}
+	}
+	{
+		// Building at (0,0): corner reduces ring size (out-of-bounds excluded)
+		TileMap map2(20, 15);
+		auto entrances = BuildingEntrances(map2, 0, 0, 2, 2);
+		// Only 5 walkable tiles: (2,0)(0,2)(1,2)(2,1)(2,2)
+		// (0,1),(1,1) are inside; (-1,*) and (*,-1) are OOB
+		CC_CHECK(static_cast<int>(entrances.size()) == 5);
+	}
+	{
+		// Water blocks entrance tiles
+		TileMap map2(20, 15);
+		map2.Set({ 7, 5 }, TerrainType::Water);
+		map2.Set({ 4, 5 }, TerrainType::Water);
+		auto entrances = BuildingEntrances(map2, 5, 5, 2, 2);
+		// (7,5) and (4,5) blocked → 12 - 2 = 10
+		CC_CHECK(static_cast<int>(entrances.size()) == 10);
+	}
 
-    // --- QoL SelectAllBuildings: same-team same-type only, replaces ---
-    {
-        Registry lots;
-        TileMap lotsMap(20, 15);
-        const Entity bootA =
-            PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 0, 1, 1);
-        const Entity bootB =
-            PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 0, 5, 5);
-        const Entity depot =
-            PlaceBuilding(lots, lotsMap, BuildingType::ResourceDepot, 0, 10, 10);
-        const Entity foeBoot =
-            PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 1, 12, 12);
-        CC_CHECK(bootA != kInvalidEntity && bootB != kInvalidEntity);
-        CC_CHECK(depot != kInvalidEntity && foeBoot != kInvalidEntity);
-        CC_CHECK(SelectAllBuildings(lots, BuildingType::Bootcamp, 0) == 2);
-        CC_CHECK(lots.Get<Building>(bootA)->isSelected);
-        CC_CHECK(lots.Get<Building>(bootB)->isSelected);
-        CC_CHECK(!lots.Get<Building>(depot)->isSelected);
-        CC_CHECK(!lots.Get<Building>(foeBoot)->isSelected);
-        CC_CHECK(SelectAllBuildings(lots, BuildingType::ResourceDepot, 0) == 1);
-        CC_CHECK(!lots.Get<Building>(bootA)->isSelected); // replaced
-        CC_CHECK(lots.Get<Building>(depot)->isSelected);
-    }
+	// --- : BuildingAttackPositions ---
+	{
+		TileMap map2(20, 15);
+		auto positions = BuildingAttackPositions(map2, 5, 5, 2, 2, 8);
+		// 12 available, max 8 → should return exactly 8
+		CC_CHECK(static_cast<int>(positions.size()) == 8);
+		// All returned positions are walkable
+		for (const cc::IVec2 &p : positions)
+		{
+			CC_CHECK(map2.InBounds(p));
+			CC_CHECK(!map2.IsBlocked(p));
+		}
+	}
+	{
+		// Fewer available than max → returns all available
+		TileMap map2(20, 15);
+		// Block most tiles around the building
+		for (int dy = -1; dy <= 2; ++dy)
+		{
+			for (int dx = -1; dx <= 2; ++dx)
+			{
+				if (dx >= 0 && dx < 2 && dy >= 0 && dy < 2)
+					continue;
+				int x = 5 + dx;
+				int y = 5 + dy;
+				if (map2.InBounds({ x, y }))
+					map2.Set({ x, y }, TerrainType::Water);
+			}
+		}
+		auto positions = BuildingAttackPositions(map2, 5, 5, 2, 2, 12);
+		CC_CHECK(static_cast<int>(positions.size()) == 0);
+	}
 
-    // --- QoL SelectAllProductionBuildings: both producers, one pass ---
-    {
-        Registry lots;
-        TileMap lotsMap(20, 15);
-        const Entity boot = PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 0, 1, 1);
-        const Entity shop = PlaceBuilding(lots, lotsMap, BuildingType::Workshop, 0, 5, 5);
-        const Entity depot =
-            PlaceBuilding(lots, lotsMap, BuildingType::ResourceDepot, 0, 10, 10);
-        const Entity foe = PlaceBuilding(lots, lotsMap, BuildingType::Workshop, 1, 12, 12);
-        CC_CHECK(boot != kInvalidEntity && shop != kInvalidEntity);
-        CC_CHECK(depot != kInvalidEntity && foe != kInvalidEntity);
-        CC_CHECK(SelectAllProductionBuildings(lots, 0) == 2);
-        CC_CHECK(lots.Get<Building>(boot)->isSelected);
-        CC_CHECK(lots.Get<Building>(shop)->isSelected);
-        CC_CHECK(!lots.Get<Building>(depot)->isSelected);
-        CC_CHECK(!lots.Get<Building>(foe)->isSelected);
-    }
+	// --- QoL SelectAllBuildings: same-team same-type only, replaces ---
+	{
+		Registry lots;
+		TileMap lotsMap(20, 15);
+		const Entity bootA =
+			PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 0, 1, 1);
+		const Entity bootB =
+			PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 0, 5, 5);
+		const Entity depot =
+			PlaceBuilding(lots, lotsMap, BuildingType::ResourceDepot, 0, 10, 10);
+		const Entity foeBoot =
+			PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 1, 12, 12);
+		CC_CHECK(bootA != kInvalidEntity && bootB != kInvalidEntity);
+		CC_CHECK(depot != kInvalidEntity && foeBoot != kInvalidEntity);
+		CC_CHECK(SelectAllBuildings(lots, BuildingType::Bootcamp, 0) == 2);
+		CC_CHECK(lots.Get<Building>(bootA)->isSelected);
+		CC_CHECK(lots.Get<Building>(bootB)->isSelected);
+		CC_CHECK(!lots.Get<Building>(depot)->isSelected);
+		CC_CHECK(!lots.Get<Building>(foeBoot)->isSelected);
+		CC_CHECK(SelectAllBuildings(lots, BuildingType::ResourceDepot, 0) == 1);
+		CC_CHECK(!lots.Get<Building>(bootA)->isSelected); // replaced
+		CC_CHECK(lots.Get<Building>(depot)->isSelected);
+	}
 
-    // --- QoL CanPlaceBuilding: mirrors PlaceBuilding's validation ---
-    {
-        Registry yard;
-        TileMap yardMap(20, 15);
-        ResourceNodes yardNodes;
-        CC_CHECK(CanPlaceBuilding(yardMap, &yardNodes, BuildingType::Base, 1, 1));
-        CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::Base, 19, 14));
-        yardMap.Set({ 5, 5 }, TerrainType::Water);
-        CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::ResourceDepot, 5, 5));
-        // Node tile: predicate refuses where the placer would strand iron.
-        CC_CHECK(yardNodes.SpawnNode(yardMap, ResourceKind::Iron, { 8, 8 }, 200.0f, 10.0f));
-        CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::ResourceDepot, 8, 8));
-        CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::Base, 7, 7));
-        // Null nodes = legacy grass-only check.
-        CC_CHECK(CanPlaceBuilding(yardMap, nullptr, BuildingType::ResourceDepot, 8, 8));
-        // ...but placing there still fails through the nodes-aware overload.
-        CC_CHECK(PlaceBuilding(yard, yardMap, BuildingType::ResourceDepot, 0, 8, 8,
-                               &yardNodes) == kInvalidEntity);
-    }
+	// --- QoL SelectAllProductionBuildings: both producers, one pass ---
+	{
+		Registry lots;
+		TileMap lotsMap(20, 15);
+		const Entity boot = PlaceBuilding(lots, lotsMap, BuildingType::Bootcamp, 0, 1, 1);
+		const Entity shop = PlaceBuilding(lots, lotsMap, BuildingType::Workshop, 0, 5, 5);
+		const Entity depot =
+			PlaceBuilding(lots, lotsMap, BuildingType::ResourceDepot, 0, 10, 10);
+		const Entity foe = PlaceBuilding(lots, lotsMap, BuildingType::Workshop, 1, 12, 12);
+		CC_CHECK(boot != kInvalidEntity && shop != kInvalidEntity);
+		CC_CHECK(depot != kInvalidEntity && foe != kInvalidEntity);
+		CC_CHECK(SelectAllProductionBuildings(lots, 0) == 2);
+		CC_CHECK(lots.Get<Building>(boot)->isSelected);
+		CC_CHECK(lots.Get<Building>(shop)->isSelected);
+		CC_CHECK(!lots.Get<Building>(depot)->isSelected);
+		CC_CHECK(!lots.Get<Building>(foe)->isSelected);
+	}
 
-    // --- QoL AreaBuildSlots: footprint-stepped tiling, inclusive range ---
-    {
-        // Depot (1x1) over a 3x2 range: every tile is a slot.
-        const auto singles = AreaBuildSlots(BuildingType::ResourceDepot, { 1, 1 }, { 3, 2 });
-        CC_CHECK(singles.size() == 6);
-        CC_CHECK(singles.front() == cc::IVec2(1, 1) && singles.back() == cc::IVec2(3, 2));
-        // Base (2x2) over 0..3: anchors at even tiles only, no overlaps.
-        const auto quads = AreaBuildSlots(BuildingType::Base, { 0, 0 }, { 3, 3 });
-        CC_CHECK(quads.size() == 4);
-        CC_CHECK(quads[0] == cc::IVec2(0, 0) && quads[3] == cc::IVec2(2, 2));
-        // Reversed range: empty, never negative-stepped.
-        CC_CHECK(AreaBuildSlots(BuildingType::Base, { 3, 3 }, { 0, 0 }).empty());
-    }
+	// --- QoL CanPlaceBuilding: mirrors PlaceBuilding's validation ---
+	{
+		Registry yard;
+		TileMap yardMap(20, 15);
+		ResourceNodes yardNodes;
+		CC_CHECK(CanPlaceBuilding(yardMap, &yardNodes, BuildingType::Base, 1, 1));
+		CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::Base, 19, 14));
+		yardMap.Set({ 5, 5 }, TerrainType::Water);
+		CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::ResourceDepot, 5, 5));
+		// Node tile: predicate refuses where the placer would strand iron.
+		CC_CHECK(yardNodes.SpawnNode(yardMap, ResourceKind::Iron, { 8, 8 }, 200.0f, 10.0f));
+		CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::ResourceDepot, 8, 8));
+		CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::Base, 7, 7));
+		// Null nodes = legacy grass-only check.
+		CC_CHECK(CanPlaceBuilding(yardMap, nullptr, BuildingType::ResourceDepot, 8, 8));
+		// ...but placing there still fails through the nodes-aware overload.
+		CC_CHECK(PlaceBuilding(yard, yardMap, BuildingType::ResourceDepot, 0, 8, 8,
+							   &yardNodes) == kInvalidEntity);
+	}
 
-    // --- QoL BuildingFootprintRect: tile footprint as a world rect ---
-    {
-        Building depot;
-        depot.type = BuildingType::ResourceDepot;
-        depot.tileX = 3;
-        depot.tileY = 4;
-        const Rectangle depotRect = BuildingFootprintRect(depot);
-        CC_CHECK(depotRect.x == 3.0f * 64.0f && depotRect.y == 4.0f * 64.0f);
-        CC_CHECK(depotRect.width == 64.0f && depotRect.height == 64.0f);
+	// --- QoL AreaBuildSlots: footprint-stepped tiling, inclusive range ---
+	{
+		// Depot (1x1) over a 3x2 range: every tile is a slot.
+		const auto singles = AreaBuildSlots(BuildingType::ResourceDepot, { 1, 1 }, { 3, 2 });
+		CC_CHECK(singles.size() == 6);
+		CC_CHECK(singles.front() == cc::IVec2(1, 1) && singles.back() == cc::IVec2(3, 2));
+		// Base (2x2) over 0..3: anchors at even tiles only, no overlaps.
+		const auto quads = AreaBuildSlots(BuildingType::Base, { 0, 0 }, { 3, 3 });
+		CC_CHECK(quads.size() == 4);
+		CC_CHECK(quads[0] == cc::IVec2(0, 0) && quads[3] == cc::IVec2(2, 2));
+		// Reversed range: empty, never negative-stepped.
+		CC_CHECK(AreaBuildSlots(BuildingType::Base, { 3, 3 }, { 0, 0 }).empty());
+	}
 
-        Building base;
-        base.type = BuildingType::Base;
-        base.tileX = 1;
-        base.tileY = 1;
-        const Rectangle baseRect = BuildingFootprintRect(base);
-        CC_CHECK(baseRect.x == 64.0f && baseRect.y == 64.0f);
-        CC_CHECK(baseRect.width == 128.0f && baseRect.height == 128.0f);
-    }
+	// --- QoL BuildingFootprintRect: tile footprint as a world rect ---
+	{
+		Building depot;
+		depot.type = BuildingType::ResourceDepot;
+		depot.tileX = 3;
+		depot.tileY = 4;
+		const Rectangle depotRect = BuildingFootprintRect(depot);
+		CC_CHECK(depotRect.x == 3.0f * 64.0f && depotRect.y == 4.0f * 64.0f);
+		CC_CHECK(depotRect.width == 64.0f && depotRect.height == 64.0f);
 
-    // --- QoL QueryBuildingsInRect: overlap + team filter ---
-    {
-        Registry query;
-        TileMap queryMap(20, 15);
-        const Entity inBase =
-            PlaceBuilding(query, queryMap, BuildingType::Base, 0, 1, 1); // (64,64)-(192,192)
-        const Entity inDepot = PlaceBuilding(query, queryMap, BuildingType::ResourceDepot,
-                                             0, 5, 5); // single tile (5,5)
-        const Entity foeBase =
-            PlaceBuilding(query, queryMap, BuildingType::Base, 1, 10, 10); // far away
-        CC_CHECK(inBase != kInvalidEntity && inDepot != kInvalidEntity &&
-                 foeBase != kInvalidEntity);
+		Building base;
+		base.type = BuildingType::Base;
+		base.tileX = 1;
+		base.tileY = 1;
+		const Rectangle baseRect = BuildingFootprintRect(base);
+		CC_CHECK(baseRect.x == 64.0f && baseRect.y == 64.0f);
+		CC_CHECK(baseRect.width == 128.0f && baseRect.height == 128.0f);
+	}
 
-        std::vector<Entity> found;
-        // Rect overlapping only the team-0 base.
-        QueryBuildingsInRect(query, { 0.0f, 0.0f, 200.0f, 200.0f }, 0, found);
-        CC_CHECK(found.size() == 1 && found[0] == inBase);
-        // Small rect strictly inside the depot tile.
-        found.clear();
-        QueryBuildingsInRect(query, { 5.0f * 64.0f, 5.0f * 64.0f, 10.0f, 10.0f }, 0,
-                             found);
-        CC_CHECK(found.size() == 1 && found[0] == inDepot);
-        // Rect over nothing.
-        found.clear();
-        QueryBuildingsInRect(query, { 0.0f, 600.0f, 100.0f, 100.0f }, 0, found);
-        CC_CHECK(found.empty());
-        // Negative team: every team.
-        found.clear();
-        QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 64.0f, 15.0f * 64.0f }, -1,
-                             found);
-        CC_CHECK(found.size() == 3);
-        // Team 1 alone.
-        found.clear();
-        QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 64.0f, 15.0f * 64.0f }, 1,
-                             found);
-        CC_CHECK(found.size() == 1 && found[0] == foeBase);
-    }
+	// --- QoL QueryBuildingsInRect: overlap + team filter ---
+	{
+		Registry query;
+		TileMap queryMap(20, 15);
+		const Entity inBase =
+			PlaceBuilding(query, queryMap, BuildingType::Base, 0, 1, 1); // (64,64)-(192,192)
+		const Entity inDepot = PlaceBuilding(query, queryMap, BuildingType::ResourceDepot,
+											 0, 5, 5); // single tile (5,5)
+		const Entity foeBase =
+			PlaceBuilding(query, queryMap, BuildingType::Base, 1, 10, 10); // far away
+		CC_CHECK(inBase != kInvalidEntity && inDepot != kInvalidEntity &&
+				 foeBase != kInvalidEntity);
 
-    // --- UpdateBuildingFlash: decays by dt, clamps at 0, no-op for dt <= 0 ---
-    {
-        Registry flash;
-        TileMap flashMap(20, 15);
-        const Entity id = PlaceBuilding(flash, flashMap, BuildingType::Base, 0, 1, 1);
-        Building *building = flash.Get<Building>(id);
-        building->hitFlashTime = 0.25f;
-        UpdateBuildingFlash(flash, 0.1f);
-        CC_CHECK(building->hitFlashTime > 0.14f && building->hitFlashTime < 0.16f);
-        UpdateBuildingFlash(flash, 0.2f);
-        CC_CHECK(building->hitFlashTime == 0.0f);
-        building->hitFlashTime = 0.2f;
-        UpdateBuildingFlash(flash, 0.0f);
-        CC_CHECK(building->hitFlashTime == 0.2f);
-        UpdateBuildingFlash(flash, -1.0f);
-        CC_CHECK(building->hitFlashTime == 0.2f);
-    }
+		std::vector<Entity> found;
+		// Rect overlapping only the team-0 base.
+		QueryBuildingsInRect(query, { 0.0f, 0.0f, 200.0f, 200.0f }, 0, found);
+		CC_CHECK(found.size() == 1 && found[0] == inBase);
+		// Small rect strictly inside the depot tile.
+		found.clear();
+		QueryBuildingsInRect(query, { 5.0f * 64.0f, 5.0f * 64.0f, 10.0f, 10.0f }, 0,
+							 found);
+		CC_CHECK(found.size() == 1 && found[0] == inDepot);
+		// Rect over nothing.
+		found.clear();
+		QueryBuildingsInRect(query, { 0.0f, 600.0f, 100.0f, 100.0f }, 0, found);
+		CC_CHECK(found.empty());
+		// Negative team: every team.
+		found.clear();
+		QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 64.0f, 15.0f * 64.0f }, -1,
+							 found);
+		CC_CHECK(found.size() == 3);
+		// Team 1 alone.
+		found.clear();
+		QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 64.0f, 15.0f * 64.0f }, 1,
+							 found);
+		CC_CHECK(found.size() == 1 && found[0] == foeBase);
+	}
 
-    {
-        Registry rally;
-        TileMap rallyMap(20, 15);
-        const Entity boot = PlaceBuilding(rally, rallyMap, BuildingType::Bootcamp, 0, 5, 5);
-        CC_CHECK(boot != kInvalidEntity);
-        const Building *bootB = rally.Get<Building>(boot);
-        const cc::IVec2 bootFp = Footprint(BuildingType::Bootcamp);
-        CC_CHECK(!(bootB->rallyTile == cc::IVec2(-1, -1)));
-        CC_CHECK(rallyMap.InBounds(bootB->rallyTile));
-        CC_CHECK(!rallyMap.IsBlocked(bootB->rallyTile));
-        const bool bootInside = bootB->rallyTile.x >= 5 &&
-                                bootB->rallyTile.x < 5 + bootFp.x &&
-                                bootB->rallyTile.y >= 5 &&
-                                bootB->rallyTile.y < 5 + bootFp.y;
-        CC_CHECK(!bootInside);
+	// --- UpdateBuildingFlash: decays by dt, clamps at 0, no-op for dt <= 0 ---
+	{
+		Registry flash;
+		TileMap flashMap(20, 15);
+		const Entity id = PlaceBuilding(flash, flashMap, BuildingType::Base, 0, 1, 1);
+		Building *building = flash.Get<Building>(id);
+		building->hitFlashTime = 0.25f;
+		UpdateBuildingFlash(flash, 0.1f);
+		CC_CHECK(building->hitFlashTime > 0.14f && building->hitFlashTime < 0.16f);
+		UpdateBuildingFlash(flash, 0.2f);
+		CC_CHECK(building->hitFlashTime == 0.0f);
+		building->hitFlashTime = 0.2f;
+		UpdateBuildingFlash(flash, 0.0f);
+		CC_CHECK(building->hitFlashTime == 0.2f);
+		UpdateBuildingFlash(flash, -1.0f);
+		CC_CHECK(building->hitFlashTime == 0.2f);
+	}
 
-        const Entity shop =
-            PlaceBuilding(rally, rallyMap, BuildingType::Workshop, 0, 10, 5);
-        CC_CHECK(shop != kInvalidEntity);
-        const Building *shopB = rally.Get<Building>(shop);
-        const cc::IVec2 shopFp = Footprint(BuildingType::Workshop);
-        CC_CHECK(!(shopB->rallyTile == cc::IVec2(-1, -1)));
-        CC_CHECK(rallyMap.InBounds(shopB->rallyTile));
-        CC_CHECK(!rallyMap.IsBlocked(shopB->rallyTile));
-        const bool shopInside = shopB->rallyTile.x >= 10 &&
-                                shopB->rallyTile.x < 10 + shopFp.x &&
-                                shopB->rallyTile.y >= 5 &&
-                                shopB->rallyTile.y < 5 + shopFp.y;
-        CC_CHECK(!shopInside);
-    }
+	{
+		Registry rally;
+		TileMap rallyMap(20, 15);
+		const Entity boot = PlaceBuilding(rally, rallyMap, BuildingType::Bootcamp, 0, 5, 5);
+		CC_CHECK(boot != kInvalidEntity);
+		const Building *bootB = rally.Get<Building>(boot);
+		const cc::IVec2 bootFp = Footprint(BuildingType::Bootcamp);
+		CC_CHECK(!(bootB->rallyTile == cc::IVec2(-1, -1)));
+		CC_CHECK(rallyMap.InBounds(bootB->rallyTile));
+		CC_CHECK(!rallyMap.IsBlocked(bootB->rallyTile));
+		const bool bootInside = bootB->rallyTile.x >= 5 &&
+								bootB->rallyTile.x < 5 + bootFp.x &&
+								bootB->rallyTile.y >= 5 &&
+								bootB->rallyTile.y < 5 + bootFp.y;
+		CC_CHECK(!bootInside);
 
-    // --- ProducerBuildingAt: operational producers of type/team in registry order ---
-    {
-        Registry producers;
-        TileMap producerMap(20, 15);
-        const Entity bootA =
-            PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 0, 1, 1);
-        const Entity bootB =
-            PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 0, 5, 5);
-        const Entity foe =
-            PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 1, 12, 12);
-        const Entity shop =
-            PlaceBuilding(producers, producerMap, BuildingType::Workshop, 0, 1, 10);
-        CC_CHECK(bootA != kInvalidEntity && bootB != kInvalidEntity);
-        CC_CHECK(foe != kInvalidEntity && shop != kInvalidEntity);
-        UpdateBuildingConstruction(producers, 20.0f);
-        const Entity site =
-            PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 0, 10, 1);
-        CC_CHECK(site != kInvalidEntity);
-        CC_CHECK(producers.Get<Building>(site)->state == BuildingState::UnderConstruction);
-        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 0, 0) == bootA);
-        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 0, 1) == bootB);
-        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 0, 2) == bootA);
-        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 1, 0) == foe);
-        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Workshop, 0, 0) == shop);
-        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Workshop, 1, 0) ==
-                 kInvalidEntity);
-        CC_CHECK(ProducerBuildingAt(producers, BuildingType::Base, 0, 0) == kInvalidEntity);
-    }
+		const Entity shop =
+			PlaceBuilding(rally, rallyMap, BuildingType::Workshop, 0, 10, 5);
+		CC_CHECK(shop != kInvalidEntity);
+		const Building *shopB = rally.Get<Building>(shop);
+		const cc::IVec2 shopFp = Footprint(BuildingType::Workshop);
+		CC_CHECK(!(shopB->rallyTile == cc::IVec2(-1, -1)));
+		CC_CHECK(rallyMap.InBounds(shopB->rallyTile));
+		CC_CHECK(!rallyMap.IsBlocked(shopB->rallyTile));
+		const bool shopInside = shopB->rallyTile.x >= 10 &&
+								shopB->rallyTile.x < 10 + shopFp.x &&
+								shopB->rallyTile.y >= 5 &&
+								shopB->rallyTile.y < 5 + shopFp.y;
+		CC_CHECK(!shopInside);
+	}
 
-    // --- BuildingSpawnTile: unblocked exit tile outside the footprint ---
-    {
-        Registry spawns;
-        TileMap spawnMap(20, 15);
-        OccupancyGrid spawnOcc(20, 15);
-        const Entity boot = PlaceBuilding(spawns, spawnMap, BuildingType::Bootcamp, 0, 5, 5);
-        CC_CHECK(boot != kInvalidEntity);
-        const Building *bootB = spawns.Get<Building>(boot);
-        const cc::IVec2 tile = BuildingSpawnTile(spawnMap, &spawnOcc, *bootB);
-        CC_CHECK(spawnMap.InBounds(tile));
-        CC_CHECK(!spawnMap.IsBlocked(tile));
-        const cc::IVec2 fp = Footprint(BuildingType::Bootcamp);
-        const bool inside = tile.x >= 5 && tile.x < 5 + fp.x && tile.y >= 5 &&
-                            tile.y < 5 + fp.y;
-        CC_CHECK(!inside);
-    }
+	// --- ProducerBuildingAt: operational producers of type/team in registry order ---
+	{
+		Registry producers;
+		TileMap producerMap(20, 15);
+		const Entity bootA =
+			PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 0, 1, 1);
+		const Entity bootB =
+			PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 0, 5, 5);
+		const Entity foe =
+			PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 1, 12, 12);
+		const Entity shop =
+			PlaceBuilding(producers, producerMap, BuildingType::Workshop, 0, 1, 10);
+		CC_CHECK(bootA != kInvalidEntity && bootB != kInvalidEntity);
+		CC_CHECK(foe != kInvalidEntity && shop != kInvalidEntity);
+		UpdateBuildingConstruction(producers, 20.0f);
+		const Entity site =
+			PlaceBuilding(producers, producerMap, BuildingType::Bootcamp, 0, 10, 1);
+		CC_CHECK(site != kInvalidEntity);
+		CC_CHECK(producers.Get<Building>(site)->state == BuildingState::UnderConstruction);
+		CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 0, 0) == bootA);
+		CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 0, 1) == bootB);
+		CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 0, 2) == bootA);
+		CC_CHECK(ProducerBuildingAt(producers, BuildingType::Bootcamp, 1, 0) == foe);
+		CC_CHECK(ProducerBuildingAt(producers, BuildingType::Workshop, 0, 0) == shop);
+		CC_CHECK(ProducerBuildingAt(producers, BuildingType::Workshop, 1, 0) ==
+				 kInvalidEntity);
+		CC_CHECK(ProducerBuildingAt(producers, BuildingType::Base, 0, 0) == kInvalidEntity);
+	}
+
+	// --- BuildingSpawnTile: unblocked exit tile outside the footprint ---
+	{
+		Registry spawns;
+		TileMap spawnMap(20, 15);
+		OccupancyGrid spawnOcc(20, 15);
+		const Entity boot = PlaceBuilding(spawns, spawnMap, BuildingType::Bootcamp, 0, 5, 5);
+		CC_CHECK(boot != kInvalidEntity);
+		const Building *bootB = spawns.Get<Building>(boot);
+		const cc::IVec2 tile = BuildingSpawnTile(spawnMap, &spawnOcc, *bootB);
+		CC_CHECK(spawnMap.InBounds(tile));
+		CC_CHECK(!spawnMap.IsBlocked(tile));
+		const cc::IVec2 fp = Footprint(BuildingType::Bootcamp);
+		const bool inside = tile.x >= 5 && tile.x < 5 + fp.x && tile.y >= 5 &&
+							tile.y < 5 + fp.y;
+		CC_CHECK(!inside);
+	}
 }

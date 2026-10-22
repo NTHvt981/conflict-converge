@@ -25,8 +25,8 @@ float BuildingHealthFraction(const Building &building);
 std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys);
 struct HoverTooltipState
 {
-    Entity hovered = kInvalidEntity;
-    float time = 0.0f;
+	Entity hovered = kInvalidEntity;
+	float time = 0.0f;
 };
 constexpr float kHoverTooltipDelay = 0.4f;
 bool UpdateHoverTooltip(HoverTooltipState &state, Entity hovered, float dt, float delay);
@@ -44,23 +44,23 @@ std::vector<BuildingType> BuildingMenuOrder();
 // explains a disabled entry (empty when enabled).
 enum class AbilityId
 {
-    Hold,
-    Guard,
-    Patrol,
-    AttackMove,
-    Halt,
-    Repair,
-    Heal,
-    Rally,
-    Demolish
+	Hold,
+	Guard,
+	Patrol,
+	AttackMove,
+	Halt,
+	Repair,
+	Heal,
+	Rally,
+	Demolish
 };
 const char *AbilityName(AbilityId id);
 struct AbilityEntry
 {
-    AbilityId id = AbilityId::Halt;
-    bool enabled = true;
-    bool active = false;
-    std::string reason;
+	AbilityId id = AbilityId::Halt;
+	bool enabled = true;
+	bool active = false;
+	std::string reason;
 };
 std::vector<AbilityEntry> AbilitiesForSelection(const Registry &registry,
-                                                 const std::vector<Entity> &selection);
+												 const std::vector<Entity> &selection);

@@ -9,11 +9,11 @@
 
 void RunCcAssertTests()
 {
-    CC_ASSERT(true);
-    CC_CHECK(true);
+	CC_ASSERT(true);
+	CC_CHECK(true);
 
 #ifdef NDEBUG
-    CC_ASSERT(false); // must be compiled out in Release; aborts if live
-    CC_CHECK(true);
+	CC_ASSERT(false); // must be compiled out in Release; aborts if live
+	CC_CHECK(true);
 #endif
 }
