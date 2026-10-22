@@ -3,7 +3,7 @@
   "stats": {
     "health": 90,
     "armorType": "RUBBER",
-    "damageType": "EXPLOSIVE",
+    "damageType": "AP",
     "attackPower": 25,
     "attackRange": 128,
     "cooldownTime": 1.5,

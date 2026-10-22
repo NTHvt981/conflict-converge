@@ -41,7 +41,7 @@ AIDifficultyParams ParamsFor(AIDifficulty difficulty)
 		params.relaunchCooldown = 15.0f;
 		params.retreats = true;
 		params.composition = { UnitType::RifleInfantry, UnitType::LightTank, UnitType::Artillery,
-							   UnitType::IFV };
+							   UnitType::IFV, UnitType::AntiArmorInfantry };
 		break;
 	}
 	return params;

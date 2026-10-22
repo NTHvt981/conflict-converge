@@ -4,6 +4,7 @@
 
 #include "units/Combat.h"
 #include "units/Extensions.h"
+#include "economy/Building.h"
 #include "app/data/Art.h"
 #include "core/MathUtils.h"
 #include "core/Registry.h"
@@ -18,24 +19,63 @@ void RunCombatTests()
 {
 	// --- full matrix spot values ---
 	CC_CHECK(Effectiveness(DamageType::KINETIC, ArmorType::STEEL) == 1.00f);
-	CC_CHECK(Effectiveness(DamageType::KINETIC, ArmorType::RUBBER) == 0.75f);
-	CC_CHECK(Effectiveness(DamageType::KINETIC, ArmorType::COMPOSITE) == 0.50f);
-	CC_CHECK(Effectiveness(DamageType::EXPLOSIVE, ArmorType::STEEL) == 1.25f);
-	CC_CHECK(Effectiveness(DamageType::EXPLOSIVE, ArmorType::RUBBER) == 1.00f);
-	CC_CHECK(Effectiveness(DamageType::EXPLOSIVE, ArmorType::COMPOSITE) == 0.75f);
+	CC_CHECK(Effectiveness(DamageType::KINETIC, ArmorType::RUBBER) == 1.00f);
+	CC_CHECK(Effectiveness(DamageType::KINETIC, ArmorType::COMPOSITE) == 0.60f);
+	CC_CHECK(Effectiveness(DamageType::EXPLOSIVE, ArmorType::STEEL) == 1.00f);
+	CC_CHECK(Effectiveness(DamageType::EXPLOSIVE, ArmorType::RUBBER) == 1.25f);
+	CC_CHECK(Effectiveness(DamageType::EXPLOSIVE, ArmorType::COMPOSITE) == 0.45f);
 	CC_CHECK(Effectiveness(DamageType::ENERGY, ArmorType::STEEL) == 0.50f);
-	CC_CHECK(Effectiveness(DamageType::ENERGY, ArmorType::RUBBER) == 1.25f);
-	CC_CHECK(Effectiveness(DamageType::ENERGY, ArmorType::COMPOSITE) == 1.00f);
+	CC_CHECK(Effectiveness(DamageType::ENERGY, ArmorType::RUBBER) == 1.00f);
+	CC_CHECK(Effectiveness(DamageType::ENERGY, ArmorType::COMPOSITE) == 1.25f);
+	CC_CHECK(Effectiveness(DamageType::AP, ArmorType::STEEL) == 1.25f);
+	CC_CHECK(Effectiveness(DamageType::AP, ArmorType::RUBBER) == 0.75f);
+	CC_CHECK(Effectiveness(DamageType::AP, ArmorType::COMPOSITE) == 0.50f);
+
+	// --- structure multiplier pins ---
+	CC_CHECK(StructureEffectiveness(DamageType::KINETIC) == 0.50f);
+	CC_CHECK(StructureEffectiveness(DamageType::EXPLOSIVE) == 1.50f);
+	CC_CHECK(StructureEffectiveness(DamageType::ENERGY) == 1.00f);
+	CC_CHECK(StructureEffectiveness(DamageType::AP) == 0.75f);
+
+	// --- no-dominance regression: every row must win at least one column ---
+	{
+		auto Dominates = [](DamageType a, DamageType b) {
+			auto Row = [](DamageType dealt) {
+				return std::array<float, 3>{
+					Effectiveness(dealt, ArmorType::STEEL),
+					Effectiveness(dealt, ArmorType::RUBBER),
+					Effectiveness(dealt, ArmorType::COMPOSITE),
+				};
+			};
+			const std::array<float, 3> ra = Row(a);
+			const std::array<float, 3> rb = Row(b);
+			bool allGE = true;
+			bool anyGT = false;
+			for (int col = 0; col < 3; ++col)
+			{
+				if (ra[col] < rb[col])
+					allGE = false;
+				if (ra[col] > rb[col])
+					anyGT = true;
+			}
+			return allGE && anyGT;
+		};
+		for (int a = 0; a < static_cast<int>(DamageType::Count); ++a)
+			for (int b = 0; b < static_cast<int>(DamageType::Count); ++b)
+				if (a != b)
+					CC_CHECK(!Dominates(static_cast<DamageType>(a),
+										static_cast<DamageType>(b)));
+	}
 
 	// --- scaled damage + cooldown restart ---
 	Unit attacker;
 	attacker.attackPower = 100;
-	attacker.damageType = DamageType::KINETIC;
+	attacker.damageType = DamageType::ENERGY;
 	attacker.cooldownTime = 1.5f;
 	CombatState attackerCombat;
 	Unit defender;
 	defender.health = 200.0f;
-	defender.armorType = ArmorType::COMPOSITE; // 0.50x vs KINETIC
+	defender.armorType = ArmorType::STEEL; // 0.50x vs ENERGY
 	CombatState defenderCombat;
 
 	const float dealt = ResolveAttack(attacker, attackerCombat, defender, defenderCombat);
@@ -43,15 +83,15 @@ void RunCombatTests()
 	CC_CHECK(defender.health == 150.0f);
 	CC_CHECK(attackerCombat.cooldown == 1.5f);
 
-	// --- bonus matchup: EXPLOSIVE cracks STEEL ---
+	// --- bonus matchup: AP cracks STEEL ---
 	Unit bomber;
 	bomber.attackPower = 80;
-	bomber.damageType = DamageType::EXPLOSIVE;
+	bomber.damageType = DamageType::AP;
 	bomber.cooldownTime = 2.0f;
 	CombatState bomberCombat;
 	Unit tank;
 	tank.health = 500.0f;
-	tank.armorType = ArmorType::STEEL; // 1.25x vs EXPLOSIVE
+	tank.armorType = ArmorType::STEEL; // 1.25x vs AP
 	CombatState tankCombat;
 	CC_CHECK(ResolveAttack(bomber, bomberCombat, tank, tankCombat) == 100.0f);
 	CC_CHECK(tank.health == 400.0f);
@@ -145,6 +185,7 @@ void RunCombatTests()
 		squad.type = UnitType::RifleInfantry;
 		ApplyBaseStats(squad);
 		squad.health = 100.0f;
+		squad.armorType = ArmorType::STEEL; // AP deals 31.25 (31% of max HP)
 		CombatState squadCombat;
 		std::array<Vector2, 6> slots;
 		float scale = 1.0f;
@@ -152,5 +193,28 @@ void RunCombatTests()
 		ResolveAttack(marksman, marksmanCombat, squad, squadCombat); // ~25% of max HP through the matrix
 		CC_CHECK(SquadSlots(squad.type, 7, squad.health / 100.0f, slots, scale) == 4);
 		ResetActiveUnitConfigs();
+	}
+
+	// --- building hits scale by damage type through StructureEffectiveness ---
+	{
+		const DamageType damageTypes[] = { DamageType::KINETIC, DamageType::EXPLOSIVE,
+										   DamageType::ENERGY, DamageType::AP };
+		const float expectedDamage[] = { 5.0f, 15.0f, 10.0f, 7.5f };
+		for (int i = 0; i < 4; ++i)
+		{
+			Unit attacker;
+			attacker.attackPower = 10;
+			attacker.damageType = damageTypes[i];
+			attacker.cooldownTime = 2.5f;
+			CombatState attackerCombat;
+			Building building;
+			building.health = 400.0f;
+			const float dealt =
+				ResolveBuildingAttack(attacker, attackerCombat, building);
+			CC_CHECK(dealt == expectedDamage[i]);
+			CC_CHECK(building.health == 400.0f - expectedDamage[i]);
+			CC_CHECK(attackerCombat.cooldown == attacker.cooldownTime);
+			CC_CHECK(building.hitFlashTime == kHitFlashDuration);
+		}
 	}
 }

@@ -91,7 +91,8 @@ app/match: Menu, Skirmish
   attack-move/patrol/repair/heal issue
 - `UnitStats.h` - `BaseStats` table for 7 types + `ApplyBaseStats` (preserves
   position/team/selection)
-- `Combat.h` - 3x3 damage matrix (`Effectiveness`), `ResolveAttack` (scales, restarts
+- `Combat.h` - 4x3 damage matrix (`Effectiveness`) plus `StructureEffectiveness`
+  for building hits, `ResolveAttack` (scales, restarts
   cooldown, stamps hit-flash), hitboxes, crush rule, M13 `ResolveBuildingAttack`;
   M3 `ResolveStrike`/`ResolveStrikeGround` dispatch (direct vs arcing launch) +
   `UpdateProjectiles` ballistics (dodgeable AoE, no friendly fire, never persisted)

@@ -636,6 +636,11 @@ bool ParseDamageTypeName(const std::string &name, DamageType &out)
 		out = DamageType::ENERGY;
 		return true;
 	}
+	if (name == "AP")
+	{
+		out = DamageType::AP;
+		return true;
+	}
 	return false;
 }
 
@@ -665,6 +670,8 @@ const char *DamageTypeName(DamageType type)
 		return "EXPLOSIVE";
 	case DamageType::ENERGY:
 		return "ENERGY";
+	case DamageType::AP:
+		return "AP";
 	case DamageType::Count:
 		break;
 	}

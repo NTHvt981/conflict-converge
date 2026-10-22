@@ -10,6 +10,9 @@ class TileMap;
 
 float Effectiveness(DamageType dealt, ArmorType armor);
 
+// Structures have no armor type: damage-type multiplier for building hits.
+float StructureEffectiveness(DamageType dealt);
+
 // Seconds a victim flashes after taking a hit (overlay + number).
 inline constexpr float kHitFlashDuration = 0.25f;
 float ResolveAttack(Unit &attacker, CombatState &attackerCombat, Unit &defender,

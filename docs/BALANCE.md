@@ -11,29 +11,39 @@ unit roles and pacing, not faction asymmetry. All values from
 | Unit | Cost I/O | Build | HP | Armor | Dmg | Pow | Rng | CD | Spd | Sight | Role |
 |------|----------|-------|----|-------|-----|-----|-----|----|-----|-------|------|
 | Infantry | 25/0 | 2.5s | 100 | RUBBER | KINETIC | 10 | 128 | 1.0s | 64 | 320 | cheap line holder, scout (1.5x fog sight) |
-| AntiArmor | 30/5 | 2.6s | 90 | RUBBER | EXPLOSIVE | 25 | 128 | 1.5s | 64 | 320 | tank hunter (1.25x vs STEEL) |
-| Engineer | 40/0 | 2.8s | 60 | RUBBER | KINETIC | 2 | 64 | 1.0s | 64 | 256 | harvest + repair (15 HP/s, time only) |
+| AntiArmor | 30/5 | 2.6s | 90 | RUBBER | AP | 25 | 128 | 1.5s | 64 | 320 | tank hunter (1.25x vs STEEL) |
+| Engineer | 40/0 | 2.8s | 60 | RUBBER | KINETIC | 0 | 64 | 1.0s | 64 | 256 | harvest + repair (15 HP/s, time only) |
 | IFV | 80/20 | 3.6s | 200 | STEEL | KINETIC | 15 | 192 | 0.8s | 128 | 384 | fast scout/skirmisher (1.5x fog sight) |
 | Artillery | 120/40 | 4.4s | 150 | STEEL | EXPLOSIVE | 40 | 384 | 3.0s | 48 | 320 | siege; blind-fires into shroud, no penalty |
 | LightTank | 150/50 | 5.0s | 300 | STEEL | KINETIC | 20 | 192 | 1.2s | 96 | 320 | main battle tank |
-| HeavyTank | 250/100 | 7.0s | 500 | COMPOSITE | EXPLOSIVE | 35 | 224 | 1.8s | 64 | 320 | breakthrough (resists EXPLOSIVE 0.75x) |
+| HeavyTank | 250/100 | 7.0s | 500 | COMPOSITE | AP | 35 | 224 | 1.8s | 64 | 320 | breakthrough (AP: 0.5x vs COMPOSITE, so ENERGY counters it at 1.25x) |
 
 ## Damage matrix (attacker row x defender column)
 
 | | STEEL | RUBBER | COMPOSITE |
 |---|---|---|---|
-| KINETIC | 1.00 | 0.75 | 0.50 |
-| EXPLOSIVE | 1.25 | 1.00 | 0.75 |
-| ENERGY | 0.50 | 1.25 | 1.00 |
+| KINETIC | 1.00 | 1.00 | 0.60 |
+| EXPLOSIVE | 1.00 | 1.25 | 0.45 |
+| ENERGY | 0.50 | 1.00 | 1.25 |
+| AP | 1.25 | 0.75 | 0.50 |
 
-(ENERGY has no unit yet — reserved for future/tech.)
+Every row wins at least one column, so no damage type is a strictly better
+pick: EXPLOSIVE is the anti-infantry round (1.25x vs RUBBER, and the worst
+pick against COMPOSITE), AP is anti-armor (1.25x vs STEEL, over-penetrates
+RUBBER), ENERGY is anti-composite (1.25x, and steel sheds it), and KINETIC
+is the generalist with no strength and no weakness. `combat_tests.cpp`
+asserts the no-dominance property directly.
+
+Structures apply `StructureEffectiveness` to all building hits, including
+arcing shells: KINETIC 0.5, EXPLOSIVE 1.5, ENERGY 1.0, AP 0.75.
 
 ## Key TTKs (seconds, duel, no maneuver)
 
-- Infantry vs Infantry: ~14s. LightTank vs Infantry: ~8s.
-- AntiArmor vs LightTank: ~15s. AntiArmor vs HeavyTank: ~40s (needs focus fire).
-- LightTank vs LightTank: ~18s. HeavyTank vs HeavyTank: ~36s.
-- Artillery vs LightTank: ~18s (outranges 384 vs 192 — fires unanswered).
+- Infantry vs Infantry: ~10s. LightTank vs Infantry: ~5s.
+- AntiArmor vs LightTank: ~14s. AntiArmor vs HeavyTank: ~59s (needs focus fire).
+- LightTank vs LightTank: ~17s. HeavyTank vs HeavyTank: ~50s.
+- Artillery vs LightTank: ~21s (outranges 192 — fires unanswered).
+- Artillery vs Base: ~18s.
 
 ## Structures & economy
 
@@ -53,7 +63,7 @@ Harvest: 10 iron/s or 8 oil/s per Engineer on a live node. Starting funds:
 |------------|-----------|-----------|-------|----------|------|
 | Easy | 1 | 3 | 60s | 30s | Infantry |
 | Medium | 2 | 5 | 30s | 20s | Infantry x2 + LightTank |
-| Hard | 3 | 4 | 15s | 15s | Infantry + LightTank + Artillery + IFV + retreats |
+| Hard | 3 | 4 | 15s | 15s | Infantry + AntiArmor + LightTank + Artillery + IFV + retreats |
 
 ## Pass 2 (balance milestone): full ladder proof on a representative arena
 

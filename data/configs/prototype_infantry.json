@@ -3,7 +3,7 @@
   "stats": {
     "health": 100,
     "armorType": "RUBBER",
-    "damageType": "KINETIC",
+    "damageType": "ENERGY",
     "attackPower": 10,
     "attackRange": 128,
     "cooldownTime": 1,

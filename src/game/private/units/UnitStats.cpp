@@ -8,13 +8,13 @@ const UnitStats kTable[] = {
 	// IFV, Artillery, LightTank, HeavyTank, PrototypeInfantry, Medic
 	// (support: no attack, heals flesh instead).
 	{ 100.0f, ArmorType::RUBBER, DamageType::KINETIC, 10, 128, 1.0f, 64.0f, 320.0f },
-	{ 90.0f, ArmorType::RUBBER, DamageType::EXPLOSIVE, 25, 128, 1.5f, 64.0f, 320.0f },
+	{ 90.0f, ArmorType::RUBBER, DamageType::AP, 25, 128, 1.5f, 64.0f, 320.0f },
 	{ 60.0f, ArmorType::RUBBER, DamageType::KINETIC, 0, 64, 1.0f, 64.0f, 256.0f },
 	{ 200.0f, ArmorType::STEEL, DamageType::KINETIC, 15, 192, 0.8f, 128.0f, 384.0f },
 	{ 150.0f, ArmorType::STEEL, DamageType::EXPLOSIVE, 40, 384, 3.0f, 48.0f, 320.0f },
 	{ 300.0f, ArmorType::STEEL, DamageType::KINETIC, 20, 192, 1.2f, 96.0f, 320.0f },
-	{ 500.0f, ArmorType::COMPOSITE, DamageType::EXPLOSIVE, 35, 224, 1.8f, 64.0f, 320.0f },
-	{ 100.0f, ArmorType::RUBBER, DamageType::KINETIC, 10, 128, 1.0f, 64.0f, 320.0f },
+	{ 500.0f, ArmorType::COMPOSITE, DamageType::AP, 35, 224, 1.8f, 64.0f, 320.0f },
+	{ 100.0f, ArmorType::RUBBER, DamageType::ENERGY, 10, 128, 1.0f, 64.0f, 320.0f },
 	{ 60.0f, ArmorType::RUBBER, DamageType::KINETIC, 0, 0, 1.0f, 64.0f, 256.0f },
 };
 
