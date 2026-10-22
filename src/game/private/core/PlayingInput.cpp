@@ -188,18 +188,21 @@ const int &PlayingInput::AutoAddGroupBit() const
 	return autoAddGroupBit_;
 }
 
-void PlayingInput::Dispatch()
+void PlayingInput::Dispatch(bool pointerOverUi)
 {
-	HandleLeftPress();
-	HandleSelectDragRelease();
-	HandlePlaceDragRelease();
-	HandleRepairDragRelease();
-	HandleRightPan();
-	const bool wasPlacing = placingType_.has_value() || areaRepairMode_;
-	HandleRightPress();
-	const bool cancelledPlacement = input_.RightPressed() && wasPlacing;
-	HandleRightRelease(cancelledPlacement);
-	HandleLineDragRelease();
+	if (!pointerOverUi)
+	{
+		HandleLeftPress();
+		HandleSelectDragRelease();
+		HandlePlaceDragRelease();
+		HandleRepairDragRelease();
+		HandleRightPan();
+		const bool wasPlacing = placingType_.has_value() || areaRepairMode_;
+		HandleRightPress();
+		const bool cancelledPlacement = input_.RightPressed() && wasPlacing;
+		HandleRightRelease(cancelledPlacement);
+		HandleLineDragRelease();
+	}
 	HandleControlGroups();
 	HandlePlacementKeys();
 }
