@@ -29,6 +29,15 @@ void HaltSelection(Registry &registry)
 			orders.hasRepairOrder = false;
 			orders.repairTarget = kInvalidEntity;
 			orders.hasAttackGroundOrder = false;
+			orders.hasPatrol = false;
+			orders.patrolToB = true;
+			orders.hasLoadOrder = false;
+			orders.loadTarget = kInvalidEntity;
+			orders.hasUnloadOrder = false;
+			if (orders.stance == Stance::Patrol)
+			{
+				orders.stance = Stance::Guard;
+			}
 			mover.speedCapPixelsPerSec = -1.0f;
 			orders.orderQueue.clear();
 			combat.phase = AttackPhase::Ready;

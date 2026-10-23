@@ -38,6 +38,22 @@ Entity AddCommandUnit(Registry &registry, UnitType type, bool selected)
 
 void RunArmedAbilityTests();
 
+namespace
+{
+
+void StepCommandUnits(Registry &registry, TileMap &map, int frames)
+{
+	for (int i = 0; i < frames; ++i)
+	{
+		registry.Each<Unit>([&](Entity id, Unit &unit) {
+			(void)unit;
+			UpdateUnit(id, registry, map, 1.0f / 60.0f);
+		});
+	}
+}
+
+} // namespace
+
 void RunUnitCommandsTests()
 {
 	// --- stance applies to every selected unit ---
@@ -123,23 +139,66 @@ void RunUnitCommandsTests()
 		const Entity tank = AddCommandUnit(registry, UnitType::LightTank, false);
 		CC_CHECK(IssueSelectionHeal(registry, map, &occ, tank, false) == 0);
 	}
-}
 
-namespace
-{
-
-void StepCommandUnits(Registry &registry, TileMap &map, int frames)
-{
-	for (int i = 0; i < frames; ++i)
+	// --- halt cancels a transport load and the next frame does not re-issue it ---
 	{
-		registry.Each<Unit>([&](Entity id, Unit &unit) {
-			(void)unit;
-			UpdateUnit(id, registry, map, 1.0f / 60.0f);
-		});
+		Registry registry;
+		TileMap map(20, 15);
+		const Entity carrier = AddCommandUnit(registry, UnitType::IFV, true);
+		const Entity rider = AddCommandUnit(registry, UnitType::RifleInfantry, false);
+		Cargo cargo;
+		cargo.capacity = 1;
+		registry.Add(carrier, cargo);
+		registry.Get<Unit>(carrier)->position = { 64.0f, 64.0f };
+		registry.Get<Unit>(rider)->position = { 512.0f, 384.0f };
+		IssueLoadOrder(*registry.Get<Unit>(carrier), GetOrders(registry, carrier),
+					   GetMover(registry, carrier), rider);
+		CC_CHECK(GetOrders(registry, carrier).hasLoadOrder);
+		HaltSelection(registry);
+		CC_CHECK(!GetOrders(registry, carrier).hasLoadOrder);
+		StepCommandUnits(registry, map, 1);
+		CC_CHECK(!FindMover(registry, carrier)->hasMoveOrder);
+	}
+
+	// --- halt cancels a transport unload and the next frame does not re-issue it ---
+	{
+		Registry registry;
+		TileMap map(20, 15);
+		const Entity carrier = AddCommandUnit(registry, UnitType::IFV, true);
+		const Entity rider = AddCommandUnit(registry, UnitType::RifleInfantry, false);
+		Cargo cargo;
+		cargo.capacity = 1;
+		cargo.passengers.push_back(rider);
+		registry.Add(carrier, cargo);
+		registry.Get<Unit>(carrier)->position = { 64.0f, 64.0f };
+		IssueUnloadOrder(*registry.Get<Unit>(carrier), GetOrders(registry, carrier),
+						 GetMover(registry, carrier), map, { 512.0f, 384.0f });
+		CC_CHECK(GetOrders(registry, carrier).hasUnloadOrder);
+		HaltSelection(registry);
+		CC_CHECK(!GetOrders(registry, carrier).hasUnloadOrder);
+		StepCommandUnits(registry, map, 1);
+		CC_CHECK(!FindMover(registry, carrier)->hasMoveOrder);
+	}
+
+	// --- halt ends a patrol and drops the stance to guard ---
+	{
+		Registry registry;
+		TileMap map(20, 15);
+		OccupancyGrid occ(20, 15);
+		const Entity id = AddCommandUnit(registry, UnitType::RifleInfantry, true);
+		registry.Get<Unit>(id)->position = { 64.0f, 64.0f };
+		CC_CHECK(IssueSelectionPatrol(registry, map, &occ, { 512.0f, 384.0f }, false) == 1);
+		CC_CHECK(GetOrders(registry, id).hasPatrol);
+		HaltSelection(registry);
+		CC_CHECK(!GetOrders(registry, id).hasPatrol);
+		CC_CHECK(GetOrders(registry, id).stance == Stance::Guard);
+		StepCommandUnits(registry, map, 10);
+		CC_CHECK(!GetOrders(registry, id).hasPatrol);
+		CC_CHECK(GetOrders(registry, id).stance == Stance::Guard);
+		CC_CHECK(!FindMover(registry, id)->hasMoveOrder && !FindMover(registry, id)->hasPath);
+		CC_CHECK(registry.Get<Unit>(id)->state == UnitState::Idle);
 	}
 }
-
-} // namespace
 
 void RunAutoRepairTests()
 {
