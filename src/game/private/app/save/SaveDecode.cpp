@@ -39,7 +39,8 @@ constexpr std::int32_t kMaxFogTeams = 16;
 constexpr int kMaxTeamID = 1;
 
 static_assert(static_cast<int>(ArmorType::Count) == 3, "ArmorType grew: review save decode");
-static_assert(static_cast<int>(DamageType::Count) == 3, "DamageType grew: review save decode");
+static_assert(static_cast<int>(DamageType::Count) == 4,
+	"DamageType grew (AP added): save decode reviewed");
 static_assert(static_cast<int>(UnitType::Count) == 9, "UnitType grew: review save decode");
 static_assert(static_cast<int>(UnitState::Count) == 3, "UnitState grew: review save decode");
 static_assert(static_cast<int>(AttackPhase::Count) == 3, "AttackPhase grew: review save decode");

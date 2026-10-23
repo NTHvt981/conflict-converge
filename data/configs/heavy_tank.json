@@ -3,7 +3,7 @@
   "stats": {
     "health": 500,
     "armorType": "COMPOSITE",
-    "damageType": "EXPLOSIVE",
+    "damageType": "AP",
     "attackPower": 35,
     "attackRange": 224,
     "cooldownTime": 1.8,

@@ -38,7 +38,10 @@ void RunUnitStatsTests()
 	CC_CHECK(BaseStats(UnitType::HeavyTank).health == 500.0f);
 	CC_CHECK(BaseStats(UnitType::Artillery).attackRange == 384);
 	CC_CHECK(BaseStats(UnitType::IFV).speed == 128.0f);
-	CC_CHECK(BaseStats(UnitType::AntiArmorInfantry).damageType == DamageType::EXPLOSIVE);
+	CC_CHECK(BaseStats(UnitType::AntiArmorInfantry).damageType == DamageType::AP);
+	CC_CHECK(BaseStats(UnitType::LightTank).damageType == DamageType::KINETIC);
+	CC_CHECK(BaseStats(UnitType::HeavyTank).damageType == DamageType::AP);
+	CC_CHECK(BaseStats(UnitType::PrototypeInfantry).damageType == DamageType::ENERGY);
 	CC_CHECK(BaseStats(UnitType::HeavyTank).armorType == ArmorType::COMPOSITE);
 	// Support types cannot attack (heal/repair instead).
 	CC_CHECK(BaseStats(UnitType::Medic).attackPower == 0);

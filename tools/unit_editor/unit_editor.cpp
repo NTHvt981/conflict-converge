@@ -12,7 +12,7 @@ namespace
 
 const char *kTypeList = "RifleInfantry;AntiArmorInfantry;Engineer;Medic;IFV;Artillery;LightTank;HeavyTank;PrototypeInfantry";
 const char *kArmorList = "STEEL;RUBBER;COMPOSITE";
-const char *kDamageList = "KINETIC;EXPLOSIVE;ENERGY";
+const char *kDamageList = "KINETIC;EXPLOSIVE;ENERGY;AP";
 
 // Canonical save path (snake_case stems live in UnitConfigFilename — the
 // single copy, so the editor can never drift from the loader).
@@ -28,7 +28,7 @@ int ArmorIndex(ArmorType armor)
 
 int DamageIndex(DamageType damage)
 {
-	return damage == DamageType::EXPLOSIVE ? 1 : (damage == DamageType::ENERGY ? 2 : 0);
+	return static_cast<int>(damage);
 }
 
 void SyncBuffers(EditorState &editor)
@@ -148,6 +148,10 @@ void DrawStatsTab(EditorState &editor)
 	else if (editor.damageActive == 2)
 	{
 		config.stats.damageType = DamageType::ENERGY;
+	}
+	else if (editor.damageActive == 3)
+	{
+		config.stats.damageType = DamageType::AP;
 	}
 	else
 	{

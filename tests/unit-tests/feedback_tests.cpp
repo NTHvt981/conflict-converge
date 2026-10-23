@@ -48,7 +48,7 @@ void RunFeedbackTests()
 	// --- matrix-scaled number is what gets stamped ---
 	{
 		Unit gun = MakeGun();
-		gun.damageType = DamageType::ENERGY; // ENERGY vs STEEL: 0.5x
+		gun.damageType = DamageType::ENERGY; // ENERGY vs STEEL: 0.50x
 		CombatState gunCombat;
 		Unit victim = MakeVictim();
 		CombatState victimCombat;

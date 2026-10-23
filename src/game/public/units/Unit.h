@@ -35,6 +35,7 @@ enum class DamageType
 	KINETIC,
 	EXPLOSIVE,
 	ENERGY,
+	AP,
 	Count
 };
 

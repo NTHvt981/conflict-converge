@@ -6,12 +6,19 @@
 
 float Effectiveness(DamageType dealt, ArmorType armor)
 {
-	static constexpr float kMatrix[3][3] = {
-		{ 1.00f, 0.75f, 0.50f },
-		{ 1.25f, 1.00f, 0.75f },
-		{ 0.50f, 1.25f, 1.00f },
+	static constexpr float kMatrix[4][3] = {
+		{ 1.00f, 1.00f, 0.60f }, // KINETIC: general purpose rounds, no strong matchup
+		{ 1.00f, 1.25f, 0.45f }, // EXPLOSIVE: anti-infantry, poor against laminate
+		{ 0.50f, 1.00f, 1.25f }, // ENERGY: anti-composite, steel sheds it
+		{ 1.25f, 0.75f, 0.50f }, // AP: anti-armor, over-penetrates flesh
 	};
 	return kMatrix[static_cast<int>(dealt)][static_cast<int>(armor)];
+}
+
+float StructureEffectiveness(DamageType dealt)
+{
+	static constexpr float kStructure[4] = { 0.50f, 1.50f, 1.00f, 0.75f };
+	return kStructure[static_cast<int>(dealt)];
 }
 
 float ResolveAttack(Unit &attacker, CombatState &attackerCombat, Unit &defender,
@@ -37,7 +44,8 @@ bool IsVehicleHull(UnitType attackerType)
 
 float ResolveBuildingAttack(Unit &attacker, CombatState &attackerCombat, Building &building)
 {
-	const float effective = static_cast<float>(attacker.attackPower);
+	const float effective = static_cast<float>(attacker.attackPower) *
+							StructureEffectiveness(attacker.damageType);
 	building.health -= effective;
 	building.hitFlashTime = kHitFlashDuration;
 	attackerCombat.cooldown = attacker.cooldownTime;
@@ -226,7 +234,8 @@ void UpdateProjectiles(Registry &registry, TileMap &map, float dtSeconds)
 			{
 				continue;
 			}
-			building->health -= static_cast<float>(shell->attackPower);
+			building->health -= static_cast<float>(shell->attackPower) *
+								StructureEffectiveness(shell->damageType);
 			if (building->health <= 0.0f)
 			{
 				DemolishBuilding(registry, map, structureId);
