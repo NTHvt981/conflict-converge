@@ -106,6 +106,25 @@ void RunSubsystemTests()
 		CC_CHECK(!systems.Has<ProbeSubsystem>());
 	}
 
+	{
+		std::vector<std::string> log;
+		Subsystems systems;
+		ProbeSubsystem &first = systems.Add<ProbeSubsystem>(&log, "first");
+		ProbeSubsystem &duplicate = systems.Add<ProbeSubsystem>(&log, "duplicate");
+		ProbeSubsystem &keyed = systems.AddKeyed<ProbeSubsystem>("probe", &log, "keyed");
+		ProbeSubsystem &keyedDuplicate = systems.AddKeyed<ProbeSubsystem>("probe", &log, "keyed-duplicate");
+		CC_CHECK(&duplicate == &first);
+		CC_CHECK(&keyedDuplicate == &keyed);
+		CC_CHECK(systems.Get<ProbeSubsystem>().Name() == "first");
+		CC_CHECK(systems.GetKeyed<ProbeSubsystem>("probe").Name() == "keyed");
+		CC_CHECK(systems.Size() == 2);
+
+		systems.InitAll();
+		CC_CHECK(log.size() == 2);
+		CC_CHECK(log[0] == "init:first");
+		CC_CHECK(log[1] == "init:keyed");
+	}
+
 	// --- ResetForMatch fans out to every subsystem in order ---
 	{
 		std::vector<std::string> log;

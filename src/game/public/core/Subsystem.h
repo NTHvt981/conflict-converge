@@ -93,7 +93,11 @@ inline Subsystem &Subsystems::Insert(std::type_index type, const std::string &na
 	std::unique_ptr<Subsystem> owned)
 {
 	CC_ASSERT(owned != nullptr);
-	CC_ASSERT(Find(type, name) == nullptr);
+	const auto existing = index_.find(Key(type, name));
+	if (existing != index_.end())
+	{
+		return *existing->second;
+	}
 	order_.push_back(std::move(owned));
 	Subsystem *raw = order_.back().get();
 	index_.emplace(Key(type, name), raw);
