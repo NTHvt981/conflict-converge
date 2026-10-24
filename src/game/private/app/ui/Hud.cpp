@@ -1,5 +1,6 @@
 #include "app/ui/Hud.h"
 
+#include <array>
 #include <cstdio>
 
 #include "economy/Building.h"
@@ -92,6 +93,101 @@ float BuildingHealthFraction(const Building &building)
 		return 0.0f;
 	}
 	return fraction >= 1.0f ? 1.0f : fraction;
+}
+
+std::string BuildingSummary(const Building &building)
+{
+	char buf[128];
+	std::snprintf(buf, sizeof(buf), "%s  HP %.0f/%.0f", BuildingTypeName(building.type), building.health,
+				  building.maxHealth);
+	return buf;
+}
+
+std::string SelectionLineText(const Registry &registry)
+{
+	Entity selectedUnit = kInvalidEntity;
+	int unitCount = 0;
+	registry.Each<Unit>([&](Entity entity, const Unit &unit) {
+		if (!unit.isSelected)
+		{
+			return;
+		}
+		if (selectedUnit == kInvalidEntity)
+		{
+			selectedUnit = entity;
+		}
+		++unitCount;
+	});
+	if (unitCount > 0)
+	{
+		const Unit *unit = registry.Get<Unit>(selectedUnit);
+		if (unit == nullptr)
+		{
+			return "No selection";
+		}
+		if (unitCount > 1)
+		{
+			char buf[64];
+			std::snprintf(buf, sizeof(buf), "%d units selected", unitCount);
+			return buf;
+		}
+		return SelectionSummary(*unit);
+	}
+
+	std::array<int, static_cast<size_t>(BuildingType::Count)> counts{};
+	int buildingCount = 0;
+	int typeCount = 0;
+	const Building *only = nullptr;
+	registry.Each<Building>([&](Entity, const Building &building) {
+		if (!building.isSelected)
+		{
+			return;
+		}
+		if (buildingCount == 0)
+		{
+			only = &building;
+		}
+		++counts[static_cast<size_t>(building.type)];
+		++buildingCount;
+	});
+	if (buildingCount == 0 || only == nullptr)
+	{
+		return "No selection";
+	}
+	if (buildingCount == 1)
+	{
+		return BuildingSummary(*only);
+	}
+	for (const int count : counts)
+	{
+		if (count > 0)
+		{
+			++typeCount;
+		}
+	}
+	if (typeCount > 2)
+	{
+		char buf[64];
+		std::snprintf(buf, sizeof(buf), "%d buildings selected", buildingCount);
+		return buf;
+	}
+	std::string line;
+	for (size_t i = 0; i < counts.size(); ++i)
+	{
+		if (counts[i] == 0)
+		{
+			continue;
+		}
+		if (!line.empty())
+		{
+			line += ", ";
+		}
+		char buf[64];
+		std::snprintf(buf, sizeof(buf), "%d %s", counts[i],
+					  BuildingTypeName(static_cast<BuildingType>(i)));
+		line += buf;
+	}
+	return line;
 }
 
 namespace

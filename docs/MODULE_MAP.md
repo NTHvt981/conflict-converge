@@ -147,7 +147,8 @@ app/match: Menu, Skirmish
   height, periodic refresh, aspect-preserved world transform with black-bar
   letterbox, viewport box, M13 inverse (`MinimapToWorld`/`Contains`)
 - `Hud.h` - Pure text builders (`UnitTypeName`, `FormatResources`, `SelectionSummary`,
-  `ShortcutHintLines`, production category/tab orders, `AbilitiesForSelection`
+  `BuildingSummary`, `SelectionLineText` selection line, `ShortcutHintLines`,
+  production category/tab orders, `AbilitiesForSelection`
   panel data); the RmlUi HUD owns the panels
 - `Art.h` - M12 sprites + particles (`data/sprites/` via `tools/gen_sprites.py`) + tank
   body/head layered atlas art; `Init(false)`
