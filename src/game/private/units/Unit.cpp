@@ -360,6 +360,8 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
 		}
 	});
 
+	PumpYieldHandshake(registry, map, occ, dtSeconds);
+
 	registry.Each<Unit>([&](Entity id, Unit &) {
 		UpdateUnit(id, registry, map, dtSeconds, fog, &occ, &reservedDamage);
 	});

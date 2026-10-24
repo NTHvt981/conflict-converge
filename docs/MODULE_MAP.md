@@ -82,7 +82,9 @@ app/match: Menu, Skirmish
   mutates), stances, attack-move/patrol/repair orders, hit-flash fields, `SeparateUnits`
   overlap avoidance. Fwd-declares `TileMap`; never include `Pathfinder.h` from here.
   Gimmick drivers: `ResolveCrush`, turret traverse + fire-gate in `EngageTarget`,
-  player-only `Load`/`Unload` orders (`CanLoadTarget`/`BoardTransport`/`UnloadTransport`)
+  player-only `Load`/`Unload` orders (`CanLoadTarget`/`BoardTransport`/`UnloadTransport`),
+  `PumpYieldHandshake` (a mover blocked by a freely idle friendly asks it to step one
+  tile aside, then resumes its own path once the tile clears; 3s timeout)
 - `UnitInternal.h` - Helpers shared by the Unit TUs only (`UnitOrders`/`UnitCombat`/
   `UnitRepair`/`UnitMovement`/`UnitTransport` + `Unit.cpp`): cross-TU targets, turret aim,
   repair aim, order-queue advance, `UpdateAttackPhases` template. Not general API.

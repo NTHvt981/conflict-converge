@@ -23,7 +23,8 @@ enum class StepResult
 
 StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &map, cc::Vec2 &outNext,
 					  OccupancyGrid *occ = nullptr, Entity self = 0, std::uint32_t selfGen = 0,
-					  int footprintW = 1, int footprintH = 1)
+					  int footprintW = 1, int footprintH = 1,
+					  cc::IVec2 *blockedTile = nullptr)
 {
 	if (step <= 0.0f)
 	{
@@ -38,7 +39,20 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
 		const cc::IVec2 targetTile = cc::WorldToTile(target);
 		if (targetTile != fromTile && map.IsBlocked(targetTile))
 		{
+			if (blockedTile)
+			{
+				*blockedTile = targetTile;
+			}
 			return StepResult::Blocked;
+		}
+		if (occ != nullptr && targetTile != fromTile &&
+			!occ->CanEnter(map, targetTile, footprintW, footprintH, self, selfGen))
+		{
+			if (blockedTile)
+			{
+				*blockedTile = targetTile;
+			}
+			return StepResult::BlockedUnit;
 		}
 		outNext = target;
 		return StepResult::Arrived;
@@ -49,12 +63,20 @@ StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &
 	const cc::IVec2 to = cc::WorldToTile(next);
 	if (map.IsBlocked(to) && to != from)
 	{
+		if (blockedTile)
+		{
+			*blockedTile = to;
+		}
 		return StepResult::Blocked;
 	}
 	if (occ != nullptr && to != from)
 	{
 		if (!occ->CanEnter(map, to, footprintW, footprintH, self, selfGen))
 		{
+			if (blockedTile)
+			{
+				*blockedTile = to;
+			}
 			return StepResult::BlockedUnit;
 		}
 	}
@@ -165,6 +187,114 @@ struct TileHash
 	}
 };
 
+bool FreelyIdle(const Registry &registry, Entity entity)
+{
+	const Unit *unit = registry.Get<Unit>(entity);
+	if (unit == nullptr || unit->health <= 0.0f || unit->state != UnitState::Idle ||
+		IsEmbarked(registry, entity))
+	{
+		return false;
+	}
+	if (const Mover *mover = registry.Get<Mover>(entity))
+	{
+		if (mover->hasMoveOrder || mover->hasPath || mover->yielding)
+		{
+			return false;
+		}
+	}
+	if (const Orders *orders = registry.Get<Orders>(entity))
+	{
+		if (orders->stance == Stance::Hold || orders->hasPatrol || orders->hasRepairOrder ||
+			orders->hasLoadOrder || orders->hasUnloadOrder || orders->hasAttackGroundOrder ||
+			!orders->orderQueue.empty())
+		{
+			return false;
+		}
+	}
+	if (const CombatState *combat = registry.Get<CombatState>(entity))
+	{
+		if (combat->target != kInvalidEntity)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool OnTile(const OccupancyGrid &occ, cc::IVec2 tile, Entity entity)
+{
+	return occ.InBounds(tile) && occ.GetUnit(tile).entity == entity;
+}
+
+bool FindYieldTile(const TileMap &map, const OccupancyGrid &occ, const Mover &requester,
+				   cc::IVec2 from, Entity self, std::uint32_t selfGen, int footprintW,
+				   int footprintH, cc::IVec2 &out)
+{
+	const cc::IVec2 offsets[8] = { { 0, -1 }, { -1, 0 },  { 1, 0 },  { 0, 1 },
+								   { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } };
+	const cc::IVec2 requesterGoal = cc::WorldToTile(cc::ToGlm(requester.moveTarget));
+	cc::IVec2 requesterTile{ -1, -1 };
+	if (requester.pathNext > 0 && requester.pathNext <= requester.path.size())
+	{
+		requesterTile = requester.path[requester.pathNext - 1];
+	}
+	for (const cc::IVec2 &offset : offsets)
+	{
+		const cc::IVec2 candidate{ from.x + offset.x, from.y + offset.y };
+		if (candidate == from || candidate == requesterGoal || candidate == requesterTile)
+		{
+			continue;
+		}
+		if (!occ.CanEnter(map, candidate, footprintW, footprintH, self, selfGen))
+		{
+			continue;
+		}
+		bool onPath = false;
+		for (std::size_t i = requester.pathNext; i < requester.path.size(); ++i)
+		{
+			if (requester.path[i] == candidate)
+			{
+				onPath = true;
+				break;
+			}
+		}
+		if (onPath)
+		{
+			continue;
+		}
+		out = candidate;
+		return true;
+	}
+	return false;
+}
+
+bool TryBeginYield(Unit &unit, Mover &mover, const OccupancyGrid *occ, cc::IVec2 blockedTile,
+				   Entity self)
+{
+	if (occ == nullptr)
+	{
+		return false;
+	}
+	if (mover.awaitingClearBlocker != kInvalidEntity)
+	{
+		return true;
+	}
+	const OccEntry entry = occ->GetUnit(blockedTile);
+	if (entry.entity == kOccEmpty || entry.entity == self || entry.entity == mover.yieldDeclined)
+	{
+		return false;
+	}
+	if (mover.yieldRequestBlocker == entry.entity && mover.yieldRequestTile == blockedTile)
+	{
+		return false;
+	}
+	mover.yieldRequestBlocker = entry.entity;
+	mover.yieldRequestTile = blockedTile;
+	mover.blockedTime = 0.0f;
+	unit.velocity = { 0.0f, 0.0f };
+	return true;
+}
+
 }
 
 Facing FacingFromVelocity(Vector2 velocity)
@@ -205,8 +335,10 @@ void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &c
 		const cc::IVec2 node = mover.path[mover.pathNext];
 		const cc::Vec2 waypoint = cc::TileToWorld(node.x, node.y);
 		cc::Vec2 next = cc::ToGlm(unit.position);
+		cc::IVec2 blockedTile{ -1, -1 };
 		switch (StepToward(cc::ToGlm(unit.position), waypoint, step, map, next,
-						   occ, self, selfGen, unit.footprintWidth, unit.footprintHeight))
+						   occ, self, selfGen, unit.footprintWidth, unit.footprintHeight,
+						   &blockedTile))
 		{
 		case StepResult::Arrived:
 			unit.position = cc::ToRaylib(waypoint);
@@ -226,6 +358,10 @@ void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &c
 			OnOrderCancelled(orders);
 			return;
 		case StepResult::BlockedUnit:
+			if (TryBeginYield(unit, mover, occ, blockedTile, self))
+			{
+				return;
+			}
 			if (TryBlockedRetry(unit, orders, mover, map, occ, self, selfGen, dtSeconds))
 			{
 				return;
@@ -244,8 +380,10 @@ void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &c
 	}
 
 	cc::Vec2 next = cc::ToGlm(unit.position);
+	cc::IVec2 blockedTile{ -1, -1 };
 	switch (StepToward(cc::ToGlm(unit.position), cc::ToGlm(mover.moveTarget), step, map, next,
-					   occ, self, selfGen, unit.footprintWidth, unit.footprintHeight))
+					   occ, self, selfGen, unit.footprintWidth, unit.footprintHeight,
+					   &blockedTile))
 	{
 	case StepResult::Arrived:
 		Arrive(unit, mover, cc::ToGlm(mover.moveTarget));
@@ -256,6 +394,10 @@ void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &c
 		OnOrderCancelled(orders);
 		return;
 	case StepResult::BlockedUnit:
+		if (TryBeginYield(unit, mover, occ, blockedTile, self))
+		{
+			return;
+		}
 		if (TryBlockedRetry(unit, orders, mover, map, occ, self, selfGen, dtSeconds))
 		{
 			return;
@@ -271,6 +413,144 @@ void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &c
 		unit.facing = FacingFromVelocity(unit.velocity);
 		unit.position = cc::ToRaylib(next);
 		return;
+	}
+}
+
+void PumpYieldHandshake(Registry &registry, const TileMap &map, OccupancyGrid &occ,
+						float dtSeconds)
+{
+	constexpr float kYieldTimeoutSeconds = 3.0f;
+
+	registry.Each<Mover>([&](Entity, Mover &mover) {
+		if (mover.yielding && !mover.hasMoveOrder && !mover.hasPath)
+		{
+			mover.yielding = false;
+		}
+	});
+
+	std::vector<Entity> requesters;
+	registry.Each<Unit>([&](Entity id, const Unit &) {
+		const Mover *mover = FindMover(registry, id);
+		if (mover != nullptr && mover->yieldRequestBlocker != kInvalidEntity)
+		{
+			requesters.push_back(id);
+		}
+	});
+	std::sort(requesters.begin(), requesters.end());
+
+	std::vector<Entity> claimed;
+	for (Entity id : requesters)
+	{
+		Unit *unit = registry.Get<Unit>(id);
+		Mover *mover = registry.Get<Mover>(id);
+		if (unit == nullptr || mover == nullptr)
+		{
+			continue;
+		}
+		const Entity blocker = mover->yieldRequestBlocker;
+		const cc::IVec2 tile = mover->yieldRequestTile;
+		mover->yieldRequestBlocker = kInvalidEntity;
+		mover->yieldRequestTile = { -1, -1 };
+		auto decline = [&] { mover->yieldDeclined = blocker; };
+		if (unit->health <= 0.0f || IsEmbarked(registry, id) || blocker == kInvalidEntity)
+		{
+			continue;
+		}
+		if (std::find(claimed.begin(), claimed.end(), blocker) != claimed.end())
+		{
+			decline();
+			continue;
+		}
+		Unit *aside = registry.Get<Unit>(blocker);
+		Mover *asideMover = registry.Get<Mover>(blocker);
+		if (aside == nullptr || asideMover == nullptr || aside->health <= 0.0f)
+		{
+			decline();
+			continue;
+		}
+		if (aside->teamID != unit->teamID)
+		{
+			decline();
+			continue;
+		}
+		if (!OnTile(occ, tile, blocker))
+		{
+			decline();
+			continue;
+		}
+		if (!FreelyIdle(registry, blocker))
+		{
+			decline();
+			continue;
+		}
+		cc::IVec2 side{ -1, -1 };
+		if (!FindYieldTile(map, occ, *mover, tile, blocker, registry.Generation(blocker),
+						   aside->footprintWidth, aside->footprintHeight, side))
+		{
+			decline();
+			continue;
+		}
+		Orders &asideOrders = GetOrders(registry, blocker);
+		IssuePathOrderFootprint(*aside, asideOrders, *asideMover, map, occ,
+								cc::ToRaylib(cc::TileToWorld(side.x, side.y)), blocker,
+								registry.Generation(blocker));
+		if (asideMover->path.empty() || !asideMover->hasMoveOrder)
+		{
+			asideMover->hasMoveOrder = false;
+			asideMover->hasPath = false;
+			asideMover->path.clear();
+			asideMover->pathNext = 0;
+			asideMover->moveTarget = {};
+			decline();
+			continue;
+		}
+		asideMover->yielding = true;
+		claimed.push_back(blocker);
+		mover->awaitingClearBlocker = blocker;
+		mover->awaitingClearTile = tile;
+		mover->awaitingClearTime = 0.0f;
+		mover->blockedTime = 0.0f;
+	}
+
+	std::vector<Entity> waiting;
+	registry.Each<Unit>([&](Entity id, const Unit &) {
+		const Mover *mover = FindMover(registry, id);
+		if (mover != nullptr && mover->awaitingClearBlocker != kInvalidEntity)
+		{
+			waiting.push_back(id);
+		}
+	});
+	for (Entity id : waiting)
+	{
+		Mover *mover = registry.Get<Mover>(id);
+		Unit *unit = registry.Get<Unit>(id);
+		if (mover == nullptr || unit == nullptr)
+		{
+			continue;
+		}
+		const Entity blocker = mover->awaitingClearBlocker;
+		Unit *aside = registry.Get<Unit>(blocker);
+		Mover *asideMover = registry.Get<Mover>(blocker);
+		mover->awaitingClearTime += dtSeconds;
+		const bool bodyGone =
+			aside == nullptr || aside->health <= 0.0f || !OnTile(occ, mover->awaitingClearTile, blocker);
+		const bool asideIdle = aside != nullptr && aside->state == UnitState::Idle &&
+							   (asideMover == nullptr ||
+								(!asideMover->hasMoveOrder && !asideMover->hasPath));
+		if (bodyGone && asideIdle)
+		{
+			mover->awaitingClearBlocker = kInvalidEntity;
+			mover->awaitingClearTime = 0.0f;
+			mover->blockedTime = 0.0f;
+			mover->blockedRepaths = 0;
+			continue;
+		}
+		if (mover->awaitingClearTime > kYieldTimeoutSeconds || (asideIdle && !bodyGone))
+		{
+			mover->awaitingClearBlocker = kInvalidEntity;
+			mover->awaitingClearTime = 0.0f;
+			mover->yieldDeclined = blocker;
+		}
 	}
 }
 

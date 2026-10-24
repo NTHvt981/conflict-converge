@@ -70,6 +70,7 @@ void RunFootprintTests();
 void RunSpriteDataTests();
 void RunUnitConfigTests();
 void RunMovementStallTests();
+void RunYieldTests();
 void RunUnitStackResolutionTests();
 void RunPrototypeSandboxMovementTests();
 void RunFormationStackMoveTests();
@@ -151,6 +152,7 @@ const Suite kSuites[] = {
 	{ "SpriteData", RunSpriteDataTests },
 	{ "UnitConfig", RunUnitConfigTests },
 	{ "MovementStall", RunMovementStallTests },
+	{ "Yield", RunYieldTests },
 	{ "UnitStackResolution", RunUnitStackResolutionTests },
 	{ "PrototypeSandboxMovement", RunPrototypeSandboxMovementTests },
 	{ "FormationStackMove", RunFormationStackMoveTests },
