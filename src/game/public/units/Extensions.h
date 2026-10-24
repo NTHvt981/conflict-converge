@@ -131,6 +131,13 @@ struct Mover
 	float blockedTime = 0.0f; // blocked-move retry accounting
 	int blockedRepaths = 0;
 	float speedCapPixelsPerSec = -1.0f; // slowest-speed cap; -1 = uncapped
+	Entity yieldRequestBlocker = kInvalidEntity;
+	cc::IVec2 yieldRequestTile{ -1, -1 };
+	Entity awaitingClearBlocker = kInvalidEntity;
+	cc::IVec2 awaitingClearTile{ -1, -1 };
+	float awaitingClearTime = 0.0f;
+	bool yielding = false;
+	Entity yieldDeclined = kInvalidEntity;
 };
 
 inline Mover &GetMover(Registry &registry, Entity entity)

@@ -93,6 +93,12 @@ void ClearOrders(Unit &unit, Orders &orders, Mover &mover)
 	orders.loadTarget = kInvalidEntity;
 	orders.hasUnloadOrder = false;
 	mover.speedCapPixelsPerSec = -1.0f;
+	mover.yieldRequestBlocker = kInvalidEntity;
+	mover.yieldRequestTile = { -1, -1 };
+	mover.awaitingClearBlocker = kInvalidEntity;
+	mover.awaitingClearTile = { -1, -1 };
+	mover.awaitingClearTime = 0.0f;
+	mover.yieldDeclined = kInvalidEntity;
 }
 
 void IssueAttackGroundOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,

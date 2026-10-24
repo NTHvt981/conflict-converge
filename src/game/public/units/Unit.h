@@ -234,6 +234,9 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 
 void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &occ);
 
+void PumpYieldHandshake(Registry &registry, const TileMap &map, OccupancyGrid &occ,
+						float dtSeconds);
+
 // G3 crush: a `crushesFlesh` unit overlapping an enemy foot unit kills it
 // instead of pushing. Team-checked (no friendly crush); kills resolve before
 // occupancy so the tile frees. Vehicles/buildings are never crushed.
