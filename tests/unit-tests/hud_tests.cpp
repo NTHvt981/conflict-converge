@@ -278,6 +278,18 @@ void RunHudSelectionLineTests()
 		CC_CHECK(SelectionLineText(registry) == "3 buildings selected");
 	}
 
+	// --- a single selected type still groups ---
+	{
+		Registry registry;
+		const Entity campA = AddHudBuilding(registry, BuildingType::Bootcamp);
+		const Entity campB = AddHudBuilding(registry, BuildingType::Bootcamp);
+		const Entity campC = AddHudBuilding(registry, BuildingType::Bootcamp);
+		registry.Get<Building>(campA)->isSelected = true;
+		registry.Get<Building>(campB)->isSelected = true;
+		registry.Get<Building>(campC)->isSelected = true;
+		CC_CHECK(SelectionLineText(registry) == "3 Bootcamp");
+	}
+
 	// --- a selected unit wins over selected buildings ---
 	{
 		Registry registry;

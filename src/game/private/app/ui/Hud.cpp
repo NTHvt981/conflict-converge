@@ -103,74 +103,27 @@ std::string BuildingSummary(const Building &building)
 	return buf;
 }
 
-std::string SelectionLineText(const Registry &registry)
+namespace
 {
-	Entity selectedUnit = kInvalidEntity;
-	int unitCount = 0;
-	registry.Each<Unit>([&](Entity entity, const Unit &unit) {
-		if (!unit.isSelected)
-		{
-			return;
-		}
-		if (selectedUnit == kInvalidEntity)
-		{
-			selectedUnit = entity;
-		}
-		++unitCount;
-	});
-	if (unitCount > 0)
-	{
-		const Unit *unit = registry.Get<Unit>(selectedUnit);
-		if (unit == nullptr)
-		{
-			return "No selection";
-		}
-		if (unitCount > 1)
-		{
-			char buf[64];
-			std::snprintf(buf, sizeof(buf), "%d units selected", unitCount);
-			return buf;
-		}
-		return SelectionSummary(*unit);
-	}
+constexpr const char *kNoSelectionLine = "No selection";
+using BuildingTypeCounts = std::array<int, static_cast<size_t>(BuildingType::Count)>;
 
-	std::array<int, static_cast<size_t>(BuildingType::Count)> counts{};
-	int buildingCount = 0;
-	int typeCount = 0;
-	const Building *only = nullptr;
-	registry.Each<Building>([&](Entity, const Building &building) {
-		if (!building.isSelected)
-		{
-			return;
-		}
-		if (buildingCount == 0)
-		{
-			only = &building;
-		}
-		++counts[static_cast<size_t>(building.type)];
-		++buildingCount;
-	});
-	if (buildingCount == 0 || only == nullptr)
-	{
-		return "No selection";
-	}
-	if (buildingCount == 1)
-	{
-		return BuildingSummary(*only);
-	}
-	for (const int count : counts)
-	{
-		if (count > 0)
-		{
-			++typeCount;
-		}
-	}
-	if (typeCount > 2)
-	{
-		char buf[64];
-		std::snprintf(buf, sizeof(buf), "%d buildings selected", buildingCount);
-		return buf;
-	}
+std::string UnitsSelectedLine(int count)
+{
+	char buf[64];
+	std::snprintf(buf, sizeof(buf), "%d units selected", count);
+	return buf;
+}
+
+std::string BuildingsSelectedLine(int count)
+{
+	char buf[64];
+	std::snprintf(buf, sizeof(buf), "%d buildings selected", count);
+	return buf;
+}
+
+std::string BuildingTypesLine(const BuildingTypeCounts &counts)
+{
 	std::string line;
 	for (size_t i = 0; i < counts.size(); ++i)
 	{
@@ -188,6 +141,67 @@ std::string SelectionLineText(const Registry &registry)
 		line += buf;
 	}
 	return line;
+}
+} // namespace
+
+std::string SelectionLineText(const Registry &registry)
+{
+	const Unit *selectedUnit = nullptr;
+	int unitCount = 0;
+	registry.Each<Unit>([&](Entity, const Unit &unit) {
+		if (!unit.isSelected)
+		{
+			return;
+		}
+		if (selectedUnit == nullptr)
+		{
+			selectedUnit = &unit;
+		}
+		++unitCount;
+	});
+	if (unitCount == 1)
+	{
+		return SelectionSummary(*selectedUnit);
+	}
+	if (unitCount > 1)
+	{
+		return UnitsSelectedLine(unitCount);
+	}
+
+	const Building *selectedBuilding = nullptr;
+	BuildingTypeCounts buildingsByType{};
+	int buildingCount = 0;
+	int buildingTypeCount = 0;
+	registry.Each<Building>([&](Entity, const Building &building) {
+		if (!building.isSelected)
+		{
+			return;
+		}
+		if (selectedBuilding == nullptr)
+		{
+			selectedBuilding = &building;
+		}
+		int &count = buildingsByType[static_cast<size_t>(building.type)];
+		if (count == 0)
+		{
+			++buildingTypeCount;
+		}
+		++count;
+		++buildingCount;
+	});
+	if (buildingCount == 0)
+	{
+		return kNoSelectionLine;
+	}
+	if (buildingCount == 1)
+	{
+		return BuildingSummary(*selectedBuilding);
+	}
+	if (buildingTypeCount > 2)
+	{
+		return BuildingsSelectedLine(buildingCount);
+	}
+	return BuildingTypesLine(buildingsByType);
 }
 
 namespace
