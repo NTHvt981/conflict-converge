@@ -11,8 +11,10 @@ and area repair, and area-build.
 ## Behavior
 
 - `Shift` queues Move/AttackMove/Patrol/Repair/AttackGround chains
-  (`Unit.orderQueue`); `Space` clears. Patrol never dequeues (loops);
-  a cancelled order drops the whole queue (documented anti-stuck rule).
+  (`Unit.orderQueue`); `Space` halts outright — movement, combat, transport
+  load/unload, and patrol legs clear, and a patrolling unit drops to
+  `Guard`. Patrol never dequeues (loops); a cancelled order drops the whole
+  queue (documented anti-stuck rule).
 - Attack-ground (`X`): continuous shelling with single-nearest splash
   (`ResolveGroundAttack`), not one-shot.
 - Single-target repair (Engineers, right-click) with cursor hint and
