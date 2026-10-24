@@ -11,7 +11,6 @@
 
 #include "economy/Building.h"
 #include "app/ui/Hud.h"
-#include "app/input/Selection.h"
 #include "units/Unit.h"
 #include "units/UnitFactory.h"
 
@@ -264,36 +263,7 @@ ProductionQueue *RmlUiHud::ActiveQueue()
 
 std::string RmlUiHud::SelectionLine() const
 {
-	const Entity selected = SelectedUnit(registry_);
-	const Unit *unit = registry_.Get<Unit>(selected);
-	char buf[128];
-	if (unit != nullptr)
-	{
-		if (SelectedUnitCount(registry_) > 1)
-		{
-			snprintf(buf, sizeof(buf), "%d units selected", SelectedUnitCount(registry_));
-			return buf;
-		}
-		return SelectionSummary(*unit);
-	}
-	int count = 0;
-	BuildingType firstType = BuildingType::Base;
-	registry_.Each<Building>([&](Entity, const Building &building) {
-		if (building.isSelected)
-		{
-			if (count == 0)
-			{
-				firstType = building.type;
-			}
-			++count;
-		}
-	});
-	if (count > 0)
-	{
-		snprintf(buf, sizeof(buf), "%d %s selected", count, BuildingTypeName(firstType));
-		return buf;
-	}
-	return "No selection";
+	return SelectionLineText(registry_);
 }
 
 void RmlUiHud::RefreshHints()

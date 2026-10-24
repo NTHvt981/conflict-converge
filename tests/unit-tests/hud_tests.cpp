@@ -9,6 +9,7 @@
 #include "units/UnitStats.h"
 
 void RunHudAbilityTests();
+void RunHudSelectionLineTests();
 
 void RunHudTests()
 {
@@ -91,6 +92,7 @@ void RunHudTests()
 	}
 
 	RunHudAbilityTests();
+	RunHudSelectionLineTests();
 }
 
 namespace
@@ -217,5 +219,84 @@ void RunHudAbilityTests()
 		const std::vector<AbilityEntry> entries =
 			AbilitiesForSelection(registry, { soldier, bootcamp });
 		CC_CHECK(entries.size() == 1 && entries[0].id == AbilityId::Halt);
+	}
+}
+
+void RunHudSelectionLineTests()
+{
+	// --- empty selection ---
+	{
+		Registry registry;
+		CC_CHECK(SelectionLineText(registry) == "No selection");
+	}
+
+	// --- one unit reuses the unit summary, several units count ---
+	{
+		Registry registry;
+		const Entity tank = AddHudUnit(registry, UnitType::LightTank);
+		Unit *unit = registry.Get<Unit>(tank);
+		unit->health = 200.0f;
+		unit->isSelected = true;
+		CC_CHECK(SelectionLineText(registry) == SelectionSummary(*unit));
+		const Entity ifv = AddHudUnit(registry, UnitType::IFV);
+		registry.Get<Unit>(ifv)->isSelected = true;
+		CC_CHECK(SelectionLineText(registry) == "2 units selected");
+	}
+
+	// --- a single building shows its type and health ---
+	{
+		Registry registry;
+		const Entity depot = AddHudBuilding(registry, BuildingType::ResourceDepot);
+		Building *building = registry.Get<Building>(depot);
+		building->isSelected = true;
+		building->health = 420.0f;
+		building->maxHealth = 500.0f;
+		CC_CHECK(SelectionLineText(registry) == "Depot  HP 420/500");
+	}
+
+	// --- mixed types group by type in canonical order, not registry order ---
+	{
+		Registry registry;
+		const Entity depot = AddHudBuilding(registry, BuildingType::ResourceDepot);
+		const Entity base = AddHudBuilding(registry, BuildingType::Base);
+		const Entity base2 = AddHudBuilding(registry, BuildingType::Base);
+		registry.Get<Building>(depot)->isSelected = true;
+		registry.Get<Building>(base)->isSelected = true;
+		registry.Get<Building>(base2)->isSelected = true;
+		CC_CHECK(SelectionLineText(registry) == "2 Base, 1 Depot");
+	}
+
+	// --- more than two types falls back to a plain count ---
+	{
+		Registry registry;
+		const Entity base = AddHudBuilding(registry, BuildingType::Base);
+		const Entity depot = AddHudBuilding(registry, BuildingType::ResourceDepot);
+		const Entity bootcamp = AddHudBuilding(registry, BuildingType::Bootcamp);
+		registry.Get<Building>(base)->isSelected = true;
+		registry.Get<Building>(depot)->isSelected = true;
+		registry.Get<Building>(bootcamp)->isSelected = true;
+		CC_CHECK(SelectionLineText(registry) == "3 buildings selected");
+	}
+
+	// --- a single selected type still groups ---
+	{
+		Registry registry;
+		const Entity campA = AddHudBuilding(registry, BuildingType::Bootcamp);
+		const Entity campB = AddHudBuilding(registry, BuildingType::Bootcamp);
+		const Entity campC = AddHudBuilding(registry, BuildingType::Bootcamp);
+		registry.Get<Building>(campA)->isSelected = true;
+		registry.Get<Building>(campB)->isSelected = true;
+		registry.Get<Building>(campC)->isSelected = true;
+		CC_CHECK(SelectionLineText(registry) == "3 Bootcamp");
+	}
+
+	// --- a selected unit wins over selected buildings ---
+	{
+		Registry registry;
+		const Entity soldier = AddHudUnit(registry, UnitType::RifleInfantry);
+		const Entity base = AddHudBuilding(registry, BuildingType::Base);
+		registry.Get<Unit>(soldier)->isSelected = true;
+		registry.Get<Building>(base)->isSelected = true;
+		CC_CHECK(SelectionLineText(registry) == SelectionSummary(*registry.Get<Unit>(soldier)));
 	}
 }

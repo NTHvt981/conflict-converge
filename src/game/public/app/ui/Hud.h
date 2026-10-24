@@ -22,6 +22,8 @@ std::string FormatResources(const ResourceSystem &resources);
 std::string SelectionSummary(const Unit &unit);
 float UnitHealthFraction(const Unit &unit);
 float BuildingHealthFraction(const Building &building);
+std::string BuildingSummary(const Building &building);
+std::string SelectionLineText(const Registry &registry);
 std::vector<std::string> ShortcutHintLines(const HotkeyMap &hotkeys);
 struct HoverTooltipState
 {
