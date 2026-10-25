@@ -157,8 +157,8 @@ void Game::Init()
 	cheats.Init();
 
 	InitAudioDevice();
-	engine_.Get<Audio>().Init(IsAudioDeviceReady());
-	engine_.Get<Art>().Init(true);
+	engine_.Get<Audio>().Init(IsAudioDeviceReady() ? InitMode::WithDevice : InitMode::Headless);
+	engine_.Get<Art>().Init(InitMode::WithDevice);
 	if (engine_.Get<Art>().HasFont())
 	{
 		GuiSetFont(engine_.Get<Art>().UiFont());

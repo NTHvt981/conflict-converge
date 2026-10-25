@@ -10,6 +10,7 @@
 #include "raylib.h"
 #include "economy/Building.h"
 #include "economy/Nodes.h"
+#include "app/data/InitMode.h"
 #include "app/data/SpriteData.h"
 #include "core/Subsystem.h"
 #include "core/Team.h"
@@ -19,7 +20,7 @@ enum class TerrainType : std::uint8_t;
 
 // Sprite art + particles + floating damage numbers. Assets live under
 // data/sprites/ and data/fonts/ (see Art.h.context.md for the contract);
-// Init(false) is the headless rectangle-fallback path.
+// Init(InitMode::Headless) is the headless rectangle-fallback path.
 
 // AttackPhase -> sprite frame. WindUp telegraphs and Recover follows
 // through on the attack frame; everything else idles. Pure: unit-tested.
@@ -102,9 +103,9 @@ private:
 class Art : public Subsystem
 {
 public:
-	// Load every sprite. With withDevice=false or on a missing file, loads
+	// Load every sprite. Headless or on a missing file, loads
 	// nothing and UseRectangles stays true. Returns IsReady.
-	bool Init(bool withDevice);
+	bool Init(InitMode mode);
 	void Shutdown();
 
 	bool IsReady() const;

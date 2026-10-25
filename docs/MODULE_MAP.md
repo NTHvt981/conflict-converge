@@ -25,7 +25,7 @@ app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, RmlUiHost, RmlUiMenus,
 app/input: InputManager, Selection, Shortcuts, Hotkeys
 app/save: SaveGame (+SaveEncode/SaveDecode), SaveWire
 app/data: Art (+ArtEffects), SpriteData, UnitConfig (+UnitConfigParse/UnitConfigCatalog),
-          Audio, Log, DataRoot
+          Audio, InitMode, Log, DataRoot
 app/match: Menu, Skirmish
 ```
 
@@ -159,7 +159,7 @@ app/match: Menu, Skirmish
   production category/tab orders, `AbilitiesForSelection`
   panel data); the RmlUi HUD owns the panels
 - `Art.h` - M12 sprites + particles (`data/sprites/` via `tools/gen_sprites.py`) + tank
-  body/head layered atlas art; `Init(false)`
+  body/head layered atlas art; `Init(InitMode::Headless)`
   is the headless rectangle-fallback path
 - `SpriteData.h` - Sprite-atlas data (JSON in `data/configs/`: textures/sprites/animations
   merged at load); `LoadSpriteSheet`/`ParseSpriteSheetJson` + name/id lookups
@@ -183,7 +183,7 @@ app/match: Menu, Skirmish
   (`SaveSlotPath`). `SaveWire.h` keeps `std::int32_t team`; `SaveEncode`/`SaveDecode`
   convert to and from `TeamId` at that boundary
 - `Audio.h` - M11 synth-asset SFX + looped music (`data/audio/*.wav` via
-  `tools/gen_audio.py`); `Init(false)` is the headless no-op path
+  `tools/gen_audio.py`); `Init(InitMode::Headless)` is the headless no-op path
 - `Log.h` - Fatal logging over raylib `TraceLog`: `Init` tees console + file
   (`data/logs/conflict-converge.log`, wired in `Game::Init`/`Shutdown`), `Fatal` exits;
   headless-tested via `tests/unit-tests/log_tests.cpp`

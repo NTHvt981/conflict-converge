@@ -1,6 +1,6 @@
 // Unit tests for art (phase→frame mapping, particle pool logic,
 // rectangle-fallback flag). Nothing here needs a GPU or audio device:
-// Art::Init(false) loads nothing and draw calls are never made headless.
+// Art::Init(InitMode::Headless) loads nothing and draw calls are never made headless.
 
 #include "test_harness.h"
 
@@ -90,11 +90,11 @@ void RunArtTests()
 	// --- headless art stays on rectangles ---
 	{
 		Art art;
-		CC_CHECK(!art.Init(false));
+		CC_CHECK(!art.Init(InitMode::Headless));
 		CC_CHECK(!art.IsReady());
 		CC_CHECK(art.UseRectangles());
 		CC_CHECK(!art.HasFont()); // UI typeface loads on the device path only
-		art.Shutdown(); // safe without Init(true)
+		art.Shutdown(); // safe without Init(InitMode::WithDevice)
 		CC_CHECK(art.UseRectangles());
 		CC_CHECK(!art.HasFont());
 	}
@@ -329,7 +329,7 @@ void RunArtTests()
 		CC_CHECK(Art::TerrainSlot(TerrainType::Building) == -1);
 		// Headless no-op: rectangles path never touches the GPU.
 		Art art;
-		CC_CHECK(!art.Init(false));
+		CC_CHECK(!art.Init(InitMode::Headless));
 		art.DrawTerrain(TerrainType::Grass, { 0.0f, 0.0f });
 		art.DrawTerrain(TerrainType::Building, { 0.0f, 0.0f });
 		CC_CHECK(true);

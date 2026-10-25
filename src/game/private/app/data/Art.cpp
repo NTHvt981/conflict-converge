@@ -171,10 +171,10 @@ int Art::TeamSlot(TeamId teamID)
 	return teamID == kPlayerTeam ? 0 : 1;
 }
 
-bool Art::Init(bool withDevice)
+bool Art::Init(InitMode mode)
 {
 	Shutdown();
-	if (!withDevice)
+	if (mode == InitMode::Headless)
 	{
 		return false;
 	}

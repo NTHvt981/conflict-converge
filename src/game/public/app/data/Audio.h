@@ -3,11 +3,12 @@
 #include <string>
 
 #include "raylib.h"
+#include "app/data/InitMode.h"
 #include "core/Subsystem.h"
 
 // Audio: SFX + a looped music stream from data/audio/*.wav (synthesized by
-// tools/gen_audio.py). Headless-safe: Init(false) loads nothing and every
-// Play is a no-op.
+// tools/gen_audio.py). Headless-safe: Init(InitMode::Headless) loads nothing
+// and every Play is a no-op.
 
 enum class SfxId
 {
@@ -26,9 +27,9 @@ class Audio : public Subsystem
 {
 public:
 	Audio(); // first ShouldPlay ever is true
-	// Load assets and start the music loop; withDevice=false loads nothing
+	// Load assets and start the music loop; InitMode::Headless loads nothing
 	// and reports !IsReady. Every other method stays safe to call.
-	bool Init(bool withDevice);
+	bool Init(InitMode mode);
 	void Shutdown();
 
 	bool IsReady() const;

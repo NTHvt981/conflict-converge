@@ -71,14 +71,14 @@ const char *Audio::FileFor(SfxId id)
 	return "select.wav";
 }
 
-bool Audio::Init(bool withDevice)
+bool Audio::Init(InitMode mode)
 {
 	Shutdown();
 	for (int i = 0; i < static_cast<int>(SfxId::Count); ++i)
 	{
 		lastPlay_[i] = -1.0e9;
 	}
-	if (!withDevice)
+	if (mode == InitMode::Headless)
 	{
 		return false;
 	}
