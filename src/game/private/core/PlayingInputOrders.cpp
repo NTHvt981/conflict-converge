@@ -93,10 +93,9 @@ void PlayingInput::HandleRepairDragRelease()
 				if (Unit *engineer = registry_.Get<Unit>(job.engineer))
 				{
 					IssueOrEnqueue(*engineer, GetOrders(registry_, job.engineer),
-								   GetMover(registry_, job.engineer), map_, &occ_, job.engineer, registry_.Generation(job.engineer),
-								   input_.ShiftDown(),
-								   QueuedOrder{ QueuedOrderKind::Repair, {}, {},
-												job.target });
+								   GetMover(registry_, job.engineer), map_, &occ_, job.engineer,
+								   registry_.Generation(job.engineer), input_.ShiftDown(),
+								   QueuedOrder{ .kind = QueuedOrderKind::Repair, .target = job.target });
 				}
 			}
 			if (!assignments.empty())
@@ -169,7 +168,7 @@ void PlayingInput::DispatchRightClickOrders()
 				IssueOrEnqueue(unit, GetOrders(registry_, id), GetMover(registry_, id), map_,
 							   &occ_, id,
 							   registry_.Generation(id), queued,
-							   QueuedOrder{ QueuedOrderKind::AttackGround, target });
+							   QueuedOrder{ .kind = QueuedOrderKind::AttackGround, .pointA = target });
 			}
 		});
 		audio_.Play(SfxId::Confirm);
@@ -219,7 +218,7 @@ void PlayingInput::DispatchRightClickOrders()
 				{
 					IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
 								   registry_.Generation(squad[0]), input_.ShiftDown(),
-								   QueuedOrder{ QueuedOrderKind::Repair, {}, {}, patient });
+								   QueuedOrder{ .kind = QueuedOrderKind::Repair, .target = patient });
 					repaired = true;
 				}
 			}
@@ -236,7 +235,7 @@ void PlayingInput::DispatchRightClickOrders()
 				{
 					IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
 								   registry_.Generation(squad[0]), input_.ShiftDown(),
-								   QueuedOrder{ QueuedOrderKind::Repair, {}, {}, patient });
+								   QueuedOrder{ .kind = QueuedOrderKind::Repair, .target = patient });
 					repaired = true;
 				}
 			}
@@ -251,8 +250,7 @@ void PlayingInput::DispatchRightClickOrders()
 					{
 						IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
 									   registry_.Generation(squad[0]), input_.ShiftDown(),
-									   QueuedOrder{ QueuedOrderKind::Unload,
-													ordered->position });
+									   QueuedOrder{ .kind = QueuedOrderKind::Unload, .pointA = ordered->position });
 						repaired = true;
 					}
 				}
@@ -261,7 +259,7 @@ void PlayingInput::DispatchRightClickOrders()
 				{
 					IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
 								   registry_.Generation(squad[0]), input_.ShiftDown(),
-								   QueuedOrder{ QueuedOrderKind::Load, {}, {}, picked });
+								   QueuedOrder{ .kind = QueuedOrderKind::Load, .target = picked });
 					repaired = true;
 				}
 			}
@@ -271,8 +269,7 @@ void PlayingInput::DispatchRightClickOrders()
 				{
 					IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
 								   registry_.Generation(squad[0]), true,
-								   QueuedOrder{ QueuedOrderKind::Move,
-												input_.MouseWorld(camera_) });
+								   QueuedOrder{ .kind = QueuedOrderKind::Move, .pointA = input_.MouseWorld(camera_) });
 				}
 				else
 				{
@@ -298,7 +295,7 @@ void PlayingInput::DispatchRightClickOrders()
 					IssueOrEnqueue(*unit, GetOrders(registry_, id), GetMover(registry_, id),
 								   map_, &occ_, id,
 								   registry_.Generation(id), true,
-								   QueuedOrder{ QueuedOrderKind::Move, dest });
+								   QueuedOrder{ .kind = QueuedOrderKind::Move, .pointA = dest });
 				}
 			}
 		}

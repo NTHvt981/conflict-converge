@@ -365,7 +365,7 @@ std::vector<AbilityEntry> AbilitiesForSelection(const Registry &registry,
 	}
 	if (!units.empty() && !buildings.empty())
 	{
-		return { AbilityEntry{ AbilityId::Halt } };
+		return { AbilityEntry{ .id = AbilityId::Halt } };
 	}
 	if (!units.empty())
 	{
@@ -399,19 +399,19 @@ std::vector<AbilityEntry> AbilitiesForSelection(const Registry &registry,
 			}
 		}
 		std::vector<AbilityEntry> out = {
-			AbilityEntry{ AbilityId::Hold, true, allHold, {} },
-			AbilityEntry{ AbilityId::Guard, true, allGuard, {} },
-			AbilityEntry{ AbilityId::Patrol, true, allPatrol, {} },
-			AbilityEntry{ AbilityId::AttackMove, true, allAttackMove, {} },
-			AbilityEntry{ AbilityId::Halt },
+			AbilityEntry{ .id = AbilityId::Hold, .enabled = true, .active = allHold },
+			AbilityEntry{ .id = AbilityId::Guard, .enabled = true, .active = allGuard },
+			AbilityEntry{ .id = AbilityId::Patrol, .enabled = true, .active = allPatrol },
+			AbilityEntry{ .id = AbilityId::AttackMove, .enabled = true, .active = allAttackMove },
+			AbilityEntry{ .id = AbilityId::Halt },
 		};
 		if (anyEngineer)
 		{
-			out.push_back(AbilityEntry{ AbilityId::Repair, true, allEngineerRepair, {} });
+			out.push_back(AbilityEntry{ .id = AbilityId::Repair, .enabled = true, .active = allEngineerRepair });
 		}
 		if (anyMedic)
 		{
-			out.push_back(AbilityEntry{ AbilityId::Heal, true, allMedicHeal, {} });
+			out.push_back(AbilityEntry{ .id = AbilityId::Heal, .enabled = true, .active = allMedicHeal });
 		}
 		return out;
 	}
@@ -427,9 +427,11 @@ std::vector<AbilityEntry> AbilitiesForSelection(const Registry &registry,
 			}
 		}
 		return {
-			AbilityEntry{ AbilityId::Rally, anyProducer, false,
-						  anyProducer ? std::string{} : std::string{ "Requires Bootcamp / Workshop" } },
-			AbilityEntry{ AbilityId::Demolish },
+			AbilityEntry{ .id = AbilityId::Rally,
+						  .enabled = anyProducer,
+						  .active = false,
+						  .reason = anyProducer ? std::string{} : std::string{ "Requires Bootcamp / Workshop" } },
+			AbilityEntry{ .id = AbilityId::Demolish },
 		};
 	}
 	return {};
