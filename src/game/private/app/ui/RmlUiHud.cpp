@@ -11,6 +11,7 @@
 #include <RmlUi/Core/Elements/ElementFormControl.h>
 
 #include "app/ui/RmlUiHost.h"
+#include "app/ui/UiIds.h"
 
 namespace {
 
@@ -88,37 +89,48 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
 		Shutdown();
 		return false;
 	}
-	if (Rml::Element *el = hudDoc_->GetElementById("btn-cancel"))
+	if (Rml::Element *el = ById(hudDoc_, UiIds::BtnCancel))
 	{
 		el->AddEventListener("click", this);
 	}
 	auto listen = [this](Rml::ElementDocument *doc, const char *event,
-						 std::initializer_list<const char *> ids) {
-		for (const char *id : ids)
+						 std::initializer_list<std::string_view> ids) {
+		for (std::string_view id : ids)
 		{
-			if (Rml::Element *el = doc->GetElementById(id))
+			if (Rml::Element *el = ById(doc, id))
 			{
 				el->AddEventListener(event, this);
 			}
 		}
 	};
 	listen(hudDoc_, "click",
-		   { "tab-infantry", "tab-vehicles", "tab-buildings", "place-0", "place-1", "place-2",
-			  "place-3", "prod-i-0", "prod-i-1", "prod-i-2", "prod-i-3", "prod-v-0", "prod-v-1",
-			  "prod-v-2", "prod-v-3", "repr-i-0", "repr-i-1", "repr-i-2", "repr-i-3", "repr-v-0",
-			 "repr-v-1", "repr-v-2", "repr-v-3", "ab-hold", "ab-guard", "ab-patrol",
-			 "ab-attackmove", "ab-halt", "ab-repair", "ab-heal", "ab-rally", "ab-demolish" });
+		   { UiIds::TabInfantry, UiIds::TabVehicles, UiIds::TabBuildings, UiIds::AbHold,
+			 UiIds::AbGuard, UiIds::AbPatrol, UiIds::AbAttackMove, UiIds::AbHalt, UiIds::AbRepair,
+			 UiIds::AbHeal, UiIds::AbRally, UiIds::AbDemolish });
+	for (int row = 0; row < 4; ++row)
+	{
+		for (std::string_view family :
+			 { UiIds::PlaceRow, UiIds::ProdInfantryRow, UiIds::ProdVehicleRow,
+			   UiIds::RepeatInfantryRow, UiIds::RepeatVehicleRow })
+		{
+			if (Rml::Element *el = ById(hudDoc_, UiIds::WithIndex(family, row)))
+			{
+				el->AddEventListener("click", this);
+			}
+		}
+	}
 	for (Rml::ElementDocument *doc : { pauseDoc_, outcomeDoc_ })
 	{
 		(void)doc;
 	}
 	listen(pauseDoc_, "click",
-		   { "btn-resume", "btn-p-remap", "btn-p-tomenu", "btn-p-todesktop" });
+		   { UiIds::BtnResume, UiIds::BtnPRemap, UiIds::BtnPToMenu, UiIds::BtnPToDesktop });
 	listen(pauseDoc_, "change",
-		   { "opt-p-camspeed", "opt-p-minimap", "opt-p-hints", "opt-p-master", "opt-p-music",
-			 "opt-p-sfx", "opt-p-mute", "opt-p-rightdrag", "opt-p-colorblind" });
-	listen(outcomeDoc_, "click", { "btn-o-tomenu", "btn-o-todesktop" });
-	listen(confirmDoc_, "click", { "btn-yes", "btn-no" });
+		   { UiIds::OptPCamSpeed, UiIds::OptPMinimap, UiIds::OptPHints, UiIds::OptPMaster,
+			 UiIds::OptPMusic, UiIds::OptPSfx, UiIds::OptPMute, UiIds::OptPRightDrag,
+			 UiIds::OptPColorBlind });
+	listen(outcomeDoc_, "click", { UiIds::BtnOToMenu, UiIds::BtnOToDesktop });
+	listen(confirmDoc_, "click", { UiIds::BtnYes, UiIds::BtnNo });
 	ready_ = true;
 	return true;
 }
@@ -286,15 +298,16 @@ bool RmlUiHud::IsInteractiveTag(const Rml::String &tag)
 	return tag == "button" || tag == "input" || tag == "select" || tag == "textarea";
 }
 
-void RmlUiHud::SetTextCached(const char *id, const std::string &text)
+void RmlUiHud::SetTextCached(std::string_view id, const std::string &text)
 {
-	auto it = textCache_.find(id);
+	const std::string key(id);
+	auto it = textCache_.find(key);
 	if (it != textCache_.end() && it->second == text)
 	{
 		return;
 	}
-	textCache_[id] = text;
-	if (Rml::Element *el = hudDoc_->GetElementById(id))
+	textCache_[key] = text;
+	if (Rml::Element *el = ById(hudDoc_, id))
 	{
 		el->SetInnerRML(text.c_str());
 	}
@@ -315,13 +328,18 @@ void RmlUiHud::SetDisplay(Rml::Element *el, const std::string &value)
 	el->SetProperty("display", value.c_str());
 }
 
-void RmlUiHud::SetRangeIn(Rml::ElementDocument *doc, const char *id, float value)
+Rml::Element *RmlUiHud::ById(Rml::ElementDocument *doc, std::string_view id)
 {
 	if (doc == nullptr)
 	{
-		return;
+		return nullptr;
 	}
-	if (Rml::Element *el = doc->GetElementById(id))
+	return doc->GetElementById(std::string(id));
+}
+
+void RmlUiHud::SetRangeIn(Rml::ElementDocument *doc, std::string_view id, float value)
+{
+	if (Rml::Element *el = ById(doc, id))
 	{
 		if (auto *control = dynamic_cast<Rml::ElementFormControl *>(el))
 		{
@@ -332,13 +350,9 @@ void RmlUiHud::SetRangeIn(Rml::ElementDocument *doc, const char *id, float value
 	}
 }
 
-void RmlUiHud::SetCheckIn(Rml::ElementDocument *doc, const char *id, bool checked)
+void RmlUiHud::SetCheckIn(Rml::ElementDocument *doc, std::string_view id, bool checked)
 {
-	if (doc == nullptr)
-	{
-		return;
-	}
-	if (Rml::Element *el = doc->GetElementById(id))
+	if (Rml::Element *el = ById(doc, id))
 	{
 		if (checked)
 		{
@@ -351,13 +365,9 @@ void RmlUiHud::SetCheckIn(Rml::ElementDocument *doc, const char *id, bool checke
 	}
 }
 
-void RmlUiHud::SetTextIn(Rml::ElementDocument *doc, const char *id, const std::string &text)
+void RmlUiHud::SetTextIn(Rml::ElementDocument *doc, std::string_view id, const std::string &text)
 {
-	if (doc == nullptr)
-	{
-		return;
-	}
-	if (Rml::Element *el = doc->GetElementById(id))
+	if (Rml::Element *el = ById(doc, id))
 	{
 		el->SetInnerRML(text.c_str());
 	}

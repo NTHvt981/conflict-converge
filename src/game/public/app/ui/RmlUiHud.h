@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 #include <RmlUi/Core/EventListener.h>
@@ -88,11 +89,12 @@ private:
 	static float Clamp(float value, float lo, float hi);
 	static float ReadRange(Rml::Element *el);
 	static bool IsInteractiveTag(const Rml::String &tag);
-	void SetTextCached(const char *id, const std::string &text);
+	static Rml::Element *ById(Rml::ElementDocument *doc, std::string_view id);
+	void SetTextCached(std::string_view id, const std::string &text);
 	void SetDisplay(Rml::Element *el, const std::string &value);
-	void SetRangeIn(Rml::ElementDocument *doc, const char *id, float value);
-	void SetCheckIn(Rml::ElementDocument *doc, const char *id, bool checked);
-	void SetTextIn(Rml::ElementDocument *doc, const char *id, const std::string &text);
+	void SetRangeIn(Rml::ElementDocument *doc, std::string_view id, float value);
+	void SetCheckIn(Rml::ElementDocument *doc, std::string_view id, bool checked);
+	void SetTextIn(Rml::ElementDocument *doc, std::string_view id, const std::string &text);
 
 	Registry &registry_;
 	ResourceSystem &resources_;

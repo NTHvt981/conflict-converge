@@ -2,6 +2,7 @@
 
 #include <initializer_list>
 #include <string>
+#include <string_view>
 
 #include <RmlUi/Core/EventListener.h>
 
@@ -78,7 +79,7 @@ public:
 private:
 	Rml::ElementDocument *Load(const std::string &file);
 	void Listen(Rml::ElementDocument *doc, const char *event,
-				std::initializer_list<const char *> ids);
+				std::initializer_list<std::string_view> ids);
 	void ShowState();
 	Rml::ElementDocument *DocForState(MenuState state);
 	void RefreshCurrent();
@@ -98,9 +99,10 @@ private:
 	static void SetDisabled(Rml::Element *el, bool disabled);
 	static float Clamp(float value, float lo, float hi);
 	static float ReadRange(Rml::Element *el);
-	void SetRangeIn(Rml::ElementDocument *doc, const char *id, float value);
-	void SetCheckIn(Rml::ElementDocument *doc, const char *id, bool checked);
-	void SetTextIn(Rml::ElementDocument *doc, const char *id, const std::string &text);
+	static Rml::Element *ById(Rml::ElementDocument *doc, std::string_view id);
+	void SetRangeIn(Rml::ElementDocument *doc, std::string_view id, float value);
+	void SetCheckIn(Rml::ElementDocument *doc, std::string_view id, bool checked);
+	void SetTextIn(Rml::ElementDocument *doc, std::string_view id, const std::string &text);
 
 	MenuFlow &menu_;
 	HotkeyMap &hotkeys_;

@@ -11,6 +11,7 @@
 
 #include "app/input/Hotkeys.h"
 #include "app/match/Menu.h"
+#include "app/ui/UiIds.h"
 
 void RmlUiMenus::BeginRemap(MenuState returnTo)
 {
@@ -49,7 +50,7 @@ void RmlUiMenus::RefreshRemap()
 	}
 	if (remapArming_ >= 0)
 	{
-		SetTextIn(remapDoc_, "remap-status", "Press a key for the armed action (Esc cancels)");
+		SetTextIn(remapDoc_, UiIds::RemapStatus, "Press a key for the armed action (Esc cancels)");
 	}
 	else if (!remapConflictAction_.empty())
 	{
@@ -57,11 +58,11 @@ void RmlUiMenus::RefreshRemap()
 		char text[128];
 		snprintf(text, sizeof(text), "'%s' already fires '%s' - click the row again to steal it.",
 				 GetKeyName(remapConflictKey_), owner.has_value() ? owner->c_str() : "?");
-		SetTextIn(remapDoc_, "remap-status", text);
+		SetTextIn(remapDoc_, UiIds::RemapStatus, text);
 	}
 	else
 	{
-		SetTextIn(remapDoc_, "remap-status",
+		SetTextIn(remapDoc_, UiIds::RemapStatus,
 				  "Click a key to rebind it. Digits/Alt (Tier 2) are fixed.");
 	}
 }
@@ -86,8 +87,8 @@ void RmlUiMenus::PopulateRemapRows()
 	const int defCount = NumHotkeyDefs();
 	const int perCol = (defCount + 1) / 2;
 	Rml::Element *cols[2] = {
-		remapDoc_->GetElementById("hkcol-a"),
-		remapDoc_->GetElementById("hkcol-b"),
+		ById(remapDoc_, UiIds::HkColA),
+		ById(remapDoc_, UiIds::HkColB),
 	};
 	for (int col = 0; col < 2; ++col)
 	{
@@ -100,8 +101,7 @@ void RmlUiMenus::PopulateRemapRows()
 	{
 		const HotkeyDef &def = kHotkeyDefs[i];
 		Rml::ElementPtr row(remapDoc_->CreateElement("div"));
-		char rowId[32];
-		snprintf(rowId, sizeof(rowId), "hkrow-%d", i);
+		const std::string rowId = UiIds::WithIndex(UiIds::RemapRow, i);
 		row->SetAttribute("id", Rml::String(rowId));
 		row->SetAttribute("class", Rml::String("hkrow"));
 		if (remapArming_ == i)
@@ -112,8 +112,7 @@ void RmlUiMenus::PopulateRemapRows()
 		label->SetAttribute("class", Rml::String("hklabel"));
 		label->SetInnerRML(def.label);
 		Rml::ElementPtr key(remapDoc_->CreateElement("button"));
-		char keyId[32];
-		snprintf(keyId, sizeof(keyId), "hkkey-%d", i);
+		const std::string keyId = UiIds::WithIndex(UiIds::RemapKeyRow, i);
 		key->SetAttribute("id", Rml::String(keyId));
 		key->SetAttribute("class", Rml::String("hkkey"));
 		const int effective = hotkeys_.KeyFor(def.action);
