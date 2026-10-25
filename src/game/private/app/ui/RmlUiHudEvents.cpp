@@ -2,7 +2,6 @@
 #include "app/ui/RmlUiHud.h"
 
 #include <cstdio>
-#include <cstring>
 
 #include <RmlUi/Core.h>
 #include <RmlUi/Core/Element.h>
@@ -10,18 +9,19 @@
 
 #include "economy/Building.h"
 #include "app/ui/Hud.h"
+#include "app/ui/UiIds.h"
 #include "units/Unit.h"
 #include "units/UnitCommands.h"
 
 namespace {
 
-// Ability buttons in panel order; ids match hud.rml.
-const std::pair<const char *, AbilityId> kAbilityButtons[] = {
-	{ "ab-hold", AbilityId::Hold },         { "ab-guard", AbilityId::Guard },
-	{ "ab-patrol", AbilityId::Patrol },     { "ab-attackmove", AbilityId::AttackMove },
-	{ "ab-halt", AbilityId::Halt },         { "ab-repair", AbilityId::Repair },
-	{ "ab-heal", AbilityId::Heal },         { "ab-rally", AbilityId::Rally },
-	{ "ab-demolish", AbilityId::Demolish },
+// Ability buttons in panel order.
+const std::pair<std::string_view, AbilityId> kAbilityButtons[] = {
+	{ UiIds::AbHold, AbilityId::Hold },         { UiIds::AbGuard, AbilityId::Guard },
+	{ UiIds::AbPatrol, AbilityId::Patrol },     { UiIds::AbAttackMove, AbilityId::AttackMove },
+	{ UiIds::AbHalt, AbilityId::Halt },         { UiIds::AbRepair, AbilityId::Repair },
+	{ UiIds::AbHeal, AbilityId::Heal },         { UiIds::AbRally, AbilityId::Rally },
+	{ UiIds::AbDemolish, AbilityId::Demolish },
 };
 
 } // namespace
@@ -51,7 +51,7 @@ void RmlUiHud::RefreshAbilities()
 	const std::vector<AbilityEntry> entries = AbilitiesForSelection(registry_, selection);
 	for (const auto &[buttonId, ability] : kAbilityButtons)
 	{
-		Rml::Element *el = hudDoc_->GetElementById(buttonId);
+		Rml::Element *el = ById(hudDoc_, buttonId);
 		if (el == nullptr)
 		{
 			continue;
@@ -87,7 +87,7 @@ void RmlUiHud::RefreshAbilities()
 
 void RmlUiHud::OnClick(const Rml::String &id)
 {
-	if (id == "btn-cancel")
+	if (id == UiIds::BtnCancel)
 	{
 		if (ProductionQueue *active = ActiveQueue())
 		{
@@ -95,24 +95,24 @@ void RmlUiHud::OnClick(const Rml::String &id)
 		}
 		return;
 	}
-	if (id == "tab-infantry")
+	if (id == UiIds::TabInfantry)
 	{
 		productionTab_ = ProductionTab::Infantry;
 		return;
 	}
-	if (id == "tab-vehicles")
+	if (id == UiIds::TabVehicles)
 	{
 		productionTab_ = ProductionTab::Vehicles;
 		return;
 	}
-	if (id == "tab-buildings")
+	if (id == UiIds::TabBuildings)
 	{
 		productionTab_ = ProductionTab::Buildings;
 		return;
 	}
-	if (id.compare(0, 6, "place-") == 0)
+	if (UiIds::StartsWith(id, UiIds::PlaceRow))
 	{
-		const int row = std::atoi(id.c_str() + 6);
+		const int row = std::atoi(id.c_str() + UiIds::PlaceRow.size());
 		const std::vector<BuildingType> order = BuildingMenuOrder();
 		if (row >= 0 && row < static_cast<int>(order.size()))
 		{
@@ -124,14 +124,13 @@ void RmlUiHud::OnClick(const Rml::String &id)
 	// is visual-only, matching the raygui panel.
 	const std::vector<UnitType> infantry = InfantryMenuOrder();
 	const std::vector<UnitType> vehicles = VehicleMenuOrder();
-	auto enqueueRow = [&](const char *prefix, const std::vector<UnitType> &order,
+	auto enqueueRow = [&](std::string_view prefix, const std::vector<UnitType> &order,
 						  ProductionQueue &queue) {
-		const std::size_t width = std::strlen(prefix);
-		if (id.compare(0, width, prefix) != 0)
+		if (!UiIds::StartsWith(id, prefix))
 		{
 			return false;
 		}
-		const int row = std::atoi(id.c_str() + width);
+		const int row = std::atoi(id.c_str() + prefix.size());
 		if (row >= 0 && row < static_cast<int>(order.size()))
 		{
 			queue.Enqueue(resources_, order[static_cast<std::size_t>(row)],
@@ -139,14 +138,13 @@ void RmlUiHud::OnClick(const Rml::String &id)
 		}
 		return true;
 	};
-	auto repeatRow = [&](const char *prefix, const std::vector<UnitType> &order,
+	auto repeatRow = [&](std::string_view prefix, const std::vector<UnitType> &order,
 						 ProductionQueue &queue) {
-		const std::size_t width = std::strlen(prefix);
-		if (id.compare(0, width, prefix) != 0)
+		if (!UiIds::StartsWith(id, prefix))
 		{
 			return false;
 		}
-		const int row = std::atoi(id.c_str() + width);
+		const int row = std::atoi(id.c_str() + prefix.size());
 		if (row >= 0 && row < static_cast<int>(order.size()))
 		{
 			const UnitType type = order[static_cast<std::size_t>(row)];
@@ -154,10 +152,10 @@ void RmlUiHud::OnClick(const Rml::String &id)
 		}
 		return true;
 	};
-	if (enqueueRow("prod-i-", infantry, bootcampQueue_) ||
-		enqueueRow("prod-v-", vehicles, workshopQueue_) ||
-		repeatRow("repr-i-", infantry, bootcampQueue_) ||
-		repeatRow("repr-v-", vehicles, workshopQueue_))
+	if (enqueueRow(UiIds::ProdInfantryRow, infantry, bootcampQueue_) ||
+		enqueueRow(UiIds::ProdVehicleRow, vehicles, workshopQueue_) ||
+		repeatRow(UiIds::RepeatInfantryRow, infantry, bootcampQueue_) ||
+		repeatRow(UiIds::RepeatVehicleRow, vehicles, workshopQueue_))
 	{
 		return;
 	}
@@ -169,36 +167,36 @@ void RmlUiHud::OnClick(const Rml::String &id)
 			return;
 		}
 	}
-	if (id == "btn-resume")
+	if (id == UiIds::BtnResume)
 	{
 		Announce(EventType::MenuAction);
 		menu_.state = MenuState::Playing;
 	}
-	else if (id == "btn-p-remap")
+	else if (id == UiIds::BtnPRemap)
 	{
 		beginRemap_(MenuState::Paused);
 	}
-	else if (id == "btn-p-tomenu")
+	else if (id == UiIds::BtnPToMenu)
 	{
 		quitToMenu_();
 	}
-	else if (id == "btn-p-todesktop")
+	else if (id == UiIds::BtnPToDesktop)
 	{
 		menu_.quitRequested = true;
 	}
-	else if (id == "btn-o-tomenu")
+	else if (id == UiIds::BtnOToMenu)
 	{
 		quitToMenu_();
 	}
-	else if (id == "btn-o-todesktop")
+	else if (id == UiIds::BtnOToDesktop)
 	{
 		menu_.quitRequested = true;
 	}
-	else if (id == "btn-yes")
+	else if (id == UiIds::BtnYes)
 	{
 		pendingChoice_ = ConfirmChoice::Yes;
 	}
-	else if (id == "btn-no")
+	else if (id == UiIds::BtnNo)
 	{
 		pendingChoice_ = ConfirmChoice::No;
 	}
@@ -243,51 +241,51 @@ void RmlUiHud::OnChange(Rml::Element *target, const Rml::String &id)
 {
 	// Same no-refresh rule as the menus: programmatic SetValue/SetAttribute
 	// re-dispatches Change into this listener.
-	if (id == "opt-p-camspeed")
+	if (id == UiIds::OptPCamSpeed)
 	{
 		menu_.settings.cameraSpeed = Clamp(ReadRange(target), 100.0f, 800.0f);
 		char text[32];
 		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.cameraSpeed));
-		SetTextIn(pauseDoc_, "val-p-camspeed", text);
+		SetTextIn(pauseDoc_, UiIds::ValPCamSpeed, text);
 	}
-	else if (id == "opt-p-master")
+	else if (id == UiIds::OptPMaster)
 	{
 		menu_.settings.masterVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
 		char text[32];
 		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.masterVolume));
-		SetTextIn(pauseDoc_, "val-p-master", text);
+		SetTextIn(pauseDoc_, UiIds::ValPMaster, text);
 	}
-	else if (id == "opt-p-music")
+	else if (id == UiIds::OptPMusic)
 	{
 		menu_.settings.musicVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
 		char text[32];
 		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.musicVolume));
-		SetTextIn(pauseDoc_, "val-p-music", text);
+		SetTextIn(pauseDoc_, UiIds::ValPMusic, text);
 	}
-	else if (id == "opt-p-sfx")
+	else if (id == UiIds::OptPSfx)
 	{
 		menu_.settings.sfxVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
 		char text[32];
 		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.sfxVolume));
-		SetTextIn(pauseDoc_, "val-p-sfx", text);
+		SetTextIn(pauseDoc_, UiIds::ValPSfx, text);
 	}
-	else if (id == "opt-p-minimap")
+	else if (id == UiIds::OptPMinimap)
 	{
 		menu_.settings.showMinimap = target->HasAttribute("checked");
 	}
-	else if (id == "opt-p-hints")
+	else if (id == UiIds::OptPHints)
 	{
 		menu_.settings.showHints = target->HasAttribute("checked");
 	}
-	else if (id == "opt-p-mute")
+	else if (id == UiIds::OptPMute)
 	{
 		menu_.settings.mute = target->HasAttribute("checked");
 	}
-	else if (id == "opt-p-rightdrag")
+	else if (id == UiIds::OptPRightDrag)
 	{
 		menu_.settings.rightDragPan = target->HasAttribute("checked");
 	}
-	else if (id == "opt-p-colorblind")
+	else if (id == UiIds::OptPColorBlind)
 	{
 		menu_.settings.colorBlindMode = target->HasAttribute("checked");
 		art_.SetColorBlindMode(menu_.settings.colorBlindMode);

@@ -13,38 +13,39 @@
 
 #include "app/data/Art.h"
 #include "app/input/Hotkeys.h"
+#include "app/ui/UiIds.h"
 #include "world/MapFile.h"
 #include "app/match/Menu.h"
 #include "app/save/SaveGame.h"
 
 void RmlUiMenus::OnClick(const Rml::String &id)
 {
-	if (id == "btn-setup")
+	if (id == UiIds::BtnSetup)
 	{
 		menu_.OpenSetup(ListMaps("data/maps"));
 		Announce(EventType::MenuAction);
 	}
-	else if (id == "btn-load")
+	else if (id == UiIds::BtnLoad)
 	{
 		menu_.OpenLoad();
 		Announce(EventType::MenuAction);
 	}
-	else if (id == "btn-settings")
+	else if (id == UiIds::BtnSettings)
 	{
 		menu_.OpenSettings();
 		Announce(EventType::MenuAction);
 	}
-	else if (id == "btn-editor")
+	else if (id == UiIds::BtnEditor)
 	{
 		screens_.OpenEditor();
 		Announce(EventType::MenuAction);
 	}
-	else if (id == "btn-quit")
+	else if (id == UiIds::BtnQuit)
 	{
 		menu_.OpenQuitConfirm();
 		Announce(EventType::MenuAction);
 	}
-	else if (id == "btn-start")
+	else if (id == UiIds::BtnStart)
 	{
 		// No announce here, matching the raygui Start path.
 		if (const MapEntry *sel = menu_.setup.SelectedMap();
@@ -53,39 +54,39 @@ void RmlUiMenus::OnClick(const Rml::String &id)
 			callbacks_.startMatch(sel->path, menu_.setup.difficulty);
 		}
 	}
-	else if (id == "btn-back-right")
+	else if (id == UiIds::BtnBackRight)
 	{
 		menu_.OpenMainMenu();
 		Announce(EventType::MenuAction);
 	}
-	else if (id == "btn-settings-back")
+	else if (id == UiIds::BtnSettingsBack)
 	{
 		menu_.settings.hotkeyOverrides = hotkeys_.Overrides();
 		SaveSettings(menu_.settings, kSettingsPath);
 		menu_.OpenMainMenu();
 		Announce(EventType::MenuAction);
 	}
-	else if (id == "btn-load-back")
+	else if (id == UiIds::BtnLoadBack)
 	{
 		menu_.OpenMainMenu();
 		Announce(EventType::MenuAction);
 	}
-	else if (id == "btn-remap")
+	else if (id == UiIds::BtnRemap)
 	{
 		BeginRemap(MenuState::Settings);
 	}
-	else if (id == "btn-remap-back")
+	else if (id == UiIds::BtnRemapBack)
 	{
 		remapArming_ = -1;
 		remapConflictAction_.clear();
 		Announce(EventType::MenuAction);
 		menu_.state = remapReturn_;
 	}
-	else if (id.compare(0, 6, "hkkey-") == 0)
+	else if (UiIds::StartsWith(id, UiIds::RemapKeyRow))
 	{
 		// Mirror the raygui row button: a second click on the conflict row
 		// steals the key, otherwise the click toggles arming.
-		const int row = std::atoi(id.c_str() + 6);
+		const int row = std::atoi(id.c_str() + UiIds::RemapKeyRow.size());
 		if (row >= 0 && row < NumHotkeyDefs())
 		{
 			const std::string action = kHotkeyDefs[row].action;
@@ -105,35 +106,31 @@ void RmlUiMenus::OnClick(const Rml::String &id)
 			}
 		}
 	}
-	else if (id == "btn-yes")
+	else if (id == UiIds::BtnYes)
 	{
 		pendingChoice_ = ConfirmChoice::Yes;
 	}
-	else if (id == "btn-no")
+	else if (id == UiIds::BtnNo)
 	{
 		pendingChoice_ = ConfirmChoice::No;
 	}
-	else if (id == "diff-0")
+	else if (UiIds::StartsWith(id, UiIds::DifficultyRow))
 	{
-		menu_.SelectDifficulty(AIDifficulty::Easy);
+		const int row = std::atoi(id.c_str() + UiIds::DifficultyRow.size());
+		if (row >= 0 && row <= static_cast<int>(AIDifficulty::Hard))
+		{
+			menu_.SelectDifficulty(static_cast<AIDifficulty>(row));
+		}
 	}
-	else if (id == "diff-1")
+	else if (UiIds::StartsWith(id, UiIds::MapRow))
 	{
-		menu_.SelectDifficulty(AIDifficulty::Medium);
+		menu_.SelectMap(std::atoi(id.c_str() + UiIds::MapRow.size()));
 	}
-	else if (id == "diff-2")
-	{
-		menu_.SelectDifficulty(AIDifficulty::Hard);
-	}
-	else if (id.compare(0, 8, "mapitem-") == 0)
-	{
-		menu_.SelectMap(std::atoi(id.c_str() + 8));
-	}
-	else if (id.compare(0, 5, "slot-") == 0)
+	else if (UiIds::StartsWith(id, UiIds::SlotRow))
 	{
 		// No announce here, matching the raygui slot path. The disabled
 		// class is visual-only, so re-check filled before loading.
-		const int slot = std::atoi(id.c_str() + 5);
+		const int slot = std::atoi(id.c_str() + UiIds::SlotRow.size());
 		if (slot >= 0 && slot < 4)
 		{
 			const std::string path = slot == 0 ? "data/quicksave.ccpb" : SaveSlotPath(slot);
@@ -144,7 +141,7 @@ void RmlUiMenus::OnClick(const Rml::String &id)
 			}
 		}
 	}
-	else if (id == "btn-replay")
+	else if (id == UiIds::BtnReplay)
 	{
 		if (ReplayFrameCount(kReplayDir) > 0)
 		{
@@ -166,31 +163,31 @@ void RmlUiMenus::OnChange(Rml::Element *target, const Rml::String &id)
 	// the stack overflows. Update settings + the value label only; the
 	// control already shows the new value.
 	char text[32];
-	if (id == "opt-camspeed")
+	if (id == UiIds::OptCamSpeed)
 	{
 		menu_.settings.cameraSpeed = Clamp(ReadRange(target), 100.0f, 800.0f);
 		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.cameraSpeed));
-		SetTextIn(settingsDoc_, "val-camspeed", text);
+		SetTextIn(settingsDoc_, UiIds::ValCamSpeed, text);
 	}
-	else if (id == "opt-master")
+	else if (id == UiIds::OptMaster)
 	{
 		menu_.settings.masterVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
 		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.masterVolume));
-		SetTextIn(settingsDoc_, "val-master", text);
+		SetTextIn(settingsDoc_, UiIds::ValMaster, text);
 	}
-	else if (id == "opt-music")
+	else if (id == UiIds::OptMusic)
 	{
 		menu_.settings.musicVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
 		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.musicVolume));
-		SetTextIn(settingsDoc_, "val-music", text);
+		SetTextIn(settingsDoc_, UiIds::ValMusic, text);
 	}
-	else if (id == "opt-sfx")
+	else if (id == UiIds::OptSfx)
 	{
 		menu_.settings.sfxVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
 		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.sfxVolume));
-		SetTextIn(settingsDoc_, "val-sfx", text);
+		SetTextIn(settingsDoc_, UiIds::ValSfx, text);
 	}
-	else if (id == "opt-uiscale")
+	else if (id == UiIds::OptUiScale)
 	{
 		menu_.settings.uiScale = Clamp(ReadRange(target), 0.75f, 2.0f);
 		// Keeps the raygui Map Editor legible; the RmlUi ratio follows
@@ -198,25 +195,25 @@ void RmlUiMenus::OnChange(Rml::Element *target, const Rml::String &id)
 		GuiSetStyle(DEFAULT, TEXT_SIZE,
 					static_cast<int>(10 * menu_.settings.uiScale));
 		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.uiScale));
-		SetTextIn(settingsDoc_, "val-uiscale", text);
+		SetTextIn(settingsDoc_, UiIds::ValUiScale, text);
 	}
-	else if (id == "opt-minimap")
+	else if (id == UiIds::OptMinimap)
 	{
 		menu_.settings.showMinimap = target->HasAttribute("checked");
 	}
-	else if (id == "opt-hints")
+	else if (id == UiIds::OptHints)
 	{
 		menu_.settings.showHints = target->HasAttribute("checked");
 	}
-	else if (id == "opt-mute")
+	else if (id == UiIds::OptMute)
 	{
 		menu_.settings.mute = target->HasAttribute("checked");
 	}
-	else if (id == "opt-rightdrag")
+	else if (id == UiIds::OptRightDrag)
 	{
 		menu_.settings.rightDragPan = target->HasAttribute("checked");
 	}
-	else if (id == "opt-colorblind")
+	else if (id == UiIds::OptColorBlind)
 	{
 		menu_.settings.colorBlindMode = target->HasAttribute("checked");
 		art_.SetColorBlindMode(menu_.settings.colorBlindMode);
@@ -240,7 +237,7 @@ void RmlUiMenus::PopulateMaps()
 		return;
 	}
 	mapCache_ = signature;
-	Rml::Element *list = setupDoc_->GetElementById("maplist");
+	Rml::Element *list = ById(setupDoc_, UiIds::MapList);
 	while (Rml::Element *child = list->GetFirstChild())
 	{
 		list->RemoveChild(child);
@@ -250,8 +247,7 @@ void RmlUiMenus::PopulateMaps()
 	{
 		const MapEntry &entry = maps[i];
 		Rml::ElementPtr item(setupDoc_->CreateElement("div"));
-		char id[32];
-		snprintf(id, sizeof(id), "mapitem-%d", static_cast<int>(i));
+		const std::string id = UiIds::WithIndex(UiIds::MapRow, static_cast<int>(i));
 		item->SetAttribute("id", Rml::String(id));
 		item->SetAttribute("class", Rml::String("map-item"));
 		char label[128];
@@ -268,14 +264,13 @@ void RmlUiMenus::RefreshSetup()
 	PopulateMaps();
 	for (std::size_t i = 0; i < menu_.setup.maps.size(); ++i)
 	{
-		char id[32];
-		snprintf(id, sizeof(id), "mapitem-%d", static_cast<int>(i));
-		if (Rml::Element *el = setupDoc_->GetElementById(id))
+		const std::string id = UiIds::WithIndex(UiIds::MapRow, static_cast<int>(i));
+		if (Rml::Element *el = ById(setupDoc_, id))
 		{
 			el->SetClass("selected", static_cast<int>(i) == menu_.setup.mapIndex);
 		}
 	}
-	if (Rml::Element *detail = setupDoc_->GetElementById("mapdetail"))
+	if (Rml::Element *detail = ById(setupDoc_, UiIds::MapDetail))
 	{
 		if (const MapEntry *sel = menu_.setup.SelectedMap())
 		{
@@ -290,17 +285,16 @@ void RmlUiMenus::RefreshSetup()
 		}
 	}
 	const int diff = static_cast<int>(menu_.setup.difficulty);
-	for (int i = 0; i < 3; ++i)
+	for (int i = 0; i <= static_cast<int>(AIDifficulty::Hard); ++i)
 	{
-		char id[16];
-		snprintf(id, sizeof(id), "diff-%d", i);
-		if (Rml::Element *el = setupDoc_->GetElementById(id))
+		const std::string id = UiIds::WithIndex(UiIds::DifficultyRow, i);
+		if (Rml::Element *el = ById(setupDoc_, id))
 		{
 			el->SetClass("selected", i == diff);
 		}
 	}
 	// The disabled class is visual-only; the click guard lives in OnClick.
-	if (Rml::Element *start = setupDoc_->GetElementById("btn-start"))
+	if (Rml::Element *start = ById(setupDoc_, UiIds::BtnStart))
 	{
 		SetDisabled(start, !menu_.setup.CanStart());
 	}
@@ -308,44 +302,43 @@ void RmlUiMenus::RefreshSetup()
 
 void RmlUiMenus::RefreshSettings()
 {
-	SetRangeIn(settingsDoc_, "opt-camspeed", menu_.settings.cameraSpeed);
-	SetRangeIn(settingsDoc_, "opt-master", menu_.settings.masterVolume);
-	SetRangeIn(settingsDoc_, "opt-music", menu_.settings.musicVolume);
-	SetRangeIn(settingsDoc_, "opt-sfx", menu_.settings.sfxVolume);
-	SetRangeIn(settingsDoc_, "opt-uiscale", menu_.settings.uiScale);
-	SetCheckIn(settingsDoc_, "opt-minimap", menu_.settings.showMinimap);
-	SetCheckIn(settingsDoc_, "opt-hints", menu_.settings.showHints);
-	SetCheckIn(settingsDoc_, "opt-mute", menu_.settings.mute);
-	SetCheckIn(settingsDoc_, "opt-rightdrag", menu_.settings.rightDragPan);
-	SetCheckIn(settingsDoc_, "opt-colorblind", menu_.settings.colorBlindMode);
+	SetRangeIn(settingsDoc_, UiIds::OptCamSpeed, menu_.settings.cameraSpeed);
+	SetRangeIn(settingsDoc_, UiIds::OptMaster, menu_.settings.masterVolume);
+	SetRangeIn(settingsDoc_, UiIds::OptMusic, menu_.settings.musicVolume);
+	SetRangeIn(settingsDoc_, UiIds::OptSfx, menu_.settings.sfxVolume);
+	SetRangeIn(settingsDoc_, UiIds::OptUiScale, menu_.settings.uiScale);
+	SetCheckIn(settingsDoc_, UiIds::OptMinimap, menu_.settings.showMinimap);
+	SetCheckIn(settingsDoc_, UiIds::OptHints, menu_.settings.showHints);
+	SetCheckIn(settingsDoc_, UiIds::OptMute, menu_.settings.mute);
+	SetCheckIn(settingsDoc_, UiIds::OptRightDrag, menu_.settings.rightDragPan);
+	SetCheckIn(settingsDoc_, UiIds::OptColorBlind, menu_.settings.colorBlindMode);
 	char text[32];
 	snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.cameraSpeed));
-	SetTextIn(settingsDoc_, "val-camspeed", text);
+	SetTextIn(settingsDoc_, UiIds::ValCamSpeed, text);
 	snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.masterVolume));
-	SetTextIn(settingsDoc_, "val-master", text);
+	SetTextIn(settingsDoc_, UiIds::ValMaster, text);
 	snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.musicVolume));
-	SetTextIn(settingsDoc_, "val-music", text);
+	SetTextIn(settingsDoc_, UiIds::ValMusic, text);
 	snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.sfxVolume));
-	SetTextIn(settingsDoc_, "val-sfx", text);
+	SetTextIn(settingsDoc_, UiIds::ValSfx, text);
 	snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.uiScale));
-	SetTextIn(settingsDoc_, "val-uiscale", text);
+	SetTextIn(settingsDoc_, UiIds::ValUiScale, text);
 }
 
 void RmlUiMenus::RefreshLoad()
 {
 	for (int i = 0; i < 4; ++i)
 	{
-		char id[16];
-		snprintf(id, sizeof(id), "slot-%d", i);
+		const std::string id = UiIds::WithIndex(UiIds::SlotRow, i);
 		const std::string path = i == 0 ? "data/quicksave.ccpb" : SaveSlotPath(i);
 		std::error_code ec;
 		const bool filled = std::filesystem::exists(path, ec) && !ec;
-		if (Rml::Element *el = loadDoc_->GetElementById(id))
+		if (Rml::Element *el = ById(loadDoc_, id))
 		{
 			SetDisabled(el, !filled);
 		}
 	}
-	if (Rml::Element *replay = loadDoc_->GetElementById("btn-replay"))
+	if (Rml::Element *replay = ById(loadDoc_, UiIds::BtnReplay))
 	{
 		SetDisabled(replay, ReplayFrameCount(kReplayDir) <= 0);
 	}
@@ -355,8 +348,8 @@ void RmlUiMenus::RefreshConfirm()
 {
 	// Texts match the confirm.rml dialog exactly.
 	const bool quitting = menu_.confirm == ConfirmKind::QuitApp;
-	SetTextIn(confirmDoc_, "confirm-title",
+	SetTextIn(confirmDoc_, UiIds::ConfirmTitle,
 			  quitting ? "Quit Conflict Converge?" : "Return to main menu?");
-	SetTextIn(confirmDoc_, "confirm-sub",
+	SetTextIn(confirmDoc_, UiIds::ConfirmSub,
 			  quitting ? "Close the game?" : "Abandon the current match?");
 }

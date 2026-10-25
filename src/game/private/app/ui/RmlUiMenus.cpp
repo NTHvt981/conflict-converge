@@ -14,6 +14,7 @@
 #include "app/data/Audio.h"
 #include "app/match/Menu.h"
 #include "app/ui/RmlUiHost.h"
+#include "app/ui/UiIds.h"
 
 namespace {
 
@@ -203,18 +204,27 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
 		Shutdown();
 		return false;
 	}
-	Listen(menuDoc_, "click", { "btn-setup", "btn-load", "btn-settings", "btn-editor",
-								"btn-quit" });
-	Listen(setupDoc_, "click",
-		   { "btn-start", "btn-back-right", "diff-0", "diff-1", "diff-2" });
-	Listen(settingsDoc_, "click", { "btn-settings-back", "btn-remap" });
+	Listen(menuDoc_, "click", { UiIds::BtnSetup, UiIds::BtnLoad, UiIds::BtnSettings,
+								UiIds::BtnEditor, UiIds::BtnQuit });
+	Listen(setupDoc_, "click", { UiIds::BtnStart, UiIds::BtnBackRight });
+	for (int row = 0; row <= static_cast<int>(AIDifficulty::Hard); ++row)
+	{
+		const std::string id = UiIds::WithIndex(UiIds::DifficultyRow, row);
+		Listen(setupDoc_, "click", { id });
+	}
+	Listen(settingsDoc_, "click", { UiIds::BtnSettingsBack, UiIds::BtnRemap });
 	Listen(settingsDoc_, "change",
-		   { "opt-camspeed", "opt-minimap", "opt-hints", "opt-master", "opt-music", "opt-sfx",
-			 "opt-mute", "opt-rightdrag", "opt-colorblind", "opt-uiscale" });
-	Listen(loadDoc_, "click",
-		   { "slot-0", "slot-1", "slot-2", "slot-3", "btn-load-back", "btn-replay" });
-	Listen(confirmDoc_, "click", { "btn-yes", "btn-no" });
-	Listen(remapDoc_, "click", { "btn-remap-back" });
+		   { UiIds::OptCamSpeed, UiIds::OptMinimap, UiIds::OptHints, UiIds::OptMaster,
+			 UiIds::OptMusic, UiIds::OptSfx, UiIds::OptMute, UiIds::OptRightDrag,
+			 UiIds::OptColorBlind, UiIds::OptUiScale });
+	for (int slot = 0; slot < 4; ++slot)
+	{
+		const std::string id = UiIds::WithIndex(UiIds::SlotRow, slot);
+		Listen(loadDoc_, "click", { id });
+	}
+	Listen(loadDoc_, "click", { UiIds::BtnLoadBack, UiIds::BtnReplay });
+	Listen(confirmDoc_, "click", { UiIds::BtnYes, UiIds::BtnNo });
+	Listen(remapDoc_, "click", { UiIds::BtnRemapBack });
 	PopulateMaps();
 	ready_ = true;
 	ShowState();
@@ -365,11 +375,11 @@ Rml::ElementDocument *RmlUiMenus::Load(const std::string &file)
 }
 
 void RmlUiMenus::Listen(Rml::ElementDocument *doc, const char *event,
-						std::initializer_list<const char *> ids)
+						std::initializer_list<std::string_view> ids)
 {
-	for (const char *id : ids)
+	for (std::string_view id : ids)
 	{
-		if (Rml::Element *el = doc->GetElementById(id))
+		if (Rml::Element *el = ById(doc, id))
 		{
 			el->AddEventListener(event, this);
 		}
@@ -469,9 +479,18 @@ float RmlUiMenus::ReadRange(Rml::Element *el)
 	return 0.0f;
 }
 
-void RmlUiMenus::SetRangeIn(Rml::ElementDocument *doc, const char *id, float value)
+Rml::Element *RmlUiMenus::ById(Rml::ElementDocument *doc, std::string_view id)
 {
-	if (Rml::Element *el = doc->GetElementById(id))
+	if (doc == nullptr)
+	{
+		return nullptr;
+	}
+	return doc->GetElementById(std::string(id));
+}
+
+void RmlUiMenus::SetRangeIn(Rml::ElementDocument *doc, std::string_view id, float value)
+{
+	if (Rml::Element *el = ById(doc, id))
 	{
 		if (auto *control = dynamic_cast<Rml::ElementFormControl *>(el))
 		{
@@ -482,9 +501,9 @@ void RmlUiMenus::SetRangeIn(Rml::ElementDocument *doc, const char *id, float val
 	}
 }
 
-void RmlUiMenus::SetCheckIn(Rml::ElementDocument *doc, const char *id, bool checked)
+void RmlUiMenus::SetCheckIn(Rml::ElementDocument *doc, std::string_view id, bool checked)
 {
-	if (Rml::Element *el = doc->GetElementById(id))
+	if (Rml::Element *el = ById(doc, id))
 	{
 		if (checked)
 		{
@@ -497,9 +516,9 @@ void RmlUiMenus::SetCheckIn(Rml::ElementDocument *doc, const char *id, bool chec
 	}
 }
 
-void RmlUiMenus::SetTextIn(Rml::ElementDocument *doc, const char *id, const std::string &text)
+void RmlUiMenus::SetTextIn(Rml::ElementDocument *doc, std::string_view id, const std::string &text)
 {
-	if (Rml::Element *el = doc->GetElementById(id))
+	if (Rml::Element *el = ById(doc, id))
 	{
 		el->SetInnerRML(text.c_str());
 	}

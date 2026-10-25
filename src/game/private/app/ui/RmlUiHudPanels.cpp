@@ -11,37 +11,38 @@
 
 #include "economy/Building.h"
 #include "app/ui/Hud.h"
+#include "app/ui/UiIds.h"
 #include "core/Team.h"
 #include "units/Unit.h"
 #include "units/UnitFactory.h"
 
 void RmlUiHud::RefreshPause()
 {
-	SetRangeIn(pauseDoc_, "opt-p-camspeed", menu_.settings.cameraSpeed);
-	SetRangeIn(pauseDoc_, "opt-p-master", menu_.settings.masterVolume);
-	SetRangeIn(pauseDoc_, "opt-p-music", menu_.settings.musicVolume);
-	SetRangeIn(pauseDoc_, "opt-p-sfx", menu_.settings.sfxVolume);
-	SetCheckIn(pauseDoc_, "opt-p-minimap", menu_.settings.showMinimap);
-	SetCheckIn(pauseDoc_, "opt-p-hints", menu_.settings.showHints);
-	SetCheckIn(pauseDoc_, "opt-p-mute", menu_.settings.mute);
-	SetCheckIn(pauseDoc_, "opt-p-rightdrag", menu_.settings.rightDragPan);
-	SetCheckIn(pauseDoc_, "opt-p-colorblind", menu_.settings.colorBlindMode);
+	SetRangeIn(pauseDoc_, UiIds::OptPCamSpeed, menu_.settings.cameraSpeed);
+	SetRangeIn(pauseDoc_, UiIds::OptPMaster, menu_.settings.masterVolume);
+	SetRangeIn(pauseDoc_, UiIds::OptPMusic, menu_.settings.musicVolume);
+	SetRangeIn(pauseDoc_, UiIds::OptPSfx, menu_.settings.sfxVolume);
+	SetCheckIn(pauseDoc_, UiIds::OptPMinimap, menu_.settings.showMinimap);
+	SetCheckIn(pauseDoc_, UiIds::OptPHints, menu_.settings.showHints);
+	SetCheckIn(pauseDoc_, UiIds::OptPMute, menu_.settings.mute);
+	SetCheckIn(pauseDoc_, UiIds::OptPRightDrag, menu_.settings.rightDragPan);
+	SetCheckIn(pauseDoc_, UiIds::OptPColorBlind, menu_.settings.colorBlindMode);
 	char text[32];
 	snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.cameraSpeed));
-	SetTextIn(pauseDoc_, "val-p-camspeed", text);
+	SetTextIn(pauseDoc_, UiIds::ValPCamSpeed, text);
 	snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.masterVolume));
-	SetTextIn(pauseDoc_, "val-p-master", text);
+	SetTextIn(pauseDoc_, UiIds::ValPMaster, text);
 	snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.musicVolume));
-	SetTextIn(pauseDoc_, "val-p-music", text);
+	SetTextIn(pauseDoc_, UiIds::ValPMusic, text);
 	snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.sfxVolume));
-	SetTextIn(pauseDoc_, "val-p-sfx", text);
+	SetTextIn(pauseDoc_, UiIds::ValPSfx, text);
 }
 
 void RmlUiHud::RefreshOutcome()
 {
 	const bool won = menu_.state == MenuState::Victory;
-	SetTextIn(outcomeDoc_, "outcome-title", won ? "Victory!" : "Defeat");
-	SetTextIn(outcomeDoc_, "outcome-body",
+	SetTextIn(outcomeDoc_, UiIds::OutcomeTitle, won ? "Victory!" : "Defeat");
+	SetTextIn(outcomeDoc_, UiIds::OutcomeBody,
 			  won ? "Enemy force destroyed." : "Your force was destroyed.");
 }
 
@@ -49,16 +50,16 @@ void RmlUiHud::RefreshConfirm()
 {
 	// Texts match the confirm.rml dialog exactly.
 	const bool quitting = menu_.confirm == ConfirmKind::QuitApp;
-	SetTextIn(confirmDoc_, "confirm-title",
+	SetTextIn(confirmDoc_, UiIds::ConfirmTitle,
 			  quitting ? "Quit Conflict Converge?" : "Return to main menu?");
-	SetTextIn(confirmDoc_, "confirm-sub",
+	SetTextIn(confirmDoc_, UiIds::ConfirmSub,
 			  quitting ? "Close the game?" : "Abandon the current match?");
 }
 
 void RmlUiHud::RefreshHud()
 {
-	SetTextCached("res-line", FormatResources(resources_));
-	SetTextCached("sel-line", SelectionLine());
+	SetTextCached(UiIds::ResLine, FormatResources(resources_));
+	SetTextCached(UiIds::SelLine, SelectionLine());
 
 	int selectedProducer = -1;
 	ProductionTab producerTab = ProductionTab::Infantry;
@@ -116,11 +117,10 @@ void RmlUiHud::RefreshHud()
 	{
 		const int count = counts[bit];
 		const bool allSelected = !partial[bit];
-		char id[16];
-		snprintf(id, sizeof(id), "cg-%d", bit);
+		const std::string id = UiIds::WithIndex(UiIds::CgRow, bit);
 		snprintf(label, sizeof(label), "%d:%d", (bit + 1) % 10, count);
 		SetTextCached(id, label);
-		if (Rml::Element *el = hudDoc_->GetElementById(id))
+		if (Rml::Element *el = ById(hudDoc_, id))
 		{
 			const bool nonempty = count > 0;
 			el->SetClass("nonempty", nonempty);
@@ -130,25 +130,25 @@ void RmlUiHud::RefreshHud()
 	}
 
 	const bool anyProducer = sim_.HasBootcamp() || sim_.HasWorkshop();
-	if (Rml::Element *stub = hudDoc_->GetElementById("need-production"))
+	if (Rml::Element *stub = ById(hudDoc_, UiIds::NeedProduction))
 	{
 		SetDisplay(stub, anyProducer ? "none" : "block");
 	}
 	ProductionQueue *active = ActiveQueue();
-	if (Rml::Element *queueRow = hudDoc_->GetElementById("prod-queue-row"))
+	if (Rml::Element *queueRow = ById(hudDoc_, UiIds::ProdQueueRow))
 	{
 		SetDisplay(queueRow, active != nullptr ? "block" : "none");
 	}
 	RefreshProduction();
 	RefreshAbilities();
 	snprintf(label, sizeof(label), "Queue: %d", active != nullptr ? static_cast<int>(active->Size()) : 0);
-	SetTextCached("queue-line", label);
+	SetTextCached(UiIds::QueueLine, label);
 
-	if (Rml::Element *producing = hudDoc_->GetElementById("hud-producing"))
+	if (Rml::Element *producing = ById(hudDoc_, UiIds::HudProducing))
 	{
 		SetDisplay(producing, (active == nullptr || active->Empty()) ? "none" : "block");
 	}
-	if (Rml::Element *fill = hudDoc_->GetElementById("producing-fill"))
+	if (Rml::Element *fill = ById(hudDoc_, UiIds::ProducingFill))
 	{
 		char width[32];
 		snprintf(width, sizeof(width), "%g%%",
@@ -157,9 +157,9 @@ void RmlUiHud::RefreshHud()
 	}
 
 	snprintf(label, sizeof(label), "%d FPS", GetFPS());
-	SetTextCached("fps-line", label);
+	SetTextCached(UiIds::FpsLine, label);
 
-	if (Rml::Element *hints = hudDoc_->GetElementById("hud-hints"))
+	if (Rml::Element *hints = ById(hudDoc_, UiIds::HudHints))
 	{
 		SetDisplay(hints, showHints_ ? "block" : "none");
 	}
@@ -174,29 +174,29 @@ void RmlUiHud::RefreshProduction()
 	const bool infantryTab = productionTab_ == ProductionTab::Infantry;
 	const bool vehiclesTab = productionTab_ == ProductionTab::Vehicles;
 	const bool buildingsTab = productionTab_ == ProductionTab::Buildings;
-	if (Rml::Element *rows = hudDoc_->GetElementById("rows-infantry"))
+	if (Rml::Element *rows = ById(hudDoc_, UiIds::RowsInfantry))
 	{
 		SetDisplay(rows, hasBootcamp && infantryTab ? "block" : "none");
 	}
-	if (Rml::Element *rows = hudDoc_->GetElementById("rows-vehicles"))
+	if (Rml::Element *rows = ById(hudDoc_, UiIds::RowsVehicles))
 	{
 		SetDisplay(rows, hasWorkshop && vehiclesTab ? "block" : "none");
 	}
-	if (Rml::Element *rows = hudDoc_->GetElementById("rows-buildings"))
+	if (Rml::Element *rows = ById(hudDoc_, UiIds::RowsBuildings))
 	{
 		SetDisplay(rows, buildingsTab ? "block" : "none");
 	}
-	if (Rml::Element *tab = hudDoc_->GetElementById("tab-infantry"))
+	if (Rml::Element *tab = ById(hudDoc_, UiIds::TabInfantry))
 	{
 		tab->SetClass("selected", infantryTab);
 		SetDisabled(tab, !hasBootcamp);
 	}
-	if (Rml::Element *tab = hudDoc_->GetElementById("tab-vehicles"))
+	if (Rml::Element *tab = ById(hudDoc_, UiIds::TabVehicles))
 	{
 		tab->SetClass("selected", vehiclesTab);
 		SetDisabled(tab, !hasWorkshop);
 	}
-	if (Rml::Element *tab = hudDoc_->GetElementById("tab-buildings"))
+	if (Rml::Element *tab = ById(hudDoc_, UiIds::TabBuildings))
 	{
 		tab->SetClass("selected", buildingsTab);
 	}
@@ -204,45 +204,42 @@ void RmlUiHud::RefreshProduction()
 	for (std::size_t i = 0; i < infantry.size() && i < 4; ++i)
 	{
 		const UnitCost cost = CostOf(infantry[i]);
-		char id[16];
-		snprintf(id, sizeof(id), "prod-i-%d", static_cast<int>(i));
+		const std::string id = UiIds::WithIndex(UiIds::ProdInfantryRow, static_cast<int>(i));
 		snprintf(label, sizeof(label), "%s %ld/%ld", UnitTypeName(infantry[i]), cost.iron,
 				 cost.oil);
 		SetTextCached(id, label);
-		if (Rml::Element *el = hudDoc_->GetElementById(id))
+		if (Rml::Element *el = ById(hudDoc_, id))
 		{
 			SetDisabled(el, resources_.iron < cost.iron || resources_.oil < cost.oil);
 		}
-		snprintf(id, sizeof(id), "repr-i-%d", static_cast<int>(i));
-		SetTextCached(id, bootcampQueue_.RepeatArmed(infantry[i]) ? "R*" : "R");
+		SetTextCached(UiIds::WithIndex(UiIds::RepeatInfantryRow, static_cast<int>(i)),
+					  bootcampQueue_.RepeatArmed(infantry[i]) ? "R*" : "R");
 	}
 	const std::vector<UnitType> vehicles = VehicleMenuOrder();
 	for (std::size_t i = 0; i < vehicles.size() && i < 4; ++i)
 	{
 		const UnitCost cost = CostOf(vehicles[i]);
-		char id[16];
-		snprintf(id, sizeof(id), "prod-v-%d", static_cast<int>(i));
+		const std::string id = UiIds::WithIndex(UiIds::ProdVehicleRow, static_cast<int>(i));
 		snprintf(label, sizeof(label), "%s %ld/%ld", UnitTypeName(vehicles[i]), cost.iron,
 				 cost.oil);
 		SetTextCached(id, label);
-		if (Rml::Element *el = hudDoc_->GetElementById(id))
+		if (Rml::Element *el = ById(hudDoc_, id))
 		{
 			SetDisabled(el, resources_.iron < cost.iron || resources_.oil < cost.oil);
 		}
-		snprintf(id, sizeof(id), "repr-v-%d", static_cast<int>(i));
-		SetTextCached(id, workshopQueue_.RepeatArmed(vehicles[i]) ? "R*" : "R");
+		SetTextCached(UiIds::WithIndex(UiIds::RepeatVehicleRow, static_cast<int>(i)),
+					  workshopQueue_.RepeatArmed(vehicles[i]) ? "R*" : "R");
 	}
 	const std::vector<BuildingType> buildings = BuildingMenuOrder();
 	for (std::size_t i = 0; i < buildings.size() && i < 4; ++i)
 	{
-		char id[16];
-		snprintf(id, sizeof(id), "place-%d", static_cast<int>(i));
+		const std::string id = UiIds::WithIndex(UiIds::PlaceRow, static_cast<int>(i));
 		SetTextCached(id, BuildingTypeName(buildings[i]));
 	}
 	ProductionQueue *active = ActiveQueue();
 	snprintf(label, sizeof(label), "Queue: %d",
 			 active != nullptr ? static_cast<int>(active->Size()) : 0);
-	SetTextCached("queue-line", label);
+	SetTextCached(UiIds::QueueLine, label);
 }
 
 ProductionQueue *RmlUiHud::ActiveQueue()
@@ -278,7 +275,7 @@ void RmlUiHud::RefreshHints()
 		return;
 	}
 	hintsCache_ = joined;
-	Rml::Element *list = hudDoc_->GetElementById("hud-hints");
+	Rml::Element *list = ById(hudDoc_, UiIds::HudHints);
 	if (list == nullptr)
 	{
 		return;
