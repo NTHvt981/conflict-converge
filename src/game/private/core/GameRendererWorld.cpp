@@ -11,7 +11,6 @@
 #include "app/input/Selection.h"
 #include "units/Unit.h"
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <vector>
 
@@ -26,41 +25,39 @@ Rectangle SquadSelectionBox(const Art &art, const Unit &unit, Entity id, bool at
 	{
 		return body;
 	}
-	std::array<Vector2, 6> slots;
-	float slotScale = 1.0f;
-	const int count = SquadSlots(unit.type, id, UnitHealthFraction(unit), slots, slotScale);
+	const SquadLayout squad = SquadSlots(unit.type, id, UnitHealthFraction(unit));
 	const bool atlasCells =
 		art.UseAtlas() && !art.UnitSprite(unit.type, false, id, 0.0f, 0).empty();
 	const float s = Art::BaseArtScale(unit.type);
 	float x0, y0, x1, y1;
 	if (atlasCells)
 	{
-		x0 = unit.position.x + slots[0].x + cc::kHalfTile - 8.0f * s;
-		y0 = unit.position.y + slots[0].y + cc::kHalfTile - 16.0f * s;
-		x1 = unit.position.x + slots[0].x + cc::kHalfTile + 8.0f * s;
-		y1 = unit.position.y + slots[0].y + cc::kHalfTile + 16.0f * s;
+		x0 = unit.position.x + squad.slots[0].x + cc::kHalfTile - 8.0f * s;
+		y0 = unit.position.y + squad.slots[0].y + cc::kHalfTile - 16.0f * s;
+		x1 = unit.position.x + squad.slots[0].x + cc::kHalfTile + 8.0f * s;
+		y1 = unit.position.y + squad.slots[0].y + cc::kHalfTile + 16.0f * s;
 	}
 	else
 	{
-		x0 = unit.position.x + slots[0].x + 16.0f;
-		y0 = unit.position.y + slots[0].y + 16.0f;
+		x0 = unit.position.x + squad.slots[0].x + 16.0f;
+		y0 = unit.position.y + squad.slots[0].y + 16.0f;
 		x1 = x0 + 32.0f;
 		y1 = y0 + 32.0f;
 	}
-	for (int i = 1; i < count; ++i)
+	for (int i = 1; i < squad.count; ++i)
 	{
 		float cx0, cy0, cx1, cy1;
 		if (atlasCells)
 		{
-			cx0 = unit.position.x + slots[i].x + cc::kHalfTile - 8.0f * s;
-			cy0 = unit.position.y + slots[i].y + cc::kHalfTile - 16.0f * s;
-			cx1 = unit.position.x + slots[i].x + cc::kHalfTile + 8.0f * s;
-			cy1 = unit.position.y + slots[i].y + cc::kHalfTile + 16.0f * s;
+			cx0 = unit.position.x + squad.slots[i].x + cc::kHalfTile - 8.0f * s;
+			cy0 = unit.position.y + squad.slots[i].y + cc::kHalfTile - 16.0f * s;
+			cx1 = unit.position.x + squad.slots[i].x + cc::kHalfTile + 8.0f * s;
+			cy1 = unit.position.y + squad.slots[i].y + cc::kHalfTile + 16.0f * s;
 		}
 		else
 		{
-			cx0 = unit.position.x + slots[i].x + 16.0f;
-			cy0 = unit.position.y + slots[i].y + 16.0f;
+			cx0 = unit.position.x + squad.slots[i].x + 16.0f;
+			cy0 = unit.position.y + squad.slots[i].y + 16.0f;
 			cx1 = cx0 + 32.0f;
 			cy1 = cy0 + 32.0f;
 		}
@@ -312,17 +309,15 @@ void GameRenderer::DrawUnitEntity(Entity id, Unit &unit)
 	}
 	else
 	{
-		std::array<Vector2, 6> slots;
-		float slotScale = 1.0f;
-		const int count = SquadSlots(unit.type, id, UnitHealthFraction(unit), slots, slotScale);
+		const SquadLayout squad = SquadSlots(unit.type, id, UnitHealthFraction(unit));
 		const bool moving = unit.state == UnitState::Moving;
 		const bool attacking = unit.state == UnitState::Attacking;
 		const float animTime = static_cast<float>(GetTime());
 		const Color tint = art_.TeamTint(unit.teamID);
-		for (int i = 0; i < count; ++i)
+		for (int i = 0; i < squad.count; ++i)
 		{
-			const Vector2 corner = { unit.position.x + slots[i].x,
-									 unit.position.y + slots[i].y };
+			const Vector2 corner = { unit.position.x + squad.slots[i].x,
+									 unit.position.y + squad.slots[i].y };
 			if (art_.UseAtlas() && art_.HasTankArt(unit.type))
 			{
 				const int bodyDir = static_cast<int>(unit.facing);
