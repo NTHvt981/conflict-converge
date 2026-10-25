@@ -168,7 +168,7 @@ void ShortcutBindings::Bind()
 		const Unit *unit = registry_.Get<Unit>(selected);
 		if (unit != nullptr)
 		{
-			SelectAllOfType(registry_, unit->type, 0, false);
+			SelectAllOfType(registry_, unit->type, kPlayerTeam, false);
 		}
 	});
 	input_.shortcuts.Bind(hotkeys_.KeyFor("SelectFactories"), [&] {
@@ -176,7 +176,7 @@ void ShortcutBindings::Bind()
 		{
 			return;
 		}
-		SelectAllProductionBuildings(registry_, 0);
+		SelectAllProductionBuildings(registry_, kPlayerTeam);
 	});
 	input_.shortcuts.Bind(hotkeys_.KeyFor("SlowestSpeed"), [&] {
 		if (worldActive_ && menu_.state == MenuState::Playing)

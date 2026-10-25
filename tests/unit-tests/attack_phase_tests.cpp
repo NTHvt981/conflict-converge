@@ -14,7 +14,7 @@
 namespace
 {
 
-Entity AddPhaser(Registry &registry, UnitType type, int team, float x, float y)
+Entity AddPhaser(Registry &registry, UnitType type, TeamId team, float x, float y)
 {
 	Unit unit;
 	unit.type = type;
@@ -47,8 +47,10 @@ void RunAttackPhaseTests()
 	{
 		Registry registry;
 		TileMap map(10, 10);
-		const Entity attacker = AddPhaser(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
-		const Entity victim = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
+		const Entity attacker =
+			AddPhaser(registry, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
+		const Entity victim =
+			AddPhaser(registry, UnitType::RifleInfantry, kEnemyTeam, 100.0f, 0.0f);
 
 		UpdateUnit(attacker, registry, map, kDt);
 		CC_CHECK(FindCombatState(registry, attacker)->phase == AttackPhase::WindUp);
@@ -82,11 +84,11 @@ void RunAttackPhaseTests()
 		unarmed.attackPower = 0;
 		unarmed.attackRange = 256;
 		unarmed.sightRange = 320.0f;
-		unarmed.teamID = 0;
+		unarmed.teamID = kPlayerTeam;
 		unarmed.position = { 0.0f, 0.0f };
 		const Entity pacifist = registry.Create();
 		registry.Add(pacifist, unarmed);
-		const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
+		const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, kEnemyTeam, 100.0f, 0.0f);
 		GetCombatState(registry, pacifist).target = foe; // bypass acquisition
 		StepPhasers(registry, map, kDt, 30);
 		const Unit *unit = registry.Get<Unit>(pacifist);
@@ -98,8 +100,8 @@ void RunAttackPhaseTests()
 	{
 		Registry registry;
 		TileMap map(10, 10);
-		const Entity walker = AddPhaser(registry, UnitType::RifleInfantry, 0, 0.0f, 0.0f);
-		const Entity gone = AddPhaser(registry, UnitType::RifleInfantry, 1, 100.0f, 0.0f);
+		const Entity walker = AddPhaser(registry, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
+		const Entity gone = AddPhaser(registry, UnitType::RifleInfantry, kEnemyTeam, 100.0f, 0.0f);
 		UpdateUnit(walker, registry, map, kDt); // acquires, starts WindUp
 		CC_CHECK(FindCombatState(registry, walker)->phase == AttackPhase::WindUp);
 		registry.Destroy(gone); // target lost...
@@ -116,8 +118,8 @@ void RunAttackPhaseTests()
 	{
 		Registry registry;
 		TileMap map(10, 10);
-		const Entity tank = AddPhaser(registry, UnitType::LightTank, 0, 0.0f, 0.0f);
-		const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 192.0f, 0.0f);
+		const Entity tank = AddPhaser(registry, UnitType::LightTank, kPlayerTeam, 0.0f, 0.0f);
+		const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, kEnemyTeam, 192.0f, 0.0f);
 		Turret turret;
 		turret.facing = 3.141592653589793f; // aimed away (desired = 0)
 		turret.turnRate = 3.0f;
@@ -133,8 +135,8 @@ void RunAttackPhaseTests()
 	{
 		Registry registry;
 		TileMap map(10, 10);
-		const Entity tank = AddPhaser(registry, UnitType::LightTank, 0, 0.0f, 0.0f);
-		const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, 1, 192.0f, 0.0f);
+		const Entity tank = AddPhaser(registry, UnitType::LightTank, kPlayerTeam, 0.0f, 0.0f);
+		const Entity foe = AddPhaser(registry, UnitType::RifleInfantry, kEnemyTeam, 192.0f, 0.0f);
 		Turret turret;
 		turret.facing = 3.141592653589793f;
 		turret.turnRate = 3.0f;

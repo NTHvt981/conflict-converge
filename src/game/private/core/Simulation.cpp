@@ -86,7 +86,7 @@ void Simulation::RefreshProducers()
 	hasBootcamp_ = false;
 	hasWorkshop_ = false;
 	registry_.Each<Building>([&](Entity, const Building &building) {
-		if (building.teamID != 0 || building.state != BuildingState::Operational)
+		if (building.teamID != kPlayerTeam || building.state != BuildingState::Operational)
 		{
 			return;
 		}
@@ -134,8 +134,8 @@ void Simulation::Step(float dt)
 		if (const Unit *corpse = registry_.Get<Unit>(id))
 		{
 			art_.ParticlesPool().SpawnBurst(
-				{ corpse->position.x + 32.0f, corpse->position.y + 32.0f }, ORANGE, 24,
-				120.0f, 0.6f);
+				{ corpse->position.x + cc::kHalfTile, corpse->position.y + cc::kHalfTile },
+				ORANGE, 24, 120.0f, 0.6f);
 			const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(corpse->position));
 			occ_.ReleaseFootprintOwned(anchor, corpse->footprintWidth,
 									   corpse->footprintHeight, id,
@@ -149,7 +149,8 @@ void Simulation::Step(float dt)
 		shakeTrauma_ = AddShakeTrauma(shakeTrauma_, kShakeDeathTrauma);
 	}
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
-		const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
+		const Vector2 center = {
+			unit.position.x + cc::kHalfTile, unit.position.y + cc::kHalfTile };
 		const CombatState *combat = FindCombatState(registry_, id);
 		if (combat != nullptr && combat->hitFlashTime > 0.20f)
 		{
@@ -157,7 +158,7 @@ void Simulation::Step(float dt)
 			damageNumbers_.Spawn({ center.x, unit.position.y - 2.0f },
 								 combat->lastDamageTaken);
 			shakeTrauma_ = AddShakeTrauma(shakeTrauma_, kShakeHitTrauma);
-			if (unit.teamID == 0)
+			if (unit.teamID == kPlayerTeam)
 			{
 				pings_.Raise(center, PingKind::UnderAttack);
 			}
@@ -220,15 +221,15 @@ void Simulation::Step(float dt)
 		Announce(EventType::ResourceDepleted);
 	}
 	lastDepletedCount_ = depletedCount;
-	UpdateBaseIncome(registry_, resources_, dt, 0);
+	UpdateBaseIncome(registry_, resources_, dt, kPlayerTeam);
 	nodes_.Update(dt);
-	nodes_.UpdateHarvesters(registry_, map_, &occ_, dt, 0);
-	nodes_.GatherTick(registry_, resources_, dt, 0);
+	nodes_.UpdateHarvesters(registry_, map_, &occ_, dt, kPlayerTeam);
+	nodes_.GatherTick(registry_, resources_, dt, kPlayerTeam);
 	RefreshProducers();
 	auto pumpQueue = [&](ProductionQueue &queue, BuildingType type, int &cursor) {
 		int producers = 0;
 		registry_.Each<Building>([&](Entity, const Building &building) {
-			if (building.type == type && building.teamID == 0 &&
+			if (building.type == type && building.teamID == kPlayerTeam &&
 				building.state == BuildingState::Operational)
 			{
 				++producers;
@@ -238,7 +239,7 @@ void Simulation::Step(float dt)
 		{
 			return;
 		}
-		const Entity producerId = ProducerBuildingAt(registry_, type, 0, cursor);
+		const Entity producerId = ProducerBuildingAt(registry_, type, kPlayerTeam, cursor);
 		if (producerId == kInvalidEntity)
 		{
 			return;
@@ -254,7 +255,7 @@ void Simulation::Step(float dt)
 		for (int n = 0; n < producers; ++n)
 		{
 			const Entity spawned =
-				queue.Update(factory_, resources_, 0, spawnPos, dt, &map_, &occ_);
+				queue.Update(factory_, resources_, kPlayerTeam, spawnPos, dt, &map_, &occ_);
 			if (spawned == kInvalidEntity)
 			{
 				continue;
@@ -309,7 +310,7 @@ void Simulation::Step(float dt)
 	UpdateBuildingFlash(registry_, dt);
 	{
 		const Vector2 home = ResolvePlayerRetreatHome(registry_);
-		RetreatIfLowHP(registry_, map_, &occ_, home, 0, kRetreatHealthFraction, true);
+		RetreatIfLowHP(registry_, map_, &occ_, home, kPlayerTeam, kRetreatHealthFraction, true);
 	}
 	if (!sandboxMode_)
 	{
@@ -344,12 +345,13 @@ void Simulation::Step(float dt)
 			}
 		}
 		registry_.Each<Unit>([&](Entity, const Unit &unit) {
-			if (unit.teamID != 0 &&
-				!fog_.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit.position))))
+			if (unit.teamID != kPlayerTeam &&
+				!fog_.IsVisible(kPlayerTeam, cc::WorldToTile(cc::ToGlm(unit.position))))
 			{
 				return;
 			}
-			const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
+			const Vector2 center = {
+			unit.position.x + cc::kHalfTile, unit.position.y + cc::kHalfTile };
 			const Vector2 dot =
 				minimap_.WorldToMinimap(center, map_.Width(), map_.Height());
 			DrawRectangle(static_cast<int>(dot.x - minimap_.screenRect.x) - 1,
@@ -360,7 +362,8 @@ void Simulation::Step(float dt)
 	}
 	if (!sandboxMode_)
 	{
-		menu_.ShowOutcome(TeamHasUnits(registry_, 0), TeamHasUnits(registry_, 1));
+		menu_.ShowOutcome(TeamHasUnits(registry_, kPlayerTeam),
+						  TeamHasUnits(registry_, kEnemyTeam));
 	}
 	if (menu_.state != lastOutcomeState_)
 	{

@@ -16,7 +16,7 @@ Entity SpawnEngineer(Registry &registry, cc::IVec2 tile)
 	Unit unit;
 	unit.type = UnitType::Engineer;
 	ApplyBaseStats(unit);
-	unit.teamID = 0;
+	unit.teamID = kPlayerTeam;
 	unit.position = cc::ToRaylib(cc::TileToWorld(tile.x, tile.y));
 	const Entity id = registry.Create();
 	registry.Add(id, unit);
@@ -48,7 +48,7 @@ void RunNodesTests()
 	Unit scout;
 	scout.type = UnitType::RifleInfantry;
 	ApplyBaseStats(scout);
-	scout.teamID = 0;
+	scout.teamID = kPlayerTeam;
 	scout.position = cc::ToRaylib(cc::TileToWorld(3, 3));
 	const Entity idle = registry.Create();
 	registry.Add(idle, scout);
@@ -116,7 +116,7 @@ void RunNodesTests()
 	CC_CHECK(loop.SpawnNode(field, ResourceKind::Iron, { 3, 3 }, 1000.0f, 5.0f));
 	Registry crew2;
 	ResourceSystem bank;
-	CC_CHECK(PlaceBuilding(crew2, field, BuildingType::ResourceDepot, 0, 8, 8, &loop) !=
+	CC_CHECK(PlaceBuilding(crew2, field, BuildingType::ResourceDepot, kPlayerTeam, 8, 8, &loop) !=
 			 kInvalidEntity);
 	UpdateBuildingConstruction(crew2, 5.0f);
 	const Entity hauler = SpawnEngineer(crew2, { 3, 3 });
@@ -147,17 +147,17 @@ void RunNodesTests()
 	CC_CHECK(plan.phase == HarvestPhase::Unloading);
 
 	// --- base income stalls at the cap ---
-	CC_CHECK(PlaceBuilding(crew2, field, BuildingType::Base, 0, 12, 12, &loop) !=
+	CC_CHECK(PlaceBuilding(crew2, field, BuildingType::Base, kPlayerTeam, 12, 12, &loop) !=
 			 kInvalidEntity);
 	UpdateBuildingConstruction(crew2, 5.0f);
-	UpdateBaseIncome(crew2, bank, 60.0f, 0);
+	UpdateBaseIncome(crew2, bank, 60.0f, kPlayerTeam);
 	CC_CHECK(bank.iron == 1500);
 
 	// --- idle loop harvesters take orders to their field ---
 	plan.phase = HarvestPhase::ToField;
 	plan.load = 0.0f;
 	plan.nodeTile = { 3, 3 };
-	loop.UpdateHarvesters(crew2, field, nullptr, 1.0f / 60.0f, 0);
+	loop.UpdateHarvesters(crew2, field, nullptr, 1.0f / 60.0f, kPlayerTeam);
 	const Mover *haulMover = FindMover(crew2, hauler);
 	CC_CHECK(haulMover != nullptr && (haulMover->hasMoveOrder || haulMover->hasPath));
 
@@ -174,7 +174,7 @@ void RunNodesTests()
 	GetHarvester(pair, first).nodeTile = { 3, 3 };
 	GetHarvester(pair, second).phase = HarvestPhase::ToField;
 	GetHarvester(pair, second).nodeTile = { 3, 3 };
-	shared.UpdateHarvesters(pair, duplex, nullptr, 1.0f / 60.0f, 0);
+	shared.UpdateHarvesters(pair, duplex, nullptr, 1.0f / 60.0f, kPlayerTeam);
 	const cc::IVec2 firstTile = pair.Get<Harvester>(first)->nodeTile;
 	const cc::IVec2 secondTile = pair.Get<Harvester>(second)->nodeTile;
 	CC_CHECK(!(firstTile == secondTile));

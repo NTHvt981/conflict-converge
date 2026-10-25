@@ -44,11 +44,12 @@ Game::WorldScope::WorldScope(Subsystems &engine)
 	EventDispatcher &events = engine.Get<EventDispatcher>();
 	Add<UnitFactory>(Get<Registry>(), Get<ResourceSystem>(), events);
 	AddKeyed<AICommander>("ai", Get<Registry>(), Get<TileMap>(), Get<ResourceNodes>(), events,
-						  1, AIDifficulty::Medium, cc::IVec2{ 0, 0 }, cc::IVec2{ 0, 0 });
+						  kEnemyTeam, AIDifficulty::Medium, cc::IVec2{ 0, 0 }, cc::IVec2{ 0, 0 });
 	AddKeyed<AICommander>("ally", Get<Registry>(), Get<TileMap>(), Get<ResourceNodes>(), events,
-						  0, AIDifficulty::Medium, cc::IVec2{ 0, 0 }, cc::IVec2{ 0, 0 });
+						  kPlayerTeam, AIDifficulty::Medium, cc::IVec2{ 0, 0 }, cc::IVec2{ 0, 0 });
 	AddKeyed<AICommander>("enemy2", Get<Registry>(), Get<TileMap>(), Get<ResourceNodes>(),
-						  events, 1, AIDifficulty::Medium, cc::IVec2{ 0, 0 }, cc::IVec2{ 0, 0 });
+						  events, kEnemyTeam, AIDifficulty::Medium, cc::IVec2{ 0, 0 },
+						  cc::IVec2{ 0, 0 });
 	Add<Pings>();
 	Add<Minimap>();
 }
@@ -156,8 +157,8 @@ void Game::Init()
 	cheats.Init();
 
 	InitAudioDevice();
-	engine_.Get<Audio>().Init(IsAudioDeviceReady());
-	engine_.Get<Art>().Init(true);
+	engine_.Get<Audio>().Init(IsAudioDeviceReady() ? InitMode::WithDevice : InitMode::Headless);
+	engine_.Get<Art>().Init(InitMode::WithDevice);
 	if (engine_.Get<Art>().HasFont())
 	{
 		GuiSetFont(engine_.Get<Art>().UiFont());
@@ -194,10 +195,11 @@ void Game::Init()
 	});
 	engine_.Get<EventDispatcher>().Subscribe(EventType::UnitDestroyed, [&](const Event &e) {
 		const auto *lifecycle = dynamic_cast<const UnitLifecycleEvent *>(&e);
-		if (lifecycle != nullptr && lifecycle->teamID == 0)
+		if (lifecycle != nullptr && lifecycle->teamID == kPlayerTeam)
 		{
-			world_.Get<Pings>().Raise({ lifecycle->position.x + 32.0f, lifecycle->position.y + 32.0f },
-								PingKind::UnitLost);
+			world_.Get<Pings>().Raise(
+				{ lifecycle->position.x + cc::kHalfTile, lifecycle->position.y + cc::kHalfTile },
+				PingKind::UnitLost);
 		}
 	});
 

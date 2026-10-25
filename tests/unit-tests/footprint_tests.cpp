@@ -512,7 +512,7 @@ void RunFootprintTests()
 			Unit hunter;
 			hunter.type = UnitType::RifleInfantry;
 			ApplyBaseStats(hunter);
-			hunter.teamID = 0;
+			hunter.teamID = kPlayerTeam;
 			hunter.position = cc::ToRaylib(cc::TileToWorld(0, 0));
 			registry.Add(chaser, hunter);
 			registry.Add(chaser, Mover{});
@@ -520,7 +520,7 @@ void RunFootprintTests()
 			Unit victim;
 			victim.type = UnitType::RifleInfantry;
 			ApplyBaseStats(victim);
-			victim.teamID = 1;
+			victim.teamID = kEnemyTeam;
 			victim.position = cc::ToRaylib(cc::TileToWorld(4, 0));
 			registry.Add(prey, victim);
 			registry.Add(prey, Mover{});

@@ -52,7 +52,7 @@ void RunProductionTests()
 	CC_CHECK(brokeQueue.Empty());
 
 	// --- partial progress advances without spawning ---
-	queue.Update(rig.factory, rig.resources, 0, { 0.0f, 0.0f },
+	queue.Update(rig.factory, rig.resources, kPlayerTeam, { 0.0f, 0.0f },
 				 BuildTime(UnitType::RifleInfantry) * 0.5f);
 	CC_CHECK(queue.Size() == 1);
 	CC_CHECK(rig.spawned == 0);
@@ -61,14 +61,14 @@ void RunProductionTests()
 
 	// --- completion spawns prepaid at the rally point (no second charge) ---
 	const long ironBefore = rig.resources.iron;
-	queue.Update(rig.factory, rig.resources, 3, cc::ToRaylib(cc::TileToWorld(4, 4)),
+	queue.Update(rig.factory, rig.resources, kEnemyTeam, cc::ToRaylib(cc::TileToWorld(4, 4)),
 				 BuildTime(UnitType::RifleInfantry));
 	CC_CHECK(queue.Empty());
 	CC_CHECK(rig.spawned == 1);
 	CC_CHECK(rig.resources.iron == ironBefore); // prepaid: balances untouched
 	bool found = false;
 	rig.registry.Each<Unit>([&](Entity, const Unit &unit) {
-		if (unit.teamID == 3 && unit.position.x == 256.0f && unit.position.y == 256.0f)
+		if (unit.teamID == kEnemyTeam && unit.position.x == 256.0f && unit.position.y == 256.0f)
 		{
 			found = true;
 		}
@@ -80,10 +80,12 @@ void RunProductionTests()
 	ProductionQueue lineQueue;
 	CC_CHECK(lineQueue.Enqueue(line.resources, UnitType::RifleInfantry));
 	CC_CHECK(lineQueue.Enqueue(line.resources, UnitType::Engineer));
-	lineQueue.Update(line.factory, line.resources, 0, { 0.0f, 0.0f }, 1000.0f); // finishes head only
+	lineQueue.Update(line.factory, line.resources, kPlayerTeam, { 0.0f, 0.0f },
+					 1000.0f); // finishes head only
 	CC_CHECK(lineQueue.Size() == 1);
 	CC_CHECK(line.spawned == 1);
-	lineQueue.Update(line.factory, line.resources, 0, { 0.0f, 0.0f }, 1000.0f);
+	lineQueue.Update(line.factory, line.resources, kPlayerTeam, { 0.0f, 0.0f },
+					 1000.0f);
 	CC_CHECK(lineQueue.Empty());
 	CC_CHECK(line.spawned == 2);
 
@@ -93,12 +95,12 @@ void RunProductionTests()
 	CC_CHECK(repQueue.Enqueue(rep.resources, UnitType::RifleInfantry, true));
 	const UnitCost repCost = CostOf(UnitType::RifleInfantry);
 	const long afterFirstCharge = rep.resources.iron;
-	repQueue.Update(rep.factory, rep.resources, 0, { 0.0f, 0.0f },
+	repQueue.Update(rep.factory, rep.resources, kPlayerTeam, { 0.0f, 0.0f },
 					BuildTime(UnitType::RifleInfantry));
 	CC_CHECK(repQueue.Size() == 1); // still queued, rebuilding
 	CC_CHECK(rep.spawned == 1);
 	CC_CHECK(rep.resources.iron == afterFirstCharge - repCost.iron); // charged twice
-	repQueue.Update(rep.factory, rep.resources, 0, { 0.0f, 0.0f },
+	repQueue.Update(rep.factory, rep.resources, kPlayerTeam, { 0.0f, 0.0f },
 					BuildTime(UnitType::RifleInfantry));
 	CC_CHECK(repQueue.Size() == 1);
 	CC_CHECK(rep.spawned == 2);
@@ -107,18 +109,18 @@ void RunProductionTests()
 	Rig poor;
 	ProductionQueue poorQueue;
 	CC_CHECK(poorQueue.Enqueue(poor.resources, UnitType::RifleInfantry, true));
-	poorQueue.Update(poor.factory, poor.resources, 0, { 0.0f, 0.0f },
+	poorQueue.Update(poor.factory, poor.resources, kPlayerTeam, { 0.0f, 0.0f },
 					 BuildTime(UnitType::RifleInfantry)); // first cycle ok
 	CC_CHECK(poor.spawned == 1);
 	poor.resources.iron = 0; // drain before the second cycle completes
 	poor.resources.oil = 0;
-	poorQueue.Update(poor.factory, poor.resources, 0, { 0.0f, 0.0f },
+	poorQueue.Update(poor.factory, poor.resources, kPlayerTeam, { 0.0f, 0.0f },
 					 BuildTime(UnitType::RifleInfantry));
 	CC_CHECK(poorQueue.Size() == 1); // parked, not dropped
 	CC_CHECK(poor.spawned == 1);     // no free spawn while broke
 	poor.resources.AddIron(1000);
 	poor.resources.AddOil(500);
-	poorQueue.Update(poor.factory, poor.resources, 0, { 0.0f, 0.0f }, 0.01f);
+	poorQueue.Update(poor.factory, poor.resources, kPlayerTeam, { 0.0f, 0.0f }, 0.01f);
 	CC_CHECK(poor.spawned == 2); // resumes on the next tick once affordable
 
 	// --- cancel still refunds + removes repeat items ("until cancelled") ---
@@ -144,7 +146,7 @@ void RunProductionTests()
 	EventDispatcher events;
 	Registry registry;
 	UnitFactory freeFactory(registry, empty, events);
-	CC_CHECK(freeFactory.SpawnPrepaid(UnitType::HeavyTank, 1, { 64.0f, 64.0f }) !=
+	CC_CHECK(freeFactory.SpawnPrepaid(UnitType::HeavyTank, kEnemyTeam, { 64.0f, 64.0f }) !=
 			 kInvalidEntity);
 	CC_CHECK(empty.iron == 0 && empty.oil == 0);
 

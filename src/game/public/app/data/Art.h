@@ -10,15 +10,17 @@
 #include "raylib.h"
 #include "economy/Building.h"
 #include "economy/Nodes.h"
+#include "app/data/InitMode.h"
 #include "app/data/SpriteData.h"
 #include "core/Subsystem.h"
+#include "core/Team.h"
 #include "units/Unit.h"
 
 enum class TerrainType : std::uint8_t;
 
 // Sprite art + particles + floating damage numbers. Assets live under
 // data/sprites/ and data/fonts/ (see Art.h.context.md for the contract);
-// Init(false) is the headless rectangle-fallback path.
+// Init(InitMode::Headless) is the headless rectangle-fallback path.
 
 // AttackPhase -> sprite frame. WindUp telegraphs and Recover follows
 // through on the attack frame; everything else idles. Pure: unit-tested.
@@ -101,16 +103,16 @@ private:
 class Art : public Subsystem
 {
 public:
-	// Load every sprite. With withDevice=false or on a missing file, loads
+	// Load every sprite. Headless or on a missing file, loads
 	// nothing and UseRectangles stays true. Returns IsReady.
-	bool Init(bool withDevice);
+	bool Init(InitMode mode);
 	void Shutdown();
 
 	bool IsReady() const;
 	bool UseRectangles() const; // fallback flag: draw colored rects instead
 
 	// tileCorner = unit.position (snapped); sprite fills the 32x32 body inset.
-	void DrawUnit(UnitType type, int teamID, UnitFrame frame, Vector2 tileCorner) const;
+	void DrawUnit(UnitType type, TeamId teamID, UnitFrame frame, Vector2 tileCorner) const;
 	// Atlas blit of a named sprite, origin-aligned to the 32x32 body center;
 	// no-op when the atlas is down or the name is unknown. rotationDeg spins
 	// the blit around the body center (turret layer, 0 = unrotated).
@@ -121,12 +123,12 @@ public:
 	// the atlas is down or the name is unknown.
 	bool SpriteDrawRect(const std::string &spriteName, Vector2 tileCorner, Rectangle &out,
 						float scale = 1.0f) const;
-	void DrawBuilding(BuildingType type, int teamID, int tileX, int tileY,
+	void DrawBuilding(BuildingType type, TeamId teamID, int tileX, int tileY,
 					  BuildingFrame frame = BuildingFrame::Operational,
 					  Color tint = WHITE) const;
 	void DrawNode(ResourceKind kind, Vector2 center) const;
 	void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon
-	void DrawRallyMarker(int teamID, Vector2 worldCenter) const;
+	void DrawRallyMarker(TeamId teamID, Vector2 worldCenter) const;
 	// UI typeface; HasFont is false on the headless/rectangle path.
 	bool HasFont() const;
 	const Font &UiFont() const;
@@ -161,14 +163,14 @@ public:
 	static int TerrainSlot(TerrainType type);
 	// Team color for atlas mask tinting (mask layer only); color-blind mode
 	// swaps in the Okabe-Ito pair.
-	Color TeamTint(int teamID) const;
+	Color TeamTint(TeamId teamID) const;
 	void SetColorBlindMode(bool enabled);
 
 	Particles &ParticlesPool();
 	const Particles &ParticlesPool() const;
 
 private:
-	static int TeamSlot(int teamID); // 0 -> blue, anything else -> red
+	static int TeamSlot(TeamId teamID); // 0 -> blue, anything else -> red
 	void DrawOneAtlasSprite(const SpriteDefInfo &sprite, Vector2 tileCorner, Color tint,
 							float scale, float rotationDeg = 0.0f) const;
 	bool ready_ = false;

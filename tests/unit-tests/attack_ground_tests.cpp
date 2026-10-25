@@ -13,7 +13,7 @@
 namespace
 {
 
-Entity SpawnArty(Registry &registry, int tileX, int tileY, int team = 0)
+Entity SpawnArty(Registry &registry, int tileX, int tileY, TeamId team = kPlayerTeam)
 {
 	Entity entity = registry.Create();
 	Unit unit;
@@ -64,7 +64,7 @@ void RunAttackGroundTests()
 		Unit enemy;
 		enemy.type = UnitType::LightTank;
 		ApplyBaseStats(enemy);
-		enemy.teamID = 1;
+		enemy.teamID = kEnemyTeam;
 		enemy.position = cc::ToRaylib(cc::TileToWorld(15, 2));
 		registry.Add(foe, enemy);
 		const float fullHp = registry.Get<Unit>(foe)->health;
@@ -106,7 +106,7 @@ void RunAttackGroundTests()
 		Unit close;
 		close.type = UnitType::RifleInfantry;
 		ApplyBaseStats(close);
-		close.teamID = 1;
+		close.teamID = kEnemyTeam;
 		close.position = cc::ToRaylib(cc::TileToWorld(5, 5));
 		registry.Add(near, close);
 		const float nearFull = close.health;
@@ -120,7 +120,7 @@ void RunAttackGroundTests()
 		Unit ally;
 		ally.type = UnitType::RifleInfantry;
 		ApplyBaseStats(ally);
-		ally.teamID = 0;
+		ally.teamID = kPlayerTeam;
 		ally.position = cc::ToRaylib(cc::TileToWorld(5, 5));
 		registry.Add(pal, ally);
 		const float palFull = ally.health;
@@ -179,7 +179,7 @@ void RunAttackGroundTests()
 		Unit near;
 		near.type = UnitType::RifleInfantry;
 		ApplyBaseStats(near);
-		near.teamID = 1;
+		near.teamID = kEnemyTeam;
 		near.position = impact;
 		registry.Add(close, near);
 		const float nearFull = near.health;
@@ -188,7 +188,7 @@ void RunAttackGroundTests()
 		Unit distant;
 		distant.type = UnitType::RifleInfantry;
 		ApplyBaseStats(distant);
-		distant.teamID = 1;
+		distant.teamID = kEnemyTeam;
 		distant.position = cc::ToRaylib(cc::TileToWorld(9, 2)); // 3 tiles out
 		registry.Add(far, distant);
 		const float farFull = distant.health;
@@ -197,7 +197,7 @@ void RunAttackGroundTests()
 		Unit ally;
 		ally.type = UnitType::RifleInfantry;
 		ApplyBaseStats(ally);
-		ally.teamID = 0;
+		ally.teamID = kPlayerTeam;
 		ally.position = impact; // same-team at ground zero: no friendly fire
 		registry.Add(pal, ally);
 		const float palFull = ally.health;
@@ -224,13 +224,14 @@ void RunAttackGroundTests()
 		Unit runner;
 		runner.type = UnitType::IFV; // 128px/s vs 0.6s flight, ±32px splash
 		ApplyBaseStats(runner);
-		runner.teamID = 1;
+		runner.teamID = kEnemyTeam;
 		runner.position = cc::ToRaylib(cc::TileToWorld(6, 2));
 		registry.Add(foe, runner);
 		const float fullHp = runner.health;
 
 		ResolveStrikeGround(registry, id, gun, GetCombatState(registry, id),
-							{ runner.position.x + 32.0f, runner.position.y + 32.0f });
+							{ runner.position.x + cc::kHalfTile,
+							  runner.position.y + cc::kHalfTile });
 		// Plain move orders never acquire, so the runner marches east flat-out.
 		IssueMoveOrder(*registry.Get<Unit>(foe), GetOrders(registry, foe),
 					   GetMover(registry, foe),
@@ -257,12 +258,13 @@ void RunAttackGroundTests()
 		Unit walker;
 		walker.type = UnitType::Engineer; // 64px/s: 38px in 0.6s < ±32px + hitbox
 		ApplyBaseStats(walker);
-		walker.teamID = 1;
+		walker.teamID = kEnemyTeam;
 		walker.position = cc::ToRaylib(cc::TileToWorld(6, 2));
 		registry.Add(foe, walker);
 		const float fullHp = walker.health;
 		ResolveStrikeGround(registry, id, gun, GetCombatState(registry, id),
-							{ walker.position.x + 32.0f, walker.position.y + 32.0f });
+							{ walker.position.x + cc::kHalfTile,
+							  walker.position.y + cc::kHalfTile });
 		IssueMoveOrder(*registry.Get<Unit>(foe), GetOrders(registry, foe),
 					   GetMover(registry, foe),
 					   cc::ToRaylib(cc::TileToWorld(9, 2)));

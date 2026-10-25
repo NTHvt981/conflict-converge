@@ -149,11 +149,11 @@ void MatchController::LoadGameFromSlot(const std::string &slotPath)
 	}
 	const SkirmishSpots spots =
 		SpotsForMap(worldMapPath_.empty() ? "data/maps/crossroads.map" : worldMapPath_);
-	ai_.Reset(menu_.setup.difficulty, spots.aiHome, spots.playerHome, 1);
+	ai_.Reset(menu_.setup.difficulty, spots.aiHome, spots.playerHome, kEnemyTeam);
 	if (spots.is2v2)
 	{
-		allyAI_.Reset(menu_.setup.difficulty, spots.allyHome, spots.aiHome, 0);
-		enemyAI2_.Reset(menu_.setup.difficulty, spots.enemyHome2, spots.playerHome, 1);
+		allyAI_.Reset(menu_.setup.difficulty, spots.allyHome, spots.aiHome, kPlayerTeam);
+		enemyAI2_.Reset(menu_.setup.difficulty, spots.enemyHome2, spots.playerHome, kEnemyTeam);
 	}
 	worldDifficulty_ = menu_.setup.difficulty;
 	worldActive_ = true;

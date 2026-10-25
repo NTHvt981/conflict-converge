@@ -21,46 +21,62 @@ PlayingInput::PlayingInput(Registry &registry, TileMap &map, OccupancyGrid &occ,
 {
 }
 
+void PlayingInput::SetMode(InteractionMode mode, bool enabled)
+{
+	if (enabled)
+	{
+		mode_ = mode_ | mode;
+	}
+	else
+	{
+		mode_ =
+			static_cast<InteractionMode>(static_cast<int>(mode_) & ~static_cast<int>(mode));
+	}
+}
+
 void PlayingInput::ResetForMatch()
 {
-	settingRally_ = false;
-	dragging_ = false;
-	rightDragging_ = false;
+	SetMode(InteractionMode::SettingRally, false);
+	selectDrag_.active = false;
+	rightDrag_.active = false;
 	pendingRightClick_ = false;
 	rightDragDist_ = 0.0f;
-	placeDragActive_ = false;
-	repairDragActive_ = false;
-	attackGroundMode_ = false;
+	placeDrag_.active = false;
+	repairDrag_.active = false;
+	SetMode(InteractionMode::AttackGround, false);
 	armedAbility_.reset();
 }
 
 void PlayingInput::ToggleSettingRally()
 {
-	settingRally_ = !settingRally_;
+	SetMode(InteractionMode::SettingRally, !HasMode(mode_, InteractionMode::SettingRally));
 }
 
 void PlayingInput::ToggleSlowestSpeed()
 {
-	moveAtSlowestSpeed_ = !moveAtSlowestSpeed_;
+	SetMode(InteractionMode::SlowestSpeed, !HasMode(mode_, InteractionMode::SlowestSpeed));
 }
 
 void PlayingInput::ToggleAreaBuild()
 {
-	if (placingType_.has_value())
+	if (HasMode(mode_, InteractionMode::Placing))
 	{
+		SetMode(InteractionMode::Placing, false);
 		placingType_.reset();
 	}
 	else
 	{
+		SetMode(InteractionMode::Placing, true);
 		placingType_ = BuildingType::Base;
 	}
-	placeDragActive_ = false;
+	placeDrag_.active = false;
 }
 
 void PlayingInput::SelectPlacingType(BuildingType type)
 {
+	SetMode(InteractionMode::Placing, true);
 	placingType_ = type;
-	placeDragActive_ = false;
+	placeDrag_.active = false;
 }
 
 void PlayingInput::ArmAbility(AbilityId id)
@@ -119,48 +135,48 @@ bool PlayingInput::IssueArmedAbilityAt(Vector2 worldTarget, bool queued)
 
 void PlayingInput::ToggleAreaRepair()
 {
-	areaRepairMode_ = !areaRepairMode_;
-	repairDragActive_ = false;
+	SetMode(InteractionMode::AreaRepair, !HasMode(mode_, InteractionMode::AreaRepair));
+	repairDrag_.active = false;
 }
 
 void PlayingInput::ToggleAttackGround()
 {
-	attackGroundMode_ = !attackGroundMode_;
+	SetMode(InteractionMode::AttackGround, !HasMode(mode_, InteractionMode::AttackGround));
 }
 
 bool PlayingInput::IsDragging() const
 {
-	return dragging_;
+	return selectDrag_.active;
 }
 
 Vector2 PlayingInput::DragStart() const
 {
-	return dragStart_;
+	return selectDrag_.start;
 }
 
 bool PlayingInput::IsRightDragging() const
 {
-	return rightDragging_;
+	return rightDrag_.active;
 }
 
 Vector2 PlayingInput::RightDragStart() const
 {
-	return rightDragStart_;
+	return rightDrag_.start;
 }
 
 bool PlayingInput::RepairDragActive() const
 {
-	return repairDragActive_;
+	return repairDrag_.active;
 }
 
 Vector2 PlayingInput::RepairDragStart() const
 {
-	return repairDragStart_;
+	return repairDrag_.start;
 }
 
 bool PlayingInput::PlaceDragActive() const
 {
-	return placeDragActive_;
+	return placeDrag_.active;
 }
 
 const std::optional<BuildingType> &PlayingInput::PlacingType() const
@@ -170,17 +186,17 @@ const std::optional<BuildingType> &PlayingInput::PlacingType() const
 
 bool PlayingInput::AreaRepairMode() const
 {
-	return areaRepairMode_;
+	return HasMode(mode_, InteractionMode::AreaRepair);
 }
 
 bool PlayingInput::AttackGroundMode() const
 {
-	return attackGroundMode_;
+	return HasMode(mode_, InteractionMode::AttackGround);
 }
 
 bool PlayingInput::IsSettingRally() const
 {
-	return settingRally_;
+	return HasMode(mode_, InteractionMode::SettingRally);
 }
 
 const int &PlayingInput::AutoAddGroupBit() const
@@ -197,7 +213,8 @@ void PlayingInput::Dispatch(bool pointerOverUi)
 		HandlePlaceDragRelease();
 		HandleRepairDragRelease();
 		HandleRightPan();
-		const bool wasPlacing = placingType_.has_value() || areaRepairMode_;
+		const bool wasPlacing = HasMode(mode_, InteractionMode::Placing) ||
+								HasMode(mode_, InteractionMode::AreaRepair);
 		HandleRightPress();
 		const bool cancelledPlacement = input_.RightPressed() && wasPlacing;
 		HandleRightRelease(cancelledPlacement);

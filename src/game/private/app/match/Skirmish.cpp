@@ -79,15 +79,15 @@ void ResetSkirmish(SkirmishWorld &world)
 	}
 	if (world.ai != nullptr)
 	{
-		world.ai->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, 1);
+		world.ai->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, kEnemyTeam);
 	}
 	if (world.allyAI != nullptr)
 	{
-		world.allyAI->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, 0);
+		world.allyAI->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, kPlayerTeam);
 	}
 	if (world.enemyAI2 != nullptr)
 	{
-		world.enemyAI2->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, 1);
+		world.enemyAI2->Reset(AIDifficulty::Medium, { 0, 0 }, { 0, 0 }, kEnemyTeam);
 	}
 	if (world.ai != nullptr)
 	{
@@ -157,11 +157,11 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 	fog.Resize(map.Width(), map.Height());
 	occ.Resize(map.Width(), map.Height());
 
-	auto spawnDemo = [&](UnitType type, int tileX, int tileY, int team) {
+	auto spawnDemo = [&](UnitType type, int tileX, int tileY, TeamId team) {
 		const cc::IVec2 free = NearestFreeTile(map, tileX, tileY);
 		factory.Spawn(type, team, cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
 	};
-	auto placeBase = [&](int team, cc::IVec2 anchor) {
+	auto placeBase = [&](TeamId team, cc::IVec2 anchor) {
 		auto reserve = [&](cc::IVec2 at, BuildingType type, Entity entity) {
 			const cc::IVec2 fp = Footprint(type);
 			occ.ReserveFootprint(at, fp.x, fp.y, entity, registry.Generation(entity));
@@ -256,33 +256,34 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 			trySpiral(BuildingType::Workshop, home);
 		}
 	};
-	placeBase(0, spots.playerHome);
-	spawnDemo(UnitType::RifleInfantry, spots.playerHome.x, spots.playerHome.y, 0);
-	spawnDemo(UnitType::LightTank, spots.playerHome.x + 2, spots.playerHome.y, 0);
-	spawnDemo(UnitType::Artillery, spots.playerHome.x + 1, spots.playerHome.y + 3, 0);
-	spawnDemo(UnitType::Engineer, spots.harvest.x, spots.harvest.y, 0);
+	placeBase(kPlayerTeam, spots.playerHome);
+	spawnDemo(UnitType::RifleInfantry, spots.playerHome.x, spots.playerHome.y, kPlayerTeam);
+	spawnDemo(UnitType::LightTank, spots.playerHome.x + 2, spots.playerHome.y, kPlayerTeam);
+	spawnDemo(UnitType::Artillery, spots.playerHome.x + 1, spots.playerHome.y + 3, kPlayerTeam);
+	spawnDemo(UnitType::Engineer, spots.harvest.x, spots.harvest.y, kPlayerTeam);
 	bootcampQueue.Enqueue(resources, UnitType::RifleInfantry);
 	workshopQueue.Enqueue(resources, UnitType::LightTank);
 
-	world.ai->Reset(difficulty, spots.aiHome, spots.playerHome, 1);
+	world.ai->Reset(difficulty, spots.aiHome, spots.playerHome, kEnemyTeam);
 	world.ai->SetupBase();
 
 	if (spots.is2v2)
 	{
 		if (world.allyAI != nullptr)
 		{
-			world.allyAI->Reset(difficulty, spots.allyHome, spots.aiHome, 0);
+			world.allyAI->Reset(difficulty, spots.allyHome, spots.aiHome, kPlayerTeam);
 			world.allyAI->SetupBase();
 		}
 		if (world.enemyAI2 != nullptr)
 		{
-			world.enemyAI2->Reset(difficulty, spots.enemyHome2, spots.playerHome, 1);
+			world.enemyAI2->Reset(difficulty, spots.enemyHome2, spots.playerHome, kEnemyTeam);
 			world.enemyAI2->SetupBase();
 		}
 	}
 
-	world.camera->view.target = cc::ToRaylib(
-		cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) + cc::Vec2(32.0f, 32.0f));
+	world.camera->view.target =
+		cc::ToRaylib(cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) +
+					 cc::Vec2(cc::kHalfTile, cc::kHalfTile));
 	return true;
 }
 
@@ -315,18 +316,18 @@ bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath)
 
 	const cc::IVec2 home = data.playerSpawns[0];
 	const cc::IVec2 free = NearestFreeTile(map, home.x, home.y);
-	factory.SpawnPrepaid(UnitType::Engineer, 0,
+	factory.SpawnPrepaid(UnitType::Engineer, kPlayerTeam,
 		cc::ToRaylib(cc::TileToWorld(free.x - 1, free.y)));
-	factory.SpawnPrepaid(UnitType::RifleInfantry, 0,
+	factory.SpawnPrepaid(UnitType::RifleInfantry, kPlayerTeam,
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y - 1)));
-	factory.SpawnPrepaid(UnitType::AntiArmorInfantry, 0,
+	factory.SpawnPrepaid(UnitType::AntiArmorInfantry, kPlayerTeam,
 		cc::ToRaylib(cc::TileToWorld(free.x + 1, free.y - 1)));
-	factory.SpawnPrepaid(UnitType::Medic, 0,
+	factory.SpawnPrepaid(UnitType::Medic, kPlayerTeam,
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
-	factory.SpawnPrepaid(UnitType::LightTank, 0,
+	factory.SpawnPrepaid(UnitType::LightTank, kPlayerTeam,
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y + 1)));
 
 	world.camera->view.target = cc::ToRaylib(cc::TileToWorld(free.x, free.y) +
-											 cc::Vec2(32.0f, 32.0f));
+											 cc::Vec2(cc::kHalfTile, cc::kHalfTile));
 	return true;
 }

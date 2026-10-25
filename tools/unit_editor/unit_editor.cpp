@@ -173,7 +173,7 @@ void DrawPreview(EditorState &editor, Art &art, float panelX, float panelY)
 	}
 	else
 	{
-		art.DrawUnit(type, 0, UnitFrame::Idle, tileCorner);
+		art.DrawUnit(type, kPlayerTeam, UnitFrame::Idle, tileCorner);
 		GuiLabel({ panelX + 10.0f, panelY + 200.0f, 200.0f, 20.0f },
 				 "no atlas entry:");
 		GuiLabel({ panelX + 10.0f, panelY + 218.0f, 200.0f, 20.0f },

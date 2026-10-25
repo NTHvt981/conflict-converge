@@ -40,7 +40,7 @@ bool FogOfWar::InBounds(cc::IVec2 tile) const
 	return tile.x >= 0 && tile.y >= 0 && tile.x < width_ && tile.y < height_;
 }
 
-std::vector<std::uint8_t> &FogOfWar::ExploredRow(int teamID)
+std::vector<std::uint8_t> &FogOfWar::ExploredRow(TeamId teamID)
 {
 	auto it = explored_.find(teamID);
 	if (it == explored_.end())
@@ -53,7 +53,7 @@ std::vector<std::uint8_t> &FogOfWar::ExploredRow(int teamID)
 	return it->second;
 }
 
-const std::vector<std::uint8_t> *FogOfWar::FindVisible(int teamID) const
+const std::vector<std::uint8_t> *FogOfWar::FindVisible(TeamId teamID) const
 {
 	const auto it = visible_.find(teamID);
 	return it == visible_.end() ? nullptr : &it->second;
@@ -112,7 +112,7 @@ void FogOfWar::Recompute(const Registry &registry)
 	});
 }
 
-bool FogOfWar::IsVisible(int teamID, cc::IVec2 tile) const
+bool FogOfWar::IsVisible(TeamId teamID, cc::IVec2 tile) const
 {
 	if (!InBounds(tile))
 	{
@@ -124,7 +124,7 @@ bool FogOfWar::IsVisible(int teamID, cc::IVec2 tile) const
 				   static_cast<std::size_t>(tile.x)] != 0;
 }
 
-bool FogOfWar::IsExplored(int teamID, cc::IVec2 tile) const
+bool FogOfWar::IsExplored(TeamId teamID, cc::IVec2 tile) const
 {
 	if (!InBounds(tile))
 	{
@@ -136,7 +136,7 @@ bool FogOfWar::IsExplored(int teamID, cc::IVec2 tile) const
 					  static_cast<std::size_t>(tile.x)] != 0;
 }
 
-std::vector<std::uint8_t> FogOfWar::ExploredBytes(int teamID) const
+std::vector<std::uint8_t> FogOfWar::ExploredBytes(TeamId teamID) const
 {
 	const auto it = explored_.find(teamID);
 	if (it == explored_.end())
@@ -147,7 +147,7 @@ std::vector<std::uint8_t> FogOfWar::ExploredBytes(int teamID) const
 	return it->second;
 }
 
-void FogOfWar::SetExplored(int teamID, const std::uint8_t *bytes, std::size_t size)
+void FogOfWar::SetExplored(TeamId teamID, const std::uint8_t *bytes, std::size_t size)
 {
 	std::vector<std::uint8_t> &row = ExploredRow(teamID);
 	if (size != row.size() || bytes == nullptr)
@@ -160,9 +160,9 @@ void FogOfWar::SetExplored(int teamID, const std::uint8_t *bytes, std::size_t si
 	}
 }
 
-std::vector<int> FogOfWar::Teams() const
+std::vector<TeamId> FogOfWar::Teams() const
 {
-	std::vector<int> teams;
+	std::vector<TeamId> teams;
 	teams.reserve(explored_.size());
 	for (const auto &entry : explored_)
 	{

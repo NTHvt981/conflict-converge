@@ -74,7 +74,7 @@ bool ProductionQueue::RepeatArmed(UnitType type) const
 	return i >= 0 && i < kTypeCount && repeatArmed_[i];
 }
 
-Entity ProductionQueue::Update(UnitFactory &factory, ResourceSystem &resources, int teamID,
+Entity ProductionQueue::Update(UnitFactory &factory, ResourceSystem &resources, TeamId teamID,
 							   Vector2 spawnPos, float dt, const TileMap *map,
 							   const OccupancyGrid *occ)
 {

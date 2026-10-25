@@ -11,7 +11,7 @@ across subsystems need include edits. `Unit.h` fwd-declares `TileMap`; never inc
 `Pathfinder.h` from `Unit.h` — no cycles.
 
 ```
-core:    MathUtils, CcAssert, Registry, Event, Subsystem
+core:    MathUtils, CcAssert, Registry, Event, Subsystem, Team
          Game, Simulation, PlayingInput (+PlayingInputSelect/PlayingInputOrders),
          GameRenderer (+GameRendererWorld/GameRendererHud), MenuScreens
 world:   TileMap, Pathfinder, MapFile, FogOfWar
@@ -25,7 +25,7 @@ app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, RmlUiHost, RmlUiMenus,
 app/input: InputManager, Selection, Shortcuts, Hotkeys
 app/save: SaveGame (+SaveEncode/SaveDecode), SaveWire
 app/data: Art (+ArtEffects), SpriteData, UnitConfig (+UnitConfigParse/UnitConfigCatalog),
-          Audio, Log, DataRoot
+          Audio, InitMode, Log, DataRoot
 app/match: Menu, Skirmish
 ```
 
@@ -42,8 +42,9 @@ app/match: Menu, Skirmish
    rendering, so unit tests drive `Step` headlessly); `ResetForMatch`/`ResetEdgePolls`, team-0
    Bootcamp/Workshop gates, replay recording
 - `PlayingInput.h` - In-match input dispatch extracted from `Game`: drag-box select,
-  area-build/repair, right-click orders, line formation, control groups, sticky gesture
-  modes, armed HUD abilities. Runs only while Playing; advances no simulation
+  area-build/repair, right-click orders, line formation, control groups, one
+  `InteractionMode` bit set covering placing, area repair, rally, attack ground and
+  slowest speed, armed HUD abilities. Runs only while Playing; advances no simulation
 - `MenuScreens.h` - Map Editor branch only (raygui scratch canvas) + hotkey
   override apply/sync (`ApplyHotkeyOverrides`/`SyncHotkeySettings`); menus/HUD are
   RmlUi (`RmlUiMenus`/`RmlUiHud`). `MenuCallbacks` gives `Game` every world mutation.
@@ -54,7 +55,9 @@ app/match: Menu, Skirmish
   + downcast payloads, M14 Q57 categories (game-state: MatchStarted/Paused/GameOver/Victory;
   UI: MenuAction/ProductionOrdered)
 - `MathUtils.h` - `cc::Vec2`, raylib conversions, 64x64 tile helpers (top-left-corner
-  convention)
+  convention, `cc::kHalfTile` = centre offset)
+- `Team.h` - `TeamId` (`Any`/`Player`/`Enemy`) + `kAnyTeam`/`kPlayerTeam`/`kEnemyTeam`;
+  every team field and parameter is typed
 - `CcAssert.h` - `CC_ASSERT`: live in Debug, `((void)0)` under NDEBUG
 - `Subsystem.h` - UE5-inspired service scopes (no reflection): `Subsystem` base
   (`Init`/`Shutdown`/`ResetForMatch` no-op defaults) + `Subsystems` container
@@ -157,7 +160,7 @@ app/match: Menu, Skirmish
   production category/tab orders, `AbilitiesForSelection`
   panel data); the RmlUi HUD owns the panels
 - `Art.h` - M12 sprites + particles (`data/sprites/` via `tools/gen_sprites.py`) + tank
-  body/head layered atlas art; `Init(false)`
+  body/head layered atlas art; `Init(InitMode::Headless)`
   is the headless rectangle-fallback path
 - `SpriteData.h` - Sprite-atlas data (JSON in `data/configs/`: textures/sprites/animations
   merged at load); `LoadSpriteSheet`/`ParseSpriteSheetJson` + name/id lookups
@@ -178,9 +181,10 @@ app/match: Menu, Skirmish
   beside the exe
 - `SaveGame.h` - Versioned binary save/load (`CCB2` magic, v2, cereal-binary via
   `SaveWire.h`): `WorldState` bundle, two-phase load, target-index remap, M13 named slots
-  (`SaveSlotPath`)
+  (`SaveSlotPath`). `SaveWire.h` keeps `std::int32_t team`; `SaveEncode`/`SaveDecode`
+  convert to and from `TeamId` at that boundary
 - `Audio.h` - M11 synth-asset SFX + looped music (`data/audio/*.wav` via
-  `tools/gen_audio.py`); `Init(false)` is the headless no-op path
+  `tools/gen_audio.py`); `Init(InitMode::Headless)` is the headless no-op path
 - `Log.h` - Fatal logging over raylib `TraceLog`: `Init` tees console + file
   (`data/logs/conflict-converge.log`, wired in `Game::Init`/`Shutdown`), `Fatal` exits;
   headless-tested via `tests/unit-tests/log_tests.cpp`

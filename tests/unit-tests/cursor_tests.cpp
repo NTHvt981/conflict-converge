@@ -13,7 +13,8 @@
 namespace
 {
 
-Entity SpawnUnit(Registry &registry, UnitType type, int team, float x, float y, float healthFrac = 1.0f)
+Entity SpawnUnit(Registry &registry, UnitType type, TeamId team, float x, float y,
+				 float healthFrac = 1.0f)
 {
 	Entity entity = registry.Create();
 	Unit unit;
@@ -29,7 +30,7 @@ Entity SpawnUnit(Registry &registry, UnitType type, int team, float x, float y, 
 Vector2 UnitCenter(const Registry &registry, Entity id)
 {
 	const Unit *unit = registry.Get<Unit>(id);
-	return { unit->position.x + 32.0f, unit->position.y + 32.0f };
+	return { unit->position.x + cc::kHalfTile, unit->position.y + cc::kHalfTile };
 }
 
 } // namespace
@@ -37,16 +38,17 @@ Vector2 UnitCenter(const Registry &registry, Entity id)
 void RunCursorTests()
 {
 	Registry registry;
-	Entity attacker = SpawnUnit(registry, UnitType::RifleInfantry, 0, 64.0f, 64.0f);
-	Entity enemy = SpawnUnit(registry, UnitType::RifleInfantry, 1, 256.0f, 128.0f);
-	Entity engineer = SpawnUnit(registry, UnitType::Engineer, 0, 64.0f, 320.0f);
-	Entity wounded = SpawnUnit(registry, UnitType::LightTank, 0, 320.0f, 320.0f, 0.5f);
-	Entity healthy = SpawnUnit(registry, UnitType::LightTank, 0, 448.0f, 320.0f);
-	Entity enemyTank = SpawnUnit(registry, UnitType::LightTank, 1, 512.0f, 320.0f, 0.5f);
-	Entity medic = SpawnUnit(registry, UnitType::Medic, 0, 64.0f, 448.0f);
-	Entity hurtFoot = SpawnUnit(registry, UnitType::RifleInfantry, 0, 320.0f, 448.0f, 0.5f);
-	Entity wholeFoot = SpawnUnit(registry, UnitType::RifleInfantry, 0, 448.0f, 448.0f);
-	Entity foeFoot = SpawnUnit(registry, UnitType::RifleInfantry, 1, 576.0f, 448.0f, 0.5f);
+	Entity attacker = SpawnUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 64.0f, 64.0f);
+	Entity enemy = SpawnUnit(registry, UnitType::RifleInfantry, kEnemyTeam, 256.0f, 128.0f);
+	Entity engineer = SpawnUnit(registry, UnitType::Engineer, kPlayerTeam, 64.0f, 320.0f);
+	Entity wounded = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 320.0f, 320.0f, 0.5f);
+	Entity healthy = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 448.0f, 320.0f);
+	Entity enemyTank = SpawnUnit(registry, UnitType::LightTank, kEnemyTeam, 512.0f, 320.0f, 0.5f);
+	Entity medic = SpawnUnit(registry, UnitType::Medic, kPlayerTeam, 64.0f, 448.0f);
+	Entity hurtFoot =
+		SpawnUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 320.0f, 448.0f, 0.5f);
+	Entity wholeFoot = SpawnUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 448.0f, 448.0f);
+	Entity foeFoot = SpawnUnit(registry, UnitType::RifleInfantry, kEnemyTeam, 576.0f, 448.0f, 0.5f);
 	const Unit *sel = registry.Get<Unit>(attacker);
 	const Unit *eng = registry.Get<Unit>(engineer);
 	const Unit *med = registry.Get<Unit>(medic);
@@ -102,7 +104,7 @@ void RunCursorTests()
 			 CursorIntent::Move);
 
 	// --- G4 carrier over friendly foot: Load; enemy still wins as Attack ---
-	Entity carrier = SpawnUnit(registry, UnitType::IFV, 0, 64.0f, 576.0f);
+	Entity carrier = SpawnUnit(registry, UnitType::IFV, kPlayerTeam, 64.0f, 576.0f);
 	Cargo cargo;
 	cargo.capacity = 4;
 	registry.Add(carrier, cargo);
@@ -118,7 +120,7 @@ void RunCursorTests()
 	for (int i = 0; i < 4; ++i)
 	{
 		const Entity seat =
-			SpawnUnit(registry, UnitType::RifleInfantry, 0, 700.0f + i * 64.0f, 576.0f);
+			SpawnUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 700.0f + i * 64.0f, 576.0f);
 		EmbarkedOn ride;
 		ride.carrier = carrier;
 		registry.Add(seat, ride);

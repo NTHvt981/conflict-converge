@@ -8,6 +8,7 @@
 
 #include "core/MathUtils.h"
 #include "core/Registry.h"
+#include "core/Team.h"
 
 class TileMap;
 class OccupancyGrid;
@@ -126,7 +127,7 @@ struct Unit
 	Vector2 velocity = {};
 	bool isSelected = false;
 	unsigned int controlGroups = 0; // bit N = control group N; 0 = none
-	int teamID = 0;
+	TeamId teamID = kPlayerTeam;
 	UnitType type = UnitType::RifleInfantry;
 	UnitState state = UnitState::Idle;
 	Facing facing = Facing::Right;
@@ -184,7 +185,7 @@ struct RepairAssignment
 // Pure sweep of damaged supportable units/buildings overlapping worldArea:
 // repairable vehicles + operational buildings (engineers) plus wounded
 // flesh units (medics).
-void CollectAreaRepairCandidates(Registry &registry, Rectangle worldArea, int teamID,
+void CollectAreaRepairCandidates(Registry &registry, Rectangle worldArea, TeamId teamID,
 								 std::vector<Entity> &out);
 
 // Never self-pairs.
@@ -216,8 +217,8 @@ inline constexpr float kRetreatHealthFraction = 0.3f;
 // Resolve the player's retreat home: nearest owned Base to the army centroid.
 Vector2 ResolvePlayerRetreatHome(Registry &registry);
 
-void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector2 home, int teamID,
-					float healthFraction, bool onlyAutoRetreat);
+void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector2 home,
+					TeamId teamID, float healthFraction, bool onlyAutoRetreat);
 
 void IssueOrEnqueue(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
 					OccupancyGrid *occ, Entity self, std::uint32_t selfGen, bool shiftQueue,

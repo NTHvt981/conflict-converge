@@ -32,7 +32,7 @@ std::string SelectionSummary(const Unit &unit)
 	const float maxHealth = BaseStats(unit.type).health;
 	char buf[128];
 	std::snprintf(buf, sizeof(buf), "%s  HP %.0f/%.0f  Team %d", UnitTypeName(unit.type), unit.health,
-				  maxHealth, unit.teamID);
+				  maxHealth, static_cast<int>(unit.teamID));
 	return buf;
 }
 

@@ -14,7 +14,7 @@ int main()
 	SetTargetFPS(60);
 
 	Art art;
-	const bool artReady = art.Init(true);
+	const bool artReady = art.Init(InitMode::WithDevice);
 	art.LoadAtlas();
 
 	EditorState editor;

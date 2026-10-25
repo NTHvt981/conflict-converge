@@ -72,9 +72,9 @@ void RunSaveGameTests()
 	src.camera.view.rotation = 0.0f;
 	src.camera.view.zoom = 1.5f;
 	src.map.Set({ 6, 3 }, TerrainType::Water);
-	PlaceBuilding(src.registry, src.map, BuildingType::Base, 0, 1, 10);
-	PlaceBuilding(src.registry, src.map, BuildingType::Bootcamp, 1, 10, 10);
-	PlaceBuilding(src.registry, src.map, BuildingType::Workshop, 0, 5, 10);
+	PlaceBuilding(src.registry, src.map, BuildingType::Base, kPlayerTeam, 1, 10);
+	PlaceBuilding(src.registry, src.map, BuildingType::Bootcamp, kEnemyTeam, 10, 10);
+	PlaceBuilding(src.registry, src.map, BuildingType::Workshop, kPlayerTeam, 5, 10);
 	UpdateBuildingConstruction(src.registry, 20.0f); // save Operational structures
 	src.nodes.SpawnNode(src.map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
 	src.nodes.SpawnNode(src.map, ResourceKind::Oil, { 15, 12 }, 150.0f, 10.0f);
@@ -82,7 +82,7 @@ void RunSaveGameTests()
 	Unit scout;
 	scout.type = UnitType::RifleInfantry;
 	ApplyBaseStats(scout);
-	scout.teamID = 0;
+	scout.teamID = kPlayerTeam;
 	scout.position = cc::ToRaylib(cc::TileToWorld(2, 2));
 	scout.isSelected = true;
 	scout.health = 73.5f;
@@ -98,7 +98,7 @@ void RunSaveGameTests()
 	Unit hunter;
 	hunter.type = UnitType::LightTank;
 	ApplyBaseStats(hunter);
-	hunter.teamID = 1;
+	hunter.teamID = kEnemyTeam;
 	hunter.position = cc::ToRaylib(cc::TileToWorld(6, 2));
 	hunter.state = UnitState::Moving;
 	const Entity hunterId = src.registry.Create();
@@ -142,8 +142,8 @@ void RunSaveGameTests()
 	CC_CHECK(dst.map.Get({ 6, 3 }) == TerrainType::Water);
 	CC_CHECK(dst.map.Get({ 1, 10 }) == TerrainType::Building);
 	CC_CHECK(dst.map.Get({ 0, 0 }) == TerrainType::Grass);
-	CC_CHECK(dst.fog.IsExplored(0, { 2, 2 })); // team_fog survived the trip
-	CC_CHECK(!dst.fog.IsExplored(0, { 19, 14 }));
+	CC_CHECK(dst.fog.IsExplored(kPlayerTeam, { 2, 2 })); // team_fog survived the trip
+	CC_CHECK(!dst.fog.IsExplored(kPlayerTeam, { 19, 14 }));
 
 	CC_CHECK(dst.registry.EntityCount() == 5); // 2 units + 3 buildings, junk cleared
 	CC_CHECK(dst.nodes.Count() == 2);
@@ -154,7 +154,7 @@ void RunSaveGameTests()
 	// Find the loaded pair by team and verify the target remap.
 	Entity loadedScout = kInvalidEntity, loadedHunter = kInvalidEntity;
 	dst.registry.Each<Unit>([&](Entity id, const Unit &u) {
-		if (u.teamID == 0)
+		if (u.teamID == kPlayerTeam)
 		{
 			loadedScout = id;
 		}
@@ -332,7 +332,7 @@ void RunSaveGameTests()
 		Building evil;
 		evil.type = BuildingType::Base;
 		evil.state = BuildingState::Operational;
-		evil.teamID = 0;
+		evil.teamID = kPlayerTeam;
 		evil.tileX = INT32_MAX;
 		evil.tileY = 0;
 		evil.health = BuildingMaxHealth(BuildingType::Base);
@@ -378,7 +378,7 @@ void RunSaveGameTests()
 		{
 			return;
 		}
-		CC_CHECK(u->type == UnitType::RifleInfantry && u->teamID == 0);
+		CC_CHECK(u->type == UnitType::RifleInfantry && u->teamID == kPlayerTeam);
 		CC_CHECK(u->health == 50.0f);
 		CC_CHECK(FindCombatState(sparseWorld.registry, only)->cooldown == 0.0f &&
 				 FindMover(sparseWorld.registry, only) != nullptr &&
@@ -399,7 +399,7 @@ void RunSaveGameTests()
 		Unit walker;
 		walker.type = UnitType::RifleInfantry;
 		ApplyBaseStats(walker);
-		walker.teamID = 0;
+		walker.teamID = kPlayerTeam;
 		walker.speed = 64.0f;
 		walker.position = cc::ToRaylib(cc::TileToWorld(1, 1));
 		const Entity walkerId = actor.registry.Create();
@@ -440,7 +440,7 @@ void RunSaveGameTests()
 		Unit hull;
 		hull.type = UnitType::HeavyTank;
 		ApplyBaseStats(hull);
-		hull.teamID = 0;
+		hull.teamID = kPlayerTeam;
 		hull.position = cc::ToRaylib(cc::TileToWorld(2, 2));
 		hull.facing = Facing::Left; // G1: body facing persists alongside turret
 		const Entity carrierId = carrier.registry.Create();
@@ -456,7 +456,7 @@ void RunSaveGameTests()
 		Unit rider;
 		rider.type = UnitType::RifleInfantry;
 		ApplyBaseStats(rider);
-		rider.teamID = 0;
+		rider.teamID = kPlayerTeam;
 		rider.position = cc::ToRaylib(cc::TileToWorld(2, 2));
 		const Entity riderId = carrier.registry.Create();
 		carrier.registry.Add(riderId, rider);

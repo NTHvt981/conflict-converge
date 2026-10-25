@@ -53,7 +53,8 @@ struct Harness
 	EventDispatcher events;
 	UnitFactory factory{ registry, resources, events };
 	GameCamera camera;
-	AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
+	AICommander ai{ registry, map, nodes, events, kEnemyTeam, AIDifficulty::Medium, { 0, 0 },
+					{ 0, 0 } };
 	SkirmishWorld world{ &registry, &resources, &map, &occ, &fog, &nodes,
 						 &bootcampQueue, &workshopQueue, &factory, &ai, nullptr, nullptr,
 						 &camera };
@@ -74,9 +75,12 @@ struct Harness2v2
 	EventDispatcher events;
 	UnitFactory factory{ registry, resources, events };
 	GameCamera camera;
-	AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
-	AICommander allyAI{ registry, map, nodes, events, 0, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
-	AICommander enemyAI2{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
+	AICommander ai{ registry, map, nodes, events, kEnemyTeam, AIDifficulty::Medium, { 0, 0 },
+					{ 0, 0 } };
+	AICommander allyAI{ registry, map, nodes, events, kPlayerTeam, AIDifficulty::Medium, { 0, 0 },
+						{ 0, 0 } };
+	AICommander enemyAI2{ registry, map, nodes, events, kEnemyTeam, AIDifficulty::Medium, { 0, 0 },
+						  { 0, 0 } };
 	SkirmishWorld world{ &registry, &resources, &map, &occ, &fog, &nodes,
 						 &bootcampQueue, &workshopQueue, &factory, &ai, &allyAI, &enemyAI2,
 						 &camera };
@@ -86,7 +90,7 @@ template <typename T>
 Vector2 ProducerSpawnPos(T &game, BuildingType type)
 {
 	cc::IVec2 tile = { 2, 2 };
-	const Entity producer = ProducerBuildingAt(game.registry, type, 0, 0);
+	const Entity producer = ProducerBuildingAt(game.registry, type, kPlayerTeam, 0);
 	if (const Building *building = game.registry.Get<Building>(producer))
 	{
 		tile = BuildingSpawnTile(game.map, &game.occ, *building);
@@ -135,8 +139,8 @@ void RunSkirmishTests()
 	Harness game;
 	CC_CHECK(BuildSkirmish(game.world, cross, AIDifficulty::Hard));
 	CC_CHECK(game.ai.Difficulty() == AIDifficulty::Hard);
-	CC_CHECK(TeamHasUnits(game.registry, 0));
-	CC_CHECK(TeamHasUnits(game.registry, 1));
+	CC_CHECK(TeamHasUnits(game.registry, kPlayerTeam));
+	CC_CHECK(TeamHasUnits(game.registry, kEnemyTeam));
 	CC_CHECK(!game.bootcampQueue.Empty());
 	CC_CHECK(!game.workshopQueue.Empty());
 	UpdateBuildingConstruction(game.registry, 20.0f); // sites -> Operational
@@ -146,7 +150,7 @@ void RunSkirmishTests()
 	// Camera aims at the player home.
 	const Vector2 expectTarget =
 		cc::ToRaylib(cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) +
-					 cc::Vec2(32.0f, 32.0f));
+					 cc::Vec2(cc::kHalfTile, cc::kHalfTile));
 	CC_CHECK(game.camera.view.target.x == expectTarget.x);
 	CC_CHECK(game.camera.view.target.y == expectTarget.y);
 
@@ -159,30 +163,30 @@ void RunSkirmishTests()
 		game.registry.Each<Unit>([&](Entity id, Unit &unit) {
 			UpdateUnit(id, game.registry, game.map, dt, &game.fog);
 		});
-		UpdateBaseIncome(game.registry, game.resources, dt, 0);
+		UpdateBaseIncome(game.registry, game.resources, dt, kPlayerTeam);
 		game.nodes.Update(dt);
-		game.nodes.GatherTick(game.registry, game.resources, dt, 0);
+		game.nodes.GatherTick(game.registry, game.resources, dt, kPlayerTeam);
 		if (game.ai.HasBootcamp())
 		{
-			game.bootcampQueue.Update(game.factory, game.resources, 0,
+			game.bootcampQueue.Update(game.factory, game.resources, kPlayerTeam,
 									  ProducerSpawnPos(game, BuildingType::Bootcamp), dt,
 									  &game.map, &game.occ);
 		}
 		if (game.ai.HasWorkshop())
 		{
-			game.workshopQueue.Update(game.factory, game.resources, 0,
+			game.workshopQueue.Update(game.factory, game.resources, kPlayerTeam,
 									  ProducerSpawnPos(game, BuildingType::Workshop), dt,
 									  &game.map, &game.occ);
 		}
 		game.ai.Update(dt);
 	}
-	CC_CHECK(TeamHasUnits(game.registry, 0));
-	CC_CHECK(TeamHasUnits(game.registry, 1));
+	CC_CHECK(TeamHasUnits(game.registry, kPlayerTeam));
+	CC_CHECK(TeamHasUnits(game.registry, kEnemyTeam));
 
 	// --- ResetSkirmish drops the match (quit-to-menu teardown) ---
 	ResetSkirmish(game.world);
-	CC_CHECK(!TeamHasUnits(game.registry, 0));
-	CC_CHECK(!TeamHasUnits(game.registry, 1));
+	CC_CHECK(!TeamHasUnits(game.registry, kPlayerTeam));
+	CC_CHECK(!TeamHasUnits(game.registry, kEnemyTeam));
 	CC_CHECK(game.bootcampQueue.Empty());
 	CC_CHECK(game.workshopQueue.Empty());
 	CC_CHECK(game.resources.iron == 0 && game.resources.oil == 0);
@@ -194,8 +198,8 @@ void RunSkirmishTests()
 	// --- a fresh Build after Reset re-arms everything ---
 	CC_CHECK(BuildSkirmish(game.world, cross, AIDifficulty::Easy));
 	CC_CHECK(game.ai.Difficulty() == AIDifficulty::Easy);
-	CC_CHECK(TeamHasUnits(game.registry, 0));
-	CC_CHECK(TeamHasUnits(game.registry, 1));
+	CC_CHECK(TeamHasUnits(game.registry, kPlayerTeam));
+	CC_CHECK(TeamHasUnits(game.registry, kEnemyTeam));
 
 	// --- BuildSandbox: terrain + player prototype squad, nothing else ---
 	const std::string proto = ShippedMap("prototype.map");
@@ -219,7 +223,7 @@ void RunSkirmishTests()
 		int buildings = 0;
 		sand.registry.Each<Building>([&](Entity, const Building &) { ++buildings; });
 		CC_CHECK(buildings == 0);
-		CC_CHECK(!TeamHasUnits(sand.registry, 1));
+		CC_CHECK(!TeamHasUnits(sand.registry, kEnemyTeam));
 		CC_CHECK(sand.resources.iron == 0 && sand.resources.oil == 0);
 		CC_CHECK(sand.bootcampQueue.Empty());
 		CC_CHECK(sand.workshopQueue.Empty());
@@ -234,7 +238,7 @@ void RunSkirmishTests()
 	{
 		Harness sand;
 		CC_CHECK(!BuildSandbox(sand.world, "data/does-not-exist.map"));
-		CC_CHECK(!TeamHasUnits(sand.registry, 0));
+		CC_CHECK(!TeamHasUnits(sand.registry, kPlayerTeam));
 	}
 
 	// --- prototype.map: producer rallies avoid footprints, spawns land on free tiles ---
@@ -245,7 +249,7 @@ void RunSkirmishTests()
 		Harness stuck;
 		CC_CHECK(BuildSkirmish(stuck.world, stuckMap, AIDifficulty::Easy));
 		stuck.registry.Each<Building>([&](Entity, const Building &building) {
-			if (building.teamID != 0 || !ProducerCategory(building.type).has_value())
+			if (building.teamID != kPlayerTeam || !ProducerCategory(building.type).has_value())
 			{
 				return;
 			}
@@ -267,19 +271,19 @@ void RunSkirmishTests()
 			stuck.registry.Each<Unit>([&](Entity id, Unit &unit) {
 				UpdateUnit(id, stuck.registry, stuck.map, dt, &stuck.fog);
 			});
-			UpdateBaseIncome(stuck.registry, stuck.resources, dt, 0);
+			UpdateBaseIncome(stuck.registry, stuck.resources, dt, kPlayerTeam);
 			stuck.nodes.Update(dt);
-			stuck.nodes.GatherTick(stuck.registry, stuck.resources, dt, 0);
-			stuck.bootcampQueue.Update(stuck.factory, stuck.resources, 0,
+			stuck.nodes.GatherTick(stuck.registry, stuck.resources, dt, kPlayerTeam);
+			stuck.bootcampQueue.Update(stuck.factory, stuck.resources, kPlayerTeam,
 									   ProducerSpawnPos(stuck, BuildingType::Bootcamp), dt,
 									   &stuck.map, &stuck.occ);
-			stuck.workshopQueue.Update(stuck.factory, stuck.resources, 0,
+			stuck.workshopQueue.Update(stuck.factory, stuck.resources, kPlayerTeam,
 									   ProducerSpawnPos(stuck, BuildingType::Workshop), dt,
 									   &stuck.map, &stuck.occ);
 		}
 		bool allFree = true;
 		stuck.registry.Each<Unit>([&](Entity, const Unit &unit) {
-			if (unit.teamID != 0)
+			if (unit.teamID != kPlayerTeam)
 			{
 				return;
 			}
@@ -289,7 +293,7 @@ void RunSkirmishTests()
 			}
 		});
 		CC_CHECK(allFree);
-		CC_CHECK(TeamHasUnits(stuck.registry, 0));
+		CC_CHECK(TeamHasUnits(stuck.registry, kPlayerTeam));
 	}
 
 	// --- 2v2: twin-falls markers arm the allied + second enemy commanders ---
@@ -306,8 +310,8 @@ void RunSkirmishTests()
 
 		Harness2v2 ally;
 		CC_CHECK(BuildSkirmish(ally.world, falls, AIDifficulty::Easy));
-		CC_CHECK(ally.allyAI.TeamID() == 0);
-		CC_CHECK(ally.enemyAI2.TeamID() == 1);
+		CC_CHECK(ally.allyAI.TeamID() == kPlayerTeam);
+		CC_CHECK(ally.enemyAI2.TeamID() == kEnemyTeam);
 		CC_CHECK(ally.allyAI.CombatUnitCount() > 0); // allied guard fielded
 		UpdateBuildingConstruction(ally.registry, 20.0f); // sites -> Operational
 		CC_CHECK(ally.allyAI.HasBootcamp());          // allied base produces
@@ -315,8 +319,8 @@ void RunSkirmishTests()
 		CC_CHECK(ally.enemyAI2.CombatUnitCount() > 0);
 		CC_CHECK(ally.enemyAI2.HasBootcamp());
 		CC_CHECK(ally.enemyAI2.HasWorkshop());
-		CC_CHECK(TeamHasUnits(ally.registry, 0));
-		CC_CHECK(TeamHasUnits(ally.registry, 1));
+		CC_CHECK(TeamHasUnits(ally.registry, kPlayerTeam));
+		CC_CHECK(TeamHasUnits(ally.registry, kEnemyTeam));
 		for (int i = 0; i < 600; ++i)
 		{
 			const float dt = 1.0f / 60.0f;
@@ -325,18 +329,18 @@ void RunSkirmishTests()
 			ally.registry.Each<Unit>([&](Entity id, Unit &unit) {
 				UpdateUnit(id, ally.registry, ally.map, dt, &ally.fog);
 			});
-			UpdateBaseIncome(ally.registry, ally.resources, dt, 0);
+			UpdateBaseIncome(ally.registry, ally.resources, dt, kPlayerTeam);
 			ally.nodes.Update(dt);
-			ally.nodes.GatherTick(ally.registry, ally.resources, dt, 0);
+			ally.nodes.GatherTick(ally.registry, ally.resources, dt, kPlayerTeam);
 			if (ally.ai.HasBootcamp())
 			{
-				ally.bootcampQueue.Update(ally.factory, ally.resources, 0,
+				ally.bootcampQueue.Update(ally.factory, ally.resources, kPlayerTeam,
 										  ProducerSpawnPos(ally, BuildingType::Bootcamp), dt,
 										  &ally.map, &ally.occ);
 			}
 			if (ally.ai.HasWorkshop())
 			{
-				ally.workshopQueue.Update(ally.factory, ally.resources, 0,
+				ally.workshopQueue.Update(ally.factory, ally.resources, kPlayerTeam,
 										  ProducerSpawnPos(ally, BuildingType::Workshop), dt,
 										  &ally.map, &ally.occ);
 			}
@@ -344,16 +348,16 @@ void RunSkirmishTests()
 			ally.allyAI.Update(dt);
 			ally.enemyAI2.Update(dt);
 		}
-		CC_CHECK(TeamHasUnits(ally.registry, 0));
-		CC_CHECK(TeamHasUnits(ally.registry, 1));
-		CC_CHECK(ally.allyAI.TeamID() == 0); // teams survive the sim
-		CC_CHECK(ally.enemyAI2.TeamID() == 1);
+		CC_CHECK(TeamHasUnits(ally.registry, kPlayerTeam));
+		CC_CHECK(TeamHasUnits(ally.registry, kEnemyTeam));
+		CC_CHECK(ally.allyAI.TeamID() == kPlayerTeam); // teams survive the sim
+		CC_CHECK(ally.enemyAI2.TeamID() == kEnemyTeam);
 		ResetSkirmish(ally.world);
-		CC_CHECK(!TeamHasUnits(ally.registry, 0));
-		CC_CHECK(!TeamHasUnits(ally.registry, 1));
+		CC_CHECK(!TeamHasUnits(ally.registry, kPlayerTeam));
+		CC_CHECK(!TeamHasUnits(ally.registry, kEnemyTeam));
 		CC_CHECK(ally.allyAI.WavesLaunched() == 0);
 		CC_CHECK(ally.enemyAI2.WavesLaunched() == 0);
-		CC_CHECK(ally.allyAI.TeamID() == 0); // parked, not re-teamed
-		CC_CHECK(ally.enemyAI2.TeamID() == 1);
+		CC_CHECK(ally.allyAI.TeamID() == kPlayerTeam); // parked, not re-teamed
+		CC_CHECK(ally.enemyAI2.TeamID() == kEnemyTeam);
 	}
 }

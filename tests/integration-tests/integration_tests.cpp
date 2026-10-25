@@ -29,7 +29,7 @@ namespace
 
 constexpr float kDt = 1.0f / 60.0f;
 
-int CountTeam(Registry &registry, int team)
+int CountTeam(Registry &registry, TeamId team)
 {
 	int count = 0;
 	registry.Each<Unit>([&](Entity, const Unit &unit) {
@@ -74,10 +74,10 @@ void DeployFaceoff(Registry &registry, UnitFactory &factory, UnitType type)
 	for (int i = 0; i < 3; ++i)
 	{
 		const float y = 320.0f + static_cast<float>(i) * 64.0f;
-		factory.Spawn(type, 0, { 320.0f, y });
+		factory.Spawn(type, kPlayerTeam, { 320.0f, y });
 		if (i < 2)
 		{
-			factory.Spawn(type, 1, { 320.0f + gap, y });
+			factory.Spawn(type, kEnemyTeam, { 320.0f + gap, y });
 		}
 	}
 }
@@ -95,7 +95,8 @@ int RunAISoak(Registry &registry, TileMap &map, ResourceNodes &nodes, AICommande
 	// harvesters ride out raids instead of chasing to their deaths and
 	// games legitimately run longer than the old all-combatant casts.
 	constexpr int kCap = 27000;
-	while (CountTeam(registry, 0) > 0 && CountTeam(registry, 1) > 0 && frames < kCap)
+	while (CountTeam(registry, kPlayerTeam) > 0 && CountTeam(registry, kEnemyTeam) > 0 &&
+		   frames < kCap)
 	{
 		first.Update(kDt);
 		second.Update(kDt);
@@ -116,7 +117,7 @@ int RunAISoak(Registry &registry, TileMap &map, ResourceNodes &nodes, AICommande
 		{
 			if (const Unit *corpse = registry.Get<Unit>(id))
 			{
-				if (corpse->teamID == 0)
+				if (corpse->teamID == kPlayerTeam)
 				{
 					++kills0;
 				}
@@ -131,8 +132,8 @@ int RunAISoak(Registry &registry, TileMap &map, ResourceNodes &nodes, AICommande
 		if (frames % 1200 == 0)
 		{
 			std::printf("soak %s t=%ds t0=%d t1=%d kills=%d/%d waves=%d/%d\n", label, frames / 60,
-						CountTeam(registry, 0), CountTeam(registry, 1), kills0, kills1,
-						first.WavesLaunched(), second.WavesLaunched());
+						CountTeam(registry, kPlayerTeam), CountTeam(registry, kEnemyTeam), kills0,
+						kills1, first.WavesLaunched(), second.WavesLaunched());
 		}
 	}
 	std::printf("soak: %s decided in %d frames\n", label, frames);
@@ -168,13 +169,14 @@ void RunIntegrationTests()
 		DeployFaceoff(registry, factory, UnitType::RifleInfantry);
 
 		int frames = 0;
-		while (CountTeam(registry, 0) > 0 && CountTeam(registry, 1) > 0 && frames < 3600)
+		while (CountTeam(registry, kPlayerTeam) > 0 && CountTeam(registry, kEnemyTeam) > 0 &&
+			   frames < 3600)
 		{
 			SimulateCombatFrames(registry, map, factory, 60);
 			frames += 60;
 		}
-		CC_CHECK(CountTeam(registry, 0) > 0); // favored side standing
-		CC_CHECK(CountTeam(registry, 1) == 0); // underdogs wiped
+		CC_CHECK(CountTeam(registry, kPlayerTeam) > 0); // favored side standing
+		CC_CHECK(CountTeam(registry, kEnemyTeam) == 0); // underdogs wiped
 		CC_CHECK(frames < 3600);               // it terminated, not timed out
 	}
 
@@ -187,10 +189,10 @@ void RunIntegrationTests()
 		EventDispatcher events;
 		UnitFactory factory(registry, resources, events);
 		TileMap map(20, 15);
-		PlaceBuilding(registry, map, BuildingType::Base, 0, 1, 10);
+		PlaceBuilding(registry, map, BuildingType::Base, kPlayerTeam, 1, 10);
 		ResourceNodes nodes;
 		nodes.SpawnNode(map, ResourceKind::Iron, { 15, 3 }, 10000.0f, 60.0f);
-		factory.Spawn(UnitType::Engineer, 0, cc::ToRaylib(cc::TileToWorld(15, 3)));
+		factory.Spawn(UnitType::Engineer, kPlayerTeam, cc::ToRaylib(cc::TileToWorld(15, 3)));
 		ProductionQueue queue;
 		CC_CHECK(queue.Enqueue(resources, UnitType::RifleInfantry));
 		const std::size_t before = registry.EntityCount();
@@ -199,10 +201,10 @@ void RunIntegrationTests()
 		for (int i = 0; i < 1200; ++i) // 20 simulated seconds
 		{
 			UpdateBuildingConstruction(registry, kDt); // site -> Operational, like Game
-			UpdateBaseIncome(registry, resources, kDt, 0);
+			UpdateBaseIncome(registry, resources, kDt, kPlayerTeam);
 			nodes.Update(kDt);
 			nodes.GatherTick(registry, resources, kDt);
-			queue.Update(factory, resources, 0, rally, kDt);
+			queue.Update(factory, resources, kPlayerTeam, rally, kDt);
 			registry.Each<Unit>([&](Entity id, Unit &unit) { UpdateUnit(id, registry, map, kDt); });
 		}
 		CC_CHECK(queue.Empty());                        // order rolled off the line
@@ -263,15 +265,16 @@ void RunIntegrationTests()
 		ResourceNodes nodes;
 		SeedSoakArena(map, nodes);
 		EventDispatcher events;
-		AICommander easy(registry, map, nodes, events, 0, AIDifficulty::Easy, { 2, 15 }, { 21, 2 });
-		AICommander medium(registry, map, nodes, events, 1, AIDifficulty::Medium, { 21, 2 },
-						   { 2, 15 });
+		AICommander easy(registry, map, nodes, events, kPlayerTeam, AIDifficulty::Easy, { 2, 15 },
+						 { 21, 2 });
+		AICommander medium(registry, map, nodes, events, kEnemyTeam,
+						   AIDifficulty::Medium, { 21, 2 }, { 2, 15 });
 		easy.SetupBase();
 		medium.SetupBase();
 		const int frames = RunAISoak(registry, map, nodes, easy, medium, "Easy-vs-Medium");
 		CC_CHECK(frames < 27000); // terminated: no stalemate
-		CC_CHECK(CountTeam(registry, 1) > 0); // Medium wins the first rung
-		CC_CHECK(CountTeam(registry, 0) == 0);
+		CC_CHECK(CountTeam(registry, kEnemyTeam) > 0); // Medium wins the first rung
+		CC_CHECK(CountTeam(registry, kPlayerTeam) == 0);
 	}
 	{
 		Registry registry;
@@ -279,14 +282,15 @@ void RunIntegrationTests()
 		ResourceNodes nodes;
 		SeedSoakArena(map, nodes);
 		EventDispatcher events;
-		AICommander medium(registry, map, nodes, events, 0, AIDifficulty::Medium, { 2, 15 },
-						   { 21, 2 });
-		AICommander hard(registry, map, nodes, events, 1, AIDifficulty::Hard, { 21, 2 }, { 2, 15 });
+		AICommander medium(registry, map, nodes, events, kPlayerTeam,
+						   AIDifficulty::Medium, { 2, 15 }, { 21, 2 });
+		AICommander hard(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Hard, { 21, 2 },
+						 { 2, 15 });
 		medium.SetupBase();
 		hard.SetupBase();
 		const int frames = RunAISoak(registry, map, nodes, medium, hard, "Medium-vs-Hard");
 		CC_CHECK(frames < 27000); // terminated: no stalemate
-		CC_CHECK(CountTeam(registry, 1) > 0); // Hard wins the second rung
-		CC_CHECK(CountTeam(registry, 0) == 0);
+		CC_CHECK(CountTeam(registry, kEnemyTeam) > 0); // Hard wins the second rung
+		CC_CHECK(CountTeam(registry, kPlayerTeam) == 0);
 	}
 }

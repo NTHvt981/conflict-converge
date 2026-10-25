@@ -90,8 +90,8 @@ int SelectInRect(Registry &registry, Rectangle worldBox, bool add)
 			unit.isSelected = false;
 			return;
 		}
-		const float cx = unit.position.x + 32.0f;
-		const float cy = unit.position.y + 32.0f;
+		const float cx = unit.position.x + cc::kHalfTile;
+		const float cy = unit.position.y + cc::kHalfTile;
 		const bool inside = cx >= box.x && cx <= box.x + box.width && cy >= box.y &&
 							cy <= box.y + box.height;
 		if (!add)
@@ -183,7 +183,7 @@ int RecallControlGroup(Registry &registry, int groupBit)
 	return picked;
 }
 
-int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add)
+int SelectAllOfType(Registry &registry, UnitType type, TeamId teamID, bool add)
 {
 	int picked = 0;
 	registry.Each<Unit>([&](Entity, Unit &unit) {
@@ -205,15 +205,15 @@ int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add)
 }
 
 int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType type,
-						  int teamID, bool add)
+						  TeamId teamID, bool add)
 {
 	const Rectangle box = NormalizeRect({ worldViewport.x, worldViewport.y },
 										{ worldViewport.x + worldViewport.width,
 										  worldViewport.y + worldViewport.height });
 	int picked = 0;
 	registry.Each<Unit>([&](Entity, Unit &unit) {
-		const float cx = unit.position.x + 32.0f;
-		const float cy = unit.position.y + 32.0f;
+		const float cx = unit.position.x + cc::kHalfTile;
+		const float cy = unit.position.y + cc::kHalfTile;
 		const bool inside = cx >= box.x && cx <= box.x + box.width && cy >= box.y &&
 							cy <= box.y + box.height;
 		const bool match = inside && unit.teamID == teamID && unit.type == type;
@@ -233,7 +233,7 @@ int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType 
 	return picked;
 }
 
-int SelectAllBuildings(Registry &registry, BuildingType type, int teamID)
+int SelectAllBuildings(Registry &registry, BuildingType type, TeamId teamID)
 {
 	int picked = 0;
 	registry.Each<Building>([&](Entity, Building &building) {
@@ -246,7 +246,7 @@ int SelectAllBuildings(Registry &registry, BuildingType type, int teamID)
 	return picked;
 }
 
-int SelectAllProductionBuildings(Registry &registry, int teamID)
+int SelectAllProductionBuildings(Registry &registry, TeamId teamID)
 {
 	int picked = 0;
 	registry.Each<Building>([&](Entity, Building &building) {

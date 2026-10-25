@@ -61,7 +61,8 @@ struct Harness
 	EventDispatcher events;
 	UnitFactory factory{ registry, resources, events };
 	GameCamera camera;
-	AICommander ai{ registry, map, nodes, events, 1, AIDifficulty::Medium, { 0, 0 }, { 0, 0 } };
+	AICommander ai{ registry, map, nodes, events, kEnemyTeam, AIDifficulty::Medium, { 0, 0 },
+					{ 0, 0 } };
 	SkirmishWorld world{ &registry, &resources, &map, &occ, &fog, &nodes,
 						 &bootcampQueue, &workshopQueue, &factory, &ai, nullptr, nullptr,
 						 &camera };
@@ -86,7 +87,7 @@ void RunPrototypeSandboxMovementTests()
 	sand.registry.Each<Unit>([&](Entity id, const Unit &unit) {
 		// Whatever the sandbox spawns (composition changed in 91b11a5 away
 		// from all-Prototype): drive the team-0 foot squad.
-		if (unit.teamID == 0 && !IsVehicleHull(unit.type))
+		if (unit.teamID == kPlayerTeam && !IsVehicleHull(unit.type))
 		{
 			squad.push_back(id);
 		}

@@ -144,7 +144,7 @@ bool CanHealTarget(const Registry &registry, const Unit &medic, Entity target)
 	return HealAim(registry, medic, target, aim);
 }
 
-void CollectAreaRepairCandidates(Registry &registry, Rectangle worldArea, int teamID,
+void CollectAreaRepairCandidates(Registry &registry, Rectangle worldArea, TeamId teamID,
 								 std::vector<Entity> &out)
 {
 	std::vector<Entity> units;

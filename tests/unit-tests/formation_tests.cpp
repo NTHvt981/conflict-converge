@@ -45,7 +45,7 @@ void RunFormationTests()
 	for (int i = 0; i < 3; ++i)
 	{
 		Unit unit;
-		unit.teamID = 0;
+		unit.teamID = kPlayerTeam;
 		unit.position = cc::ToRaylib(cc::TileToWorld(i, 0));
 		squad.push_back(registry.Create());
 		registry.Add(squad.back(), unit);
@@ -139,7 +139,7 @@ void RunFormationTests()
 			Unit unit;
 			unit.type = UnitType::HeavyTank;
 			ApplyBaseStats(unit);
-			unit.teamID = 0;
+			unit.teamID = kPlayerTeam;
 			unit.position = cc::ToRaylib(cc::TileToWorld(i * 3, 0));
 			vehicles.push_back(fpRegistry.Create());
 			fpRegistry.Add(vehicles.back(), unit);
@@ -170,7 +170,7 @@ void RunFormationTests()
 			Unit unit;
 			unit.type = UnitType::RifleInfantry;
 			ApplyBaseStats(unit);
-			unit.teamID = 0;
+			unit.teamID = kPlayerTeam;
 			unit.position = cc::ToRaylib(cc::TileToWorld(i * 3, 0));
 			mixed.push_back(capRegistry.Create());
 			capRegistry.Add(mixed.back(), unit);
@@ -219,7 +219,7 @@ void RunFormationTests()
 			Unit unit;
 			unit.type = UnitType::RifleInfantry;
 			ApplyBaseStats(unit);
-			unit.teamID = 0;
+			unit.teamID = kPlayerTeam;
 			unit.position = cc::ToRaylib(cc::TileToWorld(starts[i].x, starts[i].y));
 			byPos[i] = asRegistry.Create();
 			asRegistry.Add(byPos[i], unit);

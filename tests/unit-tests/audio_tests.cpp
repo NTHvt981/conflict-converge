@@ -1,5 +1,5 @@
 // Unit tests for audio (headless guard, volume clamps, settings defaults).
-// Nothing here touches an audio device: Audio::Init(false) must load nothing
+// Nothing here touches an audio device: Audio::Init(InitMode::Headless) must load nothing
 // and every Play must no-op, so the suite runs on machines without sound.
 
 #include "test_harness.h"
@@ -25,7 +25,7 @@ void RunAudioTests()
 	// --- headless init loads nothing but still records settings ---
 	{
 		Audio audio;
-		CC_CHECK(!audio.Init(false));
+		CC_CHECK(!audio.Init(InitMode::Headless));
 		CC_CHECK(!audio.IsReady());
 		audio.Play(SfxId::Explosion);
 		audio.UpdateMusic();

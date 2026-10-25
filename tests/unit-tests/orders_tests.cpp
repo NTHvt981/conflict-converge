@@ -17,7 +17,7 @@
 namespace
 {
 
-Unit Soldier(int team, UnitType type, int tileX, int tileY)
+Unit Soldier(TeamId team, UnitType type, int tileX, int tileY)
 {
 	Unit u;
 	u.type = type;
@@ -64,8 +64,8 @@ void RunOrdersTests()
 		Registry registry;
 		TileMap map(20, 15);
 		const Entity seekerId =
-			AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
-		Unit victim = Soldier(1, UnitType::RifleInfantry, 5, 2);
+			AddUnit(registry, Soldier(kPlayerTeam, UnitType::RifleInfantry, 2, 2));
+		Unit victim = Soldier(kEnemyTeam, UnitType::RifleInfantry, 5, 2);
 		victim.health = 30.0f;
 		victim.attackPower = 0; // passive: never fights back
 		const Entity victimId = AddUnit(registry, victim);
@@ -127,7 +127,7 @@ void RunOrdersTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity id = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
+		const Entity id = AddUnit(registry, Soldier(kPlayerTeam, UnitType::RifleInfantry, 2, 2));
 		Unit *u = registry.Get<Unit>(id);
 		IssueAttackMoveOrder(*u, GetOrders(registry, id), GetMover(registry, id), map,
 							 cc::ToRaylib(cc::TileToWorld(6, 2)));
@@ -141,11 +141,12 @@ void RunOrdersTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity holderId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
+		const Entity holderId =
+			AddUnit(registry, Soldier(kPlayerTeam, UnitType::RifleInfantry, 2, 2));
 		Unit *holder = registry.Get<Unit>(holderId);
 		SetStance(*holder, GetOrders(registry, holderId), GetCombatState(registry, holderId),
 				  Stance::Hold);
-		Unit foe = Soldier(1, UnitType::RifleInfantry, 5, 2);
+		Unit foe = Soldier(kEnemyTeam, UnitType::RifleInfantry, 5, 2);
 		foe.attackPower = 0;
 		const Entity foeId = AddUnit(registry, foe);
 		StepUnits(registry, map, 120);
@@ -164,7 +165,7 @@ void RunOrdersTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity id = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
+		const Entity id = AddUnit(registry, Soldier(kPlayerTeam, UnitType::RifleInfantry, 2, 2));
 		Unit *u = registry.Get<Unit>(id);
 		Orders &orders = GetOrders(registry, id);
 		Mover &mover = GetMover(registry, id);
@@ -199,12 +200,12 @@ void RunOrdersTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		Unit tank = Soldier(0, UnitType::LightTank, 2, 2);
+		Unit tank = Soldier(kPlayerTeam, UnitType::LightTank, 2, 2);
 		ApplyBaseStats(tank);
-		tank.teamID = 0;
+		tank.teamID = kPlayerTeam;
 		tank.health = BaseStats(UnitType::LightTank).health / 2.0f;
 		const Entity tankId = AddUnit(registry, tank);
-		const Entity engId = AddUnit(registry, Soldier(0, UnitType::Engineer, 2, 2));
+		const Entity engId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Engineer, 2, 2));
 		Unit *eng = registry.Get<Unit>(engId);
 		eng->speed = 64.0f;
 		IssueRepairOrder(*eng, GetOrders(registry, engId), GetMover(registry, engId), tankId);
@@ -219,13 +220,13 @@ void RunOrdersTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		Unit tank = Soldier(0, UnitType::LightTank, 8, 2);
+		Unit tank = Soldier(kPlayerTeam, UnitType::LightTank, 8, 2);
 		ApplyBaseStats(tank);
-		tank.teamID = 0;
+		tank.teamID = kPlayerTeam;
 		tank.health = 10.0f;
 		tank.attackPower = 0;
 		const Entity tankId = AddUnit(registry, tank);
-		const Entity engId = AddUnit(registry, Soldier(0, UnitType::Engineer, 2, 2));
+		const Entity engId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Engineer, 2, 2));
 		Unit *eng = registry.Get<Unit>(engId);
 		eng->speed = 64.0f;
 		eng->attackPower = 0;
@@ -243,21 +244,22 @@ void RunOrdersTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		Unit tank = Soldier(0, UnitType::LightTank, 2, 2);
+		Unit tank = Soldier(kPlayerTeam, UnitType::LightTank, 2, 2);
 		ApplyBaseStats(tank);
-		tank.teamID = 0;
+		tank.teamID = kPlayerTeam;
 		tank.health = 10.0f;
 		const Entity tankId = AddUnit(registry, tank);
 		// Non-engineer issuer: no-op.
-		const Entity gruntId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 3, 2));
+		const Entity gruntId =
+			AddUnit(registry, Soldier(kPlayerTeam, UnitType::RifleInfantry, 3, 2));
 		IssueRepairOrder(*registry.Get<Unit>(gruntId), GetOrders(registry, gruntId),
 						 GetMover(registry, gruntId), tankId);
 		CC_CHECK(!GetOrders(registry, gruntId).hasRepairOrder);
 		// Enemy patient: order dies on the first tick.
-		const Entity spyId = AddUnit(registry, Soldier(0, UnitType::Engineer, 3, 2));
-		Unit foe = Soldier(1, UnitType::LightTank, 4, 2);
+		const Entity spyId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Engineer, 3, 2));
+		Unit foe = Soldier(kEnemyTeam, UnitType::LightTank, 4, 2);
 		ApplyBaseStats(foe);
-		foe.teamID = 1;
+		foe.teamID = kEnemyTeam;
 		foe.health = 10.0f;
 		const Entity foeId = AddUnit(registry, foe);
 		IssueRepairOrder(*registry.Get<Unit>(spyId), GetOrders(registry, spyId),
@@ -265,16 +267,17 @@ void RunOrdersTests()
 		StepUnits(registry, map, 5);
 		CC_CHECK(!GetOrders(registry, spyId).hasRepairOrder);
 		// Healthy patient: nothing to fix.
-		Unit whole = Soldier(0, UnitType::LightTank, 5, 2);
+		Unit whole = Soldier(kPlayerTeam, UnitType::LightTank, 5, 2);
 		ApplyBaseStats(whole);
-		whole.teamID = 0;
+		whole.teamID = kPlayerTeam;
 		const Entity wholeId = AddUnit(registry, whole);
 		IssueRepairOrder(*registry.Get<Unit>(spyId), GetOrders(registry, spyId),
 						 GetMover(registry, spyId), wholeId);
 		StepUnits(registry, map, 5);
 		CC_CHECK(!GetOrders(registry, spyId).hasRepairOrder);
 		// Flesh (infantry) is not repairable.
-		const Entity mateId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 6, 2));
+		const Entity mateId =
+			AddUnit(registry, Soldier(kPlayerTeam, UnitType::RifleInfantry, 6, 2));
 		registry.Get<Unit>(mateId)->health = 10.0f;
 		IssueRepairOrder(*registry.Get<Unit>(spyId), GetOrders(registry, spyId),
 						 GetMover(registry, spyId), mateId);
@@ -287,7 +290,7 @@ void RunOrdersTests()
 		Registry registry;
 		TileMap map(20, 15);
 		const Entity baseId =
-			PlaceBuilding(registry, map, BuildingType::Base, 0, 5, 5);
+			PlaceBuilding(registry, map, BuildingType::Base, kPlayerTeam, 5, 5);
 		CC_CHECK(baseId != kInvalidEntity);
 		UpdateBuildingConstruction(registry, 20.0f); // Operational before wounding
 		CC_CHECK(registry.Get<Building>(baseId)->health == 400.0f);
@@ -295,7 +298,7 @@ void RunOrdersTests()
 		CC_CHECK(BuildingMaxHealth(BuildingType::Bootcamp) == 350.0f);
 		CC_CHECK(BuildingMaxHealth(BuildingType::Workshop) == 500.0f);
 		registry.Get<Building>(baseId)->health = 100.0f; // battle damage (simulated)
-		const Entity engId = AddUnit(registry, Soldier(0, UnitType::Engineer, 5, 4));
+		const Entity engId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Engineer, 5, 4));
 		Unit *eng = registry.Get<Unit>(engId);
 		eng->speed = 64.0f;
 		IssueRepairOrder(*eng, GetOrders(registry, engId), GetMover(registry, engId), baseId);
@@ -308,15 +311,15 @@ void RunOrdersTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity seekerId = AddUnit(registry, Soldier(0, UnitType::LightTank, 2, 2));
+		const Entity seekerId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::LightTank, 2, 2));
 		Unit *seeker = registry.Get<Unit>(seekerId);
 		seeker->sightRange = 512.0f;
 		const Entity farBase =
-			PlaceBuilding(registry, map, BuildingType::Base, 1, 7, 2);
+			PlaceBuilding(registry, map, BuildingType::Base, kEnemyTeam, 7, 2);
 		const Entity nearDepot =
-			PlaceBuilding(registry, map, BuildingType::ResourceDepot, 1, 5, 2);
+			PlaceBuilding(registry, map, BuildingType::ResourceDepot, kEnemyTeam, 5, 2);
 		const Entity ownBootcamp =
-			PlaceBuilding(registry, map, BuildingType::Bootcamp, 0, 2, 5);
+			PlaceBuilding(registry, map, BuildingType::Bootcamp, kPlayerTeam, 2, 5);
 		UpdateBuildingConstruction(registry, 20.0f); // targets must be Operational
 		CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) == nearDepot);
 		// Own structures are never targets.
@@ -337,9 +340,9 @@ void RunOrdersTests()
 		Registry registry;
 		TileMap map(20, 15);
 		const Entity depotId =
-			PlaceBuilding(registry, map, BuildingType::ResourceDepot, 1, 5, 2);
+			PlaceBuilding(registry, map, BuildingType::ResourceDepot, kEnemyTeam, 5, 2);
 		UpdateBuildingConstruction(registry, 20.0f); // raidable only when Operational
-		const Entity raiderId = AddUnit(registry, Soldier(0, UnitType::LightTank, 3, 2));
+		const Entity raiderId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::LightTank, 3, 2));
 		Unit *raider = registry.Get<Unit>(raiderId);
 		raider->sightRange = 512.0f;
 		StepUnits(registry, map, 3600);
@@ -354,14 +357,15 @@ void RunOrdersTests()
 		TileMap map(20, 15);
 		ResourceNodes nodes;
 		EventDispatcher events;
-		AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 10, 10 }, { 2, 2 });
+		AICommander ai(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Easy, { 10, 10 },
+					   { 2, 2 });
 		ai.SetupBase();
 		UpdateBuildingConstruction(registry, 20.0f); // bootcamp must be Operational
 		CC_CHECK(ai.HasBootcamp());
 		CC_CHECK(ai.HasWorkshop());
 		Entity bootcampId = kInvalidEntity;
 		registry.Each<Building>([&](Entity id, const Building &b) {
-			if (b.teamID == 1 && b.type == BuildingType::Bootcamp)
+			if (b.teamID == kEnemyTeam && b.type == BuildingType::Bootcamp)
 			{
 				bootcampId = id;
 			}
@@ -384,7 +388,7 @@ void RunOrdersTests()
 		TileMap map(20, 15);
 		ResourceNodes nodes;
 		EventDispatcher events;
-		AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 10, 10 },
+		AICommander ai(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Medium, { 10, 10 },
 					   { 2, 2 });
 		ai.SetupBase();
 		UpdateBuildingConstruction(registry, 20.0f); // producers must be Operational
@@ -392,7 +396,7 @@ void RunOrdersTests()
 		CC_CHECK(ai.HasWorkshop());
 		Entity workshopId = kInvalidEntity;
 		registry.Each<Building>([&](Entity id, const Building &b) {
-			if (b.teamID == 1 && b.type == BuildingType::Workshop)
+			if (b.teamID == kEnemyTeam && b.type == BuildingType::Workshop)
 			{
 				workshopId = id;
 			}
@@ -407,7 +411,7 @@ void RunOrdersTests()
 		}
 		int tanks = 0, foot = 0;
 		registry.Each<Unit>([&](Entity, const Unit &unit) {
-			if (unit.teamID != 1 || unit.health <= 0.0f || unit.type == UnitType::Engineer)
+			if (unit.teamID != kEnemyTeam || unit.health <= 0.0f || unit.type == UnitType::Engineer)
 			{
 				return;
 			}
@@ -428,11 +432,12 @@ void RunOrdersTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity carrierId = AddUnit(registry, Soldier(0, UnitType::IFV, 2, 2));
+		const Entity carrierId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::IFV, 2, 2));
 		Cargo cargo;
 		cargo.capacity = 2;
 		registry.Add(carrierId, cargo);
-		const Entity riderId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 3, 2));
+		const Entity riderId =
+			AddUnit(registry, Soldier(kPlayerTeam, UnitType::RifleInfantry, 3, 2));
 		IssueLoadOrder(*registry.Get<Unit>(carrierId), GetOrders(registry, carrierId),
 					   GetMover(registry, carrierId), riderId);
 		StepUnits(registry, map, 5);
@@ -446,22 +451,22 @@ void RunOrdersTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity carrierId = AddUnit(registry, Soldier(0, UnitType::IFV, 2, 2));
+		const Entity carrierId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::IFV, 2, 2));
 		Cargo cargo;
 		cargo.capacity = 1;
 		registry.Add(carrierId, cargo);
 		const Unit *carrier = registry.Get<Unit>(carrierId);
-		const Entity foeId = AddUnit(registry, Soldier(1, UnitType::RifleInfantry, 2, 3));
+		const Entity foeId = AddUnit(registry, Soldier(kEnemyTeam, UnitType::RifleInfantry, 2, 3));
 		CC_CHECK(!CanLoadTarget(registry, carrierId, *carrier, foeId)); // enemy
-		const Entity truckId = AddUnit(registry, Soldier(0, UnitType::LightTank, 2, 3));
+		const Entity truckId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::LightTank, 2, 3));
 		CC_CHECK(!CanLoadTarget(registry, carrierId, *carrier, truckId)); // vehicle
-		const Entity firstId = AddUnit(registry, Soldier(0, UnitType::Engineer, 2, 3));
+		const Entity firstId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Engineer, 2, 3));
 		CC_CHECK(CanLoadTarget(registry, carrierId, *carrier, firstId));
 		CC_CHECK(BoardTransport(registry, carrierId, firstId));
-		const Entity secondId = AddUnit(registry, Soldier(0, UnitType::Medic, 2, 3));
+		const Entity secondId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Medic, 2, 3));
 		CC_CHECK(!CanLoadTarget(registry, carrierId, *carrier, secondId)); // full
 		CC_CHECK(!BoardTransport(registry, carrierId, secondId));
-		const Entity bareId = AddUnit(registry, Soldier(0, UnitType::LightTank, 4, 4));
+		const Entity bareId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::LightTank, 4, 4));
 		CC_CHECK(!CanLoadTarget(registry, bareId, *registry.Get<Unit>(bareId),
 								firstId)); // no Cargo
 	}
@@ -470,11 +475,12 @@ void RunOrdersTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity carrierId = AddUnit(registry, Soldier(0, UnitType::IFV, 5, 5));
+		const Entity carrierId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::IFV, 5, 5));
 		Cargo cargo;
 		cargo.capacity = 4;
 		registry.Add(carrierId, cargo);
-		const Entity riderId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 5, 5));
+		const Entity riderId =
+			AddUnit(registry, Soldier(kPlayerTeam, UnitType::RifleInfantry, 5, 5));
 		CC_CHECK(BoardTransport(registry, carrierId, riderId));
 		IssueUnloadOrder(*registry.Get<Unit>(carrierId), GetOrders(registry, carrierId),
 						 GetMover(registry, carrierId), map, cc::ToRaylib(cc::TileToWorld(8, 8)));
@@ -489,13 +495,15 @@ void RunOrdersTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity carrierId = AddUnit(registry, Soldier(0, UnitType::IFV, 2, 2));
+		const Entity carrierId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::IFV, 2, 2));
 		Cargo cargo;
 		cargo.capacity = 2;
 		registry.Add(carrierId, cargo);
-		const Entity riderId = AddUnit(registry, Soldier(0, UnitType::RifleInfantry, 2, 2));
+		const Entity riderId =
+			AddUnit(registry, Soldier(kPlayerTeam, UnitType::RifleInfantry, 2, 2));
 		CC_CHECK(BoardTransport(registry, carrierId, riderId));
-		const Entity seekerId = AddUnit(registry, Soldier(1, UnitType::RifleInfantry, 2, 3));
+		const Entity seekerId =
+			AddUnit(registry, Soldier(kEnemyTeam, UnitType::RifleInfantry, 2, 3));
 		CC_CHECK(AcquireTarget(registry, seekerId, nullptr) != riderId); // untargetable
 		CC_CHECK(PickUnitAt(registry, registry.Get<Unit>(riderId)->position) !=
 				 riderId); // unpickable

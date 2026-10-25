@@ -81,7 +81,7 @@ struct SavedWorld
 	std::vector<ResourceNode> nodes;
 	float nodeIronCarry = 0.0f;
 	float nodeOilCarry = 0.0f;
-	std::vector<std::pair<int, std::vector<std::uint8_t>>> teamFog;
+	std::vector<std::pair<TeamId, std::vector<std::uint8_t>>> teamFog;
 };
 
 bool InRange(std::int64_t value)
@@ -125,7 +125,7 @@ bool DecodeUnit(const SaveUnit &in, SavedUnit &out, std::int32_t mapWidth,
 	u.position = ToVec2(in.position);
 	u.velocity = ToVec2(in.velocity);
 	u.isSelected = in.selected;
-	u.teamID = in.team;
+	u.teamID = static_cast<TeamId>(in.team);
 	u.type = static_cast<UnitType>(in.type);
 	u.state = static_cast<UnitState>(in.state);
 	out.targetIndex = in.targetIndex;
@@ -250,7 +250,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
 		{
 			return false;
 		}
-		b.teamID = in.team;
+		b.teamID = static_cast<TeamId>(in.team);
 		b.tileX = in.tileX;
 		b.tileY = in.tileY;
 		b.rallyTile = { in.rallyX, in.rallyY };
@@ -310,7 +310,7 @@ bool Decode(const std::string &payload, SavedWorld &out)
 	out.teamFog.clear();
 	for (const SaveFog &in : msg.teamFog)
 	{
-		out.teamFog.push_back({ in.team, in.explored });
+		out.teamFog.push_back({ static_cast<TeamId>(in.team), in.explored });
 	}
 	return true;
 }

@@ -10,48 +10,48 @@ void PlayingInput::HandleLeftPress()
 {
 	if (input_.LeftPressed())
 	{
-		if (placingType_.has_value())
+		if (HasMode(mode_, InteractionMode::Placing))
 		{
-			placeDragActive_ = true;
-			placeDragStart_ = input_.MouseScreen();
+			placeDrag_.active = true;
+			placeDrag_.start = input_.MouseScreen();
 		}
-		else if (areaRepairMode_)
+		else if (HasMode(mode_, InteractionMode::AreaRepair))
 		{
-			repairDragActive_ = true;
-			repairDragStart_ = input_.MouseScreen();
+			repairDrag_.active = true;
+			repairDrag_.start = input_.MouseScreen();
 		}
 		else if (minimap_.Contains(input_.MouseScreen()))
 		{
 			camera_.view.target =
 				minimap_.MinimapToWorld(input_.MouseScreen(), map_.Width(), map_.Height());
 		}
-		else if (settingRally_)
+		else if (HasMode(mode_, InteractionMode::SettingRally))
 		{
 			const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(input_.MouseWorld(camera_)));
 			const cc::IVec2 free = NearestFreeFootprintTile(map_, &occ_, tile, 1, 1);
 			registry_.Each<Building>([&](Entity, Building &building) {
-				if (building.isSelected && building.teamID == 0 &&
+				if (building.isSelected && building.teamID == kPlayerTeam &&
 					ProducerCategory(building.type).has_value())
 				{
 					building.rallyTile = free;
 				}
 			});
-			settingRally_ = false;
+			SetMode(InteractionMode::SettingRally, false);
 		}
 		else
 		{
-			dragging_ = true;
-			dragStart_ = input_.MouseScreen();
+			selectDrag_.active = true;
+			selectDrag_.start = input_.MouseScreen();
 		}
 	}
 }
 
 void PlayingInput::HandleSelectDragRelease()
 {
-	if (dragging_ && !input_.LeftDown())
+	if (selectDrag_.active && !input_.LeftDown())
 	{
-		dragging_ = false;
-		const Rectangle box = NormalizeRect(dragStart_, input_.MouseScreen());
+		selectDrag_.active = false;
+		const Rectangle box = NormalizeRect(selectDrag_.start, input_.MouseScreen());
 		if (box.width < 6.0f && box.height < 6.0f)
 		{
 			const Vector2 world = input_.MouseWorld(camera_);
@@ -66,7 +66,7 @@ void PlayingInput::HandleSelectDragRelease()
 						DraggedWorldBox(camera_, { 0.0f, 0.0f },
 										{ static_cast<float>(GetScreenWidth()),
 										  static_cast<float>(GetScreenHeight()) }),
-						hitUnit->type, 0, false);
+						hitUnit->type, kPlayerTeam, false);
 				}
 				else
 				{

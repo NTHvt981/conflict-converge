@@ -67,7 +67,7 @@ void FillUnit(SaveUnit &out, const Registry &registry, Entity id, const Unit &u,
 	FillVec2(out.position, u.position);
 	FillVec2(out.velocity, u.velocity);
 	out.selected = u.isSelected;
-	out.team = u.teamID;
+	out.team = static_cast<std::int32_t>(u.teamID);
 	out.type = static_cast<std::int32_t>(u.type);
 	out.state = static_cast<std::int32_t>(u.state);
 	out.targetIndex = indexOf(combat != nullptr ? combat->target : kInvalidEntity);
@@ -157,7 +157,7 @@ bool SaveWorld(const WorldState &world, const std::string &path)
 		SaveBuilding &out = msg.buildings.emplace_back();
 		out.type = static_cast<std::int32_t>(b.type);
 		out.state = static_cast<std::int32_t>(b.state);
-		out.team = b.teamID;
+		out.team = static_cast<std::int32_t>(b.teamID);
 		out.tileX = b.tileX;
 		out.tileY = b.tileY;
 		out.health = b.health;
@@ -177,10 +177,10 @@ bool SaveWorld(const WorldState &world, const std::string &path)
 	});
 	msg.nodeIronCarry = world.nodes->IronCarry();
 	msg.nodeOilCarry = world.nodes->OilCarry();
-	for (int teamID : world.fog->Teams())
+	for (TeamId teamID : world.fog->Teams())
 	{
 		SaveFog &out = msg.teamFog.emplace_back();
-		out.team = teamID;
+		out.team = static_cast<std::int32_t>(teamID);
 		const std::vector<std::uint8_t> bytes = world.fog->ExploredBytes(teamID);
 		out.explored.assign(bytes.begin(), bytes.end());
 	}

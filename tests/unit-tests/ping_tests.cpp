@@ -95,9 +95,9 @@ void RunPingTests()
 		resources.AddOil(500);
 		EventDispatcher events;
 		Vector2 spawnPos = {};
-		int spawnTeam = -1;
+		TeamId spawnTeam = kAnyTeam;
 		Vector2 deathPos = { -1.0f, -1.0f };
-		int deathTeam = -1;
+		TeamId deathTeam = kAnyTeam;
 		events.Subscribe(EventType::UnitSpawned, [&](const Event &e) {
 			if (const auto *lifecycle = dynamic_cast<const UnitLifecycleEvent *>(&e))
 			{
@@ -114,12 +114,12 @@ void RunPingTests()
 		});
 		UnitFactory factory(registry, resources, events);
 		const Entity id =
-			factory.Spawn(UnitType::RifleInfantry, 1, { 128.0f, 192.0f });
+			factory.Spawn(UnitType::RifleInfantry, kEnemyTeam, { 128.0f, 192.0f });
 		CC_CHECK(id != kInvalidEntity);
 		CC_CHECK(spawnPos.x == 128.0f && spawnPos.y == 192.0f);
-		CC_CHECK(spawnTeam == 1);
+		CC_CHECK(spawnTeam == kEnemyTeam);
 		factory.DestroyUnit(id);
-		CC_CHECK(deathTeam == 1);
+		CC_CHECK(deathTeam == kEnemyTeam);
 		CC_CHECK(deathPos.x == 128.0f && deathPos.y == 192.0f);
 	}
 }

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "core/Subsystem.h"
+#include "core/Team.h"
 #include "units/Unit.h"
 #include "units/UnitStats.h"
 #include "raylib.h"
@@ -26,7 +27,7 @@ public:
 	void CancelTop(ResourceSystem &resources);
 	void SetRepeatArmed(UnitType type, bool repeat);
 	bool RepeatArmed(UnitType type) const;
-	Entity Update(UnitFactory &factory, ResourceSystem &resources, int teamID, Vector2 spawnPos,
+	Entity Update(UnitFactory &factory, ResourceSystem &resources, TeamId teamID, Vector2 spawnPos,
 				  float dt, const TileMap *map = nullptr, const OccupancyGrid *occ = nullptr);
 
 	bool Empty() const;

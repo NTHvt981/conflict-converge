@@ -28,7 +28,7 @@
 namespace
 {
 
-int CountTeam(Registry &registry, int team)
+int CountTeam(Registry &registry, TeamId team)
 {
 	int count = 0;
 	registry.Each<Unit>([&](Entity, const Unit &unit) {
@@ -42,7 +42,7 @@ int CountTeam(Registry &registry, int team)
 
 // Arrange a wipe through the real death path: zero health and let the
 // loop's sweep destroy the corpses (direct destroy would skip it).
-void WipeTeam(Registry &registry, int team)
+void WipeTeam(Registry &registry, TeamId team)
 {
 	registry.Each<Unit>([&](Entity, Unit &unit) {
 		if (unit.teamID == team && unit.health > 0.0f)
@@ -56,7 +56,7 @@ void WipeTeam(Registry &registry, int team)
 // wiped units mid-scenario and the outcome never fires (correct game
 // behavior — games end by demolition, not by one good battle). Real
 // demolition (tiles freed) so the mop-up force can path into the base.
-void RazeTeamBuildings(Registry &registry, TileMap &map, int team)
+void RazeTeamBuildings(Registry &registry, TileMap &map, TeamId team)
 {
 	std::vector<Entity> condemned;
 	registry.Each<Building>([&](Entity id, const Building &building) {
@@ -109,8 +109,8 @@ void ScenarioStartAndSimulate()
 	// Both sides fielded from frame one: still playing, world intact.
 	CC_CHECK(menu.state == MenuState::Playing);
 	CC_CHECK(game.IsWorldActive());
-	CC_CHECK(CountTeam(game.E2ERegistry(), 0) > 0);
-	CC_CHECK(CountTeam(game.E2ERegistry(), 1) > 0);
+	CC_CHECK(CountTeam(game.E2ERegistry(), kPlayerTeam) > 0);
+	CC_CHECK(CountTeam(game.E2ERegistry(), kEnemyTeam) > 0);
 	game.Shutdown();
 	std::printf("e2e: start-and-simulate ok\n");
 }
@@ -125,8 +125,8 @@ void ScenarioOutcomes()
 	menu.OpenSetup(ListMaps("data/maps"));
 	menu.SelectMap(0);
 	CC_CHECK(game.E2EStartSelectedMatch());
-	RazeTeamBuildings(game.E2ERegistry(), game.E2EMap(), 1);
-	WipeTeam(game.E2ERegistry(), 1);
+	RazeTeamBuildings(game.E2ERegistry(), game.E2EMap(), kEnemyTeam);
+	WipeTeam(game.E2ERegistry(), kEnemyTeam);
 	// Mop-up through the loop, not around it: the razed AI instantly
 	// respawns harvesters while its ledger lasts, so a single external wipe
 	// can never stick — kills must land inside the frame, between the AI
@@ -144,7 +144,7 @@ void ScenarioOutcomes()
 	{
 		Registry &registry = game.E2ERegistry();
 		registry.Each<Unit>([&](Entity id, Unit &unit) {
-			if (unit.teamID == 0 && unit.type != UnitType::Engineer && unit.health > 0.0f)
+			if (unit.teamID == kPlayerTeam && unit.type != UnitType::Engineer && unit.health > 0.0f)
 			{
 				SetStance(unit, GetOrders(registry, id), GetCombatState(registry, id),
 						  Stance::Hold);
@@ -166,8 +166,8 @@ void ScenarioOutcomes()
 	menu.SelectMap(0);
 	CC_CHECK(game.E2EStartSelectedMatch());
 	CC_CHECK(game.IsWorldActive());
-	RazeTeamBuildings(game.E2ERegistry(), game.E2EMap(), 0);
-	WipeTeam(game.E2ERegistry(), 0);
+	RazeTeamBuildings(game.E2ERegistry(), game.E2EMap(), kPlayerTeam);
+	WipeTeam(game.E2ERegistry(), kPlayerTeam);
 	StepFrames(game, 120);
 	CC_CHECK(menu.state == MenuState::GameOver);
 	game.Shutdown();
@@ -191,8 +191,8 @@ void ScenarioAlliedAI()
 		StepFrames(game, 60);
 		CC_CHECK(menu.state == MenuState::Playing);
 		// 4 player units + allied guard on team 0; two guards on team 1.
-		CC_CHECK(CountTeam(game.E2ERegistry(), 0) >= 5);
-		CC_CHECK(CountTeam(game.E2ERegistry(), 1) >= 2);
+		CC_CHECK(CountTeam(game.E2ERegistry(), kPlayerTeam) >= 5);
+		CC_CHECK(CountTeam(game.E2ERegistry(), kEnemyTeam) >= 2);
 	}
 	game.Shutdown();
 	std::printf("e2e: allied-ai ok\n");

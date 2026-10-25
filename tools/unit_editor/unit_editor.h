@@ -60,6 +60,6 @@ struct EditorState
 // syncs the edit buffers to configs[0].
 void InitEditor(EditorState &editor);
 
-// One frame of the editor window. `art` must be Init(true)'d + LoadAtlas'd
+// One frame of the editor window. `art` must be Init(InitMode::WithDevice)'d + LoadAtlas'd
 // by the caller (main.cpp); Save refreshes the atlas via LoadAtlas.
 void DrawEditorFrame(EditorState &editor, class Art &art);

@@ -3,6 +3,7 @@
 #include "test_harness.h"
 
 #include "core/Event.h"
+#include "core/Team.h"
 
 #include <string>
 #include <vector>
@@ -12,7 +13,7 @@ namespace
 
 struct SpawnedEvent : Event
 {
-	int teamID = 0;
+	TeamId teamID = kPlayerTeam;
 };
 
 } // namespace
@@ -27,7 +28,7 @@ void RunEventTests()
 
 	SpawnedEvent spawned;
 	spawned.type = EventType::UnitSpawned;
-	spawned.teamID = 3;
+	spawned.teamID = kEnemyTeam;
 	dispatcher.Dispatch(spawned);
 
 	CC_CHECK(calls.size() == 2);
@@ -35,15 +36,15 @@ void RunEventTests()
 	CC_CHECK(calls[1] == "second");
 
 	// --- handlers receive the concrete payload via downcast ---
-	int seenTeam = -1;
+	TeamId seenTeam = kAnyTeam;
 	dispatcher.Subscribe(EventType::UnitDestroyed, [&](const Event &e) {
 		seenTeam = static_cast<const SpawnedEvent &>(e).teamID;
 	});
 	SpawnedEvent destroyed;
 	destroyed.type = EventType::UnitDestroyed;
-	destroyed.teamID = 7;
+	destroyed.teamID = kEnemyTeam;
 	dispatcher.Dispatch(destroyed);
-	CC_CHECK(seenTeam == 7);
+	CC_CHECK(seenTeam == kEnemyTeam);
 
 	// --- event types are isolated: UnitSpawned handlers did not re-fire ---
 	CC_CHECK(calls.size() == 2);
@@ -60,7 +61,7 @@ void RunEventTests()
 	dispatcher.Dispatch(spawned);
 	dispatcher.Dispatch(destroyed);
 	CC_CHECK(calls.size() == 2);
-	CC_CHECK(seenTeam == 7);
+	CC_CHECK(seenTeam == kEnemyTeam);
 
 	// --- Game-state + UI categories ride the same dispatcher ---
 	EventDispatcher flow;

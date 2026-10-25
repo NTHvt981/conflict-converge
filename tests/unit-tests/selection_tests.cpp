@@ -117,11 +117,11 @@ void RunSelectionTests()
 	typeReg.Get<Unit>(tank)->type = UnitType::LightTank;
 	const Entity foeInf = SpawnAt(typeReg, 256.0f, 256.0f);
 	typeReg.Get<Unit>(foeInf)->type = UnitType::RifleInfantry;
-	typeReg.Get<Unit>(foeInf)->teamID = 1;
-	CC_CHECK(SelectAllOfType(typeReg, UnitType::RifleInfantry, 0, false) == 2);
+	typeReg.Get<Unit>(foeInf)->teamID = kEnemyTeam;
+	CC_CHECK(SelectAllOfType(typeReg, UnitType::RifleInfantry, kPlayerTeam, false) == 2);
 	CC_CHECK(typeReg.Get<Unit>(infA)->isSelected && typeReg.Get<Unit>(infB)->isSelected);
 	CC_CHECK(!typeReg.Get<Unit>(tank)->isSelected && !typeReg.Get<Unit>(foeInf)->isSelected);
-	CC_CHECK(SelectAllOfType(typeReg, UnitType::LightTank, 0, true) == 1); // extends
+	CC_CHECK(SelectAllOfType(typeReg, UnitType::LightTank, kPlayerTeam, true) == 1); // extends
 	CC_CHECK(typeReg.Get<Unit>(infA)->isSelected && typeReg.Get<Unit>(tank)->isSelected);
 
 	// --- SelectAllOfTypeInRect: type + team + viewport, replace/extend ---
@@ -134,19 +134,21 @@ void RunSelectionTests()
 	viewReg.Get<Unit>(viewTank)->type = UnitType::LightTank;
 	const Entity viewFoe = SpawnAt(viewReg, 320.0f, 64.0f); // inside, enemy team
 	viewReg.Get<Unit>(viewFoe)->type = UnitType::RifleInfantry;
-	viewReg.Get<Unit>(viewFoe)->teamID = 1;
+	viewReg.Get<Unit>(viewFoe)->teamID = kEnemyTeam;
 	const Entity offView = SpawnAt(viewReg, 2000.0f, 2000.0f); // same type/team, offscreen
 	viewReg.Get<Unit>(offView)->type = UnitType::RifleInfantry;
 	const Rectangle viewport = { 0.0f, 0.0f, 500.0f, 500.0f };
 
-	CC_CHECK(SelectAllOfTypeInRect(viewReg, viewport, UnitType::RifleInfantry, 0, false) == 2);
+	CC_CHECK(SelectAllOfTypeInRect(viewReg, viewport, UnitType::RifleInfantry, kPlayerTeam,
+								   false) == 2);
 	CC_CHECK(viewReg.Get<Unit>(inA)->isSelected && viewReg.Get<Unit>(inB)->isSelected);
 	CC_CHECK(!viewReg.Get<Unit>(viewTank)->isSelected);
 	CC_CHECK(!viewReg.Get<Unit>(viewFoe)->isSelected);
 	CC_CHECK(!viewReg.Get<Unit>(offView)->isSelected);
 	// add=true keeps the prior selection and still counts only matches.
 	viewReg.Get<Unit>(viewTank)->isSelected = true;
-	CC_CHECK(SelectAllOfTypeInRect(viewReg, viewport, UnitType::RifleInfantry, 0, true) == 2);
+	CC_CHECK(SelectAllOfTypeInRect(viewReg, viewport, UnitType::RifleInfantry, kPlayerTeam,
+								   true) == 2);
 	CC_CHECK(viewReg.Get<Unit>(viewTank)->isSelected); // kept, not counted
 	CC_CHECK(viewReg.Get<Unit>(inA)->isSelected);
 }

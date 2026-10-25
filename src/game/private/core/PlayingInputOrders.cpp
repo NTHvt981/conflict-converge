@@ -14,20 +14,20 @@
 
 void PlayingInput::HandlePlaceDragRelease()
 {
-	if (placeDragActive_ && !input_.LeftDown())
+	if (placeDrag_.active && !input_.LeftDown())
 	{
-		placeDragActive_ = false;
+		placeDrag_.active = false;
 		if (placingType_.has_value())
 		{
 			const Rectangle box =
-				DraggedWorldBox(camera_, placeDragStart_, input_.MouseScreen());
+				DraggedWorldBox(camera_, placeDrag_.start, input_.MouseScreen());
 			if (box.width < 6.0f && box.height < 6.0f)
 			{
 				const cc::IVec2 tile =
 					cc::WorldToTile(cc::ToGlm(input_.MouseWorld(camera_)));
 				const UnitCost cost = BuildingCost(*placingType_);
 				if (resources_.iron >= cost.iron && resources_.oil >= cost.oil &&
-					PlaceBuilding(registry_, map_, *placingType_, 0, tile.x, tile.y,
+					PlaceBuilding(registry_, map_, *placingType_, kPlayerTeam, tile.x, tile.y,
 								  &nodes_) != kInvalidEntity)
 				{
 					resources_.TrySpend(cost.iron, cost.oil);
@@ -51,7 +51,7 @@ void PlayingInput::HandlePlaceDragRelease()
 					{
 						break;
 					}
-					if (PlaceBuilding(registry_, map_, *placingType_, 0, slot.x, slot.y,
+					if (PlaceBuilding(registry_, map_, *placingType_, kPlayerTeam, slot.x, slot.y,
 									  &nodes_) != kInvalidEntity)
 					{
 						resources_.TrySpend(areaCost.iron, areaCost.oil);
@@ -69,13 +69,13 @@ void PlayingInput::HandlePlaceDragRelease()
 
 void PlayingInput::HandleRepairDragRelease()
 {
-	if (repairDragActive_ && !input_.LeftDown())
+	if (repairDrag_.active && !input_.LeftDown())
 	{
-		repairDragActive_ = false;
-		if (areaRepairMode_)
+		repairDrag_.active = false;
+		if (HasMode(mode_, InteractionMode::AreaRepair))
 		{
 			const Rectangle zone =
-				DraggedWorldBox(camera_, repairDragStart_, input_.MouseScreen());
+				DraggedWorldBox(camera_, repairDrag_.start, input_.MouseScreen());
 			std::vector<Entity> engineers;
 			registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 				if (unit.isSelected &&
@@ -85,7 +85,7 @@ void PlayingInput::HandleRepairDragRelease()
 				}
 			});
 			std::vector<Entity> candidates;
-			CollectAreaRepairCandidates(registry_, zone, 0, candidates);
+			CollectAreaRepairCandidates(registry_, zone, kPlayerTeam, candidates);
 			std::vector<RepairAssignment> assignments;
 			AssignAreaRepair(registry_, engineers, candidates, assignments);
 			for (const RepairAssignment &job : assignments)
@@ -126,23 +126,24 @@ void PlayingInput::HandleRightPress()
 {
 	if (input_.RightPressed())
 	{
-		if (placingType_.has_value())
+		if (HasMode(mode_, InteractionMode::Placing))
 		{
+			SetMode(InteractionMode::Placing, false);
 			placingType_.reset();
-			placeDragActive_ = false;
+			placeDrag_.active = false;
 		}
-		else if (areaRepairMode_)
+		else if (HasMode(mode_, InteractionMode::AreaRepair))
 		{
-			areaRepairMode_ = false;
-			repairDragActive_ = false;
+			SetMode(InteractionMode::AreaRepair, false);
+			repairDrag_.active = false;
 		}
 		else
 		{
 			const bool altDown = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
 			if (altDown)
 			{
-				rightDragging_ = true;
-				rightDragStart_ = input_.MouseScreen();
+				rightDrag_.active = true;
+				rightDrag_.start = input_.MouseScreen();
 			}
 		}
 	}
@@ -157,9 +158,9 @@ void PlayingInput::DispatchRightClickOrders()
 			audio_.Play(SfxId::Confirm);
 		}
 	}
-	else if (attackGroundMode_)
+	else if (HasMode(mode_, InteractionMode::AttackGround))
 	{
-		attackGroundMode_ = false;
+		SetMode(InteractionMode::AttackGround, false);
 		const Vector2 target = input_.MouseWorld(camera_);
 		const bool queued = input_.ShiftDown();
 		registry_.Each<Unit>([&](Entity id, Unit &unit) {
@@ -205,7 +206,8 @@ void PlayingInput::DispatchRightClickOrders()
 						}
 						const Rectangle footprint = BuildingFootprintRect(building);
 						const Vector2 tileCenter = cc::ToRaylib(
-							cc::TileToWorld(tile.x, tile.y) + cc::Vec2(32.0f, 32.0f));
+							cc::TileToWorld(tile.x, tile.y) +
+								cc::Vec2(cc::kHalfTile, cc::kHalfTile));
 						if (CheckCollisionPointRec(tileCenter, footprint) &&
 							CanRepairTarget(registry_, *ordered, id))
 						{
@@ -304,7 +306,7 @@ void PlayingInput::DispatchRightClickOrders()
 		{
 			formation::IssueFormationMoveFP(registry_, squad, map_, occ_,
 											input_.MouseWorld(camera_),
-											moveAtSlowestSpeed_);
+											HasMode(mode_, InteractionMode::SlowestSpeed));
 		}
 		audio_.Play(SfxId::Confirm);
 	}
@@ -314,7 +316,7 @@ void PlayingInput::DispatchRightClickOrders()
 void PlayingInput::HandleRightRelease(bool cancelledPlacement)
 {
 	const bool altDown = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
-	if (input_.RightPressed() && !rightDragging_ && !cancelledPlacement)
+	if (input_.RightPressed() && !rightDrag_.active && !cancelledPlacement)
 	{
 		if (settings_.rightDragPan && !altDown)
 		{
@@ -338,9 +340,9 @@ void PlayingInput::HandleRightRelease(bool cancelledPlacement)
 
 void PlayingInput::HandleLineDragRelease()
 {
-	if (rightDragging_ && !input_.RightDown())
+	if (rightDrag_.active && !input_.RightDown())
 	{
-		rightDragging_ = false;
+		rightDrag_.active = false;
 		std::vector<Entity> squad;
 		registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 			if (unit.isSelected)
@@ -351,9 +353,10 @@ void PlayingInput::HandleLineDragRelease()
 		if (!squad.empty())
 		{
 			const auto [lineStart, lineEnd] =
-				DraggedWorldLine(camera_, rightDragStart_, input_.MouseScreen());
+				DraggedWorldLine(camera_, rightDrag_.start, input_.MouseScreen());
 			formation::IssueLineFormationMoveFP(registry_, squad, map_, occ_, lineStart,
-												lineEnd, moveAtSlowestSpeed_);
+												lineEnd,
+												HasMode(mode_, InteractionMode::SlowestSpeed));
 			audio_.Play(SfxId::Confirm);
 		}
 	}

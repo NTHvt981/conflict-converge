@@ -12,7 +12,7 @@
 namespace
 {
 
-Entity SpawnTeam(Registry &registry, UnitType type, int team, int tileX, int tileY, float hpFrac)
+Entity SpawnTeam(Registry &registry, UnitType type, TeamId team, int tileX, int tileY, float hpFrac)
 {
 	Entity entity = registry.Create();
 	Unit unit;
@@ -36,7 +36,7 @@ Entity SpawnBase(Registry &registry, int tileX, int tileY)
 {
 	Entity entity = registry.Create();
 	Building base;
-	base.teamID = 0;
+	base.teamID = kPlayerTeam;
 	base.type = BuildingType::Base;
 	base.state = BuildingState::Operational;
 	base.tileX = tileX;
@@ -53,12 +53,12 @@ void RunRetreatTests()
 	{
 		Registry registry;
 		TileMap map(10, 10);
-		const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, 0, 8, 8, 0.2f);
+		const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, kPlayerTeam, 8, 8, 0.2f);
 		Unit &unit = *registry.Get<Unit>(id);
 		Orders &orders = GetOrders(registry, id);
 		orders.autoRetreat = true;
 
-		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), 0, kRetreatHealthFraction,
+		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), kPlayerTeam, kRetreatHealthFraction,
 					   true);
 		CC_CHECK(orders.attackMove); // withdrawal fights: not a plain move
 		CC_CHECK(FindMover(registry, id)->hasPath || FindMover(registry, id)->hasMoveOrder);
@@ -69,12 +69,12 @@ void RunRetreatTests()
 	{
 		Registry registry;
 		TileMap map(10, 10);
-		const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, 0, 8, 8, 1.0f);
+		const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, kPlayerTeam, 8, 8, 1.0f);
 		Unit &unit = *registry.Get<Unit>(id);
 		Orders &orders = GetOrders(registry, id);
 		orders.autoRetreat = true;
 
-		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), 0, kRetreatHealthFraction,
+		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), kPlayerTeam, kRetreatHealthFraction,
 					   true);
 		CC_CHECK(!orders.attackMove);
 		CC_CHECK(!FindMover(registry, id)->hasMoveOrder && !FindMover(registry, id)->hasPath);
@@ -84,12 +84,12 @@ void RunRetreatTests()
 	{
 		Registry registry;
 		TileMap map(10, 10);
-		const Entity id = SpawnTeam(registry, UnitType::Engineer, 0, 8, 8, 0.1f);
+		const Entity id = SpawnTeam(registry, UnitType::Engineer, kPlayerTeam, 8, 8, 0.1f);
 		Unit &unit = *registry.Get<Unit>(id);
 		Orders &orders = GetOrders(registry, id);
 		orders.autoRetreat = true;
 
-		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), 0, kRetreatHealthFraction,
+		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), kPlayerTeam, kRetreatHealthFraction,
 					   true);
 		CC_CHECK(!orders.attackMove);
 		CC_CHECK(!FindMover(registry, id)->hasMoveOrder && !FindMover(registry, id)->hasPath);
@@ -99,13 +99,13 @@ void RunRetreatTests()
 	{
 		Registry registry;
 		TileMap map(10, 10);
-		const Entity id = SpawnTeam(registry, UnitType::LightTank, 1, 8, 8, 0.2f);
+		const Entity id = SpawnTeam(registry, UnitType::LightTank, kEnemyTeam, 8, 8, 0.2f);
 		Orders &orders = GetOrders(registry, id);
 
-		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), 1, kRetreatHealthFraction,
+		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), kEnemyTeam, kRetreatHealthFraction,
 					   true);
 		CC_CHECK(!orders.attackMove); // flag off: player pass leaves it alone
-		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), 1, kRetreatHealthFraction,
+		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), kEnemyTeam, kRetreatHealthFraction,
 					   false);
 		CC_CHECK(orders.attackMove); // AI pass: threshold alone suffices
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(orders.attackMoveDest)) == cc::IVec2(1, 1));
@@ -115,10 +115,10 @@ void RunRetreatTests()
 	{
 		Registry registry;
 		TileMap map(10, 10);
-		const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, 1, 8, 8, 0.1f);
+		const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, kEnemyTeam, 8, 8, 0.1f);
 		Orders &orders = GetOrders(registry, id);
 
-		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), 0, kRetreatHealthFraction,
+		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), kPlayerTeam, kRetreatHealthFraction,
 					   false);
 		CC_CHECK(!orders.attackMove);
 	}
@@ -129,7 +129,7 @@ void RunRetreatTests()
 		TileMap map(20, 15); // center ~(10, 7): Base B is nearer the center,
 		SpawnBase(registry, 16, 12); // ...but Base A is nearer the unit.
 		SpawnBase(registry, 2, 2);
-		const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, 0, 2, 5, 0.2f);
+		const Entity id = SpawnTeam(registry, UnitType::RifleInfantry, kPlayerTeam, 2, 5, 0.2f);
 		Orders &orders = GetOrders(registry, id);
 		orders.autoRetreat = true;
 
@@ -139,7 +139,7 @@ void RunRetreatTests()
 		const Vector2 home = ResolvePlayerRetreatHome(registry);
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(home)) == cc::IVec2(2, 2));
 
-		RetreatIfLowHP(registry, map, nullptr, home, 0, kRetreatHealthFraction, true);
+		RetreatIfLowHP(registry, map, nullptr, home, kPlayerTeam, kRetreatHealthFraction, true);
 		CC_CHECK(orders.attackMove);
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(orders.attackMoveDest)) == cc::IVec2(2, 2));
 	}

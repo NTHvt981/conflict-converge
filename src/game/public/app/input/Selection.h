@@ -6,6 +6,7 @@
 
 #include "app/ui/GameCamera.h"
 #include "core/Registry.h"
+#include "core/Team.h"
 
 enum class BuildingType;
 enum class UnitType;
@@ -39,8 +40,8 @@ int AssignControlGroup(Registry &registry, int groupBit);
 int AddToControlGroup(Registry &registry, int groupBit);
 int RecallControlGroup(Registry &registry, int groupBit);
 
-int SelectAllOfType(Registry &registry, UnitType type, int teamID, bool add);
+int SelectAllOfType(Registry &registry, UnitType type, TeamId teamID, bool add);
 int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType type,
-						  int teamID, bool add);
-int SelectAllBuildings(Registry &registry, BuildingType type, int teamID);
-int SelectAllProductionBuildings(Registry &registry, int teamID);
+						  TeamId teamID, bool add);
+int SelectAllBuildings(Registry &registry, BuildingType type, TeamId teamID);
+int SelectAllProductionBuildings(Registry &registry, TeamId teamID);

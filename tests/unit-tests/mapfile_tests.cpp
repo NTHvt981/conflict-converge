@@ -261,12 +261,12 @@ void RunMapFileTests()
 			EventDispatcher demoEvents;
 			CC_CHECK(ApplyMapData(demo, demoMap, demoNodes));
 			const cc::IVec2 home = demo.playerSpawns[0];
-			CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::Base, 0, home.x,
+			CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::Base, kPlayerTeam, home.x,
 								   home.y) != kInvalidEntity);
-			CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::ResourceDepot, 0,
+			CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::ResourceDepot, kPlayerTeam,
 								   home.x + 2, home.y) != kInvalidEntity);
-			CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::Bootcamp, 0, home.x,
-								   home.y + 2) != kInvalidEntity);
+			CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::Bootcamp, kPlayerTeam,
+								   home.x, home.y + 2) != kInvalidEntity);
 			Entity workshop = kInvalidEntity;
 			for (int ring = 0; workshop == kInvalidEntity && ring <= 6; ++ring)
 			{
@@ -275,7 +275,7 @@ void RunMapFileTests()
 					for (int dx = -ring; dx <= ring; ++dx)
 					{
 						workshop = PlaceBuilding(demoRegistry, demoMap, BuildingType::Workshop,
-												 0, home.x + dx, home.y + dy);
+												 kPlayerTeam, home.x + dx, home.y + dy);
 						if (workshop != kInvalidEntity)
 						{
 							break;
@@ -284,13 +284,13 @@ void RunMapFileTests()
 				}
 			}
 			CC_CHECK(workshop != kInvalidEntity);
-			AICommander demoAI(demoRegistry, demoMap, demoNodes, demoEvents, 1,
+			AICommander demoAI(demoRegistry, demoMap, demoNodes, demoEvents, kEnemyTeam,
 							   AIDifficulty::Medium, demo.aiSpawns[0], home);
 			demoAI.SetupBase();
 			UpdateBuildingConstruction(demoRegistry, 20.0f); // sites -> Operational
 			int aiBuildings = 0;
 			demoRegistry.Each<Building>([&](Entity, const Building &b) {
-				if (b.teamID == 1 && b.state == BuildingState::Operational)
+				if (b.teamID == kEnemyTeam && b.state == BuildingState::Operational)
 				{
 					++aiBuildings;
 				}

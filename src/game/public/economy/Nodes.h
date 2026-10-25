@@ -5,6 +5,7 @@
 
 #include "core/MathUtils.h"
 #include "core/Registry.h"
+#include "core/Team.h"
 #include "economy/ResourceSystem.h"
 #include "core/Subsystem.h"
 
@@ -37,12 +38,12 @@ public:
 	bool SpawnNode(const TileMap &map, ResourceKind kind, cc::IVec2 tile, float amount,
 				   float respawnDelay);
 	void Update(float dt);
-	// teamID < 0 = all teams.
-	void GatherTick(Registry &registry, ResourceSystem &resources, float dt, int teamID = -1);
+	void GatherTick(Registry &registry, ResourceSystem &resources, float dt,
+					TeamId teamID = kAnyTeam);
 	// Drives loop harvesters between fields and depots; engineers without a
 	// Harvester component keep the legacy stand-and-trickle behavior.
 	void UpdateHarvesters(Registry &registry, const TileMap &map, const OccupancyGrid *occ,
-						  float dt, int teamID = -1);
+						  float dt, TeamId teamID = kAnyTeam);
 
 	std::size_t Count() const;
 	const ResourceNode *FindAt(cc::IVec2 tile) const;
@@ -62,4 +63,4 @@ private:
 };
 
 // True when another live unit of the team works the tile.
-bool HarvestFieldClaimed(const Registry &registry, cc::IVec2 tile, Entity self, int teamID);
+bool HarvestFieldClaimed(const Registry &registry, cc::IVec2 tile, Entity self, TeamId teamID);

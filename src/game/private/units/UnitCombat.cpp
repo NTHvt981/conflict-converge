@@ -183,7 +183,7 @@ Vector2 ResolvePlayerRetreatHome(Registry &registry)
 	Vector2 armyCentroid = { 0.0f, 0.0f };
 	int aliveCount = 0;
 	registry.Each<Unit>([&](Entity, const Unit &unit) {
-		if (unit.teamID == 0 && unit.health > 0.0f)
+		if (unit.teamID == kPlayerTeam && unit.health > 0.0f)
 		{
 			armyCentroid.x += unit.position.x;
 			armyCentroid.y += unit.position.y;
@@ -199,13 +199,13 @@ Vector2 ResolvePlayerRetreatHome(Registry &registry)
 	Vector2 home = { 0.0f, 0.0f };
 	float bestDistSq = -1.0f;
 	registry.Each<Building>([&](Entity, const Building &building) {
-		if (building.teamID != 0 || building.type != BuildingType::Base ||
+		if (building.teamID != kPlayerTeam || building.type != BuildingType::Base ||
 			building.state != BuildingState::Operational)
 		{
 			return;
 		}
 		const cc::Vec2 corner = cc::TileToWorld(building.tileX, building.tileY);
-		const Vector2 center = { corner.x + 32.0f, corner.y + 32.0f };
+		const Vector2 center = { corner.x + cc::kHalfTile, corner.y + cc::kHalfTile };
 		const float dx = center.x - armyCentroid.x;
 		const float dy = center.y - armyCentroid.y;
 		const float distSq = dx * dx + dy * dy;
@@ -218,8 +218,8 @@ Vector2 ResolvePlayerRetreatHome(Registry &registry)
 	return home;
 }
 
-void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector2 home, int teamID,
-					float healthFraction, bool onlyAutoRetreat)
+void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector2 home,
+					TeamId teamID, float healthFraction, bool onlyAutoRetreat)
 {
 	registry.Each<Unit>([&](Entity id, Unit &unit) {
 		if (unit.teamID != teamID || unit.health <= 0.0f || unit.type == UnitType::Engineer)

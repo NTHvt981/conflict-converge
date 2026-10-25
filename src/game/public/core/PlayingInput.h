@@ -14,6 +14,37 @@
 #include "core/Subsystem.h"
 #include "world/TileMap.h"
 
+enum class InteractionMode
+{
+	None = 0,
+	Placing = 1 << 0,
+	AreaRepair = 1 << 1,
+	SettingRally = 1 << 2,
+	AttackGround = 1 << 3,
+	SlowestSpeed = 1 << 4
+};
+
+inline constexpr InteractionMode operator|(InteractionMode lhs, InteractionMode rhs)
+{
+	return static_cast<InteractionMode>(static_cast<int>(lhs) | static_cast<int>(rhs));
+}
+
+inline constexpr InteractionMode operator&(InteractionMode lhs, InteractionMode rhs)
+{
+	return static_cast<InteractionMode>(static_cast<int>(lhs) & static_cast<int>(rhs));
+}
+
+inline constexpr bool HasMode(InteractionMode set, InteractionMode mode)
+{
+	return (set & mode) != InteractionMode::None;
+}
+
+struct DragGesture
+{
+	bool active = false;
+	Vector2 start = {};
+};
+
 // In-match input dispatch. Runs only while Playing; advances no simulation itself.
 class PlayingInput : public Subsystem
 {
@@ -68,23 +99,17 @@ private:
 	const MenuSettings &settings_;
 	ResourceSystem &resources_;
 	std::optional<BuildingType> placingType_;
-	bool areaRepairMode_ = false;
-	bool moveAtSlowestSpeed_ = false;
+	InteractionMode mode_ = InteractionMode::None;
 	int autoAddGroupBit_ = -1;
-	bool settingRally_ = false;
-	bool dragging_ = false;
-	Vector2 dragStart_ = {};
-	bool rightDragging_ = false;
-	Vector2 rightDragStart_ = {};
+	DragGesture selectDrag_;
+	DragGesture rightDrag_;
 	bool pendingRightClick_ = false;
 	float rightDragDist_ = 0.0f;
-	bool placeDragActive_ = false;
-	Vector2 placeDragStart_ = {};
-	bool repairDragActive_ = false;
-	Vector2 repairDragStart_ = {};
-	bool attackGroundMode_ = false;
+	DragGesture placeDrag_;
+	DragGesture repairDrag_;
 	std::optional<AbilityId> armedAbility_;
 
+	void SetMode(InteractionMode mode, bool enabled);
 	void HandleLeftPress();
 	void HandleSelectDragRelease();
 	void HandleControlGroups();

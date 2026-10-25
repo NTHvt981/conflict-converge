@@ -48,7 +48,7 @@ AIDifficultyParams ParamsFor(AIDifficulty difficulty)
 }
 
 AICommander::AICommander(Registry &registry, TileMap &map, ResourceNodes &nodes,
-						 EventDispatcher &events, int teamID, AIDifficulty difficulty,
+						 EventDispatcher &events, TeamId teamID, AIDifficulty difficulty,
 						 cc::IVec2 homeTile, cc::IVec2 enemyTile)
 	: registry_(registry), map_(map), nodes_(nodes), factory_(registry, resources_, events),
 	  params_(ActiveAIDifficultyParams(difficulty)), teamID_(teamID), difficulty_(difficulty), homeTile_(homeTile),
@@ -58,7 +58,7 @@ AICommander::AICommander(Registry &registry, TileMap &map, ResourceNodes &nodes,
 	timeSinceLaunch_ = params_.relaunchCooldown;
 }
 
-int AICommander::TeamID() const
+TeamId AICommander::TeamID() const
 {
 	return teamID_;
 }
@@ -134,7 +134,7 @@ cc::IVec2 AICommander::LastSeenEnemy() const
 }
 
 void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile,
-						int teamID)
+						TeamId teamID)
 {
 	params_ = ActiveAIDifficultyParams(difficulty);
 	difficulty_ = difficulty;

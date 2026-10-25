@@ -1,6 +1,6 @@
 // Unit tests for art (phase→frame mapping, particle pool logic,
 // rectangle-fallback flag). Nothing here needs a GPU or audio device:
-// Art::Init(false) loads nothing and draw calls are never made headless.
+// Art::Init(InitMode::Headless) loads nothing and draw calls are never made headless.
 
 #include "test_harness.h"
 
@@ -90,11 +90,11 @@ void RunArtTests()
 	// --- headless art stays on rectangles ---
 	{
 		Art art;
-		CC_CHECK(!art.Init(false));
+		CC_CHECK(!art.Init(InitMode::Headless));
 		CC_CHECK(!art.IsReady());
 		CC_CHECK(art.UseRectangles());
 		CC_CHECK(!art.HasFont()); // UI typeface loads on the device path only
-		art.Shutdown(); // safe without Init(true)
+		art.Shutdown(); // safe without Init(InitMode::WithDevice)
 		CC_CHECK(art.UseRectangles());
 		CC_CHECK(!art.HasFont());
 	}
@@ -193,18 +193,18 @@ void RunArtTests()
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6).empty());
 		art.DrawAtlasFrame("rifle_infantry_idle_0_0", { 0.0f, 0.0f }, WHITE); // no crash
 		// Default mode: raw BLUE/RED (colorBlindMode_ defaults to false).
-		const Color blue = art.TeamTint(0);
+		const Color blue = art.TeamTint(kPlayerTeam);
 		CC_CHECK(blue.r == BLUE.r && blue.g == BLUE.g && blue.b == BLUE.b);
-		const Color red = art.TeamTint(1);
+		const Color red = art.TeamTint(kEnemyTeam);
 		CC_CHECK(red.r == RED.r && red.g == RED.g && red.b == RED.b);
 		// Color-blind mode: Okabe-Ito orange / sky blue.
 		art.SetColorBlindMode(true);
-		const Color cbOrange = art.TeamTint(0);
+		const Color cbOrange = art.TeamTint(kPlayerTeam);
 		CC_CHECK(cbOrange.r == 230 && cbOrange.g == 159 && cbOrange.b == 0);
-		const Color cbSky = art.TeamTint(1);
+		const Color cbSky = art.TeamTint(kEnemyTeam);
 		CC_CHECK(cbSky.r == 86 && cbSky.g == 180 && cbSky.b == 233);
 		art.SetColorBlindMode(false);
-		const Color backToBlue = art.TeamTint(0);
+		const Color backToBlue = art.TeamTint(kPlayerTeam);
 		CC_CHECK(backToBlue.r == BLUE.r && backToBlue.g == BLUE.g && backToBlue.b == BLUE.b);
 	}
 
@@ -329,7 +329,7 @@ void RunArtTests()
 		CC_CHECK(Art::TerrainSlot(TerrainType::Building) == -1);
 		// Headless no-op: rectangles path never touches the GPU.
 		Art art;
-		CC_CHECK(!art.Init(false));
+		CC_CHECK(!art.Init(InitMode::Headless));
 		art.DrawTerrain(TerrainType::Grass, { 0.0f, 0.0f });
 		art.DrawTerrain(TerrainType::Building, { 0.0f, 0.0f });
 		CC_CHECK(true);

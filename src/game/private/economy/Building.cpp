@@ -30,7 +30,7 @@ cc::IVec2 BuildingSpawnTile(const TileMap &map, const OccupancyGrid *occ,
 	return NearestFreeFootprintTile(map, occ, exit, 1, 1);
 }
 
-Entity ProducerBuildingAt(Registry &registry, BuildingType type, int teamID, int index)
+Entity ProducerBuildingAt(Registry &registry, BuildingType type, TeamId teamID, int index)
 {
 	std::vector<Entity> producers;
 	registry.Each<Building>([&](Entity id, const Building &building) {
@@ -61,11 +61,11 @@ Rectangle BuildingFootprintRect(const Building &building)
 			 static_cast<float>(fp.y) * cc::TILE_SIZE };
 }
 
-void QueryBuildingsInRect(Registry &registry, Rectangle area, int teamID,
+void QueryBuildingsInRect(Registry &registry, Rectangle area, TeamId teamID,
 						  std::vector<Entity> &out)
 {
 	registry.Each<Building>([&](Entity id, const Building &building) {
-		if (teamID >= 0 && building.teamID != teamID)
+		if (teamID != kAnyTeam && building.teamID != teamID)
 		{
 			return;
 		}
@@ -151,13 +151,13 @@ std::vector<cc::IVec2> AreaBuildSlots(BuildingType type, cc::IVec2 minTile,
 	return slots;
 }
 
-Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
+Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, TeamId teamID, int tileX,
 					 int tileY)
 {
 	return PlaceBuilding(registry, map, type, teamID, tileX, tileY, nullptr);
 }
 
-Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
+Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, TeamId teamID, int tileX,
 					 int tileY, const ResourceNodes *nodes)
 {
 	if (!CanPlaceBuilding(map, nodes, type, tileX, tileY))
@@ -205,7 +205,7 @@ UnitCost BuildingCost(BuildingType type)
 	return { info.ironCost, info.oilCost };
 }
 
-bool SellBuilding(Registry &registry, TileMap &map, ResourceSystem &resources, int teamID,
+bool SellBuilding(Registry &registry, TileMap &map, ResourceSystem &resources, TeamId teamID,
 				  Entity entity)
 {
 	const Building *building = registry.Get<Building>(entity);
@@ -219,19 +219,19 @@ bool SellBuilding(Registry &registry, TileMap &map, ResourceSystem &resources, i
 	return DemolishBuilding(registry, map, entity);
 }
 
-void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float dt, int teamID)
+void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float dt, TeamId teamID)
 {
 	int bases = 0;
 	registry.Each<Building>([&](Entity, const Building &building) {
 		if (building.state == BuildingState::Operational && building.type == BuildingType::Base &&
-			(teamID < 0 || building.teamID == teamID))
+			(teamID == kAnyTeam || building.teamID == teamID))
 		{
 			++bases;
 		}
 	});
 	if (bases > 0)
 	{
-		if (teamID < 0)
+		if (teamID == kAnyTeam)
 		{
 			resources.TickIncome(kBaseIronPerSecond * static_cast<float>(bases),
 								 kBaseOilPerSecond * static_cast<float>(bases), dt);
@@ -246,7 +246,7 @@ void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float
 	}
 }
 
-long StorageCapacity(const Registry &registry, int teamID)
+long StorageCapacity(const Registry &registry, TeamId teamID)
 {
 	long capacity = 500;
 	registry.Each<Building>([&](Entity, const Building &building) {
@@ -259,13 +259,13 @@ long StorageCapacity(const Registry &registry, int teamID)
 	return capacity;
 }
 
-long DepositIron(const Registry &registry, ResourceSystem &resources, int teamID, long amount)
+long DepositIron(const Registry &registry, ResourceSystem &resources, TeamId teamID, long amount)
 {
 	if (amount <= 0)
 	{
 		return 0;
 	}
-	long space = teamID < 0 ? amount : StorageCapacity(registry, teamID) - resources.iron;
+	long space = teamID == kAnyTeam ? amount : StorageCapacity(registry, teamID) - resources.iron;
 	if (space <= 0)
 	{
 		return 0;
@@ -275,13 +275,13 @@ long DepositIron(const Registry &registry, ResourceSystem &resources, int teamID
 	return stored;
 }
 
-long DepositOil(const Registry &registry, ResourceSystem &resources, int teamID, long amount)
+long DepositOil(const Registry &registry, ResourceSystem &resources, TeamId teamID, long amount)
 {
 	if (amount <= 0)
 	{
 		return 0;
 	}
-	long space = teamID < 0 ? amount : StorageCapacity(registry, teamID) - resources.oil;
+	long space = teamID == kAnyTeam ? amount : StorageCapacity(registry, teamID) - resources.oil;
 	if (space <= 0)
 	{
 		return 0;
