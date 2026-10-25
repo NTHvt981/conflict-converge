@@ -38,13 +38,18 @@ enum class BuildingFrame
 	Count
 };
 
-// Rifle-infantry squad visual. Returns the number of soldier sprites to draw
-// (driven by healthFraction, capped per type) and fills outOffsets with that
-// many pixel offsets from the unit's tile-corner position. Deterministic
-// per-entity. outScale shrinks with the count so clustered soldiers don't
-// overlap; pass it to DrawAtlasFrame.
-int SquadSlots(UnitType type, unsigned int id, float healthFraction,
-			   std::array<Vector2, 6> &outOffsets, float &outScale);
+// Rifle-infantry squad visual. count is the number of soldier sprites to draw
+// (driven by healthFraction, capped per type); slots holds that many pixel
+// offsets from the unit's tile-corner position. Deterministic per-entity.
+// scale shrinks with the count so clustered soldiers don't overlap; pass it to
+// DrawAtlasFrame.
+struct SquadLayout
+{
+	std::array<Vector2, 6> slots = {};
+	int count = 0;
+	float scale = 1.0f;
+};
+SquadLayout SquadSlots(UnitType type, unsigned int id, float healthFraction);
 
 // CPU particle pool: impact sparks, muzzle flashes, death bursts.
 // Logic is device-independent (tested); Draw needs a live window.

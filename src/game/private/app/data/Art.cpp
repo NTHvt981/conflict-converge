@@ -30,15 +30,14 @@ static unsigned int HashId(unsigned int id)
 	return id;
 }
 
-int SquadSlots(UnitType type, unsigned int id, float healthFraction,
-			   std::array<Vector2, 6> &outOffsets, float &outScale)
+SquadLayout SquadSlots(UnitType type, unsigned int id, float healthFraction)
 {
+	SquadLayout layout;
 	if (type != UnitType::RifleInfantry && type != UnitType::AntiArmorInfantry &&
 		type != UnitType::PrototypeInfantry && type != UnitType::Medic)
 	{
-		outOffsets[0] = { 0.0f, 0.0f };
-		outScale = 1.0f;
-		return 1;
+		layout.count = 1;
+		return layout;
 	}
 
 	int count;
@@ -60,12 +59,12 @@ int SquadSlots(UnitType type, unsigned int id, float healthFraction,
 		count = (healthFraction > 0.50f) ? 2 : 1;
 	}
 
-	struct SquadLayout
+	struct SquadPreset
 	{
 		float scale;
 		float offsets[6][2];
 	};
-	static constexpr SquadLayout kLayouts[6] = {
+	static constexpr SquadPreset kPresets[6] = {
 		{ 1.00f, { { 0, 0 } } },
 		{ 0.80f, { { -14, 0 }, { 14, 0 } } },
 		{ 0.70f, { { 0, -14 }, { -13, 10 }, { 13, 10 } } },
@@ -74,20 +73,21 @@ int SquadSlots(UnitType type, unsigned int id, float healthFraction,
 		{ 0.50f,
 		  { { -18, -17 }, { 0, -17 }, { 18, -17 }, { -18, 17 }, { 0, 17 }, { 18, 17 } } },
 	};
-	const SquadLayout &layout = kLayouts[count - 1];
-	outScale = layout.scale;
+	const SquadPreset &preset = kPresets[count - 1];
+	layout.count = count;
+	layout.scale = preset.scale;
 
 	const unsigned int h = HashId(id);
-	const float jitterPx = 2.0f * layout.scale;
+	const float jitterPx = 2.0f * preset.scale;
 	for (int i = 0; i < count; ++i)
 	{
 		const unsigned int jitter = HashId(h + static_cast<unsigned int>(i));
 		const float jx = (static_cast<float>(jitter & 0x7) / 7.0f - 0.5f) * 2.0f * jitterPx;
 		const float jy =
 			(static_cast<float>((jitter >> 3) & 0x7) / 7.0f - 0.5f) * 2.0f * jitterPx;
-		outOffsets[i] = { layout.offsets[i][0] + jx, layout.offsets[i][1] + jy };
+		layout.slots[i] = { preset.offsets[i][0] + jx, preset.offsets[i][1] + jy };
 	}
-	return count;
+	return layout;
 }
 
 

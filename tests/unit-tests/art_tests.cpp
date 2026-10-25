@@ -101,87 +101,72 @@ void RunArtTests()
 
 	// --- : SquadSlots ---
 	{
-		std::array<Vector2, 6> offsets;
-		float scale = 1.0f;
-
 		// RifleInfantry at full health → 5 soldiers
-		const int infCount = SquadSlots(UnitType::RifleInfantry, 42, 1.0f, offsets, scale);
-		CC_CHECK(infCount == 5);
-		CC_CHECK(scale < 1.0f); // clusters shrink: 5-wide at 0.55
+		const SquadLayout inf = SquadSlots(UnitType::RifleInfantry, 42, 1.0f);
+		CC_CHECK(inf.count == 5);
+		CC_CHECK(inf.scale < 1.0f); // clusters shrink: 5-wide at 0.55
 		// All 5 offsets must be non-identical (spaced apart)
-		CC_CHECK(offsets[0].x != offsets[3].x || offsets[0].y != offsets[3].y);
+		CC_CHECK(inf.slots[0].x != inf.slots[3].x || inf.slots[0].y != inf.slots[3].y);
 
 		// RifleInfantry at 40% health → 2 soldiers (0.40 is not > 0.40)
-		float midScale = 1.0f;
-		const int midCount = SquadSlots(UnitType::RifleInfantry, 42, 0.40f, offsets, midScale);
-		CC_CHECK(midCount == 2);
-		CC_CHECK(midScale > scale); // fewer soldiers → larger blit
+		const SquadLayout mid = SquadSlots(UnitType::RifleInfantry, 42, 0.40f);
+		CC_CHECK(mid.count == 2);
+		CC_CHECK(mid.scale > inf.scale); // fewer soldiers → larger blit
 
 		// RifleInfantry at 5% health → 1 soldier at full scale
-		float lowScale = 0.0f;
-		const int lowCount = SquadSlots(UnitType::RifleInfantry, 42, 0.05f, offsets, lowScale);
-		CC_CHECK(lowCount == 1);
-		CC_CHECK(lowScale == 1.0f);
+		const SquadLayout low = SquadSlots(UnitType::RifleInfantry, 42, 0.05f);
+		CC_CHECK(low.count == 1);
+		CC_CHECK(low.scale == 1.0f);
 
 		// AntiArmorInfantry: 2-man team above half health, 1 below.
-		std::array<Vector2, 6> aOffsets;
-		float aaScale = 1.0f;
-		CC_CHECK(SquadSlots(UnitType::AntiArmorInfantry, 10, 0.90f, aOffsets, aaScale) == 2);
-		CC_CHECK(aaScale == 0.80f);
-		CC_CHECK(SquadSlots(UnitType::AntiArmorInfantry, 10, 0.40f, aOffsets, aaScale) == 1);
+		const SquadLayout aa = SquadSlots(UnitType::AntiArmorInfantry, 10, 0.90f);
+		CC_CHECK(aa.count == 2);
+		CC_CHECK(aa.scale == 0.80f);
+		CC_CHECK(SquadSlots(UnitType::AntiArmorInfantry, 10, 0.40f).count == 1);
 
 		// Medic: 2-man team above half health, 1 below (like AntiArmor).
-		std::array<Vector2, 6> mOffsets;
-		float mScale = 1.0f;
-		CC_CHECK(SquadSlots(UnitType::Medic, 11, 0.90f, mOffsets, mScale) == 2);
-		CC_CHECK(mScale == 0.80f);
-		CC_CHECK(SquadSlots(UnitType::Medic, 11, 0.40f, mOffsets, mScale) == 1);
+		const SquadLayout medic = SquadSlots(UnitType::Medic, 11, 0.90f);
+		CC_CHECK(medic.count == 2);
+		CC_CHECK(medic.scale == 0.80f);
+		CC_CHECK(SquadSlots(UnitType::Medic, 11, 0.40f).count == 1);
 
 		// Engineer: always a single centered sprite, like a vehicle.
-		std::array<Vector2, 6> eOffsets;
-		float eScale = 0.0f;
-		CC_CHECK(SquadSlots(UnitType::Engineer, 20, 1.0f, eOffsets, eScale) == 1);
-		CC_CHECK(eOffsets[0].x == 0.0f && eOffsets[0].y == 0.0f);
-		CC_CHECK(eScale == 1.0f);
+		const SquadLayout engineer = SquadSlots(UnitType::Engineer, 20, 1.0f);
+		CC_CHECK(engineer.count == 1);
+		CC_CHECK(engineer.slots[0].x == 0.0f && engineer.slots[0].y == 0.0f);
+		CC_CHECK(engineer.scale == 1.0f);
 
 		// PrototypeInfantry clusters exactly like RifleInfantry (5 at full health).
-		std::array<Vector2, 6> pOffsets;
-		float pScale = 0.0f;
-		CC_CHECK(SquadSlots(UnitType::PrototypeInfantry, 10, 1.0f, pOffsets, pScale) == 5);
-		CC_CHECK(pScale == 0.55f);
-		CC_CHECK(SquadSlots(UnitType::PrototypeInfantry, 10, 0.10f, pOffsets, pScale) == 1);
+		const SquadLayout prototype = SquadSlots(UnitType::PrototypeInfantry, 10, 1.0f);
+		CC_CHECK(prototype.count == 5);
+		CC_CHECK(prototype.scale == 0.55f);
+		CC_CHECK(SquadSlots(UnitType::PrototypeInfantry, 10, 0.10f).count == 1);
 
 		// Non-infantry always returns 1 with offset {0,0}
-		std::array<Vector2, 6> vOffsets;
-		float vScale = 0.0f;
-		const int tankCount = SquadSlots(UnitType::HeavyTank, 99, 1.0f, vOffsets, vScale);
-		CC_CHECK(tankCount == 1);
-		CC_CHECK(vOffsets[0].x == 0.0f);
-		CC_CHECK(vOffsets[0].y == 0.0f);
-		CC_CHECK(vScale == 1.0f);
+		const SquadLayout tank = SquadSlots(UnitType::HeavyTank, 99, 1.0f);
+		CC_CHECK(tank.count == 1);
+		CC_CHECK(tank.slots[0].x == 0.0f);
+		CC_CHECK(tank.slots[0].y == 0.0f);
+		CC_CHECK(tank.scale == 1.0f);
 
 		// Deterministic: same id + health → same offsets
-		std::array<Vector2, 6> a, b;
-		float sa = 0.0f, sb = 0.0f;
-		SquadSlots(UnitType::RifleInfantry, 77, 0.90f, a, sa);
-		SquadSlots(UnitType::RifleInfantry, 77, 0.90f, b, sb);
-		CC_CHECK(a[0].x == b[0].x);
-		CC_CHECK(a[0].y == b[0].y);
-		CC_CHECK(sa == sb);
+		const SquadLayout a = SquadSlots(UnitType::RifleInfantry, 77, 0.90f);
+		const SquadLayout b = SquadSlots(UnitType::RifleInfantry, 77, 0.90f);
+		CC_CHECK(a.slots[0].x == b.slots[0].x);
+		CC_CHECK(a.slots[0].y == b.slots[0].y);
+		CC_CHECK(a.scale == b.scale);
 
 		// No overlap: every pair of active slots in a full-strength
 		// RifleInfantry squad stays >= scale * 32px apart (jitter included).
-		std::array<Vector2, 6> full;
-		float fullScale = 1.0f;
-		const int fullCount = SquadSlots(UnitType::RifleInfantry, 1234, 1.0f, full, fullScale);
-		CC_CHECK(fullCount == 5);
-		for (int i = 0; i < fullCount; ++i)
+		const SquadLayout full = SquadSlots(UnitType::RifleInfantry, 1234, 1.0f);
+		CC_CHECK(full.count == 5);
+		for (int i = 0; i < full.count; ++i)
 		{
-			for (int j = i + 1; j < fullCount; ++j)
+			for (int j = i + 1; j < full.count; ++j)
 			{
-				const float dx = full[i].x - full[j].x;
-				const float dy = full[i].y - full[j].y;
-				CC_CHECK(dx * dx + dy * dy >= fullScale * 32.0f * fullScale * 32.0f);
+				const float dx = full.slots[i].x - full.slots[j].x;
+				const float dy = full.slots[i].y - full.slots[j].y;
+				CC_CHECK(dx * dx + dy * dy >= full.scale * 32.0f * full.scale * 32.0f);
 			}
 		}
 	}

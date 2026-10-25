@@ -146,11 +146,9 @@ void RunCombatTests()
 		ApplyBaseStats(squad);
 		squad.health = 100.0f;
 		CombatState squadCombat;
-		std::array<Vector2, 6> slots;
-		float scale = 1.0f;
-		CC_CHECK(SquadSlots(squad.type, 7, squad.health / 100.0f, slots, scale) == 5);
+		CC_CHECK(SquadSlots(squad.type, 7, squad.health / 100.0f).count == 5);
 		ResolveAttack(marksman, marksmanCombat, squad, squadCombat); // ~25% of max HP through the matrix
-		CC_CHECK(SquadSlots(squad.type, 7, squad.health / 100.0f, slots, scale) == 4);
+		CC_CHECK(SquadSlots(squad.type, 7, squad.health / 100.0f).count == 4);
 		ResetActiveUnitConfigs();
 	}
 }
