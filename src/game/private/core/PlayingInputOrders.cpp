@@ -205,7 +205,8 @@ void PlayingInput::DispatchRightClickOrders()
 						}
 						const Rectangle footprint = BuildingFootprintRect(building);
 						const Vector2 tileCenter = cc::ToRaylib(
-							cc::TileToWorld(tile.x, tile.y) + cc::Vec2(32.0f, 32.0f));
+							cc::TileToWorld(tile.x, tile.y) +
+								cc::Vec2(cc::kHalfTile, cc::kHalfTile));
 						if (CheckCollisionPointRec(tileCenter, footprint) &&
 							CanRepairTarget(registry_, *ordered, id))
 						{

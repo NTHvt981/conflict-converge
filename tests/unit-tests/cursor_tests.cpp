@@ -30,7 +30,7 @@ Entity SpawnUnit(Registry &registry, UnitType type, TeamId team, float x, float 
 Vector2 UnitCenter(const Registry &registry, Entity id)
 {
 	const Unit *unit = registry.Get<Unit>(id);
-	return { unit->position.x + 32.0f, unit->position.y + 32.0f };
+	return { unit->position.x + cc::kHalfTile, unit->position.y + cc::kHalfTile };
 }
 
 } // namespace

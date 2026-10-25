@@ -230,7 +230,8 @@ void RunAttackGroundTests()
 		const float fullHp = runner.health;
 
 		ResolveStrikeGround(registry, id, gun, GetCombatState(registry, id),
-							{ runner.position.x + 32.0f, runner.position.y + 32.0f });
+							{ runner.position.x + cc::kHalfTile,
+							  runner.position.y + cc::kHalfTile });
 		// Plain move orders never acquire, so the runner marches east flat-out.
 		IssueMoveOrder(*registry.Get<Unit>(foe), GetOrders(registry, foe),
 					   GetMover(registry, foe),
@@ -262,7 +263,8 @@ void RunAttackGroundTests()
 		registry.Add(foe, walker);
 		const float fullHp = walker.health;
 		ResolveStrikeGround(registry, id, gun, GetCombatState(registry, id),
-							{ walker.position.x + 32.0f, walker.position.y + 32.0f });
+							{ walker.position.x + cc::kHalfTile,
+							  walker.position.y + cc::kHalfTile });
 		IssueMoveOrder(*registry.Get<Unit>(foe), GetOrders(registry, foe),
 					   GetMover(registry, foe),
 					   cc::ToRaylib(cc::TileToWorld(9, 2)));

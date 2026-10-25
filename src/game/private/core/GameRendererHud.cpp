@@ -34,7 +34,7 @@ void GameRenderer::DrawDragPreviews()
 			Vector2 center = { 0.0f, 0.0f };
 			if (const Unit *unit = registry_.Get<Unit>(id))
 			{
-				center = { unit->position.x + 32.0f, unit->position.y + 32.0f };
+				center = { unit->position.x + cc::kHalfTile, unit->position.y + cc::kHalfTile };
 			}
 			else if (const Building *building = registry_.Get<Building>(id))
 			{

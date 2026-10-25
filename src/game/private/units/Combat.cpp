@@ -54,8 +54,8 @@ void ResolveGroundAttack(Registry &registry, Unit &attacker, CombatState &attack
 		{
 			return;
 		}
-		const float dx = (unit.position.x + 32.0f) - pos.x;
-		const float dy = (unit.position.y + 32.0f) - pos.y;
+		const float dx = (unit.position.x + cc::kHalfTile) - pos.x;
+		const float dy = (unit.position.y + cc::kHalfTile) - pos.y;
 		const float distSq = dx * dx + dy * dy;
 		if (distSq < bestDistSq)
 		{
@@ -126,7 +126,7 @@ void LaunchShell(Registry &registry, Unit &attacker, CombatState &attackerCombat
 		return;
 	}
 	Projectile shell;
-	shell.start = { attacker.position.x + 32.0f, attacker.position.y + 32.0f };
+	shell.start = { attacker.position.x + cc::kHalfTile, attacker.position.y + cc::kHalfTile };
 	shell.target = landing;
 	shell.flightTime = flightTime;
 	shell.attackPower = attacker.attackPower;
@@ -149,7 +149,7 @@ void ResolveStrike(Registry &registry, Entity attackerId, Unit &attacker,
 		if (const Unit *target = registry.Get<Unit>(targetId))
 		{
 			LaunchShell(registry, attacker, attackerCombat,
-						{ target->position.x + 32.0f, target->position.y + 32.0f });
+						{ target->position.x + cc::kHalfTile, target->position.y + cc::kHalfTile });
 		}
 		else
 		{

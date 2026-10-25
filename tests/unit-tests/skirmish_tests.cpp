@@ -150,7 +150,7 @@ void RunSkirmishTests()
 	// Camera aims at the player home.
 	const Vector2 expectTarget =
 		cc::ToRaylib(cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) +
-					 cc::Vec2(32.0f, 32.0f));
+					 cc::Vec2(cc::kHalfTile, cc::kHalfTile));
 	CC_CHECK(game.camera.view.target.x == expectTarget.x);
 	CC_CHECK(game.camera.view.target.y == expectTarget.y);
 

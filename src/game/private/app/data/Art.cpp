@@ -710,7 +710,7 @@ bool Art::SpriteDrawRect(const std::string &spriteName, Vector2 tileCorner, Rect
 	}
 	const float w = static_cast<float>(s->bounds.right - s->bounds.left);
 	const float h = static_cast<float>(s->bounds.bottom - s->bounds.top);
-	const Vector2 anchor = { tileCorner.x + 32.0f, tileCorner.y + 32.0f };
+	const Vector2 anchor = { tileCorner.x + cc::kHalfTile, tileCorner.y + cc::kHalfTile };
 	out = { anchor.x - static_cast<float>(s->origin.x) * scale,
 			anchor.y - static_cast<float>(s->origin.y) * scale, w * scale, h * scale };
 	return true;
@@ -728,7 +728,7 @@ void Art::DrawOneAtlasSprite(const SpriteDefInfo &s, Vector2 tileCorner, Color t
 	const float h = static_cast<float>(s.bounds.bottom - s.bounds.top);
 	const Rectangle src = { static_cast<float>(s.bounds.left), static_cast<float>(s.bounds.top),
 							w, h };
-	const Vector2 anchor = { tileCorner.x + 32.0f, tileCorner.y + 32.0f };
+	const Vector2 anchor = { tileCorner.x + cc::kHalfTile, tileCorner.y + cc::kHalfTile };
 	const Rectangle dest = { anchor.x - static_cast<float>(s.origin.x) * scale,
 							 anchor.y - static_cast<float>(s.origin.y) * scale, w * scale,
 							 h * scale };

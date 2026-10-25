@@ -205,7 +205,7 @@ Vector2 ResolvePlayerRetreatHome(Registry &registry)
 			return;
 		}
 		const cc::Vec2 corner = cc::TileToWorld(building.tileX, building.tileY);
-		const Vector2 center = { corner.x + 32.0f, corner.y + 32.0f };
+		const Vector2 center = { corner.x + cc::kHalfTile, corner.y + cc::kHalfTile };
 		const float dx = center.x - armyCentroid.x;
 		const float dy = center.y - armyCentroid.y;
 		const float distSq = dx * dx + dy * dy;

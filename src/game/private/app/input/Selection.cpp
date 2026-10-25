@@ -90,8 +90,8 @@ int SelectInRect(Registry &registry, Rectangle worldBox, bool add)
 			unit.isSelected = false;
 			return;
 		}
-		const float cx = unit.position.x + 32.0f;
-		const float cy = unit.position.y + 32.0f;
+		const float cx = unit.position.x + cc::kHalfTile;
+		const float cy = unit.position.y + cc::kHalfTile;
 		const bool inside = cx >= box.x && cx <= box.x + box.width && cy >= box.y &&
 							cy <= box.y + box.height;
 		if (!add)
@@ -212,8 +212,8 @@ int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType 
 										  worldViewport.y + worldViewport.height });
 	int picked = 0;
 	registry.Each<Unit>([&](Entity, Unit &unit) {
-		const float cx = unit.position.x + 32.0f;
-		const float cy = unit.position.y + 32.0f;
+		const float cx = unit.position.x + cc::kHalfTile;
+		const float cy = unit.position.y + cc::kHalfTile;
 		const bool inside = cx >= box.x && cx <= box.x + box.width && cy >= box.y &&
 							cy <= box.y + box.height;
 		const bool match = inside && unit.teamID == teamID && unit.type == type;

@@ -281,8 +281,9 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 		}
 	}
 
-	world.camera->view.target = cc::ToRaylib(
-		cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) + cc::Vec2(32.0f, 32.0f));
+	world.camera->view.target =
+		cc::ToRaylib(cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) +
+					 cc::Vec2(cc::kHalfTile, cc::kHalfTile));
 	return true;
 }
 
@@ -327,6 +328,6 @@ bool BuildSandbox(SkirmishWorld &world, const std::string &mapPath)
 		cc::ToRaylib(cc::TileToWorld(free.x, free.y + 1)));
 
 	world.camera->view.target = cc::ToRaylib(cc::TileToWorld(free.x, free.y) +
-											 cc::Vec2(32.0f, 32.0f));
+											 cc::Vec2(cc::kHalfTile, cc::kHalfTile));
 	return true;
 }

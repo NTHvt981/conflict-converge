@@ -35,10 +35,10 @@ Rectangle SquadSelectionBox(const Art &art, const Unit &unit, Entity id, bool at
 	float x0, y0, x1, y1;
 	if (atlasCells)
 	{
-		x0 = unit.position.x + slots[0].x + 32.0f - 8.0f * s;
-		y0 = unit.position.y + slots[0].y + 32.0f - 16.0f * s;
-		x1 = unit.position.x + slots[0].x + 32.0f + 8.0f * s;
-		y1 = unit.position.y + slots[0].y + 32.0f + 16.0f * s;
+		x0 = unit.position.x + slots[0].x + cc::kHalfTile - 8.0f * s;
+		y0 = unit.position.y + slots[0].y + cc::kHalfTile - 16.0f * s;
+		x1 = unit.position.x + slots[0].x + cc::kHalfTile + 8.0f * s;
+		y1 = unit.position.y + slots[0].y + cc::kHalfTile + 16.0f * s;
 	}
 	else
 	{
@@ -52,10 +52,10 @@ Rectangle SquadSelectionBox(const Art &art, const Unit &unit, Entity id, bool at
 		float cx0, cy0, cx1, cy1;
 		if (atlasCells)
 		{
-			cx0 = unit.position.x + slots[i].x + 32.0f - 8.0f * s;
-			cy0 = unit.position.y + slots[i].y + 32.0f - 16.0f * s;
-			cx1 = unit.position.x + slots[i].x + 32.0f + 8.0f * s;
-			cy1 = unit.position.y + slots[i].y + 32.0f + 16.0f * s;
+			cx0 = unit.position.x + slots[i].x + cc::kHalfTile - 8.0f * s;
+			cy0 = unit.position.y + slots[i].y + cc::kHalfTile - 16.0f * s;
+			cx1 = unit.position.x + slots[i].x + cc::kHalfTile + 8.0f * s;
+			cy1 = unit.position.y + slots[i].y + cc::kHalfTile + 16.0f * s;
 		}
 		else
 		{
@@ -436,8 +436,8 @@ void GameRenderer::DrawUnitEntity(Entity id, Unit &unit)
 		{
 			if (const Unit *target = registry_.Get<Unit>(combat->target))
 			{
-				const Vector2 targetCenter = { target->position.x + 32.0f,
-											   target->position.y + 32.0f };
+				const Vector2 targetCenter = { target->position.x + cc::kHalfTile,
+											   target->position.y + cc::kHalfTile };
 				DrawLineV(center, targetCenter, RED);
 			}
 		}
@@ -445,8 +445,9 @@ void GameRenderer::DrawUnitEntity(Entity id, Unit &unit)
 	const Mover *mover = FindMover(registry_, id);
 	if (mover != nullptr && mover->hasMoveOrder)
 	{
-		DrawCircleV(cc::ToRaylib(cc::ToGlm(mover->moveTarget) + cc::Vec2(32.0f, 32.0f)), 5.0f,
-					GREEN);
+		DrawCircleV(
+			cc::ToRaylib(cc::ToGlm(mover->moveTarget) + cc::Vec2(cc::kHalfTile, cc::kHalfTile)),
+			5.0f, GREEN);
 	}
 }
 
@@ -459,7 +460,7 @@ void GameRenderer::DrawRallyMarkers()
 		}
 		const Vector2 center = cc::ToRaylib(cc::TileToWorld(building.rallyTile.x,
 															 building.rallyTile.y) +
-											cc::Vec2(32.0f, 32.0f));
+											cc::Vec2(cc::kHalfTile, cc::kHalfTile));
 		art_.DrawRallyMarker(building.teamID, center);
 	});
 }

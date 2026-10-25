@@ -134,8 +134,8 @@ void Simulation::Step(float dt)
 		if (const Unit *corpse = registry_.Get<Unit>(id))
 		{
 			art_.ParticlesPool().SpawnBurst(
-				{ corpse->position.x + 32.0f, corpse->position.y + 32.0f }, ORANGE, 24,
-				120.0f, 0.6f);
+				{ corpse->position.x + cc::kHalfTile, corpse->position.y + cc::kHalfTile },
+				ORANGE, 24, 120.0f, 0.6f);
 			const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(corpse->position));
 			occ_.ReleaseFootprintOwned(anchor, corpse->footprintWidth,
 									   corpse->footprintHeight, id,
@@ -149,7 +149,8 @@ void Simulation::Step(float dt)
 		shakeTrauma_ = AddShakeTrauma(shakeTrauma_, kShakeDeathTrauma);
 	}
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
-		const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
+		const Vector2 center = {
+			unit.position.x + cc::kHalfTile, unit.position.y + cc::kHalfTile };
 		const CombatState *combat = FindCombatState(registry_, id);
 		if (combat != nullptr && combat->hitFlashTime > 0.20f)
 		{
@@ -349,7 +350,8 @@ void Simulation::Step(float dt)
 			{
 				return;
 			}
-			const Vector2 center = { unit.position.x + 32.0f, unit.position.y + 32.0f };
+			const Vector2 center = {
+			unit.position.x + cc::kHalfTile, unit.position.y + cc::kHalfTile };
 			const Vector2 dot =
 				minimap_.WorldToMinimap(center, map_.Width(), map_.Height());
 			DrawRectangle(static_cast<int>(dot.x - minimap_.screenRect.x) - 1,

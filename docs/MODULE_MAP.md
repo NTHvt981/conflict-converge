@@ -54,7 +54,7 @@ app/match: Menu, Skirmish
   + downcast payloads, M14 Q57 categories (game-state: MatchStarted/Paused/GameOver/Victory;
   UI: MenuAction/ProductionOrdered)
 - `MathUtils.h` - `cc::Vec2`, raylib conversions, 64x64 tile helpers (top-left-corner
-  convention)
+  convention, `cc::kHalfTile` = centre offset)
 - `Team.h` - `TeamId` (`Any`/`Player`/`Enemy`) + `kAnyTeam`/`kPlayerTeam`/`kEnemyTeam`;
   every team field and parameter is typed
 - `CcAssert.h` - `CC_ASSERT`: live in Debug, `((void)0)` under NDEBUG

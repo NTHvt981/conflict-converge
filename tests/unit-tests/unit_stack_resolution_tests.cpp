@@ -221,7 +221,7 @@ void RunUnitStackResolutionTests()
 		Unit *unit = registry.Get<Unit>(solo);
 		unit->speed = 200.0f;
 		IssueMoveOrder(*unit, GetOrders(registry, solo), GetMover(registry, solo),
-					   Vector2{ 10.0f * 64.0f + 32.0f, 5.0f * 64.0f }); // OOB target
+					   Vector2{ 10.0f * 64.0f + cc::kHalfTile, 5.0f * 64.0f }); // OOB target
 		UpdateUnitMovement(*unit, GetOrders(registry, solo), GetMover(registry, solo),
 						   GetCombatState(registry, solo), map,
 						   EffectiveSpeed(*unit, GetMover(registry, solo)), 1.0f, &occ, solo,

@@ -197,8 +197,9 @@ void Game::Init()
 		const auto *lifecycle = dynamic_cast<const UnitLifecycleEvent *>(&e);
 		if (lifecycle != nullptr && lifecycle->teamID == kPlayerTeam)
 		{
-			world_.Get<Pings>().Raise({ lifecycle->position.x + 32.0f, lifecycle->position.y + 32.0f },
-								PingKind::UnitLost);
+			world_.Get<Pings>().Raise(
+				{ lifecycle->position.x + cc::kHalfTile, lifecycle->position.y + cc::kHalfTile },
+				PingKind::UnitLost);
 		}
 	});
 
