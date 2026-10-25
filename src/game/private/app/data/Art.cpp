@@ -5,6 +5,8 @@
 #include <cstdlib>
 
 #include "core/MathUtils.h"
+#include "economy/BuildingTypeInfo.h"
+#include "units/UnitTypeInfo.h"
 #include "world/TileMap.h"
 
 UnitFrame FrameForPhase(AttackPhase phase)
@@ -93,61 +95,6 @@ int SquadSlots(UnitType type, unsigned int id, float healthFraction,
 namespace
 {
 
-const char *UnitFile(UnitType type)
-{
-	switch (type)
-	{
-	case UnitType::RifleInfantry:
-		return "rifle_infantry";
-	case UnitType::AntiArmorInfantry:
-		return "antiarmor";
-	case UnitType::Engineer:
-		return "engineer";
-	case UnitType::IFV:
-		return "ifv";
-	case UnitType::Artillery:
-		return "artillery";
-	case UnitType::LightTank:
-		return "lighttank";
-	case UnitType::HeavyTank:
-		return "heavytank";
-	case UnitType::PrototypeInfantry:
-		return "prototypeinfantry";
-	case UnitType::Medic:
-		return "medic";
-	}
-	return "rifle_infantry";
-}
-
-const char *BuildingFlatStem(BuildingType type)
-{
-	switch (type)
-	{
-	case BuildingType::Base:
-		return "base";
-	case BuildingType::ResourceDepot:
-		return "depot";
-	case BuildingType::Bootcamp:
-		return nullptr;
-	}
-	return nullptr;
-}
-
-const char *BuildingMaskedStem(BuildingType type)
-{
-	switch (type)
-	{
-	case BuildingType::Bootcamp:
-		return "bootcamp";
-	case BuildingType::Workshop:
-		return "workshop";
-	case BuildingType::Base:
-	case BuildingType::ResourceDepot:
-		return nullptr;
-	}
-	return nullptr;
-}
-
 const char *BuildingFrameSuffix(BuildingFrame frame)
 {
 	switch (frame)
@@ -177,26 +124,6 @@ const char *NodeFile(ResourceKind kind)
 const char *TeamName(int teamID)
 {
 	return teamID == 0 ? "blue" : "red";
-}
-
-// Folder under data/sprites/units/ holding a type's PNGs. Matches UnitFile
-// except RifleInfantry, whose folder predates the rename.
-const char *UnitDir(UnitType type)
-{
-	return type == UnitType::RifleInfantry ? "rifle" : UnitFile(type);
-}
-
-const char *TankArtPrefix(UnitType type)
-{
-	switch (type)
-	{
-	case UnitType::LightTank:
-		return "lighttank";
-	case UnitType::HeavyTank:
-		return "heavytank";
-	default:
-		return nullptr;
-	}
 }
 
 }
@@ -264,9 +191,9 @@ bool Art::Init(bool withDevice)
 			for (int f = 0; f < 2; ++f)
 			{
 				std::snprintf(path, sizeof(path), "data/sprites/units/%s/%s_%s_%s.png",
-							  UnitDir(static_cast<UnitType>(t)),
-							  UnitFile(static_cast<UnitType>(t)), team == 0 ? "blue" : "red",
-							  f == 0 ? "idle" : "attack");
+							  InfoOf(static_cast<UnitType>(t)).artDir,
+							  InfoOf(static_cast<UnitType>(t)).spriteStem,
+							  team == 0 ? "blue" : "red", f == 0 ? "idle" : "attack");
 				units_[t][team][f] = LoadTexture(path);
 				if (units_[t][team][f].id == 0)
 				{
@@ -278,7 +205,7 @@ bool Art::Init(bool withDevice)
 	for (int t = 0; t < static_cast<int>(BuildingType::Count); ++t)
 	{
 		const BuildingType type = static_cast<BuildingType>(t);
-		if (const char *flat = BuildingFlatStem(type); flat != nullptr)
+		if (const char *flat = InfoOf(type).flatStem; flat != nullptr)
 		{
 			for (int f = 0; f < static_cast<int>(BuildingFrame::Count); ++f)
 			{
@@ -333,7 +260,7 @@ bool Art::Init(bool withDevice)
 				}
 			}
 		}
-		else if (const char *masked = BuildingMaskedStem(type); masked != nullptr)
+		else if (const char *masked = InfoOf(type).maskedStem; masked != nullptr)
 		{
 			for (int f = 0; f < static_cast<int>(BuildingFrame::Count); ++f)
 			{
@@ -458,7 +385,7 @@ bool Art::Init(bool withDevice)
 		// while the atlas is up. Without atlas cover the type would have
 		// no visual at all: keep the rectangle fallback.
 		const std::string idleName =
-			std::string(UnitFile(static_cast<UnitType>(t))) + "_idle_0_6";
+			std::string(InfoOf(static_cast<UnitType>(t)).spriteStem) + "_idle_0_6";
 		if (!(atlasReady_ && FindSpriteByName(sheet_, idleName) != nullptr))
 		{
 			fallback_ = true;
@@ -615,7 +542,7 @@ std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
 		return {};
 	}
 	const int dir = (facingDir < 0 || facingDir > 7) ? 6 : facingDir;
-	const std::string prefix = UnitFile(type);
+	const std::string prefix = InfoOf(type).spriteStem;
 	auto animSprite = [&](const std::string &animName) -> std::string {
 		const SpriteAnimInfo *anim = FindAnimByName(sheet_, animName);
 		if (anim == nullptr || anim->frames.empty())
@@ -693,7 +620,7 @@ std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
 
 bool Art::HasTankArt(UnitType type) const
 {
-	const char *prefix = TankArtPrefix(type);
+	const char *prefix = InfoOf(type).tankArtPrefix;
 	if (prefix == nullptr || !sheetLoaded_)
 	{
 		return false;
@@ -703,7 +630,7 @@ bool Art::HasTankArt(UnitType type) const
 
 std::string Art::TankBodySprite(UnitType type, int facingDir) const
 {
-	const char *prefix = TankArtPrefix(type);
+	const char *prefix = InfoOf(type).tankArtPrefix;
 	if (prefix == nullptr || !sheetLoaded_)
 	{
 		return {};
@@ -716,7 +643,7 @@ std::string Art::TankBodySprite(UnitType type, int facingDir) const
 
 std::string Art::TankHeadSprite(UnitType type, int facingDir) const
 {
-	const char *prefix = TankArtPrefix(type);
+	const char *prefix = InfoOf(type).tankArtPrefix;
 	if (prefix == nullptr || !sheetLoaded_)
 	{
 		return {};

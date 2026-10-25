@@ -14,6 +14,7 @@ One line per area; the linked section carries the Do/Don't pair.
 | [Build](#language-and-build) | C++20, MSVC, x64; regenerate projects after any file add or remove |
 | [Layout](#files-and-folders) | Header in `public/<module>/`, TU in `private/<module>/`, PascalCase file names |
 | [Naming](#naming) | PascalCase types/functions; camelCase data; `_` class members; `k` constants; `Count` last |
+| [Type tables](#keep-one-descriptor-table-per-type-enum) | One descriptor table per type enum; a new enumerator adds a row, not a `case` |
 | [Includes](#headers-and-includes) | `#pragma once`; own header first; root-qualified includes; forward-declare cycles |
 | [Format](#formatting) | Tabs; Allman braces; `const T &`; comma-first init lists; 100 columns; LF |
 | [Structure](#structure) | Data structs with defaults; free-function systems; `Subsystem` scopes, no globals |
@@ -405,6 +406,51 @@ enum class TerrainType
 	Count
 };
 ```
+
+### Keep one descriptor table per type enum
+
+**✅ Do**
+```cpp
+struct UnitTypeInfo
+{
+	const char *displayName;
+	const char *fileStem;
+	int ironCost;
+};
+
+inline constexpr UnitTypeInfo kUnitTypes[] = {
+	{ "Rifle Infantry", "rifle_infantry", 25 },
+	{ "Anti-Armor", "antiarmor_infantry", 30 },
+};
+
+static_assert(sizeof(kUnitTypes) / sizeof(kUnitTypes[0]) ==
+				  static_cast<std::size_t>(UnitType::Count),
+			  "one row per UnitType");
+
+const char *UnitTypeName(UnitType type)
+{
+	return InfoOf(type).displayName;
+}
+```
+
+**❌ Don't**
+```cpp
+const char *UnitTypeName(UnitType type)
+{
+	switch (type)
+	{
+	case UnitType::RifleInfantry:
+		return "Rifle Infantry";
+	case UnitType::AntiArmorInfantry:
+		return "Anti-Armor";
+	}
+	return "Unknown"; // a forgotten case compiles into this
+}
+```
+
+One table holds every per-type fact (name, cost, art stems, footprint); `InfoOf`
+is the only reader, so a new enumerator adds a row and the `static_assert` fails
+until it does.
 
 ### Pass a generation whenever an entity id outlives the call
 

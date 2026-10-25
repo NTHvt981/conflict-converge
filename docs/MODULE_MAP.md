@@ -16,9 +16,9 @@ core:    MathUtils, CcAssert, Registry, Event, Subsystem
          GameRenderer (+GameRendererWorld/GameRendererHud), MenuScreens
 world:   TileMap, Pathfinder, MapFile, FogOfWar
 units:   Unit (+UnitInternal, UnitOrders/UnitCombat/UnitRepair/UnitMovement/
-          UnitTransport TUs), UnitStats, Combat, UnitFactory, Targeting, Formation
+          UnitTransport TUs), UnitStats, UnitTypeInfo, Combat, UnitFactory, Targeting, Formation
           (+FormationAssignment), AICommander, Extensions, UnitCommands
-economy: Building, Nodes, ResourceSystem, Production
+economy: Building, BuildingTypeInfo, Nodes, ResourceSystem, Production
 app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, RmlUiHost, RmlUiMenus,
          (+RmlUiMenusRemap/RmlUiMenusDialogs), RmlUiHud (+RmlUiHudPanels/RmlUiHudEvents),
          RmlRaylibRenderInterface, RmlRaylibSystemInterface, RmlRaylibFileInterface
@@ -93,6 +93,8 @@ app/match: Menu, Skirmish
   attack-move/patrol/repair/heal issue
 - `UnitStats.h` - `BaseStats` table for 7 types + `ApplyBaseStats` (preserves
   position/team/selection)
+- `UnitTypeInfo.h` - Per-type descriptor table: name/cost/art stems/footprint;
+  `InfoOf` is the only reader
 - `Combat.h` - 3x3 damage matrix (`Effectiveness`), `ResolveAttack` (scales, restarts
   cooldown, stamps hit-flash), hitboxes, crush rule, M13 `ResolveBuildingAttack`;
   M3 `ResolveStrike`/`ResolveStrikeGround` dispatch (direct vs arcing launch) +
@@ -120,6 +122,8 @@ app/match: Menu, Skirmish
   (`SellBuilding`, capped), base income, M13 structure HP (`BuildingMaxHealth`),
   producer categories (`ProducerCategory`), per-building rally tiles
   (`rallyTile`, `DefaultRallyTile`, `BuildingSpawnTile`, `ProducerBuildingAt`)
+- `BuildingTypeInfo.h` - Per-type descriptor table: name/art stems/footprint,
+  health, build time, cost, producer category; `InfoOf` is the only reader
 - `Production.h` - Per-category production queues (Bootcamp/Infantry,
   Workshop/Vehicle; unbound default accepts anything): upfront charge, FIFO, prepaid spawn
   at the producing building's exit tile, then a move order to that building's rally

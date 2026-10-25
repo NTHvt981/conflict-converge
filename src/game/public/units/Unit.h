@@ -68,7 +68,8 @@ enum class Stance
 {
 	Hold,
 	Guard,
-	Patrol
+	Patrol,
+	Count
 };
 
 // Shift-queued order; `kind` selects which payload fields are valid.

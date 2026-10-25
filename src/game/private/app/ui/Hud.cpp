@@ -4,50 +4,20 @@
 #include <cstdio>
 
 #include "economy/Building.h"
+#include "economy/BuildingTypeInfo.h"
 #include "units/Extensions.h"
+#include "units/UnitTypeInfo.h"
 #include "app/input/Hotkeys.h"
 #include "units/UnitStats.h"
 
 const char *UnitTypeName(UnitType type)
 {
-	switch (type)
-	{
-	case UnitType::RifleInfantry:
-		return "Rifle Infantry";
-	case UnitType::AntiArmorInfantry:
-		return "Anti-Armor";
-	case UnitType::Engineer:
-		return "Engineer";
-	case UnitType::IFV:
-		return "IFV";
-	case UnitType::Artillery:
-		return "Artillery";
-	case UnitType::LightTank:
-		return "Light Tank";
-	case UnitType::HeavyTank:
-		return "Heavy Tank";
-	case UnitType::PrototypeInfantry:
-		return "Prototype Infantry";
-	case UnitType::Medic:
-		return "Medic";
-	}
-	return "Unknown";
+	return InfoOf(type).displayName;
 }
 
 const char *BuildingTypeName(BuildingType type)
 {
-	switch (type)
-	{
-	case BuildingType::Base:
-		return "Base";
-	case BuildingType::ResourceDepot:
-		return "Depot";
-	case BuildingType::Bootcamp:
-		return "Bootcamp";
-	case BuildingType::Workshop:
-		return "Workshop";
-	}
-	return "Unknown";
+	return InfoOf(type).displayName;
 }
 
 std::string FormatResources(const ResourceSystem &resources)
@@ -275,18 +245,23 @@ bool UpdateHoverTooltip(HoverTooltipState &state, Entity hovered, float dt, floa
 namespace
 {
 
+constexpr const char *kStanceNames[] = {
+	"Hold",
+	"Guard",
+	"Patrol",
+};
+static_assert(sizeof(kStanceNames) / sizeof(kStanceNames[0]) ==
+				  static_cast<std::size_t>(Stance::Count),
+			  "one row per Stance");
+
 const char *StanceName(Stance stance)
 {
-	switch (stance)
+	const std::size_t index = static_cast<std::size_t>(stance);
+	if (index >= sizeof(kStanceNames) / sizeof(kStanceNames[0]))
 	{
-	case Stance::Hold:
-		return "Hold";
-	case Stance::Guard:
-		return "Guard";
-	case Stance::Patrol:
-		return "Patrol";
+		return "Unknown";
 	}
-	return "Unknown";
+	return kStanceNames[index];
 }
 
 const char *UnitStateName(UnitState state)
@@ -355,30 +330,21 @@ std::vector<BuildingType> BuildingMenuOrder()
 			 BuildingType::Workshop };
 }
 
+constexpr const char *kAbilityNames[] = {
+	"Hold", "Guard", "Patrol", "AttackMove", "Halt", "Repair", "Heal", "Rally", "Sell",
+};
+static_assert(sizeof(kAbilityNames) / sizeof(kAbilityNames[0]) ==
+				  static_cast<std::size_t>(AbilityId::Count),
+			  "one row per AbilityId");
+
 const char *AbilityName(AbilityId id)
 {
-	switch (id)
+	const std::size_t index = static_cast<std::size_t>(id);
+	if (index >= sizeof(kAbilityNames) / sizeof(kAbilityNames[0]))
 	{
-	case AbilityId::Hold:
-		return "Hold";
-	case AbilityId::Guard:
-		return "Guard";
-	case AbilityId::Patrol:
-		return "Patrol";
-	case AbilityId::AttackMove:
-		return "AttackMove";
-	case AbilityId::Halt:
-		return "Halt";
-	case AbilityId::Repair:
-		return "Repair";
-	case AbilityId::Heal:
-		return "Heal";
-	case AbilityId::Rally:
-		return "Rally";
-	case AbilityId::Demolish:
-		return "Sell";
+		return "Unknown";
 	}
-	return "Unknown";
+	return kAbilityNames[index];
 }
 
 std::vector<AbilityEntry> AbilitiesForSelection(const Registry &registry,

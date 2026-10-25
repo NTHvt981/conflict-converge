@@ -1,5 +1,7 @@
 #include "units/UnitStats.h"
 
+#include "units/UnitTypeInfo.h"
+
 namespace
 {
 
@@ -29,15 +31,7 @@ const UnitStats &BaseStats(UnitType type)
 
 cc::IVec2 UnitFootprint(UnitType type)
 {
-	switch (type)
-	{
-	case UnitType::IFV:
-	case UnitType::Artillery:
-	case UnitType::HeavyTank:
-		return { 2, 2 };
-	default:
-		return { 1, 1 };
-	}
+	return InfoOf(type).footprint;
 }
 
 void ApplyBaseStats(Unit &unit)
@@ -58,14 +52,5 @@ void ApplyBaseStats(Unit &unit)
 
 ProductionCategory ProductionCategoryOf(UnitType type)
 {
-	switch (type)
-	{
-	case UnitType::IFV:
-	case UnitType::Artillery:
-	case UnitType::LightTank:
-	case UnitType::HeavyTank:
-		return ProductionCategory::Vehicle;
-	default:
-		return ProductionCategory::Infantry;
-	}
+	return InfoOf(type).isVehicle ? ProductionCategory::Vehicle : ProductionCategory::Infantry;
 }
