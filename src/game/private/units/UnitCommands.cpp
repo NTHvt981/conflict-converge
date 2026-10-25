@@ -88,8 +88,7 @@ int IssueSelectionAttackMove(Registry &registry, const TileMap &map, OccupancyGr
 	registry.Each<Unit>([&](Entity id, Unit &unit) {
 		if (unit.isSelected)
 		{
-			IssueOrEnqueue(unit, GetOrders(registry, id), GetMover(registry, id), map, occ, id,
-						   registry.Generation(id), queued,
+			IssueOrEnqueue(unit, MakeOrderContext(registry, id, map, occ), queued,
 						   QueuedOrder{ QueuedOrderKind::AttackMove, dest });
 			++acted;
 		}
@@ -104,8 +103,7 @@ int IssueSelectionPatrol(Registry &registry, const TileMap &map, OccupancyGrid *
 	registry.Each<Unit>([&](Entity id, Unit &unit) {
 		if (unit.isSelected)
 		{
-			IssueOrEnqueue(unit, GetOrders(registry, id), GetMover(registry, id), map, occ, id,
-						   registry.Generation(id), queued,
+			IssueOrEnqueue(unit, MakeOrderContext(registry, id, map, occ), queued,
 						   QueuedOrder{ QueuedOrderKind::Patrol, unit.position, dest });
 			++acted;
 		}
@@ -121,8 +119,7 @@ int IssueSelectionRepair(Registry &registry, const TileMap &map, OccupancyGrid *
 		if (unit.isSelected && unit.type == UnitType::Engineer &&
 			CanRepairTarget(registry, unit, target))
 		{
-			IssueOrEnqueue(unit, GetOrders(registry, id), GetMover(registry, id), map, occ, id,
-						   registry.Generation(id), queued,
+			IssueOrEnqueue(unit, MakeOrderContext(registry, id, map, occ), queued,
 						   QueuedOrder{ QueuedOrderKind::Repair, {}, {}, target });
 			++acted;
 		}
@@ -138,8 +135,7 @@ int IssueSelectionHeal(Registry &registry, const TileMap &map, OccupancyGrid *oc
 		if (unit.isSelected && unit.type == UnitType::Medic &&
 			CanHealTarget(registry, unit, target))
 		{
-			IssueOrEnqueue(unit, GetOrders(registry, id), GetMover(registry, id), map, occ, id,
-						   registry.Generation(id), queued,
+			IssueOrEnqueue(unit, MakeOrderContext(registry, id, map, occ), queued,
 						   QueuedOrder{ QueuedOrderKind::Repair, {}, {}, target });
 			++acted;
 		}

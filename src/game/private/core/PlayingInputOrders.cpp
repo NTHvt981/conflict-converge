@@ -92,9 +92,9 @@ void PlayingInput::HandleRepairDragRelease()
 			{
 				if (Unit *engineer = registry_.Get<Unit>(job.engineer))
 				{
-					IssueOrEnqueue(*engineer, GetOrders(registry_, job.engineer),
-								   GetMover(registry_, job.engineer), map_, &occ_, job.engineer,
-								   registry_.Generation(job.engineer), input_.ShiftDown(),
+					IssueOrEnqueue(*engineer,
+								   MakeOrderContext(registry_, job.engineer, map_, &occ_),
+								   input_.ShiftDown(),
 								   QueuedOrder{ .kind = QueuedOrderKind::Repair, .target = job.target });
 				}
 			}
@@ -165,9 +165,7 @@ void PlayingInput::DispatchRightClickOrders()
 		registry_.Each<Unit>([&](Entity id, Unit &unit) {
 			if (unit.isSelected)
 			{
-				IssueOrEnqueue(unit, GetOrders(registry_, id), GetMover(registry_, id), map_,
-							   &occ_, id,
-							   registry_.Generation(id), queued,
+				IssueOrEnqueue(unit, MakeOrderContext(registry_, id, map_, &occ_), queued,
 							   QueuedOrder{ .kind = QueuedOrderKind::AttackGround, .pointA = target });
 			}
 		});
@@ -188,6 +186,7 @@ void PlayingInput::DispatchRightClickOrders()
 		{
 			Orders &orders = GetOrders(registry_, squad[0]);
 			Mover &mover = GetMover(registry_, squad[0]);
+			const OrderContext ctx = MakeOrderContext(registry_, squad[0], map_, &occ_);
 			bool repaired = false;
 			if (ordered->type == UnitType::Engineer)
 			{
@@ -216,8 +215,7 @@ void PlayingInput::DispatchRightClickOrders()
 				}
 				if (patient != kInvalidEntity)
 				{
-					IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
-								   registry_.Generation(squad[0]), input_.ShiftDown(),
+					IssueOrEnqueue(*ordered, ctx, input_.ShiftDown(),
 								   QueuedOrder{ .kind = QueuedOrderKind::Repair, .target = patient });
 					repaired = true;
 				}
@@ -233,8 +231,7 @@ void PlayingInput::DispatchRightClickOrders()
 				}
 				if (patient != kInvalidEntity)
 				{
-					IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
-								   registry_.Generation(squad[0]), input_.ShiftDown(),
+					IssueOrEnqueue(*ordered, ctx, input_.ShiftDown(),
 								   QueuedOrder{ .kind = QueuedOrderKind::Repair, .target = patient });
 					repaired = true;
 				}
@@ -248,8 +245,7 @@ void PlayingInput::DispatchRightClickOrders()
 					if (const Cargo *cargo = registry_.Get<Cargo>(squad[0]);
 						cargo != nullptr && !cargo->passengers.empty())
 					{
-						IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
-									   registry_.Generation(squad[0]), input_.ShiftDown(),
+						IssueOrEnqueue(*ordered, ctx, input_.ShiftDown(),
 									   QueuedOrder{ .kind = QueuedOrderKind::Unload, .pointA = ordered->position });
 						repaired = true;
 					}
@@ -257,8 +253,7 @@ void PlayingInput::DispatchRightClickOrders()
 				else if (picked != kInvalidEntity &&
 						 CanLoadTarget(registry_, squad[0], *ordered, picked))
 				{
-					IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
-								   registry_.Generation(squad[0]), input_.ShiftDown(),
+					IssueOrEnqueue(*ordered, ctx, input_.ShiftDown(),
 								   QueuedOrder{ .kind = QueuedOrderKind::Load, .target = picked });
 					repaired = true;
 				}
@@ -267,17 +262,14 @@ void PlayingInput::DispatchRightClickOrders()
 			{
 				if (input_.ShiftDown())
 				{
-					IssueOrEnqueue(*ordered, orders, mover, map_, &occ_, squad[0],
-								   registry_.Generation(squad[0]), true,
+					IssueOrEnqueue(*ordered, ctx, true,
 								   QueuedOrder{ .kind = QueuedOrderKind::Move, .pointA = input_.MouseWorld(camera_) });
 				}
 				else
 				{
 					orders.orderQueue.clear();
 					ClearOrders(*ordered, orders, mover);
-					IssuePathOrderFootprint(*ordered, orders, mover, map_, occ_,
-											input_.MouseWorld(camera_), squad[0],
-											registry_.Generation(squad[0]));
+					IssuePathOrderFootprint(*ordered, ctx, input_.MouseWorld(camera_));
 				}
 			}
 			audio_.Play(SfxId::Confirm);
@@ -292,9 +284,7 @@ void PlayingInput::DispatchRightClickOrders()
 			{
 				if (Unit *unit = registry_.Get<Unit>(id))
 				{
-					IssueOrEnqueue(*unit, GetOrders(registry_, id), GetMover(registry_, id),
-								   map_, &occ_, id,
-								   registry_.Generation(id), true,
+					IssueOrEnqueue(*unit, MakeOrderContext(registry_, id, map_, &occ_), true,
 								   QueuedOrder{ .kind = QueuedOrderKind::Move, .pointA = dest });
 				}
 			}

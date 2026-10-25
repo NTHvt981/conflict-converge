@@ -74,8 +74,8 @@ bool StaggerIfCoLocated(
 									  unit.footprintHeight, self, selfGen);
 	}
 	claimedEscapeTiles.push_back(escape);
-	IssuePathOrderFootprint(unit, GetOrders(registry, self), GetMover(registry, self), map, occ,
-							cc::ToRaylib(cc::TileToWorld(escape.x, escape.y)), self, selfGen);
+	const OrderContext ctx = MakeOrderContext(registry, self, map, &occ);
+	IssuePathOrderFootprint(unit, ctx, cc::ToRaylib(cc::TileToWorld(escape.x, escape.y)));
 	GetOrders(registry, self).orderQueue.push_back(
 		QueuedOrder{ QueuedOrderKind::Move, realSlotWorld, {}, kInvalidEntity });
 	return true;
@@ -383,8 +383,8 @@ void IssueFormationMoveFP(Registry &registry, const std::vector<Entity> &units,
 		{
 			continue;
 		}
-		IssuePathOrderFootprint(*unit, orders, mover, map, formationOcc, slotWorld, self,
-							   registry.Generation(self));
+		IssuePathOrderFootprint(*unit, MakeOrderContext(registry, self, map, &formationOcc),
+								slotWorld);
 
 		if (mover.hasPath)
 		{
@@ -443,8 +443,8 @@ void IssueLineFormationMoveFP(Registry &registry, const std::vector<Entity> &uni
 		{
 			continue;
 		}
-		IssuePathOrderFootprint(*unit, orders, mover, map, occ, slotWorld, units[i],
-							   registry.Generation(units[i]));
+		IssuePathOrderFootprint(
+			*unit, MakeOrderContext(registry, units[i], map, &occ), slotWorld);
 	}
 }
 

@@ -4,6 +4,13 @@
 #include "units/UnitInternal.h"
 #include "world/Pathfinder.h"
 
+OrderContext MakeOrderContext(Registry &registry, Entity self, const TileMap &map,
+							  const OccupancyGrid *occ)
+{
+	return OrderContext{ GetOrders(registry, self), GetMover(registry, self), map, occ, self,
+						 registry.Generation(self) };
+}
+
 void IssueMoveOrder(Unit &unit, Orders &orders, Mover &mover, Vector2 worldTarget)
 {
 	mover.moveTarget = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldTarget)));
@@ -22,14 +29,12 @@ void IssueAttackMoveOrder(Unit &unit, Orders &orders, Mover &mover, const TileMa
 	orders.attackMoveDest = mover.moveTarget;
 }
 
-void IssueAttackMoveOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-								   const OccupancyGrid &occ, Vector2 worldTarget, Entity self,
-								   std::uint32_t selfGen)
+void IssueAttackMoveOrderFootprint(Unit &unit, const OrderContext &ctx, Vector2 worldTarget)
 {
-	ClearOrders(unit, orders, mover);
-	IssuePathOrderFootprint(unit, orders, mover, map, occ, worldTarget, self, selfGen);
-	orders.attackMove = true;
-	orders.attackMoveDest = mover.moveTarget;
+	ClearOrders(unit, ctx.orders, ctx.mover);
+	IssuePathOrderFootprint(unit, ctx, worldTarget);
+	ctx.orders.attackMove = true;
+	ctx.orders.attackMoveDest = ctx.mover.moveTarget;
 }
 
 void SetStance(Unit &unit, Orders &orders, CombatState &combat, Stance stance)
@@ -110,76 +115,70 @@ void IssueAttackGroundOrder(Unit &unit, Orders &orders, Mover &mover, const Tile
 	IssuePathOrder(unit, orders, mover, map, orders.attackGroundPos);
 }
 
-void IssueAttackGroundOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-									 const OccupancyGrid &occ, Vector2 worldPos, Entity self,
-									 std::uint32_t selfGen)
+void IssueAttackGroundOrderFootprint(Unit &unit, const OrderContext &ctx, Vector2 worldPos)
 {
-	ClearOrders(unit, orders, mover);
-	orders.hasAttackGroundOrder = true;
-	orders.attackGroundPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
-	IssuePathOrderFootprint(unit, orders, mover, map, occ, orders.attackGroundPos, self, selfGen);
+	ClearOrders(unit, ctx.orders, ctx.mover);
+	ctx.orders.hasAttackGroundOrder = true;
+	ctx.orders.attackGroundPos = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(worldPos)));
+	IssuePathOrderFootprint(unit, ctx, ctx.orders.attackGroundPos);
 }
 
 namespace
 {
 
-void DispatchQueuedOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-						 OccupancyGrid *occ, Entity self, std::uint32_t selfGen,
-						 const QueuedOrder &order)
+void DispatchQueuedOrder(Unit &unit, const OrderContext &ctx, const QueuedOrder &order)
 {
-	ClearOrders(unit, orders, mover);
+	ClearOrders(unit, ctx.orders, ctx.mover);
 	switch (order.kind)
 	{
 	case QueuedOrderKind::Move:
-		if (occ != nullptr)
+		if (ctx.occ != nullptr)
 		{
-			IssuePathOrderFootprint(unit, orders, mover, map, *occ, order.pointA, self, selfGen);
+			IssuePathOrderFootprint(unit, ctx, order.pointA);
 		}
 		else
 		{
-			IssuePathOrder(unit, orders, mover, map, order.pointA);
+			IssuePathOrder(unit, ctx.orders, ctx.mover, ctx.map, order.pointA);
 		}
 		break;
 	case QueuedOrderKind::AttackMove:
-		if (occ != nullptr)
+		if (ctx.occ != nullptr)
 		{
-			IssueAttackMoveOrderFootprint(unit, orders, mover, map, *occ, order.pointA, self,
-										  selfGen);
+			IssueAttackMoveOrderFootprint(unit, ctx, order.pointA);
 		}
 		else
 		{
-			IssueAttackMoveOrder(unit, orders, mover, map, order.pointA);
+			IssueAttackMoveOrder(unit, ctx.orders, ctx.mover, ctx.map, order.pointA);
 		}
 		break;
 	case QueuedOrderKind::Patrol:
-		IssuePatrolOrder(unit, orders, mover, map, order.pointA, order.pointB);
+		IssuePatrolOrder(unit, ctx.orders, ctx.mover, ctx.map, order.pointA, order.pointB);
 		break;
 	case QueuedOrderKind::Repair:
 		if (unit.type == UnitType::Medic)
 		{
-			IssueHealOrder(unit, orders, mover, order.target);
+			IssueHealOrder(unit, ctx.orders, ctx.mover, order.target);
 		}
 		else
 		{
-			IssueRepairOrder(unit, orders, mover, order.target);
+			IssueRepairOrder(unit, ctx.orders, ctx.mover, order.target);
 		}
 		break;
 	case QueuedOrderKind::AttackGround:
-		if (occ != nullptr)
+		if (ctx.occ != nullptr)
 		{
-			IssueAttackGroundOrderFootprint(unit, orders, mover, map, *occ, order.pointA, self,
-											selfGen);
+			IssueAttackGroundOrderFootprint(unit, ctx, order.pointA);
 		}
 		else
 		{
-			IssueAttackGroundOrder(unit, orders, mover, map, order.pointA);
+			IssueAttackGroundOrder(unit, ctx.orders, ctx.mover, ctx.map, order.pointA);
 		}
 		break;
 	case QueuedOrderKind::Load:
-		IssueLoadOrder(unit, orders, mover, order.target);
+		IssueLoadOrder(unit, ctx.orders, ctx.mover, order.target);
 		break;
 	case QueuedOrderKind::Unload:
-		IssueUnloadOrder(unit, orders, mover, map, order.pointA);
+		IssueUnloadOrder(unit, ctx.orders, ctx.mover, ctx.map, order.pointA);
 		break;
 	case QueuedOrderKind::Count:
 		break;
@@ -188,16 +187,15 @@ void DispatchQueuedOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap
 
 }
 
-void OnOrderFinished(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-					 OccupancyGrid *occ, Entity self, std::uint32_t selfGen)
+void OnOrderFinished(Unit &unit, const OrderContext &ctx)
 {
-	if (orders.hasPatrol || orders.orderQueue.empty())
+	if (ctx.orders.hasPatrol || ctx.orders.orderQueue.empty())
 	{
 		return;
 	}
-	const QueuedOrder next = orders.orderQueue.front();
-	orders.orderQueue.erase(orders.orderQueue.begin());
-	DispatchQueuedOrder(unit, orders, mover, map, occ, self, selfGen, next);
+	const QueuedOrder next = ctx.orders.orderQueue.front();
+	ctx.orders.orderQueue.erase(ctx.orders.orderQueue.begin());
+	DispatchQueuedOrder(unit, ctx, next);
 }
 
 void OnOrderCancelled(Orders &orders)
@@ -205,21 +203,20 @@ void OnOrderCancelled(Orders &orders)
 	orders.orderQueue.clear();
 }
 
-void IssueOrEnqueue(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-					OccupancyGrid *occ, Entity self, std::uint32_t selfGen, bool shiftQueue,
-					QueuedOrder order)
+void IssueOrEnqueue(Unit &unit, const OrderContext &ctx, bool shiftQueue, QueuedOrder order)
 {
 	if (!shiftQueue)
 	{
-		orders.orderQueue.clear();
-		DispatchQueuedOrder(unit, orders, mover, map, occ, self, selfGen, order);
+		ctx.orders.orderQueue.clear();
+		DispatchQueuedOrder(unit, ctx, order);
 		return;
 	}
-	if (!mover.hasMoveOrder && !mover.hasPath && !orders.hasRepairOrder && !orders.hasLoadOrder &&
-		!orders.hasUnloadOrder && !orders.hasPatrol && orders.orderQueue.empty())
+	if (!ctx.mover.hasMoveOrder && !ctx.mover.hasPath && !ctx.orders.hasRepairOrder &&
+		!ctx.orders.hasLoadOrder && !ctx.orders.hasUnloadOrder && !ctx.orders.hasPatrol &&
+		ctx.orders.orderQueue.empty())
 	{
-		DispatchQueuedOrder(unit, orders, mover, map, occ, self, selfGen, order);
+		DispatchQueuedOrder(unit, ctx, order);
 		return;
 	}
-	orders.orderQueue.push_back(order);
+	ctx.orders.orderQueue.push_back(order);
 }

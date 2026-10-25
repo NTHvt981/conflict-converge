@@ -121,11 +121,9 @@ void RunPrototypeSandboxMovementTests()
 	for (std::size_t i = 0; i < squad.size(); ++i)
 	{
 		Unit *u = sand.registry.Get<Unit>(squad[i]);
-		IssuePathOrderFootprint(*u, GetOrders(sand.registry, squad[i]),
-								GetMover(sand.registry, squad[i]), sand.map, sand.occ,
+		IssuePathOrderFootprint(*u, MakeOrderContext(sand.registry, squad[i], sand.map, &sand.occ),
 								cc::ToRaylib(cc::TileToWorld(
-									destinations[i].x, destinations[i].y)),
-								squad[i], sand.registry.Generation(squad[i]));
+									destinations[i].x, destinations[i].y)));
 		CC_CHECK(FindMover(sand.registry, squad[i])->hasPath ||
 				 FindMover(sand.registry, squad[i])->hasMoveOrder); // path found, or straight-line fallback engaged
 	}

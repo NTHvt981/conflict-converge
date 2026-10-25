@@ -46,10 +46,8 @@ void RunYieldTests()
 
 		Unit *moverUnit = registry.Get<Unit>(moverId);
 		Unit *blockerUnit = registry.Get<Unit>(blockerId);
-		IssuePathOrderFootprint(*moverUnit, GetOrders(registry, moverId),
-								GetMover(registry, moverId), map, occ,
-								cc::ToRaylib(cc::TileToWorld(6, 1)), moverId,
-								registry.Generation(moverId));
+		IssuePathOrderFootprint(*moverUnit, MakeOrderContext(registry, moverId, map, &occ),
+								cc::ToRaylib(cc::TileToWorld(6, 1)));
 
 		int frames = 0;
 		constexpr int kBudget = 900;
@@ -89,10 +87,8 @@ void RunYieldTests()
 		registry.Add(blockerId, MakeInfantry(2, 1, kPlayerTeam));
 
 		Unit *moverUnit = registry.Get<Unit>(moverId);
-		IssuePathOrderFootprint(*moverUnit, GetOrders(registry, moverId),
-								GetMover(registry, moverId), map, occ,
-								cc::ToRaylib(cc::TileToWorld(6, 1)), moverId,
-								registry.Generation(moverId));
+		IssuePathOrderFootprint(*moverUnit, MakeOrderContext(registry, moverId, map, &occ),
+								cc::ToRaylib(cc::TileToWorld(6, 1)));
 
 		int frames = 0;
 		constexpr int kBudget = 600;
@@ -128,10 +124,8 @@ void RunYieldTests()
 
 		Unit *moverUnit = registry.Get<Unit>(moverId);
 		Unit *blockerUnit = registry.Get<Unit>(blockerId);
-		IssuePathOrderFootprint(*moverUnit, GetOrders(registry, moverId),
-								GetMover(registry, moverId), map, occ,
-								cc::ToRaylib(cc::TileToWorld(6, 1)), moverId,
-								registry.Generation(moverId));
+		IssuePathOrderFootprint(*moverUnit, MakeOrderContext(registry, moverId, map, &occ),
+								cc::ToRaylib(cc::TileToWorld(6, 1)));
 
 		int frames = 0;
 		constexpr int kBudget = 600;
@@ -168,10 +162,8 @@ void RunYieldTests()
 
 		Unit *moverUnit = registry.Get<Unit>(moverId);
 		Unit *bystanderUnit = registry.Get<Unit>(bystanderId);
-		IssuePathOrderFootprint(*moverUnit, GetOrders(registry, moverId),
-								GetMover(registry, moverId), map, occ,
-								cc::ToRaylib(cc::TileToWorld(6, 1)), moverId,
-								registry.Generation(moverId));
+		IssuePathOrderFootprint(*moverUnit, MakeOrderContext(registry, moverId, map, &occ),
+								cc::ToRaylib(cc::TileToWorld(6, 1)));
 
 		int frames = 0;
 		constexpr int kBudget = 600;

@@ -64,12 +64,10 @@ void RunMovementStallTests()
 
 		Unit *ua = registry.Get<Unit>(a);
 		Unit *ub = registry.Get<Unit>(b);
-		IssuePathOrderFootprint(*ua, GetOrders(registry, a), GetMover(registry, a), map, occ,
-								cc::ToRaylib(cc::TileToWorld(4, 1)), a,
-								registry.Generation(a));
-		IssuePathOrderFootprint(*ub, GetOrders(registry, b), GetMover(registry, b), map, occ,
-								cc::ToRaylib(cc::TileToWorld(0, 1)), b,
-								registry.Generation(b));
+		IssuePathOrderFootprint(*ua, MakeOrderContext(registry, a, map, &occ),
+								cc::ToRaylib(cc::TileToWorld(4, 1)));
+		IssuePathOrderFootprint(*ub, MakeOrderContext(registry, b, map, &occ),
+								cc::ToRaylib(cc::TileToWorld(0, 1)));
 		CC_CHECK(FindMover(registry, a)->hasPath);
 		CC_CHECK(FindMover(registry, b)->hasPath);
 

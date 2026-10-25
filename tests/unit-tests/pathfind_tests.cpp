@@ -47,7 +47,7 @@ int WalkUntilIdle(Unit &unit, Orders &orders, Mover &mover, CombatState &combat,
 	int frames = 0;
 	while ((mover.hasMoveOrder || mover.hasPath) && frames < maxFrames)
 	{
-		UpdateUnitMovement(unit, orders, mover, combat, map, speed, dt);
+		UpdateUnitMovement(unit, OrderContext{ orders, mover, map }, combat, speed, dt);
 		++frames;
 	}
 	return frames;
@@ -209,8 +209,10 @@ void RunPathfindTests()
 	wedged.type = UnitType::RifleInfantry;
 	ApplyBaseStats(wedged);
 	wedged.position = cc::ToRaylib(cc::TileToWorld(3, 3));
-	IssuePathOrderFootprint(wedged, wedgedOrders, wedgedMover, trap, trapOcc,
-							cc::ToRaylib(cc::TileToWorld(0, 0)), kInvalidEntity, 0);
+	IssuePathOrderFootprint(wedged,
+							OrderContext{ wedgedOrders, wedgedMover, trap, &trapOcc,
+										  kInvalidEntity, 0 },
+							cc::ToRaylib(cc::TileToWorld(0, 0)));
 	CC_CHECK(wedgedMover.hasMoveOrder);
 	CC_CHECK(!wedgedMover.hasPath);
 }

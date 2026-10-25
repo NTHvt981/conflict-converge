@@ -57,18 +57,18 @@ void RunOrderQueueTests()
 		Unit &unit = *registry.Get<Unit>(id);
 		Orders &orders = GetOrders(registry, id);
 
-		IssueOrEnqueue(unit, orders, GetMover(registry, id), map, nullptr, id, 0, false,
-					   QueuedOrder{ QueuedOrderKind::Move, TilePos(8, 1) });
+		IssueOrEnqueue(unit, OrderContext{ orders, GetMover(registry, id), map, nullptr, id, 0 },
+					   false, QueuedOrder{ QueuedOrderKind::Move, TilePos(8, 1) });
 		CC_CHECK(FindMover(registry, id)->hasMoveOrder);
 		CC_CHECK(orders.orderQueue.empty());
 
-		IssueOrEnqueue(unit, orders, GetMover(registry, id), map, nullptr, id, 0, true,
-					   QueuedOrder{ QueuedOrderKind::AttackMove, TilePos(8, 8) });
+		IssueOrEnqueue(unit, OrderContext{ orders, GetMover(registry, id), map, nullptr, id, 0 },
+					   true, QueuedOrder{ QueuedOrderKind::AttackMove, TilePos(8, 8) });
 		CC_CHECK(orders.orderQueue.size() == 1);
 		CC_CHECK(!orders.attackMove); // still on the first order
 
-		IssueOrEnqueue(unit, orders, GetMover(registry, id), map, nullptr, id, 0, true,
-					   QueuedOrder{ QueuedOrderKind::Patrol, TilePos(8, 8), TilePos(1, 8) });
+		IssueOrEnqueue(unit, OrderContext{ orders, GetMover(registry, id), map, nullptr, id, 0 },
+					   true, QueuedOrder{ QueuedOrderKind::Patrol, TilePos(8, 8), TilePos(1, 8) });
 		CC_CHECK(orders.orderQueue.size() == 2);
 
 		// First order completes -> attack-move dequeues and starts.
@@ -93,8 +93,8 @@ void RunOrderQueueTests()
 		Unit &unit = *registry.Get<Unit>(id);
 		Orders &orders = GetOrders(registry, id);
 
-		IssueOrEnqueue(unit, orders, GetMover(registry, id), map, nullptr, id, 0, true,
-					   QueuedOrder{ QueuedOrderKind::Move, TilePos(5, 5) });
+		IssueOrEnqueue(unit, OrderContext{ orders, GetMover(registry, id), map, nullptr, id, 0 },
+					   true, QueuedOrder{ QueuedOrderKind::Move, TilePos(5, 5) });
 		CC_CHECK(FindMover(registry, id)->hasMoveOrder);
 		CC_CHECK(orders.orderQueue.empty());
 	}
@@ -107,13 +107,13 @@ void RunOrderQueueTests()
 		Unit &unit = *registry.Get<Unit>(id);
 		Orders &orders = GetOrders(registry, id);
 
-		IssueOrEnqueue(unit, orders, GetMover(registry, id), map, nullptr, id, 0, false,
-					   QueuedOrder{ QueuedOrderKind::Move, TilePos(8, 1) });
-		IssueOrEnqueue(unit, orders, GetMover(registry, id), map, nullptr, id, 0, true,
-					   QueuedOrder{ QueuedOrderKind::Move, TilePos(1, 8) });
+		IssueOrEnqueue(unit, OrderContext{ orders, GetMover(registry, id), map, nullptr, id, 0 },
+					   false, QueuedOrder{ QueuedOrderKind::Move, TilePos(8, 1) });
+		IssueOrEnqueue(unit, OrderContext{ orders, GetMover(registry, id), map, nullptr, id, 0 },
+					   true, QueuedOrder{ QueuedOrderKind::Move, TilePos(1, 8) });
 		CC_CHECK(orders.orderQueue.size() == 1);
-		IssueOrEnqueue(unit, orders, GetMover(registry, id), map, nullptr, id, 0, false,
-					   QueuedOrder{ QueuedOrderKind::Move, TilePos(8, 8) });
+		IssueOrEnqueue(unit, OrderContext{ orders, GetMover(registry, id), map, nullptr, id, 0 },
+					   false, QueuedOrder{ QueuedOrderKind::Move, TilePos(8, 8) });
 		CC_CHECK(orders.orderQueue.empty());
 	}
 
@@ -145,8 +145,8 @@ void RunOrderQueueTests()
 		Orders &orders = GetOrders(registry, id);
 
 		IssueMoveOrder(unit, orders, GetMover(registry, id), TilePos(8, 1)); // straight at the water, no path
-		IssueOrEnqueue(unit, orders, GetMover(registry, id), map, nullptr, id, 0, true,
-					   QueuedOrder{ QueuedOrderKind::Move, TilePos(1, 8) });
+		IssueOrEnqueue(unit, OrderContext{ orders, GetMover(registry, id), map, nullptr, id, 0 },
+					   true, QueuedOrder{ QueuedOrderKind::Move, TilePos(1, 8) });
 		CC_CHECK(orders.orderQueue.size() == 1);
 		UpdateUnit(id, registry, map, 1.0f); // steps into water -> cancels
 		CC_CHECK(!FindMover(registry, id)->hasMoveOrder);
@@ -174,8 +174,9 @@ void RunOrderQueueTests()
 		CC_CHECK(!CanRepairTarget(registry, engineer, tank)); // healthy: nothing to do
 		patient->health = maxHp - 30.0f;
 
-		IssueOrEnqueue(engineer, engOrders, GetMover(registry, eng), map, nullptr, eng, 0, false,
-					   QueuedOrder{ QueuedOrderKind::Repair, {}, {}, tank });
+		IssueOrEnqueue(engineer,
+					   OrderContext{ engOrders, GetMover(registry, eng), map, nullptr, eng, 0 },
+					   false, QueuedOrder{ QueuedOrderKind::Repair, {}, {}, tank });
 		CC_CHECK(engOrders.hasRepairOrder);
 		for (int i = 0; i < 30 && engOrders.hasRepairOrder; ++i)
 		{
@@ -204,8 +205,8 @@ void RunOrderQueueTests()
 		// Same sequence as Game.cpp's single-unit right-click branch.
 		engOrders.orderQueue.clear();
 		ClearOrders(engineer, engOrders, GetMover(registry, eng));
-		IssuePathOrderFootprint(engineer, engOrders, GetMover(registry, eng), map, occ,
-								TilePos(8, 8), eng, registry.Generation(eng));
+		IssuePathOrderFootprint(engineer, MakeOrderContext(registry, eng, map, &occ),
+								TilePos(8, 8));
 		CC_CHECK(!engOrders.hasRepairOrder);
 		CC_CHECK(engOrders.repairTarget == kInvalidEntity);
 		CC_CHECK(FindMover(registry, eng)->hasMoveOrder || FindMover(registry, eng)->hasPath);

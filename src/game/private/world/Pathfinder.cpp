@@ -357,31 +357,29 @@ void IssuePathOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map
 	mover.blockedRepaths = 0;
 }
 
-void IssuePathOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-							 const OccupancyGrid &occ, Vector2 worldTarget, Entity self,
-							 std::uint32_t selfGen)
+void IssuePathOrderFootprint(Unit &unit, const OrderContext &ctx, Vector2 worldTarget)
 {
 	const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
 	cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(worldTarget)));
-	goal = NearestEnterableTile(map, occ, goal, unit.footprintWidth, unit.footprintHeight,
-								self, selfGen);
-	TilePath path = FindPathFootprint(map, occ, start, goal,
+	goal = NearestEnterableTile(ctx.map, *ctx.occ, goal, unit.footprintWidth, unit.footprintHeight,
+								ctx.self, ctx.selfGen);
+	TilePath path = FindPathFootprint(ctx.map, *ctx.occ, start, goal,
 									  unit.footprintWidth, unit.footprintHeight,
-									  self, selfGen, LocomotorOf(unit.type));
+									  ctx.self, ctx.selfGen, LocomotorOf(unit.type));
 	if (path.empty())
 	{
-		IssueMoveOrder(unit, orders, mover, cc::ToRaylib(cc::TileToWorld(goal.x, goal.y)));
-		mover.hasPath = false;
-		mover.path.clear();
-		mover.pathNext = 0;
+		IssueMoveOrder(unit, ctx.orders, ctx.mover, cc::ToRaylib(cc::TileToWorld(goal.x, goal.y)));
+		ctx.mover.hasPath = false;
+		ctx.mover.path.clear();
+		ctx.mover.pathNext = 0;
 		return;
 	}
 
-	mover.moveTarget = cc::ToRaylib(cc::TileToWorld(goal.x, goal.y));
-	mover.hasMoveOrder = true;
-	mover.path = std::move(path);
-	mover.pathNext = 1;
-	mover.hasPath = true;
-	mover.blockedTime = 0.0f;
-	mover.blockedRepaths = 0;
+	ctx.mover.moveTarget = cc::ToRaylib(cc::TileToWorld(goal.x, goal.y));
+	ctx.mover.hasMoveOrder = true;
+	ctx.mover.path = std::move(path);
+	ctx.mover.pathNext = 1;
+	ctx.mover.hasPath = true;
+	ctx.mover.blockedTime = 0.0f;
+	ctx.mover.blockedRepaths = 0;
 }

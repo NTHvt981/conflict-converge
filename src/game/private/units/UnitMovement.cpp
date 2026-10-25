@@ -22,7 +22,7 @@ enum class StepResult
 };
 
 StepResult StepToward(cc::Vec2 pos, cc::Vec2 target, float step, const TileMap &map, cc::Vec2 &outNext,
-					  OccupancyGrid *occ = nullptr, Entity self = 0, std::uint32_t selfGen = 0,
+					  const OccupancyGrid *occ = nullptr, Entity self = 0, std::uint32_t selfGen = 0,
 					  int footprintW = 1, int footprintH = 1,
 					  cc::IVec2 *blockedTile = nullptr)
 {
@@ -125,9 +125,8 @@ void CancelAtBlocked(Unit &unit, Mover &mover, const TileMap &map)
 constexpr float kBlockedRetryDelaySeconds = 0.5f;
 constexpr int kMaxBlockedRepaths = 3;
 
-bool TryBlockedRetryWithBudget(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-							   OccupancyGrid *occ, Entity self, std::uint32_t selfGen,
-							   float dtSeconds, float &blockedTime, int &blockedRepaths)
+bool TryBlockedRetryWithBudget(Unit &unit, const OrderContext &ctx, float dtSeconds,
+							   float &blockedTime, int &blockedRepaths)
 {
 	unit.velocity = { 0.0f, 0.0f };
 	blockedTime += dtSeconds;
@@ -142,17 +141,17 @@ bool TryBlockedRetryWithBudget(Unit &unit, Orders &orders, Mover &mover, const T
 	++blockedRepaths;
 	blockedTime = 0.0f;
 	const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
-	const cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(mover.moveTarget)));
+	const cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(ctx.mover.moveTarget)));
 	TilePath fresh;
-	if (occ != nullptr)
+	if (ctx.occ != nullptr)
 	{
-		fresh = FindPathFootprint(map, *occ, start, goal, unit.footprintWidth,
-								  unit.footprintHeight, self, selfGen,
+		fresh = FindPathFootprint(ctx.map, *ctx.occ, start, goal, unit.footprintWidth,
+								  unit.footprintHeight, ctx.self, ctx.selfGen,
 								  LocomotorOf(unit.type));
 	}
 	else
 	{
-		fresh = FindPath(map, start, goal, LocomotorOf(unit.type));
+		fresh = FindPath(ctx.map, start, goal, LocomotorOf(unit.type));
 	}
 	if (fresh.empty())
 	{
@@ -160,22 +159,21 @@ bool TryBlockedRetryWithBudget(Unit &unit, Orders &orders, Mover &mover, const T
 	}
 	if (fresh.size() == 1)
 	{
-		Arrive(unit, mover, cc::ToGlm(mover.moveTarget));
-		OnOrderFinished(unit, orders, mover, map, occ, self, selfGen);
+		Arrive(unit, ctx.mover, cc::ToGlm(ctx.mover.moveTarget));
+		OnOrderFinished(unit, ctx);
 		return true;
 	}
-	mover.path = std::move(fresh);
-	mover.pathNext = 1;
-	mover.hasPath = true;
-	mover.hasMoveOrder = true;
+	ctx.mover.path = std::move(fresh);
+	ctx.mover.pathNext = 1;
+	ctx.mover.hasPath = true;
+	ctx.mover.hasMoveOrder = true;
 	return true;
 }
 
-bool TryBlockedRetry(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-					 OccupancyGrid *occ, Entity self, std::uint32_t selfGen, float dtSeconds)
+bool TryBlockedRetry(Unit &unit, const OrderContext &ctx, float dtSeconds)
 {
-	return TryBlockedRetryWithBudget(unit, orders, mover, map, occ, self, selfGen, dtSeconds,
-									 mover.blockedTime, mover.blockedRepaths);
+	return TryBlockedRetryWithBudget(unit, ctx, dtSeconds, ctx.mover.blockedTime,
+									 ctx.mover.blockedRepaths);
 }
 
 struct TileHash
@@ -310,11 +308,10 @@ Facing FacingFromVelocity(Vector2 velocity)
 	return static_cast<Facing>((6 - octant + 8) % 8);
 }
 
-void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &combat,
-						const TileMap &map, float speedPixelsPerSec, float dtSeconds,
-						OccupancyGrid *occ, Entity self, std::uint32_t selfGen)
+void UpdateUnitMovement(Unit &unit, const OrderContext &ctx, CombatState &combat,
+						float speedPixelsPerSec, float dtSeconds)
 {
-	if (!mover.hasMoveOrder && !mover.hasPath)
+	if (!ctx.mover.hasMoveOrder && !ctx.mover.hasPath)
 	{
 		return;
 	}
@@ -323,30 +320,30 @@ void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &c
 	unit.state = UnitState::Moving;
 	combat.phase = AttackPhase::Ready;
 
-	if (mover.hasPath)
+	if (ctx.mover.hasPath)
 	{
-		if (mover.pathNext >= mover.path.size())
+		if (ctx.mover.pathNext >= ctx.mover.path.size())
 		{
-			Arrive(unit, mover, cc::ToGlm(mover.moveTarget));
-			OnOrderFinished(unit, orders, mover, map, occ, self, selfGen);
+			Arrive(unit, ctx.mover, cc::ToGlm(ctx.mover.moveTarget));
+			OnOrderFinished(unit, ctx);
 			return;
 		}
 
-		const cc::IVec2 node = mover.path[mover.pathNext];
+		const cc::IVec2 node = ctx.mover.path[ctx.mover.pathNext];
 		const cc::Vec2 waypoint = cc::TileToWorld(node.x, node.y);
 		cc::Vec2 next = cc::ToGlm(unit.position);
 		cc::IVec2 blockedTile{ -1, -1 };
-		switch (StepToward(cc::ToGlm(unit.position), waypoint, step, map, next,
-						   occ, self, selfGen, unit.footprintWidth, unit.footprintHeight,
-						   &blockedTile))
+		switch (StepToward(cc::ToGlm(unit.position), waypoint, step, ctx.map, next,
+						   ctx.occ, ctx.self, ctx.selfGen, unit.footprintWidth,
+						   unit.footprintHeight, &blockedTile))
 		{
 		case StepResult::Arrived:
 			unit.position = cc::ToRaylib(waypoint);
-			++mover.pathNext;
-			if (mover.pathNext >= mover.path.size())
+			++ctx.mover.pathNext;
+			if (ctx.mover.pathNext >= ctx.mover.path.size())
 			{
-				Arrive(unit, mover, cc::ToGlm(mover.moveTarget));
-				OnOrderFinished(unit, orders, mover, map, occ, self, selfGen);
+				Arrive(unit, ctx.mover, cc::ToGlm(ctx.mover.moveTarget));
+				OnOrderFinished(unit, ctx);
 			}
 			else
 			{
@@ -354,23 +351,23 @@ void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &c
 			}
 			return;
 		case StepResult::Blocked:
-			CancelAtBlocked(unit, mover, map);
-			OnOrderCancelled(orders);
+			CancelAtBlocked(unit, ctx.mover, ctx.map);
+			OnOrderCancelled(ctx.orders);
 			return;
 		case StepResult::BlockedUnit:
-			if (TryBeginYield(unit, mover, occ, blockedTile, self))
+			if (TryBeginYield(unit, ctx.mover, ctx.occ, blockedTile, ctx.self))
 			{
 				return;
 			}
-			if (TryBlockedRetry(unit, orders, mover, map, occ, self, selfGen, dtSeconds))
+			if (TryBlockedRetry(unit, ctx, dtSeconds))
 			{
 				return;
 			}
-			CancelAtBlocked(unit, mover, map);
-			OnOrderCancelled(orders);
+			CancelAtBlocked(unit, ctx.mover, ctx.map);
+			OnOrderCancelled(ctx.orders);
 			return;
 		case StepResult::Stepped:
-			mover.blockedTime = 0.0f;
+			ctx.mover.blockedTime = 0.0f;
 			unit.velocity = cc::ToRaylib((waypoint - cc::ToGlm(unit.position)) /
 										 glm::length(waypoint - cc::ToGlm(unit.position)) * speedPixelsPerSec);
 			unit.facing = FacingFromVelocity(unit.velocity);
@@ -381,34 +378,34 @@ void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &c
 
 	cc::Vec2 next = cc::ToGlm(unit.position);
 	cc::IVec2 blockedTile{ -1, -1 };
-	switch (StepToward(cc::ToGlm(unit.position), cc::ToGlm(mover.moveTarget), step, map, next,
-					   occ, self, selfGen, unit.footprintWidth, unit.footprintHeight,
-					   &blockedTile))
+	switch (StepToward(cc::ToGlm(unit.position), cc::ToGlm(ctx.mover.moveTarget), step, ctx.map,
+					   next, ctx.occ, ctx.self, ctx.selfGen, unit.footprintWidth,
+					   unit.footprintHeight, &blockedTile))
 	{
 	case StepResult::Arrived:
-		Arrive(unit, mover, cc::ToGlm(mover.moveTarget));
-		OnOrderFinished(unit, orders, mover, map, occ, self, selfGen);
+		Arrive(unit, ctx.mover, cc::ToGlm(ctx.mover.moveTarget));
+		OnOrderFinished(unit, ctx);
 		return;
 	case StepResult::Blocked:
-		CancelAtBlocked(unit, mover, map);
-		OnOrderCancelled(orders);
+		CancelAtBlocked(unit, ctx.mover, ctx.map);
+		OnOrderCancelled(ctx.orders);
 		return;
 	case StepResult::BlockedUnit:
-		if (TryBeginYield(unit, mover, occ, blockedTile, self))
+		if (TryBeginYield(unit, ctx.mover, ctx.occ, blockedTile, ctx.self))
 		{
 			return;
 		}
-		if (TryBlockedRetry(unit, orders, mover, map, occ, self, selfGen, dtSeconds))
+		if (TryBlockedRetry(unit, ctx, dtSeconds))
 		{
 			return;
 		}
-		CancelAtBlocked(unit, mover, map);
-		OnOrderCancelled(orders);
+		CancelAtBlocked(unit, ctx.mover, ctx.map);
+		OnOrderCancelled(ctx.orders);
 		return;
 	case StepResult::Stepped:
-		mover.blockedTime = 0.0f;
-		unit.velocity = cc::ToRaylib((cc::ToGlm(mover.moveTarget) - cc::ToGlm(unit.position)) /
-									 glm::length(cc::ToGlm(mover.moveTarget) - cc::ToGlm(unit.position)) *
+		ctx.mover.blockedTime = 0.0f;
+		unit.velocity = cc::ToRaylib((cc::ToGlm(ctx.mover.moveTarget) - cc::ToGlm(unit.position)) /
+									 glm::length(cc::ToGlm(ctx.mover.moveTarget) - cc::ToGlm(unit.position)) *
 									 speedPixelsPerSec);
 		unit.facing = FacingFromVelocity(unit.velocity);
 		unit.position = cc::ToRaylib(next);
@@ -490,10 +487,8 @@ void PumpYieldHandshake(Registry &registry, const TileMap &map, OccupancyGrid &o
 			decline();
 			continue;
 		}
-		Orders &asideOrders = GetOrders(registry, blocker);
-		IssuePathOrderFootprint(*aside, asideOrders, *asideMover, map, occ,
-								cc::ToRaylib(cc::TileToWorld(side.x, side.y)), blocker,
-								registry.Generation(blocker));
+		IssuePathOrderFootprint(*aside, MakeOrderContext(registry, blocker, map, &occ),
+								cc::ToRaylib(cc::TileToWorld(side.x, side.y)));
 		if (asideMover->path.empty() || !asideMover->hasMoveOrder)
 		{
 			asideMover->hasMoveOrder = false;
@@ -656,9 +651,8 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
 		}
 		claimedThisFrame.push_back(dest);
 
-		IssuePathOrderFootprint(*unit, GetOrders(registry, pick), GetMover(registry, pick), map,
-								occ, cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)), pick,
-								registry.Generation(pick));
+		IssuePathOrderFootprint(*unit, MakeOrderContext(registry, pick, map, &occ),
+								cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)));
 		// The stacked start tile blocks the footprint pathfinder (the neighbor
 		// still owns it), so fall back to a straight move order: step-out walks
 		// the unit clear and repaths from the freed tile.

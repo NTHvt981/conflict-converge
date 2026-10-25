@@ -48,6 +48,4 @@ cc::IVec2 NearestFreeFootprintTile(const TileMap &map, const OccupancyGrid *occ,
 void IssuePathOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
 					Vector2 worldTarget);
 
-void IssuePathOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-							 const OccupancyGrid &occ, Vector2 worldTarget, Entity self,
-							 std::uint32_t selfGen);
+void IssuePathOrderFootprint(Unit &unit, const OrderContext &ctx, Vector2 worldTarget);

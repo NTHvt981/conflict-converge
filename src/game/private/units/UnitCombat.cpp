@@ -250,8 +250,7 @@ void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector
 		}
 		if (occ != nullptr)
 		{
-			IssueAttackMoveOrderFootprint(unit, orders, mover, map, *occ, home, id,
-										  registry.Generation(id));
+			IssueAttackMoveOrderFootprint(unit, MakeOrderContext(registry, id, map, occ), home);
 		}
 		else
 		{

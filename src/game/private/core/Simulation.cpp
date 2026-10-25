@@ -265,10 +265,9 @@ void Simulation::Step(float dt)
 			{
 				if (!(cc::WorldToTile(cc::ToGlm(fresh->position)) == rally))
 				{
-					IssuePathOrderFootprint(*fresh, GetOrders(registry_, spawned),
-											GetMover(registry_, spawned), map_, occ_,
-											cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)),
-											spawned, registry_.Generation(spawned));
+					IssuePathOrderFootprint(*fresh,
+											MakeOrderContext(registry_, spawned, map_, &occ_),
+											cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)));
 				}
 				if (autoAddGroupBit_ >= 0)
 				{

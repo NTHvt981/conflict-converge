@@ -143,6 +143,19 @@ inline void SnapUnitToTile(Unit &unit)
 	unit.position = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(unit.position)));
 }
 
+struct OrderContext
+{
+	Orders &orders;
+	Mover &mover;
+	const TileMap &map;
+	const OccupancyGrid *occ = nullptr;
+	Entity self = kInvalidEntity;
+	std::uint32_t selfGen = 0;
+};
+
+OrderContext MakeOrderContext(Registry &registry, Entity self, const TileMap &map,
+							  const OccupancyGrid *occ);
+
 float EffectiveSpeed(const Unit &unit, const Mover &mover);
 
 void IssueMoveOrder(Unit &unit, Orders &orders, Mover &mover, Vector2 worldTarget);
@@ -155,9 +168,7 @@ void IssueAttackMoveOrder(Unit &unit, Orders &orders, Mover &mover, const TileMa
 						  Vector2 worldTarget);
 
 // Footprint-aware attack-move: the initial march routes around units.
-void IssueAttackMoveOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-								   const OccupancyGrid &occ, Vector2 worldTarget, Entity self,
-								   std::uint32_t selfGen);
+void IssueAttackMoveOrderFootprint(Unit &unit, const OrderContext &ctx, Vector2 worldTarget);
 
 // Leaving Patrol drops the route.
 void SetStance(Unit &unit, Orders &orders, CombatState &combat, Stance stance);
@@ -196,9 +207,7 @@ int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engine
 // Attack-ground: shell worldPos continuously until cancelled.
 void IssueAttackGroundOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
 							Vector2 worldPos);
-void IssueAttackGroundOrderFootprint(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-									 const OccupancyGrid &occ, Vector2 worldPos, Entity self,
-									 std::uint32_t selfGen);
+void IssueAttackGroundOrderFootprint(Unit &unit, const OrderContext &ctx, Vector2 worldPos);
 
 void IssueLoadOrder(Unit &carrier, Orders &orders, Mover &mover, Entity passenger);
 void IssueUnloadOrder(Unit &carrier, Orders &orders, Mover &mover, const TileMap &map,
@@ -220,15 +229,11 @@ Vector2 ResolvePlayerRetreatHome(Registry &registry);
 void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector2 home,
 					TeamId teamID, float healthFraction, bool onlyAutoRetreat);
 
-void IssueOrEnqueue(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-					OccupancyGrid *occ, Entity self, std::uint32_t selfGen, bool shiftQueue,
-					QueuedOrder order);
+void IssueOrEnqueue(Unit &unit, const OrderContext &ctx, bool shiftQueue, QueuedOrder order);
 
 // Stops snapped on arrival.
-void UpdateUnitMovement(Unit &unit, Orders &orders, Mover &mover, CombatState &combat,
-						const TileMap &map, float speedPixelsPerSec, float dtSeconds,
-						OccupancyGrid *occ = nullptr, Entity self = 0,
-						std::uint32_t selfGen = 0);
+void UpdateUnitMovement(Unit &unit, const OrderContext &ctx, CombatState &combat,
+						float speedPixelsPerSec, float dtSeconds);
 
 void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 				const FogOfWar *fog = nullptr, OccupancyGrid *occ = nullptr,
