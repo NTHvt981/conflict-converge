@@ -37,12 +37,12 @@ void PlayingInput::SetMode(InteractionMode mode, bool enabled)
 void PlayingInput::ResetForMatch()
 {
 	SetMode(InteractionMode::SettingRally, false);
-	dragging_ = false;
-	rightDragging_ = false;
+	selectDrag_.active = false;
+	rightDrag_.active = false;
 	pendingRightClick_ = false;
 	rightDragDist_ = 0.0f;
-	placeDragActive_ = false;
-	repairDragActive_ = false;
+	placeDrag_.active = false;
+	repairDrag_.active = false;
 	SetMode(InteractionMode::AttackGround, false);
 	armedAbility_.reset();
 }
@@ -69,14 +69,14 @@ void PlayingInput::ToggleAreaBuild()
 		SetMode(InteractionMode::Placing, true);
 		placingType_ = BuildingType::Base;
 	}
-	placeDragActive_ = false;
+	placeDrag_.active = false;
 }
 
 void PlayingInput::SelectPlacingType(BuildingType type)
 {
 	SetMode(InteractionMode::Placing, true);
 	placingType_ = type;
-	placeDragActive_ = false;
+	placeDrag_.active = false;
 }
 
 void PlayingInput::ArmAbility(AbilityId id)
@@ -136,7 +136,7 @@ bool PlayingInput::IssueArmedAbilityAt(Vector2 worldTarget, bool queued)
 void PlayingInput::ToggleAreaRepair()
 {
 	SetMode(InteractionMode::AreaRepair, !HasMode(mode_, InteractionMode::AreaRepair));
-	repairDragActive_ = false;
+	repairDrag_.active = false;
 }
 
 void PlayingInput::ToggleAttackGround()
@@ -146,37 +146,37 @@ void PlayingInput::ToggleAttackGround()
 
 bool PlayingInput::IsDragging() const
 {
-	return dragging_;
+	return selectDrag_.active;
 }
 
 Vector2 PlayingInput::DragStart() const
 {
-	return dragStart_;
+	return selectDrag_.start;
 }
 
 bool PlayingInput::IsRightDragging() const
 {
-	return rightDragging_;
+	return rightDrag_.active;
 }
 
 Vector2 PlayingInput::RightDragStart() const
 {
-	return rightDragStart_;
+	return rightDrag_.start;
 }
 
 bool PlayingInput::RepairDragActive() const
 {
-	return repairDragActive_;
+	return repairDrag_.active;
 }
 
 Vector2 PlayingInput::RepairDragStart() const
 {
-	return repairDragStart_;
+	return repairDrag_.start;
 }
 
 bool PlayingInput::PlaceDragActive() const
 {
-	return placeDragActive_;
+	return placeDrag_.active;
 }
 
 const std::optional<BuildingType> &PlayingInput::PlacingType() const

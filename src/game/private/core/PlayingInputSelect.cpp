@@ -12,13 +12,13 @@ void PlayingInput::HandleLeftPress()
 	{
 		if (HasMode(mode_, InteractionMode::Placing))
 		{
-			placeDragActive_ = true;
-			placeDragStart_ = input_.MouseScreen();
+			placeDrag_.active = true;
+			placeDrag_.start = input_.MouseScreen();
 		}
 		else if (HasMode(mode_, InteractionMode::AreaRepair))
 		{
-			repairDragActive_ = true;
-			repairDragStart_ = input_.MouseScreen();
+			repairDrag_.active = true;
+			repairDrag_.start = input_.MouseScreen();
 		}
 		else if (minimap_.Contains(input_.MouseScreen()))
 		{
@@ -40,18 +40,18 @@ void PlayingInput::HandleLeftPress()
 		}
 		else
 		{
-			dragging_ = true;
-			dragStart_ = input_.MouseScreen();
+			selectDrag_.active = true;
+			selectDrag_.start = input_.MouseScreen();
 		}
 	}
 }
 
 void PlayingInput::HandleSelectDragRelease()
 {
-	if (dragging_ && !input_.LeftDown())
+	if (selectDrag_.active && !input_.LeftDown())
 	{
-		dragging_ = false;
-		const Rectangle box = NormalizeRect(dragStart_, input_.MouseScreen());
+		selectDrag_.active = false;
+		const Rectangle box = NormalizeRect(selectDrag_.start, input_.MouseScreen());
 		if (box.width < 6.0f && box.height < 6.0f)
 		{
 			const Vector2 world = input_.MouseWorld(camera_);

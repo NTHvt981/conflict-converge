@@ -39,6 +39,12 @@ inline constexpr bool HasMode(InteractionMode set, InteractionMode mode)
 	return (set & mode) != InteractionMode::None;
 }
 
+struct DragGesture
+{
+	bool active = false;
+	Vector2 start = {};
+};
+
 // In-match input dispatch. Runs only while Playing; advances no simulation itself.
 class PlayingInput : public Subsystem
 {
@@ -95,16 +101,12 @@ private:
 	std::optional<BuildingType> placingType_;
 	InteractionMode mode_ = InteractionMode::None;
 	int autoAddGroupBit_ = -1;
-	bool dragging_ = false;
-	Vector2 dragStart_ = {};
-	bool rightDragging_ = false;
-	Vector2 rightDragStart_ = {};
+	DragGesture selectDrag_;
+	DragGesture rightDrag_;
 	bool pendingRightClick_ = false;
 	float rightDragDist_ = 0.0f;
-	bool placeDragActive_ = false;
-	Vector2 placeDragStart_ = {};
-	bool repairDragActive_ = false;
-	Vector2 repairDragStart_ = {};
+	DragGesture placeDrag_;
+	DragGesture repairDrag_;
 	std::optional<AbilityId> armedAbility_;
 
 	void SetMode(InteractionMode mode, bool enabled);

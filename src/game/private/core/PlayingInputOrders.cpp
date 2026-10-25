@@ -14,13 +14,13 @@
 
 void PlayingInput::HandlePlaceDragRelease()
 {
-	if (placeDragActive_ && !input_.LeftDown())
+	if (placeDrag_.active && !input_.LeftDown())
 	{
-		placeDragActive_ = false;
+		placeDrag_.active = false;
 		if (placingType_.has_value())
 		{
 			const Rectangle box =
-				DraggedWorldBox(camera_, placeDragStart_, input_.MouseScreen());
+				DraggedWorldBox(camera_, placeDrag_.start, input_.MouseScreen());
 			if (box.width < 6.0f && box.height < 6.0f)
 			{
 				const cc::IVec2 tile =
@@ -69,13 +69,13 @@ void PlayingInput::HandlePlaceDragRelease()
 
 void PlayingInput::HandleRepairDragRelease()
 {
-	if (repairDragActive_ && !input_.LeftDown())
+	if (repairDrag_.active && !input_.LeftDown())
 	{
-		repairDragActive_ = false;
+		repairDrag_.active = false;
 		if (HasMode(mode_, InteractionMode::AreaRepair))
 		{
 			const Rectangle zone =
-				DraggedWorldBox(camera_, repairDragStart_, input_.MouseScreen());
+				DraggedWorldBox(camera_, repairDrag_.start, input_.MouseScreen());
 			std::vector<Entity> engineers;
 			registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 				if (unit.isSelected &&
@@ -130,20 +130,20 @@ void PlayingInput::HandleRightPress()
 		{
 			SetMode(InteractionMode::Placing, false);
 			placingType_.reset();
-			placeDragActive_ = false;
+			placeDrag_.active = false;
 		}
 		else if (HasMode(mode_, InteractionMode::AreaRepair))
 		{
 			SetMode(InteractionMode::AreaRepair, false);
-			repairDragActive_ = false;
+			repairDrag_.active = false;
 		}
 		else
 		{
 			const bool altDown = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
 			if (altDown)
 			{
-				rightDragging_ = true;
-				rightDragStart_ = input_.MouseScreen();
+				rightDrag_.active = true;
+				rightDrag_.start = input_.MouseScreen();
 			}
 		}
 	}
@@ -316,7 +316,7 @@ void PlayingInput::DispatchRightClickOrders()
 void PlayingInput::HandleRightRelease(bool cancelledPlacement)
 {
 	const bool altDown = IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT);
-	if (input_.RightPressed() && !rightDragging_ && !cancelledPlacement)
+	if (input_.RightPressed() && !rightDrag_.active && !cancelledPlacement)
 	{
 		if (settings_.rightDragPan && !altDown)
 		{
@@ -340,9 +340,9 @@ void PlayingInput::HandleRightRelease(bool cancelledPlacement)
 
 void PlayingInput::HandleLineDragRelease()
 {
-	if (rightDragging_ && !input_.RightDown())
+	if (rightDrag_.active && !input_.RightDown())
 	{
-		rightDragging_ = false;
+		rightDrag_.active = false;
 		std::vector<Entity> squad;
 		registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 			if (unit.isSelected)
@@ -353,7 +353,7 @@ void PlayingInput::HandleLineDragRelease()
 		if (!squad.empty())
 		{
 			const auto [lineStart, lineEnd] =
-				DraggedWorldLine(camera_, rightDragStart_, input_.MouseScreen());
+				DraggedWorldLine(camera_, rightDrag_.start, input_.MouseScreen());
 			formation::IssueLineFormationMoveFP(registry_, squad, map_, occ_, lineStart,
 												lineEnd,
 												HasMode(mode_, InteractionMode::SlowestSpeed));
