@@ -11,7 +11,7 @@
 namespace
 {
 
-Entity AddWatcher(Registry &registry, int teamID, UnitType type, float sightRange, int tileX,
+Entity AddWatcher(Registry &registry, TeamId teamID, UnitType type, float sightRange, int tileX,
 				  int tileY)
 {
 	Unit unit;
@@ -33,70 +33,70 @@ void RunFogTests()
 	Registry registry;
 	FogOfWar fog;
 	fog.Resize(20, 15);
-	AddWatcher(registry, 0, UnitType::LightTank, 128.0f, 5, 5);
+	AddWatcher(registry, kPlayerTeam, UnitType::LightTank, 128.0f, 5, 5);
 	fog.Recompute(registry);
-	CC_CHECK(fog.IsVisible(0, { 5, 5 }));
-	CC_CHECK(fog.IsVisible(0, { 7, 5 }));
-	CC_CHECK(!fog.IsVisible(0, { 8, 5 }));
-	CC_CHECK(fog.IsVisible(0, { 6, 6 }));   // 1+1 <= 4: inside the disc
-	CC_CHECK(!fog.IsVisible(0, { 7, 6 }));  // 4+1 > 4: clipped corner
-	CC_CHECK(fog.IsExplored(0, { 7, 5 }));
-	CC_CHECK(!fog.IsExplored(0, { 8, 5 }));
+	CC_CHECK(fog.IsVisible(kPlayerTeam, { 5, 5 }));
+	CC_CHECK(fog.IsVisible(kPlayerTeam, { 7, 5 }));
+	CC_CHECK(!fog.IsVisible(kPlayerTeam, { 8, 5 }));
+	CC_CHECK(fog.IsVisible(kPlayerTeam, { 6, 6 }));   // 1+1 <= 4: inside the disc
+	CC_CHECK(!fog.IsVisible(kPlayerTeam, { 7, 6 }));  // 4+1 > 4: clipped corner
+	CC_CHECK(fog.IsExplored(kPlayerTeam, { 7, 5 }));
+	CC_CHECK(!fog.IsExplored(kPlayerTeam, { 8, 5 }));
 
 	// --- team isolation: team 1 sees nothing from team 0's eyes ---
-	CC_CHECK(!fog.IsVisible(1, { 5, 5 }));
-	CC_CHECK(!fog.IsExplored(1, { 5, 5 }));
+	CC_CHECK(!fog.IsVisible(kEnemyTeam, { 5, 5 }));
+	CC_CHECK(!fog.IsExplored(kEnemyTeam, { 5, 5 }));
 
 	// --- explored persists after the watcher leaves ---
 	registry.Clear();
-	AddWatcher(registry, 0, UnitType::LightTank, 128.0f, 15, 12);
+	AddWatcher(registry, kPlayerTeam, UnitType::LightTank, 128.0f, 15, 12);
 	fog.Recompute(registry);
-	CC_CHECK(!fog.IsVisible(0, { 5, 5 }));
-	CC_CHECK(fog.IsExplored(0, { 5, 5 })); // frozen snapshot
-	CC_CHECK(fog.IsVisible(0, { 15, 12 }));
+	CC_CHECK(!fog.IsVisible(kPlayerTeam, { 5, 5 }));
+	CC_CHECK(fog.IsExplored(kPlayerTeam, { 5, 5 })); // frozen snapshot
+	CC_CHECK(fog.IsVisible(kPlayerTeam, { 15, 12 }));
 
 	// --- the blind and the dead reveal nothing ---
 	registry.Clear();
-	AddWatcher(registry, 0, UnitType::LightTank, 0.0f, 5, 5);
-	const Entity corpse = AddWatcher(registry, 0, UnitType::LightTank, 500.0f, 5, 5);
+	AddWatcher(registry, kPlayerTeam, UnitType::LightTank, 0.0f, 5, 5);
+	const Entity corpse = AddWatcher(registry, kPlayerTeam, UnitType::LightTank, 500.0f, 5, 5);
 	registry.Get<Unit>(corpse)->health = 0.0f;
 	FogOfWar dark;
 	dark.Resize(20, 15);
 	dark.Recompute(registry);
-	CC_CHECK(!dark.IsVisible(0, { 5, 5 }));
-	CC_CHECK(!dark.IsExplored(0, { 5, 5 }));
+	CC_CHECK(!dark.IsVisible(kPlayerTeam, { 5, 5 }));
+	CC_CHECK(!dark.IsExplored(kPlayerTeam, { 5, 5 }));
 
 	// --- scout bonus: same sightRange, Infantry out-sees LightTank ---
 	Registry scoutRegistry;
 	FogOfWar scoutFog;
 	scoutFog.Resize(20, 15);
-	AddWatcher(scoutRegistry, 0, UnitType::LightTank, 64.0f, 5, 5);
-	AddWatcher(scoutRegistry, 1, UnitType::RifleInfantry, 64.0f, 15, 5);
+	AddWatcher(scoutRegistry, kPlayerTeam, UnitType::LightTank, 64.0f, 5, 5);
+	AddWatcher(scoutRegistry, kEnemyTeam, UnitType::RifleInfantry, 64.0f, 15, 5);
 	scoutFog.Recompute(scoutRegistry);
 	// Radius 1 without bonus: (6,5) yes, (7,5) no. With 1.5x: radius 2.
-	CC_CHECK(scoutFog.IsVisible(0, { 6, 5 }));
-	CC_CHECK(!scoutFog.IsVisible(0, { 7, 5 }));
-	CC_CHECK(scoutFog.IsVisible(1, { 17, 5 })); // scout bonus reaches
+	CC_CHECK(scoutFog.IsVisible(kPlayerTeam, { 6, 5 }));
+	CC_CHECK(!scoutFog.IsVisible(kPlayerTeam, { 7, 5 }));
+	CC_CHECK(scoutFog.IsVisible(kEnemyTeam, { 17, 5 })); // scout bonus reaches
 
 	// --- explored byte roundtrip (+ size-mismatch guard) ---
-	const std::vector<std::uint8_t> bytes = fog.ExploredBytes(0);
+	const std::vector<std::uint8_t> bytes = fog.ExploredBytes(kPlayerTeam);
 	CC_CHECK(bytes.size() == 20 * 15);
 	FogOfWar restored;
 	restored.Resize(20, 15);
-	restored.SetExplored(0, bytes.data(), bytes.size());
-	CC_CHECK(restored.IsExplored(0, { 5, 5 }));
-	CC_CHECK(restored.IsExplored(0, { 15, 12 }));
-	CC_CHECK(!restored.IsExplored(0, { 0, 0 }));
-	CC_CHECK(!restored.IsVisible(0, { 5, 5 })); // bytes carry memory, not sight
+	restored.SetExplored(kPlayerTeam, bytes.data(), bytes.size());
+	CC_CHECK(restored.IsExplored(kPlayerTeam, { 5, 5 }));
+	CC_CHECK(restored.IsExplored(kPlayerTeam, { 15, 12 }));
+	CC_CHECK(!restored.IsExplored(kPlayerTeam, { 0, 0 }));
+	CC_CHECK(!restored.IsVisible(kPlayerTeam, { 5, 5 })); // bytes carry memory, not sight
 	const std::uint8_t shortBytes[4] = { 1, 1, 1, 1 };
-	restored.SetExplored(1, shortBytes, sizeof(shortBytes)); // ignored, kept empty
-	CC_CHECK(!restored.IsExplored(1, { 0, 0 }));
-	const std::vector<int> teams = fog.Teams();
-	CC_CHECK(teams.size() == 1 && teams[0] == 0);
+	restored.SetExplored(kEnemyTeam, shortBytes, sizeof(shortBytes)); // ignored, kept empty
+	CC_CHECK(!restored.IsExplored(kEnemyTeam, { 0, 0 }));
+	const std::vector<TeamId> teams = fog.Teams();
+	CC_CHECK(teams.size() == 1 && teams[0] == kPlayerTeam);
 
 	// --- resize wipes memory ---
 	fog.Resize(20, 15);
-	CC_CHECK(!fog.IsExplored(0, { 5, 5 }));
+	CC_CHECK(!fog.IsExplored(kPlayerTeam, { 5, 5 }));
 	CC_CHECK(fog.Teams().empty());
 }
 
@@ -110,7 +110,7 @@ void RunFogCombatTests()
 	FogOfWar fog;
 	fog.Resize(20, 15);
 	Unit foe;
-	foe.teamID = 1;
+	foe.teamID = kEnemyTeam;
 	foe.type = UnitType::LightTank;
 	foe.health = 100.0f;
 	foe.sightRange = 64.0f;
@@ -120,7 +120,7 @@ void RunFogCombatTests()
 	fog.Recompute(registry); // team 0 sees nothing; team 1 sees its own ground
 
 	Unit seeker;
-	seeker.teamID = 0;
+	seeker.teamID = kPlayerTeam;
 	seeker.type = UnitType::LightTank;
 	seeker.health = 100.0f;
 	seeker.sightRange = 512.0f; // reaches (10,2): 8 tiles away

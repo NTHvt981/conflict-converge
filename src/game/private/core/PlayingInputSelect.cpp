@@ -30,7 +30,7 @@ void PlayingInput::HandleLeftPress()
 			const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(input_.MouseWorld(camera_)));
 			const cc::IVec2 free = NearestFreeFootprintTile(map_, &occ_, tile, 1, 1);
 			registry_.Each<Building>([&](Entity, Building &building) {
-				if (building.isSelected && building.teamID == 0 &&
+				if (building.isSelected && building.teamID == kPlayerTeam &&
 					ProducerCategory(building.type).has_value())
 				{
 					building.rallyTile = free;
@@ -66,7 +66,7 @@ void PlayingInput::HandleSelectDragRelease()
 						DraggedWorldBox(camera_, { 0.0f, 0.0f },
 										{ static_cast<float>(GetScreenWidth()),
 										  static_cast<float>(GetScreenHeight()) }),
-						hitUnit->type, 0, false);
+						hitUnit->type, kPlayerTeam, false);
 				}
 				else
 				{

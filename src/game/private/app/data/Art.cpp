@@ -121,9 +121,9 @@ const char *NodeFile(ResourceKind kind)
 	return kind == ResourceKind::Iron ? "iron" : "oil";
 }
 
-const char *TeamName(int teamID)
+const char *TeamName(TeamId teamID)
 {
-	return teamID == 0 ? "blue" : "red";
+	return teamID == kPlayerTeam ? "blue" : "red";
 }
 
 }
@@ -166,9 +166,9 @@ int Art::TerrainSlot(TerrainType type)
 	return -1;
 }
 
-int Art::TeamSlot(int teamID)
+int Art::TeamSlot(TeamId teamID)
 {
-	return teamID == 0 ? 0 : 1;
+	return teamID == kPlayerTeam ? 0 : 1;
 }
 
 bool Art::Init(bool withDevice)
@@ -507,7 +507,7 @@ const Particles &Art::ParticlesPool() const
 	return particles_;
 }
 
-void Art::DrawUnit(UnitType type, int teamID, UnitFrame frame, Vector2 tileCorner) const
+void Art::DrawUnit(UnitType type, TeamId teamID, UnitFrame frame, Vector2 tileCorner) const
 {
 	if (fallback_)
 	{
@@ -653,13 +653,13 @@ std::string Art::TankHeadSprite(UnitType type, int facingDir) const
 	return FindSpriteByName(sheet_, name) != nullptr ? name : std::string{};
 }
 
-Color Art::TeamTint(int teamID) const
+Color Art::TeamTint(TeamId teamID) const
 {
 	if (colorBlindMode_)
 	{
-		return teamID == 0 ? Color{ 230, 159, 0, 255 } : Color{ 86, 180, 233, 255 };
+		return teamID == kPlayerTeam ? Color{ 230, 159, 0, 255 } : Color{ 86, 180, 233, 255 };
 	}
-	return teamID == 0 ? BLUE : RED;
+	return teamID == kPlayerTeam ? BLUE : RED;
 }
 
 void Art::SetColorBlindMode(bool enabled)
@@ -742,7 +742,7 @@ void Art::DrawOneAtlasSprite(const SpriteDefInfo &s, Vector2 tileCorner, Color t
 	DrawTexturePro(it->second, src, dest, pivot, rotationDeg, tint);
 }
 
-void Art::DrawBuilding(BuildingType type, int teamID, int tileX, int tileY,
+void Art::DrawBuilding(BuildingType type, TeamId teamID, int tileX, int tileY,
 					   BuildingFrame frame, Color tint) const
 {
 	if (fallback_)
@@ -813,7 +813,7 @@ void Art::DrawIcon(ResourceKind kind, Vector2 screenPos) const
 	DrawTextureV(icons_[static_cast<int>(kind)], screenPos, WHITE);
 }
 
-void Art::DrawRallyMarker(int teamID, Vector2 worldCenter) const
+void Art::DrawRallyMarker(TeamId teamID, Vector2 worldCenter) const
 {
 	if (fallback_ || rallyBase_.id == 0)
 	{

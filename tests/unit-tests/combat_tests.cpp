@@ -75,7 +75,7 @@ void RunCombatTests()
 		Unit crusher;
 		crusher.type = UnitType::HeavyTank;
 		ApplyBaseStats(crusher);
-		crusher.teamID = 0;
+		crusher.teamID = kPlayerTeam;
 		crusher.position = cc::ToRaylib(cc::TileToWorld(3, 3));
 		const Entity crusherId = registry.Create();
 		registry.Add(crusherId, crusher);
@@ -83,7 +83,7 @@ void RunCombatTests()
 		Unit victim;
 		victim.type = UnitType::RifleInfantry;
 		ApplyBaseStats(victim);
-		victim.teamID = 1;
+		victim.teamID = kEnemyTeam;
 		victim.position = cc::ToRaylib(cc::TileToWorld(3, 3)); // same tile: overlap
 		const Entity victimId = registry.Create();
 		registry.Add(victimId, victim);
@@ -91,7 +91,7 @@ void RunCombatTests()
 		Unit friendFoot;
 		friendFoot.type = UnitType::RifleInfantry;
 		ApplyBaseStats(friendFoot);
-		friendFoot.teamID = 0; // same team: no friendly crush
+		friendFoot.teamID = kPlayerTeam; // same team: no friendly crush
 		friendFoot.position = cc::ToRaylib(cc::TileToWorld(3, 3));
 		const Entity friendId = registry.Create();
 		registry.Add(friendId, friendFoot);
@@ -99,7 +99,7 @@ void RunCombatTests()
 		Unit enemyVehicle;
 		enemyVehicle.type = UnitType::LightTank;
 		ApplyBaseStats(enemyVehicle);
-		enemyVehicle.teamID = 1; // hulls are never crushed
+		enemyVehicle.teamID = kEnemyTeam; // hulls are never crushed
 		enemyVehicle.position = cc::ToRaylib(cc::TileToWorld(3, 3));
 		const Entity vehicleId = registry.Create();
 		registry.Add(vehicleId, enemyVehicle);
@@ -118,14 +118,14 @@ void RunCombatTests()
 		Unit light;
 		light.type = UnitType::LightTank; // no crushesFlesh
 		ApplyBaseStats(light);
-		light.teamID = 0;
+		light.teamID = kPlayerTeam;
 		light.position = cc::ToRaylib(cc::TileToWorld(5, 5));
 		const Entity lightId = registry.Create();
 		registry.Add(lightId, light);
 		Unit foot;
 		foot.type = UnitType::Engineer;
 		ApplyBaseStats(foot);
-		foot.teamID = 1;
+		foot.teamID = kEnemyTeam;
 		foot.position = cc::ToRaylib(cc::TileToWorld(5, 5));
 		const Entity footId = registry.Create();
 		registry.Add(footId, foot);

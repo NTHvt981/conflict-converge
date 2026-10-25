@@ -8,6 +8,7 @@
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
 #include "core/Subsystem.h"
+#include "core/Team.h"
 #include "units/Targeting.h"
 #include "units/Unit.h"
 #include "units/UnitFactory.h"
@@ -75,19 +76,19 @@ class AICommander : public Subsystem
 {
 public:
 	AICommander(Registry &registry, TileMap &map, ResourceNodes &nodes, EventDispatcher &events,
-				int teamID, AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile);
+				TeamId teamID, AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile);
 
 	void SetupBase();
 	// Restart for a new match: team, difficulty, homes, timers, harvesters,
 	// and the owned economy/queue. Reference members are untouched.
-	void Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile, int teamID);
+	void Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile, TeamId teamID);
 	void Update(float dt);
 	// Bind shared unit occupancy for footprint-aware orders (null = plain point orders).
 	void SetOccupancy(OccupancyGrid *occ);
 	// Bind live fog for honest targeting (null = legacy omniscient).
 	void SetFog(const FogOfWar *fog);
 
-	int TeamID() const;
+	TeamId TeamID() const;
 	AIDifficulty Difficulty() const;
 	int CombatUnitCount() const;   // living non-Engineer units on our team
 	int HarvesterCount() const;    // living Engineers on our team
@@ -133,7 +134,7 @@ private:
 	ProductionQueue queueBootcamp_{ ProductionCategory::Infantry };
 	ProductionQueue queueWorkshop_{ ProductionCategory::Vehicle };
 	AIDifficultyParams params_;
-	int teamID_;
+	TeamId teamID_;
 	AIDifficulty difficulty_;
 	cc::IVec2 homeTile_;
 	cc::IVec2 enemyTile_;

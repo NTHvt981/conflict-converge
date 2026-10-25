@@ -193,18 +193,18 @@ void RunArtTests()
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6).empty());
 		art.DrawAtlasFrame("rifle_infantry_idle_0_0", { 0.0f, 0.0f }, WHITE); // no crash
 		// Default mode: raw BLUE/RED (colorBlindMode_ defaults to false).
-		const Color blue = art.TeamTint(0);
+		const Color blue = art.TeamTint(kPlayerTeam);
 		CC_CHECK(blue.r == BLUE.r && blue.g == BLUE.g && blue.b == BLUE.b);
-		const Color red = art.TeamTint(1);
+		const Color red = art.TeamTint(kEnemyTeam);
 		CC_CHECK(red.r == RED.r && red.g == RED.g && red.b == RED.b);
 		// Color-blind mode: Okabe-Ito orange / sky blue.
 		art.SetColorBlindMode(true);
-		const Color cbOrange = art.TeamTint(0);
+		const Color cbOrange = art.TeamTint(kPlayerTeam);
 		CC_CHECK(cbOrange.r == 230 && cbOrange.g == 159 && cbOrange.b == 0);
-		const Color cbSky = art.TeamTint(1);
+		const Color cbSky = art.TeamTint(kEnemyTeam);
 		CC_CHECK(cbSky.r == 86 && cbSky.g == 180 && cbSky.b == 233);
 		art.SetColorBlindMode(false);
-		const Color backToBlue = art.TeamTint(0);
+		const Color backToBlue = art.TeamTint(kPlayerTeam);
 		CC_CHECK(backToBlue.r == BLUE.r && backToBlue.g == BLUE.g && backToBlue.b == BLUE.b);
 	}
 

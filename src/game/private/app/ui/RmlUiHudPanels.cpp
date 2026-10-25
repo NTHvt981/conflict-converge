@@ -11,11 +11,9 @@
 
 #include "economy/Building.h"
 #include "app/ui/Hud.h"
+#include "core/Team.h"
 #include "units/Unit.h"
 #include "units/UnitFactory.h"
-
-// Player team for every HUD readout, matching the raygui panels.
-constexpr int kPlayerTeam = 0;
 
 void RmlUiHud::RefreshPause()
 {

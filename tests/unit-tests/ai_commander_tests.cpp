@@ -20,7 +20,7 @@
 namespace
 {
 
-int CountBuildings(const Registry &registry, int teamID)
+int CountBuildings(const Registry &registry, TeamId teamID)
 {
 	int count = 0;
 	registry.Each<Building>([&](Entity, const Building &building) {
@@ -77,14 +77,15 @@ void RunAICommanderTests()
 	TileMap map(20, 15);
 	ResourceNodes nodes;
 	EventDispatcher events;
-	AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 16, 9 }, { 1, 10 });
-	CC_CHECK(ai.TeamID() == 1);
+	AICommander ai(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Medium, { 16, 9 },
+				   { 1, 10 });
+	CC_CHECK(ai.TeamID() == kEnemyTeam);
 	CC_CHECK(ai.Difficulty() == AIDifficulty::Medium);
 	CC_CHECK(ai.WavesLaunched() == 0);
 	CC_CHECK(!ai.HasScouted());
 	ai.SetupBase();
 	UpdateBuildingConstruction(registry, 20.0f); // sites -> Operational (game ticks this)
-	CC_CHECK(CountBuildings(registry, 1) == 4);
+	CC_CHECK(CountBuildings(registry, kEnemyTeam) == 4);
 	CC_CHECK(ai.HasBootcamp());
 	CC_CHECK(ai.HasWorkshop());
 	CC_CHECK(ai.CombatUnitCount() >= 1); // guard: team never starts empty
@@ -103,13 +104,13 @@ void RunAICommanderTests()
 	ResourceNodes warNodes;
 	EventDispatcher warEvents;
 	ResourceSystem warResources;
-	AICommander war(warRegistry, warMap, warNodes, warEvents, 1, AIDifficulty::Easy, { 16, 9 },
-					{ 1, 10 });
+	AICommander war(warRegistry, warMap, warNodes, warEvents, kEnemyTeam, AIDifficulty::Easy,
+					{ 16, 9 }, { 1, 10 });
 	war.SetupBase();
 	UnitFactory warFactory(warRegistry, warResources, warEvents);
 	for (int i = 0; i < 3; ++i)
 	{
-		warFactory.SpawnPrepaid(UnitType::RifleInfantry, 1,
+		warFactory.SpawnPrepaid(UnitType::RifleInfantry, kEnemyTeam,
 								cc::ToRaylib(cc::TileToWorld(16 + i, 9)));
 	}
 	war.Update(1.0f / 60.0f);
@@ -117,7 +118,7 @@ void RunAICommanderTests()
 	int ordered = 0;
 	warRegistry.Each<Unit>([&](Entity id, const Unit &unit) {
 		const Mover *mover = FindMover(warRegistry, id);
-		if (unit.teamID == 1 && unit.health > 0.0f && mover != nullptr &&
+		if (unit.teamID == kEnemyTeam && unit.health > 0.0f && mover != nullptr &&
 			(mover->hasMoveOrder || mover->hasPath))
 		{
 			++ordered;
@@ -130,8 +131,8 @@ void RunAICommanderTests()
 	TileMap scoutMap(20, 15);
 	ResourceNodes scoutNodes;
 	EventDispatcher scoutEvents;
-	AICommander scout(scoutRegistry, scoutMap, scoutNodes, scoutEvents, 1, AIDifficulty::Hard,
-					  { 16, 9 }, { 1, 10 });
+	AICommander scout(scoutRegistry, scoutMap, scoutNodes, scoutEvents, kEnemyTeam,
+					  AIDifficulty::Hard, { 16, 9 }, { 1, 10 });
 	scout.SetupBase();
 	for (int i = 0; i < 16 * 60; ++i)
 	{
@@ -151,10 +152,10 @@ void RunAICommanderTests()
 	EventDispatcher simEvents;
 	ResourceSystem simResources;
 	UnitFactory simFactory(simRegistry, simResources, simEvents);
-	AICommander left(simRegistry, simMap, simNodes, simEvents, 0, AIDifficulty::Easy, { 1, 14 },
-					 { 21, 3 });
-	AICommander right(simRegistry, simMap, simNodes, simEvents, 1, AIDifficulty::Easy, { 21, 3 },
-					  { 1, 14 });
+	AICommander left(simRegistry, simMap, simNodes, simEvents, kPlayerTeam,
+					 AIDifficulty::Easy, { 1, 14 }, { 21, 3 });
+	AICommander right(simRegistry, simMap, simNodes, simEvents, kEnemyTeam,
+					  AIDifficulty::Easy, { 21, 3 }, { 1, 14 });
 	left.SetupBase();
 	right.SetupBase();
 	const std::size_t startEntities = simRegistry.EntityCount();
@@ -182,7 +183,7 @@ void RunAICommanderTests()
 		ResourceNodes nodes;
 		EventDispatcher events;
 		OccupancyGrid occ(20, 15);
-		AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Medium, { 16, 9 },
+		AICommander ai(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Medium, { 16, 9 },
 					   { 1, 10 });
 		ai.SetupBase();
 		ai.SetOccupancy(&occ);
@@ -225,14 +226,14 @@ void RunAICommanderTests()
 		EventDispatcher events;
 		OccupancyGrid occ(20, 15);
 		ResourceSystem resources;
-		AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 16, 9 },
-					   { 1, 10 });
+		AICommander ai(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Easy,
+					   { 16, 9 }, { 1, 10 });
 		ai.SetupBase();
 		ai.SetOccupancy(&occ);
 		UnitFactory factory(registry, resources, events);
 		for (int i = 0; i < 3; ++i)
 		{
-			factory.SpawnPrepaid(UnitType::RifleInfantry, 1,
+			factory.SpawnPrepaid(UnitType::RifleInfantry, kEnemyTeam,
 								 cc::ToRaylib(cc::TileToWorld(16 + i, 9)));
 		}
 		// Wave slots around lastSeenEnemy (1,10): (1,10),(2,10),(1,11),(2,11).
@@ -246,7 +247,7 @@ void RunAICommanderTests()
 		CC_CHECK(ai.WavesLaunched() == 1);
 		int ordered = 0;
 		registry.Each<Unit>([&](Entity id, const Unit &unit) {
-			if (id == blocker || unit.teamID != 1 || unit.health <= 0.0f)
+			if (id == blocker || unit.teamID != kEnemyTeam || unit.health <= 0.0f)
 			{
 				return;
 			}
@@ -275,14 +276,14 @@ void RunAICommanderTests()
 		EventDispatcher events;
 		OccupancyGrid occ(20, 15);
 		ResourceSystem resources;
-		AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 16, 9 },
-					   { 1, 10 });
+		AICommander ai(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Easy,
+					   { 16, 9 }, { 1, 10 });
 		ai.SetupBase();
 		// NOTE: no SetOccupancy — legacy path.
 		UnitFactory factory(registry, resources, events);
 		for (int i = 0; i < 3; ++i)
 		{
-			factory.SpawnPrepaid(UnitType::RifleInfantry, 1,
+			factory.SpawnPrepaid(UnitType::RifleInfantry, kEnemyTeam,
 								 cc::ToRaylib(cc::TileToWorld(16 + i, 9)));
 		}
 		const Entity blocker = registry.Create();
@@ -292,7 +293,7 @@ void RunAICommanderTests()
 		// Blind march drives straight at the slot even though it is occupied.
 		bool droveAtBlocker = false;
 		registry.Each<Unit>([&](Entity id, const Unit &unit) {
-			if (id == blocker || unit.teamID != 1 || unit.health <= 0.0f ||
+			if (id == blocker || unit.teamID != kEnemyTeam || unit.health <= 0.0f ||
 				unit.type == UnitType::Engineer)
 			{
 				return;
@@ -317,15 +318,15 @@ void RunAICommanderTests()
 		ResourceSystem resources;
 		FogOfWar fog;
 		fog.Resize(20, 15);
-		AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 16, 9 },
-					   { 1, 10 });
+		AICommander ai(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Easy,
+					   { 16, 9 }, { 1, 10 });
 		ai.SetupBase();
 		UnitFactory factory(registry, resources, events);
-		factory.SpawnPrepaid(UnitType::RifleInfantry, 0,
+		factory.SpawnPrepaid(UnitType::RifleInfantry, kPlayerTeam,
 							 cc::ToRaylib(cc::TileToWorld(1, 10)));
 		for (int i = 0; i < 3; ++i)
 		{
-			factory.SpawnPrepaid(UnitType::RifleInfantry, 1,
+			factory.SpawnPrepaid(UnitType::RifleInfantry, kEnemyTeam,
 								 cc::ToRaylib(cc::TileToWorld(15 + i, 8)));
 		}
 		fog.Recompute(registry); // home guard sees home only: (1,10) stays dark
@@ -333,7 +334,7 @@ void RunAICommanderTests()
 		ai.Update(1.0f / 60.0f);
 		CC_CHECK(ai.WavesLaunched() == 1);
 		registry.Each<Unit>([&](Entity id, const Unit &unit) {
-			if (unit.teamID != 1 || unit.health <= 0.0f || unit.type == UnitType::Engineer)
+			if (unit.teamID != kEnemyTeam || unit.health <= 0.0f || unit.type == UnitType::Engineer)
 			{
 				return;
 			}
@@ -354,16 +355,19 @@ void RunAICommanderTests()
 		ResourceSystem resources;
 		FogOfWar fog;
 		fog.Resize(20, 15);
-		AICommander ai(registry, map, nodes, events, 1, AIDifficulty::Easy, { 16, 9 },
-					   { 1, 10 });
+		AICommander ai(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Easy,
+					   { 16, 9 }, { 1, 10 });
 		ai.SetupBase();
 		UnitFactory factory(registry, resources, events);
-		factory.SpawnPrepaid(UnitType::RifleInfantry, 1, cc::ToRaylib(cc::TileToWorld(7, 5)));
-		factory.SpawnPrepaid(UnitType::RifleInfantry, 0, cc::ToRaylib(cc::TileToWorld(6, 4)));
-		factory.SpawnPrepaid(UnitType::RifleInfantry, 0, cc::ToRaylib(cc::TileToWorld(7, 4)));
+		factory.SpawnPrepaid(UnitType::RifleInfantry, kEnemyTeam,
+							 cc::ToRaylib(cc::TileToWorld(7, 5)));
+		factory.SpawnPrepaid(UnitType::RifleInfantry, kPlayerTeam,
+							 cc::ToRaylib(cc::TileToWorld(6, 4)));
+		factory.SpawnPrepaid(UnitType::RifleInfantry, kPlayerTeam,
+							 cc::ToRaylib(cc::TileToWorld(7, 4)));
 		for (int i = 0; i < 3; ++i)
 		{
-			factory.SpawnPrepaid(UnitType::RifleInfantry, 1,
+			factory.SpawnPrepaid(UnitType::RifleInfantry, kEnemyTeam,
 								 cc::ToRaylib(cc::TileToWorld(15 + i, 8)));
 		}
 		fog.Recompute(registry); // scout at (7,5) lights the (6,4)+(7,4) pair
@@ -371,7 +375,7 @@ void RunAICommanderTests()
 		ai.Update(1.0f / 60.0f);
 		CC_CHECK(ai.WavesLaunched() == 1);
 		registry.Each<Unit>([&](Entity id, const Unit &unit) {
-			if (unit.teamID != 1 || unit.health <= 0.0f || unit.type == UnitType::Engineer)
+			if (unit.teamID != kEnemyTeam || unit.health <= 0.0f || unit.type == UnitType::Engineer)
 			{
 				return;
 			}

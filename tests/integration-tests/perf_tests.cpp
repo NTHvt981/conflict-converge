@@ -31,7 +31,8 @@ void RunPerfTests()
 	for (int i = 0; i < 200; ++i)
 	{
 		const cc::Vec2 corner = cc::TileToWorld(i % 40, (i / 40) % 30);
-		factory.Spawn(mix[i % 4], i % 2, cc::ToRaylib(corner));
+		factory.Spawn(mix[i % 4], (i % 2) == 0 ? kPlayerTeam : kEnemyTeam,
+					  cc::ToRaylib(corner));
 	}
 	CC_CHECK(registry.EntityCount() == 200);
 

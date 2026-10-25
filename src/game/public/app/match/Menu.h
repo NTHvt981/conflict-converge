@@ -6,6 +6,7 @@
 #include "units/AICommander.h"
 #include "world/MapFile.h"
 #include "core/Registry.h"
+#include "core/Team.h"
 #include "units/Unit.h"
 #include "reasings.h"
 
@@ -139,4 +140,4 @@ inline float MenuFadeAlpha(float time)
 	return EaseQuadOut(time, 0.0f, 1.0f, kMenuFadeInDuration);
 }
 
-bool TeamHasUnits(const Registry &registry, int teamID);
+bool TeamHasUnits(const Registry &registry, TeamId teamID);

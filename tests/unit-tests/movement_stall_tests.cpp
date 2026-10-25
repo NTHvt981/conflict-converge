@@ -26,7 +26,7 @@
 namespace
 {
 
-Unit MakeInfantry(int tileX, int tileY, int team)
+Unit MakeInfantry(int tileX, int tileY, TeamId team)
 {
 	Unit unit;
 	unit.type = UnitType::RifleInfantry;
@@ -58,9 +58,9 @@ void RunMovementStallTests()
 		Registry registry;
 
 		const Entity a = registry.Create();
-		registry.Add(a, MakeInfantry(0, 1, 0));
+		registry.Add(a, MakeInfantry(0, 1, kPlayerTeam));
 		const Entity b = registry.Create();
-		registry.Add(b, MakeInfantry(4, 1, 0));
+		registry.Add(b, MakeInfantry(4, 1, kPlayerTeam));
 
 		Unit *ua = registry.Get<Unit>(a);
 		Unit *ub = registry.Get<Unit>(b);
@@ -117,7 +117,7 @@ void RunMovementStallTests()
 		for (int i = 0; i < 5; ++i)
 		{
 			const Entity e = registry.Create();
-			registry.Add(e, MakeInfantry(0, i, 0));
+			registry.Add(e, MakeInfantry(0, i, kPlayerTeam));
 			squad.push_back(e);
 		}
 

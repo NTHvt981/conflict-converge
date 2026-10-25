@@ -14,6 +14,7 @@ One line per area; the linked section carries the Do/Don't pair.
 | [Build](#language-and-build) | C++20, MSVC, x64; regenerate projects after any file add or remove |
 | [Layout](#files-and-folders) | Header in `public/<module>/`, TU in `private/<module>/`, PascalCase file names |
 | [Naming](#naming) | PascalCase types/functions; camelCase data; `_` class members; `k` constants; `Count` last |
+| [Domain types](#name-domain-types-instead-of-bare-ints) | A sentinel or mode gets a named type; wire fields stay `std::int32_t` |
 | [Type tables](#keep-one-descriptor-table-per-type-enum) | One descriptor table per type enum; a new enumerator adds a row, not a `case` |
 | [Includes](#headers-and-includes) | `#pragma once`; own header first; root-qualified includes; forward-declare cycles |
 | [Format](#formatting) | Tabs; Allman braces; `const T &`; comma-first init lists; 100 columns; LF |
@@ -326,6 +327,31 @@ static int saveVersion = 3;
 ```
 
 `cc::TILE_SIZE` is the all-caps exception; leave it that way.
+
+### Name domain types instead of bare ints
+
+**✅ Do**
+```cpp
+enum class TeamId : int
+{
+	Any = -1,
+	Player = 0,
+	Enemy = 1
+};
+
+void GatherTick(Registry &registry, ResourceSystem &resources, float dt,
+				TeamId teamID = kAnyTeam);
+```
+
+**❌ Don't**
+```cpp
+// teamID < 0 = all teams.
+void GatherTick(Registry &registry, ResourceSystem &resources, float dt, int teamID = -1);
+```
+
+A sentinel or mode that a comment has to explain becomes a named type (`TeamId`,
+`ResourceKind`, `InitMode`, `InteractionMode`); wire fields stay `std::int32_t` and
+convert at the save boundary.
 
 ### Use cc, save_detail, and anonymous namespaces
 

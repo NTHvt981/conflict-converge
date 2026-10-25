@@ -14,8 +14,8 @@
 namespace
 {
 
-Entity SpawnUnit(Registry &registry, UnitType type, int team, int tileX, int tileY,
-				 float hpFrac)
+Entity SpawnUnit(Registry &registry, UnitType type, TeamId team, int tileX,
+				 int tileY, float hpFrac)
 {
 	Entity entity = registry.Create();
 	Unit unit;
@@ -28,7 +28,7 @@ Entity SpawnUnit(Registry &registry, UnitType type, int team, int tileX, int til
 	return entity;
 }
 
-Entity SpawnBuilding(Registry &registry, TileMap &map, BuildingType type, int team,
+Entity SpawnBuilding(Registry &registry, TileMap &map, BuildingType type, TeamId team,
 					 int tileX, int tileY, float hpFrac)
 {
 	const Entity entity = PlaceBuilding(registry, map, type, team, tileX, tileY);
@@ -56,15 +56,18 @@ void RunAreaRepairTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity hurtTank = SpawnUnit(registry, UnitType::LightTank, 0, 2, 2, 0.5f);
-		const Entity wholeTank = SpawnUnit(registry, UnitType::LightTank, 0, 3, 2, 1.0f);
-		const Entity hurtFlesh = SpawnUnit(registry, UnitType::RifleInfantry, 0, 2, 3, 0.5f);
-		const Entity foeTank = SpawnUnit(registry, UnitType::LightTank, 1, 4, 2, 0.5f);
-		const Entity farTank = SpawnUnit(registry, UnitType::LightTank, 0, 15, 12, 0.5f);
-		const Entity hurtBase = SpawnBuilding(registry, map, BuildingType::Base, 0, 6, 2, 0.5f);
+		const Entity hurtTank = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 2, 2, 0.5f);
+		const Entity wholeTank = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 3, 2, 1.0f);
+		const Entity hurtFlesh =
+			SpawnUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 2, 3, 0.5f);
+		const Entity foeTank = SpawnUnit(registry, UnitType::LightTank, kEnemyTeam, 4, 2, 0.5f);
+		const Entity farTank = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 15, 12, 0.5f);
+		const Entity hurtBase =
+			SpawnBuilding(registry, map, BuildingType::Base, kPlayerTeam, 6, 2, 0.5f);
 		const Entity wholeDepot =
-			SpawnBuilding(registry, map, BuildingType::ResourceDepot, 0, 8, 2, 1.0f);
-		const Entity deadBase = SpawnBuilding(registry, map, BuildingType::Base, 0, 10, 2, 0.5f);
+			SpawnBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 8, 2, 1.0f);
+		const Entity deadBase =
+			SpawnBuilding(registry, map, BuildingType::Base, kPlayerTeam, 10, 2, 0.5f);
 		registry.Get<Building>(deadBase)->state = BuildingState::Destroyed;
 		CC_CHECK(hurtBase != kInvalidEntity && wholeDepot != kInvalidEntity &&
 				 deadBase != kInvalidEntity);
@@ -73,7 +76,7 @@ void RunAreaRepairTests()
 		std::vector<Entity> candidates;
 		CollectAreaRepairCandidates(registry, WorldRect(0.0f, 0.0f, 12.0f * 64.0f,
 														6.0f * 64.0f),
-									0, candidates);
+									kPlayerTeam, candidates);
 		CC_CHECK(candidates.size() == 3);
 		bool hasTank = false;
 		bool hasBase = false;
@@ -96,10 +99,10 @@ void RunAreaRepairTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity engA = SpawnUnit(registry, UnitType::Engineer, 0, 1, 1, 1.0f);
-		const Entity engB = SpawnUnit(registry, UnitType::Engineer, 0, 10, 1, 1.0f);
-		const Entity targetA = SpawnUnit(registry, UnitType::LightTank, 0, 2, 1, 0.5f);
-		const Entity targetB = SpawnUnit(registry, UnitType::LightTank, 0, 9, 1, 0.5f);
+		const Entity engA = SpawnUnit(registry, UnitType::Engineer, kPlayerTeam, 1, 1, 1.0f);
+		const Entity engB = SpawnUnit(registry, UnitType::Engineer, kPlayerTeam, 10, 1, 1.0f);
+		const Entity targetA = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 2, 1, 0.5f);
+		const Entity targetB = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 9, 1, 0.5f);
 		const std::vector<Entity> engineers = { engA, engB };
 		const std::vector<Entity> candidates = { targetA, targetB };
 
@@ -114,9 +117,9 @@ void RunAreaRepairTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity engA = SpawnUnit(registry, UnitType::Engineer, 0, 1, 1, 1.0f);
-		const Entity engB = SpawnUnit(registry, UnitType::Engineer, 0, 2, 1, 1.0f);
-		const Entity lone = SpawnUnit(registry, UnitType::LightTank, 0, 1, 2, 0.5f);
+		const Entity engA = SpawnUnit(registry, UnitType::Engineer, kPlayerTeam, 1, 1, 1.0f);
+		const Entity engB = SpawnUnit(registry, UnitType::Engineer, kPlayerTeam, 2, 1, 1.0f);
+		const Entity lone = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 1, 2, 0.5f);
 		const std::vector<Entity> engineers = { engA, engB };
 		const std::vector<Entity> candidates = { lone };
 
@@ -130,10 +133,10 @@ void RunAreaRepairTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity eng = SpawnUnit(registry, UnitType::Engineer, 0, 1, 1, 1.0f);
-		const Entity near = SpawnUnit(registry, UnitType::LightTank, 0, 2, 1, 0.5f);
-		const Entity mid = SpawnUnit(registry, UnitType::LightTank, 0, 5, 1, 0.5f);
-		const Entity far = SpawnUnit(registry, UnitType::LightTank, 0, 9, 1, 0.5f);
+		const Entity eng = SpawnUnit(registry, UnitType::Engineer, kPlayerTeam, 1, 1, 1.0f);
+		const Entity near = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 2, 1, 0.5f);
+		const Entity mid = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 5, 1, 0.5f);
+		const Entity far = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 9, 1, 0.5f);
 		const std::vector<Entity> engineers = { eng };
 		const std::vector<Entity> candidates = { far, mid, near }; // shuffled input
 
@@ -148,9 +151,10 @@ void RunAreaRepairTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity eng = SpawnUnit(registry, UnitType::Engineer, 0, 1, 5, 1.0f);
-		const Entity tank = SpawnUnit(registry, UnitType::LightTank, 0, 8, 5, 0.5f);
-		const Entity base = SpawnBuilding(registry, map, BuildingType::Base, 0, 2, 5, 0.5f);
+		const Entity eng = SpawnUnit(registry, UnitType::Engineer, kPlayerTeam, 1, 5, 1.0f);
+		const Entity tank = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 8, 5, 0.5f);
+		const Entity base =
+			SpawnBuilding(registry, map, BuildingType::Base, kPlayerTeam, 2, 5, 0.5f);
 		CC_CHECK(base != kInvalidEntity);
 		const std::vector<Entity> engineers = { eng };
 		const std::vector<Entity> candidates = { tank, base };
@@ -174,13 +178,14 @@ void RunAreaRepairTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity medic = SpawnUnit(registry, UnitType::Medic, 0, 1, 1, 1.0f);
-		const Entity eng = SpawnUnit(registry, UnitType::Engineer, 0, 1, 2, 1.0f);
-		const Entity hurt = SpawnUnit(registry, UnitType::RifleInfantry, 0, 2, 1, 0.5f);
-		const Entity whole = SpawnUnit(registry, UnitType::RifleInfantry, 0, 3, 1, 1.0f);
-		const Entity foe = SpawnUnit(registry, UnitType::RifleInfantry, 1, 2, 2, 0.5f);
-		const Entity tank = SpawnUnit(registry, UnitType::LightTank, 0, 4, 1, 0.5f);
-		const Entity depot = SpawnBuilding(registry, map, BuildingType::ResourceDepot, 0, 6, 1, 0.5f);
+		const Entity medic = SpawnUnit(registry, UnitType::Medic, kPlayerTeam, 1, 1, 1.0f);
+		const Entity eng = SpawnUnit(registry, UnitType::Engineer, kPlayerTeam, 1, 2, 1.0f);
+		const Entity hurt = SpawnUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 2, 1, 0.5f);
+		const Entity whole = SpawnUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 3, 1, 1.0f);
+		const Entity foe = SpawnUnit(registry, UnitType::RifleInfantry, kEnemyTeam, 2, 2, 0.5f);
+		const Entity tank = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 4, 1, 0.5f);
+		const Entity depot =
+			SpawnBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 6, 1, 0.5f);
 		const Unit *med = registry.Get<Unit>(medic);
 		const Unit *engineer = registry.Get<Unit>(eng);
 		CC_CHECK(med != nullptr && engineer != nullptr && depot != kInvalidEntity);
@@ -198,8 +203,8 @@ void RunAreaRepairTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity medic = SpawnUnit(registry, UnitType::Medic, 0, 1, 1, 1.0f);
-		const Entity hurt = SpawnUnit(registry, UnitType::RifleInfantry, 0, 2, 1, 0.5f);
+		const Entity medic = SpawnUnit(registry, UnitType::Medic, kPlayerTeam, 1, 1, 1.0f);
+		const Entity hurt = SpawnUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 2, 1, 0.5f);
 		Unit *med = registry.Get<Unit>(medic);
 		Orders &medOrders = GetOrders(registry, medic);
 		CC_CHECK(med != nullptr);
@@ -221,9 +226,9 @@ void RunAreaRepairTests()
 	// --- area assign pairs medics with flesh: never self, never vehicles ---
 	{
 		Registry registry;
-		const Entity medic = SpawnUnit(registry, UnitType::Medic, 0, 1, 1, 0.5f);
-		const Entity flesh = SpawnUnit(registry, UnitType::RifleInfantry, 0, 5, 5, 0.5f);
-		const Entity tank = SpawnUnit(registry, UnitType::LightTank, 0, 2, 1, 0.5f);
+		const Entity medic = SpawnUnit(registry, UnitType::Medic, kPlayerTeam, 1, 1, 0.5f);
+		const Entity flesh = SpawnUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 5, 5, 0.5f);
+		const Entity tank = SpawnUnit(registry, UnitType::LightTank, kPlayerTeam, 2, 1, 0.5f);
 		std::vector<RepairAssignment> jobs;
 		CC_CHECK(AssignAreaRepair(registry, { medic }, { medic, tank, flesh }, jobs) == 1);
 		CC_CHECK(jobs[0].engineer == medic && jobs[0].target == flesh);
@@ -233,9 +238,9 @@ void RunAreaRepairTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity medic = SpawnUnit(registry, UnitType::Medic, 0, 1, 1, 1.0f);
-		const Entity eng = SpawnUnit(registry, UnitType::Engineer, 0, 1, 3, 1.0f);
-		const Entity foe = SpawnUnit(registry, UnitType::RifleInfantry, 1, 3, 1, 1.0f);
+		const Entity medic = SpawnUnit(registry, UnitType::Medic, kPlayerTeam, 1, 1, 1.0f);
+		const Entity eng = SpawnUnit(registry, UnitType::Engineer, kPlayerTeam, 1, 3, 1.0f);
+		const Entity foe = SpawnUnit(registry, UnitType::RifleInfantry, kEnemyTeam, 3, 1, 1.0f);
 		CC_CHECK(AcquireTarget(registry, medic, nullptr, nullptr) == kInvalidEntity);
 		CC_CHECK(AcquireTarget(registry, eng, nullptr, nullptr) == kInvalidEntity);
 		const float foeMax = BaseStats(UnitType::RifleInfantry).health;

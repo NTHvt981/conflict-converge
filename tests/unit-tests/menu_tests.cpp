@@ -49,26 +49,26 @@ void RunMenuTests()
 
 	// --- team aliveness ignores corpses and other teams ---
 	Registry registry;
-	CC_CHECK(!TeamHasUnits(registry, 0));
+	CC_CHECK(!TeamHasUnits(registry, kPlayerTeam));
 
 	Unit ally;
-	ally.teamID = 0;
+	ally.teamID = kPlayerTeam;
 	ally.health = 10.0f;
 	const Entity allyId = registry.Create();
 	registry.Add(allyId, ally);
-	CC_CHECK(TeamHasUnits(registry, 0));
-	CC_CHECK(!TeamHasUnits(registry, 1));
+	CC_CHECK(TeamHasUnits(registry, kPlayerTeam));
+	CC_CHECK(!TeamHasUnits(registry, kEnemyTeam));
 
 	Unit *stored = registry.Get<Unit>(allyId);
 	stored->health = 0.0f; // corpse: side is out
-	CC_CHECK(!TeamHasUnits(registry, 0));
+	CC_CHECK(!TeamHasUnits(registry, kPlayerTeam));
 
 	Unit foe;
-	foe.teamID = 1;
+	foe.teamID = kEnemyTeam;
 	foe.health = 50.0f;
 	registry.Add(registry.Create(), foe);
-	CC_CHECK(TeamHasUnits(registry, 1));
-	CC_CHECK(!TeamHasUnits(registry, 0));
+	CC_CHECK(TeamHasUnits(registry, kEnemyTeam));
+	CC_CHECK(!TeamHasUnits(registry, kPlayerTeam));
 
 	// --- Setup validation (no map = Start disabled) ---
 	MenuFlow boot;

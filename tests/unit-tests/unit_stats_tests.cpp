@@ -59,7 +59,7 @@ void RunUnitStatsTests()
 	// --- ApplyBaseStats fills stats but preserves identity/placement ---
 	Unit unit;
 	unit.type = UnitType::LightTank;
-	unit.teamID = 2;
+	unit.teamID = kEnemyTeam;
 	unit.position = { 128.0f, 192.0f };
 	unit.isSelected = true;
 	ApplyBaseStats(unit);
@@ -67,7 +67,7 @@ void RunUnitStatsTests()
 	CC_CHECK(unit.attackPower == 20);
 	CC_CHECK(unit.speed == 96.0f);
 	CC_CHECK(CombatState{}.cooldown == 0.0f); // live cooldown starts at zero, not from stats
-	CC_CHECK(unit.teamID == 2);
+	CC_CHECK(unit.teamID == kEnemyTeam);
 	CC_CHECK(unit.position.x == 128.0f);
 	CC_CHECK(unit.position.y == 192.0f);
 	CC_CHECK(unit.isSelected);

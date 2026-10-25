@@ -86,7 +86,7 @@ void Simulation::RefreshProducers()
 	hasBootcamp_ = false;
 	hasWorkshop_ = false;
 	registry_.Each<Building>([&](Entity, const Building &building) {
-		if (building.teamID != 0 || building.state != BuildingState::Operational)
+		if (building.teamID != kPlayerTeam || building.state != BuildingState::Operational)
 		{
 			return;
 		}
@@ -157,7 +157,7 @@ void Simulation::Step(float dt)
 			damageNumbers_.Spawn({ center.x, unit.position.y - 2.0f },
 								 combat->lastDamageTaken);
 			shakeTrauma_ = AddShakeTrauma(shakeTrauma_, kShakeHitTrauma);
-			if (unit.teamID == 0)
+			if (unit.teamID == kPlayerTeam)
 			{
 				pings_.Raise(center, PingKind::UnderAttack);
 			}
@@ -220,15 +220,15 @@ void Simulation::Step(float dt)
 		Announce(EventType::ResourceDepleted);
 	}
 	lastDepletedCount_ = depletedCount;
-	UpdateBaseIncome(registry_, resources_, dt, 0);
+	UpdateBaseIncome(registry_, resources_, dt, kPlayerTeam);
 	nodes_.Update(dt);
-	nodes_.UpdateHarvesters(registry_, map_, &occ_, dt, 0);
-	nodes_.GatherTick(registry_, resources_, dt, 0);
+	nodes_.UpdateHarvesters(registry_, map_, &occ_, dt, kPlayerTeam);
+	nodes_.GatherTick(registry_, resources_, dt, kPlayerTeam);
 	RefreshProducers();
 	auto pumpQueue = [&](ProductionQueue &queue, BuildingType type, int &cursor) {
 		int producers = 0;
 		registry_.Each<Building>([&](Entity, const Building &building) {
-			if (building.type == type && building.teamID == 0 &&
+			if (building.type == type && building.teamID == kPlayerTeam &&
 				building.state == BuildingState::Operational)
 			{
 				++producers;
@@ -238,7 +238,7 @@ void Simulation::Step(float dt)
 		{
 			return;
 		}
-		const Entity producerId = ProducerBuildingAt(registry_, type, 0, cursor);
+		const Entity producerId = ProducerBuildingAt(registry_, type, kPlayerTeam, cursor);
 		if (producerId == kInvalidEntity)
 		{
 			return;
@@ -254,7 +254,7 @@ void Simulation::Step(float dt)
 		for (int n = 0; n < producers; ++n)
 		{
 			const Entity spawned =
-				queue.Update(factory_, resources_, 0, spawnPos, dt, &map_, &occ_);
+				queue.Update(factory_, resources_, kPlayerTeam, spawnPos, dt, &map_, &occ_);
 			if (spawned == kInvalidEntity)
 			{
 				continue;
@@ -309,7 +309,7 @@ void Simulation::Step(float dt)
 	UpdateBuildingFlash(registry_, dt);
 	{
 		const Vector2 home = ResolvePlayerRetreatHome(registry_);
-		RetreatIfLowHP(registry_, map_, &occ_, home, 0, kRetreatHealthFraction, true);
+		RetreatIfLowHP(registry_, map_, &occ_, home, kPlayerTeam, kRetreatHealthFraction, true);
 	}
 	if (!sandboxMode_)
 	{
@@ -344,8 +344,8 @@ void Simulation::Step(float dt)
 			}
 		}
 		registry_.Each<Unit>([&](Entity, const Unit &unit) {
-			if (unit.teamID != 0 &&
-				!fog_.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit.position))))
+			if (unit.teamID != kPlayerTeam &&
+				!fog_.IsVisible(kPlayerTeam, cc::WorldToTile(cc::ToGlm(unit.position))))
 			{
 				return;
 			}
@@ -360,7 +360,8 @@ void Simulation::Step(float dt)
 	}
 	if (!sandboxMode_)
 	{
-		menu_.ShowOutcome(TeamHasUnits(registry_, 0), TeamHasUnits(registry_, 1));
+		menu_.ShowOutcome(TeamHasUnits(registry_, kPlayerTeam),
+						  TeamHasUnits(registry_, kEnemyTeam));
 	}
 	if (menu_.state != lastOutcomeState_)
 	{

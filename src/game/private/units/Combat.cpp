@@ -84,14 +84,14 @@ bool HitboxesOverlap(const Unit &a, const Unit &b)
 	return CheckCollisionRecs(HitboxOf(a), HitboxOf(b));
 }
 
-void QueryUnitsInRect(Registry &registry, Rectangle area, int teamID, std::vector<Entity> &out)
+void QueryUnitsInRect(Registry &registry, Rectangle area, TeamId teamID, std::vector<Entity> &out)
 {
 	registry.Each<Unit>([&](Entity id, const Unit &unit) {
 		if (unit.health <= 0.0f || IsEmbarked(registry, id))
 		{
 			return;
 		}
-		if (teamID >= 0 && unit.teamID != teamID)
+		if (teamID != kAnyTeam && unit.teamID != teamID)
 		{
 			return;
 		}
@@ -199,7 +199,7 @@ void UpdateProjectiles(Registry &registry, TileMap &map, float dtSeconds)
 		const Rectangle area = { shell->target.x - half, shell->target.y - half, half * 2.0f,
 								 half * 2.0f };
 		std::vector<Entity> victims;
-		QueryUnitsInRect(registry, area, -1, victims);
+		QueryUnitsInRect(registry, area, kAnyTeam, victims);
 		for (const Entity victimId : victims)
 		{
 			Unit *victim = registry.Get<Unit>(victimId);
@@ -217,7 +217,7 @@ void UpdateProjectiles(Registry &registry, TileMap &map, float dtSeconds)
 			}
 		}
 		std::vector<Entity> structures;
-		QueryBuildingsInRect(registry, area, -1, structures);
+		QueryBuildingsInRect(registry, area, kAnyTeam, structures);
 		for (const Entity structureId : structures)
 		{
 			Building *building = registry.Get<Building>(structureId);

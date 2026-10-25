@@ -16,7 +16,7 @@ UnitFactory::UnitFactory(Registry &registry, ResourceSystem &resources, EventDis
 {
 }
 
-Entity UnitFactory::Spawn(UnitType type, int teamID, Vector2 worldPos)
+Entity UnitFactory::Spawn(UnitType type, TeamId teamID, Vector2 worldPos)
 {
 	const UnitCost cost = CostOf(type);
 	if (!resources_.TrySpend(cost.iron, cost.oil))
@@ -26,7 +26,7 @@ Entity UnitFactory::Spawn(UnitType type, int teamID, Vector2 worldPos)
 	return SpawnPrepaid(type, teamID, worldPos);
 }
 
-Entity UnitFactory::SpawnPrepaid(UnitType type, int teamID, Vector2 worldPos)
+Entity UnitFactory::SpawnPrepaid(UnitType type, TeamId teamID, Vector2 worldPos)
 {
 	Unit unit;
 	unit.type = type;

@@ -177,7 +177,7 @@ void RunAutoRepairTests()
 	{
 		Registry registry;
 		TileMap map(20, 15);
-		const Entity baseId = PlaceBuilding(registry, map, BuildingType::Base, 0, 1, 1);
+		const Entity baseId = PlaceBuilding(registry, map, BuildingType::Base, kPlayerTeam, 1, 1);
 		CC_CHECK(baseId != kInvalidEntity);
 		UpdateBuildingConstruction(registry, 20.0f);
 		registry.Get<Building>(baseId)->health = 100.0f;

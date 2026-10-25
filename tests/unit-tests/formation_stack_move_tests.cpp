@@ -23,7 +23,7 @@ Unit MakeInfantry(int tileX, int tileY)
 	Unit unit;
 	unit.type = UnitType::RifleInfantry;
 	ApplyBaseStats(unit);
-	unit.teamID = 0;
+	unit.teamID = kPlayerTeam;
 	unit.position = cc::ToRaylib(cc::TileToWorld(tileX, tileY));
 	return unit;
 }

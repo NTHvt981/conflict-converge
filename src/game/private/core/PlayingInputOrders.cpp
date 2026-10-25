@@ -27,7 +27,7 @@ void PlayingInput::HandlePlaceDragRelease()
 					cc::WorldToTile(cc::ToGlm(input_.MouseWorld(camera_)));
 				const UnitCost cost = BuildingCost(*placingType_);
 				if (resources_.iron >= cost.iron && resources_.oil >= cost.oil &&
-					PlaceBuilding(registry_, map_, *placingType_, 0, tile.x, tile.y,
+					PlaceBuilding(registry_, map_, *placingType_, kPlayerTeam, tile.x, tile.y,
 								  &nodes_) != kInvalidEntity)
 				{
 					resources_.TrySpend(cost.iron, cost.oil);
@@ -51,7 +51,7 @@ void PlayingInput::HandlePlaceDragRelease()
 					{
 						break;
 					}
-					if (PlaceBuilding(registry_, map_, *placingType_, 0, slot.x, slot.y,
+					if (PlaceBuilding(registry_, map_, *placingType_, kPlayerTeam, slot.x, slot.y,
 									  &nodes_) != kInvalidEntity)
 					{
 						resources_.TrySpend(areaCost.iron, areaCost.oil);
@@ -85,7 +85,7 @@ void PlayingInput::HandleRepairDragRelease()
 				}
 			});
 			std::vector<Entity> candidates;
-			CollectAreaRepairCandidates(registry_, zone, 0, candidates);
+			CollectAreaRepairCandidates(registry_, zone, kPlayerTeam, candidates);
 			std::vector<RepairAssignment> assignments;
 			AssignAreaRepair(registry_, engineers, candidates, assignments);
 			for (const RepairAssignment &job : assignments)

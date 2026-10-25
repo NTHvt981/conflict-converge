@@ -336,7 +336,7 @@ bool LoadSettings(MenuSettings &settings, const std::string &path)
 	return true;
 }
 
-bool TeamHasUnits(const Registry &registry, int teamID)
+bool TeamHasUnits(const Registry &registry, TeamId teamID)
 {
 	bool found = false;
 	registry.Each<Unit>([&](Entity, const Unit &unit) {

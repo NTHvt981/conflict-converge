@@ -27,8 +27,8 @@ void GameRenderer::DrawDragPreviews()
 		std::vector<Entity> preview;
 		CollectAreaRepairCandidates(
 			registry_,
-			DraggedWorldBox(camera_, playingInput_.RepairDragStart(), input_.MouseScreen()), 0,
-			preview);
+			DraggedWorldBox(camera_, playingInput_.RepairDragStart(), input_.MouseScreen()),
+			kPlayerTeam, preview);
 		for (const Entity id : preview)
 		{
 			Vector2 center = { 0.0f, 0.0f };
@@ -88,8 +88,8 @@ void GameRenderer::DrawHoverTooltip()
 			if (const Unit *unit = registry_.Get<Unit>(hoverTip_.hovered))
 			{
 				const bool visible =
-					unit->teamID == 0 ||
-					fog_.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit->position)));
+					unit->teamID == kPlayerTeam ||
+					fog_.IsVisible(kPlayerTeam, cc::WorldToTile(cc::ToGlm(unit->position)));
 				if (visible)
 				{
 					const std::vector<std::string> lines = UnitTooltipLines(

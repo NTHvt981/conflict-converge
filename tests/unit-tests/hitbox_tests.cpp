@@ -28,7 +28,7 @@ void RunHitboxTests()
 
 	// --- area query: team filter, dead exclusion ---
 	Registry registry;
-	auto addAt = [&](int team, float x, float y, float hp) {
+	auto addAt = [&](TeamId team, float x, float y, float hp) {
 		Unit u;
 		u.teamID = team;
 		u.position = { x, y };
@@ -37,21 +37,21 @@ void RunHitboxTests()
 		registry.Add(id, u);
 		return id;
 	};
-	const Entity blue = addAt(0, 0.0f, 0.0f, 100.0f);
-	addAt(1, 32.0f, 0.0f, 100.0f);
-	addAt(0, 1000.0f, 1000.0f, 100.0f);
-	addAt(0, 0.0f, 64.0f, 0.0f); // corpse: excluded
+	const Entity blue = addAt(kPlayerTeam, 0.0f, 0.0f, 100.0f);
+	addAt(kEnemyTeam, 32.0f, 0.0f, 100.0f);
+	addAt(kPlayerTeam, 1000.0f, 1000.0f, 100.0f);
+	addAt(kPlayerTeam, 0.0f, 64.0f, 0.0f); // corpse: excluded
 
 	std::vector<Entity> all;
-	QueryUnitsInRect(registry, { 0.0f, 0.0f, 128.0f, 128.0f }, -1, all);
+	QueryUnitsInRect(registry, { 0.0f, 0.0f, 128.0f, 128.0f }, kAnyTeam, all);
 	CC_CHECK(all.size() == 2);
 
 	std::vector<Entity> blues;
-	QueryUnitsInRect(registry, { 0.0f, 0.0f, 128.0f, 128.0f }, 0, blues);
+	QueryUnitsInRect(registry, { 0.0f, 0.0f, 128.0f, 128.0f }, kPlayerTeam, blues);
 	CC_CHECK(blues.size() == 1);
 	CC_CHECK(blues[0] == blue);
 
 	std::vector<Entity> nowhere;
-	QueryUnitsInRect(registry, { 5000.0f, 5000.0f, 64.0f, 64.0f }, -1, nowhere);
+	QueryUnitsInRect(registry, { 5000.0f, 5000.0f, 64.0f, 64.0f }, kAnyTeam, nowhere);
 	CC_CHECK(nowhere.empty());
 }

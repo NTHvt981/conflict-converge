@@ -35,7 +35,7 @@ void RunHudTests()
 	unit.type = UnitType::HeavyTank;
 	ApplyBaseStats(unit);
 	unit.health = 320.0f;
-	unit.teamID = 1;
+	unit.teamID = kEnemyTeam;
 	const std::string summary = SelectionSummary(unit);
 	CC_CHECK(summary.find("Heavy Tank") != std::string::npos);
 	CC_CHECK(summary.find("320/500") != std::string::npos);

@@ -32,7 +32,7 @@ void RunFactoryTests()
 	events.Subscribe(EventType::UnitSpawned, [&](const Event &) { ++spawned; });
 	UnitFactory factory(registry, resources, events);
 
-	const Entity id = factory.Spawn(UnitType::RifleInfantry, 2, { 70.0f, 130.0f });
+	const Entity id = factory.Spawn(UnitType::RifleInfantry, kEnemyTeam, { 70.0f, 130.0f });
 	CC_CHECK(id != kInvalidEntity);
 	CC_CHECK(spawned == 1);
 	CC_CHECK(resources.iron == 1000 - rifle.iron);
@@ -41,7 +41,7 @@ void RunFactoryTests()
 	const Unit *unit = registry.Get<Unit>(id);
 	CC_CHECK(unit != nullptr);
 	CC_CHECK(unit->health == BaseStats(UnitType::RifleInfantry).health);
-	CC_CHECK(unit->teamID == 2);
+	CC_CHECK(unit->teamID == kEnemyTeam);
 	CC_CHECK(unit->state == UnitState::Idle);
 	CC_CHECK(unit->position.x == 64.0f && unit->position.y == 128.0f);
 	CC_CHECK(FindCombatState(registry, id)->target == kInvalidEntity);
@@ -53,7 +53,8 @@ void RunFactoryTests()
 	brokeEvents.Subscribe(EventType::UnitSpawned, [&](const Event &) { ++brokeSpawned; });
 	UnitFactory brokeFactory(registry, broke, brokeEvents);
 	const std::size_t before = registry.EntityCount();
-	CC_CHECK(brokeFactory.Spawn(UnitType::HeavyTank, 0, { 0.0f, 0.0f }) == kInvalidEntity);
+	CC_CHECK(brokeFactory.Spawn(UnitType::HeavyTank, kPlayerTeam, { 0.0f, 0.0f }) ==
+			  kInvalidEntity);
 	CC_CHECK(registry.EntityCount() == before);
 	CC_CHECK(brokeSpawned == 0);
 	CC_CHECK(broke.iron == 0 && broke.oil == 0);
@@ -64,7 +65,7 @@ void RunFactoryTests()
 	exact.AddOil(heavy.oil);
 	EventDispatcher exactEvents;
 	UnitFactory exactFactory(registry, exact, exactEvents);
-	CC_CHECK(exactFactory.Spawn(UnitType::HeavyTank, 1, { 0.0f, 0.0f }) != kInvalidEntity);
+	CC_CHECK(exactFactory.Spawn(UnitType::HeavyTank, kEnemyTeam, { 0.0f, 0.0f }) != kInvalidEntity);
 	CC_CHECK(exact.iron == 0 && exact.oil == 0);
 
 	// --- destroy: announces once, removes; repeat is a silent no-op ---
@@ -87,12 +88,13 @@ void RunFactoryTests()
 		res.AddOil(10000);
 		EventDispatcher ev;
 		UnitFactory fac(reg, res, ev);
-		const Entity heavy = fac.SpawnPrepaid(UnitType::HeavyTank, 0, { 0.0f, 0.0f });
+		const Entity heavy = fac.SpawnPrepaid(UnitType::HeavyTank, kPlayerTeam, { 0.0f, 0.0f });
 		CC_CHECK(heavy != kInvalidEntity);
 		CC_CHECK(reg.Has<Turret>(heavy)); // G1: heavies are turreted by default
 		CC_CHECK(reg.Get<Turret>(heavy)->turnRate == 3.0f);
 		CC_CHECK(!reg.Has<Cargo>(heavy));
-		const Entity rifle = fac.SpawnPrepaid(UnitType::RifleInfantry, 0, { 64.0f, 64.0f });
+		const Entity rifle =
+			fac.SpawnPrepaid(UnitType::RifleInfantry, kPlayerTeam, { 64.0f, 64.0f });
 		CC_CHECK(!reg.Has<Turret>(rifle) && !reg.Has<Cargo>(rifle));
 
 		std::vector<UnitConfig> override;
@@ -103,10 +105,11 @@ void RunFactoryTests()
 		light.abilities.turretTurnRate = 3.0f;
 		override.push_back(light);
 		SetActiveUnitConfigs(override);
-		const Entity carrier = fac.SpawnPrepaid(UnitType::IFV, 0, { 64.0f, 0.0f });
+		const Entity carrier = fac.SpawnPrepaid(UnitType::IFV, kPlayerTeam, { 64.0f, 0.0f });
 		CC_CHECK(reg.Has<Cargo>(carrier));
 		CC_CHECK(reg.Get<Cargo>(carrier)->capacity == 4);
-		const Entity turreted = fac.SpawnPrepaid(UnitType::LightTank, 0, { 128.0f, 0.0f });
+		const Entity turreted =
+			fac.SpawnPrepaid(UnitType::LightTank, kPlayerTeam, { 128.0f, 0.0f });
 		CC_CHECK(reg.Has<Turret>(turreted));
 		CC_CHECK(reg.Get<Turret>(turreted)->turnRate == 3.0f);
 		ResetActiveUnitConfigs();
@@ -118,7 +121,7 @@ void RunFactoryTests()
 		Unit hull;
 		hull.type = UnitType::IFV;
 		ApplyBaseStats(hull);
-		hull.teamID = 0;
+		hull.teamID = kPlayerTeam;
 		hull.position = { 128.0f, 128.0f };
 		const Entity carrier = reg.Create();
 		reg.Add(carrier, hull);
@@ -128,7 +131,7 @@ void RunFactoryTests()
 		Unit rider;
 		rider.type = UnitType::RifleInfantry;
 		ApplyBaseStats(rider);
-		rider.teamID = 0;
+		rider.teamID = kPlayerTeam;
 		const Entity passenger = reg.Create();
 		reg.Add(passenger, rider);
 		EmbarkedOn ride;

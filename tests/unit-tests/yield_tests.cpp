@@ -11,7 +11,7 @@
 namespace
 {
 
-Unit MakeInfantry(int tileX, int tileY, int team)
+Unit MakeInfantry(int tileX, int tileY, TeamId team)
 {
 	Unit unit;
 	unit.type = UnitType::RifleInfantry;
@@ -40,9 +40,9 @@ void RunYieldTests()
 		Registry registry;
 
 		const Entity moverId = registry.Create();
-		registry.Add(moverId, MakeInfantry(0, 1, 0));
+		registry.Add(moverId, MakeInfantry(0, 1, kPlayerTeam));
 		const Entity blockerId = registry.Create();
-		registry.Add(blockerId, MakeInfantry(2, 1, 0));
+		registry.Add(blockerId, MakeInfantry(2, 1, kPlayerTeam));
 
 		Unit *moverUnit = registry.Get<Unit>(moverId);
 		Unit *blockerUnit = registry.Get<Unit>(blockerId);
@@ -84,9 +84,9 @@ void RunYieldTests()
 		Registry registry;
 
 		const Entity moverId = registry.Create();
-		registry.Add(moverId, MakeInfantry(0, 1, 0));
+		registry.Add(moverId, MakeInfantry(0, 1, kPlayerTeam));
 		const Entity blockerId = registry.Create();
-		registry.Add(blockerId, MakeInfantry(2, 1, 0));
+		registry.Add(blockerId, MakeInfantry(2, 1, kPlayerTeam));
 
 		Unit *moverUnit = registry.Get<Unit>(moverId);
 		IssuePathOrderFootprint(*moverUnit, GetOrders(registry, moverId),
@@ -122,9 +122,9 @@ void RunYieldTests()
 		Registry registry;
 
 		const Entity moverId = registry.Create();
-		registry.Add(moverId, MakeInfantry(0, 1, 0));
+		registry.Add(moverId, MakeInfantry(0, 1, kPlayerTeam));
 		const Entity blockerId = registry.Create();
-		registry.Add(blockerId, MakeInfantry(2, 1, 1));
+		registry.Add(blockerId, MakeInfantry(2, 1, kEnemyTeam));
 
 		Unit *moverUnit = registry.Get<Unit>(moverId);
 		Unit *blockerUnit = registry.Get<Unit>(blockerId);
@@ -162,9 +162,9 @@ void RunYieldTests()
 		Registry registry;
 
 		const Entity moverId = registry.Create();
-		registry.Add(moverId, MakeInfantry(0, 1, 0));
+		registry.Add(moverId, MakeInfantry(0, 1, kPlayerTeam));
 		const Entity bystanderId = registry.Create();
-		registry.Add(bystanderId, MakeInfantry(2, 0, 0));
+		registry.Add(bystanderId, MakeInfantry(2, 0, kPlayerTeam));
 
 		Unit *moverUnit = registry.Get<Unit>(moverId);
 		Unit *bystanderUnit = registry.Get<Unit>(bystanderId);

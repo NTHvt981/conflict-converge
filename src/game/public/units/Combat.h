@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "core/Registry.h"
+#include "core/Team.h"
 #include "units/Unit.h"
 
 struct Building;
@@ -37,5 +38,4 @@ bool IsVehicleHull(UnitType attackerType);
 Rectangle HitboxOf(const Unit &unit);
 // Edge-touch doesn't count (raylib semantics).
 bool HitboxesOverlap(const Unit &a, const Unit &b);
-// teamID < 0 = all teams.
-void QueryUnitsInRect(Registry &registry, Rectangle area, int teamID, std::vector<Entity> &out);
+void QueryUnitsInRect(Registry &registry, Rectangle area, TeamId teamID, std::vector<Entity> &out);

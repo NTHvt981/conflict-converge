@@ -13,7 +13,7 @@ inline constexpr float kLoadIronPerSecond = 16.0f;
 namespace
 {
 
-bool OnDepotEntrance(const Registry &registry, cc::IVec2 tile, int teamID)
+bool OnDepotEntrance(const Registry &registry, cc::IVec2 tile, TeamId teamID)
 {
 	bool found = false;
 	registry.Each<Building>([&](Entity, const Building &building) {
@@ -43,7 +43,7 @@ bool OnDepotEntrance(const Registry &registry, cc::IVec2 tile, int teamID)
 }
 
 cc::IVec2 NearestDepotEntrance(const Registry &registry, const TileMap &map, cc::IVec2 from,
-							   int teamID)
+							   TeamId teamID)
 {
 	cc::IVec2 best{ -1, -1 };
 	int bestDist = 0;
@@ -98,7 +98,7 @@ void OrderHarvestMove(Registry &registry, Unit &unit, Entity id, const TileMap &
 
 } // namespace
 
-bool HarvestFieldClaimed(const Registry &registry, cc::IVec2 tile, Entity self, int teamID)
+bool HarvestFieldClaimed(const Registry &registry, cc::IVec2 tile, Entity self, TeamId teamID)
 {
 	bool claimed = false;
 	registry.Each<Unit>([&](Entity id, const Unit &unit) {
@@ -161,7 +161,7 @@ void ResourceNodes::Update(float dt)
 }
 
 void ResourceNodes::GatherTick(Registry &registry, ResourceSystem &resources, float dt,
-							   int teamID)
+							   TeamId teamID)
 {
 	if (dt <= 0.0f)
 	{
@@ -172,7 +172,7 @@ void ResourceNodes::GatherTick(Registry &registry, ResourceSystem &resources, fl
 		{
 			return;
 		}
-		if (teamID >= 0 && unit.teamID != teamID)
+		if (teamID != kAnyTeam && unit.teamID != teamID)
 		{
 			return;
 		}
@@ -275,7 +275,7 @@ void ResourceNodes::GatherTick(Registry &registry, ResourceSystem &resources, fl
 }
 
 void ResourceNodes::UpdateHarvesters(Registry &registry, const TileMap &map,
-									 const OccupancyGrid *occ, float dt, int teamID)
+									 const OccupancyGrid *occ, float dt, TeamId teamID)
 {
 	if (dt <= 0.0f)
 	{
@@ -286,7 +286,7 @@ void ResourceNodes::UpdateHarvesters(Registry &registry, const TileMap &map,
 		{
 			return;
 		}
-		if (teamID >= 0 && unit.teamID != teamID)
+		if (teamID != kAnyTeam && unit.teamID != teamID)
 		{
 			return;
 		}

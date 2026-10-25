@@ -11,7 +11,7 @@ across subsystems need include edits. `Unit.h` fwd-declares `TileMap`; never inc
 `Pathfinder.h` from `Unit.h` — no cycles.
 
 ```
-core:    MathUtils, CcAssert, Registry, Event, Subsystem
+core:    MathUtils, CcAssert, Registry, Event, Subsystem, Team
          Game, Simulation, PlayingInput (+PlayingInputSelect/PlayingInputOrders),
          GameRenderer (+GameRendererWorld/GameRendererHud), MenuScreens
 world:   TileMap, Pathfinder, MapFile, FogOfWar
@@ -55,6 +55,8 @@ app/match: Menu, Skirmish
   UI: MenuAction/ProductionOrdered)
 - `MathUtils.h` - `cc::Vec2`, raylib conversions, 64x64 tile helpers (top-left-corner
   convention)
+- `Team.h` - `TeamId` (`Any`/`Player`/`Enemy`) + `kAnyTeam`/`kPlayerTeam`/`kEnemyTeam`;
+  every team field and parameter is typed
 - `CcAssert.h` - `CC_ASSERT`: live in Debug, `((void)0)` under NDEBUG
 - `Subsystem.h` - UE5-inspired service scopes (no reflection): `Subsystem` base
   (`Init`/`Shutdown`/`ResetForMatch` no-op defaults) + `Subsystems` container
@@ -178,7 +180,8 @@ app/match: Menu, Skirmish
   beside the exe
 - `SaveGame.h` - Versioned binary save/load (`CCB2` magic, v2, cereal-binary via
   `SaveWire.h`): `WorldState` bundle, two-phase load, target-index remap, M13 named slots
-  (`SaveSlotPath`)
+  (`SaveSlotPath`). `SaveWire.h` keeps `std::int32_t team`; `SaveEncode`/`SaveDecode`
+  convert to and from `TeamId` at that boundary
 - `Audio.h` - M11 synth-asset SFX + looped music (`data/audio/*.wav` via
   `tools/gen_audio.py`); `Init(false)` is the headless no-op path
 - `Log.h` - Fatal logging over raylib `TraceLog`: `Init` tees console + file

@@ -160,8 +160,8 @@ void GameRenderer::DrawTerrainTiles()
 void GameRenderer::DrawBuildings()
 {
 	registry_.Each<Building>([&](Entity, const Building &building) {
-		if (building.teamID != 0 &&
-			!fog_.IsVisible(0, cc::IVec2{ building.tileX, building.tileY }))
+		if (building.teamID != kPlayerTeam &&
+			!fog_.IsVisible(kPlayerTeam, cc::IVec2{ building.tileX, building.tileY }))
 		{
 			return;
 		}
@@ -253,7 +253,7 @@ void GameRenderer::DrawPlacementGhost()
 void GameRenderer::DrawNodes()
 {
 	nodes_.Each([&](const ResourceNode &node) {
-		if (!fog_.IsExplored(0, node.tile))
+		if (!fog_.IsExplored(kPlayerTeam, node.tile))
 		{
 			return;
 		}
@@ -284,8 +284,8 @@ void GameRenderer::DrawUnitEntity(Entity id, Unit &unit)
 	{
 		return; // inside a carrier: invisible until unloaded
 	}
-	if (unit.teamID != 0 &&
-		!fog_.IsVisible(0, cc::WorldToTile(cc::ToGlm(unit.position))))
+	if (unit.teamID != kPlayerTeam &&
+		!fog_.IsVisible(kPlayerTeam, cc::WorldToTile(cc::ToGlm(unit.position))))
 	{
 		return;
 	}
@@ -485,13 +485,13 @@ void GameRenderer::DrawFogVeil()
 		for (int x = 0; x < map_.Width(); ++x)
 		{
 			const cc::IVec2 tile{ x, y };
-			if (fog_.IsVisible(0, tile))
+			if (fog_.IsVisible(kPlayerTeam, tile))
 			{
 				continue;
 			}
 			const Vector2 corner = cc::ToRaylib(cc::TileToWorld(x, y));
 			const Color veil =
-				fog_.IsExplored(0, tile) ? Fade(BLACK, 0.45f) : BLACK;
+				fog_.IsExplored(kPlayerTeam, tile) ? Fade(BLACK, 0.45f) : BLACK;
 			DrawRectangleV(corner, { cc::TILE_SIZE, cc::TILE_SIZE }, veil);
 		}
 	}

@@ -6,6 +6,7 @@
 
 #include "core/MathUtils.h"
 #include "core/Registry.h"
+#include "core/Team.h"
 #include "economy/ResourceSystem.h"
 #include "units/UnitFactory.h"
 #include "units/UnitStats.h"
@@ -35,7 +36,7 @@ struct Building
 {
 	BuildingType type = BuildingType::Base;
 	BuildingState state = BuildingState::Operational;
-	int teamID = 0;
+	TeamId teamID = kPlayerTeam;
 	bool isSelected = false;
 	int tileX = 0; // top-left of the footprint
 	int tileY = 0;
@@ -57,17 +58,16 @@ cc::IVec2 Footprint(BuildingType type);
 cc::IVec2 DefaultRallyTile(const TileMap &map, const Building &building);
 cc::IVec2 BuildingSpawnTile(const TileMap &map, const OccupancyGrid *occ,
 							 const Building &building);
-Entity ProducerBuildingAt(Registry &registry, BuildingType type, int teamID, int index);
+Entity ProducerBuildingAt(Registry &registry, BuildingType type, TeamId teamID, int index);
 
 Rectangle BuildingFootprintRect(const Building &building);
 
-// teamID < 0 = every team; overlap, not containment.
-void QueryBuildingsInRect(Registry &registry, Rectangle area, int teamID,
+void QueryBuildingsInRect(Registry &registry, Rectangle area, TeamId teamID,
 						  std::vector<Entity> &out);
 
-Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
+Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, TeamId teamID, int tileX,
 					 int tileY);
-Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, int teamID, int tileX,
+Entity PlaceBuilding(Registry &registry, TileMap &map, BuildingType type, TeamId teamID, int tileX,
 					 int tileY, const ResourceNodes *nodes);
 bool CanPlaceBuilding(const TileMap &map, const ResourceNodes *nodes, BuildingType type,
 					  int tileX, int tileY);
@@ -77,16 +77,16 @@ std::vector<cc::IVec2> AreaBuildSlots(BuildingType type, cc::IVec2 minTile,
 bool DemolishBuilding(Registry &registry, TileMap &map, Entity entity);
 
 // Sells for half cost through the storage cap, then demolishes.
-bool SellBuilding(Registry &registry, TileMap &map, ResourceSystem &resources, int teamID,
+bool SellBuilding(Registry &registry, TileMap &map, ResourceSystem &resources, TeamId teamID,
 				  Entity entity);
 
 void UpdateBaseIncome(const Registry &registry, ResourceSystem &resources, float dt,
-					   int teamID = -1);
+					   TeamId teamID = kAnyTeam);
 
 // Storage cap: base allowance plus each operational depot; overflow deposits are lost.
-long StorageCapacity(const Registry &registry, int teamID);
-long DepositIron(const Registry &registry, ResourceSystem &resources, int teamID, long amount);
-long DepositOil(const Registry &registry, ResourceSystem &resources, int teamID, long amount);
+long StorageCapacity(const Registry &registry, TeamId teamID);
+long DepositIron(const Registry &registry, ResourceSystem &resources, TeamId teamID, long amount);
+long DepositOil(const Registry &registry, ResourceSystem &resources, TeamId teamID, long amount);
 
 std::vector<cc::IVec2> BuildingEntrances(const TileMap &map, int tileX, int tileY,
 										  int fpW, int fpH);

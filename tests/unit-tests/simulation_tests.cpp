@@ -67,15 +67,15 @@ struct Fixture
 		EventDispatcher &events = engine.Get<EventDispatcher>();
 		world.Add<UnitFactory>(world.Get<Registry>(), world.Get<ResourceSystem>(), events);
 		world.AddKeyed<AICommander>("ai", world.Get<Registry>(), world.Get<TileMap>(),
-									world.Get<ResourceNodes>(), events, 1,
+									world.Get<ResourceNodes>(), events, kEnemyTeam,
 									AIDifficulty::Medium, cc::IVec2{ 0, 0 },
 									cc::IVec2{ 0, 0 });
 		world.AddKeyed<AICommander>("ally", world.Get<Registry>(), world.Get<TileMap>(),
-									world.Get<ResourceNodes>(), events, 0,
+									world.Get<ResourceNodes>(), events, kPlayerTeam,
 									AIDifficulty::Medium, cc::IVec2{ 0, 0 },
 									cc::IVec2{ 0, 0 });
 		world.AddKeyed<AICommander>("enemy2", world.Get<Registry>(), world.Get<TileMap>(),
-									world.Get<ResourceNodes>(), events, 1,
+									world.Get<ResourceNodes>(), events, kEnemyTeam,
 									AIDifficulty::Medium, cc::IVec2{ 0, 0 },
 									cc::IVec2{ 0, 0 });
 		world.Add<Pings>();
@@ -130,9 +130,10 @@ void RunSimulationTests()
 	{
 		Fixture fx;
 		TileMap &map = fx.world.Get<TileMap>();
-		const Entity bootA = PlaceBuilding(*fx.registry, map, BuildingType::Bootcamp, 0, 2, 2);
+		const Entity bootA =
+			PlaceBuilding(*fx.registry, map, BuildingType::Bootcamp, kPlayerTeam, 2, 2);
 		const Entity bootB =
-			PlaceBuilding(*fx.registry, map, BuildingType::Bootcamp, 0, 12, 10);
+			PlaceBuilding(*fx.registry, map, BuildingType::Bootcamp, kPlayerTeam, 12, 10);
 		CC_CHECK(bootA != kInvalidEntity && bootB != kInvalidEntity);
 		UpdateBuildingConstruction(*fx.registry, 20.0f);
 		fx.registry->Get<Building>(bootA)->rallyTile = { 2, 6 };
@@ -152,7 +153,7 @@ void RunSimulationTests()
 		{
 			fx.sim->Step(kDt);
 			fx.registry->Each<Unit>([&](Entity id, const Unit &unit) {
-				if (unit.teamID != 0)
+				if (unit.teamID != kPlayerTeam)
 				{
 					return;
 				}

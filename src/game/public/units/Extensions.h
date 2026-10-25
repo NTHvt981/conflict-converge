@@ -5,6 +5,7 @@
 
 #include "units/Combat.h"
 #include "core/Registry.h"
+#include "core/Team.h"
 #include "units/Unit.h"
 
 // Header-only: no TU, no premake regen.
@@ -66,7 +67,7 @@ struct Projectile
 	float elapsed = 0.0f;
 	int attackPower = 0;
 	DamageType damageType = DamageType::KINETIC;
-	int teamID = 0;
+	TeamId teamID = kPlayerTeam;
 	int splashTiles = 0; // AoE half-extent = splashTiles * 32px
 };
 
