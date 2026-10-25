@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "units/UnitStats.h"
+#include "units/UnitTypeInfo.h"
 
 namespace
 {
@@ -34,113 +35,6 @@ std::string NormalizedStem(std::string s)
 		out += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
 	}
 	return out;
-}
-
-const char *BaselineSpritePrefix(UnitType type)
-{
-	switch (type)
-	{
-	case UnitType::RifleInfantry:
-		return "rifle_infantry";
-	case UnitType::AntiArmorInfantry:
-		return "antiarmor";
-	case UnitType::Engineer:
-		return "engineer";
-	case UnitType::IFV:
-		return "ifv";
-	case UnitType::Artillery:
-		return "artillery";
-	case UnitType::LightTank:
-		return "lighttank";
-	case UnitType::HeavyTank:
-		return "heavytank";
-	case UnitType::Medic:
-		return "medic";
-	case UnitType::Count:
-		break;
-	}
-	return "rifle_infantry";
-}
-
-bool BaselineIsVehicle(UnitType type)
-{
-	return type == UnitType::IFV || type == UnitType::Artillery ||
-		   type == UnitType::LightTank || type == UnitType::HeavyTank;
-}
-
-void BaselineCost(UnitType type, int &iron, int &oil)
-{
-	switch (type)
-	{
-	case UnitType::RifleInfantry:
-		iron = 25;
-		oil = 0;
-		break;
-	case UnitType::AntiArmorInfantry:
-		iron = 30;
-		oil = 5;
-		break;
-	case UnitType::Engineer:
-		iron = 40;
-		oil = 0;
-		break;
-	case UnitType::IFV:
-		iron = 80;
-		oil = 20;
-		break;
-	case UnitType::Artillery:
-		iron = 120;
-		oil = 40;
-		break;
-	case UnitType::LightTank:
-		iron = 150;
-		oil = 50;
-		break;
-	case UnitType::HeavyTank:
-		iron = 250;
-		oil = 100;
-		break;
-	case UnitType::PrototypeInfantry:
-		iron = 25;
-		oil = 0;
-		break;
-	case UnitType::Medic:
-		iron = 30;
-		oil = 0;
-		break;
-	case UnitType::Count:
-		iron = 0;
-		oil = 0;
-		break;
-	}
-}
-
-const char *UnitTypeConfigName(UnitType type)
-{
-	switch (type)
-	{
-	case UnitType::RifleInfantry:
-		return "RifleInfantry";
-	case UnitType::AntiArmorInfantry:
-		return "AntiArmorInfantry";
-	case UnitType::Engineer:
-		return "Engineer";
-	case UnitType::IFV:
-		return "IFV";
-	case UnitType::Artillery:
-		return "Artillery";
-	case UnitType::LightTank:
-		return "LightTank";
-	case UnitType::HeavyTank:
-		return "HeavyTank";
-	case UnitType::PrototypeInfantry:
-		return "PrototypeInfantry";
-	case UnitType::Medic:
-		return "Medic";
-	case UnitType::Count:
-		break;
-	}
-	return "";
 }
 
 template <class Archive, class T>
@@ -488,10 +382,12 @@ bool HasUnknownAbilityKey(const std::string &json)
 
 UnitConfig DefaultUnitConfig(UnitType type)
 {
+	const UnitTypeInfo &info = InfoOf(type);
 	UnitConfig config;
-	config.type = UnitTypeConfigName(type);
+	config.type = info.configName;
 	config.stats = BaseStats(type);
-	BaselineCost(type, config.costIron, config.costOil);
+	config.costIron = info.ironCost;
+	config.costOil = info.oilCost;
 	config.abilities = UnitAbilities{};
 	if (type == UnitType::HeavyTank)
 	{
@@ -523,78 +419,28 @@ UnitConfig DefaultUnitConfig(UnitType type)
 	{
 		config.abilities.sniper = true;
 	}
-	config.footprintWidth = BaselineIsVehicle(type) ? 2 : 1;
-	config.footprintHeight = BaselineIsVehicle(type) ? 2 : 1;
-	config.spritePrefix = BaselineSpritePrefix(type);
-	if (type == UnitType::RifleInfantry)
-	{
-		config.atlasIdlePrefix = "rifle_infantry_idle";
-		config.atlasMovePrefix = "rifle_infantry_move";
-	}
-	if (type == UnitType::AntiArmorInfantry)
-	{
-		config.atlasIdlePrefix = "antiarmor_idle";
-		config.atlasMovePrefix = "antiarmor_move";
-	}
-	if (type == UnitType::Engineer)
-	{
-		config.atlasIdlePrefix = "engineer_idle";
-		config.atlasMovePrefix = "engineer_move";
-	}
-	if (type == UnitType::Medic)
-	{
-		config.atlasIdlePrefix = "medic_idle";
-		config.atlasMovePrefix = "medic_move";
-	}
+	config.footprintWidth = info.isVehicle ? 2 : 1;
+	config.footprintHeight = info.isVehicle ? 2 : 1;
+	config.spritePrefix = info.spriteStem;
+	config.atlasIdlePrefix = info.atlasIdlePrefix;
+	config.atlasMovePrefix = info.atlasMovePrefix;
 	return config;
 }
 
 bool ParseUnitTypeName(const std::string &name, UnitType &out)
 {
-	if (name == "RifleInfantry" || name == "Infantry") // "Infantry" alias
+	if (name == "Infantry") // "Infantry" alias
 	{
 		out = UnitType::RifleInfantry;
 		return true;
 	}
-	if (name == "AntiArmorInfantry")
+	for (std::size_t i = 0; i < static_cast<std::size_t>(UnitType::Count); ++i)
 	{
-		out = UnitType::AntiArmorInfantry;
-		return true;
-	}
-	if (name == "Engineer")
-	{
-		out = UnitType::Engineer;
-		return true;
-	}
-	if (name == "IFV")
-	{
-		out = UnitType::IFV;
-		return true;
-	}
-	if (name == "Artillery")
-	{
-		out = UnitType::Artillery;
-		return true;
-	}
-	if (name == "LightTank")
-	{
-		out = UnitType::LightTank;
-		return true;
-	}
-	if (name == "HeavyTank")
-	{
-		out = UnitType::HeavyTank;
-		return true;
-	}
-	if (name == "PrototypeInfantry")
-	{
-		out = UnitType::PrototypeInfantry;
-		return true;
-	}
-	if (name == "Medic")
-	{
-		out = UnitType::Medic;
-		return true;
+		if (name == kUnitTypes[i].configName)
+		{
+			out = static_cast<UnitType>(i);
+			return true;
+		}
 	}
 	return false;
 }

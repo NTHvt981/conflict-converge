@@ -4,6 +4,8 @@
 #include <fstream>
 #include <string>
 
+#include "units/UnitTypeInfo.h"
+
 namespace
 {
 
@@ -27,30 +29,7 @@ bool ReadWholeFile(const std::string &path, std::string &out)
 
 const char *UnitConfigFilename(UnitType type)
 {
-	switch (type)
-	{
-	case UnitType::RifleInfantry:
-		return "rifle_infantry";
-	case UnitType::AntiArmorInfantry:
-		return "antiarmor_infantry";
-	case UnitType::Engineer:
-		return "engineer";
-	case UnitType::IFV:
-		return "ifv";
-	case UnitType::Artillery:
-		return "artillery";
-	case UnitType::LightTank:
-		return "light_tank";
-	case UnitType::HeavyTank:
-		return "heavy_tank";
-	case UnitType::PrototypeInfantry:
-		return "prototype_infantry";
-	case UnitType::Medic:
-		return "medic";
-	case UnitType::Count:
-		break;
-	}
-	return "";
+	return InfoOf(type).fileStem;
 }
 
 

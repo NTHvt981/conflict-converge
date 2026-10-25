@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "economy/BuildingTypeInfo.h"
 #include "economy/Nodes.h"
 #include "world/Pathfinder.h"
 #include "world/TileMap.h"
@@ -11,18 +12,7 @@ inline constexpr float kBaseOilPerSecond = 1.0f;
 
 cc::IVec2 Footprint(BuildingType type)
 {
-	switch (type)
-	{
-	case BuildingType::Base:
-		return { 2, 2 };
-	case BuildingType::ResourceDepot:
-		return { 1, 1 };
-	case BuildingType::Bootcamp:
-		return { 2, 2 };
-	case BuildingType::Workshop:
-		return { 3, 3 };
-	}
-	return { 1, 1 };
+	return type == BuildingType::Count ? cc::IVec2{ 1, 1 } : InfoOf(type).footprint;
 }
 
 cc::IVec2 DefaultRallyTile(const TileMap &map, const Building &building)
@@ -60,18 +50,7 @@ Entity ProducerBuildingAt(Registry &registry, BuildingType type, int teamID, int
 
 float BuildingMaxHealth(BuildingType type)
 {
-	switch (type)
-	{
-	case BuildingType::Base:
-		return 400.0f;
-	case BuildingType::ResourceDepot:
-		return 200.0f;
-	case BuildingType::Bootcamp:
-		return 350.0f;
-	case BuildingType::Workshop:
-		return 500.0f;
-	}
-	return 200.0f;
+	return type == BuildingType::Count ? 200.0f : InfoOf(type).maxHealth;
 }
 
 Rectangle BuildingFootprintRect(const Building &building)
@@ -218,20 +197,12 @@ bool DemolishBuilding(Registry &registry, TileMap &map, Entity entity)
 
 UnitCost BuildingCost(BuildingType type)
 {
-	switch (type)
+	if (type == BuildingType::Count)
 	{
-	case BuildingType::Base:
-		return { 350, 100 };
-	case BuildingType::ResourceDepot:
-		return { 150, 0 };
-	case BuildingType::Bootcamp:
-		return { 200, 0 };
-	case BuildingType::Workshop:
-		return { 300, 0 };
-	case BuildingType::Count:
 		return { 0, 0 };
 	}
-	return { 0, 0 };
+	const BuildingTypeInfo &info = InfoOf(type);
+	return { info.ironCost, info.oilCost };
 }
 
 bool SellBuilding(Registry &registry, TileMap &map, ResourceSystem &resources, int teamID,
@@ -322,33 +293,18 @@ long DepositOil(const Registry &registry, ResourceSystem &resources, int teamID,
 
 float BuildingBuildTime(BuildingType type)
 {
-	switch (type)
-	{
-	case BuildingType::Base:
-		return 3.0f;
-	case BuildingType::ResourceDepot:
-		return 2.0f;
-	case BuildingType::Bootcamp:
-		return 4.0f;
-	case BuildingType::Workshop:
-		return 5.0f;
-	case BuildingType::Count:
-		return 3.0f;
-	}
-	return 3.0f;
+	return type == BuildingType::Count ? 3.0f : InfoOf(type).buildTime;
 }
 
 std::optional<ProductionCategory> ProducerCategory(BuildingType type)
 {
-	switch (type)
+	if (type == BuildingType::Count)
 	{
-	case BuildingType::Bootcamp:
-		return ProductionCategory::Infantry;
-	case BuildingType::Workshop:
-		return ProductionCategory::Vehicle;
-	default:
 		return std::nullopt;
 	}
+	const BuildingTypeInfo &info = InfoOf(type);
+	return info.isProducer ? std::optional<ProductionCategory>(info.producerCategory)
+						   : std::nullopt;
 }
 
 void UpdateBuildingConstruction(Registry &registry, float dt)

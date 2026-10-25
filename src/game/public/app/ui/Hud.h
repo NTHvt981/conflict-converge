@@ -54,7 +54,8 @@ enum class AbilityId
 	Repair,
 	Heal,
 	Rally,
-	Demolish
+	Demolish,
+	Count
 };
 const char *AbilityName(AbilityId id);
 struct AbilityEntry

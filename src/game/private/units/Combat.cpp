@@ -2,6 +2,7 @@
 
 #include "economy/Building.h"
 #include "units/Extensions.h"
+#include "units/UnitTypeInfo.h"
 #include "app/data/UnitConfig.h"
 
 float Effectiveness(DamageType dealt, ArmorType armor)
@@ -31,8 +32,7 @@ float ResolveAttack(Unit &attacker, CombatState &attackerCombat, Unit &defender,
 
 bool IsVehicleHull(UnitType attackerType)
 {
-	return attackerType == UnitType::IFV || attackerType == UnitType::Artillery ||
-		   attackerType == UnitType::LightTank || attackerType == UnitType::HeavyTank;
+	return InfoOf(attackerType).isVehicle;
 }
 
 float ResolveBuildingAttack(Unit &attacker, CombatState &attackerCombat, Building &building)
