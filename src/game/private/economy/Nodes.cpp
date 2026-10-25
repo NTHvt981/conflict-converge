@@ -208,7 +208,7 @@ void ResourceNodes::GatherTick(Registry &registry, ResourceSystem &resources, fl
 						node.respawnTimer = node.respawnDelay;
 					}
 					harvester->load += take;
-					harvester->loadKind = static_cast<int>(node.kind);
+					harvester->loadKind = node.kind;
 					if (harvester->load >= harvester->capacity)
 					{
 						harvester->phase = HarvestPhase::ToDepot;
@@ -222,7 +222,7 @@ void ResourceNodes::GatherTick(Registry &registry, ResourceSystem &resources, fl
 			{
 				const long whole = static_cast<long>(harvester->load);
 				long stored = 0;
-				if (harvester->loadKind == static_cast<int>(ResourceKind::Oil))
+				if (harvester->loadKind == ResourceKind::Oil)
 				{
 					stored = DepositOil(registry, resources, unit.teamID, whole);
 				}

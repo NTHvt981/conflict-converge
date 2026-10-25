@@ -6,6 +6,7 @@
 #include "units/Combat.h"
 #include "core/Registry.h"
 #include "core/Team.h"
+#include "economy/Nodes.h"
 #include "units/Unit.h"
 
 // Header-only: no TU, no premake regen.
@@ -35,7 +36,7 @@ struct Harvester
 	HarvestPhase phase = HarvestPhase::ToField;
 	float load = 0.0f;
 	float capacity = 100.0f;
-	int loadKind = 0; // ResourceKind as int; set from the node being worked
+	ResourceKind loadKind = ResourceKind::Iron;
 	cc::IVec2 nodeTile{ -1, -1 };
 };
 
