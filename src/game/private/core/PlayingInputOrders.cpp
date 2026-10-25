@@ -72,7 +72,7 @@ void PlayingInput::HandleRepairDragRelease()
 	if (repairDragActive_ && !input_.LeftDown())
 	{
 		repairDragActive_ = false;
-		if (areaRepairMode_)
+		if (HasMode(mode_, InteractionMode::AreaRepair))
 		{
 			const Rectangle zone =
 				DraggedWorldBox(camera_, repairDragStart_, input_.MouseScreen());
@@ -126,14 +126,15 @@ void PlayingInput::HandleRightPress()
 {
 	if (input_.RightPressed())
 	{
-		if (placingType_.has_value())
+		if (HasMode(mode_, InteractionMode::Placing))
 		{
+			SetMode(InteractionMode::Placing, false);
 			placingType_.reset();
 			placeDragActive_ = false;
 		}
-		else if (areaRepairMode_)
+		else if (HasMode(mode_, InteractionMode::AreaRepair))
 		{
-			areaRepairMode_ = false;
+			SetMode(InteractionMode::AreaRepair, false);
 			repairDragActive_ = false;
 		}
 		else
@@ -157,9 +158,9 @@ void PlayingInput::DispatchRightClickOrders()
 			audio_.Play(SfxId::Confirm);
 		}
 	}
-	else if (attackGroundMode_)
+	else if (HasMode(mode_, InteractionMode::AttackGround))
 	{
-		attackGroundMode_ = false;
+		SetMode(InteractionMode::AttackGround, false);
 		const Vector2 target = input_.MouseWorld(camera_);
 		const bool queued = input_.ShiftDown();
 		registry_.Each<Unit>([&](Entity id, Unit &unit) {
@@ -305,7 +306,7 @@ void PlayingInput::DispatchRightClickOrders()
 		{
 			formation::IssueFormationMoveFP(registry_, squad, map_, occ_,
 											input_.MouseWorld(camera_),
-											moveAtSlowestSpeed_);
+											HasMode(mode_, InteractionMode::SlowestSpeed));
 		}
 		audio_.Play(SfxId::Confirm);
 	}
@@ -354,7 +355,8 @@ void PlayingInput::HandleLineDragRelease()
 			const auto [lineStart, lineEnd] =
 				DraggedWorldLine(camera_, rightDragStart_, input_.MouseScreen());
 			formation::IssueLineFormationMoveFP(registry_, squad, map_, occ_, lineStart,
-												lineEnd, moveAtSlowestSpeed_);
+												lineEnd,
+												HasMode(mode_, InteractionMode::SlowestSpeed));
 			audio_.Play(SfxId::Confirm);
 		}
 	}

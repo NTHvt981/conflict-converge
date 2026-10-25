@@ -21,37 +21,52 @@ PlayingInput::PlayingInput(Registry &registry, TileMap &map, OccupancyGrid &occ,
 {
 }
 
+void PlayingInput::SetMode(InteractionMode mode, bool enabled)
+{
+	if (enabled)
+	{
+		mode_ = mode_ | mode;
+	}
+	else
+	{
+		mode_ =
+			static_cast<InteractionMode>(static_cast<int>(mode_) & ~static_cast<int>(mode));
+	}
+}
+
 void PlayingInput::ResetForMatch()
 {
-	settingRally_ = false;
+	SetMode(InteractionMode::SettingRally, false);
 	dragging_ = false;
 	rightDragging_ = false;
 	pendingRightClick_ = false;
 	rightDragDist_ = 0.0f;
 	placeDragActive_ = false;
 	repairDragActive_ = false;
-	attackGroundMode_ = false;
+	SetMode(InteractionMode::AttackGround, false);
 	armedAbility_.reset();
 }
 
 void PlayingInput::ToggleSettingRally()
 {
-	settingRally_ = !settingRally_;
+	SetMode(InteractionMode::SettingRally, !HasMode(mode_, InteractionMode::SettingRally));
 }
 
 void PlayingInput::ToggleSlowestSpeed()
 {
-	moveAtSlowestSpeed_ = !moveAtSlowestSpeed_;
+	SetMode(InteractionMode::SlowestSpeed, !HasMode(mode_, InteractionMode::SlowestSpeed));
 }
 
 void PlayingInput::ToggleAreaBuild()
 {
-	if (placingType_.has_value())
+	if (HasMode(mode_, InteractionMode::Placing))
 	{
+		SetMode(InteractionMode::Placing, false);
 		placingType_.reset();
 	}
 	else
 	{
+		SetMode(InteractionMode::Placing, true);
 		placingType_ = BuildingType::Base;
 	}
 	placeDragActive_ = false;
@@ -59,6 +74,7 @@ void PlayingInput::ToggleAreaBuild()
 
 void PlayingInput::SelectPlacingType(BuildingType type)
 {
+	SetMode(InteractionMode::Placing, true);
 	placingType_ = type;
 	placeDragActive_ = false;
 }
@@ -119,13 +135,13 @@ bool PlayingInput::IssueArmedAbilityAt(Vector2 worldTarget, bool queued)
 
 void PlayingInput::ToggleAreaRepair()
 {
-	areaRepairMode_ = !areaRepairMode_;
+	SetMode(InteractionMode::AreaRepair, !HasMode(mode_, InteractionMode::AreaRepair));
 	repairDragActive_ = false;
 }
 
 void PlayingInput::ToggleAttackGround()
 {
-	attackGroundMode_ = !attackGroundMode_;
+	SetMode(InteractionMode::AttackGround, !HasMode(mode_, InteractionMode::AttackGround));
 }
 
 bool PlayingInput::IsDragging() const
@@ -170,17 +186,17 @@ const std::optional<BuildingType> &PlayingInput::PlacingType() const
 
 bool PlayingInput::AreaRepairMode() const
 {
-	return areaRepairMode_;
+	return HasMode(mode_, InteractionMode::AreaRepair);
 }
 
 bool PlayingInput::AttackGroundMode() const
 {
-	return attackGroundMode_;
+	return HasMode(mode_, InteractionMode::AttackGround);
 }
 
 bool PlayingInput::IsSettingRally() const
 {
-	return settingRally_;
+	return HasMode(mode_, InteractionMode::SettingRally);
 }
 
 const int &PlayingInput::AutoAddGroupBit() const
@@ -197,7 +213,8 @@ void PlayingInput::Dispatch(bool pointerOverUi)
 		HandlePlaceDragRelease();
 		HandleRepairDragRelease();
 		HandleRightPan();
-		const bool wasPlacing = placingType_.has_value() || areaRepairMode_;
+		const bool wasPlacing = HasMode(mode_, InteractionMode::Placing) ||
+								HasMode(mode_, InteractionMode::AreaRepair);
 		HandleRightPress();
 		const bool cancelledPlacement = input_.RightPressed() && wasPlacing;
 		HandleRightRelease(cancelledPlacement);

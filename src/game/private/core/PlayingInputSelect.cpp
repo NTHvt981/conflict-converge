@@ -10,12 +10,12 @@ void PlayingInput::HandleLeftPress()
 {
 	if (input_.LeftPressed())
 	{
-		if (placingType_.has_value())
+		if (HasMode(mode_, InteractionMode::Placing))
 		{
 			placeDragActive_ = true;
 			placeDragStart_ = input_.MouseScreen();
 		}
-		else if (areaRepairMode_)
+		else if (HasMode(mode_, InteractionMode::AreaRepair))
 		{
 			repairDragActive_ = true;
 			repairDragStart_ = input_.MouseScreen();
@@ -25,7 +25,7 @@ void PlayingInput::HandleLeftPress()
 			camera_.view.target =
 				minimap_.MinimapToWorld(input_.MouseScreen(), map_.Width(), map_.Height());
 		}
-		else if (settingRally_)
+		else if (HasMode(mode_, InteractionMode::SettingRally))
 		{
 			const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(input_.MouseWorld(camera_)));
 			const cc::IVec2 free = NearestFreeFootprintTile(map_, &occ_, tile, 1, 1);
@@ -36,7 +36,7 @@ void PlayingInput::HandleLeftPress()
 					building.rallyTile = free;
 				}
 			});
-			settingRally_ = false;
+			SetMode(InteractionMode::SettingRally, false);
 		}
 		else
 		{

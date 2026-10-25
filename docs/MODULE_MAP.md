@@ -42,8 +42,9 @@ app/match: Menu, Skirmish
    rendering, so unit tests drive `Step` headlessly); `ResetForMatch`/`ResetEdgePolls`, team-0
    Bootcamp/Workshop gates, replay recording
 - `PlayingInput.h` - In-match input dispatch extracted from `Game`: drag-box select,
-  area-build/repair, right-click orders, line formation, control groups, sticky gesture
-  modes, armed HUD abilities. Runs only while Playing; advances no simulation
+  area-build/repair, right-click orders, line formation, control groups, one
+  `InteractionMode` bit set covering placing, area repair, rally, attack ground and
+  slowest speed, armed HUD abilities. Runs only while Playing; advances no simulation
 - `MenuScreens.h` - Map Editor branch only (raygui scratch canvas) + hotkey
   override apply/sync (`ApplyHotkeyOverrides`/`SyncHotkeySettings`); menus/HUD are
   RmlUi (`RmlUiMenus`/`RmlUiHud`). `MenuCallbacks` gives `Game` every world mutation.
