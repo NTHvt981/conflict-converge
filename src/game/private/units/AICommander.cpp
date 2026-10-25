@@ -297,27 +297,27 @@ void AICommander::RefreshIntel()
 
 void AICommander::OrderMove(Unit &unit, Entity id, Vector2 dest)
 {
-	if (occ_ != nullptr)
+	const OrderContext ctx = MakeOrderContext(registry_, id, map_, occ_);
+	if (ctx.occ != nullptr)
 	{
-		IssuePathOrderFootprint(unit, GetOrders(registry_, id), GetMover(registry_, id), map_,
-								*occ_, dest, id, registry_.Generation(id));
+		IssuePathOrderFootprint(unit, ctx, dest);
 	}
 	else
 	{
-		IssuePathOrder(unit, GetOrders(registry_, id), GetMover(registry_, id), map_, dest);
+		IssuePathOrder(unit, ctx.orders, ctx.mover, ctx.map, dest);
 	}
 }
 
 void AICommander::OrderAttackMove(Unit &unit, Entity id, Vector2 dest)
 {
-	if (occ_ != nullptr)
+	const OrderContext ctx = MakeOrderContext(registry_, id, map_, occ_);
+	if (ctx.occ != nullptr)
 	{
-		IssueAttackMoveOrderFootprint(unit, GetOrders(registry_, id), GetMover(registry_, id),
-									  map_, *occ_, dest, id, registry_.Generation(id));
+		IssueAttackMoveOrderFootprint(unit, ctx, dest);
 	}
 	else
 	{
-		IssueAttackMoveOrder(unit, GetOrders(registry_, id), GetMover(registry_, id), map_, dest);
+		IssueAttackMoveOrder(unit, ctx.orders, ctx.mover, ctx.map, dest);
 	}
 }
 

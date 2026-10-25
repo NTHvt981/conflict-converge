@@ -87,8 +87,9 @@ void OrderHarvestMove(Registry &registry, Unit &unit, Entity id, const TileMap &
 {
 	if (occ != nullptr)
 	{
-		IssuePathOrderFootprint(unit, GetOrders(registry, id), GetMover(registry, id), map, *occ,
-								dest, id, registry.Generation(id));
+		IssuePathOrderFootprint(unit,
+								MakeOrderContext(registry, id, map, occ),
+								dest);
 	}
 	else
 	{

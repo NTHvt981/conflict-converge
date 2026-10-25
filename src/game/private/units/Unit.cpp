@@ -19,24 +19,23 @@ namespace
 bool ReissueDriverOrder(Unit &unit, Mover &mover, TileMap &map, OccupancyGrid *occ, Vector2 dest,
 						Entity self, Registry &registry)
 {
+	const OrderContext ctx = MakeOrderContext(registry, self, map, occ);
 	const cc::IVec2 wantTile = cc::WorldToTile(cc::ToGlm(dest));
 	const cc::IVec2 goalTile =
 		(occ != nullptr) ? NearestEnterableTile(map, *occ, wantTile, unit.footprintWidth,
-												unit.footprintHeight, self,
-												registry.Generation(self))
+												unit.footprintHeight, self, ctx.selfGen)
 						 : wantTile;
 	if (mover.hasPath && cc::WorldToTile(cc::ToGlm(mover.moveTarget)) == goalTile)
 	{
 		return false;
 	}
-	if (occ != nullptr)
+	if (ctx.occ != nullptr)
 	{
-		IssuePathOrderFootprint(unit, GetOrders(registry, self), mover, map, *occ, dest, self,
-								registry.Generation(self));
+		IssuePathOrderFootprint(unit, ctx, dest);
 	}
 	else
 	{
-		IssuePathOrder(unit, GetOrders(registry, self), mover, map, dest);
+		IssuePathOrder(unit, ctx.orders, ctx.mover, ctx.map, dest);
 	}
 	return true;
 }
@@ -64,6 +63,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 	Orders &orders = GetOrders(registry, self);
 	Mover &mover = GetMover(registry, self);
 	CombatState &combat = GetCombatState(registry, self);
+	const OrderContext ctx = MakeOrderContext(registry, self, map, occ);
 
 	if (combat.cooldown > 0.0f)
 	{
@@ -97,7 +97,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 		{
 			orders.hasRepairOrder = false;
 			orders.repairTarget = kInvalidEntity;
-			OnOrderFinished(*unit, orders, mover, map, occ, self, registry.Generation(self));
+			OnOrderFinished(*unit, ctx);
 		}
 		else if (glm::distance(cc::ToGlm(unit->position), cc::ToGlm(aim)) > kRepairRange)
 		{
@@ -105,7 +105,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 			ReissueDriverOrder(*unit, mover, map, occ,
 							   cc::ToRaylib(cc::TileToWorld(goalTile.x, goalTile.y)), self,
 							   registry);
-			UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self, registry.Generation(self));
+			UpdateUnitMovement(*unit, ctx, combat, EffectiveSpeed(*unit, mover), dtSeconds);
 			unit->state = UnitState::Moving;
 			return;
 		}
@@ -134,7 +134,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 		{
 			orders.hasLoadOrder = false;
 			orders.loadTarget = kInvalidEntity;
-			OnOrderFinished(*unit, orders, mover, map, occ, self, registry.Generation(self));
+			OnOrderFinished(*unit, ctx);
 			return;
 		}
 		const Unit *rider = registry.Get<Unit>(orders.loadTarget);
@@ -142,8 +142,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 			glm::distance(cc::ToGlm(unit->position), cc::ToGlm(rider->position)) > kLoadRange)
 		{
 			ReissueDriverOrder(*unit, mover, map, occ, rider->position, self, registry);
-			UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self,
-							   registry.Generation(self));
+			UpdateUnitMovement(*unit, ctx, combat, EffectiveSpeed(*unit, mover), dtSeconds);
 			unit->state = UnitState::Moving;
 			return;
 		}
@@ -152,7 +151,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 		orders.loadTarget = kInvalidEntity;
 		unit->state = UnitState::Idle;
 		unit->velocity = { 0.0f, 0.0f };
-		OnOrderFinished(*unit, orders, mover, map, occ, self, registry.Generation(self));
+		OnOrderFinished(*unit, ctx);
 		return;
 	}
 
@@ -162,14 +161,13 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 		if (cargo == nullptr || cargo->passengers.empty())
 		{
 			orders.hasUnloadOrder = false;
-			OnOrderFinished(*unit, orders, mover, map, occ, self, registry.Generation(self));
+			OnOrderFinished(*unit, ctx);
 			return;
 		}
 		if (glm::distance(cc::ToGlm(unit->position), cc::ToGlm(orders.unloadPos)) > kLoadRange)
 		{
 			ReissueDriverOrder(*unit, mover, map, occ, orders.unloadPos, self, registry);
-			UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self,
-							   registry.Generation(self));
+			UpdateUnitMovement(*unit, ctx, combat, EffectiveSpeed(*unit, mover), dtSeconds);
 			unit->state = UnitState::Moving;
 			return;
 		}
@@ -177,7 +175,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 		orders.hasUnloadOrder = false;
 		unit->state = UnitState::Idle;
 		unit->velocity = { 0.0f, 0.0f };
-		OnOrderFinished(*unit, orders, mover, map, occ, self, registry.Generation(self));
+		OnOrderFinished(*unit, ctx);
 		return;
 	}
 
@@ -188,8 +186,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 		if (dist > static_cast<float>(unit->attackRange))
 		{
 			ReissueDriverOrder(*unit, mover, map, occ, orders.attackGroundPos, self, registry);
-			UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self,
-							   registry.Generation(self));
+			UpdateUnitMovement(*unit, ctx, combat, EffectiveSpeed(*unit, mover), dtSeconds);
 			unit->state = UnitState::Moving;
 			return;
 		}
@@ -223,18 +220,17 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 				{
 					return;
 				}
-				if (occ != nullptr)
+				if (ctx.occ != nullptr)
 				{
-					IssuePathOrderFootprint(*unit, orders, mover, map, *occ,
-											TargetPosition(registry, combat.target), self,
-											registry.Generation(self));
+					IssuePathOrderFootprint(*unit, ctx,
+											TargetPosition(registry, combat.target));
 				}
 				else
 				{
-					IssuePathOrder(*unit, orders, mover, map,
+					IssuePathOrder(*unit, ctx.orders, ctx.mover, ctx.map,
 								   TargetPosition(registry, combat.target));
 				}
-				UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self, registry.Generation(self));
+				UpdateUnitMovement(*unit, ctx, combat, EffectiveSpeed(*unit, mover), dtSeconds);
 				unit->state = UnitState::Moving;
 				return;
 			}
@@ -254,7 +250,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 				return;
 			}
 		}
-				UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self, registry.Generation(self));
+				UpdateUnitMovement(*unit, ctx, combat, EffectiveSpeed(*unit, mover), dtSeconds);
 		return;
 	}
 
@@ -307,7 +303,7 @@ void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,
 	}
 
 	ReissueDriverOrder(*unit, mover, map, occ, TargetPosition(registry, combat.target), self, registry);
-	UpdateUnitMovement(*unit, orders, mover, combat, map, EffectiveSpeed(*unit, mover), dtSeconds, occ, self, registry.Generation(self));
+	UpdateUnitMovement(*unit, ctx, combat, EffectiveSpeed(*unit, mover), dtSeconds);
 }
 
 

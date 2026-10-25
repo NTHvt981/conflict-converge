@@ -10,8 +10,7 @@
 // Unit TUs call but no other subsystem needs stay off Unit.h.
 void LoseTarget(Unit &unit, CombatState &combat);
 void StopMoving(Unit &unit, Mover &mover);
-void OnOrderFinished(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
-					 OccupancyGrid *occ, Entity self, std::uint32_t selfGen);
+void OnOrderFinished(Unit &unit, const OrderContext &ctx);
 void OnOrderCancelled(Orders &orders);
 bool TurretAimed(Registry &registry, Entity self, Vector2 fromPos, Vector2 aimPos,
 				 float dtSeconds);

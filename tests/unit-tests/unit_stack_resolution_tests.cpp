@@ -222,10 +222,9 @@ void RunUnitStackResolutionTests()
 		unit->speed = 200.0f;
 		IssueMoveOrder(*unit, GetOrders(registry, solo), GetMover(registry, solo),
 					   Vector2{ 10.0f * 64.0f + cc::kHalfTile, 5.0f * 64.0f }); // OOB target
-		UpdateUnitMovement(*unit, GetOrders(registry, solo), GetMover(registry, solo),
-						   GetCombatState(registry, solo), map,
-						   EffectiveSpeed(*unit, GetMover(registry, solo)), 1.0f, &occ, solo,
-						   registry.Generation(solo));
+		UpdateUnitMovement(*unit, MakeOrderContext(registry, solo, map, &occ),
+						   GetCombatState(registry, solo),
+						   EffectiveSpeed(*unit, GetMover(registry, solo)), 1.0f);
 		const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit->position));
 		CC_CHECK(map.InBounds(tile));
 		CC_CHECK(!GetMover(registry, solo).hasMoveOrder && !GetMover(registry, solo).hasPath);

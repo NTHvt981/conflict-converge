@@ -52,7 +52,7 @@ int WalkUntilIdle(Unit &unit, Orders &orders, Mover &mover, CombatState &combat,
 	int frames = 0;
 	while ((mover.hasMoveOrder || mover.hasPath) && frames < maxFrames)
 	{
-		UpdateUnitMovement(unit, orders, mover, combat, map, speed, dt);
+		UpdateUnitMovement(unit, OrderContext{ orders, mover, map }, combat, speed, dt);
 		++frames;
 	}
 	return frames;
@@ -318,9 +318,8 @@ void RunFootprintTests()
 		occ.ReserveFootprint({ 5, 5 }, 1, 1, blocker, registry.Generation(blocker));
 
 		Unit *m = registry.Get<Unit>(mover);
-		IssuePathOrderFootprint(*m, GetOrders(registry, mover), GetMover(registry, mover), map,
-								occ, cc::ToRaylib(cc::TileToWorld(5, 5)), mover,
-								registry.Generation(mover));
+		IssuePathOrderFootprint(*m, MakeOrderContext(registry, mover, map, &occ),
+								cc::ToRaylib(cc::TileToWorld(5, 5)));
 		CC_CHECK(GetMover(registry, mover).hasPath); // routed, not straight-fallback-cancelled
 		const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(GetMover(registry, mover).moveTarget));
 		CC_CHECK(!(dest == cc::IVec2(5, 5)));
@@ -412,17 +411,16 @@ void RunFootprintTests()
 		Unit *m = registry.Get<Unit>(mover);
 		Mover &mm = GetMover(registry, mover);
 		CombatState &mc = GetCombatState(registry, mover);
-		IssuePathOrderFootprint(*m, GetOrders(registry, mover), mm, map, occ,
-								cc::ToRaylib(cc::TileToWorld(4, 0)), mover,
-								registry.Generation(mover));
+		IssuePathOrderFootprint(*m, MakeOrderContext(registry, mover, map, &occ),
+								cc::ToRaylib(cc::TileToWorld(4, 0)));
 		CC_CHECK(mm.hasPath);
 		// Drop a blocker onto the route mid-walk (old code cancels here).
 		occ.ReserveFootprint({ 2, 0 }, 1, 1, blocker, registry.Generation(blocker));
 		int frames = 0;
 		while ((mm.hasMoveOrder || mm.hasPath) && frames < 1200)
 		{
-			UpdateUnitMovement(*m, GetOrders(registry, mover), mm, mc, map, m->speed, 1.0f / 60.0f,
-							   &occ, mover, registry.Generation(mover));
+			UpdateUnitMovement(*m, MakeOrderContext(registry, mover, map, &occ), mc, m->speed,
+							   1.0f / 60.0f);
 			++frames;
 		}
 		CC_CHECK(!mm.hasMoveOrder && !mm.hasPath); // arrived, not stuck
@@ -458,8 +456,8 @@ void RunFootprintTests()
 		int frames = 0;
 		while ((mm.hasMoveOrder || mm.hasPath) && frames < 600)
 		{
-			UpdateUnitMovement(*m, GetOrders(registry, mover), mm, mc, map, m->speed, 1.0f / 60.0f,
-							   &occ, mover, registry.Generation(mover));
+			UpdateUnitMovement(*m, MakeOrderContext(registry, mover, map, &occ), mc, m->speed,
+							   1.0f / 60.0f);
 			++frames;
 		}
 		CC_CHECK(!mm.hasMoveOrder && !mm.hasPath); // gave up, order gone
