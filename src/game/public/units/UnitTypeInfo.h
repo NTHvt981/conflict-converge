@@ -2,6 +2,7 @@
 
 #include <cstddef>
 
+#include "units/Locomotor.h"
 #include "units/Unit.h"
 
 struct UnitTypeInfo
@@ -15,6 +16,7 @@ struct UnitTypeInfo
 	const char *atlasIdlePrefix; // "" = flat-PNG fallback
 	const char *atlasMovePrefix; // "" = flat-PNG fallback
 	bool isVehicle;
+	Locomotor locomotor;
 	int ironCost;
 	int oilCost;
 	cc::IVec2 footprint;
@@ -22,23 +24,24 @@ struct UnitTypeInfo
 
 inline constexpr UnitTypeInfo kUnitTypes[] = {
 	{ "Rifle Infantry", "RifleInfantry", "rifle_infantry", "rifle_infantry", "rifle",
-	  nullptr, "rifle_infantry_idle", "rifle_infantry_move", false, 25, 0, { 1, 1 } },
+	  nullptr, "rifle_infantry_idle", "rifle_infantry_move", false, Locomotor::Foot, 25, 0,
+	  { 1, 1 } },
 	{ "Anti-Armor", "AntiArmorInfantry", "antiarmor_infantry", "antiarmor", "antiarmor",
-	  nullptr, "antiarmor_idle", "antiarmor_move", false, 30, 5, { 1, 1 } },
+	  nullptr, "antiarmor_idle", "antiarmor_move", false, Locomotor::Foot, 30, 5, { 1, 1 } },
 	{ "Engineer", "Engineer", "engineer", "engineer", "engineer",
-	  nullptr, "engineer_idle", "engineer_move", false, 40, 0, { 1, 1 } },
+	  nullptr, "engineer_idle", "engineer_move", false, Locomotor::Foot, 40, 0, { 1, 1 } },
 	{ "IFV", "IFV", "ifv", "ifv", "ifv",
-	  nullptr, "", "", true, 80, 20, { 2, 2 } },
+	  nullptr, "", "", true, Locomotor::Wheeled, 80, 20, { 2, 2 } },
 	{ "Artillery", "Artillery", "artillery", "artillery", "artillery",
-	  nullptr, "", "", true, 120, 40, { 2, 2 } },
+	  nullptr, "", "", true, Locomotor::Wheeled, 120, 40, { 2, 2 } },
 	{ "Light Tank", "LightTank", "light_tank", "lighttank", "lighttank",
-	  "lighttank", "", "", true, 150, 50, { 1, 1 } },
+	  "lighttank", "", "", true, Locomotor::Tracked, 150, 50, { 1, 1 } },
 	{ "Heavy Tank", "HeavyTank", "heavy_tank", "heavytank", "heavytank",
-	  "heavytank", "", "", true, 250, 100, { 2, 2 } },
+	  "heavytank", "", "", true, Locomotor::Tracked, 250, 100, { 2, 2 } },
 	{ "Prototype Infantry", "PrototypeInfantry", "prototype_infantry", "prototypeinfantry",
-	  "prototypeinfantry", nullptr, "", "", false, 25, 0, { 1, 1 } },
+	  "prototypeinfantry", nullptr, "", "", false, Locomotor::Foot, 25, 0, { 1, 1 } },
 	{ "Medic", "Medic", "medic", "medic", "medic",
-	  nullptr, "medic_idle", "medic_move", false, 30, 0, { 1, 1 } },
+	  nullptr, "medic_idle", "medic_move", false, Locomotor::Foot, 30, 0, { 1, 1 } },
 };
 
 static_assert(sizeof(kUnitTypes) / sizeof(kUnitTypes[0]) ==

@@ -4,18 +4,10 @@
 
 #include "core/MathUtils.h"
 #include "world/TileMap.h"
+#include "units/Locomotor.h"
 #include "units/Unit.h"
 
 using TilePath = std::vector<cc::IVec2>;
-
-enum class Locomotor
-{
-	Foot,
-	Tracked,
-	Wheeled
-};
-
-Locomotor LocomotorOf(UnitType type);
 
 float TerrainCost(TerrainType terrain, Locomotor locomotor);
 

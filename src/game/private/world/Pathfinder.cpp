@@ -1,6 +1,7 @@
 #include "world/Pathfinder.h"
 
 #include "units/Extensions.h"
+#include "units/UnitTypeInfo.h"
 
 #include <cmath>
 #include <queue>
@@ -118,21 +119,6 @@ float FootprintCost(const TileMap &map, cc::IVec2 anchor, int footprintW, int fo
 	return cost;
 }
 
-}
-
-Locomotor LocomotorOf(UnitType type)
-{
-	switch (type)
-	{
-	case UnitType::IFV:
-	case UnitType::Artillery:
-		return Locomotor::Wheeled;
-	case UnitType::LightTank:
-	case UnitType::HeavyTank:
-		return Locomotor::Tracked;
-	default:
-		return Locomotor::Foot;
-	}
 }
 
 float TerrainCost(TerrainType terrain, Locomotor locomotor)
@@ -338,7 +324,7 @@ void IssuePathOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map
 {
 	const cc::IVec2 start = cc::WorldToTile(cc::ToGlm(unit.position));
 	const cc::IVec2 goal = cc::WorldToTile(cc::SnapToTile(cc::ToGlm(worldTarget)));
-	TilePath path = FindPath(map, start, goal, LocomotorOf(unit.type));
+	TilePath path = FindPath(map, start, goal, InfoOf(unit.type).locomotor);
 	if (path.empty())
 	{
 		IssueMoveOrder(unit, orders, mover, worldTarget);
@@ -365,7 +351,7 @@ void IssuePathOrderFootprint(Unit &unit, const OrderContext &ctx, Vector2 worldT
 								ctx.self, ctx.selfGen);
 	TilePath path = FindPathFootprint(ctx.map, *ctx.occ, start, goal,
 									  unit.footprintWidth, unit.footprintHeight,
-									  ctx.self, ctx.selfGen, LocomotorOf(unit.type));
+									  ctx.self, ctx.selfGen, InfoOf(unit.type).locomotor);
 	if (path.empty())
 	{
 		IssueMoveOrder(unit, ctx.orders, ctx.mover, cc::ToRaylib(cc::TileToWorld(goal.x, goal.y)));

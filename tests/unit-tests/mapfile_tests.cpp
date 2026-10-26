@@ -10,6 +10,7 @@
 #include "app/ui/GameCamera.h"
 #include "world/MapFile.h"
 #include "economy/Nodes.h"
+#include "units/UnitTypeInfo.h" // locomotor column
 #include "world/Pathfinder.h" // TerrainCost hook
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
@@ -113,9 +114,11 @@ void RunMapFileTests()
 	CC_CHECK(TerrainCost(TerrainType::Forest, Locomotor::Tracked) == 1.8f);
 	CC_CHECK(TerrainCost(TerrainType::Forest, Locomotor::Wheeled) == 1.6f);
 	CC_CHECK(TerrainCost(TerrainType::Water) == 0.0f);
-	CC_CHECK(LocomotorOf(UnitType::RifleInfantry) == Locomotor::Foot);
-	CC_CHECK(LocomotorOf(UnitType::LightTank) == Locomotor::Tracked);
-	CC_CHECK(LocomotorOf(UnitType::IFV) == Locomotor::Wheeled);
+	CC_CHECK(InfoOf(UnitType::RifleInfantry).locomotor == Locomotor::Foot);
+	CC_CHECK(InfoOf(UnitType::LightTank).locomotor == Locomotor::Tracked);
+	CC_CHECK(InfoOf(UnitType::IFV).locomotor == Locomotor::Wheeled);
+	CC_CHECK(InfoOf(UnitType::PrototypeInfantry).locomotor == Locomotor::Foot);
+	CC_CHECK(InfoOf(UnitType::Medic).locomotor == Locomotor::Foot);
 
 	// --- NearestFreeTile: walkable spawn points around footprints ---
 	TileMap freeMap(8, 8);
