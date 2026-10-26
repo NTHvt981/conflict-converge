@@ -126,44 +126,48 @@ const char *TeamName(TeamId teamID)
 	return teamID == kPlayerTeam ? "blue" : "red";
 }
 
+struct TerrainArtInfo
+{
+	const char *file; // nullptr = no tile art
+	int slot;         // index into terrain_
+};
+
+constexpr TerrainArtInfo kTerrainArt[] = {
+	{ "grass", 0 },
+	{ "water", 1 },
+	{ nullptr, -1 },
+	{ "forest", 2 },
+	{ "rock", 3 },
+};
+
+static_assert(sizeof(kTerrainArt) / sizeof(kTerrainArt[0]) ==
+				  static_cast<std::size_t>(TerrainType::Count),
+			  "one row per TerrainType");
+
+constexpr bool TerrainSlotsFit()
+{
+	for (const TerrainArtInfo &art : kTerrainArt)
+	{
+		if (art.slot >= Art::kTerrainSlots)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+static_assert(TerrainSlotsFit(), "terrain slot exceeds Art::kTerrainSlots");
+
 }
 
 const char *Art::TerrainFile(TerrainType type)
 {
-	switch (type)
-	{
-	case TerrainType::Grass:
-		return "grass";
-	case TerrainType::Water:
-		return "water";
-	case TerrainType::Forest:
-		return "forest";
-	case TerrainType::Rock:
-		return "rock";
-	case TerrainType::Building:
-	case TerrainType::Count:
-		return nullptr;
-	}
-	return nullptr;
+	return kTerrainArt[static_cast<std::size_t>(type)].file;
 }
 
 int Art::TerrainSlot(TerrainType type)
 {
-	switch (type)
-	{
-	case TerrainType::Grass:
-		return 0;
-	case TerrainType::Water:
-		return 1;
-	case TerrainType::Forest:
-		return 2;
-	case TerrainType::Rock:
-		return 3;
-	case TerrainType::Building:
-	case TerrainType::Count:
-		return -1;
-	}
-	return -1;
+	return kTerrainArt[static_cast<std::size_t>(type)].slot;
 }
 
 int Art::TeamSlot(TeamId teamID)
@@ -329,16 +333,15 @@ bool Art::Init(InitMode mode)
 	}
 	rallyBase_ = LoadTexture("data/sprites/icons/rally_point_base.png");
 	rallyMask_ = LoadTexture("data/sprites/icons/rally_point_mask.png");
-	for (int s = 0; s < 4; ++s)
+	for (const TerrainArtInfo &art : kTerrainArt)
 	{
-		const TerrainType type = s == 0   ? TerrainType::Grass
-								 : s == 1 ? TerrainType::Water
-								 : s == 2 ? TerrainType::Forest
-										  : TerrainType::Rock;
-		std::snprintf(path, sizeof(path), "data/sprites/terrain_tiles/%s_64px.png",
-					  TerrainFile(type));
-		terrain_[s] = LoadTexture(path);
-		if (terrain_[s].id == 0)
+		if (art.slot < 0)
+		{
+			continue;
+		}
+		std::snprintf(path, sizeof(path), "data/sprites/terrain_tiles/%s_64px.png", art.file);
+		terrain_[art.slot] = LoadTexture(path);
+		if (terrain_[art.slot].id == 0)
 		{
 			fallback_ = true;
 		}
