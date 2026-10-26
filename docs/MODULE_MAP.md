@@ -16,8 +16,8 @@ core:    MathUtils, CcAssert, Registry, Event, Subsystem, Team
          GameRenderer (+GameRendererWorld/GameRendererHud), MenuScreens
 world:   TileMap, Pathfinder, MapFile, FogOfWar
 units:   Unit (+UnitInternal, UnitOrders/UnitCombat/UnitRepair/UnitMovement/
-          UnitTransport TUs), UnitStats, UnitTypeInfo, Combat, UnitFactory, Targeting, Formation
-          (+FormationAssignment), AICommander, Extensions, UnitCommands
+          UnitTransport TUs), UnitStats, UnitTypeInfo, Locomotor, Combat, UnitFactory,
+          Targeting, Formation (+FormationAssignment), AICommander, Extensions, UnitCommands
 economy: Building, BuildingTypeInfo, Nodes, ResourceSystem, Production
 app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, RmlUiHost, RmlUiMenus,
          (+RmlUiMenusRemap/RmlUiMenusDialogs), RmlUiHud (+RmlUiHudPanels/RmlUiHudEvents),
@@ -70,8 +70,9 @@ app/match: Menu, Skirmish
   Rock blocks; new types append after Building so old saves still decode), `IsBlocked`
   (Water/Building/Rock + OOB = true)
 - `Pathfinder.h` - 8-dir A* over one shared core (`FindPath` terrain-only,
-  `FindPathFootprint` occupancy-aware with corner-cut guard); locomotor table
-  (`LocomotorOf`: Grass 1.0 all, Forest 1.0 foot / 1.8 tracked / 1.6 wheeled) +
+  `FindPathFootprint` occupancy-aware with corner-cut guard); `TerrainCost` table
+  (Grass 1.0 all, Forest 1.0 foot / 1.8 tracked / 1.6 wheeled; the caller passes the
+  unit type's `locomotor` column from `UnitTypeInfo.h`) +
   `IssuePathOrder` (M2 straight fallback when unreachable)
 - `MapFile.h` - Text `.map` loader (`data/`): 5-line header, legend (Q79), markers,
   `ApplyMapData` (default node amounts), `NearestFreeTile` for spawns, M14 `ListMaps`
@@ -96,7 +97,7 @@ app/match: Menu, Skirmish
   attack-move/patrol/repair/heal issue
 - `UnitStats.h` - `BaseStats` table for 7 types + `ApplyBaseStats` (preserves
   position/team/selection)
-- `UnitTypeInfo.h` - Per-type descriptor table: name/cost/art stems/footprint;
+- `UnitTypeInfo.h` - Per-type descriptor table: name/cost/art stems/footprint/locomotor;
   `InfoOf` is the only reader
 - `Combat.h` - 3x3 damage matrix (`Effectiveness`), `ResolveAttack` (scales, restarts
   cooldown, stamps hit-flash), hitboxes, crush rule, M13 `ResolveBuildingAttack`;

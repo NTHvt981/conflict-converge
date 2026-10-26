@@ -6,6 +6,7 @@
 #include "world/Pathfinder.h"
 #include "world/TileMap.h"
 #include "units/UnitInternal.h"
+#include "units/UnitTypeInfo.h"
 #include <algorithm>
 #include <cmath>
 #include <unordered_map>
@@ -147,11 +148,11 @@ bool TryBlockedRetryWithBudget(Unit &unit, const OrderContext &ctx, float dtSeco
 	{
 		fresh = FindPathFootprint(ctx.map, *ctx.occ, start, goal, unit.footprintWidth,
 								  unit.footprintHeight, ctx.self, ctx.selfGen,
-								  LocomotorOf(unit.type));
+								  InfoOf(unit.type).locomotor);
 	}
 	else
 	{
-		fresh = FindPath(ctx.map, start, goal, LocomotorOf(unit.type));
+		fresh = FindPath(ctx.map, start, goal, InfoOf(unit.type).locomotor);
 	}
 	if (fresh.empty())
 	{
