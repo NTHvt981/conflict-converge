@@ -312,6 +312,23 @@ void RunArtTests()
 		CC_CHECK(Art::TerrainSlot(TerrainType::Forest) == 2);
 		CC_CHECK(Art::TerrainSlot(TerrainType::Rock) == 3);
 		CC_CHECK(Art::TerrainSlot(TerrainType::Building) == -1);
+		// Every art-bearing type owns a distinct slot inside terrain_.
+		bool seenSlots[Art::kTerrainSlots] = {};
+		for (int t = 0; t < static_cast<int>(TerrainType::Count); ++t)
+		{
+			const int slot = Art::TerrainSlot(static_cast<TerrainType>(t));
+			if (slot < 0)
+			{
+				continue;
+			}
+			if (slot >= Art::kTerrainSlots)
+			{
+				CC_CHECK(false);
+				continue;
+			}
+			CC_CHECK(!seenSlots[slot]);
+			seenSlots[slot] = true;
+		}
 		// Headless no-op: rectangles path never touches the GPU.
 		Art art;
 		CC_CHECK(!art.Init(InitMode::Headless));

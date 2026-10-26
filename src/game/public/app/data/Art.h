@@ -164,6 +164,8 @@ public:
 	// Base art scale multiplier (prototype infantry renders at 2x).
 	static float BaseArtScale(UnitType type);
 	// Terrain filename stem + tile slot per type (`<stem>_64px.png`).
+	// Slots index terrain_[], so they run 0..kTerrainSlots-1.
+	static constexpr int kTerrainSlots = 4;
 	static const char *TerrainFile(TerrainType type);
 	static int TerrainSlot(TerrainType type);
 	// Team color for atlas mask tinting (mask layer only); color-blind mode
@@ -203,7 +205,7 @@ private:
 	Texture2D icons_[2] = {};        // [kind]
 	Texture2D rallyBase_ = {};
 	Texture2D rallyMask_ = {};
-	Texture2D terrain_[4] = {};      // [TerrainSlot]: grass/water/forest/rock
+	Texture2D terrain_[kTerrainSlots] = {}; // [TerrainSlot]
 	Font uiFont_ = {};               // Porto Buena (valid only when fontReady_)
 	bool fontReady_ = false;
 };
