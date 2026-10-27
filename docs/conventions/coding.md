@@ -19,6 +19,7 @@ One line per area; the linked section carries the Do/Don't pair.
 | [Includes](#headers-and-includes) | `#pragma once`; own header first; root-qualified includes; forward-declare cycles |
 | [Format](#formatting) | Tabs; Allman braces; `const T &`; comma-first init lists; 100 columns; LF |
 | [Structure](#structure) | Data structs with defaults; free-function systems; `Subsystem` scopes, no globals |
+| [Steps](#keep-a-long-function-a-list-of-named-steps) | A screen-long function is a table of contents: one named method per phase |
 | [Errors](#error-handling) | `CC_ASSERT` invariants; bool/sentinel failures; throw only while parsing |
 | [Comments](#comments) | Contract, not syntax; present tense; units on meaningful numbers |
 | [Data](#data-saves-and-assets) | camelCase JSON; append-only save wire; version and magic bump on a break |
@@ -945,6 +946,34 @@ Subsystems(const Subsystems &) = default; // two owners of the same pools
 ```cpp
 // Unit.h must not include Pathfinder.h back.
 #include "world/Pathfinder.h"
+```
+
+### Keep a long function a list of named steps
+
+A function longer than one screen is a table of contents: one named private
+method per phase, and the top level only orders the calls.
+
+**✅ Do**
+```cpp
+void Simulation::Step(float dt)
+{
+	fog_.Recompute(registry_);
+	RunUnitMovementFrame(registry_, map_, occ_, &fog_, dt);
+	ReapDeadUnits();
+	UpdateCombatVfx();
+	UpdateParticlePools(dt);
+	// ... one named phase per line
+	UpdateOutcome();
+}
+```
+
+**❌ Don't**
+```cpp
+void Simulation::Step(float dt)
+{
+	// 260 lines: deaths, VFX, economy, production, replay, AI, minimap and the
+	// outcome gate interleaved with their own local state and lambdas
+}
 ```
 
 ### Put per-frame work in the owner of that phase

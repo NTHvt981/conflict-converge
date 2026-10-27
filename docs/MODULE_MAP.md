@@ -38,9 +38,11 @@ app/match: Menu, Skirmish
   `MatchController` fans out `world_.ResetForMatch()` at match boundaries.
   `worldIs2v2` gates the ally/enemyAI2 ticks (never unit counts —
   shared teams wake parked commanders); `E2E*` seam is for tests/e2e only
-- `Simulation.h` - Per-frame match tick extracted from `Game::Update` (no input/menus/
-   rendering, so unit tests drive `Step` headlessly); `ResetForMatch`/`ResetEdgePolls`, team-0
-   Bootcamp/Workshop gates, replay recording
+- `Simulation.h` - Per-frame match tick extracted from `Game::Update`: `Step` is a table of
+   contents over named phases (death sweep, combat VFX, economy edges, economy tick, production
+   pump, replay frames, construction/flash, retreat, commanders, minimap texture, outcome gate);
+   no input and no menu handling beyond the outcome gate, so unit tests drive `Step` headlessly;
+   `ResetForMatch`/`ResetEdgePolls`, team-0 Bootcamp/Workshop gates, replay recording
 - `PlayingInput.h` - In-match input dispatch extracted from `Game`: drag-box select,
   area-build/repair, right-click orders, line formation, control groups, one
   `InteractionMode` bit set covering placing, area repair, rally, attack ground and

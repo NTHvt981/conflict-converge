@@ -7,6 +7,7 @@
 #include "world/FogOfWar.h"
 #include "app/match/Menu.h"
 #include "app/ui/Minimap.h"
+#include "economy/Building.h"
 #include "economy/Nodes.h"
 #include "app/ui/Pings.h"
 #include "economy/Production.h"
@@ -17,8 +18,8 @@
 #include "world/TileMap.h"
 #include "units/UnitFactory.h"
 
-// It never touches input, menus (beyond the outcome gate), or rendering, so
-// unit tests can drive Step headlessly over fixture worlds.
+// It never touches input; it refreshes the minimap texture and gates the match
+// outcome, so unit tests can drive Step headlessly over fixture worlds.
 class Simulation
 {
 public:
@@ -44,6 +45,20 @@ public:
 
 private:
 	void Announce(EventType type);
+	void ReapDeadUnits();
+	void UpdateCombatVfx();
+	void UpdateParticlePools(float dt);
+	void UpdateAttackSfx(float dt);
+	void AnnounceEconomyChanges();
+	void StepEconomy(float dt);
+	void PumpProduction(float dt);
+	void PumpQueue(ProductionQueue &queue, BuildingType type, int &cursor, float dt);
+	void RecordReplayFrame(float dt);
+	void UpdateStructures(float dt);
+	void UpdateRetreat();
+	void UpdateCommanders(float dt);
+	void RefreshMinimapTexture(float dt);
+	void UpdateOutcome();
 
 	Registry &registry_;
 	TileMap &map_;
