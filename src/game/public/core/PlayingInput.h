@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <vector>
 
 #include "app/data/Audio.h"
 #include "economy/Building.h"
@@ -13,6 +14,9 @@
 #include "core/Registry.h"
 #include "core/Subsystem.h"
 #include "world/TileMap.h"
+
+struct Unit;
+struct OrderContext;
 
 enum class InteractionMode
 {
@@ -120,5 +124,12 @@ private:
 	void HandleRightPress();
 	void HandleRightRelease(bool cancelledPlacement);
 	void DispatchRightClickOrders();
+	std::vector<Entity> SelectedUnits() const;
+	bool DispatchArmedAbility(Vector2 world);
+	bool DispatchAttackGround(Vector2 world);
+	void DispatchSingleUnitOrder(Entity id, Vector2 world);
+	void DispatchSquadOrder(const std::vector<Entity> &squad, Vector2 world);
+	bool TryIssueSpecialOrder(Unit &unit, Entity id, const OrderContext &ctx, Vector2 world,
+							  bool queued);
 	void HandleLineDragRelease();
 };
