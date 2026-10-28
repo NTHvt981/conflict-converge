@@ -61,42 +61,7 @@ void CheatOverlay::Frame(const PerfSample &perf)
 			{
 				continue;
 			}
-			switch (w->Kind())
-			{
-			case cc::cheat::CheatWidgetKind::Toggle:
-			{
-				auto *tw = static_cast<cc::cheat::CheatWidget<cc::cheat::TOGGLE> *>(w);
-				bool v = tw->value();
-				if (ImGui::Checkbox(tw->Name(), &v))
-				{
-					tw->Set(v);
-				}
-				break;
-			}
-			case cc::cheat::CheatWidgetKind::Int:
-			{
-				auto *iw = static_cast<cc::cheat::CheatWidget<cc::cheat::INT> *>(w);
-				int v = iw->value();
-				ImGui::InputInt(iw->Name(), &v);
-				iw->Set(v);
-				break;
-			}
-			case cc::cheat::CheatWidgetKind::Float:
-			{
-				auto *fw = static_cast<cc::cheat::CheatWidget<cc::cheat::FLOAT> *>(w);
-				float v = fw->value();
-				ImGui::DragFloat(fw->Name(), &v);
-				fw->Set(v);
-				break;
-			}
-			case cc::cheat::CheatWidgetKind::Button:
-			{
-				auto *bw = static_cast<cc::cheat::CheatWidget<cc::cheat::BUTTON> *>(w);
-				bool clicked = ImGui::Button(bw->Name());
-				bw->Set(clicked);
-				break;
-			}
-			}
+			w->DrawImGui();
 		}
 	}
 	ImGui::End();
