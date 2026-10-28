@@ -36,8 +36,9 @@ app/match: Menu, Skirmish
   (`engine_` process lifetime, `world_` match lifetime, `player_` view state;
   construction order is load-bearing — init lists bind `engine_.Get<T>()` etc.).
   `MatchController` fans out `world_.ResetForMatch()` at match boundaries.
-  `worldIs2v2` gates the ally/enemyAI2 ticks (never unit counts —
-  shared teams wake parked commanders); `E2E*` seam is for tests/e2e only
+  `worldIs2v2_` gates the ally/enemyAI2 ticks (never unit counts —
+  shared teams wake parked commanders); `tests/e2e/E2EGame` is a friend that
+  drives the real loop headless
 - `Simulation.h` - Per-frame match tick extracted from `Game::Update`: `Step` is a table of
    contents over named phases (death sweep, combat VFX, economy edges, economy tick, production
    pump, replay frames, construction/flash, retreat, commanders, minimap texture, outcome gate);

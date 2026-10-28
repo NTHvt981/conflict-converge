@@ -6,8 +6,8 @@ class Registry;
 class TileMap;
 
 // Test-only subclass: exposes the Game internals the Tier-1 harness drives
-// directly. Lives in the e2e project so Game itself carries no test seam;
-// the base grants it protected access to the match lifecycle only.
+// directly. Lives in the e2e project so the game build carries no harness;
+// Game befriends it.
 class E2EGame : public Game
 {
 public:

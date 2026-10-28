@@ -5,7 +5,7 @@
 
 MenuFlow &E2EGame::E2EMenu()
 {
-	return menu;
+	return menu_;
 }
 
 Registry &E2EGame::E2ERegistry()
@@ -20,16 +20,16 @@ TileMap &E2EGame::E2EMap()
 
 bool E2EGame::IsWorldActive() const
 {
-	return worldActive;
+	return worldActive_;
 }
 
 bool E2EGame::E2EStartSelectedMatch()
 {
-	if (const MapEntry *sel = menu.setup.SelectedMap(); sel != nullptr)
+	if (const MapEntry *sel = menu_.setup.SelectedMap(); sel != nullptr)
 	{
-		if (menu.StartMatch())
+		if (menu_.StartMatch())
 		{
-			StartMatch(sel->path, menu.setup.difficulty);
+			StartMatch(sel->path, menu_.setup.difficulty);
 			return true;
 		}
 	}
