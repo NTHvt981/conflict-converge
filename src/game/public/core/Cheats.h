@@ -18,29 +18,20 @@ template <> struct CheatValueType<INT> { using type = int; };
 template <> struct CheatValueType<FLOAT> { using type = float; };
 template <> struct CheatValueType<BUTTON> { using type = bool; };
 
-enum class CheatWidgetKind { Toggle, Int, Float, Button };
-
-template <class Tag> constexpr CheatWidgetKind CheatKindOf();
-template <> constexpr CheatWidgetKind CheatKindOf<TOGGLE>() { return CheatWidgetKind::Toggle; }
-template <> constexpr CheatWidgetKind CheatKindOf<INT>() { return CheatWidgetKind::Int; }
-template <> constexpr CheatWidgetKind CheatKindOf<FLOAT>() { return CheatWidgetKind::Float; }
-template <> constexpr CheatWidgetKind CheatKindOf<BUTTON>() { return CheatWidgetKind::Button; }
-
 class CheatWidgetBase
 {
 public:
-	CheatWidgetBase(const char *name, const char *file, CheatWidgetKind kind);
+	CheatWidgetBase(const char *name, const char *file);
 	CheatWidgetBase(const CheatWidgetBase &) = delete;
 	CheatWidgetBase &operator=(const CheatWidgetBase &) = delete;
 	virtual ~CheatWidgetBase();
 	const char *Name() const;
 	const char *File() const;
-	CheatWidgetKind Kind() const;
+	virtual void DrawImGui() = 0;
 
 private:
 	std::string name_;
 	std::string file_;
-	CheatWidgetKind kind_;
 };
 
 class CheatRegistry
@@ -54,12 +45,19 @@ private:
 	std::vector<CheatWidgetBase *> widgets_;
 };
 
+template <class Tag>
+void DrawCheatWidget(const char *name, typename CheatValueType<Tag>::type &value);
+template <> void DrawCheatWidget<TOGGLE>(const char *name, bool &value);
+template <> void DrawCheatWidget<INT>(const char *name, int &value);
+template <> void DrawCheatWidget<FLOAT>(const char *name, float &value);
+template <> void DrawCheatWidget<BUTTON>(const char *name, bool &value);
+
 template <class Tag> class CheatWidget : public CheatWidgetBase
 {
 public:
 	using ValueT = typename CheatValueType<Tag>::type;
 	CheatWidget(const char *name, const char *file, ValueT defaultValue)
-		: CheatWidgetBase(name, file, CheatKindOf<Tag>())
+		: CheatWidgetBase(name, file)
 		, value_(defaultValue)
 	{
 		CheatRegistry::Instance().Add(this);
@@ -75,6 +73,10 @@ public:
 	void Set(const ValueT &v)
 	{
 		value_ = v;
+	}
+	void DrawImGui() override
+	{
+		DrawCheatWidget<Tag>(Name(), value_);
 	}
 
 private:

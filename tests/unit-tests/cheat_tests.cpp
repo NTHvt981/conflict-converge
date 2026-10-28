@@ -36,10 +36,6 @@ void RunCheatTests()
 	CC_CHECK(Find("TEST_BUTTON") != nullptr);
 
 	CC_CHECK(std::strstr(TEST_TOGGLE.File(), "cheat_tests.cpp") != nullptr);
-	CC_CHECK(TEST_TOGGLE.Kind() == cc::cheat::CheatWidgetKind::Toggle);
-	CC_CHECK(TEST_INT.Kind() == cc::cheat::CheatWidgetKind::Int);
-	CC_CHECK(TEST_FLOAT.Kind() == cc::cheat::CheatWidgetKind::Float);
-	CC_CHECK(TEST_BUTTON.Kind() == cc::cheat::CheatWidgetKind::Button);
 
 	TEST_INT.Set(42);
 	CC_CHECK(TEST_INT.value() == 42);
@@ -50,7 +46,6 @@ void RunCheatTests()
 	TEST_TOGGLE.Set(false);
 
 	CC_CHECK(Find("SHOW_UNIT_ID_TOGGLE") != nullptr);
-	CC_CHECK(Find("SHOW_UNIT_ID_TOGGLE")->Kind() == cc::cheat::CheatWidgetKind::Toggle);
 
 	int codeRan = 0;
 	DEFINE_CHEAT_CODE(codeRan = 1;)
