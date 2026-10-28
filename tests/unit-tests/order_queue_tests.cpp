@@ -59,7 +59,7 @@ void RunOrderQueueTests()
 
 		IssueOrEnqueue(unit, OrderContext{ orders, GetMover(registry, id), map, nullptr, id, 0 },
 					   false, QueuedOrder{ QueuedOrderKind::Move, TilePos(8, 1) });
-		CC_CHECK(FindMover(registry, id)->hasMoveOrder);
+		CC_CHECK(registry.Get<Mover>(id)->hasMoveOrder);
 		CC_CHECK(orders.orderQueue.empty());
 
 		IssueOrEnqueue(unit, OrderContext{ orders, GetMover(registry, id), map, nullptr, id, 0 },
@@ -95,7 +95,7 @@ void RunOrderQueueTests()
 
 		IssueOrEnqueue(unit, OrderContext{ orders, GetMover(registry, id), map, nullptr, id, 0 },
 					   true, QueuedOrder{ QueuedOrderKind::Move, TilePos(5, 5) });
-		CC_CHECK(FindMover(registry, id)->hasMoveOrder);
+		CC_CHECK(registry.Get<Mover>(id)->hasMoveOrder);
 		CC_CHECK(orders.orderQueue.empty());
 	}
 
@@ -149,7 +149,7 @@ void RunOrderQueueTests()
 					   true, QueuedOrder{ QueuedOrderKind::Move, TilePos(1, 8) });
 		CC_CHECK(orders.orderQueue.size() == 1);
 		UpdateUnit(id, registry, map, 1.0f); // steps into water -> cancels
-		CC_CHECK(!FindMover(registry, id)->hasMoveOrder);
+		CC_CHECK(!registry.Get<Mover>(id)->hasMoveOrder);
 		CC_CHECK(orders.orderQueue.empty()); // stuck: rest dropped, not marched
 	}
 
@@ -209,7 +209,7 @@ void RunOrderQueueTests()
 								TilePos(8, 8));
 		CC_CHECK(!engOrders.hasRepairOrder);
 		CC_CHECK(engOrders.repairTarget == kInvalidEntity);
-		CC_CHECK(FindMover(registry, eng)->hasMoveOrder || FindMover(registry, eng)->hasPath);
+		CC_CHECK(registry.Get<Mover>(eng)->hasMoveOrder || registry.Get<Mover>(eng)->hasPath);
 	}
 
 	// --- Bugfix: squad formation move clears a stale attack-ground order ---
@@ -230,8 +230,8 @@ void RunOrderQueueTests()
 		formation::IssueFormationMoveFP(registry, squad, map, occ, TilePos(15, 10),
 										false);
 		CC_CHECK(!leadOrders.hasAttackGroundOrder);
-		CC_CHECK(FindMover(registry, squad[0])->hasMoveOrder ||
-				 FindMover(registry, squad[0])->hasPath);
+		CC_CHECK(registry.Get<Mover>(squad[0])->hasMoveOrder ||
+				 registry.Get<Mover>(squad[0])->hasPath);
 	}
 
 	// --- Bugfix: line formation move clears a stale patrol (no resume) ---
@@ -249,7 +249,7 @@ void RunOrderQueueTests()
 		formation::IssueLineFormationMoveFP(registry, squad, map, occ, TilePos(10, 10),
 											TilePos(12, 10), false);
 		CC_CHECK(!orders.hasPatrol);
-		CC_CHECK(FindMover(registry, id)->hasMoveOrder || FindMover(registry, id)->hasPath);
+		CC_CHECK(registry.Get<Mover>(id)->hasMoveOrder || registry.Get<Mover>(id)->hasPath);
 		// Walk to arrival: must stop, not resume the old patrol route.
 		for (int i = 0; i < 60; ++i)
 		{

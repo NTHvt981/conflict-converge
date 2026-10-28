@@ -61,7 +61,7 @@ void RunRetreatTests()
 		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), kPlayerTeam, kRetreatHealthFraction,
 					   true);
 		CC_CHECK(orders.attackMove); // withdrawal fights: not a plain move
-		CC_CHECK(FindMover(registry, id)->hasPath || FindMover(registry, id)->hasMoveOrder);
+		CC_CHECK(registry.Get<Mover>(id)->hasPath || registry.Get<Mover>(id)->hasMoveOrder);
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(orders.attackMoveDest)) == cc::IVec2(1, 1));
 	}
 
@@ -77,7 +77,7 @@ void RunRetreatTests()
 		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), kPlayerTeam, kRetreatHealthFraction,
 					   true);
 		CC_CHECK(!orders.attackMove);
-		CC_CHECK(!FindMover(registry, id)->hasMoveOrder && !FindMover(registry, id)->hasPath);
+		CC_CHECK(!registry.Get<Mover>(id)->hasMoveOrder && !registry.Get<Mover>(id)->hasPath);
 	}
 
 	// --- Engineers never retreat, even flagged and bleeding ---
@@ -92,7 +92,7 @@ void RunRetreatTests()
 		RetreatIfLowHP(registry, map, nullptr, HomeTile(1, 1), kPlayerTeam, kRetreatHealthFraction,
 					   true);
 		CC_CHECK(!orders.attackMove);
-		CC_CHECK(!FindMover(registry, id)->hasMoveOrder && !FindMover(registry, id)->hasPath);
+		CC_CHECK(!registry.Get<Mover>(id)->hasMoveOrder && !registry.Get<Mover>(id)->hasPath);
 	}
 
 	// --- opt-in gating: AI path (false) ignores the flag either way ---

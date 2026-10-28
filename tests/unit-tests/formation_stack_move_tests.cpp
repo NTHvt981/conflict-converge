@@ -46,7 +46,7 @@ void RunFormationStackMoveTests()
 									cc::ToRaylib(cc::TileToWorld(20, 20)), false);
 	for (Entity id : squad)
 	{
-		const Mover *mover = FindMover(registry, id);
+		const Mover *mover = registry.Get<Mover>(id);
 		CC_CHECK(mover != nullptr && (mover->hasMoveOrder || mover->hasPath));
 	}
 
@@ -62,7 +62,7 @@ void RunFormationStackMoveTests()
 		bool allDone = true;
 		for (Entity id : squad)
 		{
-			const Mover *mover = FindMover(registry, id);
+			const Mover *mover = registry.Get<Mover>(id);
 			allDone = allDone && mover != nullptr && !mover->hasMoveOrder && !mover->hasPath;
 		}
 		if (allDone)

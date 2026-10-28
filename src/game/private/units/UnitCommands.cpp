@@ -45,7 +45,7 @@ void ToggleSelectionAutoRetreat(Registry &registry)
 	registry.Each<Unit>([&](Entity id, const Unit &unit) {
 		if (unit.isSelected)
 		{
-			const Orders *orders = FindOrders(registry, id);
+			const Orders *orders = registry.Get<Orders>(id);
 			if (orders == nullptr || !orders->autoRetreat)
 			{
 				allOn = false;
@@ -66,7 +66,7 @@ void ToggleSelectionAutoRepair(Registry &registry)
 	registry.Each<Unit>([&](Entity id, const Unit &unit) {
 		if (unit.isSelected && unit.type == UnitType::Engineer)
 		{
-			const Orders *orders = FindOrders(registry, id);
+			const Orders *orders = registry.Get<Orders>(id);
 			if (orders == nullptr || !orders->autoRepair)
 			{
 				allOn = false;

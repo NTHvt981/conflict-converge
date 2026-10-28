@@ -82,15 +82,15 @@ void RunFeedbackTests()
 
 		constexpr float kDt = 1.0f / 60.0f;
 		UpdateUnit(id, registry, map, kDt);
-		const float afterOne = FindCombatState(registry, id)->hitFlashTime;
+		const float afterOne = registry.Get<CombatState>(id)->hitFlashTime;
 		CC_CHECK(afterOne < kHitFlashDuration && afterOne > 0.0f);
 
 		for (int i = 0; i < 20; ++i)
 		{
 			UpdateUnit(id, registry, map, kDt);
 		}
-		CC_CHECK(FindCombatState(registry, id)->hitFlashTime == 0.0f);
+		CC_CHECK(registry.Get<CombatState>(id)->hitFlashTime == 0.0f);
 		// The number outlives the flash (render stops showing it with the overlay).
-		CC_CHECK(FindCombatState(registry, id)->lastDamageTaken == 10.0f);
+		CC_CHECK(registry.Get<CombatState>(id)->lastDamageTaken == 10.0f);
 	}
 }

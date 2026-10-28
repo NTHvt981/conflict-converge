@@ -117,7 +117,7 @@ void RunAICommanderTests()
 	CC_CHECK(war.WavesLaunched() == 1);
 	int ordered = 0;
 	warRegistry.Each<Unit>([&](Entity id, const Unit &unit) {
-		const Mover *mover = FindMover(warRegistry, id);
+		const Mover *mover = warRegistry.Get<Mover>(id);
 		if (unit.teamID == kEnemyTeam && unit.health > 0.0f && mover != nullptr &&
 			(mover->hasMoveOrder || mover->hasPath))
 		{
@@ -202,7 +202,7 @@ void RunAICommanderTests()
 			{
 				return;
 			}
-			const Mover *mover = FindMover(registry, id);
+			const Mover *mover = registry.Get<Mover>(id);
 			if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
 			{
 				const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(mover->moveTarget));
@@ -255,9 +255,9 @@ void RunAICommanderTests()
 			{
 				return;
 			}
-			const Orders *orders = FindOrders(registry, id);
+			const Orders *orders = registry.Get<Orders>(id);
 			CC_CHECK(orders != nullptr && orders->attackMove); // FP march preserves attack-move
-			const Mover *mover = FindMover(registry, id);
+			const Mover *mover = registry.Get<Mover>(id);
 			if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
 			{
 				++ordered;
@@ -298,9 +298,9 @@ void RunAICommanderTests()
 			{
 				return;
 			}
-			const Orders *orders = FindOrders(registry, id);
+			const Orders *orders = registry.Get<Orders>(id);
 			CC_CHECK(orders != nullptr && orders->attackMove);
-			const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(FindMover(registry, id)->moveTarget));
+			const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(registry.Get<Mover>(id)->moveTarget));
 			if (dest == cc::IVec2(1, 10) || dest == cc::IVec2(2, 10))
 			{
 				droveAtBlocker = true;
@@ -338,9 +338,9 @@ void RunAICommanderTests()
 			{
 				return;
 			}
-			const Orders *orders = FindOrders(registry, id);
+			const Orders *orders = registry.Get<Orders>(id);
 			CC_CHECK(orders != nullptr && orders->attackMove);
-			const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(FindMover(registry, id)->moveTarget));
+			const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(registry.Get<Mover>(id)->moveTarget));
 			const int off = (dest.x - 1) * (dest.x - 1) + (dest.y - 10) * (dest.y - 10);
 			CC_CHECK(off <= 4); // formation slots around remembered (1,10)
 		});
@@ -379,9 +379,9 @@ void RunAICommanderTests()
 			{
 				return;
 			}
-			const Orders *orders = FindOrders(registry, id);
+			const Orders *orders = registry.Get<Orders>(id);
 			CC_CHECK(orders != nullptr && orders->attackMove);
-			const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(FindMover(registry, id)->moveTarget));
+			const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(registry.Get<Mover>(id)->moveTarget));
 			const int seen = (dest.x - 6) * (dest.x - 6) + (dest.y - 4) * (dest.y - 4);
 			const int stale = (dest.x - 1) * (dest.x - 1) + (dest.y - 10) * (dest.y - 10);
 			CC_CHECK(seen <= 4);  // formation slots around the sighted cluster

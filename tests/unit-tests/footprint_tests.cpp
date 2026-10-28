@@ -353,7 +353,7 @@ void RunFootprintTests()
 			{
 				return;
 			}
-			const Mover *mover = FindMover(registry, id);
+			const Mover *mover = registry.Get<Mover>(id);
 			if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
 			{
 				++orderedCount;
@@ -532,8 +532,8 @@ void RunFootprintTests()
 			TileMap map(10, 10);
 			occ.ReserveFootprint({ 4, 0 }, 1, 1, prey, registry.Generation(prey));
 			UpdateUnit(chaser, registry, map, kDt, nullptr, &occ);
-			const CombatState *chaserCombat = FindCombatState(registry, chaser);
-			const Mover *chaserMover = FindMover(registry, chaser);
+			const CombatState *chaserCombat = registry.Get<CombatState>(chaser);
+			const Mover *chaserMover = registry.Get<Mover>(chaser);
 			CC_CHECK(chaserCombat->target == prey);
 			CC_CHECK(chaserMover->hasPath);
 			const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(chaserMover->moveTarget));
@@ -542,15 +542,15 @@ void RunFootprintTests()
 			// Second tick with an unmoved target: no re-issue churn.
 			const TilePath first = chaserMover->path;
 			UpdateUnit(chaser, registry, map, kDt, nullptr, &occ);
-			CC_CHECK(FindMover(registry, chaser)->path == first);
+			CC_CHECK(registry.Get<Mover>(chaser)->path == first);
 		}
 		// Without occ: legacy blind detour drives at the target tile.
 		{
 			auto [registry, chaser, prey] = makeDuel();
 			TileMap map(10, 10);
 			UpdateUnit(chaser, registry, map, kDt);
-			const CombatState *chaserCombat = FindCombatState(registry, chaser);
-			const Mover *chaserMover = FindMover(registry, chaser);
+			const CombatState *chaserCombat = registry.Get<CombatState>(chaser);
+			const Mover *chaserMover = registry.Get<Mover>(chaser);
 			CC_CHECK(chaserCombat->target == prey);
 			CC_CHECK(chaserMover->hasPath);
 			CC_CHECK(cc::WorldToTile(cc::ToGlm(chaserMover->moveTarget)) == cc::IVec2(4, 0));

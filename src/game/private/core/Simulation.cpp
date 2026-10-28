@@ -173,7 +173,7 @@ void Simulation::UpdateCombatVfx()
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 		const Vector2 center = {
 			unit.position.x + cc::kHalfTile, unit.position.y + cc::kHalfTile };
-		const CombatState *combat = FindCombatState(registry_, id);
+		const CombatState *combat = registry_.Get<CombatState>(id);
 		if (combat != nullptr && combat->hitFlashTime > 0.20f)
 		{
 			art_.ParticlesPool().SpawnBurst(center, YELLOW, 6, 90.0f, 0.25f);
@@ -215,7 +215,7 @@ void Simulation::UpdateAttackSfx(float dt)
 	bool windingUp = false;
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 		(void)unit;
-		const CombatState *combat = FindCombatState(registry_, id);
+		const CombatState *combat = registry_.Get<CombatState>(id);
 		if (combat != nullptr && combat->phase == AttackPhase::WindUp)
 		{
 			windingUp = true;

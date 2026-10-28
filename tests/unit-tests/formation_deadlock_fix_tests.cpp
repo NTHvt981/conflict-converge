@@ -55,7 +55,7 @@ RunResult RunUntilDone(Registry &registry, TileMap &map, OccupancyGrid &occ,
 		for (std::size_t i = 0; i < squad.size(); ++i)
 		{
 			const Unit *u = registry.Get<Unit>(squad[i]);
-			const Mover *mover = FindMover(registry, squad[i]);
+			const Mover *mover = registry.Get<Mover>(squad[i]);
 			allDone = allDone && mover != nullptr && !mover->hasMoveOrder && !mover->hasPath;
 			const bool active = mover != nullptr && (mover->hasMoveOrder || mover->hasPath);
 			const bool still = u->velocity.x == 0.0f && u->velocity.y == 0.0f;
@@ -106,7 +106,7 @@ void RunFormationDeadlockFixTests()
 		// one direct (the keeper), one via the escape hop (the straggler).
 		for (Entity id : squad)
 		{
-			const Mover *mover = FindMover(registry, id);
+			const Mover *mover = registry.Get<Mover>(id);
 			CC_CHECK(mover != nullptr && (mover->hasMoveOrder || mover->hasPath));
 		}
 		// The formation slots for a 2-unit group (cellSize 1) are
@@ -151,7 +151,7 @@ void RunFormationDeadlockFixTests()
 										cc::ToRaylib(cc::TileToWorld(20, 20)), false);
 		for (Entity id : squad)
 		{
-			const Mover *mover = FindMover(registry, id);
+			const Mover *mover = registry.Get<Mover>(id);
 			CC_CHECK(mover != nullptr && (mover->hasMoveOrder || mover->hasPath));
 		}
 

@@ -251,8 +251,8 @@ void RunAreaRepairTests()
 		}
 		CC_CHECK(registry.Get<Unit>(foe)->health == foeMax);
 		CC_CHECK(registry.Get<Unit>(medic)->state != UnitState::Attacking);
-		CC_CHECK(FindCombatState(registry, medic)->target == kInvalidEntity);
+		CC_CHECK(registry.Get<CombatState>(medic)->target == kInvalidEntity);
 		CC_CHECK(registry.Get<Unit>(eng)->state != UnitState::Attacking);
-		CC_CHECK(FindCombatState(registry, eng)->target == kInvalidEntity);
+		CC_CHECK(registry.Get<CombatState>(eng)->target == kInvalidEntity);
 	}
 }

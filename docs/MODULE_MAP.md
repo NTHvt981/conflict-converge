@@ -173,7 +173,9 @@ app/match: Menu, Skirmish
   unknown keys reject) + `cost`; `ActiveUnitConfig` catalog loaded at match start with
   per-type compiled fallback; `CostOf` reads the catalog
 - `Extensions.h` - M2 gimmick components in `Registry` pools: `Turret`/`Cargo`/`EmbarkedOn`
-  (+ `Projectile` shells, `IsEmbarked`/`IsFleshUnit` gates). Header-only
+  (+ `Projectile` shells, `IsEmbarked`/`IsFleshUnit` gates). `GetOrAdd<T>` is the only
+  creation path (`GetOrders`/`GetMover`/`GetCombatState`/`GetHarvester` forward to it);
+  reads go through `Registry::Get<T>`. Header-only
 - `Menu.h` - M14 boot-to-menu flow: MainMenu/SkirmishSetup/Settings/LoadGame +
   Playing/Paused/GameOver/Victory, injected-map setup (CanStart gate), `data/settings.cfg`
   persistence (Q86); pause overlay shares MenuSettings, quit-to-menu teardown

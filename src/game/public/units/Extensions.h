@@ -55,11 +55,6 @@ inline Harvester &GetHarvester(Registry &registry, Entity entity)
 	return GetOrAdd<Harvester>(registry, entity);
 }
 
-inline const Harvester *FindHarvester(const Registry &registry, Entity entity)
-{
-	return registry.Get<Harvester>(entity);
-}
-
 struct EmbarkedOn
 {
 	Entity carrier = kInvalidEntity;
@@ -118,11 +113,6 @@ inline Orders &GetOrders(Registry &registry, Entity entity)
 	return GetOrAdd<Orders>(registry, entity);
 }
 
-inline const Orders *FindOrders(const Registry &registry, Entity entity)
-{
-	return registry.Get<Orders>(entity);
-}
-
 struct Mover
 {
 	Vector2 moveTarget = {}; // tile-snapped pending move destination
@@ -145,11 +135,6 @@ struct Mover
 inline Mover &GetMover(Registry &registry, Entity entity)
 {
 	return GetOrAdd<Mover>(registry, entity);
-}
-
-inline const Mover *FindMover(const Registry &registry, Entity entity)
-{
-	return registry.Get<Mover>(entity);
 }
 
 // Effective movement speed honoring the slowest-speed cap (-1 = own speed).
@@ -175,9 +160,4 @@ struct CombatState
 inline CombatState &GetCombatState(Registry &registry, Entity entity)
 {
 	return GetOrAdd<CombatState>(registry, entity);
-}
-
-inline const CombatState *FindCombatState(const Registry &registry, Entity entity)
-{
-	return registry.Get<CombatState>(entity);
 }

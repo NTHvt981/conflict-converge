@@ -53,7 +53,7 @@ void RunAttackPhaseTests()
 			AddPhaser(registry, UnitType::RifleInfantry, kEnemyTeam, 100.0f, 0.0f);
 
 		UpdateUnit(attacker, registry, map, kDt);
-		CC_CHECK(FindCombatState(registry, attacker)->phase == AttackPhase::WindUp);
+		CC_CHECK(registry.Get<CombatState>(attacker)->phase == AttackPhase::WindUp);
 		CC_CHECK(registry.Get<Unit>(victim)->health == 100.0f); // telegraphed, not landed
 
 		StepPhasers(registry, map, kDt, 4); // mid-windup: still nothing
@@ -63,8 +63,8 @@ void RunAttackPhaseTests()
 		const float expected = 100.0f - 10.0f * Effectiveness(DamageType::KINETIC,
 															 registry.Get<Unit>(victim)->armorType);
 		CC_CHECK(registry.Get<Unit>(victim)->health == expected);
-		CC_CHECK(FindCombatState(registry, attacker)->phase == AttackPhase::Recover);
-		CC_CHECK(FindCombatState(registry, attacker)->cooldown > 0.0f);
+		CC_CHECK(registry.Get<CombatState>(attacker)->phase == AttackPhase::Recover);
+		CC_CHECK(registry.Get<CombatState>(attacker)->cooldown > 0.0f);
 
 		const float hpAfterFirst = registry.Get<Unit>(victim)->health;
 		StepPhasers(registry, map, kDt, 30); // recovering: no second hit
@@ -92,7 +92,7 @@ void RunAttackPhaseTests()
 		GetCombatState(registry, pacifist).target = foe; // bypass acquisition
 		StepPhasers(registry, map, kDt, 30);
 		const Unit *unit = registry.Get<Unit>(pacifist);
-		CC_CHECK(FindCombatState(registry, pacifist)->phase == AttackPhase::Ready);
+		CC_CHECK(registry.Get<CombatState>(pacifist)->phase == AttackPhase::Ready);
 		CC_CHECK(unit->state == UnitState::Attacking); // engaged, but holds fire
 	}
 
@@ -103,13 +103,13 @@ void RunAttackPhaseTests()
 		const Entity walker = AddPhaser(registry, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
 		const Entity gone = AddPhaser(registry, UnitType::RifleInfantry, kEnemyTeam, 100.0f, 0.0f);
 		UpdateUnit(walker, registry, map, kDt); // acquires, starts WindUp
-		CC_CHECK(FindCombatState(registry, walker)->phase == AttackPhase::WindUp);
+		CC_CHECK(registry.Get<CombatState>(walker)->phase == AttackPhase::WindUp);
 		registry.Destroy(gone); // target lost...
 		IssueMoveOrder(*registry.Get<Unit>(walker), GetOrders(registry, walker),
 					   GetMover(registry, walker), { 5 * 64.0f, 0.0f }); // ...walk instead
 		StepPhasers(registry, map, kDt, 3);
 		const Unit *unit = registry.Get<Unit>(walker);
-		CC_CHECK(FindCombatState(registry, walker)->phase == AttackPhase::Ready);
+		CC_CHECK(registry.Get<CombatState>(walker)->phase == AttackPhase::Ready);
 		CC_CHECK(unit->state == UnitState::Moving);
 		CC_CHECK(unit->position.x > 0.0f);
 	}
@@ -142,12 +142,12 @@ void RunAttackPhaseTests()
 		turret.turnRate = 3.0f;
 		registry.Add(tank, turret);
 		StepPhasers(registry, map, kDt, 5); // 0.25 rad traversed: still off-aim
-		CC_CHECK(FindCombatState(registry, tank)->phase == AttackPhase::Ready);
+		CC_CHECK(registry.Get<CombatState>(tank)->phase == AttackPhase::Ready);
 		CC_CHECK(registry.Get<Unit>(tank)->state == UnitState::Attacking);
 		CC_CHECK(registry.Get<Unit>(foe)->health == 100.0f); // no free hits
 
 		registry.Get<Turret>(tank)->facing = 0.0f; // pre-aimed
 		UpdateUnit(tank, registry, map, kDt);
-		CC_CHECK(FindCombatState(registry, tank)->phase == AttackPhase::WindUp);
+		CC_CHECK(registry.Get<CombatState>(tank)->phase == AttackPhase::WindUp);
 	}
 }

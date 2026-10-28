@@ -348,7 +348,7 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
 
 	ReservedDamageMap reservedDamage;
 	registry.Each<Unit>([&](Entity id, const Unit &unit) {
-		const CombatState *combat = FindCombatState(registry, id);
+		const CombatState *combat = registry.Get<CombatState>(id);
 		if (unit.health > 0.0f && combat != nullptr && combat->target != kInvalidEntity &&
 			(combat->phase == AttackPhase::WindUp || combat->phase == AttackPhase::Recover))
 		{

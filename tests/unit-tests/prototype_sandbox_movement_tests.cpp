@@ -124,8 +124,8 @@ void RunPrototypeSandboxMovementTests()
 		IssuePathOrderFootprint(*u, MakeOrderContext(sand.registry, squad[i], sand.map, &sand.occ),
 								cc::ToRaylib(cc::TileToWorld(
 									destinations[i].x, destinations[i].y)));
-		CC_CHECK(FindMover(sand.registry, squad[i])->hasPath ||
-				 FindMover(sand.registry, squad[i])->hasMoveOrder); // path found, or straight-line fallback engaged
+		CC_CHECK(sand.registry.Get<Mover>(squad[i])->hasPath ||
+				 sand.registry.Get<Mover>(squad[i])->hasMoveOrder); // path found or straight-line
 	}
 
 	// Step the exact same per-frame pipeline the real game loop uses
@@ -145,7 +145,7 @@ void RunPrototypeSandboxMovementTests()
 		bool allDone = true;
 		for (std::size_t i = 0; i < squad.size(); ++i)
 		{
-			const Mover *mover = FindMover(sand.registry, squad[i]);
+			const Mover *mover = sand.registry.Get<Mover>(squad[i]);
 			if (!done[i] && mover != nullptr && !mover->hasMoveOrder && !mover->hasPath)
 			{
 				done[i] = true;

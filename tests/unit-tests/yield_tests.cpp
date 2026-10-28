@@ -54,7 +54,7 @@ void RunYieldTests()
 		for (; frames < kBudget; ++frames)
 		{
 			RunUnitMovementFrame(registry, map, occ, nullptr, kDt);
-			const Mover *mover = FindMover(registry, moverId);
+			const Mover *mover = registry.Get<Mover>(moverId);
 			if (mover != nullptr && !mover->hasMoveOrder && !mover->hasPath &&
 				cc::WorldToTile(cc::ToGlm(moverUnit->position)) == cc::IVec2(6, 1))
 			{
@@ -64,7 +64,7 @@ void RunYieldTests()
 		std::printf("yield: corridor arrival %.2fs\n", frames * kDt);
 
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(moverUnit->position)) == cc::IVec2(6, 1));
-		CC_CHECK(!FindMover(registry, moverId)->hasMoveOrder);
+		CC_CHECK(!registry.Get<Mover>(moverId)->hasMoveOrder);
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(blockerUnit->position)) == cc::IVec2(2, 0));
 		CC_CHECK(blockerUnit->state == UnitState::Idle);
 	}
@@ -95,14 +95,14 @@ void RunYieldTests()
 		for (; frames < kBudget; ++frames)
 		{
 			RunUnitMovementFrame(registry, map, occ, nullptr, kDt);
-			const Mover *mover = FindMover(registry, moverId);
+			const Mover *mover = registry.Get<Mover>(moverId);
 			if (mover != nullptr && !mover->hasMoveOrder && !mover->hasPath)
 			{
 				break;
 			}
 		}
 
-		CC_CHECK(!FindMover(registry, moverId)->hasMoveOrder);
+		CC_CHECK(!registry.Get<Mover>(moverId)->hasMoveOrder);
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(moverUnit->position)) != cc::IVec2(6, 1));
 	}
 
@@ -132,14 +132,14 @@ void RunYieldTests()
 		for (; frames < kBudget; ++frames)
 		{
 			RunUnitMovementFrame(registry, map, occ, nullptr, kDt);
-			const Mover *mover = FindMover(registry, moverId);
+			const Mover *mover = registry.Get<Mover>(moverId);
 			if (mover != nullptr && !mover->hasMoveOrder && !mover->hasPath)
 			{
 				break;
 			}
 		}
 
-		CC_CHECK(!FindMover(registry, moverId)->hasMoveOrder);
+		CC_CHECK(!registry.Get<Mover>(moverId)->hasMoveOrder);
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(blockerUnit->position)) == cc::IVec2(2, 1));
 	}
 
@@ -178,6 +178,6 @@ void RunYieldTests()
 
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(moverUnit->position)) == cc::IVec2(6, 1));
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(bystanderUnit->position)) == cc::IVec2(2, 0));
-		CC_CHECK(!FindMover(registry, bystanderId)->hasMoveOrder);
+		CC_CHECK(!registry.Get<Mover>(bystanderId)->hasMoveOrder);
 	}
 }

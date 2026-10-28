@@ -158,7 +158,7 @@ void RunNodesTests()
 	plan.load = 0.0f;
 	plan.nodeTile = { 3, 3 };
 	loop.UpdateHarvesters(crew2, field, nullptr, 1.0f / 60.0f, kPlayerTeam);
-	const Mover *haulMover = FindMover(crew2, hauler);
+	const Mover *haulMover = crew2.Get<Mover>(hauler);
 	CC_CHECK(haulMover != nullptr && (haulMover->hasMoveOrder || haulMover->hasPath));
 
 	// --- one harvester per field: the second takes the free node ---
@@ -182,7 +182,7 @@ void RunNodesTests()
 	int marching = 0;
 	for (Entity id : { first, second })
 	{
-		const Mover *mover = FindMover(pair, id);
+		const Mover *mover = pair.Get<Mover>(id);
 		if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
 		{
 			++marching;
