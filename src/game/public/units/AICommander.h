@@ -103,6 +103,10 @@ private:
 	void MaintainProduction();
 	void MaybeLaunchWave();
 	void MusterTeams();
+	std::vector<Entity> GatherUnassignedUnits();
+	void EnsureGuardTeam(std::vector<Entity> &unassigned);
+	void EnsureHarassTeam(std::vector<Entity> &unassigned);
+	void AssignRemainingToMain(std::vector<Entity> &unassigned);
 	void LaunchTeams();
 	void UpdateTeams(float dt);
 	void UpdateGuardPost();

@@ -722,12 +722,55 @@ float AICommander::EffectiveCooldown() const
 	return params_.relaunchCooldown;
 }
 
+namespace
+{
+enum class BaseStat
+{
+	Health,
+	Speed
+};
+
+struct ByBaseStat
+{
+	const Registry &registry;
+	BaseStat stat;
+
+	bool operator()(Entity lhs, Entity rhs) const;
+};
+
+bool ByBaseStat::operator()(Entity lhs, Entity rhs) const
+{
+	const auto value = [this](Entity id) {
+		const Unit *unit = registry.Get<Unit>(id);
+		if (unit == nullptr)
+		{
+			return 0.0f;
+		}
+		const UnitStats &base = BaseStats(unit->type);
+		return stat == BaseStat::Health ? base.health : base.speed;
+	};
+	return value(lhs) > value(rhs);
+}
+}
+
 void AICommander::MusterTeams()
 {
 	for (AITeam &team : teams_)
 	{
 		PruneTeam(team);
 	}
+	std::vector<Entity> unassigned = GatherUnassignedUnits();
+	if (unassigned.empty())
+	{
+		return;
+	}
+	EnsureGuardTeam(unassigned);
+	EnsureHarassTeam(unassigned);
+	AssignRemainingToMain(unassigned);
+}
+
+std::vector<Entity> AICommander::GatherUnassignedUnits()
+{
 	std::vector<Entity> unassigned;
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 		if (unit.teamID != teamID_ || unit.health <= 0.0f || unit.type == UnitType::Engineer)
@@ -743,10 +786,11 @@ void AICommander::MusterTeams()
 		}
 		unassigned.push_back(id);
 	});
-	if (unassigned.empty())
-	{
-		return;
-	}
+	return unassigned;
+}
+
+void AICommander::EnsureGuardTeam(std::vector<Entity> &unassigned)
+{
 	bool hasGuard = false;
 	for (const AITeam &team : teams_)
 	{
@@ -758,13 +802,7 @@ void AICommander::MusterTeams()
 	if (!hasGuard && difficulty_ == AIDifficulty::Hard &&
 		static_cast<int>(unassigned.size()) >= params_.waveThreshold + 4)
 	{
-		std::sort(unassigned.begin(), unassigned.end(), [&](Entity a, Entity b) {
-			const Unit *ua = registry_.Get<Unit>(a);
-			const Unit *ub = registry_.Get<Unit>(b);
-			const float ha = ua != nullptr ? BaseStats(ua->type).health : 0.0f;
-			const float hb = ub != nullptr ? BaseStats(ub->type).health : 0.0f;
-			return ha > hb;
-		});
+		std::sort(unassigned.begin(), unassigned.end(), ByBaseStat{ registry_, BaseStat::Health });
 		AITeam guard;
 		guard.role = AITeamRole::Guard;
 		guard.members.assign(unassigned.begin(), unassigned.begin() + 2);
@@ -772,6 +810,10 @@ void AICommander::MusterTeams()
 		guard.script = { { AIMissionKind::Guard, rallyTile_, 0.0f } };
 		teams_.push_back(guard);
 	}
+}
+
+void AICommander::EnsureHarassTeam(std::vector<Entity> &unassigned)
+{
 	if (unassigned.size() >= 8 && difficulty_ != AIDifficulty::Easy && Escalation() >= 1)
 	{
 		std::vector<Entity> willing;
@@ -783,13 +825,7 @@ void AICommander::MusterTeams()
 				willing.push_back(id);
 			}
 		}
-		std::sort(willing.begin(), willing.end(), [&](Entity a, Entity b) {
-			const Unit *ua = registry_.Get<Unit>(a);
-			const Unit *ub = registry_.Get<Unit>(b);
-			const float sa = ua != nullptr ? BaseStats(ua->type).speed : 0.0f;
-			const float sb = ub != nullptr ? BaseStats(ub->type).speed : 0.0f;
-			return sa > sb;
-		});
+		std::sort(willing.begin(), willing.end(), ByBaseStat{ registry_, BaseStat::Speed });
 		const std::size_t harassCount = std::max<std::size_t>(2, unassigned.size() / 3);
 		if (willing.size() >= 2)
 		{
@@ -813,6 +849,10 @@ void AICommander::MusterTeams()
 			teams_.push_back(harass);
 		}
 	}
+}
+
+void AICommander::AssignRemainingToMain(std::vector<Entity> &unassigned)
+{
 	if (!unassigned.empty())
 	{
 		bool hasIdleMain = false;
