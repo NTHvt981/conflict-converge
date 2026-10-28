@@ -8,7 +8,7 @@ and jitters a camera copy at render time.
 
 ## Behavior
 
-- `Game::shakeTrauma` (0..1), raised additively and clamped
+- `Game::shakeTrauma_` (0..1), raised additively and clamped
   (`AddShakeTrauma`): +0.2 routine hits, +0.5 unit deaths. Overlapping
   shakes compose instead of restarting.
 - Decays per frame (`DecayShakeTrauma`, 1.5 trauma/s — a full hit clears
@@ -23,7 +23,7 @@ and jitters a camera copy at render time.
 ## Key files
 
 - `src/game/public/app/Shake.h` — pure header-only math, headless-safe.
-- `Game::shakeTrauma` field (`src/game/public/core/Game.h`); decay in
+- `Game::shakeTrauma_` field (`src/game/public/core/Game.h`); decay in
   `Game.cpp`; hit/death triggers in `Simulation.cpp` (moved there by the
   GameUpdate decomposition — the plan cited `Game.cpp` impact sites).
 - Tests: trauma section in `tests/unit-tests/camera_tests.cpp` (add/clamp,

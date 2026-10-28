@@ -9,7 +9,7 @@ Menu changes fade through black on a pure clock owned by `Game`.
 ## Behavior
 
 - `TrackMenuTransition` + `MenuFadeAlpha` over `kMenuFadeInDuration`;
-  `previousMenuState`/`menuStateTime` ticked per frame; overlay drawn
+  `previousMenuState_`/`menuStateTime_` ticked per frame; overlay drawn
   over menu screens and world overlays alike.
 - Slide/scale-pop transitions explicitly deferred to a follow-up.
 

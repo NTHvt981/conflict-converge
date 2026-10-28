@@ -34,8 +34,8 @@ public:
 	int Run();
 
 private:
-	// tests/e2e/E2EGame drives the real loop headless: it reads world_, menu
-	// and worldActive directly.
+	// tests/e2e/E2EGame drives the real loop headless: it reads world_, menu_
+	// and worldActive_ directly.
 	friend class E2EGame;
 
 	// Engine-lifetime service scope: owns Audio, Art, EventDispatcher,
@@ -59,46 +59,46 @@ private:
 	};
 	WorldScope world_{engine_};
 
-	MenuFlow menu; // before player_: PlayerScope binds menu.settings
+	MenuFlow menu_; // before player_: PlayerScope binds menu_.settings
 
 	// Player/view-state scope: owns GameCamera + PlayingInput. Declared after
-	// engine_/world_/menu (PlayingInput binds them all) and before
+	// engine_/world_/menu_ (PlayingInput binds them all) and before
 	// every consumer, so init-list expressions may bind player_.Get<T>().
 	struct PlayerScope : public Subsystems
 	{
 		PlayerScope(Subsystems &engine, Subsystems &world, const MenuSettings &settings);
 	};
-	PlayerScope player_{engine_, world_, menu.settings};
+	PlayerScope player_{engine_, world_, menu_.settings};
 
-	SkirmishWorld skirmish;
-	WorldState worldState;
-	bool worldActive = false;
-	bool worldIs2v2 = false;
-	bool sandboxMode = false;
-	AIDifficulty worldDifficulty = AIDifficulty::Medium;
-	std::string worldMapPath;
+	SkirmishWorld skirmish_;
+	WorldState worldState_;
+	bool worldActive_ = false;
+	bool worldIs2v2_ = false;
+	bool sandboxMode_ = false;
+	AIDifficulty worldDifficulty_ = AIDifficulty::Medium;
+	std::string worldMapPath_;
 
-	int replayCursor = 0;
-	float replayPlayTimer = 0.0f;
-	float shakeTrauma = 0.0f; // 0..1, render copy only
-	DamageNumbers damageNumbers;
-	MenuState previousMenuState = MenuState::MainMenu;
-	float menuStateTime = 0.0f;
-	MenuState lastOutcomeState = MenuState::MainMenu;
-	ConfirmChoice pendingConfirm = ConfirmChoice::None; // resolved next frame
+	int replayCursor_ = 0;
+	float replayPlayTimer_ = 0.0f;
+	float shakeTrauma_ = 0.0f; // 0..1, render copy only
+	DamageNumbers damageNumbers_;
+	MenuState previousMenuState_ = MenuState::MainMenu;
+	float menuStateTime_ = 0.0f;
+	MenuState lastOutcomeState_ = MenuState::MainMenu;
+	ConfirmChoice pendingConfirm_ = ConfirmChoice::None; // resolved next frame
 
 	// Match tick (declared after the members it binds).
-	Simulation sim;
-	MenuScreens menuScreens;
-	// Declared before bindings: the Back shortcut prefers the RML remap
+	Simulation sim_;
+	MenuScreens menuScreens_;
+	// Declared before bindings_: the Back shortcut prefers the RML remap
 	// capture while it owns the HotkeyRemap state.
-	RmlUiMenus rmlUiMenus;
-	ShortcutBindings bindings;
-	RmlUiHost rmlUi; // declared before renderer: overlay host (Phase 1 render-only)
-	RmlUiHud rmlUiHud; // in-match HUD panels (Phase 3, raygui fallback when not ready)
-	GameRenderer renderer;
-	MatchController match;
-	CheatOverlay cheats;
+	RmlUiMenus rmlUiMenus_;
+	ShortcutBindings bindings_;
+	RmlUiHost rmlUi_; // declared before renderer_: overlay host (Phase 1 render-only)
+	RmlUiHud rmlUiHud_; // in-match HUD panels (Phase 3, raygui fallback when not ready)
+	GameRenderer renderer_;
+	MatchController match_;
+	CheatOverlay cheats_;
 
 	// Match lifecycle the e2e harness drives directly (through the friend above).
 	void StartMatch(const std::string &mapPath, AIDifficulty difficulty);
