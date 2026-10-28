@@ -122,6 +122,24 @@ void Simulation::Step(float dt)
 {
 	fog_.Recompute(registry_);
 	RunUnitMovementFrame(registry_, map_, occ_, &fog_, dt);
+	ReapDeadUnits();
+	UpdateCombatVfx();
+	UpdateParticlePools(dt);
+	UpdateAttackSfx(dt);
+	AnnounceEconomyChanges();
+	StepEconomy(dt);
+	RefreshProducers();
+	PumpProduction(dt);
+	RecordReplayFrame(dt);
+	UpdateStructures(dt);
+	UpdateRetreat();
+	UpdateCommanders(dt);
+	RefreshMinimapTexture(dt);
+	UpdateOutcome();
+}
+
+void Simulation::ReapDeadUnits()
+{
 	std::vector<Entity> dead;
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 		if (unit.health <= 0.0f)
@@ -148,6 +166,10 @@ void Simulation::Step(float dt)
 		audio_.Play(SfxId::Explosion);
 		shakeTrauma_ = AddShakeTrauma(shakeTrauma_, kShakeDeathTrauma);
 	}
+}
+
+void Simulation::UpdateCombatVfx()
+{
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 		const Vector2 center = {
 			unit.position.x + cc::kHalfTile, unit.position.y + cc::kHalfTile };
@@ -179,8 +201,16 @@ void Simulation::Step(float dt)
 			}
 		}
 	});
+}
+
+void Simulation::UpdateParticlePools(float dt)
+{
 	art_.ParticlesPool().Update(dt);
 	damageNumbers_.Update(dt);
+}
+
+void Simulation::UpdateAttackSfx(float dt)
+{
 	attackSfxTimer_ -= dt;
 	bool windingUp = false;
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
@@ -196,6 +226,10 @@ void Simulation::Step(float dt)
 		audio_.Play(SfxId::Attack);
 		attackSfxTimer_ = 0.12f;
 	}
+}
+
+void Simulation::AnnounceEconomyChanges()
+{
 	int buildingCount = 0;
 	registry_.Each<Building>([&](Entity, const Building &building) {
 		if (building.state == BuildingState::Operational)
@@ -221,68 +255,25 @@ void Simulation::Step(float dt)
 		Announce(EventType::ResourceDepleted);
 	}
 	lastDepletedCount_ = depletedCount;
+}
+
+void Simulation::StepEconomy(float dt)
+{
 	UpdateBaseIncome(registry_, resources_, dt, kPlayerTeam);
 	nodes_.Update(dt);
 	nodes_.UpdateHarvesters(registry_, map_, &occ_, dt, kPlayerTeam);
 	nodes_.GatherTick(registry_, resources_, dt, kPlayerTeam);
-	RefreshProducers();
-	auto pumpQueue = [&](ProductionQueue &queue, BuildingType type, int &cursor) {
-		int producers = 0;
-		registry_.Each<Building>([&](Entity, const Building &building) {
-			if (building.type == type && building.teamID == kPlayerTeam &&
-				building.state == BuildingState::Operational)
-			{
-				++producers;
-			}
-		});
-		if (producers == 0)
-		{
-			return;
-		}
-		const Entity producerId = ProducerBuildingAt(registry_, type, kPlayerTeam, cursor);
-		if (producerId == kInvalidEntity)
-		{
-			return;
-		}
-		const Building *producer = registry_.Get<Building>(producerId);
-		if (producer == nullptr)
-		{
-			return;
-		}
-		const cc::IVec2 rally = producer->rallyTile;
-		const cc::IVec2 spawnTile = BuildingSpawnTile(map_, &occ_, *producer);
-		const Vector2 spawnPos = cc::ToRaylib(cc::TileToWorld(spawnTile.x, spawnTile.y));
-		for (int n = 0; n < producers; ++n)
-		{
-			const Entity spawned =
-				queue.Update(factory_, resources_, kPlayerTeam, spawnPos, dt, &map_, &occ_);
-			if (spawned == kInvalidEntity)
-			{
-				continue;
-			}
-			++cursor;
-			if (Unit *fresh = registry_.Get<Unit>(spawned))
-			{
-				if (!(cc::WorldToTile(cc::ToGlm(fresh->position)) == rally))
-				{
-					IssuePathOrderFootprint(*fresh,
-											MakeOrderContext(registry_, spawned, map_, &occ_),
-											cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)));
-				}
-				if (autoAddGroupBit_ >= 0)
-				{
-					fresh->controlGroups |= (1u << static_cast<unsigned int>(autoAddGroupBit_));
-				}
-			}
-		}
-	};
+}
+
+void Simulation::PumpProduction(float dt)
+{
 	if (hasBootcamp_)
 	{
-		pumpQueue(bootcampQueue_, BuildingType::Bootcamp, bootcampCursor_);
+		PumpQueue(bootcampQueue_, BuildingType::Bootcamp, bootcampCursor_, dt);
 	}
 	if (hasWorkshop_)
 	{
-		pumpQueue(workshopQueue_, BuildingType::Workshop, workshopCursor_);
+		PumpQueue(workshopQueue_, BuildingType::Workshop, workshopCursor_, dt);
 	}
 	const int queueSize =
 		static_cast<int>(bootcampQueue_.Size() + workshopQueue_.Size());
@@ -291,6 +282,62 @@ void Simulation::Step(float dt)
 		Announce(EventType::ProductionOrdered);
 	}
 	lastQueueSize_ = queueSize;
+}
+
+void Simulation::PumpQueue(ProductionQueue &queue, BuildingType type, int &cursor, float dt)
+{
+	int producers = 0;
+	registry_.Each<Building>([&](Entity, const Building &building) {
+		if (building.type == type && building.teamID == kPlayerTeam &&
+			building.state == BuildingState::Operational)
+		{
+			++producers;
+		}
+	});
+	if (producers == 0)
+	{
+		return;
+	}
+	const Entity producerId = ProducerBuildingAt(registry_, type, kPlayerTeam, cursor);
+	if (producerId == kInvalidEntity)
+	{
+		return;
+	}
+	const Building *producer = registry_.Get<Building>(producerId);
+	if (producer == nullptr)
+	{
+		return;
+	}
+	const cc::IVec2 rally = producer->rallyTile;
+	const cc::IVec2 spawnTile = BuildingSpawnTile(map_, &occ_, *producer);
+	const Vector2 spawnPos = cc::ToRaylib(cc::TileToWorld(spawnTile.x, spawnTile.y));
+	for (int n = 0; n < producers; ++n)
+	{
+		const Entity spawned =
+			queue.Update(factory_, resources_, kPlayerTeam, spawnPos, dt, &map_, &occ_);
+		if (spawned == kInvalidEntity)
+		{
+			continue;
+		}
+		++cursor;
+		if (Unit *fresh = registry_.Get<Unit>(spawned))
+		{
+			if (!(cc::WorldToTile(cc::ToGlm(fresh->position)) == rally))
+			{
+				IssuePathOrderFootprint(*fresh,
+										MakeOrderContext(registry_, spawned, map_, &occ_),
+										cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)));
+			}
+			if (autoAddGroupBit_ >= 0)
+			{
+				fresh->controlGroups |= (1u << static_cast<unsigned int>(autoAddGroupBit_));
+			}
+		}
+	}
+}
+
+void Simulation::RecordReplayFrame(float dt)
+{
 	if (replayRecording_)
 	{
 		replayTimer_ += dt;
@@ -305,12 +352,22 @@ void Simulation::Step(float dt)
 			}
 		}
 	}
+}
+
+void Simulation::UpdateStructures(float dt)
+{
 	UpdateBuildingConstruction(registry_, dt);
 	UpdateBuildingFlash(registry_, dt);
-	{
-		const Vector2 home = ResolvePlayerRetreatHome(registry_);
-		RetreatIfLowHP(registry_, map_, &occ_, home, kPlayerTeam, kRetreatHealthFraction, true);
-	}
+}
+
+void Simulation::UpdateRetreat()
+{
+	const Vector2 home = ResolvePlayerRetreatHome(registry_);
+	RetreatIfLowHP(registry_, map_, &occ_, home, kPlayerTeam, kRetreatHealthFraction, true);
+}
+
+void Simulation::UpdateCommanders(float dt)
+{
 	if (!sandboxMode_)
 	{
 		ai_.Update(dt);
@@ -320,6 +377,10 @@ void Simulation::Step(float dt)
 		allyAI_.Update(dt);
 		enemyAI2_.Update(dt);
 	}
+}
+
+void Simulation::RefreshMinimapTexture(float dt)
+{
 	if (minimap_.PollRefresh(dt))
 	{
 		BeginTextureMode(minimap_.target);
@@ -359,6 +420,10 @@ void Simulation::Step(float dt)
 		});
 		EndTextureMode();
 	}
+}
+
+void Simulation::UpdateOutcome()
+{
 	if (!sandboxMode_)
 	{
 		menu_.ShowOutcome(TeamHasUnits(registry_, kPlayerTeam),
