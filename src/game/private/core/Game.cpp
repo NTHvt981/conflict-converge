@@ -77,7 +77,7 @@ Game::Game()
 				  &world_.Get<ResourceNodes>(), &world_.Get<FogOfWar>(),
 				  &world_.Get<OccupancyGrid>() }
 	, sim_(world_, engine_, menu_, worldState_, damageNumbers_,
-		  player_.Get<PlayingInput>().AutoAddGroupBit(), sandboxMode_, worldIs2v2_,
+		  player_.Get<PlayingInput>(), sandboxMode_, worldIs2v2_,
 		  shakeTrauma_, lastOutcomeState_)
 	, menuScreens_(menu_, engine_.Get<Art>(), engine_.Get<Audio>(), engine_.Get<InputManager>(),
 				  engine_.Get<HotkeyMap>(), engine_.Get<EventDispatcher>(),

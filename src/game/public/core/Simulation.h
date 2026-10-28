@@ -18,14 +18,17 @@
 #include "world/TileMap.h"
 #include "units/UnitFactory.h"
 
-// It never touches input; it refreshes the minimap texture and gates the match
-// outcome, so unit tests can drive Step headlessly over fixture worlds.
+class PlayingInput;
+
+// It polls no input: the one player state it reads is the auto-add control-group
+// bit, at spawn. It refreshes the minimap texture and gates the match outcome,
+// so unit tests can drive Step headlessly over fixture worlds.
 class Simulation
 {
 public:
 	Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
 			   const WorldState &worldState, DamageNumbers &damageNumbers,
-			   const int &autoAddGroupBit,
+			   const PlayingInput &input,
 				const bool &sandboxMode, const bool &worldIs2v2,
 				float &shakeTrauma, MenuState &lastOutcomeState);
 	Simulation(const Simulation &) = delete;
@@ -80,7 +83,7 @@ private:
 	const WorldState &worldState_;
 	DamageNumbers &damageNumbers_;
 	EventDispatcher &events_;
-	const int &autoAddGroupBit_;
+	const PlayingInput &input_;
 	const bool &sandboxMode_;
 	const bool &worldIs2v2_;
 	float &shakeTrauma_;

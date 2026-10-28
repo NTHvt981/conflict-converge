@@ -42,7 +42,8 @@ app/match: Menu, Skirmish
 - `Simulation.h` - Per-frame match tick extracted from `Game::Update`: `Step` is a table of
    contents over named phases (death sweep, combat VFX, economy edges, economy tick, production
    pump, replay frames, construction/flash, retreat, commanders, minimap texture, outcome gate);
-   no input and no menu handling beyond the outcome gate, so unit tests drive `Step` headlessly;
+   no input polling (it reads the auto-add control-group bit when tagging a fresh spawn)
+   and no menu handling beyond the outcome gate, so unit tests drive `Step` headlessly;
    `ResetForMatch`/`ResetEdgePolls`, team-0 Bootcamp/Workshop gates, replay recording
 - `PlayingInput.h` - In-match input dispatch extracted from `Game`: drag-box select,
   area-build/repair, right-click orders, line formation, control groups, one
