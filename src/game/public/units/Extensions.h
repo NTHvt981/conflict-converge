@@ -11,6 +11,16 @@
 
 // Header-only: no TU, no premake regen.
 
+template <typename T> T &GetOrAdd(Registry &registry, Entity entity)
+{
+	if (T *existing = registry.Get<T>(entity))
+	{
+		return *existing;
+	}
+	registry.Add(entity, T{});
+	return *registry.Get<T>(entity);
+}
+
 struct Turret
 {
 	float facing = 0.0f;   // radians, world-space aim direction
@@ -42,12 +52,7 @@ struct Harvester
 
 inline Harvester &GetHarvester(Registry &registry, Entity entity)
 {
-	if (Harvester *harvester = registry.Get<Harvester>(entity))
-	{
-		return *harvester;
-	}
-	registry.Add(entity, Harvester{});
-	return *registry.Get<Harvester>(entity);
+	return GetOrAdd<Harvester>(registry, entity);
 }
 
 inline const Harvester *FindHarvester(const Registry &registry, Entity entity)
@@ -110,12 +115,7 @@ struct Orders
 
 inline Orders &GetOrders(Registry &registry, Entity entity)
 {
-	if (Orders *orders = registry.Get<Orders>(entity))
-	{
-		return *orders;
-	}
-	registry.Add(entity, Orders{});
-	return *registry.Get<Orders>(entity);
+	return GetOrAdd<Orders>(registry, entity);
 }
 
 inline const Orders *FindOrders(const Registry &registry, Entity entity)
@@ -144,12 +144,7 @@ struct Mover
 
 inline Mover &GetMover(Registry &registry, Entity entity)
 {
-	if (Mover *mover = registry.Get<Mover>(entity))
-	{
-		return *mover;
-	}
-	registry.Add(entity, Mover{});
-	return *registry.Get<Mover>(entity);
+	return GetOrAdd<Mover>(registry, entity);
 }
 
 inline const Mover *FindMover(const Registry &registry, Entity entity)
@@ -179,12 +174,7 @@ struct CombatState
 
 inline CombatState &GetCombatState(Registry &registry, Entity entity)
 {
-	if (CombatState *combat = registry.Get<CombatState>(entity))
-	{
-		return *combat;
-	}
-	registry.Add(entity, CombatState{});
-	return *registry.Get<CombatState>(entity);
+	return GetOrAdd<CombatState>(registry, entity);
 }
 
 inline const CombatState *FindCombatState(const Registry &registry, Entity entity)
