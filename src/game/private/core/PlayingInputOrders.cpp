@@ -150,29 +150,32 @@ void PlayingInput::HandleRightPress()
 
 void PlayingInput::DispatchRightClickOrders()
 {
-	if (armedAbility_.has_value())
+	const Vector2 world = input_.MouseWorld(camera_);
+	if (DispatchArmedAbility(world))
 	{
-		if (IssueArmedAbilityAt(input_.MouseWorld(camera_), input_.ShiftDown()))
-		{
-			audio_.Play(SfxId::Confirm);
-		}
+		return;
 	}
-	else if (HasMode(mode_, InteractionMode::AttackGround))
+	if (DispatchAttackGround(world))
 	{
-		SetMode(InteractionMode::AttackGround, false);
-		const Vector2 target = input_.MouseWorld(camera_);
-		const bool queued = input_.ShiftDown();
-		registry_.Each<Unit>([&](Entity id, Unit &unit) {
-			if (unit.isSelected)
-			{
-				IssueOrEnqueue(unit, MakeOrderContext(registry_, id, map_, &occ_), queued,
-							   QueuedOrder{ .kind = QueuedOrderKind::AttackGround, .pointA = target });
-			}
-		});
-		audio_.Play(SfxId::Confirm);
+		return;
+	}
+	const std::vector<Entity> squad = SelectedUnits();
+	if (squad.empty())
+	{
+		return;
+	}
+	if (squad.size() == 1)
+	{
+		DispatchSingleUnitOrder(squad[0], world);
 	}
 	else
 	{
+		DispatchSquadOrder(squad, world);
+	}
+}
+
+std::vector<Entity> PlayingInput::SelectedUnits() const
+{
 	std::vector<Entity> squad;
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 		if (unit.isSelected)
@@ -180,124 +183,163 @@ void PlayingInput::DispatchRightClickOrders()
 			squad.push_back(id);
 		}
 	});
-	if (squad.size() == 1)
+	return squad;
+}
+
+bool PlayingInput::DispatchArmedAbility(Vector2 world)
+{
+	if (!armedAbility_.has_value())
 	{
-		if (Unit *ordered = registry_.Get<Unit>(squad[0]))
-		{
-			Orders &orders = GetOrders(registry_, squad[0]);
-			Mover &mover = GetMover(registry_, squad[0]);
-			const OrderContext ctx = MakeOrderContext(registry_, squad[0], map_, &occ_);
-			bool repaired = false;
-			if (ordered->type == UnitType::Engineer)
-			{
-				const Vector2 world = input_.MouseWorld(camera_);
-				Entity patient = PickUnitAt(registry_, world);
-				if (patient == kInvalidEntity ||
-					!CanRepairTarget(registry_, *ordered, patient))
-				{
-					patient = kInvalidEntity;
-					const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(world));
-					registry_.Each<Building>([&](Entity id, const Building &building) {
-						if (patient != kInvalidEntity)
-						{
-							return;
-						}
-						const Rectangle footprint = BuildingFootprintRect(building);
-						const Vector2 tileCenter = cc::ToRaylib(
-							cc::TileToWorld(tile.x, tile.y) +
-								cc::Vec2(cc::kHalfTile, cc::kHalfTile));
-						if (CheckCollisionPointRec(tileCenter, footprint) &&
-							CanRepairTarget(registry_, *ordered, id))
-						{
-							patient = id;
-						}
-					});
-				}
-				if (patient != kInvalidEntity)
-				{
-					IssueOrEnqueue(*ordered, ctx, input_.ShiftDown(),
-								   QueuedOrder{ .kind = QueuedOrderKind::Repair, .target = patient });
-					repaired = true;
-				}
-			}
-			if (!repaired && ordered->type == UnitType::Medic)
-			{
-				const Vector2 world = input_.MouseWorld(camera_);
-				Entity patient = PickUnitAt(registry_, world);
-				if (patient == kInvalidEntity ||
-					!CanHealTarget(registry_, *ordered, patient))
-				{
-					patient = kInvalidEntity;
-				}
-				if (patient != kInvalidEntity)
-				{
-					IssueOrEnqueue(*ordered, ctx, input_.ShiftDown(),
-								   QueuedOrder{ .kind = QueuedOrderKind::Repair, .target = patient });
-					repaired = true;
-				}
-			}
-			if (!repaired && registry_.Has<Cargo>(squad[0]))
-			{
-				const Vector2 world = input_.MouseWorld(camera_);
-				const Entity picked = PickUnitAt(registry_, world);
-				if (picked == squad[0])
-				{
-					if (const Cargo *cargo = registry_.Get<Cargo>(squad[0]);
-						cargo != nullptr && !cargo->passengers.empty())
-					{
-						IssueOrEnqueue(*ordered, ctx, input_.ShiftDown(),
-									   QueuedOrder{ .kind = QueuedOrderKind::Unload, .pointA = ordered->position });
-						repaired = true;
-					}
-				}
-				else if (picked != kInvalidEntity &&
-						 CanLoadTarget(registry_, squad[0], *ordered, picked))
-				{
-					IssueOrEnqueue(*ordered, ctx, input_.ShiftDown(),
-								   QueuedOrder{ .kind = QueuedOrderKind::Load, .target = picked });
-					repaired = true;
-				}
-			}
-			if (!repaired)
-			{
-				if (input_.ShiftDown())
-				{
-					IssueOrEnqueue(*ordered, ctx, true,
-								   QueuedOrder{ .kind = QueuedOrderKind::Move, .pointA = input_.MouseWorld(camera_) });
-				}
-				else
-				{
-					orders.orderQueue.clear();
-					ClearOrders(*ordered, orders, mover);
-					IssuePathOrderFootprint(*ordered, ctx, input_.MouseWorld(camera_));
-				}
-			}
-			audio_.Play(SfxId::Confirm);
-		}
+		return false;
 	}
-	else if (!squad.empty())
+	if (IssueArmedAbilityAt(world, input_.ShiftDown()))
 	{
-		if (input_.ShiftDown())
-		{
-			const Vector2 dest = input_.MouseWorld(camera_);
-			for (const Entity id : squad)
-			{
-				if (Unit *unit = registry_.Get<Unit>(id))
-				{
-					IssueOrEnqueue(*unit, MakeOrderContext(registry_, id, map_, &occ_), true,
-								   QueuedOrder{ .kind = QueuedOrderKind::Move, .pointA = dest });
-				}
-			}
-		}
-		else
-		{
-			formation::IssueFormationMoveFP(registry_, squad, map_, occ_,
-											input_.MouseWorld(camera_),
-											HasMode(mode_, InteractionMode::SlowestSpeed));
-		}
 		audio_.Play(SfxId::Confirm);
 	}
+	return true;
+}
+
+bool PlayingInput::DispatchAttackGround(Vector2 world)
+{
+	if (!HasMode(mode_, InteractionMode::AttackGround))
+	{
+		return false;
 	}
+	SetMode(InteractionMode::AttackGround, false);
+	const bool queued = input_.ShiftDown();
+	registry_.Each<Unit>([&](Entity id, Unit &unit) {
+		if (unit.isSelected)
+		{
+			IssueOrEnqueue(unit, MakeOrderContext(registry_, id, map_, &occ_), queued,
+						   QueuedOrder{ .kind = QueuedOrderKind::AttackGround, .pointA = world });
+		}
+	});
+	audio_.Play(SfxId::Confirm);
+	return true;
+}
+
+void PlayingInput::DispatchSingleUnitOrder(Entity id, Vector2 world)
+{
+	Unit *ordered = registry_.Get<Unit>(id);
+	if (ordered == nullptr)
+	{
+		return;
+	}
+	Orders &orders = GetOrders(registry_, id);
+	Mover &mover = GetMover(registry_, id);
+	const OrderContext ctx = MakeOrderContext(registry_, id, map_, &occ_);
+	const bool queued = input_.ShiftDown();
+	if (TryIssueSpecialOrder(*ordered, id, ctx, world, queued))
+	{
+		audio_.Play(SfxId::Confirm);
+		return;
+	}
+	if (queued)
+	{
+		IssueOrEnqueue(*ordered, ctx, true,
+					   QueuedOrder{ .kind = QueuedOrderKind::Move, .pointA = world });
+	}
+	else
+	{
+		orders.orderQueue.clear();
+		ClearOrders(*ordered, orders, mover);
+		IssuePathOrderFootprint(*ordered, ctx, world);
+	}
+	audio_.Play(SfxId::Confirm);
+}
+
+void PlayingInput::DispatchSquadOrder(const std::vector<Entity> &squad, Vector2 world)
+{
+	if (input_.ShiftDown())
+	{
+		for (const Entity id : squad)
+		{
+			if (Unit *unit = registry_.Get<Unit>(id))
+			{
+				IssueOrEnqueue(*unit, MakeOrderContext(registry_, id, map_, &occ_), true,
+							   QueuedOrder{ .kind = QueuedOrderKind::Move, .pointA = world });
+			}
+		}
+	}
+	else
+	{
+		formation::IssueFormationMoveFP(registry_, squad, map_, occ_, world,
+										HasMode(mode_, InteractionMode::SlowestSpeed));
+	}
+	audio_.Play(SfxId::Confirm);
+}
+
+bool PlayingInput::TryIssueSpecialOrder(Unit &unit, Entity id, const OrderContext &ctx,
+										Vector2 world, bool queued)
+{
+	if (unit.type == UnitType::Engineer)
+	{
+		Entity patient = PickUnitAt(registry_, world);
+		if (patient == kInvalidEntity ||
+			!CanRepairTarget(registry_, unit, patient))
+		{
+			patient = kInvalidEntity;
+			const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(world));
+			registry_.Each<Building>([&](Entity id, const Building &building) {
+				if (patient != kInvalidEntity)
+				{
+					return;
+				}
+				const Rectangle footprint = BuildingFootprintRect(building);
+				const Vector2 tileCenter = cc::ToRaylib(
+					cc::TileToWorld(tile.x, tile.y) +
+						cc::Vec2(cc::kHalfTile, cc::kHalfTile));
+				if (CheckCollisionPointRec(tileCenter, footprint) &&
+					CanRepairTarget(registry_, unit, id))
+				{
+					patient = id;
+				}
+			});
+		}
+		if (patient != kInvalidEntity)
+		{
+			IssueOrEnqueue(unit, ctx, queued,
+						   QueuedOrder{ .kind = QueuedOrderKind::Repair, .target = patient });
+			return true;
+		}
+	}
+	if (unit.type == UnitType::Medic)
+	{
+		Entity patient = PickUnitAt(registry_, world);
+		if (patient == kInvalidEntity ||
+			!CanHealTarget(registry_, unit, patient))
+		{
+			patient = kInvalidEntity;
+		}
+		if (patient != kInvalidEntity)
+		{
+			IssueOrEnqueue(unit, ctx, queued,
+						   QueuedOrder{ .kind = QueuedOrderKind::Repair, .target = patient });
+			return true;
+		}
+	}
+	if (registry_.Has<Cargo>(id))
+	{
+		const Entity picked = PickUnitAt(registry_, world);
+		if (picked == id)
+		{
+			if (const Cargo *cargo = registry_.Get<Cargo>(id);
+				cargo != nullptr && !cargo->passengers.empty())
+			{
+				IssueOrEnqueue(unit, ctx, queued,
+							   QueuedOrder{ .kind = QueuedOrderKind::Unload, .pointA = unit.position });
+				return true;
+			}
+		}
+		else if (picked != kInvalidEntity &&
+				 CanLoadTarget(registry_, id, unit, picked))
+		{
+			IssueOrEnqueue(unit, ctx, queued,
+						   QueuedOrder{ .kind = QueuedOrderKind::Load, .target = picked });
+			return true;
+		}
+	}
+	return false;
 }
 
 void PlayingInput::HandleRightRelease(bool cancelledPlacement)
@@ -330,13 +372,7 @@ void PlayingInput::HandleLineDragRelease()
 	if (rightDrag_.active && !input_.RightDown())
 	{
 		rightDrag_.active = false;
-		std::vector<Entity> squad;
-		registry_.Each<Unit>([&](Entity id, const Unit &unit) {
-			if (unit.isSelected)
-			{
-				squad.push_back(id);
-			}
-		});
+		const std::vector<Entity> squad = SelectedUnits();
 		if (!squad.empty())
 		{
 			const auto [lineStart, lineEnd] =
