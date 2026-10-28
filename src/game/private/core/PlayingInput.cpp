@@ -199,7 +199,7 @@ bool PlayingInput::IsSettingRally() const
 	return HasMode(mode_, InteractionMode::SettingRally);
 }
 
-const int &PlayingInput::AutoAddGroupBit() const
+int PlayingInput::AutoAddGroupBit() const
 {
 	return autoAddGroupBit_;
 }

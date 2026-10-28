@@ -15,6 +15,7 @@
 #include "economy/Nodes.h"
 #include "app/ui/Pings.h"
 #include "economy/Production.h"
+#include "core/PlayingInput.h"
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
 #include "app/save/SaveGame.h"
@@ -39,12 +40,13 @@ struct Fixture
 	GameCamera camera;
 	WorldState worldState{};
 	DamageNumbers damageNumbers;
-	int autoAddGroupBit = -1;
+	MenuSettings settings;
 	bool sandboxMode = true; // skip AI + outcome: covered by soak/integration tests
 	bool worldIs2v2 = false;
 	float shakeTrauma = 0.0f;
 	MenuState lastOutcomeState = MenuState::Playing;
-	std::optional<Simulation> sim; // emplaced: Simulation is non-copyable
+	std::optional<PlayingInput> input; // emplaced: PlayingInput is non-copyable
+	std::optional<Simulation> sim;      // emplaced: Simulation is non-copyable
 
 	// Non-owning views into world_ (bound in the ctor after the Adds) for
 	// the checks below; sim binds the same objects.
@@ -56,6 +58,7 @@ struct Fixture
 		engine.Add<Art>(); // headless: never Init'ed (Step only touches pure pools/tints)
 		engine.Add<Audio>(); // headless: Play guards on ready_
 		engine.Add<EventDispatcher>();
+		engine.Add<InputManager>();
 		world.Add<Registry>();
 		world.Add<ResourceSystem>();
 		world.Add<TileMap>(20, 15);
@@ -90,8 +93,12 @@ struct Fixture
 								&world.Get<TileMap>(), &camera,
 								&world.Get<ResourceNodes>(), &world.Get<FogOfWar>(),
 								&world.Get<OccupancyGrid>() };
-		sim.emplace(world, engine, menu, worldState, damageNumbers,
-					autoAddGroupBit, sandboxMode, worldIs2v2, shakeTrauma, lastOutcomeState);
+		input.emplace(world.Get<Registry>(), world.Get<TileMap>(), world.Get<OccupancyGrid>(),
+					  world.Get<ResourceNodes>(), camera, world.Get<Minimap>(),
+					  engine.Get<InputManager>(), engine.Get<Audio>(), settings,
+					  world.Get<ResourceSystem>());
+		sim.emplace(world, engine, menu, worldState, damageNumbers, *input, sandboxMode,
+					worldIs2v2, shakeTrauma, lastOutcomeState);
 	}
 };
 

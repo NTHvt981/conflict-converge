@@ -1,6 +1,7 @@
 
 #include "core/Simulation.h"
 
+#include "core/PlayingInput.h"
 #include "economy/Building.h"
 #include "units/Extensions.h"
 #include "app/ui/Shake.h"
@@ -11,7 +12,7 @@
 
 Simulation::Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
 					   const WorldState &worldState, DamageNumbers &damageNumbers,
-					   const int &autoAddGroupBit,
+					   const PlayingInput &input,
 					   const bool &sandboxMode, const bool &worldIs2v2,
 					   float &shakeTrauma, MenuState &lastOutcomeState)
 	: registry_(world.Get<Registry>())
@@ -34,7 +35,7 @@ Simulation::Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
 	, worldState_(worldState)
 	, damageNumbers_(damageNumbers)
 	, events_(engine.Get<EventDispatcher>())
-	, autoAddGroupBit_(autoAddGroupBit)
+	, input_(input)
 	, sandboxMode_(sandboxMode)
 	, worldIs2v2_(worldIs2v2)
 	, shakeTrauma_(shakeTrauma)
@@ -328,9 +329,9 @@ void Simulation::PumpQueue(ProductionQueue &queue, BuildingType type, int &curso
 										MakeOrderContext(registry_, spawned, map_, &occ_),
 										cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)));
 			}
-			if (autoAddGroupBit_ >= 0)
+			if (const int autoAddGroupBit = input_.AutoAddGroupBit(); autoAddGroupBit >= 0)
 			{
-				fresh->controlGroups |= (1u << static_cast<unsigned int>(autoAddGroupBit_));
+				fresh->controlGroups |= (1u << static_cast<unsigned int>(autoAddGroupBit));
 			}
 		}
 	}

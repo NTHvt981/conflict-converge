@@ -89,7 +89,7 @@ public:
 	bool AreaRepairMode() const;
 	bool AttackGroundMode() const;
 	bool IsSettingRally() const;
-	const int &AutoAddGroupBit() const;
+	int AutoAddGroupBit() const;
 
 private:
 	Registry &registry_;
