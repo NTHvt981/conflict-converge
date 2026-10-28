@@ -107,7 +107,7 @@ bool DrawTankAtlas(const Art &art, Registry &registry, Entity id, const Unit &un
 	const int bodyDir = static_cast<int>(unit.facing);
 	int headDir = bodyDir;
 	const bool attacking = unit.state == UnitState::Attacking;
-	const CombatState *combat = FindCombatState(registry, id);
+	const CombatState *combat = registry.Get<CombatState>(id);
 	const bool aiming = attacking || (combat != nullptr && combat->target != kInvalidEntity);
 	if (aiming)
 	{
@@ -175,7 +175,7 @@ TankArt DrawArtLayers(const Art &art, Registry &registry, Entity id, Unit &unit,
 		}
 		if (!path.rectangles)
 		{
-			const CombatState *combat = FindCombatState(registry, id);
+			const CombatState *combat = registry.Get<CombatState>(id);
 			art.DrawUnit(unit.type, unit.teamID,
 						 FrameForPhase(combat != nullptr ? combat->phase : AttackPhase::Ready),
 						 corner);
@@ -239,7 +239,7 @@ void DrawControlGroupBadge(const Art &art, const Unit &unit, Entity id, Rectangl
 void DrawCombatOverlays(Registry &registry, const Unit &unit, Entity id, Rectangle body,
 						Vector2 center)
 {
-	const CombatState *combat = FindCombatState(registry, id);
+	const CombatState *combat = registry.Get<CombatState>(id);
 	if (combat != nullptr && combat->hitFlashTime > 0.0f)
 	{
 		DrawRectangleRec(body, Fade(WHITE, 0.7f));
@@ -256,7 +256,7 @@ void DrawCombatOverlays(Registry &registry, const Unit &unit, Entity id, Rectang
 			}
 		}
 	}
-	const Mover *mover = FindMover(registry, id);
+	const Mover *mover = registry.Get<Mover>(id);
 	if (mover != nullptr && mover->hasMoveOrder)
 	{
 		DrawCircleV(

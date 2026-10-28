@@ -46,8 +46,8 @@ void RunUnitCommandsTests()
 		const Entity a = AddCommandUnit(registry, UnitType::RifleInfantry, true);
 		const Entity b = AddCommandUnit(registry, UnitType::RifleInfantry, true);
 		SetSelectionStance(registry, Stance::Hold);
-		CC_CHECK(FindOrders(registry, a)->stance == Stance::Hold);
-		CC_CHECK(FindOrders(registry, b)->stance == Stance::Hold);
+		CC_CHECK(registry.Get<Orders>(a)->stance == Stance::Hold);
+		CC_CHECK(registry.Get<Orders>(b)->stance == Stance::Hold);
 	}
 
 	// --- halt clears movement, combat, and queued orders ---
@@ -60,11 +60,11 @@ void RunUnitCommandsTests()
 		IssueSelectionAttackMove(registry, map, &occ, { 640.0f, 640.0f }, false);
 		GetOrders(registry, id).autoRetreat = true;
 		HaltSelection(registry);
-		const Orders *orders = FindOrders(registry, id);
+		const Orders *orders = registry.Get<Orders>(id);
 		CC_CHECK(!orders->attackMove && orders->orderQueue.empty());
 		CC_CHECK(orders->autoRetreat); // halt keeps the retreat stance flag
 		CC_CHECK(registry.Get<Unit>(id)->state == UnitState::Idle);
-		CC_CHECK(FindMover(registry, id)->speedCapPixelsPerSec == -1.0f);
+		CC_CHECK(registry.Get<Mover>(id)->speedCapPixelsPerSec == -1.0f);
 	}
 
 	// --- auto-retreat toggles as a group ---
@@ -73,10 +73,10 @@ void RunUnitCommandsTests()
 		const Entity a = AddCommandUnit(registry, UnitType::RifleInfantry, true);
 		const Entity b = AddCommandUnit(registry, UnitType::RifleInfantry, true);
 		ToggleSelectionAutoRetreat(registry);
-		CC_CHECK(FindOrders(registry, a)->autoRetreat);
-		CC_CHECK(FindOrders(registry, b)->autoRetreat);
+		CC_CHECK(registry.Get<Orders>(a)->autoRetreat);
+		CC_CHECK(registry.Get<Orders>(b)->autoRetreat);
 		ToggleSelectionAutoRetreat(registry);
-		CC_CHECK(!FindOrders(registry, a)->autoRetreat);
+		CC_CHECK(!registry.Get<Orders>(a)->autoRetreat);
 	}
 
 	// --- attack-move and patrol arm the selection, skipping the unselected ---
@@ -87,11 +87,11 @@ void RunUnitCommandsTests()
 		const Entity picked = AddCommandUnit(registry, UnitType::RifleInfantry, true);
 		const Entity parked = AddCommandUnit(registry, UnitType::RifleInfantry, false);
 		CC_CHECK(IssueSelectionAttackMove(registry, map, &occ, { 320.0f, 320.0f }, false) == 1);
-		CC_CHECK(FindOrders(registry, picked)->attackMove);
-		CC_CHECK(!FindOrders(registry, parked)->attackMove);
+		CC_CHECK(registry.Get<Orders>(picked)->attackMove);
+		CC_CHECK(!registry.Get<Orders>(parked)->attackMove);
 		CC_CHECK(IssueSelectionPatrol(registry, map, &occ, { 320.0f, 320.0f }, false) == 1);
-		CC_CHECK(FindOrders(registry, picked)->hasPatrol);
-		CC_CHECK(!FindOrders(registry, parked)->hasPatrol);
+		CC_CHECK(registry.Get<Orders>(picked)->hasPatrol);
+		CC_CHECK(!registry.Get<Orders>(parked)->hasPatrol);
 	}
 
 	// --- repair arms engineers on damaged targets, nobody else ---
@@ -104,9 +104,9 @@ void RunUnitCommandsTests()
 		const Entity patient = AddCommandUnit(registry, UnitType::LightTank, false);
 		registry.Get<Unit>(patient)->health = 10.0f;
 		CC_CHECK(IssueSelectionRepair(registry, map, &occ, patient, false) == 1);
-		CC_CHECK(FindOrders(registry, engineer)->hasRepairOrder);
-		CC_CHECK(FindOrders(registry, engineer)->repairTarget == patient);
-		CC_CHECK(!FindOrders(registry, rifle)->hasRepairOrder);
+		CC_CHECK(registry.Get<Orders>(engineer)->hasRepairOrder);
+		CC_CHECK(registry.Get<Orders>(engineer)->repairTarget == patient);
+		CC_CHECK(!registry.Get<Orders>(rifle)->hasRepairOrder);
 		CC_CHECK(IssueSelectionRepair(registry, map, &occ, rifle, false) == 0);
 	}
 
@@ -119,7 +119,7 @@ void RunUnitCommandsTests()
 		const Entity wounded = AddCommandUnit(registry, UnitType::RifleInfantry, false);
 		registry.Get<Unit>(wounded)->health = 10.0f;
 		CC_CHECK(IssueSelectionHeal(registry, map, &occ, wounded, false) == 1);
-		CC_CHECK(FindOrders(registry, medic)->repairTarget == wounded);
+		CC_CHECK(registry.Get<Orders>(medic)->repairTarget == wounded);
 		const Entity tank = AddCommandUnit(registry, UnitType::LightTank, false);
 		CC_CHECK(IssueSelectionHeal(registry, map, &occ, tank, false) == 0);
 	}
@@ -150,11 +150,11 @@ void RunAutoRepairTests()
 		const Entity b = AddCommandUnit(registry, UnitType::Engineer, true);
 		AddCommandUnit(registry, UnitType::RifleInfantry, true);
 		ToggleSelectionAutoRepair(registry);
-		CC_CHECK(FindOrders(registry, a)->autoRepair);
-		CC_CHECK(FindOrders(registry, b)->autoRepair);
+		CC_CHECK(registry.Get<Orders>(a)->autoRepair);
+		CC_CHECK(registry.Get<Orders>(b)->autoRepair);
 		ToggleSelectionAutoRepair(registry);
-		CC_CHECK(!FindOrders(registry, a)->autoRepair);
-		CC_CHECK(!FindOrders(registry, b)->autoRepair);
+		CC_CHECK(!registry.Get<Orders>(a)->autoRepair);
+		CC_CHECK(!registry.Get<Orders>(b)->autoRepair);
 	}
 
 	// --- toggled engineer acquires and heals a nearby damaged vehicle ---
@@ -262,7 +262,7 @@ void RunArmedAbilityTests()
 		const Entity id = AddCommandUnit(rig.registry, UnitType::RifleInfantry, true);
 		rig.playing.ArmAbility(AbilityId::AttackMove);
 		CC_CHECK(rig.playing.IssueArmedAbilityAt({ 320.0f, 320.0f }, false));
-		CC_CHECK(FindOrders(rig.registry, id)->attackMove);
+		CC_CHECK(rig.registry.Get<Orders>(id)->attackMove);
 		CC_CHECK(!rig.playing.ArmedAbility().has_value());
 	}
 
@@ -272,7 +272,7 @@ void RunArmedAbilityTests()
 		const Entity id = AddCommandUnit(rig.registry, UnitType::RifleInfantry, true);
 		rig.playing.ArmAbility(AbilityId::Patrol);
 		CC_CHECK(rig.playing.IssueArmedAbilityAt({ 320.0f, 320.0f }, false));
-		CC_CHECK(FindOrders(rig.registry, id)->hasPatrol);
+		CC_CHECK(rig.registry.Get<Orders>(id)->hasPatrol);
 
 		const Entity medic = AddCommandUnit(rig.registry, UnitType::Medic, true);
 		const Entity wounded = AddCommandUnit(rig.registry, UnitType::RifleInfantry, false);
@@ -283,7 +283,7 @@ void RunArmedAbilityTests()
 		CC_CHECK(rig.playing.ArmedAbility().has_value()); // miss keeps the arm
 		CC_CHECK(rig.playing.IssueArmedAbilityAt(
 			rig.registry.Get<Unit>(wounded)->position, false));
-		CC_CHECK(FindOrders(rig.registry, medic)->repairTarget == wounded);
+		CC_CHECK(rig.registry.Get<Orders>(medic)->repairTarget == wounded);
 	}
 
 	// --- nothing armed issues nothing ---

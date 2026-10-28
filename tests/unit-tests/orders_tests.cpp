@@ -79,7 +79,7 @@ void RunOrdersTests()
 		for (int i = 0; i < 1200; ++i)
 		{
 			StepUnits(registry, map, 1);
-			if (FindCombatState(registry, seekerId)->target != kInvalidEntity ||
+			if (registry.Get<CombatState>(seekerId)->target != kInvalidEntity ||
 				registry.Get<Unit>(seekerId)->state == UnitState::Attacking)
 			{
 				engaged = true;
@@ -111,14 +111,14 @@ void RunOrdersTests()
 		for (int i = 0; i < 1200; ++i)
 		{
 			StepUnits(registry, map, 1);
-			const Mover *s = FindMover(registry, seekerId);
+			const Mover *s = registry.Get<Mover>(seekerId);
 			if (s == nullptr || (!s->hasMoveOrder && !s->hasPath))
 			{
 				break;
 			}
 		}
-		CC_CHECK(!FindMover(registry, seekerId)->hasMoveOrder &&
-				 !FindMover(registry, seekerId)->hasPath);
+		CC_CHECK(!registry.Get<Mover>(seekerId)->hasMoveOrder &&
+				 !registry.Get<Mover>(seekerId)->hasPath);
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(seekerId)->position)) ==
 				 cc::IVec2(10, 2));
 	}
@@ -132,7 +132,7 @@ void RunOrdersTests()
 		IssueAttackMoveOrder(*u, GetOrders(registry, id), GetMover(registry, id), map,
 							 cc::ToRaylib(cc::TileToWorld(6, 2)));
 		StepUnits(registry, map, 600);
-		const Mover *after = FindMover(registry, id);
+		const Mover *after = registry.Get<Mover>(id);
 		CC_CHECK(!after->hasMoveOrder && !after->hasPath);
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(id)->position)) == cc::IVec2(6, 2));
 	}
@@ -151,7 +151,7 @@ void RunOrdersTests()
 		const Entity foeId = AddUnit(registry, foe);
 		StepUnits(registry, map, 120);
 		const Unit *h = registry.Get<Unit>(holderId);
-		CC_CHECK(FindCombatState(registry, holderId)->target == kInvalidEntity); // never chased
+		CC_CHECK(registry.Get<CombatState>(holderId)->target == kInvalidEntity); // never chased
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(h->position)) == cc::IVec2(2, 2));
 		// Walk the foe into range: Hold opens fire without moving.
 		registry.Get<Unit>(foeId)->position = cc::ToRaylib(cc::TileToWorld(3, 2));
@@ -177,7 +177,7 @@ void RunOrdersTests()
 		for (int i = 0; i < 900; ++i)
 		{
 			StepUnits(registry, map, 1);
-			const Mover *p = FindMover(registry, id);
+			const Mover *p = registry.Get<Mover>(id);
 			if (p == nullptr || (!p->hasMoveOrder && !p->hasPath))
 			{
 				arrived = true;
@@ -188,7 +188,7 @@ void RunOrdersTests()
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(id)->position)) == cc::IVec2(6, 2));
 		// ...and the next idle tick issues the return leg.
 		StepUnits(registry, map, 5);
-		const Mover *back = FindMover(registry, id);
+		const Mover *back = registry.Get<Mover>(id);
 		CC_CHECK(back->hasMoveOrder || back->hasPath);
 		// Leaving patrol drops the route.
 		SetStance(*registry.Get<Unit>(id), GetOrders(registry, id),
@@ -234,7 +234,7 @@ void RunOrdersTests()
 		StepUnits(registry, map, 120);
 		// Six tiles out: the engineer must be walking the approach, not idle.
 		const Unit *e = registry.Get<Unit>(engId);
-		const Mover *em = FindMover(registry, engId);
+		const Mover *em = registry.Get<Mover>(engId);
 		CC_CHECK(em->hasMoveOrder || em->hasPath || e->state == UnitState::Moving);
 		StepUnits(registry, map, 3600);
 		CC_CHECK(registry.Get<Unit>(tankId)->health == BaseStats(UnitType::LightTank).health);
@@ -348,7 +348,7 @@ void RunOrdersTests()
 		StepUnits(registry, map, 3600);
 		CC_CHECK(registry.Get<Building>(depotId) == nullptr); // demolished at zero HP
 		CC_CHECK(map.Get({ 5, 2 }) == TerrainType::Grass);     // footprint restored
-		CC_CHECK(FindCombatState(registry, raiderId)->target == kInvalidEntity);
+		CC_CHECK(registry.Get<CombatState>(raiderId)->target == kInvalidEntity);
 	}
 
 	// --- production dies with the bootcamp; the queue stalls ---

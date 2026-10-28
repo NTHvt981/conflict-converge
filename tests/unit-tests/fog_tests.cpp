@@ -163,9 +163,9 @@ void RunFogCombatTests()
 	blindRegistry.Add(blindId, seeker);
 	UpdateUnit(blindId, blindRegistry, map, 1.0f / 60.0f, &blindFog);
 	const Unit *blind = blindRegistry.Get<Unit>(blindId);
-	CC_CHECK(FindCombatState(blindRegistry, blindId)->target == kInvalidEntity);
+	CC_CHECK(blindRegistry.Get<CombatState>(blindId)->target == kInvalidEntity);
 	CC_CHECK(blind->state == UnitState::Idle);
 	UpdateUnit(batteryId, artyRegistry, map, 1.0f / 60.0f, &artyFog);
 	const Unit *gun = artyRegistry.Get<Unit>(batteryId);
-	CC_CHECK(FindCombatState(artyRegistry, batteryId)->target != kInvalidEntity);
+	CC_CHECK(artyRegistry.Get<CombatState>(batteryId)->target != kInvalidEntity);
 }

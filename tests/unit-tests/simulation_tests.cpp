@@ -167,7 +167,7 @@ void RunSimulationTests()
 				spawned.push_back(id);
 				spawnTiles.push_back(cc::WorldToTile(cc::ToGlm(unit.position)));
 				spawnFrames.push_back(i);
-				const Mover *mover = FindMover(*fx.registry, id);
+				const Mover *mover = (*fx.registry).Get<Mover>(id);
 				hadOrder.push_back(mover != nullptr &&
 								   (mover->hasMoveOrder || mover->hasPath));
 			});

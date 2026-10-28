@@ -428,7 +428,7 @@ void PumpYieldHandshake(Registry &registry, const TileMap &map, OccupancyGrid &o
 
 	std::vector<Entity> requesters;
 	registry.Each<Unit>([&](Entity id, const Unit &) {
-		const Mover *mover = FindMover(registry, id);
+		const Mover *mover = registry.Get<Mover>(id);
 		if (mover != nullptr && mover->yieldRequestBlocker != kInvalidEntity)
 		{
 			requesters.push_back(id);
@@ -510,7 +510,7 @@ void PumpYieldHandshake(Registry &registry, const TileMap &map, OccupancyGrid &o
 
 	std::vector<Entity> waiting;
 	registry.Each<Unit>([&](Entity id, const Unit &) {
-		const Mover *mover = FindMover(registry, id);
+		const Mover *mover = registry.Get<Mover>(id);
 		if (mover != nullptr && mover->awaitingClearBlocker != kInvalidEntity)
 		{
 			waiting.push_back(id);
@@ -588,7 +588,7 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
 			}
 			const bool isHolder =
 				holder.entity == id && holder.generation == registry.Generation(id);
-			const Mover *mover = FindMover(registry, id);
+			const Mover *mover = registry.Get<Mover>(id);
 			const bool hasOrder =
 				mover != nullptr && (mover->hasMoveOrder || mover->hasPath);
 			const bool isDeadlockedNow =
@@ -657,7 +657,7 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
 		// The stacked start tile blocks the footprint pathfinder (the neighbor
 		// still owns it), so fall back to a straight move order: step-out walks
 		// the unit clear and repaths from the freed tile.
-		if (FindMover(registry, pick)->path.empty())
+		if (registry.Get<Mover>(pick)->path.empty())
 		{
 			IssueMoveOrder(*unit, GetOrders(registry, pick), GetMover(registry, pick),
 						   cc::ToRaylib(cc::TileToWorld(dest.x, dest.y)));

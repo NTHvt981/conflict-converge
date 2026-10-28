@@ -168,13 +168,13 @@ void RunSaveGameTests()
 	const Unit *lh = dst.registry.Get<Unit>(loadedHunter);
 	CC_CHECK(Near(ls->health, 73.5f) && ls->isSelected);
 	CC_CHECK(ls->health == 73.5f); // JSON round-trips exact floats
-	const CombatState *loadedScoutCombat = FindCombatState(dst.registry, loadedScout);
+	const CombatState *loadedScoutCombat = dst.registry.Get<CombatState>(loadedScout);
 	CC_CHECK(Near(loadedScoutCombat->lastDamageTaken, 12.0f) &&
 			 Near(loadedScoutCombat->hitFlashTime, 0.1f));
 	CC_CHECK(Near(loadedScoutCombat->cooldown, 0.2f));
-	const CombatState *loadedHunterCombat = FindCombatState(dst.registry, loadedHunter);
+	const CombatState *loadedHunterCombat = dst.registry.Get<CombatState>(loadedHunter);
 	CC_CHECK(loadedHunterCombat->target == loadedScout); // remapped to the fresh scout ID
-	const Mover *loadedMover = FindMover(dst.registry, loadedHunter);
+	const Mover *loadedMover = dst.registry.Get<Mover>(loadedHunter);
 	CC_CHECK(loadedMover != nullptr && loadedMover->hasMoveOrder && loadedMover->hasPath &&
 			 loadedMover->pathNext == 1 && loadedMover->path.size() == 3);
 	CC_CHECK(loadedMover->path[0] == cc::IVec2(5, 2) && loadedMover->path[2] == cc::IVec2(3, 3));
@@ -380,10 +380,10 @@ void RunSaveGameTests()
 		}
 		CC_CHECK(u->type == UnitType::RifleInfantry && u->teamID == kPlayerTeam);
 		CC_CHECK(u->health == 50.0f);
-		CC_CHECK(FindCombatState(sparseWorld.registry, only)->cooldown == 0.0f &&
-				 FindMover(sparseWorld.registry, only) != nullptr &&
-				 !FindMover(sparseWorld.registry, only)->hasMoveOrder &&
-				 !FindMover(sparseWorld.registry, only)->hasPath);
+		CC_CHECK(sparseWorld.registry.Get<CombatState>(only)->cooldown == 0.0f &&
+				 sparseWorld.registry.Get<Mover>(only) != nullptr &&
+				 !sparseWorld.registry.Get<Mover>(only)->hasMoveOrder &&
+				 !sparseWorld.registry.Get<Mover>(only)->hasPath);
 		CC_CHECK(u->attackPower == 0 && u->attackRange == 0); // absent: zero, not table
 		CC_CHECK(u->position.x == 128.0f && u->position.y == 128.0f);
 		CC_CHECK(sparseWorld.resources.iron == 0 && sparseWorld.nodes.Count() == 0);

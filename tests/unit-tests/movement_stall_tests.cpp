@@ -68,16 +68,16 @@ void RunMovementStallTests()
 								cc::ToRaylib(cc::TileToWorld(4, 1)));
 		IssuePathOrderFootprint(*ub, MakeOrderContext(registry, b, map, &occ),
 								cc::ToRaylib(cc::TileToWorld(0, 1)));
-		CC_CHECK(FindMover(registry, a)->hasPath);
-		CC_CHECK(FindMover(registry, b)->hasPath);
+		CC_CHECK(registry.Get<Mover>(a)->hasPath);
+		CC_CHECK(registry.Get<Mover>(b)->hasPath);
 
 		int frame = 0;
 		constexpr int kBudget = 600; // 10s at 60fps
 		for (; frame < kBudget; ++frame)
 		{
 			RunUnitMovementFrame(registry, map, occ, nullptr, kDt);
-			const Mover *ma = FindMover(registry, a);
-			const Mover *mb = FindMover(registry, b);
+			const Mover *ma = registry.Get<Mover>(a);
+			const Mover *mb = registry.Get<Mover>(b);
 			if (ma != nullptr && mb != nullptr && !ma->hasMoveOrder && !ma->hasPath &&
 				!mb->hasMoveOrder && !mb->hasPath)
 			{
@@ -92,8 +92,8 @@ void RunMovementStallTests()
 		// outcome. What must never happen is a silent forever-freeze: both
 		// orders must resolve (complete or cancel) well within budget, and
 		// the units must not end up wedged on top of each other.
-		CC_CHECK(!FindMover(registry, a)->hasMoveOrder && !FindMover(registry, a)->hasPath);
-		CC_CHECK(!FindMover(registry, b)->hasMoveOrder && !FindMover(registry, b)->hasPath);
+		CC_CHECK(!registry.Get<Mover>(a)->hasMoveOrder && !registry.Get<Mover>(a)->hasPath);
+		CC_CHECK(!registry.Get<Mover>(b)->hasMoveOrder && !registry.Get<Mover>(b)->hasPath);
 		CC_CHECK(!(cc::WorldToTile(cc::ToGlm(ua->position)) ==
 				  cc::WorldToTile(cc::ToGlm(ub->position))));
 		CC_CHECK(frame < kBudget);
@@ -130,7 +130,7 @@ void RunMovementStallTests()
 			int stillMoving = 0;
 			registry.Each<Unit>([&](Entity id, const Unit &u) {
 				(void)u;
-				const Mover *mover = FindMover(registry, id);
+				const Mover *mover = registry.Get<Mover>(id);
 				if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
 				{
 					++stillMoving;
@@ -145,7 +145,7 @@ void RunMovementStallTests()
 		int arrived = 0;
 		registry.Each<Unit>([&](Entity id, const Unit &u) {
 			(void)u;
-			const Mover *mover = FindMover(registry, id);
+			const Mover *mover = registry.Get<Mover>(id);
 			if (mover != nullptr && !mover->hasMoveOrder && !mover->hasPath)
 			{
 				++arrived;

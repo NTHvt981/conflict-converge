@@ -296,7 +296,7 @@ void ResourceNodes::UpdateHarvesters(Registry &registry, const TileMap &map,
 		{
 			return;
 		}
-		const Mover *mover = FindMover(registry, id);
+		const Mover *mover = registry.Get<Mover>(id);
 		const bool idle = mover == nullptr || (!mover->hasMoveOrder && !mover->hasPath);
 		const cc::IVec2 here = cc::WorldToTile(cc::ToGlm(unit.position));
 		switch (harvester->phase)

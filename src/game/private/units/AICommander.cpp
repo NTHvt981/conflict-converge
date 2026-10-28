@@ -462,7 +462,7 @@ void AICommander::MaintainHarvesters()
 	harvesters_.swap(alive);
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 		if (unit.teamID != teamID_ || unit.health <= 0.0f || unit.type != UnitType::Engineer ||
-			FindHarvester(registry_, id) != nullptr)
+			registry_.Get<Harvester>(id) != nullptr)
 		{
 			return;
 		}
@@ -529,7 +529,7 @@ bool AICommander::TeamAllIdle(const AITeam &team)
 {
 	for (Entity id : team.members)
 	{
-		const Mover *mover = FindMover(registry_, id);
+		const Mover *mover = registry_.Get<Mover>(id);
 		if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
 		{
 			return false;

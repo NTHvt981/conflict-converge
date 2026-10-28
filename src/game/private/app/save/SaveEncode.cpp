@@ -54,7 +54,7 @@ void FillUnit(SaveUnit &out, const Registry &registry, Entity id, const Unit &u,
 	out.damageType = static_cast<std::int32_t>(u.damageType);
 	out.attackPower = u.attackPower;
 	out.attackRange = u.attackRange;
-	const CombatState *combat = FindCombatState(registry, id);
+	const CombatState *combat = registry.Get<CombatState>(id);
 	out.cooldown = combat != nullptr ? combat->cooldown : 0.0f;
 	out.cooldownTime = u.cooldownTime;
 	out.phase = combat != nullptr ? static_cast<std::int32_t>(combat->phase) : 0;
@@ -71,7 +71,7 @@ void FillUnit(SaveUnit &out, const Registry &registry, Entity id, const Unit &u,
 	out.type = static_cast<std::int32_t>(u.type);
 	out.state = static_cast<std::int32_t>(u.state);
 	out.targetIndex = indexOf(combat != nullptr ? combat->target : kInvalidEntity);
-	const Mover *mover = FindMover(registry, id);
+	const Mover *mover = registry.Get<Mover>(id);
 	FillVec2(out.moveTarget, mover != nullptr ? mover->moveTarget : Vector2{});
 	out.hasMoveOrder = mover != nullptr && mover->hasMoveOrder;
 	if (mover != nullptr)

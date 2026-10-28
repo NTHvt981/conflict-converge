@@ -57,7 +57,7 @@ void RunFormationTests()
 	int ordered = 0;
 	registry.Each<Unit>([&](Entity id, const Unit &unit) {
 		(void)unit;
-		const Mover *mover = FindMover(registry, id);
+		const Mover *mover = registry.Get<Mover>(id);
 		const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(mover->moveTarget));
 		// Slot must be a live order near the anchor (offsets stay within the group box).
 		CC_CHECK(tile.x >= 5 && tile.x <= 6);
@@ -78,7 +78,7 @@ void RunFormationTests()
 	int reordered = 0;
 	registry.Each<Unit>([&](Entity id, const Unit &unit) {
 		(void)unit;
-		const Mover *mover = FindMover(registry, id);
+		const Mover *mover = registry.Get<Mover>(id);
 		if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
 		{
 			++reordered;
@@ -150,7 +150,7 @@ void RunFormationTests()
 		int orderedCount = 0;
 		fpRegistry.Each<Unit>([&](Entity id, const Unit &unit) {
 			(void)unit;
-			const Mover *mover = FindMover(fpRegistry, id);
+			const Mover *mover = fpRegistry.Get<Mover>(id);
 			if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
 			{
 				++orderedCount;
@@ -182,8 +182,8 @@ void RunFormationTests()
 										cc::ToRaylib(cc::TileToWorld(10, 10)), true);
 		for (Entity id : mixed)
 		{
-			CC_CHECK(FindMover(capRegistry, id)->speedCapPixelsPerSec == 50.0f);
-			CC_CHECK(EffectiveSpeed(*capRegistry.Get<Unit>(id), *FindMover(capRegistry, id)) ==
+			CC_CHECK(capRegistry.Get<Mover>(id)->speedCapPixelsPerSec == 50.0f);
+			CC_CHECK(EffectiveSpeed(*capRegistry.Get<Unit>(id), *capRegistry.Get<Mover>(id)) ==
 					 50.0f);
 		}
 		// End to end: the 200-speed unit advances exactly 50px in one tick.
@@ -198,7 +198,7 @@ void RunFormationTests()
 										cc::ToRaylib(cc::TileToWorld(12, 12)), false);
 		for (Entity id : mixed)
 		{
-			CC_CHECK(FindMover(capRegistry, id)->speedCapPixelsPerSec == -1.0f);
+			CC_CHECK(capRegistry.Get<Mover>(id)->speedCapPixelsPerSec == -1.0f);
 		}
 	}
 
@@ -231,7 +231,7 @@ void RunFormationTests()
 		const cc::IVec2 want[4] = { { 10, 10 }, { 11, 10 }, { 10, 11 }, { 11, 11 } };
 		for (int i = 0; i < 4; ++i)
 		{
-			const Mover *u = FindMover(asRegistry, byPos[i]);
+			const Mover *u = asRegistry.Get<Mover>(byPos[i]);
 			CC_CHECK(u->hasMoveOrder || u->hasPath);
 			CC_CHECK(cc::WorldToTile(cc::ToGlm(u->moveTarget)) == want[i]);
 		}

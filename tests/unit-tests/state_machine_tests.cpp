@@ -50,7 +50,7 @@ void RunStateMachineTests()
 		StepAll(registry, map, kDt, 10);
 		const Unit *unit = registry.Get<Unit>(id);
 		CC_CHECK(unit->state == UnitState::Idle);
-		CC_CHECK(FindCombatState(registry, id)->target == kInvalidEntity);
+		CC_CHECK(registry.Get<CombatState>(id)->target == kInvalidEntity);
 	}
 
 	// --- enemy inside attack range: acquires, attacks on cooldown ---
@@ -63,7 +63,7 @@ void RunStateMachineTests()
 			AddSoldier(registry, UnitType::RifleInfantry, kEnemyTeam, 100.0f, 0.0f);
 		UpdateUnit(attacker, registry, map, kDt);
 		const Unit *unit = registry.Get<Unit>(attacker);
-		const CombatState *attackerCombat = FindCombatState(registry, attacker);
+		const CombatState *attackerCombat = registry.Get<CombatState>(attacker);
 		CC_CHECK(attackerCombat->target == victim);
 		CC_CHECK(unit->state == UnitState::Attacking);
 		CC_CHECK(attackerCombat->phase == AttackPhase::WindUp); // Telegraph first, no instant hit
@@ -74,8 +74,8 @@ void RunStateMachineTests()
 		const float expected = 100.0f - 10.0f * Effectiveness(DamageType::KINETIC,
 															 registry.Get<Unit>(victim)->armorType);
 		CC_CHECK(registry.Get<Unit>(victim)->health == expected);
-		CC_CHECK(FindCombatState(registry, attacker)->phase == AttackPhase::Recover);
-		CC_CHECK(FindCombatState(registry, attacker)->cooldown > 0.0f);
+		CC_CHECK(registry.Get<CombatState>(attacker)->phase == AttackPhase::Recover);
+		CC_CHECK(registry.Get<CombatState>(attacker)->cooldown > 0.0f);
 
 		// Cooldown gates the next shot: one frame later, no further damage.
 		const float hpAfterFirst = registry.Get<Unit>(victim)->health;
@@ -97,9 +97,9 @@ void RunStateMachineTests()
 			AddSoldier(registry, UnitType::RifleInfantry, kEnemyTeam, 256.0f, 0.0f); // > 128 range
 		UpdateUnit(chaser, registry, map, kDt);
 		const Unit *unit = registry.Get<Unit>(chaser);
-		CC_CHECK(FindCombatState(registry, chaser)->target == prey);
+		CC_CHECK(registry.Get<CombatState>(chaser)->target == prey);
 		CC_CHECK(unit->state == UnitState::Moving);
-		CC_CHECK(FindMover(registry, chaser)->hasPath);
+		CC_CHECK(registry.Get<Mover>(chaser)->hasPath);
 
 		// Walking the chase to its end arrives in attack range, attacking.
 		StepAll(registry, map, kDt, 60 * 30);
@@ -120,7 +120,7 @@ void RunStateMachineTests()
 		StepAll(registry, map, kDt, 5);
 		const Unit *unit = registry.Get<Unit>(ordered);
 		CC_CHECK(unit->state == UnitState::Moving);
-		CC_CHECK(FindCombatState(registry, ordered)->target == kInvalidEntity);
+		CC_CHECK(registry.Get<CombatState>(ordered)->target == kInvalidEntity);
 		CC_CHECK(unit->position.x > 0.0f);
 	}
 
@@ -135,7 +135,7 @@ void RunStateMachineTests()
 		CC_CHECK(registry.Get<Unit>(doomed)->health <= 0.0f);
 		UpdateUnit(killer, registry, map, kDt); // notices the corpse
 		const Unit *unit = registry.Get<Unit>(killer);
-		CC_CHECK(FindCombatState(registry, killer)->target == kInvalidEntity);
+		CC_CHECK(registry.Get<CombatState>(killer)->target == kInvalidEntity);
 		CC_CHECK(unit->state == UnitState::Idle);
 	}
 
