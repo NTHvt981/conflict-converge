@@ -98,6 +98,57 @@ void RunAICommanderTests()
 	}
 	CC_CHECK(ai.HarvesterCount() == medium.harvesters);
 
+	// --- harvester replacement survives id recycling by a non-Engineer ---
+	{
+		Registry recycleRegistry;
+		TileMap recycleMap(20, 15);
+		ResourceNodes recycleNodes;
+		EventDispatcher recycleEvents;
+		ResourceSystem recycleResources;
+		UnitFactory recycleFactory(recycleRegistry, recycleResources, recycleEvents);
+		AICommander recycleAi(recycleRegistry, recycleMap, recycleNodes, recycleEvents, kEnemyTeam,
+							  AIDifficulty::Medium, { 16, 9 }, { 1, 10 });
+		recycleAi.SetupBase();
+		recycleNodes.SpawnNode(recycleMap, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
+		for (int i = 0; i < 60; ++i)
+		{
+			recycleAi.Update(1.0f / 60.0f);
+		}
+		CC_CHECK(recycleAi.HarvesterCount() == medium.harvesters);
+		Entity victim = kInvalidEntity;
+		recycleRegistry.Each<Unit>([&](Entity id, const Unit &unit) {
+			if (victim == kInvalidEntity && unit.teamID == kEnemyTeam &&
+				unit.type == UnitType::Engineer)
+			{
+				victim = id;
+			}
+		});
+		CC_CHECK(victim != kInvalidEntity);
+		recycleFactory.DestroyUnit(victim);
+		const Entity recycled = recycleFactory.SpawnPrepaid(
+			UnitType::RifleInfantry, kEnemyTeam, cc::ToRaylib(cc::TileToWorld(5, 5)));
+		CC_CHECK(recycled == victim); // freed ids are handed out again
+		for (int i = 0; i < 120; ++i)
+		{
+			recycleAi.Update(1.0f / 60.0f);
+		}
+		CC_CHECK(recycleAi.HarvesterCount() == medium.harvesters);
+		int working = 0;
+		recycleRegistry.Each<Unit>([&](Entity id, const Unit &unit) {
+			if (id == recycled || unit.teamID != kEnemyTeam || unit.health <= 0.0f ||
+				unit.type != UnitType::Engineer)
+			{
+				return;
+			}
+			const Mover *mover = recycleRegistry.Get<Mover>(id);
+			if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
+			{
+				++working;
+			}
+		});
+		CC_CHECK(working >= 1); // the replacement is actually sent to the field
+	}
+
 	// --- wave launches on army-size threshold, ordering the army ---
 	Registry warRegistry;
 	TileMap warMap(20, 15);
