@@ -67,6 +67,61 @@ void RunUnitCommandsTests()
 		CC_CHECK(registry.Get<Mover>(id)->speedCapPixelsPerSec == -1.0f);
 	}
 
+	// --- halt cancels a transport load order and it is not re-issued ---
+	{
+		Registry registry;
+		TileMap map(20, 15);
+		OccupancyGrid occ(20, 15);
+		const Entity carrier = AddCommandUnit(registry, UnitType::IFV, true);
+		const Entity rider = AddCommandUnit(registry, UnitType::RifleInfantry, false);
+		const Entity patroller = AddCommandUnit(registry, UnitType::RifleInfantry, true);
+		Cargo cargo;
+		cargo.capacity = 2;
+		registry.Add(carrier, cargo);
+		registry.Get<Unit>(rider)->position = { 640.0f, 640.0f };
+		IssueSelectionPatrol(registry, map, &occ, { 640.0f, 640.0f }, false);
+		IssueLoadOrder(*registry.Get<Unit>(carrier), GetOrders(registry, carrier),
+					   GetMover(registry, carrier), rider);
+		CC_CHECK(GetOrders(registry, carrier).hasLoadOrder);
+		CC_CHECK(GetOrders(registry, patroller).hasPatrol);
+		HaltSelection(registry);
+		CC_CHECK(!GetOrders(registry, carrier).hasLoadOrder);
+		CC_CHECK(GetOrders(registry, carrier).loadTarget == kInvalidEntity);
+		CC_CHECK(!GetOrders(registry, carrier).hasPatrol);
+		CC_CHECK(!GetOrders(registry, patroller).hasPatrol);
+		for (int i = 0; i < 3; ++i)
+		{
+			UpdateUnit(carrier, registry, map, 1.0f);
+			UpdateUnit(patroller, registry, map, 1.0f);
+		}
+		CC_CHECK(!GetMover(registry, carrier).hasMoveOrder);
+		CC_CHECK(!GetMover(registry, patroller).hasMoveOrder);
+		CC_CHECK(registry.Get<Unit>(patroller)->state == UnitState::Idle);
+	}
+
+	// --- halt cancels an unload order and it is not re-issued ---
+	{
+		Registry registry;
+		TileMap map(20, 15);
+		const Entity carrier = AddCommandUnit(registry, UnitType::IFV, true);
+		const Entity rider = AddCommandUnit(registry, UnitType::RifleInfantry, false);
+		Cargo cargo;
+		cargo.capacity = 1;
+		cargo.passengers.push_back(rider);
+		registry.Add(carrier, cargo);
+		IssueUnloadOrder(*registry.Get<Unit>(carrier), GetOrders(registry, carrier),
+						 GetMover(registry, carrier), map, { 640.0f, 640.0f });
+		CC_CHECK(GetOrders(registry, carrier).hasUnloadOrder);
+		HaltSelection(registry);
+		CC_CHECK(!GetOrders(registry, carrier).hasUnloadOrder);
+		for (int i = 0; i < 3; ++i)
+		{
+			UpdateUnit(carrier, registry, map, 1.0f);
+		}
+		CC_CHECK(!GetMover(registry, carrier).hasMoveOrder);
+		CC_CHECK(registry.Get<Unit>(carrier)->state == UnitState::Idle);
+	}
+
 	// --- auto-retreat toggles as a group ---
 	{
 		Registry registry;
