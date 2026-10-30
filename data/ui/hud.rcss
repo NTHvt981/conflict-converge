@@ -56,6 +56,7 @@
 
 .cg-box {
 	display: inline-block;
+	box-sizing: border-box;
 	width: 40dp;
 	height: 22dp;
 	line-height: 22dp;
@@ -382,15 +383,11 @@ input.pause-range sliderprogress {
 	margin-top: 24dp;
 }
 
-/* Color-blind checkbox is visual-only in the probe. */
-body.colorblind #hud-body-art {
-	background: #e8e8e8;
-}
-
-/* Responsive: the % bottom row (selection + 24% abilities + 25% production)
-   collides on narrow windows, so shrink the fixed selection panel and let
-   the % panels take relatively more room. */
-@media (max-width: 777dp)
+/* Responsive: the bottom row collides once the dp canvas is narrower than
+   the 340dp selection panel plus the 28% abilities offset (about 1243dp),
+   so shrink the fixed selection panel and let the % panels take relatively
+   more room. The dp canvas is 1280/uiScale wide at 16:9. */
+@media (max-width: 1260dp)
 {
 	#hud-selection {
 		width: 220dp;
