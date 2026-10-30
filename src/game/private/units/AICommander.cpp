@@ -449,17 +449,18 @@ void AICommander::OrderHarvesterToIron(Entity harvester)
 
 void AICommander::MaintainHarvesters()
 {
-	std::vector<Entity> alive;
-	alive.reserve(harvesters_.size());
+	std::vector<Entity> kept;
+	kept.reserve(harvesters_.size());
 	for (Entity id : harvesters_)
 	{
 		const Unit *unit = registry_.Get<Unit>(id);
-		if (unit != nullptr && unit->health > 0.0f)
+		if (unit != nullptr && unit->health > 0.0f && unit->teamID == teamID_ &&
+			unit->type == UnitType::Engineer)
 		{
-			alive.push_back(id);
+			kept.push_back(id);
 		}
 	}
-	harvesters_.swap(alive);
+	harvesters_.swap(kept);
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
 		if (unit.teamID != teamID_ || unit.health <= 0.0f || unit.type != UnitType::Engineer ||
 			registry_.Get<Harvester>(id) != nullptr)
