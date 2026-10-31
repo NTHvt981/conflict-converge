@@ -25,6 +25,7 @@ One line per area; the linked section carries the Do/Don't pair.
 | [Data](#data-saves-and-assets) | camelCase JSON; append-only save wire; version and magic bump on a break |
 | [Tests](#tests) | `CC_CHECK`; suite registered in `tests/main.cpp`; headless; Debug and Release |
 | [Workflow](#docs-and-change-workflow) | Feature doc and index; prefixed branch; full gate before a pull request |
+| [Pull request body](#keep-the-pull-request-body-to-what-the-diff-cannot-show) | Why, behavior change, proof, merge order; the diff carries the rest |
 
 ## Language and build
 
@@ -1402,6 +1403,37 @@ commit: Split the selection line into one builder per case
 branch: stuff
 commit: feat: fixed some hud things
 ```
+
+### Keep the pull request body to what the diff cannot show
+
+**✅ Do**
+```
+Descriptor tables replace fourteen per-type switches: every UnitType /
+BuildingType fact is one row, read only through InfoOf().
+
+Behavior change: DefaultUnitConfig(PrototypeInfantry).spritePrefix now
+follows the art value.
+
+Verified: Debug 4942 checks / 0 failures, Release 4926 / 0. The one e2e
+failure also fails at HEAD.
+
+Stacked on docs/coding-conventions: merge that first.
+```
+
+**❌ Don't**
+```
+## Files changed
+- UnitTypeInfo.h: adds UnitTypeInfo, kUnitTypes, InfoOf, a static_assert
+- Hud.cpp: replaces the UnitTypeName switch with InfoOf
+## How the table works
+Each row holds one type's fields; the static_assert ties the row count to
+UnitType::Count, so a new enumerator fails to compile.
+```
+
+A reviewer reads the diff for what changed and how. The body carries only why,
+behavior changes, proof, and merge order — plus the one or two decisions a
+reader would otherwise have to ask about (a deliberate oddity, a pre-existing
+failure, a stacked base).
 
 ### Run the full gate before a pull request
 
