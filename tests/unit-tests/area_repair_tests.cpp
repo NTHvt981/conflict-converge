@@ -7,6 +7,7 @@
 #include "economy/Building.h"
 #include "units/Extensions.h"
 #include "units/Targeting.h"
+#include "units/UnitInternal.h"
 #include "world/TileMap.h"
 #include "units/Unit.h"
 #include "units/UnitStats.h"
@@ -254,5 +255,45 @@ void RunAreaRepairTests()
 		CC_CHECK(registry.Get<CombatState>(medic)->target == kInvalidEntity);
 		CC_CHECK(registry.Get<Unit>(eng)->state != UnitState::Attacking);
 		CC_CHECK(registry.Get<CombatState>(eng)->target == kInvalidEntity);
+	}
+
+	// --- equal-distance repair candidates: tile key picks, any creation order ---
+	{
+		Registry leftFirst;
+		const Entity engA = SpawnUnit(leftFirst, UnitType::Engineer, kPlayerTeam, 3, 3, 1.0f);
+		const Entity leftTankA = SpawnUnit(leftFirst, UnitType::LightTank, kPlayerTeam, 2, 3, 0.5f);
+		SpawnUnit(leftFirst, UnitType::LightTank, kPlayerTeam, 4, 3, 0.5f);
+		Orders &ordersA = GetOrders(leftFirst, engA);
+		AcquireAutoRepair(leftFirst, engA, *leftFirst.Get<Unit>(engA), ordersA);
+		CC_CHECK(ordersA.hasRepairOrder);
+		CC_CHECK(ordersA.repairTarget == leftTankA);
+
+		Registry rightFirst;
+		const Entity engB = SpawnUnit(rightFirst, UnitType::Engineer, kPlayerTeam, 3, 3, 1.0f);
+		SpawnUnit(rightFirst, UnitType::LightTank, kPlayerTeam, 4, 3, 0.5f);
+		const Entity leftTankB = SpawnUnit(rightFirst, UnitType::LightTank, kPlayerTeam, 2, 3, 0.5f);
+		Orders &ordersB = GetOrders(rightFirst, engB);
+		AcquireAutoRepair(rightFirst, engB, *rightFirst.Get<Unit>(engB), ordersB);
+		CC_CHECK(ordersB.hasRepairOrder);
+		CC_CHECK(ordersB.repairTarget == leftTankB);
+	}
+
+	// --- equal-distance area assignment: same pairing either input order ---
+	{
+		Registry leftFirst;
+		const Entity engA = SpawnUnit(leftFirst, UnitType::Engineer, kPlayerTeam, 3, 3, 1.0f);
+		const Entity leftTankA = SpawnUnit(leftFirst, UnitType::LightTank, kPlayerTeam, 2, 3, 0.5f);
+		const Entity rightTankA = SpawnUnit(leftFirst, UnitType::LightTank, kPlayerTeam, 4, 3, 0.5f);
+		std::vector<RepairAssignment> jobsA;
+		CC_CHECK(AssignAreaRepair(leftFirst, { engA }, { leftTankA, rightTankA }, jobsA) == 1);
+		CC_CHECK(jobsA[0].engineer == engA && jobsA[0].target == leftTankA);
+
+		Registry rightFirst;
+		const Entity engB = SpawnUnit(rightFirst, UnitType::Engineer, kPlayerTeam, 3, 3, 1.0f);
+		const Entity leftTankB = SpawnUnit(rightFirst, UnitType::LightTank, kPlayerTeam, 2, 3, 0.5f);
+		const Entity rightTankB = SpawnUnit(rightFirst, UnitType::LightTank, kPlayerTeam, 4, 3, 0.5f);
+		std::vector<RepairAssignment> jobsB;
+		CC_CHECK(AssignAreaRepair(rightFirst, { engB }, { rightTankB, leftTankB }, jobsB) == 1);
+		CC_CHECK(jobsB[0].engineer == engB && jobsB[0].target == leftTankB);
 	}
 }

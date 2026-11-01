@@ -10,6 +10,7 @@
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
 #include "app/save/SaveGame.h"
+#include "units/Targeting.h"
 #include "world/TileMap.h"
 #include "units/Unit.h"
 #include "units/UnitStats.h"
@@ -492,6 +493,61 @@ void RunSaveGameTests()
 		const EmbarkedOn *lr = landed.registry.Get<EmbarkedOn>(loadedRider);
 		CC_CHECK(lr != nullptr && lr->carrier == loadedCarrier);
 		std::remove(xpath.c_str());
+	}
+
+	// --- acquisition tie-breaks survive save/load (ids renumbered, tiles do not) ---
+	{
+		Fixture src;
+		Unit seeker;
+		seeker.type = UnitType::RifleInfantry;
+		ApplyBaseStats(seeker);
+		seeker.teamID = kPlayerTeam;
+		seeker.position = cc::ToRaylib(cc::TileToWorld(3, 3));
+		const Entity seekerId = src.registry.Create();
+		src.registry.Add(seekerId, seeker);
+
+		const cc::Vec2 leftTile = cc::TileToWorld(2, 3);
+		const cc::Vec2 rightTile = cc::TileToWorld(4, 3);
+		const auto spawnFoe = [&](Registry &registry, float x, float y) {
+			Unit unit;
+			unit.type = UnitType::RifleInfantry;
+			ApplyBaseStats(unit);
+			unit.teamID = kEnemyTeam;
+			unit.position = { x, y };
+			const Entity id = registry.Create();
+			registry.Add(id, unit);
+			return id;
+		};
+		spawnFoe(src.registry, leftTile.x, leftTile.y);
+		spawnFoe(src.registry, rightTile.x, rightTile.y);
+
+		const Entity preSavePick = AcquireTarget(src.registry, seekerId);
+		const Vector2 preSavePos = src.registry.Get<Unit>(preSavePick)->position;
+		CC_CHECK(preSavePos.x == leftTile.x && preSavePos.y == leftTile.y);
+
+		const std::string tiePath =
+			(std::filesystem::temp_directory_path() / "cc_save_tie.ccpb").string();
+		CC_CHECK(SaveWorld(src.State(), tiePath));
+
+		Fixture dst;
+		CC_CHECK(LoadWorld(dst.State(), tiePath));
+		Entity loadedSeeker = kInvalidEntity, loadedLeft = kInvalidEntity;
+		dst.registry.Each<Unit>([&](Entity id, const Unit &u) {
+			if (u.teamID == kPlayerTeam)
+			{
+				loadedSeeker = id;
+			}
+			else if (u.position.x == leftTile.x && u.position.y == leftTile.y)
+			{
+				loadedLeft = id;
+			}
+		});
+		CC_CHECK(loadedSeeker != kInvalidEntity && loadedLeft != kInvalidEntity);
+		const Entity postSavePick = AcquireTarget(dst.registry, loadedSeeker);
+		CC_CHECK(postSavePick == loadedLeft);
+		const Vector2 postSavePos = dst.registry.Get<Unit>(postSavePick)->position;
+		CC_CHECK(postSavePos.x == preSavePos.x && postSavePos.y == preSavePos.y);
+		std::remove(tiePath.c_str());
 	}
 
 	std::remove(path.c_str());

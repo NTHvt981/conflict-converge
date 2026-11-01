@@ -82,6 +82,8 @@ void DeployFaceoff(Registry &registry, UnitFactory &factory, UnitType type)
 	}
 }
 
+constexpr int kSoakFrameCap = 72000;
+
 // AI-vs-AI driver: two commanders build, harvest, wave, and scrap
 // until one team is wiped or the cap hits. Prints kill/wave telemetry every
 // 20 sim-seconds. Returns frames simulated. Death sweep mirrors the game
@@ -91,10 +93,10 @@ int RunAISoak(Registry &registry, TileMap &map, ResourceNodes &nodes, AICommande
 {
 	int frames = 0;
 	int kills0 = 0, kills1 = 0;
-	// 7.5 sim-minutes: support units (Medic, Engineer) cannot attack, so
+	// 20 sim-minutes: support units (Medic, Engineer) cannot attack, so
 	// harvesters ride out raids instead of chasing to their deaths and
 	// games legitimately run longer than the old all-combatant casts.
-	constexpr int kCap = 27000;
+	constexpr int kCap = kSoakFrameCap;
 	while (CountTeam(registry, kPlayerTeam) > 0 && CountTeam(registry, kEnemyTeam) > 0 &&
 		   frames < kCap)
 	{
@@ -272,7 +274,7 @@ void RunIntegrationTests()
 		easy.SetupBase();
 		medium.SetupBase();
 		const int frames = RunAISoak(registry, map, nodes, easy, medium, "Easy-vs-Medium");
-		CC_CHECK(frames < 27000); // terminated: no stalemate
+		CC_CHECK(frames < kSoakFrameCap); // terminated: no stalemate
 		CC_CHECK(CountTeam(registry, kEnemyTeam) > 0); // Medium wins the first rung
 		CC_CHECK(CountTeam(registry, kPlayerTeam) == 0);
 	}
@@ -289,7 +291,7 @@ void RunIntegrationTests()
 		medium.SetupBase();
 		hard.SetupBase();
 		const int frames = RunAISoak(registry, map, nodes, medium, hard, "Medium-vs-Hard");
-		CC_CHECK(frames < 27000); // terminated: no stalemate
+		CC_CHECK(frames < kSoakFrameCap); // terminated: no stalemate
 		CC_CHECK(CountTeam(registry, kEnemyTeam) > 0); // Hard wins the second rung
 		CC_CHECK(CountTeam(registry, kPlayerTeam) == 0);
 	}

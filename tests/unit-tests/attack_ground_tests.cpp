@@ -129,6 +129,47 @@ void RunAttackGroundTests()
 		CC_CHECK(registry.Get<Unit>(pal)->health == palFull);
 	}
 
+	// --- equal splash distance: the tile key picks the victim, any creation order ---
+	{
+		const auto spawnFoe = [](Registry &r, float x, float y) {
+			const Entity id = r.Create();
+			Unit unit;
+			unit.type = UnitType::RifleInfantry;
+			ApplyBaseStats(unit);
+			unit.teamID = kEnemyTeam;
+			unit.position = { x, y };
+			r.Add(id, unit);
+			return id;
+		};
+		const auto run = [&](Registry &r, bool rightFirst) {
+			const Entity id = SpawnArty(r, 1, 1);
+			Unit &gun = *r.Get<Unit>(id);
+			const cc::Vec2 corner = cc::TileToWorld(5, 5);
+			const Vector2 impact = { corner.x + cc::kHalfTile, corner.y + cc::kHalfTile };
+			Entity leftFoe = kInvalidEntity;
+			Entity rightFoe = kInvalidEntity;
+			if (rightFirst)
+			{
+				rightFoe = spawnFoe(r, corner.x + 32.0f, corner.y);
+				leftFoe = spawnFoe(r, corner.x - 32.0f, corner.y);
+			}
+			else
+			{
+				leftFoe = spawnFoe(r, corner.x - 32.0f, corner.y);
+				rightFoe = spawnFoe(r, corner.x + 32.0f, corner.y);
+			}
+			const float leftFull = r.Get<Unit>(leftFoe)->health;
+			const float rightFull = r.Get<Unit>(rightFoe)->health;
+			ResolveGroundAttack(r, gun, GetCombatState(r, id), impact);
+			return r.Get<Unit>(leftFoe)->health < leftFull &&
+				   r.Get<Unit>(rightFoe)->health == rightFull;
+		};
+		Registry leftFirst;
+		CC_CHECK(run(leftFirst, false));
+		Registry rightFirst;
+		CC_CHECK(run(rightFirst, true));
+	}
+
 	// --- new move orders clear shelling (exactly-one-active invariant) ---
 	{
 		Registry registry;
