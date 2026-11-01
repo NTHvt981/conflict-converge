@@ -4,6 +4,7 @@
 #include "units/Combat.h"
 #include "units/Extensions.h"
 #include "units/UnitFactory.h"
+#include "units/UnitInternal.h"
 #include "world/FogOfWar.h"
 #include "core/MathUtils.h"
 
@@ -44,6 +45,7 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
 	Entity best = kInvalidEntity;
 	float bestThreat = -1.0f;
 	float bestDist = 0.0f;
+	Vector2 bestPos = {};
 	registry.Each<Unit>([&](Entity candidate, const Unit &unit) {
 		if (candidate == seeker || unit.teamID == self->teamID || unit.health <= 0.0f ||
 			IsEmbarked(registry, candidate))
@@ -68,15 +70,18 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
 		{
 			return;
 		}
-		// Power dominates; build cost breaks near-ties.
+		// Power dominates; equal-threat ties go to the stable candidate key.
 		const float threat = static_cast<float>(unit.attackPower) *
 								 TargetPriorityWeight(self->type, unit.type) +
 							 ThreatWorth(unit.type) / 500.0f;
-		if (threat > bestThreat || (threat == bestThreat && dist < bestDist))
+		if (threat > bestThreat ||
+			(threat == bestThreat &&
+			 BetterCandidate(candidate, unit.position, dist, best, bestPos, bestDist)))
 		{
 			best = candidate;
 			bestThreat = threat;
 			bestDist = dist;
+			bestPos = unit.position;
 		}
 	});
 	return best;
@@ -106,6 +111,7 @@ Entity AcquireBuildingTarget(const Registry &registry, Entity seeker, const FogO
 
 	Entity best = kInvalidEntity;
 	float bestDist = 0.0f;
+	Vector2 bestPos = {};
 	registry.Each<Building>([&](Entity candidate, const Building &building) {
 		if (building.teamID == self->teamID || building.state != BuildingState::Operational)
 		{
@@ -122,10 +128,12 @@ Entity AcquireBuildingTarget(const Registry &registry, Entity seeker, const FogO
 		{
 			return;
 		}
-		if (best == kInvalidEntity || dist < bestDist)
+		if (best == kInvalidEntity ||
+			BetterCandidate(candidate, center, dist, best, bestPos, bestDist))
 		{
 			best = candidate;
 			bestDist = dist;
+			bestPos = center;
 		}
 	});
 	return best;

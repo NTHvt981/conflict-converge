@@ -2,6 +2,7 @@
 
 #include "economy/Building.h"
 #include "units/Extensions.h"
+#include "units/UnitInternal.h"
 #include "units/UnitTypeInfo.h"
 #include "app/data/UnitConfig.h"
 
@@ -48,18 +49,21 @@ void ResolveGroundAttack(Registry &registry, Unit &attacker, CombatState &attack
 						 Vector2 pos)
 {
 	Entity best = kInvalidEntity;
+	Vector2 bestPos = {};
 	float bestDistSq = 64.0f * 64.0f;
 	registry.Each<Unit>([&](Entity id, const Unit &unit) {
 		if (unit.health <= 0.0f || unit.teamID == attacker.teamID || IsEmbarked(registry, id))
 		{
 			return;
 		}
-		const float dx = (unit.position.x + cc::kHalfTile) - pos.x;
-		const float dy = (unit.position.y + cc::kHalfTile) - pos.y;
+		const Vector2 center = { unit.position.x + cc::kHalfTile, unit.position.y + cc::kHalfTile };
+		const float dx = center.x - pos.x;
+		const float dy = center.y - pos.y;
 		const float distSq = dx * dx + dy * dy;
-		if (distSq < bestDistSq)
+		if (BetterCandidate(id, center, distSq, best, bestPos, bestDistSq))
 		{
 			best = id;
+			bestPos = center;
 			bestDistSq = distSq;
 		}
 	});

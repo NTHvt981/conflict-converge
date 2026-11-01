@@ -6,6 +6,9 @@
 
 #include "units/UnitStats.h" // ApplyBaseStats for realistic power/sight values
 
+#include "economy/Building.h"
+#include "world/TileMap.h"
+
 namespace
 {
 
@@ -138,5 +141,64 @@ void RunTargetingTests()
 		field.Get<Unit>(near)->attackPower = 10;
 		field.Get<Unit>(far)->attackPower = 10;
 		CC_CHECK(AcquireTarget(field, seeker) == near);
+	}
+
+	// --- equal threats at mirrored positions: the tile key wins, any creation order ---
+	{
+		Registry leftFirst;
+		const Entity seekerA =
+			AddSoldier(leftFirst, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
+		const Entity leftA = AddSoldier(leftFirst, UnitType::RifleInfantry, kEnemyTeam, -100.0f, 0.0f);
+		AddSoldier(leftFirst, UnitType::RifleInfantry, kEnemyTeam, 100.0f, 0.0f);
+		CC_CHECK(AcquireTarget(leftFirst, seekerA) == leftA);
+
+		Registry rightFirst;
+		const Entity seekerB =
+			AddSoldier(rightFirst, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
+		AddSoldier(rightFirst, UnitType::RifleInfantry, kEnemyTeam, 100.0f, 0.0f);
+		const Entity leftB =
+			AddSoldier(rightFirst, UnitType::RifleInfantry, kEnemyTeam, -100.0f, 0.0f);
+		CC_CHECK(AcquireTarget(rightFirst, seekerB) == leftB);
+	}
+
+	// --- equal-distance buildings: same pick regardless of creation order ---
+	{
+		Registry leftFirst;
+		TileMap mapA(20, 15);
+		const Entity seekerA =
+			AddSoldier(leftFirst, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
+		const Entity baseLeftA =
+			PlaceBuilding(leftFirst, mapA, BuildingType::Base, kEnemyTeam, 2, 2);
+		const Entity baseRightA =
+			PlaceBuilding(leftFirst, mapA, BuildingType::Base, kEnemyTeam, 4, 2);
+		Building *leftBuilding = leftFirst.Get<Building>(baseLeftA);
+		Building *rightBuilding = leftFirst.Get<Building>(baseRightA);
+		leftBuilding->state = BuildingState::Operational;
+		rightBuilding->state = BuildingState::Operational;
+		const Vector2 midA = { (BuildingCenter(*leftBuilding).x + BuildingCenter(*rightBuilding).x) *
+								   0.5f,
+							   (BuildingCenter(*leftBuilding).y + BuildingCenter(*rightBuilding).y) *
+								   0.5f };
+		leftFirst.Get<Unit>(seekerA)->position = midA;
+		CC_CHECK(AcquireBuildingTarget(leftFirst, seekerA, nullptr) == baseLeftA);
+
+		Registry rightFirst;
+		TileMap mapB(20, 15);
+		const Entity seekerB =
+			AddSoldier(rightFirst, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
+		const Entity baseRightB =
+			PlaceBuilding(rightFirst, mapB, BuildingType::Base, kEnemyTeam, 4, 2);
+		const Entity baseLeftB =
+			PlaceBuilding(rightFirst, mapB, BuildingType::Base, kEnemyTeam, 2, 2);
+		Building *leftBuildingB = rightFirst.Get<Building>(baseLeftB);
+		Building *rightBuildingB = rightFirst.Get<Building>(baseRightB);
+		leftBuildingB->state = BuildingState::Operational;
+		rightBuildingB->state = BuildingState::Operational;
+		const Vector2 midB = {
+			(BuildingCenter(*leftBuildingB).x + BuildingCenter(*rightBuildingB).x) * 0.5f,
+			(BuildingCenter(*leftBuildingB).y + BuildingCenter(*rightBuildingB).y) * 0.5f
+		};
+		rightFirst.Get<Unit>(seekerB)->position = midB;
+		CC_CHECK(AcquireBuildingTarget(rightFirst, seekerB, nullptr) == baseLeftB);
 	}
 }

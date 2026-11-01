@@ -197,8 +197,10 @@ Vector2 ResolvePlayerRetreatHome(Registry &registry)
 	}
 
 	Vector2 home = { 0.0f, 0.0f };
+	Entity best = kInvalidEntity;
+	Vector2 bestPos = {};
 	float bestDistSq = -1.0f;
-	registry.Each<Building>([&](Entity, const Building &building) {
+	registry.Each<Building>([&](Entity id, const Building &building) {
 		if (building.teamID != kPlayerTeam || building.type != BuildingType::Base ||
 			building.state != BuildingState::Operational)
 		{
@@ -209,8 +211,10 @@ Vector2 ResolvePlayerRetreatHome(Registry &registry)
 		const float dx = center.x - armyCentroid.x;
 		const float dy = center.y - armyCentroid.y;
 		const float distSq = dx * dx + dy * dy;
-		if (bestDistSq < 0.0f || distSq < bestDistSq)
+		if (bestDistSq < 0.0f || BetterCandidate(id, center, distSq, best, bestPos, bestDistSq))
 		{
+			best = id;
+			bestPos = center;
 			bestDistSq = distSq;
 			home = center;
 		}

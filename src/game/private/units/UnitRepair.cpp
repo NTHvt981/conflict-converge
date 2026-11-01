@@ -88,6 +88,7 @@ bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity targ
 void AcquireAutoRepair(Registry &registry, Entity self, const Unit &engineer, Orders &orders)
 {
 	Entity best = kInvalidEntity;
+	Vector2 bestAim = {};
 	float bestDist = kAutoRepairAcquireRange;
 	auto consider = [&](Entity candidate) {
 		if (candidate == self || candidate == kInvalidEntity)
@@ -100,9 +101,10 @@ void AcquireAutoRepair(Registry &registry, Entity self, const Unit &engineer, Or
 			return;
 		}
 		const float dist = glm::distance(cc::ToGlm(engineer.position), cc::ToGlm(aim));
-		if (dist < bestDist)
+		if (BetterCandidate(candidate, aim, dist, best, bestAim, bestDist))
 		{
 			bestDist = dist;
+			bestAim = aim;
 			best = candidate;
 		}
 	};
@@ -189,6 +191,7 @@ int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engine
 		}
 		float bestDistSq = -1.0f;
 		std::size_t bestIndex = 0;
+		Vector2 bestGoal = {};
 		bool found = false;
 		for (std::size_t i = 0; i < candidates.size(); ++i)
 		{
@@ -207,10 +210,12 @@ int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engine
 			const float dx = goal.x - engineer->position.x;
 			const float dy = goal.y - engineer->position.y;
 			const float distSq = dx * dx + dy * dy;
-			if (!found || distSq < bestDistSq)
+			if (!found || BetterCandidate(candidates[i], goal, distSq, candidates[bestIndex],
+										  bestGoal, bestDistSq))
 			{
 				bestDistSq = distSq;
 				bestIndex = i;
+				bestGoal = goal;
 				found = true;
 			}
 		}
