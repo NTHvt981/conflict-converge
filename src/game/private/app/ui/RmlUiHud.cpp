@@ -184,6 +184,15 @@ void RmlUiHud::Shutdown()
 	hintsCache_.clear();
 }
 
+void RmlUiHud::UpdatePointer()
+{
+	if (!ready_ || context_ == nullptr || menu_.state == MenuState::HotkeyRemap)
+	{
+		return;
+	}
+	PumpMouse(context_);
+}
+
 bool RmlUiHud::IsPointerOverUI()
 {
 	if (!ready_ || context_ == nullptr)
@@ -210,12 +219,6 @@ bool RmlUiHud::IsPointerOverUI()
 
 ConfirmChoice RmlUiHud::Draw(int screenWidth, int screenHeight, float uiScale)
 {
-	// The remap overlay owns the mouse pump (see header); pumping here too
-	// would double-fire the press edge into two click events.
-	if (menu_.state != MenuState::HotkeyRemap)
-	{
-		PumpMouse(context_);
-	}
 	RefreshHud();
 	for (Rml::ElementDocument *doc : { hudDoc_, pauseDoc_, outcomeDoc_, confirmDoc_ })
 	{
