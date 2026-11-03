@@ -281,6 +281,7 @@ void Game::Update()
 	// shown over the game.
 	rmlUiMenus_.HideAll();
 
+	rmlUiHud_.UpdatePointer();
 	double simMs = 0.0;
 	if (menu_.state == MenuState::Playing && !menu_.ConfirmOpen() && !cheats_.CapturingInput())
 	{

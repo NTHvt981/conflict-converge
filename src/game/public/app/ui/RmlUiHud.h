@@ -56,16 +56,21 @@ public:
 	// RCSS-only restyle of every owned document: DOM, state and listeners survive.
 	void ReloadStyleSheets();
 
+	// Advances the mouse move and button edges once per frame. Call before
+	// the game reads IsPointerOverUI so the gate sees this frame's hover.
+	// Skipped in HotkeyRemap — the remap overlay owns the pump there, see
+	// RmlUiMenus::DrawRemapOverlay.
+	void UpdatePointer();
+
 	// First-refusal gate for PlayingInput (Phase 4 preview): true while the
 	// pointer is over an interactive control, latched while its mouse button
-	// is held. Hover state lags one frame behind the pump in Draw, which is
-	// exact for clicks (pointer stationary) and negligible otherwise.
+	// is held. Reads the hover advanced by UpdatePointer, so a click on the
+	// frame the pointer reaches a control is gated.
 	bool IsPointerOverUI();
 
-	// One in-world frame: mouse pump (skipped in HotkeyRemap — the remap
-	// overlay owns the pump there, see RmlUiMenus::DrawRemapOverlay),
-	// cached refresh, doc sync, host sync. Called inside BeginDrawing; the
-	// host renders with the frame. Returns the confirm-modal button pressed.
+	// One in-world frame: cached refresh, doc sync, host sync. Called inside
+	// BeginDrawing; the host renders with the frame. Returns the confirm-modal
+	// button pressed.
 	ConfirmChoice Draw(int screenWidth, int screenHeight, float uiScale);
 
 	void ProcessEvent(Rml::Event &event) override;
