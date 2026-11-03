@@ -26,8 +26,6 @@ class Event;
 
 class RmlUiHost;
 
-// Input scope: mouse only (move/buttons, no wheel/keys/text) — forwarding
-// keys would double-fire shortcuts (e.g. Space on a focused button + Halt).
 enum class ProductionTab
 {
 	Infantry,
@@ -46,31 +44,18 @@ public:
 	RmlUiHud(const RmlUiHud &) = delete;
 	RmlUiHud &operator=(const RmlUiHud &) = delete;
 
-	// Loads hud/pause/outcome/confirm documents and attaches listeners.
-	// False when the host is not ready or a document is missing (caller keeps
-	// the raygui panels and overlays).
 	bool Init(RmlUiHost &host, const std::string &dataDir);
 	void Shutdown();
 	bool IsReady() const { return ready_; }
 	void Hide();
-	// RCSS-only restyle of every owned document: DOM, state and listeners survive.
 	void ReloadStyleSheets();
 
-	// Advances the mouse move and button edges once per frame. Call before
-	// the game reads IsPointerOverUI so the gate sees this frame's hover.
-	// Skipped in HotkeyRemap — the remap overlay owns the pump there, see
-	// RmlUiMenus::DrawRemapOverlay.
+	// Pumps mouse move and button edges; call before IsPointerOverUI().
 	void UpdatePointer();
 
-	// First-refusal gate for PlayingInput (Phase 4 preview): true while the
-	// pointer is over an interactive control, latched while its mouse button
-	// is held. Reads the hover advanced by UpdatePointer, so a click on the
-	// frame the pointer reaches a control is gated.
+	// First-refusal gate for PlayingInput.
 	bool IsPointerOverUI();
 
-	// One in-world frame: cached refresh, doc sync, host sync. Called inside
-	// BeginDrawing; the host renders with the frame. Returns the confirm-modal
-	// button pressed.
 	ConfirmChoice Draw(int screenWidth, int screenHeight, float uiScale);
 
 	void ProcessEvent(Rml::Event &event) override;
