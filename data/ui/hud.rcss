@@ -97,8 +97,9 @@
 
 .ab-btn {
 	display: inline-block;
+	box-sizing: border-box;
 	width: 31%;
-	height: 24dp;
+	height: 28dp;
 	margin-right: 2dp;
 	margin-top: 2dp;
 	padding: 0;
@@ -122,8 +123,9 @@
 
 .tab-btn {
 	display: inline-block;
+	box-sizing: border-box;
 	width: 30%;
-	height: 22dp;
+	height: 26dp;
 	margin-right: 4dp;
 	padding: 0;
 }

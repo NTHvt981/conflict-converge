@@ -34,11 +34,25 @@ body {
 		</div>
 		<div class="hud-panel" id="hud-abilities">
 			<div class="hud-title">Abilities</div>
-			<div id="abilities-grid"><button class="ab-btn" id="ab-hold"></button><button class="ab-btn" id="ab-guard"></button><button class="ab-btn" id="ab-patrol"></button><button class="ab-btn" id="ab-attackmove"></button><button class="ab-btn" id="ab-halt"></button><button class="ab-btn" id="ab-repair"></button><button class="ab-btn" id="ab-heal"></button><button class="ab-btn" id="ab-rally"></button><button class="ab-btn" id="ab-demolish"></button></div>
+			<div id="abilities-grid">
+				<button class="ab-btn" id="ab-hold"></button>
+				<button class="ab-btn" id="ab-guard"></button>
+				<button class="ab-btn" id="ab-patrol"></button>
+				<button class="ab-btn" id="ab-attackmove"></button>
+				<button class="ab-btn" id="ab-halt"></button>
+				<button class="ab-btn" id="ab-repair"></button>
+				<button class="ab-btn" id="ab-heal"></button>
+				<button class="ab-btn" id="ab-rally"></button>
+				<button class="ab-btn" id="ab-demolish"></button>
+			</div>
 		</div>
 		<div class="hud-panel" id="hud-production">
 			<div class="hud-title">Production</div>
-			<div id="production-tabs"><button class="tab-btn" id="tab-infantry">Inf</button><button class="tab-btn" id="tab-vehicles">Veh</button><button class="tab-btn" id="tab-buildings">Bld</button></div>
+			<div id="production-tabs">
+				<button class="tab-btn" id="tab-infantry">Inf</button>
+				<button class="tab-btn" id="tab-vehicles">Veh</button>
+				<button class="tab-btn" id="tab-buildings">Bld</button>
+			</div>
 			<div id="rows-infantry">
 				<div class="prod-row">
 					<button class="prod-btn" id="prod-i-0"></button>
