@@ -37,6 +37,12 @@ msbuild prj/ConflictConverge.sln /p:Configuration=Debug /p:Platform=x64
 msbuild prj/ConflictConverge.sln /p:Configuration=Release /p:Platform=x64
 ```
 
+Compilation runs across all cores (`/MP`) and every game/test/e2e translation unit
+shares one precompiled header (`src/game/public/core/CcPch.h`). Add a widely used,
+rarely edited third-party header there instead of to individual sources; a source
+that must `#define` something before such a header needs that define moved to the
+project, because the PCH is force-included first.
+
 ## Test
 
 ```bat

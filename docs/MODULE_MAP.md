@@ -11,7 +11,7 @@ across subsystems need include edits. `Unit.h` fwd-declares `TileMap`; never inc
 `Pathfinder.h` from `Unit.h` — no cycles.
 
 ```
-core:    MathUtils, CcAssert, Registry, Event, Subsystem, Team
+core:    MathUtils, CcAssert, CcPch, Registry, Event, Subsystem, Team
          Game, Simulation, PlayingInput (+PlayingInputSelect/PlayingInputOrders),
          GameRenderer (+GameRendererWorld/GameRendererHud), MenuScreens
 world:   TileMap, Pathfinder, MapFile, FogOfWar
@@ -63,6 +63,8 @@ app/match: Menu, Skirmish
 - `Team.h` - `TeamId` (`Any`/`Player`/`Enemy`) + `kAnyTeam`/`kPlayerTeam`/`kEnemyTeam`;
   every team field and parameter is typed
 - `CcAssert.h` - `CC_ASSERT`: live in Debug, `((void)0)` under NDEBUG
+- `CcPch.h` - precompiled header force-included in every game/test/e2e TU: standard
+  library, glm, raylib, RmlUi/Core (`CcPch.cpp` is its `/Yc` source, see premake)
 - `Subsystem.h` - UE5-inspired service scopes (no reflection): `Subsystem` base
   (`Init`/`Shutdown`/`ResetForMatch` no-op defaults) + `Subsystems` container
   (`Add`/`Get`/`TryGet`, keyed lookup for repeated types like `AICommander`);
