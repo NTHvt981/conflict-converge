@@ -24,7 +24,7 @@ One line per area; the linked section carries the Do/Don't pair.
 | [Comments](#comments) | Contract, not syntax; present tense; units on meaningful numbers |
 | [Data](#data-saves-and-assets) | camelCase JSON; append-only save wire; version and magic bump on a break |
 | [Tests](#tests) | `CC_CHECK`; suite registered in `tests/main.cpp`; headless; Debug and Release |
-| [Workflow](#docs-and-change-workflow) | Feature doc and index; prefixed branch; full gate before a pull request |
+| [Docs](#docs) | One page per feature, indexed; live docs describe current behavior |
 
 ## Language and build
 
@@ -1343,7 +1343,7 @@ prj/bin/Debug/conflict-converge-test.exe
 # stop there: NDEBUG-only paths and the assert-compiled test go untested
 ```
 
-## Docs and change workflow
+## Docs
 
 ### Document each feature once and index it
 
@@ -1389,38 +1389,6 @@ History belongs in `docs/history/`, `docs/PROJECT_NOTES.md`, or `plans/`.
 Bare fence, at most 70 columns, one box width, legend for every non-edge
 symbol. See `docs/conventions/ascii-diagram.md`.
 
-### Use prefixed branches and imperative commit subjects
-
-**✅ Do**
-```
-branch: fix/hud-building-selection-line
-commit: Split the selection line into one builder per case
-```
-
-**❌ Don't**
-```
-branch: stuff
-commit: feat: fixed some hud things
-```
-
-### Run the full gate before a pull request
-
-**✅ Do**
-```
-premake5 vs2022
-msbuild prj/ConflictConverge.sln /p:Configuration=Debug /p:Platform=x64
-msbuild prj/ConflictConverge.sln /p:Configuration=Release /p:Platform=x64
-prj/bin/Debug/conflict-converge-test.exe
-prj/bin/Release/conflict-converge-test.exe
-prj/bin/Debug/conflict-converge-e2e.exe
-```
-
-**❌ Don't**
-```
-msbuild prj/ConflictConverge.sln /p:Configuration=Debug /p:Platform=x64
-# open the PR with one config built and no test run
-```
-
 ## Checklist
 
 - [ ] x64 + C++20, projects regenerated after file changes
@@ -1430,5 +1398,4 @@ msbuild prj/ConflictConverge.sln /p:Configuration=Debug /p:Platform=x64
 - [ ] `CC_ASSERT` invariants, bool/sentinel failures, no throwing gameplay
 - [ ] JSON camelCase, save wire append-only, version bumped on a break
 - [ ] `CC_CHECK` covers the behavior and is registered in `tests/main.cpp`
-- [ ] Debug and Release green, e2e run when the loop or UI changed
 - [ ] feature doc and index updated, present tense, diagrams per ASCII convention
