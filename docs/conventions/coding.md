@@ -1230,7 +1230,7 @@ enum class UnitType { RifleInfantry, Medic, Count }; // Decode not reviewed
 <body id="hud-body">
 	<div class="hud-panel" id="hud-stockpile">
 		<div class="hud-title">Stockpile</div>
-		<div class="hud-line" id="res-line">Iron: 500  Oil: 250</div>
+		<div class="hud-line" id="res-line"></div>
 	</div>
 </body>
 ```
