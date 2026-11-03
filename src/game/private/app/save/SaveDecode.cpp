@@ -1,6 +1,9 @@
 
 #include "app/save/SaveGame.h"
 
+#define CEREAL_RAPIDJSON_ASSERT(x) \
+	do { if (!(x)) throw std::runtime_error("malformed save JSON"); } while (0)
+
 #include <cereal/archives/json.hpp>
 #include <cereal/cereal.hpp>
 #include <cereal/types/string.hpp>
@@ -11,6 +14,7 @@
 #include <fstream>
 #include <limits>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 

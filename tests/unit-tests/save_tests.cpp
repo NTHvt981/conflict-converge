@@ -324,6 +324,18 @@ void RunSaveGameTests()
 	CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
 	{
+		// Well-formed JSON with the wrong value type where the version number
+		// belongs: rapidjson asserts on the type query, so the decoder must
+		// turn that into a fail-closed load error.
+		std::ofstream out(path, std::ios::binary | std::ios::trunc);
+		out.write("CCJ3", 4);
+		const char badType[] = "{\"value0\":{\"saveVersion\":\"three\"}}";
+		out.write(badType, sizeof(badType) - 1);
+	}
+	CC_CHECK(!LoadWorld(victimState, path));
+	CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
+
+	{
 		// Crafted save: building tile_x at INT32_MAX smuggled through the
 		// real encode path (hand-added to the registry, bypassing placement
 		// validation). The old `tile_x + fp.x > mapWidth` check
