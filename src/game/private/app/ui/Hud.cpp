@@ -27,6 +27,18 @@ std::string FormatResources(const ResourceSystem &resources)
 	return buf;
 }
 
+std::string ProductionRowText(const char *name, UnitCost cost)
+{
+	char buf[64];
+	std::snprintf(buf, sizeof(buf), "%s %ld/%ld", name, cost.iron, cost.oil);
+	return buf;
+}
+
+bool CanAfford(const ResourceSystem &resources, UnitCost cost)
+{
+	return resources.iron >= cost.iron && resources.oil >= cost.oil;
+}
+
 std::string QueueLineText(int bootcampQueue, int workshopQueue)
 {
 	if (bootcampQueue > 0 && workshopQueue > 0)

@@ -73,6 +73,21 @@ void RunHudTests()
 	CC_CHECK(buildings[2] == BuildingType::Bootcamp);
 	CC_CHECK(buildings[3] == BuildingType::Workshop);
 
+	// --- production row text and affordability ---
+	CC_CHECK(ProductionRowText("Base", BuildingCost(BuildingType::Base)) == "Base 350/100");
+	CC_CHECK(ProductionRowText("Depot", BuildingCost(BuildingType::ResourceDepot)) ==
+			 "Depot 150/0");
+	const std::string rifleRow =
+		ProductionRowText("Rifle Infantry", CostOf(UnitType::RifleInfantry));
+	CC_CHECK(rifleRow.rfind("Rifle Infantry ", 0) == 0);
+	ResourceSystem affordable;
+	affordable.AddIron(150);
+	CC_CHECK(CanAfford(affordable, { 150, 0 }));
+	CC_CHECK(!CanAfford(affordable, { 151, 0 }));
+	affordable.AddOil(20);
+	CC_CHECK(CanAfford(affordable, { 150, 20 }));
+	CC_CHECK(!CanAfford(affordable, { 150, 21 }));
+
 	// --- BuildingHealthFraction: full, half, over-max clamp, max guard ---
 	{
 		Building full;
