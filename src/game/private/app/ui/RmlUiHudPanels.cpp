@@ -169,7 +169,6 @@ void RmlUiHud::RefreshHud()
 
 void RmlUiHud::RefreshProduction()
 {
-	char label[64];
 	const bool hasBootcamp = sim_.HasBootcamp();
 	const bool hasWorkshop = sim_.HasWorkshop();
 	const bool infantryTab = productionTab_ == ProductionTab::Infantry;
@@ -206,12 +205,10 @@ void RmlUiHud::RefreshProduction()
 	{
 		const UnitCost cost = CostOf(infantry[i]);
 		const std::string id = UiIds::WithIndex(UiIds::ProdInfantryRow, static_cast<int>(i));
-		snprintf(label, sizeof(label), "%s %ld/%ld", UnitTypeName(infantry[i]), cost.iron,
-				 cost.oil);
-		SetTextCached(id, label);
+		SetTextCached(id, ProductionRowText(UnitTypeName(infantry[i]), cost));
 		if (Rml::Element *el = ById(hudDoc_, id))
 		{
-			SetDisabled(el, resources_.iron < cost.iron || resources_.oil < cost.oil);
+			SetDisabled(el, !CanAfford(resources_, cost));
 		}
 		SetTextCached(UiIds::WithIndex(UiIds::RepeatInfantryRow, static_cast<int>(i)),
 					  bootcampQueue_.RepeatArmed(infantry[i]) ? "R*" : "R");
@@ -221,12 +218,10 @@ void RmlUiHud::RefreshProduction()
 	{
 		const UnitCost cost = CostOf(vehicles[i]);
 		const std::string id = UiIds::WithIndex(UiIds::ProdVehicleRow, static_cast<int>(i));
-		snprintf(label, sizeof(label), "%s %ld/%ld", UnitTypeName(vehicles[i]), cost.iron,
-				 cost.oil);
-		SetTextCached(id, label);
+		SetTextCached(id, ProductionRowText(UnitTypeName(vehicles[i]), cost));
 		if (Rml::Element *el = ById(hudDoc_, id))
 		{
-			SetDisabled(el, resources_.iron < cost.iron || resources_.oil < cost.oil);
+			SetDisabled(el, !CanAfford(resources_, cost));
 		}
 		SetTextCached(UiIds::WithIndex(UiIds::RepeatVehicleRow, static_cast<int>(i)),
 					  workshopQueue_.RepeatArmed(vehicles[i]) ? "R*" : "R");
@@ -234,8 +229,14 @@ void RmlUiHud::RefreshProduction()
 	const std::vector<BuildingType> buildings = BuildingMenuOrder();
 	for (std::size_t i = 0; i < buildings.size() && i < 4; ++i)
 	{
+		const BuildingType type = buildings[i];
+		const UnitCost cost = BuildingCost(type);
 		const std::string id = UiIds::WithIndex(UiIds::PlaceRow, static_cast<int>(i));
-		SetTextCached(id, BuildingTypeName(buildings[i]));
+		SetTextCached(id, ProductionRowText(BuildingTypeName(type), cost));
+		if (Rml::Element *el = ById(hudDoc_, id))
+		{
+			SetDisabled(el, !CanAfford(resources_, cost));
+		}
 	}
 }
 

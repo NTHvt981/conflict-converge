@@ -26,6 +26,9 @@ hotkeys around build and placement flows.
   neither (`SelectPlacingType` enters placement mode per type). Unit
   tabs show only while the matching live producer stands. Selecting a
   producer switches to its tab.
+- Building-tab rows show each building's iron/oil cost in the same
+  "Name iron/oil" format as unit rows and carry the disabled state
+  while unaffordable.
 - Production feedback: separate Bootcamp and Workshop progress bars stay
   visible from every tab, and the queue line counts both queues
   (`Queue: 2 + 1`). Cancel stays bound to the active unit tab.

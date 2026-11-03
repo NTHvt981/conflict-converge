@@ -6,6 +6,7 @@
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
 #include "units/Unit.h"
+#include "units/UnitFactory.h"
 #include "units/UnitStats.h"
 #include "economy/Production.h"
 
@@ -19,6 +20,8 @@ struct Orders;
 const char *UnitTypeName(UnitType type);
 const char *BuildingTypeName(BuildingType type);
 std::string FormatResources(const ResourceSystem &resources);
+std::string ProductionRowText(const char *name, UnitCost cost);
+bool CanAfford(const ResourceSystem &resources, UnitCost cost);
 std::string QueueLineText(int bootcampQueue, int workshopQueue);
 std::string SelectionSummary(const Unit &unit);
 float UnitHealthFraction(const Unit &unit);
