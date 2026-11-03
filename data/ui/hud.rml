@@ -14,84 +14,98 @@ body {
 	<body id="hud-body">
 		<div class="hud-panel" id="hud-stockpile">
 			<div class="hud-title">Stockpile</div>
-			<div class="hud-line" id="res-line">Iron: 500  Oil: 250</div>
+			<div class="hud-line" id="res-line"></div>
 		</div>
 		<div id="hud-groups">
-			<div class="cg-box" id="cg-0">1:4</div>
-			<div class="cg-box" id="cg-1">2:0</div>
-			<div class="cg-box" id="cg-2">3:2</div>
-			<div class="cg-box" id="cg-3">4:0</div>
-			<div class="cg-box" id="cg-4">5:0</div>
-			<div class="cg-box" id="cg-5">6:1</div>
-			<div class="cg-box" id="cg-6">7:0</div>
-			<div class="cg-box" id="cg-7">8:0</div>
-			<div class="cg-box" id="cg-8">9:0</div>
-			<div class="cg-box" id="cg-9">0:0</div>
+			<div class="cg-box" id="cg-0"></div>
+			<div class="cg-box" id="cg-1"></div>
+			<div class="cg-box" id="cg-2"></div>
+			<div class="cg-box" id="cg-3"></div>
+			<div class="cg-box" id="cg-4"></div>
+			<div class="cg-box" id="cg-5"></div>
+			<div class="cg-box" id="cg-6"></div>
+			<div class="cg-box" id="cg-7"></div>
+			<div class="cg-box" id="cg-8"></div>
+			<div class="cg-box" id="cg-9"></div>
 		</div>
 		<div class="hud-panel" id="hud-selection">
 			<div class="hud-title">Selection</div>
-			<div class="hud-line" id="sel-line">Light Tank  HP 238/300  Team 0</div>
+			<div class="hud-line" id="sel-line"></div>
 		</div>
 		<div class="hud-panel" id="hud-abilities">
 			<div class="hud-title">Abilities</div>
-			<div id="abilities-grid"><button class="ab-btn" id="ab-hold">Hold</button><button class="ab-btn" id="ab-guard">Guard</button><button class="ab-btn" id="ab-patrol">Patrol</button><button class="ab-btn" id="ab-attackmove">AtkMove</button><button class="ab-btn" id="ab-halt">Halt</button><button class="ab-btn" id="ab-repair">Repair</button><button class="ab-btn" id="ab-heal">Heal</button><button class="ab-btn" id="ab-rally">Rally</button><button class="ab-btn" id="ab-demolish">Raze</button></div>
+			<div id="abilities-grid">
+				<button class="ab-btn" id="ab-hold"></button>
+				<button class="ab-btn" id="ab-guard"></button>
+				<button class="ab-btn" id="ab-patrol"></button>
+				<button class="ab-btn" id="ab-attackmove"></button>
+				<button class="ab-btn" id="ab-halt"></button>
+				<button class="ab-btn" id="ab-repair"></button>
+				<button class="ab-btn" id="ab-heal"></button>
+				<button class="ab-btn" id="ab-rally"></button>
+				<button class="ab-btn" id="ab-demolish"></button>
+			</div>
 		</div>
 		<div class="hud-panel" id="hud-production">
 			<div class="hud-title">Production</div>
-			<div id="production-tabs"><button class="tab-btn" id="tab-infantry">Inf</button><button class="tab-btn" id="tab-vehicles">Veh</button><button class="tab-btn" id="tab-buildings">Bld</button></div>
+			<div id="production-tabs">
+				<button class="tab-btn" id="tab-infantry">Inf</button>
+				<button class="tab-btn" id="tab-vehicles">Veh</button>
+				<button class="tab-btn" id="tab-buildings">Bld</button>
+			</div>
 			<div id="rows-infantry">
 				<div class="prod-row">
-					<button class="prod-btn" id="prod-i-0">Infantry 25/0</button>
-					<button class="prod-rep" id="repr-i-0">R</button>
+					<button class="prod-btn" id="prod-i-0"></button>
+					<button class="prod-rep" id="repr-i-0"></button>
 				</div>
 				<div class="prod-row">
-					<button class="prod-btn" id="prod-i-1">Anti-Armor 30/5</button>
-					<button class="prod-rep" id="repr-i-1">R</button>
+					<button class="prod-btn" id="prod-i-1"></button>
+					<button class="prod-rep" id="repr-i-1"></button>
 				</div>
 				<div class="prod-row">
-					<button class="prod-btn" id="prod-i-2">Engineer 40/0</button>
-					<button class="prod-rep" id="repr-i-2">R</button>
+					<button class="prod-btn" id="prod-i-2"></button>
+					<button class="prod-rep" id="repr-i-2"></button>
 				</div>
 				<div class="prod-row">
-					<button class="prod-btn" id="prod-i-3">Medic 30/0</button>
-					<button class="prod-rep" id="repr-i-3">R</button>
+					<button class="prod-btn" id="prod-i-3"></button>
+					<button class="prod-rep" id="repr-i-3"></button>
 				</div>
 			</div>
 			<div id="rows-vehicles">
 				<div class="prod-row">
-					<button class="prod-btn" id="prod-v-0">IFV 80/20</button>
-					<button class="prod-rep" id="repr-v-0">R</button>
+					<button class="prod-btn" id="prod-v-0"></button>
+					<button class="prod-rep" id="repr-v-0"></button>
 				</div>
 				<div class="prod-row">
-					<button class="prod-btn" id="prod-v-1">Artillery 120/40</button>
-					<button class="prod-rep" id="repr-v-1">R</button>
+					<button class="prod-btn" id="prod-v-1"></button>
+					<button class="prod-rep" id="repr-v-1"></button>
 				</div>
 				<div class="prod-row">
-					<button class="prod-btn" id="prod-v-2">Light Tank 150/50</button>
-					<button class="prod-rep" id="repr-v-2">R</button>
+					<button class="prod-btn" id="prod-v-2"></button>
+					<button class="prod-rep" id="repr-v-2"></button>
 				</div>
 				<div class="prod-row">
-					<button class="prod-btn" id="prod-v-3">Heavy Tank 250/100</button>
-					<button class="prod-rep" id="repr-v-3">R</button>
+					<button class="prod-btn" id="prod-v-3"></button>
+					<button class="prod-rep" id="repr-v-3"></button>
 				</div>
 			</div>
 			<div id="rows-buildings">
 				<div class="prod-row">
-					<button class="prod-btn" id="place-0">Base</button>
+					<button class="prod-btn" id="place-0"></button>
 				</div>
 				<div class="prod-row">
-					<button class="prod-btn" id="place-1">Depot</button>
+					<button class="prod-btn" id="place-1"></button>
 				</div>
 				<div class="prod-row">
-					<button class="prod-btn" id="place-2">Bootcamp</button>
+					<button class="prod-btn" id="place-2"></button>
 				</div>
 				<div class="prod-row">
-					<button class="prod-btn" id="place-3">Workshop</button>
+					<button class="prod-btn" id="place-3"></button>
 				</div>
 			</div>
 			<div class="hud-line" id="need-production">Need Bootcamp / Workshop</div>
 			<div id="prod-queue-row">
-				<span id="queue-line">Queue: 2</span>
+				<span id="queue-line"></span>
 				<button id="btn-cancel">Cancel</button>
 			</div>
 		</div>
@@ -101,38 +115,7 @@ body {
 				<div id="producing-fill"/>
 			</div>
 		</div>
-		<div class="hud-readout" id="fps-line">60 FPS</div>
-		<div id="hud-hints">
-			<p class="hint-line">WASD Camera</p>
-			<p class="hint-line">Left Select</p>
-			<p class="hint-line">Right Order</p>
-			<p class="hint-line">Esc Deselect</p>
-			<p class="hint-line">Space Halt</p>
-			<p class="hint-line">P Pause</p>
-			<p class="hint-line">F1 Hints</p>
-			<p class="hint-line">F5 Save</p>
-			<p class="hint-line">F9 Load</p>
-			<p class="hint-line">A AttackMove</p>
-			<p class="hint-line">H Hold</p>
-			<p class="hint-line">G Guard</p>
-			<p class="hint-line">V Patrol</p>
-			<p class="hint-line">R Rally</p>
-			<p class="hint-line">C SelectType</p>
-			<p class="hint-line">F Production</p>
-			<p class="hint-line">B SlowMove</p>
-			<p class="hint-line">Z Place</p>
-			<p class="hint-line">Alt+RDrag Line</p>
-			<p class="hint-line">X AttackGnd</p>
-			<p class="hint-line">T AutoRetreat</p>
-			<p class="hint-line">J JumpPing</p>
-			<p class="hint-line">Shift Queues</p>
-			<p class="hint-line">Wheel Zoom</p>
-			<p class="hint-line">F6/F7/F8 SaveSlot</p>
-			<p class="hint-line">Shift+F6/F7/F8 Load</p>
-			<p class="hint-line">Ctrl+1-0 Group</p>
-			<p class="hint-line">Shift+1-0 AddGrp</p>
-			<p class="hint-line">1-0 Recall</p>
-			<p class="hint-line">C+S+1-0 AutoAdd</p>
-		</div>
+		<div class="hud-readout" id="fps-line"></div>
+		<div id="hud-hints"></div>
 	</body>
 </rml>
