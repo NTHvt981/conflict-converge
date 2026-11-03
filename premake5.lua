@@ -28,12 +28,17 @@ workspace "ConflictConverge"
     -- are huge; without this, parallel CL instances lock vc143.pdb (MSVC C1041).
     buildoptions { "/FS" }
 
+-- Compile TUs across all cores (/MP). Without it every project compiles
+-- serially, one CL.exe at a time.
+    flags { "MultiProcessorCompile" }
+
 -- Build profiles shared by every project below.
 -- Debug keeps assertions enabled (no NDEBUG) with full symbols;
 -- Release defines NDEBUG (compiles out CC_ASSERT, see Assert.h) and optimizes.
 filter "configurations:Debug"
     defines { "CC_DEBUG" }
     symbols "On"
+    editandcontinue "Off" -- /ZI needs the single-CL debug engine; /MP + /Zi is faster
 
 filter "configurations:Release"
     defines { "NDEBUG" }
@@ -47,6 +52,18 @@ filter "configurations:ASan"
     linkoptions { "/INCREMENTAL:NO" }
 
 filter {}
+
+-- Every app/test/e2e source parses the same heavy dependency headers before its
+-- own body (glm alone is ~55k preprocessed lines per TU). Precompiling them
+-- once per project and config turns that parse into a memory-mapped read.
+-- Project headers stay out of the PCH: editing one must not rebuild everything.
+local function precompiledHeader()
+    pchheader "core/CcPch.h"
+    pchsource "src/game/private/core/CcPch.cpp"
+    -- Raw /FI keeps the spelling identical to pchheader; premake's forceincludes
+    -- rebases the path against prj/ and the /Yu match then fails.
+    buildoptions { "/FIcore/CcPch.h" }
+end
 
 -- Third-party single-TU implementations use their own idioms (fopen, ...):
 -- silence MSVC's CRT-deprecation warnings for those files only.
@@ -127,6 +144,7 @@ project "raygui-static"
 project "conflict-converge"
     kind "ConsoleApp"
     cppdialect "C++20"
+    precompiledHeader()
 
     -- x64 link order: sibling static libs must be searched BEFORE the Windows
     -- system libs. raylib defines CloseWindow/PlaySound, which also exist in
@@ -193,6 +211,7 @@ project "conflict-converge"
 project "conflict-converge-test"
     kind "ConsoleApp"
     cppdialect "C++20"
+    precompiledHeader()
 
     -- x64 link order: sibling static libs must be searched BEFORE the Windows
     -- system libs. raylib defines CloseWindow/PlaySound, which also exist in
@@ -261,6 +280,7 @@ project "conflict-converge-test"
 project "conflict-converge-e2e"
     kind "ConsoleApp"
     cppdialect "C++20"
+    precompiledHeader()
 
     -- x64 link order: sibling static libs must be searched BEFORE the Windows
     -- system libs. raylib defines CloseWindow/PlaySound, which also exist in
