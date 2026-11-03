@@ -84,7 +84,10 @@ void RunRmlUiHostTests()
 		CC_CHECK(DocumentHasId(doc, UiIds::NeedProduction));
 		CC_CHECK(DocumentHasId(doc, UiIds::ProdQueueRow));
 		CC_CHECK(DocumentHasId(doc, UiIds::HudProducing));
-		CC_CHECK(DocumentHasId(doc, UiIds::ProducingFill));
+		CC_CHECK(DocumentHasId(doc, UiIds::ProducingBootcamp));
+		CC_CHECK(DocumentHasId(doc, UiIds::ProducingWorkshop));
+		CC_CHECK(DocumentHasId(doc, UiIds::ProducingFillBootcamp));
+		CC_CHECK(DocumentHasId(doc, UiIds::ProducingFillWorkshop));
 		CC_CHECK(DocumentHasId(doc, UiIds::HudHints));
 		CC_CHECK(DocumentHasId(doc, UiIds::BtnCancel));
 		CC_CHECK(DocumentHasId(doc, UiIds::TabInfantry));
@@ -146,6 +149,5 @@ void RunRmlUiHostTests()
 		CC_CHECK(doc.find("Queue: 2") == std::string::npos);
 
 		CC_CHECK(doc.find("Need Bootcamp / Workshop") != std::string::npos);
-		CC_CHECK(doc.find("Producing...") != std::string::npos);
 	}
 }

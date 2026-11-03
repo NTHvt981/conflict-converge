@@ -27,6 +27,16 @@ std::string FormatResources(const ResourceSystem &resources)
 	return buf;
 }
 
+std::string QueueLineText(int bootcampQueue, int workshopQueue)
+{
+	if (bootcampQueue > 0 && workshopQueue > 0)
+	{
+		return "Queue: " + std::to_string(bootcampQueue) + " + " + std::to_string(workshopQueue);
+	}
+	const int count = bootcampQueue > 0 ? bootcampQueue : workshopQueue;
+	return "Queue: " + std::to_string(count > 0 ? count : 0);
+}
+
 std::string SelectionSummary(const Unit &unit)
 {
 	const float maxHealth = BaseStats(unit.type).health;

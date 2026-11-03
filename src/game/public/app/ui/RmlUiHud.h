@@ -76,6 +76,8 @@ private:
 	std::string SelectionLine() const;
 	void RefreshAbilities();
 	void RefreshProduction();
+	void RefreshProducingRow(std::string_view rowId, std::string_view fillId,
+							 const ProductionQueue &queue);
 	void RefreshHints();
 	void RefreshPause();
 	void RefreshOutcome();
