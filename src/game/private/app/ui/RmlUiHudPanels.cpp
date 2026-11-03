@@ -135,26 +135,27 @@ void RmlUiHud::RefreshHud()
 		SetDisplay(stub, anyProducer ? "none" : "block");
 	}
 	ProductionQueue *active = ActiveQueue();
+	const bool anyQueued = !bootcampQueue_.Empty() || !workshopQueue_.Empty();
 	if (Rml::Element *queueRow = ById(hudDoc_, UiIds::ProdQueueRow))
 	{
-		SetDisplay(queueRow, active != nullptr ? "block" : "none");
+		SetDisplay(queueRow, (active != nullptr || anyQueued) ? "block" : "none");
+	}
+	if (Rml::Element *cancel = ById(hudDoc_, UiIds::BtnCancel))
+	{
+		SetDisplay(cancel, active != nullptr ? "inline-block" : "none");
 	}
 	RefreshProduction();
 	RefreshAbilities();
-	snprintf(label, sizeof(label), "Queue: %d", active != nullptr ? static_cast<int>(active->Size()) : 0);
-	SetTextCached(UiIds::QueueLine, label);
+	SetTextCached(UiIds::QueueLine,
+				  QueueLineText(static_cast<int>(bootcampQueue_.Size()),
+								static_cast<int>(workshopQueue_.Size())));
 
 	if (Rml::Element *producing = ById(hudDoc_, UiIds::HudProducing))
 	{
-		SetDisplay(producing, (active == nullptr || active->Empty()) ? "none" : "block");
+		SetDisplay(producing, anyQueued ? "block" : "none");
 	}
-	if (Rml::Element *fill = ById(hudDoc_, UiIds::ProducingFill))
-	{
-		char width[32];
-		snprintf(width, sizeof(width), "%g%%",
-				 static_cast<double>(active != nullptr ? active->HeadProgress() : 0.0f) * 100.0);
-		fill->SetProperty(Rml::String("width"), Rml::String(width));
-	}
+	RefreshProducingRow(UiIds::ProducingBootcamp, UiIds::ProducingFillBootcamp, bootcampQueue_);
+	RefreshProducingRow(UiIds::ProducingWorkshop, UiIds::ProducingFillWorkshop, workshopQueue_);
 
 	snprintf(label, sizeof(label), "%d FPS", GetFPS());
 	SetTextCached(UiIds::FpsLine, label);
@@ -236,10 +237,23 @@ void RmlUiHud::RefreshProduction()
 		const std::string id = UiIds::WithIndex(UiIds::PlaceRow, static_cast<int>(i));
 		SetTextCached(id, BuildingTypeName(buildings[i]));
 	}
-	ProductionQueue *active = ActiveQueue();
-	snprintf(label, sizeof(label), "Queue: %d",
-			 active != nullptr ? static_cast<int>(active->Size()) : 0);
-	SetTextCached(UiIds::QueueLine, label);
+}
+
+void RmlUiHud::RefreshProducingRow(std::string_view rowId, std::string_view fillId,
+								   const ProductionQueue &queue)
+{
+	const bool busy = !queue.Empty();
+	if (Rml::Element *row = ById(hudDoc_, rowId))
+	{
+		SetDisplay(row, busy ? "block" : "none");
+	}
+	if (Rml::Element *fill = ById(hudDoc_, fillId))
+	{
+		char width[32];
+		snprintf(width, sizeof(width), "%g%%",
+				 static_cast<double>(queue.HeadProgress()) * 100.0);
+		fill->SetProperty(Rml::String("width"), Rml::String(width));
+	}
 }
 
 ProductionQueue *RmlUiHud::ActiveQueue()

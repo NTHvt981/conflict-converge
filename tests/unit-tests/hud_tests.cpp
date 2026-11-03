@@ -30,6 +30,12 @@ void RunHudTests()
 	resources.AddOil(310);
 	CC_CHECK(FormatResources(resources) == "Iron: 380  Oil: 310");
 
+	// --- queue line counts both production queues ---
+	CC_CHECK(QueueLineText(0, 0) == "Queue: 0");
+	CC_CHECK(QueueLineText(2, 0) == "Queue: 2");
+	CC_CHECK(QueueLineText(0, 1) == "Queue: 1");
+	CC_CHECK(QueueLineText(2, 1) == "Queue: 2 + 1");
+
 	// --- selection summary shows type, health, team ---
 	Unit unit;
 	unit.type = UnitType::HeavyTank;

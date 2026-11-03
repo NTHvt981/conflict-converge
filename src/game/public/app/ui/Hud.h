@@ -19,6 +19,7 @@ struct Orders;
 const char *UnitTypeName(UnitType type);
 const char *BuildingTypeName(BuildingType type);
 std::string FormatResources(const ResourceSystem &resources);
+std::string QueueLineText(int bootcampQueue, int workshopQueue);
 std::string SelectionSummary(const Unit &unit);
 float UnitHealthFraction(const Unit &unit);
 float BuildingHealthFraction(const Building &building);

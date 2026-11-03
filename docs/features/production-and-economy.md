@@ -26,6 +26,9 @@ hotkeys around build and placement flows.
   neither (`SelectPlacingType` enters placement mode per type). Unit
   tabs show only while the matching live producer stands. Selecting a
   producer switches to its tab.
+- Production feedback: separate Bootcamp and Workshop progress bars stay
+  visible from every tab, and the queue line counts both queues
+  (`Queue: 2 + 1`). Cancel stays bound to the active unit tab.
 - `C` selects all of type, `F` selects all production (highlight ring +
   count, no command UI — intentional).
 - Per-unit production hotkeys (queue by keyboard) were never scoped and

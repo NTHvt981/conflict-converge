@@ -110,9 +110,17 @@ body {
 			</div>
 		</div>
 		<div id="hud-producing">
-			<div id="producing-label">Producing...</div>
-			<div id="producing-bar">
-				<div id="producing-fill"/>
+			<div id="producing-bootcamp">
+				<div class="producing-label">Bootcamp</div>
+				<div class="producing-bar">
+					<div id="producing-fill-bootcamp"/>
+				</div>
+			</div>
+			<div id="producing-workshop">
+				<div class="producing-label">Workshop</div>
+				<div class="producing-bar">
+					<div id="producing-fill-workshop"/>
+				</div>
 			</div>
 		</div>
 		<div class="hud-readout" id="fps-line"></div>
