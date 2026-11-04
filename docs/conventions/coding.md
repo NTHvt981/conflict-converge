@@ -11,16 +11,17 @@ One line per area; the linked section carries the Do/Don't pair.
 
 | Area | One-line rule |
 | --- | --- |
-| [Build](#language-and-build) | C++20, MSVC, x64; regenerate projects after any file add or remove |
+| [Build](#language-and-build) | C++23, MSVC, x64; regenerate projects after any file add or remove |
 | [Layout](#files-and-folders) | Header in `public/<module>/`, TU in `private/<module>/`, PascalCase file names |
 | [Naming](#naming) | PascalCase types/functions; camelCase data; `_` class members; `k` constants; `Count` last |
 | [Domain types](#name-domain-types-instead-of-bare-ints) | A sentinel or mode gets a named type; wire fields stay `std::int32_t` |
 | [Type tables](#keep-one-descriptor-table-per-type-enum) | One descriptor table per type enum; a new enumerator adds a row, not a `case` |
 | [Includes](#headers-and-includes) | `#pragma once`; own header first; root-qualified includes; forward-declare cycles |
+| [Loops](#enumerate-a-container-rather-than-subscript-it) | Position and element together via `views::enumerate`; per-frame loops keep their subscripts |
 | [Format](#formatting) | Tabs; Allman braces; `const T &`; comma-first init lists; 100 columns; LF |
 | [Structure](#structure) | Data structs with defaults; free-function systems; `Subsystem` scopes, no globals |
 | [Steps](#keep-a-long-function-a-list-of-named-steps) | A screen-long function is a table of contents: one named method per phase |
-| [Errors](#error-handling) | `CC_ASSERT` invariants; bool/sentinel failures; throw only while parsing |
+| [Errors](#error-handling) | `CC_ASSERT` invariants; `expected` from loaders; bool/sentinel in gameplay; throw only while parsing |
 | [Comments](#comments) | Contract, not syntax; present tense; units on meaningful numbers |
 | [Data](#data-saves-and-assets) | camelCase JSON; append-only save wire; version and magic bump on a break |
 | [Tests](#tests) | `CC_CHECK`; suite registered in `tests/main.cpp`; headless; Debug and Release |
@@ -28,7 +29,7 @@ One line per area; the linked section carries the Do/Don't pair.
 
 ## Language and build
 
-### Use C++20, MSVC, and x64 only
+### Use C++23, MSVC, and x64 only
 
 **✅ Do**
 ```lua
@@ -998,6 +999,31 @@ int main(void)
 }
 ```
 
+### Enumerate a container rather than subscript it
+
+**✅ Do**
+```cpp
+for (const auto &[i, type] : order | std::views::enumerate)
+{
+	SetRowText(i, UnitTypeName(type));
+}
+```
+
+**❌ Don't**
+```cpp
+for (std::size_t i = 0; i < order.size(); ++i)
+{
+	SetRowText(i, UnitTypeName(order[i]));
+}
+```
+
+`views::enumerate` yields the position and the element together, so a body that
+needs both reads each element once. Where only the position matters, the
+subscript form says so. Per-frame loops keep the subscript form as well: the
+view measures ~38% slower at `/O2` and 8.7x slower at `/Od` than an index loop
+over the same container, which the load, build and save paths pay once and the
+simulation would pay every frame.
+
 ## Error handling
 
 ### Use CC_ASSERT for programmer invariants, without side effects
@@ -1015,6 +1041,9 @@ void TileMap::Set(cc::IVec2 tile, TerrainType terrain)
 ```cpp
 CC_ASSERT(TrySpawnWave()); // the spawn disappears under NDEBUG
 ```
+
+A firing check prints the expression, `file:line` and 12 symbolized frames to
+stderr, then hands off to `assert`.
 
 ### Return failure for expected errors, with a Can check beside the action
 
@@ -1035,6 +1064,29 @@ void IssueRepairOrder(Unit &engineer, Entity target)
 }
 ```
 
+### Report why a loader rejected a file
+
+**✅ Do**
+```cpp
+[[nodiscard]] std::expected<UnitConfig, ConfigError> LoadUnitConfig(const std::string &path);
+
+if (!loaded)
+{
+	TraceLog(LOG_WARNING, "config %s rejected: %s", path.c_str(), Describe(loaded.error()));
+}
+```
+
+**❌ Don't**
+```cpp
+bool LoadUnitConfig(const std::string &path, UnitConfig &out); // why it failed is gone
+```
+
+`std::expected` carries the cause out of a data loader, so the caller can log
+it and fall back in one place. `ConfigError` and `Describe` live in
+`app/data/ConfigError.h` and are shared by every loader under `data/configs/`.
+Gameplay code keeps the `bool`/sentinel forms above: a rejected order has no
+cause worth reporting.
+
 ### Throw only in data parsing, catch at the load boundary
 
 **✅ Do**
@@ -1048,7 +1100,7 @@ try
 }
 catch (const std::exception &)
 {
-	return false;
+	return std::unexpected(ConfigError::MalformedJson);
 }
 ```
 
@@ -1391,11 +1443,11 @@ symbol. See `docs/conventions/ascii-diagram.md`.
 
 ## Checklist
 
-- [ ] x64 + C++20, projects regenerated after file changes
+- [ ] x64 + C++23, projects regenerated after file changes
 - [ ] header in `public/`, TU in `private/`, `#pragma once`, no new cycle
 - [ ] PascalCase types/functions, camelCase data, `_` class members, `k` constants
 - [ ] tabs, Allman braces, `const T &`, `= {}` defaults, LF, 100 columns
-- [ ] `CC_ASSERT` invariants, bool/sentinel failures, no throwing gameplay
+- [ ] `CC_ASSERT` invariants, `expected` from loaders, bool/sentinel gameplay, no throwing gameplay
 - [ ] JSON camelCase, save wire append-only, version bumped on a break
 - [ ] `CC_CHECK` covers the behavior and is registered in `tests/main.cpp`
 - [ ] feature doc and index updated, present tense, diagrams per ASCII convention
