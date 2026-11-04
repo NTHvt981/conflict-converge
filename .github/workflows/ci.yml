@@ -40,15 +40,8 @@ jobs:
         if: steps.deps-cache.outputs.cache-hit != 'true'
         run: python bootstrap.py
 
-      - name: Install premake5
-        shell: powershell
-        run: |
-          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta2/premake-5.0.0-beta2-windows.zip" -OutFile "$env:RUNNER_TEMP/premake.zip"
-          Expand-Archive "$env:RUNNER_TEMP/premake.zip" -DestinationPath "$env:RUNNER_TEMP/premake-bin"
-          "$env:RUNNER_TEMP/premake-bin" >> $env:GITHUB_PATH
-
       - name: Generate projects (required after any source file add/remove)
-        run: premake5 vs2022
+        run: .\premake5.exe vs2022
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
