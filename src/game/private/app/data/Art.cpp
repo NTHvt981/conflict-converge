@@ -352,7 +352,12 @@ bool Art::Init(InitMode mode)
 	{
 		fallback_ = true;
 	}
-	atlasReady_ = LoadAtlas();
+	const std::expected<void, ConfigError> atlas = LoadAtlas();
+	atlasReady_ = atlas.has_value();
+	if (!atlas)
+	{
+		TraceLog(LOG_WARNING, "sprite atlas rejected: %s", Describe(atlas.error()));
+	}
 	if (atlasReady_)
 	{
 		for (const SpriteTextureInfo &t : sheet_.textures)
@@ -525,16 +530,16 @@ bool Art::UseAtlas() const
 	return atlasReady_;
 }
 
-bool Art::LoadAtlas()
+std::expected<void, ConfigError> Art::LoadAtlas()
 {
-	SpriteSheetData sheet;
-	if (!LoadSpriteSheet(sheet))
+	const std::expected<SpriteSheetData, ConfigError> sheet = LoadSpriteSheet();
+	if (!sheet)
 	{
-		return false;
+		return std::unexpected(sheet.error());
 	}
-	sheet_ = sheet;
+	sheet_ = *sheet;
 	sheetLoaded_ = true;
-	return true;
+	return {};
 }
 
 std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,

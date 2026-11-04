@@ -1,8 +1,10 @@
 #pragma once
 
+#include <expected>
 #include <string>
 #include <vector>
 
+#include "app/data/ConfigError.h"
 #include "units/UnitStats.h"
 
 // Gimmick abilities (M1 schema, all optional, default off). Tolerant
@@ -44,11 +46,10 @@ struct UnitConfig
 // per-field fallback below.
 UnitConfig DefaultUnitConfig(UnitType type);
 
-// Enum <-> enumerator-spelling names ("RUBBER", "KINETIC", "RifleInfantry");
-// Parse returns false on unknown names.
-bool ParseUnitTypeName(const std::string &name, UnitType &out);
-bool ParseArmorTypeName(const std::string &name, ArmorType &out);
-bool ParseDamageTypeName(const std::string &name, DamageType &out);
+// Enum <-> enumerator-spelling names ("RUBBER", "KINETIC", "RifleInfantry").
+[[nodiscard]] std::expected<UnitType, ConfigError> ParseUnitTypeName(const std::string &name);
+[[nodiscard]] std::expected<ArmorType, ConfigError> ParseArmorTypeName(const std::string &name);
+[[nodiscard]] std::expected<DamageType, ConfigError> ParseDamageTypeName(const std::string &name);
 const char *ArmorTypeName(ArmorType type);
 const char *DamageTypeName(DamageType type);
 
@@ -56,17 +57,24 @@ const char *DamageTypeName(DamageType type);
 // multi-word types).
 const char *UnitConfigFilename(UnitType type);
 
-// Parse one file's contents; `filenameStem` is the file's own stem.
-// Unknown/mismatched type or unparseable JSON returns false.
-bool ParseUnitConfigJson(const std::string &json, const std::string &filenameStem,
-						 UnitConfig &out);
+// True when `stem` is a unit type's canonical file stem. data/configs/ also
+// holds the atlas and AI documents, so the catalog only reports rejections
+// for names that claim to be unit configs.
+bool IsUnitConfigStem(const std::string &stem);
+
+// Parse one file's contents; `filenameStem` is the file's own stem. A
+// mismatched or unknown type rejects the whole file.
+[[nodiscard]] std::expected<UnitConfig, ConfigError>
+ParseUnitConfigJson(const std::string &json, const std::string &filenameStem);
 
 // Single-file load/save; Save pretty-prints the hand-editable JSON style.
-bool LoadUnitConfig(const std::string &path, UnitConfig &out);
-bool SaveUnitConfig(const std::string &path, const UnitConfig &config);
+[[nodiscard]] std::expected<UnitConfig, ConfigError> LoadUnitConfig(const std::string &path);
+[[nodiscard]] std::expected<void, ConfigError> SaveUnitConfig(const std::string &path,
+                                                             const UnitConfig &config);
 std::string UnitConfigToJson(const UnitConfig &config);
 
-// Enumerate dir/*.json, keeping only files that parse; sorted by path.
+// Enumerate dir/*.json, keeping only files that parse; sorted by path. Each
+// rejected file logs one warning naming its cause.
 std::vector<UnitConfig> LoadAllUnitConfigs(const std::string &dir);
 
 // Runtime catalog (M1): gameplay reads stats/costs through the loaded

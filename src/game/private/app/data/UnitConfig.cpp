@@ -2,63 +2,46 @@
 
 #include <filesystem>
 #include <fstream>
+#include <sstream>
 #include <string>
 
 #include "units/UnitTypeInfo.h"
-
-namespace
-{
-
-bool ReadWholeFile(const std::string &path, std::string &out)
-{
-	std::ifstream in(path, std::ios::binary);
-	if (!in)
-	{
-		return false;
-	}
-	std::ostringstream ss;
-	ss << in.rdbuf();
-	out = ss.str();
-	return true;
-}
-
-
-
-
-}
 
 const char *UnitConfigFilename(UnitType type)
 {
 	return InfoOf(type).fileStem;
 }
 
-
-
-
-bool LoadUnitConfig(const std::string &path, UnitConfig &out)
+std::expected<UnitConfig, ConfigError> LoadUnitConfig(const std::string &path)
 {
-	std::string json;
-	if (!ReadWholeFile(path, json))
+	std::ifstream in(path, std::ios::binary);
+	if (!in)
 	{
-		return false;
+		return std::unexpected(ConfigError::FileUnreadable);
 	}
+	std::ostringstream ss;
+	ss << in.rdbuf();
 	const std::string stem = std::filesystem::path(path).stem().string();
-	return ParseUnitConfigJson(json, stem, out);
+	return ParseUnitConfigJson(ss.str(), stem);
 }
 
-
-bool SaveUnitConfig(const std::string &path, const UnitConfig &config)
+std::expected<void, ConfigError> SaveUnitConfig(const std::string &path,
+                                               const UnitConfig &config)
 {
 	const std::string json = UnitConfigToJson(config);
 	if (json.empty())
 	{
-		return false;
+		return std::unexpected(ConfigError::InvalidData);
 	}
 	std::ofstream out(path, std::ios::binary | std::ios::trunc);
 	if (!out)
 	{
-		return false;
+		return std::unexpected(ConfigError::FileUnwritable);
 	}
 	out << json;
-	return static_cast<bool>(out);
+	if (!out)
+	{
+		return std::unexpected(ConfigError::FileUnwritable);
+	}
+	return {};
 }

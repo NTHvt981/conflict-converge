@@ -427,62 +427,67 @@ UnitConfig DefaultUnitConfig(UnitType type)
 	return config;
 }
 
-bool ParseUnitTypeName(const std::string &name, UnitType &out)
+bool IsUnitConfigStem(const std::string &stem)
 {
-	if (name == "Infantry") // "Infantry" alias
+	const std::string normalized = NormalizedStem(stem);
+	for (int i = 0; i < static_cast<int>(UnitType::Count); ++i)
 	{
-		out = UnitType::RifleInfantry;
-		return true;
-	}
-	for (std::size_t i = 0; i < static_cast<std::size_t>(UnitType::Count); ++i)
-	{
-		if (name == kUnitTypes[i].configName)
+		if (NormalizedStem(UnitConfigFilename(static_cast<UnitType>(i))) == normalized)
 		{
-			out = static_cast<UnitType>(i);
 			return true;
 		}
 	}
 	return false;
 }
 
-bool ParseArmorTypeName(const std::string &name, ArmorType &out)
+std::expected<UnitType, ConfigError> ParseUnitTypeName(const std::string &name)
+{
+	if (name == "Infantry") // "Infantry" alias
+	{
+		return UnitType::RifleInfantry;
+	}
+	for (std::size_t i = 0; i < static_cast<std::size_t>(UnitType::Count); ++i)
+	{
+		if (name == kUnitTypes[i].configName)
+		{
+			return static_cast<UnitType>(i);
+		}
+	}
+	return std::unexpected(ConfigError::UnknownName);
+}
+
+std::expected<ArmorType, ConfigError> ParseArmorTypeName(const std::string &name)
 {
 	if (name == "STEEL")
 	{
-		out = ArmorType::STEEL;
-		return true;
+		return ArmorType::STEEL;
 	}
 	if (name == "RUBBER")
 	{
-		out = ArmorType::RUBBER;
-		return true;
+		return ArmorType::RUBBER;
 	}
 	if (name == "COMPOSITE")
 	{
-		out = ArmorType::COMPOSITE;
-		return true;
+		return ArmorType::COMPOSITE;
 	}
-	return false;
+	return std::unexpected(ConfigError::UnknownName);
 }
 
-bool ParseDamageTypeName(const std::string &name, DamageType &out)
+std::expected<DamageType, ConfigError> ParseDamageTypeName(const std::string &name)
 {
 	if (name == "KINETIC")
 	{
-		out = DamageType::KINETIC;
-		return true;
+		return DamageType::KINETIC;
 	}
 	if (name == "EXPLOSIVE")
 	{
-		out = DamageType::EXPLOSIVE;
-		return true;
+		return DamageType::EXPLOSIVE;
 	}
 	if (name == "ENERGY")
 	{
-		out = DamageType::ENERGY;
-		return true;
+		return DamageType::ENERGY;
 	}
-	return false;
+	return std::unexpected(ConfigError::UnknownName);
 }
 
 const char *ArmorTypeName(ArmorType type)
@@ -517,12 +522,12 @@ const char *DamageTypeName(DamageType type)
 	return "";
 }
 
-bool ParseUnitConfigJson(const std::string &json, const std::string &filenameStem,
-						 UnitConfig &out)
+std::expected<UnitConfig, ConfigError>
+ParseUnitConfigJson(const std::string &json, const std::string &filenameStem)
 {
 	if (HasUnknownAbilityKey(json))
 	{
-		return false;
+		return std::unexpected(ConfigError::UnknownAbilityKey);
 	}
 	JsonConfig cfg;
 	try
@@ -538,33 +543,33 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
 	}
 	catch (const std::exception &)
 	{
-		return false;
+		return std::unexpected(ConfigError::MalformedJson);
 	}
-	UnitType type = UnitType::RifleInfantry;
-	if (!ParseUnitTypeName(cfg.type, type))
+	const std::expected<UnitType, ConfigError> type = ParseUnitTypeName(cfg.type);
+	if (!type)
 	{
-		return false;
+		return std::unexpected(type.error());
 	}
 	if (NormalizedStem(cfg.type) != NormalizedStem(filenameStem))
 	{
-		return false;
+		return std::unexpected(ConfigError::Mismatch);
 	}
 
-	UnitConfig config = DefaultUnitConfig(type);
+	UnitConfig config = DefaultUnitConfig(*type);
 	const JsonStats &stats = cfg.stats;
 	if (stats.health.has_value() && *stats.health > 0.0f)
 	{
 		config.stats.health = *stats.health;
 	}
-	ArmorType armor = config.stats.armorType;
-	if (!stats.armorType.empty() && ParseArmorTypeName(stats.armorType, armor))
+	const std::expected<ArmorType, ConfigError> armor = ParseArmorTypeName(stats.armorType);
+	if (!stats.armorType.empty() && armor)
 	{
-		config.stats.armorType = armor;
+		config.stats.armorType = *armor;
 	}
-	DamageType damage = config.stats.damageType;
-	if (!stats.damageType.empty() && ParseDamageTypeName(stats.damageType, damage))
+	const std::expected<DamageType, ConfigError> damage = ParseDamageTypeName(stats.damageType);
+	if (!stats.damageType.empty() && damage)
 	{
-		config.stats.damageType = damage;
+		config.stats.damageType = *damage;
 	}
 	if (stats.attackPower.has_value())
 	{
@@ -651,8 +656,7 @@ bool ParseUnitConfigJson(const std::string &json, const std::string &filenameSte
 	config.atlasIdlePrefix = cfg.art.atlasIdlePrefix;
 	config.atlasMovePrefix = cfg.art.atlasMovePrefix;
 
-	out = config;
-	return true;
+	return config;
 }
 
 std::string UnitConfigToJson(const UnitConfig &config)

@@ -61,17 +61,18 @@ void SaveOne(EditorState &editor, Art &art, int typeIndex)
 {
 	const UnitType type = static_cast<UnitType>(typeIndex);
 	const std::string path = ConfigPath(type);
-	if (SaveUnitConfig(path, editor.configs[typeIndex]))
+	const std::expected<void, ConfigError> saved = SaveUnitConfig(path, editor.configs[typeIndex]);
+	if (saved)
 	{
 		editor.fromFile[typeIndex] = true;
 		std::snprintf(editor.status, sizeof(editor.status), "Saved %s",
 					  path.c_str());
-		art.LoadAtlas(); // sprite-tab edits take effect immediately
+		(void)art.LoadAtlas(); // sprite-tab edits take effect immediately
 	}
 	else
 	{
-		std::snprintf(editor.status, sizeof(editor.status), "Save FAILED: %s",
-					  path.c_str());
+		std::snprintf(editor.status, sizeof(editor.status), "Save FAILED: %s (%s)",
+					  path.c_str(), Describe(saved.error()));
 	}
 }
 
@@ -280,24 +281,42 @@ void DrawCollisionTab(EditorState &editor)
 
 void InitEditor(EditorState &editor)
 {
+	int rejected = 0;
+	const char *firstCause = "";
+	const char *firstType = "";
 	for (int i = 0; i < EditorState::kTypeCount; ++i)
 	{
 		const UnitType type = static_cast<UnitType>(i);
-		UnitConfig config;
-		if (LoadUnitConfig(ConfigPath(type), config))
+		const std::expected<UnitConfig, ConfigError> loaded = LoadUnitConfig(ConfigPath(type));
+		if (loaded)
 		{
-			editor.configs[i] = config;
+			editor.configs[i] = *loaded;
 			editor.fromFile[i] = true;
 		}
 		else
 		{
 			editor.configs[i] = DefaultUnitConfig(type);
 			editor.fromFile[i] = false;
+			if (rejected == 0)
+			{
+				firstCause = Describe(loaded.error());
+				firstType = UnitConfigFilename(type);
+			}
+			++rejected;
 		}
 	}
 	editor.selected = 0;
 	editor.tab = EditorState::kTabStats;
-	std::snprintf(editor.status, sizeof(editor.status), "Loaded data/configs");
+	if (rejected == 0)
+	{
+		std::snprintf(editor.status, sizeof(editor.status), "Loaded data/configs");
+	}
+	else
+	{
+		std::snprintf(editor.status, sizeof(editor.status),
+					  "%d of %d fell back to defaults, first: %s (%s)", rejected,
+					  EditorState::kTypeCount, firstType, firstCause);
+	}
 	SyncBuffers(editor);
 }
 

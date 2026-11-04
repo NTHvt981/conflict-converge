@@ -9,6 +9,7 @@
 #include <cereal/types/vector.hpp>
 
 #include <cstdio>
+#include <expected>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
@@ -196,19 +197,20 @@ bool ParseJsonSheet(const std::string &json, JsonSheet &out)
 
 }
 
-bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out);
+std::expected<SpriteSheetData, ConfigError> ValidateSpriteSheet(const JsonSheet &proto);
 
-bool ParseSpriteSheetJson(const std::string &json, SpriteSheetData &out)
+std::expected<SpriteSheetData, ConfigError>
+ParseSpriteSheetJson(const std::string &json)
 {
 	JsonSheet proto;
 	if (!ParseJsonSheet(json, proto))
 	{
-		return false;
+		return std::unexpected(ConfigError::MalformedJson);
 	}
-	return ValidateSpriteSheet(proto, out);
+	return ValidateSpriteSheet(proto);
 }
 
-bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
+std::expected<SpriteSheetData, ConfigError> ValidateSpriteSheet(const JsonSheet &proto)
 {
 	SpriteSheetData sheet;
 
@@ -218,7 +220,7 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 		if (t.id.empty() || t.file.empty() || t.width <= 0 || t.height <= 0 ||
 			!textureIds.insert(t.id).second)
 		{
-			return false;
+			return std::unexpected(ConfigError::InvalidData);
 		}
 		SpriteTextureInfo info;
 		info.id = t.id;
@@ -244,17 +246,17 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 
 	auto pushSprite = [&](const std::string &name, int id, const std::string &texture,
 						   const SpriteRect &bounds, const SpriteOriginPx &origin,
-						   int maskSprite) -> bool {
+						   int maskSprite) -> std::expected<void, ConfigError> {
 		if (name.empty() || !spriteIds.insert(id).second || !spriteNames.insert(name).second)
 		{
-			return false;
+			return std::unexpected(ConfigError::InvalidData);
 		}
 		const SpriteTextureInfo *tex = findTexture(texture);
 		if (tex == nullptr ||
 			!RectInside(bounds.left, bounds.top, bounds.right, bounds.bottom, tex->width,
 						tex->height))
 		{
-			return false;
+			return std::unexpected(ConfigError::InvalidData);
 		}
 		SpriteDefInfo info;
 		info.name = name;
@@ -264,7 +266,7 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 		info.origin = origin;
 		info.maskSprite = maskSprite;
 		sheet.sprites.push_back(info);
-		return true;
+		return {};
 	};
 
 	for (const JsonSprite &s : proto.sprites)
@@ -273,7 +275,7 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 		const SpriteOriginPx origin{ s.origin.x, s.origin.y };
 		if (!pushSprite(s.name, s.id, s.texture, bounds, origin, s.maskSprite))
 		{
-			return false;
+			return std::unexpected(ConfigError::InvalidData);
 		}
 	}
 
@@ -281,12 +283,12 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 	{
 		if (g.prefix.empty() || g.rows <= 0 || g.cols <= 0 || g.cellW <= 0 || g.cellH <= 0)
 		{
-			return false;
+			return std::unexpected(ConfigError::InvalidData);
 		}
 		const SpriteTextureInfo *tex = findTexture(g.texture);
 		if (tex == nullptr || g.cols * g.cellW > tex->width || g.rows * g.cellH > tex->height)
 		{
-			return false;
+			return std::unexpected(ConfigError::InvalidData);
 		}
 		const SpriteOriginPx origin{ g.origin.x, g.origin.y };
 		for (int r = 0; r < g.rows; ++r)
@@ -302,7 +304,7 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 				if (!pushSprite(name, g.startId + r * g.cols + c, g.texture, bounds, origin,
 								maskId))
 				{
-					return false;
+					return std::unexpected(ConfigError::InvalidData);
 				}
 			}
 		}
@@ -317,7 +319,7 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 		const SpriteDefInfo *mask = FindSpriteById(sheet, s.maskSprite);
 		if (mask == nullptr)
 		{
-			return false;
+			return std::unexpected(ConfigError::InvalidData);
 		}
 		const int w = s.bounds.right - s.bounds.left;
 		const int h = s.bounds.bottom - s.bounds.top;
@@ -325,7 +327,7 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 		const int mh = mask->bounds.bottom - mask->bounds.top;
 		if (w != mw || h != mh)
 		{
-			return false;
+			return std::unexpected(ConfigError::InvalidData);
 		}
 	}
 
@@ -336,7 +338,7 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 		if (a.name.empty() || !animIds.insert(a.id).second ||
 			!animNames.insert(a.name).second || a.frames.empty())
 		{
-			return false;
+			return std::unexpected(ConfigError::InvalidData);
 		}
 		SpriteAnimInfo info;
 		info.name = a.name;
@@ -346,7 +348,7 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 		{
 			if (f.durationMs <= 0 || FindSpriteById(sheet, f.sprite) == nullptr)
 			{
-				return false;
+				return std::unexpected(ConfigError::InvalidData);
 			}
 			SpriteAnimFrame frame;
 			frame.sprite = f.sprite;
@@ -356,11 +358,10 @@ bool ValidateSpriteSheet(const JsonSheet &proto, SpriteSheetData &out)
 		sheet.animations.push_back(info);
 	}
 
-	out = sheet;
-	return true;
+	return sheet;
 }
 
-bool LoadSpriteSheet(SpriteSheetData &out)
+std::expected<SpriteSheetData, ConfigError> LoadSpriteSheet()
 {
 	static const char *kAtlasFiles[] = {
 		"data/configs/textures.json",
@@ -373,12 +374,12 @@ bool LoadSpriteSheet(SpriteSheetData &out)
 		std::string json;
 		if (!ReadWholeFile(path, json))
 		{
-			return false;
+			return std::unexpected(ConfigError::FileUnreadable);
 		}
 		JsonSheet part;
 		if (!ParseJsonSheet(json, part))
 		{
-			return false;
+			return std::unexpected(ConfigError::MalformedJson);
 		}
 		merged.textures.insert(merged.textures.end(), part.textures.begin(), part.textures.end());
 		merged.sprites.insert(merged.sprites.end(), part.sprites.begin(), part.sprites.end());
@@ -386,7 +387,7 @@ bool LoadSpriteSheet(SpriteSheetData &out)
 		merged.animations.insert(merged.animations.end(), part.animations.begin(),
 								 part.animations.end());
 	}
-	return ValidateSpriteSheet(merged, out);
+	return ValidateSpriteSheet(merged);
 }
 
 const SpriteDefInfo *FindSpriteByName(const SpriteSheetData &sheet, const std::string &name)

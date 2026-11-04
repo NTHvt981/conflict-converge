@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -147,9 +148,8 @@ public:
 
 	// True once the atlas JSON parsed AND every sheet texture loaded.
 	bool UseAtlas() const;
-	// Parse the atlas files without touching the GPU (tests). False on
-	// missing/invalid files.
-	bool LoadAtlas();
+	// Parse the atlas files without touching the GPU (tests).
+	[[nodiscard]] std::expected<void, ConfigError> LoadAtlas();
 	// Sprite name for a unit at timeSeconds: directional attack (when
 	// attacking and the type has attack anims), walk/idle otherwise, with
 	// directional-to-base fallback. Empty when no sheet or no entries.
