@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
+#include <ranges>
 
 #include "raygui.h"
 
@@ -243,9 +244,8 @@ void RmlUiMenus::PopulateMaps()
 		list->RemoveChild(child);
 	}
 	const std::vector<MapEntry> &maps = menu_.setup.maps;
-	for (std::size_t i = 0; i < maps.size(); ++i)
+	for (const auto &[i, entry] : maps | std::views::enumerate)
 	{
-		const MapEntry &entry = maps[i];
 		Rml::ElementPtr item(setupDoc_->CreateElement("div"));
 		const std::string id = UiIds::WithIndex(UiIds::MapRow, static_cast<int>(i));
 		item->SetAttribute("id", Rml::String(id));

@@ -2,6 +2,7 @@
 #include "app/ui/RmlUiHud.h"
 
 #include <cstdio>
+#include <ranges>
 
 #include "raylib.h"
 
@@ -201,35 +202,34 @@ void RmlUiHud::RefreshProduction()
 		tab->SetClass("selected", buildingsTab);
 	}
 	const std::vector<UnitType> infantry = InfantryMenuOrder();
-	for (std::size_t i = 0; i < infantry.size() && i < 4; ++i)
+	for (const auto &[i, type] : infantry | std::views::take(4) | std::views::enumerate)
 	{
-		const UnitCost cost = CostOf(infantry[i]);
+		const UnitCost cost = CostOf(type);
 		const std::string id = UiIds::WithIndex(UiIds::ProdInfantryRow, static_cast<int>(i));
-		SetTextCached(id, ProductionRowText(UnitTypeName(infantry[i]), cost));
+		SetTextCached(id, ProductionRowText(UnitTypeName(type), cost));
 		if (Rml::Element *el = ById(hudDoc_, id))
 		{
 			SetDisabled(el, !CanAfford(resources_, cost));
 		}
 		SetTextCached(UiIds::WithIndex(UiIds::RepeatInfantryRow, static_cast<int>(i)),
-					  bootcampQueue_.RepeatArmed(infantry[i]) ? "R*" : "R");
+					  bootcampQueue_.RepeatArmed(type) ? "R*" : "R");
 	}
 	const std::vector<UnitType> vehicles = VehicleMenuOrder();
-	for (std::size_t i = 0; i < vehicles.size() && i < 4; ++i)
+	for (const auto &[i, type] : vehicles | std::views::take(4) | std::views::enumerate)
 	{
-		const UnitCost cost = CostOf(vehicles[i]);
+		const UnitCost cost = CostOf(type);
 		const std::string id = UiIds::WithIndex(UiIds::ProdVehicleRow, static_cast<int>(i));
-		SetTextCached(id, ProductionRowText(UnitTypeName(vehicles[i]), cost));
+		SetTextCached(id, ProductionRowText(UnitTypeName(type), cost));
 		if (Rml::Element *el = ById(hudDoc_, id))
 		{
 			SetDisabled(el, !CanAfford(resources_, cost));
 		}
 		SetTextCached(UiIds::WithIndex(UiIds::RepeatVehicleRow, static_cast<int>(i)),
-					  workshopQueue_.RepeatArmed(vehicles[i]) ? "R*" : "R");
+					  workshopQueue_.RepeatArmed(type) ? "R*" : "R");
 	}
 	const std::vector<BuildingType> buildings = BuildingMenuOrder();
-	for (std::size_t i = 0; i < buildings.size() && i < 4; ++i)
+	for (const auto &[i, type] : buildings | std::views::take(4) | std::views::enumerate)
 	{
-		const BuildingType type = buildings[i];
 		const UnitCost cost = BuildingCost(type);
 		const std::string id = UiIds::WithIndex(UiIds::PlaceRow, static_cast<int>(i));
 		SetTextCached(id, ProductionRowText(BuildingTypeName(type), cost));
@@ -302,12 +302,12 @@ void RmlUiHud::RefreshHints()
 			column->RemoveChild(child);
 		}
 	}
-	const std::size_t split = (hints.size() + 1) / 2;
-	for (std::size_t i = 0; i < hints.size(); ++i)
+	const std::ptrdiff_t split = static_cast<std::ptrdiff_t>((hints.size() + 1) / 2);
+	for (const auto &[i, hint] : hints | std::views::enumerate)
 	{
 		Rml::ElementPtr item(hudDoc_->CreateElement("p"));
 		item->SetAttribute("class", Rml::String("hint-line"));
-		item->SetInnerRML(hints[i].c_str());
+		item->SetInnerRML(hint.c_str());
 		columns[i < split ? 0 : 1]->AppendChild(std::move(item));
 	}
 }

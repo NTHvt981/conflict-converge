@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <fstream>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -41,9 +42,9 @@ void FillUnit(SaveUnit &out, const Registry &registry, Entity id, const Unit &u,
 		{
 			return -1;
 		}
-		for (std::size_t i = 0; i < order.size(); ++i)
+		for (const auto &[i, ordered] : order | std::views::enumerate)
 		{
-			if (order[i] == e)
+			if (ordered == e)
 			{
 				return static_cast<std::int32_t>(i);
 			}
