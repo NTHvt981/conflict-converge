@@ -12,6 +12,13 @@ void RunCcAssertTests()
 	CC_ASSERT(true);
 	CC_CHECK(true);
 
+#ifndef NDEBUG
+	// Frame lines show the basename only; both separators have to strip.
+	CC_CHECK(std::string(cc_assert_detail::BaseName("src\\game\\core\\Game.cpp")) == "Game.cpp");
+	CC_CHECK(std::string(cc_assert_detail::BaseName("src/game/core/Game.cpp")) == "Game.cpp");
+	CC_CHECK(std::string(cc_assert_detail::BaseName("Game.cpp")) == "Game.cpp");
+#endif
+
 #ifdef NDEBUG
 	CC_ASSERT(false); // must be compiled out in Release; aborts if live
 	CC_CHECK(true);
