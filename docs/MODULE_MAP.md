@@ -62,7 +62,8 @@ app/match: Menu, Skirmish
   convention, `cc::kHalfTile` = centre offset)
 - `Team.h` - `TeamId` (`Any`/`Player`/`Enemy`) + `kAnyTeam`/`kPlayerTeam`/`kEnemyTeam`;
   every team field and parameter is typed
-- `CcAssert.h` - `CC_ASSERT`: live in Debug, `((void)0)` under NDEBUG
+- `CcAssert.h` - `CC_ASSERT`: live in Debug, `((void)0)` under NDEBUG; a firing check prints
+  the expression, `file:line` and 12 symbolized frames to stderr before delegating to `assert`
 - `CcPch.h` - precompiled header force-included in every game/test/e2e TU: standard
   library, glm, raylib, RmlUi/Core (`CcPch.cpp` is its `/Yc` source, see premake)
 - `Subsystem.h` - UE5-inspired service scopes (no reflection): `Subsystem` base
