@@ -12,6 +12,9 @@ settings persistence, and save slots. All milestones M1–M15 are complete — s
 ## Prerequisites
 
 - Visual Studio 2022 (Community or newer) with C++ desktop workload
+- MSVC toolset 14.44 or newer. `premake5 vs2022` writes `prj/Directory.Build.props`
+  to select the newest installed v143 toolset, because an install defaults to an
+  older one; the C++23 build fails on 14.36.
 - [premake5](https://premake.github.io/) on `PATH`
 - Python 3 (for `bootstrap.py`)
 

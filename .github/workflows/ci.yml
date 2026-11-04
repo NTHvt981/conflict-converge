@@ -53,6 +53,14 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Report MSVC toolset
+        shell: powershell
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          Write-Host "install: $vs"
+          Get-ChildItem "$vs\VC\Tools\MSVC" -Directory | Select-Object -ExpandProperty Name
+
       - name: Build ${{ matrix.config }} x64 (solution is x64 only)
         run: msbuild prj/ConflictConverge.sln /p:Configuration=${{ matrix.config }} /p:Platform=x64 /v:minimal /nologo /clp:ErrorsOnly
 
