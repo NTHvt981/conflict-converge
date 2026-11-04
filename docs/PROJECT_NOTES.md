@@ -2,6 +2,21 @@
 Do not use CMake to build or generate project files
 Use premake to generate project files, then run msbuild to build project
 
+## C++23 adopted (2026-11-04)
+The four first-party projects moved from `cppdialect "C++20"` to `"C++23"`;
+the five static libraries keep their own dialects. Premake maps C++23 to
+`stdcpp23`, which MSBuild turns into `/std:c++23preview` (MSVC has no
+`/std:c++23`); `C++latest` was rejected because it also turns on draft C++26
+pieces. The toolset is the non-obvious part: a VS2022 install can default to
+14.36 with 14.44 installed beside it, and 14.36 lacks `views::enumerate`,
+`<print>` and `<mdspan>`, so `premake5 vs2022` now writes
+`prj/Directory.Build.props` with the newest installed v143 toolset. MSBuild
+honours that because the installed `Microsoft.VCToolsVersion.v143.default.props`
+only fills `VCToolsVersion` when it is empty. Feature guards in `core/CcPch.h`
+turn a too-old toolset into one clear error. Sample TUs compiled clean under
+`/std:c++latest` on 14.44 before the switch; full Debug/Release/ASan builds and
+both suites are the gate.
+
 ## Cereal migration Phase 4 done (2026-09-19)
 Protobuf fully removed: 3 protos + 6 generated files deleted, `libs_deps`
 entry + all premake include/lib blocks + CI CMake/verify steps + README
