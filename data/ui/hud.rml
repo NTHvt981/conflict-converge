@@ -124,6 +124,13 @@ body {
 			</div>
 		</div>
 		<div class="hud-readout" id="fps-line"></div>
-		<div id="hud-hints"></div>
+		<div id="hud-hints">
+			<div id="hint-box">
+				<div class="hud-title">Shortcut hints</div>
+				<div id="hint-cols">
+					<div class="hintcol" id="hint-col-a"></div><div class="hintcol hintcol-right" id="hint-col-b"></div>
+				</div>
+			</div>
+		</div>
 	</body>
 </rml>
