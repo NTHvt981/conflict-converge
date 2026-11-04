@@ -25,7 +25,7 @@ app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, RmlUiHost, RmlUiMenus,
 app/input: InputManager, Selection, Shortcuts, Hotkeys
 app/save: SaveGame (+SaveEncode/SaveDecode), SaveWire
 app/data: Art (+ArtEffects), SpriteData, UnitConfig (+UnitConfigParse/UnitConfigCatalog),
-          Audio, InitMode, Log, DataRoot
+          ConfigError, AIConfig, Audio, InitMode, Log, DataRoot
 app/match: Menu, Skirmish
 ```
 
@@ -170,12 +170,21 @@ app/match: Menu, Skirmish
   body/head layered atlas art; `Init(InitMode::Headless)`
   is the headless rectangle-fallback path
 - `SpriteData.h` - Sprite-atlas data (JSON in `data/configs/`: textures/sprites/animations
-  merged at load); `LoadSpriteSheet`/`ParseSpriteSheetJson` + name/id lookups
+  merged at load); `LoadSpriteSheet`/`ParseSpriteSheetJson` return
+  `expected<SpriteSheetData, ConfigError>`, plus name/id lookups
+- `ConfigError.h` - Failure cause shared by the config loaders (`FileUnreadable`,
+  `MalformedJson`, `UnknownName`, `Mismatch`, `UnknownAbilityKey`, `InvalidData`,
+  `FileUnwritable`) + `Describe` for log lines and the editor status. Header-only
+- `AIConfig.h` - `data/configs/ai.json` difficulty catalog: `ParseAIDifficultyJson`/
+  `LoadAIDifficultyFile` return `expected<AIDifficultyParams, ConfigError>`, the active
+  per-difficulty params are read through `ActiveAIDifficultyParams` with compiled fallbacks
 - `UnitConfig.h` - Unit-config editor data layer: one `UnitConfig` per
-  `data/configs/<type>.json`, enum↔name parsing, load/save/enumerate. Pure logic, no raylib.
+  `data/configs/<type>.json`, enum↔name parsing, load/save/enumerate, all reporting
+  `expected<..., ConfigError>`. Pure logic, no raylib.
   M1 runtime authority: optional `abilities` block (turret/arcing/crush/transport/sniper,
   unknown keys reject) + `cost`; `ActiveUnitConfig` catalog loaded at match start with
-  per-type compiled fallback; `CostOf` reads the catalog
+  per-type compiled fallback and one warning per rejected unit-config file; `CostOf` reads
+  the catalog
 - `Extensions.h` - M2 gimmick components in `Registry` pools: `Turret`/`Cargo`/`EmbarkedOn`
   (+ `Projectile` shells, `IsEmbarked`/`IsFleshUnit` gates). `GetOrAdd<T>` is the only
   creation path (`GetOrders`/`GetMover`/`GetCombatState`/`GetHarvester` forward to it);

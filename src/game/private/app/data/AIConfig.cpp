@@ -17,6 +17,8 @@
 #include <string>
 #include <vector>
 
+#include "raylib.h"
+
 #include "app/data/UnitConfig.h"
 
 namespace
@@ -107,8 +109,8 @@ int DifficultyIndex(AIDifficulty difficulty)
 
 } // namespace
 
-bool ParseAIDifficultyJson(const std::string &json, AIDifficulty difficulty,
-						   AIDifficultyParams &out)
+std::expected<AIDifficultyParams, ConfigError>
+ParseAIDifficultyJson(const std::string &json, AIDifficulty difficulty)
 {
 	AIDifficultyParams params = ParamsFor(difficulty);
 	try
@@ -146,39 +148,38 @@ bool ParseAIDifficultyJson(const std::string &json, AIDifficulty difficulty,
 			std::vector<UnitType> composition;
 			for (const std::string &name : block.composition)
 			{
-				UnitType type = UnitType::RifleInfantry;
-				if (!ParseUnitTypeName(name, type))
+				const std::expected<UnitType, ConfigError> type = ParseUnitTypeName(name);
+				if (!type)
 				{
-					return false;
+					return std::unexpected(type.error());
 				}
-				composition.push_back(type);
+				composition.push_back(*type);
 			}
 			params.composition = composition;
 		}
 	}
 	catch (const cereal::Exception &)
 	{
-		return false;
+		return std::unexpected(ConfigError::MalformedJson);
 	}
 	catch (const std::runtime_error &)
 	{
-		return false;
+		return std::unexpected(ConfigError::MalformedJson);
 	}
-	out = params;
-	return true;
+	return params;
 }
 
-bool LoadAIDifficultyFile(const std::string &path, AIDifficulty difficulty,
-						  AIDifficultyParams &out)
+std::expected<AIDifficultyParams, ConfigError>
+LoadAIDifficultyFile(const std::string &path, AIDifficulty difficulty)
 {
 	std::ifstream in(path);
 	if (!in)
 	{
-		return false;
+		return std::unexpected(ConfigError::FileUnreadable);
 	}
 	std::stringstream ss;
 	ss << in.rdbuf();
-	return ParseAIDifficultyJson(ss.str(), difficulty, out);
+	return ParseAIDifficultyJson(ss.str(), difficulty);
 }
 
 const AIDifficultyParams &ActiveAIDifficultyParams(AIDifficulty difficulty)
@@ -214,10 +215,15 @@ bool RefreshAIDifficultyParams(const std::string &dir)
 										  AIDifficulty::Hard };
 	for (AIDifficulty difficulty : difficulties)
 	{
-		if (!LoadAIDifficultyFile(path, difficulty, loaded[static_cast<std::size_t>(difficulty)]))
+		const std::expected<AIDifficultyParams, ConfigError> load =
+			LoadAIDifficultyFile(path, difficulty);
+		if (!load)
 		{
+			TraceLog(LOG_WARNING, "ai config %s rejected: %s", path.c_str(),
+					 Describe(load.error()));
 			return false;
 		}
+		loaded[static_cast<std::size_t>(difficulty)] = *load;
 	}
 	gActiveAI = loaded;
 	gAIInit = true;

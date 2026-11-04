@@ -450,19 +450,24 @@ void RunAICommanderTests()
 
 	// --- AI parse: partial block overlays defaults, unknown types reject ---
 	{
-		AIDifficultyParams parsed;
 		const std::string json =
 			"{\"medium\": {\"waveThreshold\": 9, \"composition\": [\"LightTank\"]}}";
-		CC_CHECK(ParseAIDifficultyJson(json, AIDifficulty::Medium, parsed));
-		CC_CHECK(parsed.waveThreshold == 9);
-		CC_CHECK(parsed.composition.size() == 1 &&
-				 parsed.composition[0] == UnitType::LightTank);
-		CC_CHECK(parsed.harvesters == ParamsFor(AIDifficulty::Medium).harvesters);
-		AIDifficultyParams bad;
-		CC_CHECK(!ParseAIDifficultyJson("{\"medium\": {\"composition\": [\"Banana\"]}}",
-										AIDifficulty::Medium, bad));
-		CC_CHECK(!ParseAIDifficultyJson("not json", AIDifficulty::Medium, bad));
-		CC_CHECK(!ParseAIDifficultyJson("{\"easy\": {}}", AIDifficulty::Medium, bad));
+		const std::expected<AIDifficultyParams, ConfigError> parsed =
+			ParseAIDifficultyJson(json, AIDifficulty::Medium);
+		CC_CHECK(parsed.has_value());
+		const AIDifficultyParams &good = parsed.value_or(AIDifficultyParams{});
+		CC_CHECK(good.waveThreshold == 9);
+		CC_CHECK(good.composition.size() == 1 &&
+				 good.composition[0] == UnitType::LightTank);
+		CC_CHECK(good.harvesters == ParamsFor(AIDifficulty::Medium).harvesters);
+		const std::expected<AIDifficultyParams, ConfigError> banana =
+			ParseAIDifficultyJson("{\"medium\": {\"composition\": [\"Banana\"]}}",
+								  AIDifficulty::Medium);
+		CC_CHECK(!banana.has_value() && banana.error() == ConfigError::UnknownName);
+		const std::expected<AIDifficultyParams, ConfigError> garbage =
+			ParseAIDifficultyJson("not json", AIDifficulty::Medium);
+		CC_CHECK(!garbage.has_value() && garbage.error() == ConfigError::MalformedJson);
+		CC_CHECK(!ParseAIDifficultyJson("{\"easy\": {}}", AIDifficulty::Medium).has_value());
 	}
 
 	// --- AI catalog: file round-trip then reset restores defaults ---
@@ -473,11 +478,15 @@ void RunAICommanderTests()
 			std::ofstream out(scratch, std::ios::binary | std::ios::trunc);
 			out << "{\"hard\": {\"waveThreshold\": 7}}";
 		}
-		AIDifficultyParams fromFile;
-		CC_CHECK(LoadAIDifficultyFile(scratch, AIDifficulty::Hard, fromFile));
-		CC_CHECK(fromFile.waveThreshold == 7);
-		CC_CHECK(fromFile.composition == ParamsFor(AIDifficulty::Hard).composition);
-		CC_CHECK(!LoadAIDifficultyFile(scratch + ".missing", AIDifficulty::Hard, fromFile));
+		const std::expected<AIDifficultyParams, ConfigError> fromFile =
+			LoadAIDifficultyFile(scratch, AIDifficulty::Hard);
+		CC_CHECK(fromFile.has_value());
+		const AIDifficultyParams &loaded = fromFile.value_or(AIDifficultyParams{});
+		CC_CHECK(loaded.waveThreshold == 7);
+		CC_CHECK(loaded.composition == ParamsFor(AIDifficulty::Hard).composition);
+		const std::expected<AIDifficultyParams, ConfigError> missing =
+			LoadAIDifficultyFile(scratch + ".missing", AIDifficulty::Hard);
+		CC_CHECK(!missing.has_value() && missing.error() == ConfigError::FileUnreadable);
 		std::error_code ec;
 		std::filesystem::remove(scratch, ec);
 	}

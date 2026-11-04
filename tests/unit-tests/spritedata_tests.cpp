@@ -30,13 +30,14 @@ const char *kValid = R"({
 
 bool Parses(const char *json, SpriteSheetData &out)
 {
-	return ParseSpriteSheetJson(json, out);
+	const std::expected<SpriteSheetData, ConfigError> parsed = ParseSpriteSheetJson(json);
+	out = parsed.value_or(SpriteSheetData{});
+	return parsed.has_value();
 }
 
 bool Rejects(const char *json)
 {
-	SpriteSheetData out;
-	return !ParseSpriteSheetJson(json, out);
+	return !ParseSpriteSheetJson(json).has_value();
 }
 
 } // namespace
@@ -71,14 +72,13 @@ void RunSpriteDataTests()
 		CC_CHECK(FindAnimById(sheet, 999) == nullptr);
 	}
 
-	// --- malformed JSON fails cleanly (missing atlas files fail the
+	// --- malformed JSON yields no sheet (missing atlas files fail the
 	// same way: LoadSpriteSheet is all-or-nothing over data/configs) ---
 	{
-		SpriteSheetData untouched;
-		untouched.textures.push_back({ "sentinel", "sentinel.png", 1, 1 });
-		SpriteSheetData out = untouched;
-		CC_CHECK(!ParseSpriteSheetJson("{ not json", out));
-		CC_CHECK(out.textures.size() == 1 && out.textures[0].id == "sentinel"); // untouched
+		const std::expected<SpriteSheetData, ConfigError> malformed =
+			ParseSpriteSheetJson("{ not json");
+		CC_CHECK(!malformed.has_value() &&
+				 malformed.error() == ConfigError::MalformedJson);
 	}
 
 	// --- duplicate texture id (and empty ids) ---
@@ -172,8 +172,7 @@ void RunSpriteDataTests()
 
 	// --- valid mask pair + mask grid pairing ---
 	{
-		SpriteSheetData sheet;
-		CC_CHECK(ParseSpriteSheetJson(R"({ "textures": [
+		const std::expected<SpriteSheetData, ConfigError> parsed = ParseSpriteSheetJson(R"({ "textures": [
 		  { "id": "base", "file": "base.png", "width": 64, "height": 32 },
 		  { "id": "mask", "file": "mask.png", "width": 64, "height": 32 } ],
 		  "sprites": [],
@@ -184,8 +183,9 @@ void RunSpriteDataTests()
 			{ "texture": "mask", "prefix": "u_mask", "startId": 100,
 			  "rows": 1, "cols": 2, "cellW": 32, "cellH": 32,
 			  "origin": { "x": 16, "y": 16 } } ],
-		  "animations": [] })",
-										sheet));
+		  "animations": [] })");
+		CC_CHECK(parsed.has_value());
+		const SpriteSheetData sheet = parsed.value_or(SpriteSheetData{});
 		const SpriteDefInfo *cell = FindSpriteByName(sheet, "u_0_1");
 		CC_CHECK(cell != nullptr && cell->maskSprite == 101);
 		const SpriteDefInfo *mask = FindSpriteById(sheet, 101);
@@ -202,8 +202,9 @@ void RunSpriteDataTests()
 	// (each with a mask); prototype keeps its untinted sheets.
 	// PrototypeInfantry resolves its own namespace, not rifle_infantry's.
 	{
-		SpriteSheetData sheet;
-		CC_CHECK(LoadSpriteSheet(sheet));
+		const std::expected<SpriteSheetData, ConfigError> loaded = LoadSpriteSheet();
+		CC_CHECK(loaded.has_value());
+		const SpriteSheetData sheet = loaded.value_or(SpriteSheetData{});
 		CC_CHECK(sheet.textures.size() == 26);
 		CC_CHECK(sheet.sprites.size() == 504);
 		CC_CHECK(sheet.animations.size() == 56);

@@ -15,7 +15,7 @@ int main()
 
 	Art art;
 	const bool artReady = art.Init(InitMode::WithDevice);
-	art.LoadAtlas();
+	const std::expected<void, ConfigError> atlas = art.LoadAtlas();
 
 	EditorState editor;
 	InitEditor(editor);
@@ -23,6 +23,11 @@ int main()
 	{
 		std::snprintf(editor.status, sizeof(editor.status),
 					  "Art failed to init - previews unavailable");
+	}
+	else if (!atlas)
+	{
+		std::snprintf(editor.status, sizeof(editor.status), "Atlas failed: %s",
+					  Describe(atlas.error()));
 	}
 
 	while (!WindowShouldClose())

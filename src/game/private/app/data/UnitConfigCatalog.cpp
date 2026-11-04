@@ -2,10 +2,13 @@
 #include "app/data/UnitConfig.h"
 
 #include <algorithm>
+#include <expected>
 #include <filesystem>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "raylib.h"
 
 namespace
 {
@@ -42,12 +45,19 @@ std::vector<UnitConfig> LoadAllUnitConfigs(const std::string &dir)
 		{
 			continue;
 		}
-		UnitConfig config;
-		if (!LoadUnitConfig(it->path().string(), config))
+		const std::string path = it->path().string();
+		const std::string stem = it->path().stem().string();
+		const std::expected<UnitConfig, ConfigError> loaded = LoadUnitConfig(path);
+		if (!loaded)
 		{
+			if (IsUnitConfigStem(stem))
+			{
+				TraceLog(LOG_WARNING, "config %s rejected: %s", path.c_str(),
+						 Describe(loaded.error()));
+			}
 			continue;
 		}
-		configs.push_back(std::move(config));
+		configs.push_back(std::move(*loaded));
 	}
 	std::sort(configs.begin(), configs.end(),
 			  [](const UnitConfig &a, const UnitConfig &b) { return a.type < b.type; });
@@ -66,8 +76,8 @@ const UnitConfig &ActiveUnitConfig(UnitType type)
 	// gActiveConfigs is stored in UnitType order (see Refresh/Set).
 	for (const UnitConfig &config : gActiveConfigs)
 	{
-		UnitType parsed = UnitType::RifleInfantry;
-		if (ParseUnitTypeName(config.type, parsed) && parsed == type)
+		const std::expected<UnitType, ConfigError> parsed = ParseUnitTypeName(config.type);
+		if (parsed && *parsed == type)
 		{
 			return config;
 		}
@@ -84,8 +94,9 @@ void SetActiveUnitConfigs(const std::vector<UnitConfig> &configs)
 		bool found = false;
 		for (const UnitConfig &config : configs)
 		{
-			UnitType parsed = UnitType::RifleInfantry;
-			if (ParseUnitTypeName(config.type, parsed) && parsed == type)
+			const std::expected<UnitType, ConfigError> parsed =
+				ParseUnitTypeName(config.type);
+			if (parsed && *parsed == type)
 			{
 				gActiveConfigs.push_back(config);
 				found = true;

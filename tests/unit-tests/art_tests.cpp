@@ -196,7 +196,7 @@ void RunArtTests()
 	// --- atlas: idle sprite + move cycle from the data/configs atlas ---
 	{
 		Art art;
-		CC_CHECK(art.LoadAtlas());
+		CC_CHECK(art.LoadAtlas().has_value());
 		CC_CHECK(!art.UseAtlas()); // parsed, but no GPU textures headless
 		// Idle resolves to the facing column's pose (column 0 = top).
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 0) == "rifle_infantry_idle_0_0");
@@ -271,7 +271,7 @@ void RunArtTests()
 	{
 		Art art;
 		CC_CHECK(!art.HasTankArt(UnitType::LightTank));
-		CC_CHECK(art.LoadAtlas());
+		CC_CHECK(art.LoadAtlas().has_value());
 		CC_CHECK(art.HasTankArt(UnitType::LightTank));
 		CC_CHECK(!art.HasTankArt(UnitType::HeavyTank));
 		CC_CHECK(art.TankBodySprite(UnitType::LightTank, 0) == "lighttank_body_idle_0_0");
@@ -282,8 +282,9 @@ void RunArtTests()
 		CC_CHECK(art.TankHeadSprite(UnitType::LightTank, -1) == "lighttank_head_0_6");
 		CC_CHECK(art.TankBodySprite(UnitType::HeavyTank, 0).empty());
 		CC_CHECK(art.TankHeadSprite(UnitType::HeavyTank, 0).empty());
-		SpriteSheetData sheet;
-		CC_CHECK(LoadSpriteSheet(sheet));
+		const std::expected<SpriteSheetData, ConfigError> loaded = LoadSpriteSheet();
+		CC_CHECK(loaded.has_value());
+		const SpriteSheetData sheet = loaded.value_or(SpriteSheetData{});
 		const SpriteDefInfo *body = FindSpriteByName(sheet, "lighttank_body_idle_0_6");
 		CC_CHECK(body != nullptr);
 		CC_CHECK(body->maskSprite == 1556);

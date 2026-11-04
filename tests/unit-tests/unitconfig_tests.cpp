@@ -71,9 +71,10 @@ void RunUnitConfigTests()
 		UnitConfig heavy = DefaultUnitConfig(UnitType::HeavyTank);
 		const std::string json = UnitConfigToJson(heavy);
 		CC_CHECK(!json.empty());
-		UnitConfig reloaded;
-		CC_CHECK(ParseUnitConfigJson(json, "heavy_tank", reloaded));
-		CC_CHECK(ConfigsEqual(heavy, reloaded));
+		const std::expected<UnitConfig, ConfigError> reloaded =
+			ParseUnitConfigJson(json, "heavy_tank");
+		CC_CHECK(reloaded.has_value());
+		CC_CHECK(ConfigsEqual(heavy, reloaded.value_or(UnitConfig{})));
 	}
 
 	// --- round-trip preserves edited (non-default) values ---
@@ -88,9 +89,10 @@ void RunUnitConfigTests()
 		edited.spritePrefix = "custom";
 		edited.atlasIdlePrefix = "custom_idle";
 		const std::string json = UnitConfigToJson(edited);
-		UnitConfig reloaded;
-		CC_CHECK(ParseUnitConfigJson(json, "rifle_infantry", reloaded));
-		CC_CHECK(ConfigsEqual(edited, reloaded));
+		const std::expected<UnitConfig, ConfigError> reloaded =
+			ParseUnitConfigJson(json, "rifle_infantry");
+		CC_CHECK(reloaded.has_value());
+		CC_CHECK(ConfigsEqual(edited, reloaded.value_or(UnitConfig{})));
 	}
 
 	// --- canonical filenames: snake_case stems, underscore-tolerant match ---
@@ -107,11 +109,19 @@ void RunUnitConfigTests()
 				 "prototype_infantry");
 
 		// Underscored stems validate; a genuinely different type still fails.
-		UnitConfig config;
 		const std::string heavy = UnitConfigToJson(DefaultUnitConfig(UnitType::HeavyTank));
-		CC_CHECK(ParseUnitConfigJson(heavy, "heavy_tank", config));
-		CC_CHECK(ParseUnitConfigJson(heavy, "HEAVY_TANK", config)); // case-insensitive
-		CC_CHECK(!ParseUnitConfigJson(heavy, "light_tank", config));
+		CC_CHECK(ParseUnitConfigJson(heavy, "heavy_tank").has_value());
+		CC_CHECK(ParseUnitConfigJson(heavy, "HEAVY_TANK").has_value()); // case-insensitive
+		const std::expected<UnitConfig, ConfigError> mismatch =
+			ParseUnitConfigJson(heavy, "light_tank");
+		CC_CHECK(!mismatch.has_value() && mismatch.error() == ConfigError::Mismatch);
+
+		// Only stems that claim to be unit configs are reported when they
+		// reject; data/configs/ also holds the atlas and AI documents.
+		CC_CHECK(IsUnitConfigStem("heavy_tank"));
+		CC_CHECK(IsUnitConfigStem("HEAVY_TANK"));
+		CC_CHECK(!IsUnitConfigStem("ai"));
+		CC_CHECK(!IsUnitConfigStem("sprites"));
 	}
 
 	// --- shipped seed files load with the compiled-in values ---
@@ -211,40 +221,50 @@ void RunUnitConfigTests()
 		CC_CHECK(LoadAllUnitConfigs(TempDir("cc_unitconfig_no_such_dir")).empty());
 	}
 
-	// --- tolerant load: missing file -> false (caller falls back) ---
+	// --- tolerant load: missing file -> FileUnreadable (caller falls back) ---
 	{
-		UnitConfig config;
-		CC_CHECK(!LoadUnitConfig(TempDir("cc_unitconfig_missing.json"), config));
+		const std::expected<UnitConfig, ConfigError> missing =
+			LoadUnitConfig(TempDir("cc_unitconfig_missing.json"));
+		CC_CHECK(!missing.has_value() && missing.error() == ConfigError::FileUnreadable);
 	}
 
 	// --- tolerant load: type/filename mismatch + unknown type skipped ---
 	{
-		UnitConfig config;
 		const std::string rifle =
 			UnitConfigToJson(DefaultUnitConfig(UnitType::RifleInfantry));
-		CC_CHECK(!ParseUnitConfigJson(rifle, "engineer", config)); // mismatch
-		CC_CHECK(!ParseUnitConfigJson("{\"type\":\"Spaceship\"}", "spaceship",
-									  config)); // unknown
-		CC_CHECK(!ParseUnitConfigJson("{ nope", "rifle_infantry", config)); // garbage
-		CC_CHECK(!ParseUnitConfigJson("{\"stats\":{}}", "rifle_infantry", config)); // no type
+		const std::expected<UnitConfig, ConfigError> mismatch =
+			ParseUnitConfigJson(rifle, "engineer");
+		CC_CHECK(!mismatch.has_value() && mismatch.error() == ConfigError::Mismatch);
+		const std::expected<UnitConfig, ConfigError> unknown =
+			ParseUnitConfigJson("{\"type\":\"Spaceship\"}", "spaceship");
+		CC_CHECK(!unknown.has_value() && unknown.error() == ConfigError::UnknownName);
+		const std::expected<UnitConfig, ConfigError> garbage =
+			ParseUnitConfigJson("{ nope", "rifle_infantry");
+		CC_CHECK(!garbage.has_value() && garbage.error() == ConfigError::MalformedJson);
+		const std::expected<UnitConfig, ConfigError> typeless =
+			ParseUnitConfigJson("{\"stats\":{}}", "rifle_infantry");
+		CC_CHECK(!typeless.has_value() && typeless.error() == ConfigError::UnknownName);
 	}
 
 	// --- tolerant load: missing/unknown/out-of-range fields -> defaults ---
 	{
-		UnitConfig config;
 		// Missing everything but type: full baseline.
-		CC_CHECK(ParseUnitConfigJson("{\"type\":\"Artillery\"}", "artillery", config));
+		const std::expected<UnitConfig, ConfigError> bare =
+			ParseUnitConfigJson("{\"type\":\"Artillery\"}", "artillery");
+		CC_CHECK(bare.has_value());
 		const UnitConfig baseline = DefaultUnitConfig(UnitType::Artillery);
-		CC_CHECK(ConfigsEqual(baseline, config));
+		CC_CHECK(ConfigsEqual(baseline, bare.value_or(UnitConfig{})));
 
 		// Unknown enum names + bad bounds fall back per-field; the
 		// well-formed remainder still loads.
-		CC_CHECK(ParseUnitConfigJson(
+		const std::expected<UnitConfig, ConfigError> partial = ParseUnitConfigJson(
 			"{\"type\":\"LightTank\",\"stats\":{\"health\":-5,\"armorType\":\"WOOD\","
 			"\"damageType\":\"\",\"attackPower\":21},\"collision\":{\"bounds\":{"
 			"\"left\":0,\"top\":0,\"right\":0,\"bottom\":3},\"origin\":{\"x\":1,\"y\":0}},"
 			"\"art\":{\"spritePrefix\":\"\",\"atlasIdlePrefix\":\"x\"}}",
-			"light_tank", config));
+			"light_tank");
+		CC_CHECK(partial.has_value());
+		const UnitConfig config = partial.value_or(UnitConfig{});
 		const UnitConfig tankBase = DefaultUnitConfig(UnitType::LightTank);
 		CC_CHECK(config.stats.health == tankBase.stats.health); // -5 rejected
 		CC_CHECK(config.stats.armorType == tankBase.stats.armorType); // WOOD rejected
@@ -258,12 +278,14 @@ void RunUnitConfigTests()
 		CC_CHECK(config.atlasIdlePrefix == "x"); // "" is valid: explicit honored
 
 		// Well-formed bounds derive the footprint (offset rect, not just size).
-		CC_CHECK(ParseUnitConfigJson(
+		const std::expected<UnitConfig, ConfigError> bounded = ParseUnitConfigJson(
 			"{\"type\":\"LightTank\",\"collision\":{\"bounds\":{"
 			"\"left\":1,\"top\":0,\"right\":3,\"bottom\":2},\"origin\":{\"x\":0,\"y\":0}}}",
-			"light_tank", config));
-		CC_CHECK(config.footprintWidth == 2 && config.footprintHeight == 2);
-		CC_CHECK(config.boundLeft == 1 && config.boundTop == 0);
+			"light_tank");
+		CC_CHECK(bounded.has_value());
+		const UnitConfig bounds = bounded.value_or(UnitConfig{});
+		CC_CHECK(bounds.footprintWidth == 2 && bounds.footprintHeight == 2);
+		CC_CHECK(bounds.boundLeft == 1 && bounds.boundTop == 0);
 	}
 
 	// --- enum round-trips: every value serializes and parses back ---
@@ -271,34 +293,36 @@ void RunUnitConfigTests()
 		for (int i = 0; i < static_cast<int>(ArmorType::Count); ++i)
 		{
 			const ArmorType armor = static_cast<ArmorType>(i);
-			ArmorType back = ArmorType::STEEL;
-			CC_CHECK(ParseArmorTypeName(ArmorTypeName(armor), back));
+			const std::expected<ArmorType, ConfigError> back =
+				ParseArmorTypeName(ArmorTypeName(armor));
+			CC_CHECK(back.has_value());
 			CC_CHECK(back == armor);
 		}
 		for (int i = 0; i < static_cast<int>(DamageType::Count); ++i)
 		{
 			const DamageType damage = static_cast<DamageType>(i);
-			DamageType back = DamageType::KINETIC;
-			CC_CHECK(ParseDamageTypeName(DamageTypeName(damage), back));
+			const std::expected<DamageType, ConfigError> back =
+				ParseDamageTypeName(DamageTypeName(damage));
+			CC_CHECK(back.has_value());
 			CC_CHECK(back == damage);
 		}
 		for (int i = 0; i < static_cast<int>(UnitType::Count); ++i)
 		{
 			const UnitType type = static_cast<UnitType>(i);
 			const UnitConfig baseline = DefaultUnitConfig(type);
-			UnitType back = UnitType::RifleInfantry;
-			CC_CHECK(ParseUnitTypeName(baseline.type, back));
+			const std::expected<UnitType, ConfigError> back =
+				ParseUnitTypeName(baseline.type);
+			CC_CHECK(back.has_value());
 			CC_CHECK(back == type);
 		}
-		ArmorType noArmor = ArmorType::STEEL;
-		DamageType noDamage = DamageType::KINETIC;
-		UnitType noUnit = UnitType::RifleInfantry;
-		CC_CHECK(!ParseArmorTypeName("WOOD", noArmor));
-		CC_CHECK(!ParseDamageTypeName("NUCLEAR", noDamage));
-		CC_CHECK(!ParseUnitTypeName("Spaceship", noUnit));
+		const std::expected<ArmorType, ConfigError> noArmor = ParseArmorTypeName("WOOD");
+		const std::expected<DamageType, ConfigError> noDamage = ParseDamageTypeName("NUCLEAR");
+		const std::expected<UnitType, ConfigError> noUnit = ParseUnitTypeName("Spaceship");
+		CC_CHECK(!noArmor.has_value() && noArmor.error() == ConfigError::UnknownName);
+		CC_CHECK(!noDamage.has_value() && noDamage.error() == ConfigError::UnknownName);
+		CC_CHECK(!noUnit.has_value() && noUnit.error() == ConfigError::UnknownName);
 		// Pre-rename "Infantry" stays a valid alias for old configs/saves.
-		CC_CHECK(ParseUnitTypeName("Infantry", noUnit));
-		CC_CHECK(noUnit == UnitType::RifleInfantry);
+		CC_CHECK(ParseUnitTypeName("Infantry") == UnitType::RifleInfantry);
 	}
 
 	// --- M1 abilities: defaults off, tolerant parse, round-trip ---
@@ -313,12 +337,13 @@ void RunUnitConfigTests()
 		CC_CHECK(!baseline.abilities.sniper);
 		CC_CHECK(baseline.costIron == 250 && baseline.costOil == 100);
 
-		UnitConfig config;
-		CC_CHECK(ParseUnitConfigJson(
+		const std::expected<UnitConfig, ConfigError> abilities = ParseUnitConfigJson(
 			"{\"type\":\"HeavyTank\",\"abilities\":{\"turret\":{\"turnRate\":2.5},"
 			"\"arcingShell\":{\"flightTime\":1.2,\"splashTiles\":1},"
 			"\"crushesFlesh\":true,\"transport\":{\"capacity\":6},\"sniper\":true}}",
-			"heavy_tank", config));
+			"heavy_tank");
+		CC_CHECK(abilities.has_value());
+		const UnitConfig config = abilities.value_or(UnitConfig{});
 		CC_CHECK(config.abilities.turretTurnRate == 2.5f);
 		CC_CHECK(config.abilities.arcingFlightTime == 1.2f);
 		CC_CHECK(config.abilities.arcingSplashTiles == 1);
@@ -327,38 +352,44 @@ void RunUnitConfigTests()
 		CC_CHECK(config.abilities.sniper);
 
 		const std::string json = UnitConfigToJson(config);
-		UnitConfig reloaded;
-		CC_CHECK(ParseUnitConfigJson(json, "heavy_tank", reloaded));
-		CC_CHECK(ConfigsEqual(config, reloaded));
+		const std::expected<UnitConfig, ConfigError> reloaded =
+			ParseUnitConfigJson(json, "heavy_tank");
+		CC_CHECK(reloaded.has_value());
+		CC_CHECK(ConfigsEqual(config, reloaded.value_or(UnitConfig{})));
 
 		// Missing abilities block -> defaults (old files keep working).
-		CC_CHECK(ParseUnitConfigJson("{\"type\":\"HeavyTank\"}", "heavy_tank", config));
-		CC_CHECK(AbilitiesEqual(config.abilities,
+		const std::expected<UnitConfig, ConfigError> sparse =
+			ParseUnitConfigJson("{\"type\":\"HeavyTank\"}", "heavy_tank");
+		CC_CHECK(sparse.has_value());
+		CC_CHECK(AbilitiesEqual(sparse.value_or(UnitConfig{}).abilities,
 								DefaultUnitConfig(UnitType::HeavyTank).abilities));
 	}
 
 	// --- M1 abilities: unknown keys reject (fail fast on typos) ---
 	{
-		UnitConfig config;
-		CC_CHECK(!ParseUnitConfigJson(
+		const std::expected<UnitConfig, ConfigError> turbo = ParseUnitConfigJson(
 			"{\"type\":\"HeavyTank\",\"abilities\":{\"turboTurret\":1.0}}",
-			"heavy_tank", config));
-		CC_CHECK(!ParseUnitConfigJson(
-			"{\"type\":\"IFV\",\"abilities\":{\"transport\":{\"seats\":6}}}",
-			"ifv", config));
+			"heavy_tank");
+		CC_CHECK(!turbo.has_value() && turbo.error() == ConfigError::UnknownAbilityKey);
+		const std::expected<UnitConfig, ConfigError> seats = ParseUnitConfigJson(
+			"{\"type\":\"IFV\",\"abilities\":{\"transport\":{\"seats\":6}}}", "ifv");
+		CC_CHECK(!seats.has_value() && seats.error() == ConfigError::UnknownAbilityKey);
 	}
 
 	// --- M1 cost: per-field fallback, negative rejected ---
 	{
-		UnitConfig config;
-		CC_CHECK(ParseUnitConfigJson(
-			"{\"type\":\"IFV\",\"cost\":{\"iron\":90}}", "ifv", config));
-		CC_CHECK(config.costIron == 90);
-		CC_CHECK(config.costOil == DefaultUnitConfig(UnitType::IFV).costOil);
-		CC_CHECK(ParseUnitConfigJson(
-			"{\"type\":\"IFV\",\"cost\":{\"iron\":-5,\"oil\":-1}}", "ifv", config));
-		CC_CHECK(config.costIron == DefaultUnitConfig(UnitType::IFV).costIron);
-		CC_CHECK(config.costOil == DefaultUnitConfig(UnitType::IFV).costOil);
+		const std::expected<UnitConfig, ConfigError> priced =
+			ParseUnitConfigJson("{\"type\":\"IFV\",\"cost\":{\"iron\":90}}", "ifv");
+		CC_CHECK(priced.has_value());
+		const UnitConfig cheap = priced.value_or(UnitConfig{});
+		CC_CHECK(cheap.costIron == 90);
+		CC_CHECK(cheap.costOil == DefaultUnitConfig(UnitType::IFV).costOil);
+		const std::expected<UnitConfig, ConfigError> negative = ParseUnitConfigJson(
+			"{\"type\":\"IFV\",\"cost\":{\"iron\":-5,\"oil\":-1}}", "ifv");
+		CC_CHECK(negative.has_value());
+		const UnitConfig clamped = negative.value_or(UnitConfig{});
+		CC_CHECK(clamped.costIron == DefaultUnitConfig(UnitType::IFV).costIron);
+		CC_CHECK(clamped.costOil == DefaultUnitConfig(UnitType::IFV).costOil);
 	}
 
 	// --- M1 catalog: CostOf reads active configs, reset restores defaults ---

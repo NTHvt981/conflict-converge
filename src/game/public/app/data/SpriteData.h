@@ -1,7 +1,10 @@
 #pragma once
 
+#include <expected>
 #include <string>
 #include <vector>
+
+#include "app/data/ConfigError.h"
 
 // Sprite-atlas data (JSON in data/configs/: textures.json, sprites.json,
 // animations.json — one section each, merged at load; parsed via cereal-JSON).
@@ -61,13 +64,13 @@ struct SpriteSheetData
 	std::vector<SpriteAnimInfo> animations;
 };
 
-// Load the three atlas files merged as one sheet. False when any file is
-// missing/unreadable/malformed or the merged sheet fails validation; `out`
-// untouched then.
-bool LoadSpriteSheet(SpriteSheetData &out);
+// Load the three atlas files merged as one sheet. Rejects when any file is
+// missing/unreadable/malformed or the merged sheet fails validation.
+[[nodiscard]] std::expected<SpriteSheetData, ConfigError> LoadSpriteSheet();
 
 // Parse sprite JSON from memory (same validation as LoadSpriteSheet).
-bool ParseSpriteSheetJson(const std::string &json, SpriteSheetData &out);
+[[nodiscard]] std::expected<SpriteSheetData, ConfigError>
+ParseSpriteSheetJson(const std::string &json);
 
 // Lookups by name/id. Null when absent.
 const SpriteDefInfo *FindSpriteByName(const SpriteSheetData &sheet, const std::string &name);
