@@ -18,10 +18,8 @@
 #include <vector>
 #include <version>
 
-// C++23 floor: the first-party projects are pinned to cppdialect "C++23" and
-// prj/Directory.Build.props selects the newest installed MSVC toolset. These
-// guards report a toolset that fell back to an older default once, here, rather
-// than at each feature site.
+// C++23 floor: prj/Directory.Build.props picks the newest installed MSVC
+// toolset, so a fallback to an older one reports here once.
 #if !defined(__cpp_lib_expected) || __cpp_lib_expected < 202211L
 #error "C++23 <expected> needs MSVC 14.40+; run premake5 vs2022 to regenerate the toolset pin"
 #endif
