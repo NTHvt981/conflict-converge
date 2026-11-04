@@ -162,7 +162,7 @@ void RmlUiHud::RefreshHud()
 
 	if (Rml::Element *hints = ById(hudDoc_, UiIds::HudHints))
 	{
-		SetDisplay(hints, showHints_ ? "block" : "none");
+		SetDisplay(hints, showHints_ ? "flex" : "none");
 	}
 	RefreshHints();
 }
@@ -290,20 +290,24 @@ void RmlUiHud::RefreshHints()
 		return;
 	}
 	hintsCache_ = joined;
-	Rml::Element *list = ById(hudDoc_, UiIds::HudHints);
-	if (list == nullptr)
+	Rml::Element *columns[] = {ById(hudDoc_, UiIds::HintColA), ById(hudDoc_, UiIds::HintColB)};
+	if (columns[0] == nullptr || columns[1] == nullptr)
 	{
 		return;
 	}
-	while (Rml::Element *child = list->GetFirstChild())
+	for (Rml::Element *column : columns)
 	{
-		list->RemoveChild(child);
+		while (Rml::Element *child = column->GetFirstChild())
+		{
+			column->RemoveChild(child);
+		}
 	}
-	for (const std::string &line : hints)
+	const std::size_t split = (hints.size() + 1) / 2;
+	for (std::size_t i = 0; i < hints.size(); ++i)
 	{
 		Rml::ElementPtr item(hudDoc_->CreateElement("p"));
 		item->SetAttribute("class", Rml::String("hint-line"));
-		item->SetInnerRML(line.c_str());
-		list->AppendChild(std::move(item));
+		item->SetInnerRML(hints[i].c_str());
+		columns[i < split ? 0 : 1]->AppendChild(std::move(item));
 	}
 }

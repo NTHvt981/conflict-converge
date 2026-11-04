@@ -89,6 +89,8 @@ void RunRmlUiHostTests()
 		CC_CHECK(DocumentHasId(doc, UiIds::ProducingFillBootcamp));
 		CC_CHECK(DocumentHasId(doc, UiIds::ProducingFillWorkshop));
 		CC_CHECK(DocumentHasId(doc, UiIds::HudHints));
+		CC_CHECK(DocumentHasId(doc, UiIds::HintColA));
+		CC_CHECK(DocumentHasId(doc, UiIds::HintColB));
 		CC_CHECK(DocumentHasId(doc, UiIds::BtnCancel));
 		CC_CHECK(DocumentHasId(doc, UiIds::TabInfantry));
 		CC_CHECK(DocumentHasId(doc, UiIds::TabVehicles));
