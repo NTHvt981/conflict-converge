@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cctype>
 #include <optional>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -430,9 +431,9 @@ UnitConfig DefaultUnitConfig(UnitType type)
 bool IsUnitConfigStem(const std::string &stem)
 {
 	const std::string normalized = NormalizedStem(stem);
-	for (int i = 0; i < static_cast<int>(UnitType::Count); ++i)
+	for (const UnitTypeInfo &info : kUnitTypes)
 	{
-		if (NormalizedStem(UnitConfigFilename(static_cast<UnitType>(i))) == normalized)
+		if (NormalizedStem(info.fileStem) == normalized)
 		{
 			return true;
 		}
@@ -446,9 +447,9 @@ std::expected<UnitType, ConfigError> ParseUnitTypeName(const std::string &name)
 	{
 		return UnitType::RifleInfantry;
 	}
-	for (std::size_t i = 0; i < static_cast<std::size_t>(UnitType::Count); ++i)
+	for (const auto &[i, info] : kUnitTypes | std::views::enumerate)
 	{
-		if (name == kUnitTypes[i].configName)
+		if (name == info.configName)
 		{
 			return static_cast<UnitType>(i);
 		}

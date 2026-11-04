@@ -13,6 +13,7 @@
 #include <cstring>
 #include <fstream>
 #include <limits>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -386,9 +387,10 @@ bool LoadWorld(const WorldState &world, const std::string &path)
 		world.registry->Add(freshIds.back(), savedUnit.mover);
 		world.registry->Add(freshIds.back(), savedUnit.combat);
 	}
-	for (std::size_t i = 0; i < saved.units.size(); ++i)
+	for (const auto &[index, savedUnit] : saved.units | std::views::enumerate)
 	{
-		const std::int32_t targetIndex = saved.units[i].targetIndex;
+		const std::size_t i = static_cast<std::size_t>(index);
+		const std::int32_t targetIndex = savedUnit.targetIndex;
 		if (targetIndex >= 0 && static_cast<std::size_t>(targetIndex) < freshIds.size())
 		{
 			GetCombatState(*world.registry, freshIds[i]).target =
@@ -397,7 +399,6 @@ bool LoadWorld(const WorldState &world, const std::string &path)
 		// M2 extension restore: turret facing + cargo manifest + embarked
 		// marker (same remap pattern as targetIndex; tolerant wire defaults
 		// mean old saves simply get no components).
-		const SavedUnit &savedUnit = saved.units[i];
 		if (savedUnit.hasTurret)
 		{
 			Turret turret;

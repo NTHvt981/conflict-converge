@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdio>
+#include <ranges>
 
 #include "economy/Building.h"
 #include "economy/BuildingTypeInfo.h"
@@ -117,9 +118,9 @@ std::string BuildingsSelectedLine(int count)
 std::string BuildingTypesLine(const BuildingTypeCounts &counts)
 {
 	std::string line;
-	for (size_t i = 0; i < counts.size(); ++i)
+	for (const auto &[i, count] : counts | std::views::enumerate)
 	{
-		if (counts[i] == 0)
+		if (count == 0)
 		{
 			continue;
 		}
@@ -128,7 +129,7 @@ std::string BuildingTypesLine(const BuildingTypeCounts &counts)
 			line += ", ";
 		}
 		char buf[64];
-		std::snprintf(buf, sizeof(buf), "%d %s", counts[i],
+		std::snprintf(buf, sizeof(buf), "%d %s", count,
 					  BuildingTypeName(static_cast<BuildingType>(i)));
 		line += buf;
 	}
