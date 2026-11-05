@@ -74,7 +74,7 @@ One variable per row. These are proposals, not the decision.
 
 | # | Observation | Change | Why | Risk |
 |---|---|---|---|---|
-| 1 | Obs 2 | In Skirmish setup, show a visible "select a map first" hint near `Start match` while it is disabled | the screen names the next action before selection, not only after (obs 3) | hint placement must not crowd the button; small |
+| 1 | Obs 2 | In Skirmish setup, show a visible "select a map first" hint near `Start match` while it is disabled ([issue #79](https://github.com/NTHvt981/conflict-converge/issues/79)) | the screen names the next action before selection, not only after (obs 3) | hint placement must not crowd the button; small |
 | 2 | Obs 8 | Key unit idle animation to the frozen sim clock instead of render time during pause | pixel-stable paused frames make freeze proofs and comparisons reliable | animation source refactor; low visual impact |
 | 3 | Obs 6 | none yet — gather evidence first | the order-overridden-by-combat behaviour needs a controlled run before any change | acting on one ambiguous frame risks a wrong fix |
 

@@ -88,4 +88,4 @@ because of a playtest.
 
 | Date | Note | Decision | Change | Confirmed by |
 |---|---|---|---|---|
-| 2026-11-05 | [2026-11-05-smoke-and-first-order.md](2026-11-05-smoke-and-first-order.md) | retune | Skirmish setup: show a "select a map first" hint next to the disabled `Start match` | pending — next setup-screen smoke |
+| 2026-11-05 | [2026-11-05-smoke-and-first-order.md](2026-11-05-smoke-and-first-order.md) | retune | Skirmish setup: show a "select a map first" hint next to the disabled `Start match` ([#79](https://github.com/NTHvt981/conflict-converge/issues/79)) | pending — next setup-screen smoke |
