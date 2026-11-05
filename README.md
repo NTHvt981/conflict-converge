@@ -63,3 +63,11 @@ Launch `prj/bin/Release/conflict-converge.exe`. From the title screen pick
 In-match keys: WASD pan, wheel zoom, left-click select (drag for box, Shift extends),
 right-click order, A attack-move, H/G stances, V patrol, R rally mode, Space halt,
 Esc deselect, P pause, F1 hints, F5/F9 quicksave/load, F6–F8 slots (Shift loads).
+
+## Playtest
+
+[`docs/playtest/`](docs/playtest/README.md) holds the note protocol, the template,
+verified click recipes, and the index. Each note records observations separately
+from fixes and ends in one keep, retune, or kill decision. An agent drives the
+running build through the `windows-agent-mcp` window capture and input tools; the
+skill that encodes the loop lives in `.opencode/skills/playtest/`.
