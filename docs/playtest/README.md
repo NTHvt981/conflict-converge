@@ -79,7 +79,7 @@ frames per note is the budget.
 
 | Note | Build | Question | Decision |
 |---|---|---|---|
-| _(none yet)_ | | | |
+| [2026-11-05-smoke-and-first-order.md](2026-11-05-smoke-and-first-order.md) | Release `2066fcb` | Can a player reach a match and issue one move order from what the screens say, and does every screen name the next action? | retune |
 
 ## Decision log
 
@@ -88,4 +88,4 @@ because of a playtest.
 
 | Date | Note | Decision | Change | Confirmed by |
 |---|---|---|---|---|
-| | | | | |
+| 2026-11-05 | [2026-11-05-smoke-and-first-order.md](2026-11-05-smoke-and-first-order.md) | retune | Skirmish setup: show a "select a map first" hint next to the disabled `Start match` | pending — next setup-screen smoke |
