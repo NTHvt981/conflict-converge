@@ -79,7 +79,7 @@ frames per note is the budget.
 
 | Note | Build | Question | Decision |
 |---|---|---|---|
-| _(none yet)_ | | | |
+| [2026-11-06-skirmish-setup-hint](2026-11-06-skirmish-setup-hint.md) | Release `33ac981` | disabled `Start match` cursor hint shows before selection, none after | keep |
 
 ## Decision log
 
@@ -88,4 +88,4 @@ because of a playtest.
 
 | Date | Note | Decision | Change | Confirmed by |
 |---|---|---|---|---|
-| | | | | |
+| 2026-11-06 | [2026-11-06-skirmish-setup-hint](2026-11-06-skirmish-setup-hint.md) | keep | none | the issue #79 `CONFIRM` run in that note |
