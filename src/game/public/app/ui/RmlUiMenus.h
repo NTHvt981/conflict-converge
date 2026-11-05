@@ -84,6 +84,7 @@ private:
 	Rml::ElementDocument *DocForState(MenuState state);
 	void RefreshCurrent();
 	void RefreshSetup();
+	void UpdateStartHint();
 	void RefreshSettings();
 	void RefreshLoad();
 	void RefreshConfirm();

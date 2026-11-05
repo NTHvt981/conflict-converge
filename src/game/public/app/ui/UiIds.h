@@ -84,6 +84,7 @@ inline constexpr std::string_view MapList = "maplist";
 inline constexpr std::string_view MapDetail = "mapdetail";
 inline constexpr std::string_view BtnStart = "btn-start";
 inline constexpr std::string_view BtnBackRight = "btn-back-right";
+inline constexpr std::string_view StartHint = "start-hint";
 
 // settings.rml
 inline constexpr std::string_view BtnSettingsBack = "btn-settings-back";

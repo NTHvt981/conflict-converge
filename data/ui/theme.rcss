@@ -383,3 +383,16 @@ button.hkkey {
 	width: 140dp;
 	height: 34dp;
 }
+
+#start-hint {
+	position: absolute;
+	display: none;
+	pointer-events: none;
+	background: #ffffff;
+	border: 1dp #838383;
+	color: #686868;
+	font-size: 18dp;
+	line-height: 22dp;
+	padding: 2dp 8dp;
+	white-space: nowrap;
+}

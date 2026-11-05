@@ -316,6 +316,10 @@ ConfirmChoice RmlUiMenus::Draw(int screenWidth, int screenHeight)
 	{
 		ShowState();
 	}
+	if (menu_.state == MenuState::SkirmishSetup)
+	{
+		UpdateStartHint();
+	}
 	host_->BeginFrame(screenWidth, screenHeight, menu_.settings.uiScale);
 	BeginDrawing();
 	ClearBackground(RAYWHITE);
@@ -324,6 +328,69 @@ ConfirmChoice RmlUiMenus::Draw(int screenWidth, int screenHeight)
 	const ConfirmChoice out = pendingChoice_;
 	pendingChoice_ = ConfirmChoice::None;
 	return out;
+}
+
+void RmlUiMenus::UpdateStartHint()
+{
+	Rml::Element *hint = ById(setupDoc_, UiIds::StartHint);
+	if (hint == nullptr)
+	{
+		return;
+	}
+	bool show = false;
+	if (menu_.state == MenuState::SkirmishSetup && !menu_.ConfirmOpen() &&
+		!menu_.setup.CanStart())
+	{
+		if (Rml::Element *hover = context_->GetHoverElement())
+		{
+			for (Rml::Element *el = hover; el != nullptr; el = el->GetParentNode())
+			{
+				if (el->GetId() == Rml::String(UiIds::BtnStart))
+				{
+					show = true;
+					break;
+				}
+				if (el == setupDoc_)
+				{
+					break;
+				}
+			}
+		}
+	}
+	if (show)
+	{
+		hint->SetProperty("display", "block");
+		const Vector2 mouse = GetMousePosition();
+		int left = static_cast<int>(mouse.x) + 14;
+		int top = static_cast<int>(mouse.y) + 22;
+		const int maxLeft = GetScreenWidth() - 240;
+		if (left < 4)
+		{
+			left = 4;
+		}
+		else if (left > maxLeft)
+		{
+			left = maxLeft > 4 ? maxLeft : 4;
+		}
+		const int maxTop = GetScreenHeight() - 40;
+		if (top < 4)
+		{
+			top = 4;
+		}
+		else if (top > maxTop)
+		{
+			top = maxTop > 4 ? maxTop : 4;
+		}
+		char text[32];
+		snprintf(text, sizeof(text), "%dpx", left);
+		hint->SetProperty("left", text);
+		snprintf(text, sizeof(text), "%dpx", top);
+		hint->SetProperty("top", text);
+	}
+	else
+	{
+		hint->SetProperty("display", "none");
+	}
 }
 
 void RmlUiMenus::DrawRemapScreen(int screenWidth, int screenHeight)
