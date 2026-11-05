@@ -50,6 +50,8 @@ its key files, owning test suites, and the decisions that shaped it
 - [menu-transitions](menu-transitions.md) — fade-through-black clock.
 - [hover-tooltips](hover-tooltips.md) — HUD/settings tips + debounced
   unit tooltip, fog-gated.
+- [skirmish-setup-hint](skirmish-setup-hint.md) — cursor hint on the
+  disabled `Start match` button.
 - [hint-overlay](hint-overlay.md) — live F1 overlay from the remap
   table.
 - [map-editor](map-editor.md) — in-menu tile editor behind raygui
