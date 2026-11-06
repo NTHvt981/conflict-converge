@@ -114,8 +114,7 @@ inline constexpr std::string_view HkColA = "hkcol-a";
 inline constexpr std::string_view HkColB = "hkcol-b";
 inline constexpr std::string_view BtnRemapBack = "btn-remap-back";
 
-// Cursor hint element (UiIds::CursorHint), one per participating
-// document, shared by every screen that fills a CursorHint table.
+// cursor-hint element: one per participating document
 inline constexpr std::string_view CursorHint = "cursor-hint";
 
 // Row families: the element id is the prefix followed by the row index.
