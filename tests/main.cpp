@@ -244,5 +244,9 @@ int main(int argc, char **argv)
 
 	const TestStats &stats = CcTestStats();
 	std::printf("checks: %d, failures: %d\n", stats.checks, stats.failures);
+	if (stats.warnings > 0)
+	{
+		std::printf("warnings: %d\n", stats.warnings);
+	}
 	return stats.failures == 0 ? 0 : 1;
 }

@@ -11,6 +11,7 @@ struct TestStats
 {
 	int checks = 0;
 	int failures = 0;
+	int warnings = 0;
 };
 
 inline TestStats &CcTestStats()
@@ -27,6 +28,22 @@ inline TestStats &CcTestStats()
 		{                                                                                                \
 			++CcTestStats().failures;                                                                    \
 			std::printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #cond);                                  \
+			std::fflush(stdout); /* survive crashes/aborts later in the run */                           \
+		}                                                                                                \
+	} while (0)
+
+// Non-fatal sibling of CC_CHECK: counts as a check, prints WARN on failure,
+// and the runner exits 0 regardless. For sim-outcome assertions whose
+// trajectories legitimately differ across machines/toolchains; CI surfaces
+// the WARN lines as annotations (see .github/workflows/ci.yml).
+#define CC_WARN(cond)                                                                                    \
+	do                                                                                                   \
+	{                                                                                                    \
+		++CcTestStats().checks;                                                                          \
+		if (!(cond))                                                                                     \
+		{                                                                                                \
+			++CcTestStats().warnings;                                                                    \
+			std::printf("WARN %s:%d: %s\n", __FILE__, __LINE__, #cond);                                  \
 			std::fflush(stdout); /* survive crashes/aborts later in the run */                           \
 		}                                                                                                \
 	} while (0)
