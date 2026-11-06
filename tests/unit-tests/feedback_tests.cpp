@@ -39,7 +39,10 @@ void RunFeedbackTests()
 		CombatState gunCombat;
 		Unit victim = MakeVictim();
 		CombatState victimCombat;
-		const float dealt = ResolveAttack(gun, gunCombat, victim, victimCombat);
+		Registry registry;
+		const Entity victimId = registry.Create();
+		const float dealt =
+			ResolveAttack(registry, victimId, gun, gunCombat, victim, victimCombat);
 		CC_CHECK(dealt == 10.0f);
 		CC_CHECK(victimCombat.lastDamageTaken == dealt);
 		CC_CHECK(victimCombat.hitFlashTime == kHitFlashDuration);
@@ -52,7 +55,10 @@ void RunFeedbackTests()
 		CombatState gunCombat;
 		Unit victim = MakeVictim();
 		CombatState victimCombat;
-		const float dealt = ResolveAttack(gun, gunCombat, victim, victimCombat);
+		Registry registry;
+		const Entity victimId = registry.Create();
+		const float dealt =
+			ResolveAttack(registry, victimId, gun, gunCombat, victim, victimCombat);
 		CC_CHECK(dealt == 5.0f);
 		CC_CHECK(victimCombat.lastDamageTaken == 5.0f);
 	}
@@ -63,7 +69,10 @@ void RunFeedbackTests()
 		CombatState gunCombat;
 		Unit victim = MakeVictim();
 		CombatState victimCombat;
-		CC_CHECK(ResolveAttack(gun, gunCombat, victim, victimCombat) == 0.0f);
+		Registry registry;
+		const Entity victimId = registry.Create();
+		CC_CHECK(ResolveAttack(registry, victimId, gun, gunCombat, victim, victimCombat) ==
+				0.0f);
 		CC_CHECK(victimCombat.lastDamageTaken == 0.0f);
 		CC_CHECK(victimCombat.hitFlashTime == 0.0f);
 	}

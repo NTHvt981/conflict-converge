@@ -38,7 +38,11 @@ void RunCombatTests()
 	defender.armorType = ArmorType::COMPOSITE; // 0.50x vs KINETIC
 	CombatState defenderCombat;
 
-	const float dealt = ResolveAttack(attacker, attackerCombat, defender, defenderCombat);
+	Registry registry;
+	const Entity defenderId = registry.Create();
+	const float dealt =
+		ResolveAttack(registry, defenderId, attacker, attackerCombat, defender,
+					  defenderCombat);
 	CC_CHECK(dealt == 50.0f);
 	CC_CHECK(defender.health == 150.0f);
 	CC_CHECK(attackerCombat.cooldown == 1.5f);
@@ -53,7 +57,8 @@ void RunCombatTests()
 	tank.health = 500.0f;
 	tank.armorType = ArmorType::STEEL; // 1.25x vs EXPLOSIVE
 	CombatState tankCombat;
-	CC_CHECK(ResolveAttack(bomber, bomberCombat, tank, tankCombat) == 100.0f);
+	CC_CHECK(ResolveAttack(registry, defenderId, bomber, bomberCombat, tank, tankCombat) ==
+			100.0f);
 	CC_CHECK(tank.health == 400.0f);
 
 	// --- zero power deals nothing but still cycles the cooldown ---
@@ -64,7 +69,9 @@ void RunCombatTests()
 	Unit wall;
 	wall.health = 100.0f;
 	CombatState wallCombat;
-	CC_CHECK(ResolveAttack(peashooter, peashooterCombat, wall, wallCombat) == 0.0f);
+	const Entity wallEntity = registry.Create();
+	CC_CHECK(ResolveAttack(registry, wallEntity, peashooter, peashooterCombat, wall,
+						   wallCombat) == 0.0f);
 	CC_CHECK(wall.health == 100.0f);
 	CC_CHECK(peashooterCombat.cooldown == 0.5f);
 
@@ -147,7 +154,10 @@ void RunCombatTests()
 		squad.health = 100.0f;
 		CombatState squadCombat;
 		CC_CHECK(SquadSlots(squad.type, 7, squad.health / 100.0f).count == 5);
-		ResolveAttack(marksman, marksmanCombat, squad, squadCombat); // ~25% of max HP through the matrix
+		Registry registry;
+		const Entity squadId = registry.Create();
+		ResolveAttack(registry, squadId, marksman, marksmanCombat, squad,
+					  squadCombat); // ~25% of max HP through the matrix
 		CC_CHECK(SquadSlots(squad.type, 7, squad.health / 100.0f).count == 4);
 		ResetActiveUnitConfigs();
 	}
