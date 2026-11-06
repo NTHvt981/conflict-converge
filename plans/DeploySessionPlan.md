@@ -79,6 +79,16 @@ Config `data/configs/deploy.json` (loaded via `UnitConfigParse`/`UnitConfigCatal
    Render member count is `min(deployment committed, squad count)` (SquadSlots derives from
    health; never index out of bounds).
 
+## M2 balance notes (decision record)
+
+The readiness toll (exit stagger + member walk) is a universal per-squad delay on top of
+build time, and it compresses the AI ladder gap: first pass at 0.35s stagger / 1.0x walk
+made Medium wipe Hard in the integration soak (both sides hit equally, but Hard's
+throughput edge shrank below the fixture's margin). Tuned to `kDeployExitDelayPerMember
+0.22s` / `kDeployWalkSpeedMultiplier 1.2f` — Hard wins the rung again with room to spare.
+Deploy tests derive cadence expectations from the constants (ceil-based crossing ticks), so
+retunes do not break them. M6 balance pass should re-check the in-game feel of this toll.
+
 ## Save/load & events
 
 `SaveEncode`/`SaveDecode`/`SaveWire` must round-trip the Deployment component (generation
