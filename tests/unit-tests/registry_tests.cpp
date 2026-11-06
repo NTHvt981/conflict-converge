@@ -99,4 +99,37 @@ void RunRegistryTests()
 	// Generation resets to 1 after clear
 	Entity afterClear = registry.Create();
 	CC_CHECK(registry.Generation(afterClear) == 1);
+
+	// --- any: first-match predicate scan with early stop ---
+	Registry anyRegistry;
+	CC_CHECK(!anyRegistry.Any<Marker>([](Entity, const Marker &) { return true; }));
+	anyRegistry.Create();
+	anyRegistry.Create();
+	anyRegistry.Add(anyRegistry.Create(), Marker{ 11 });
+	anyRegistry.Add(anyRegistry.Create(), Marker{ 22 });
+	anyRegistry.Add(anyRegistry.Create(), Marker{ 33 });
+
+	CC_CHECK(!anyRegistry.Any<Marker>([](Entity, const Marker &m) { return m.tag == 99; }));
+	int seenAll = 0;
+	CC_CHECK(anyRegistry.Any<Marker>([&](Entity, const Marker &m) {
+		++seenAll;
+		return m.tag == 33;
+	}));
+	CC_CHECK(seenAll <= 3);
+	int seenStop = 0;
+	CC_CHECK(anyRegistry.Any<Marker>([&](Entity, const Marker &) {
+		++seenStop;
+		return true;
+	}));
+	CC_CHECK(seenStop == 1);
+	int seenMiss = 0;
+	CC_CHECK(!anyRegistry.Any<Marker>([&](Entity, const Marker &) {
+		++seenMiss;
+		return false;
+	}));
+	CC_CHECK(seenMiss == 3);
+
+	const Registry &anyView = anyRegistry;
+	CC_CHECK(anyView.Any<Marker>([](Entity, const Marker &m) { return m.tag == 22; }));
+	CC_CHECK(!anyView.Any<Marker>([](Entity, const Marker &m) { return m.tag == 99; }));
 }
