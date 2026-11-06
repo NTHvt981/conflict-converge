@@ -123,6 +123,19 @@ bool AICommander::HasWorkshop() const
 	return found;
 }
 
+bool AICommander::HasDepot() const
+{
+	bool found = false;
+	registry_.Each<Building>([&](Entity, const Building &building) {
+		if (building.teamID == teamID_ && building.type == BuildingType::ResourceDepot &&
+			building.state == BuildingState::Operational)
+		{
+			found = true;
+		}
+	});
+	return found;
+}
+
 bool AICommander::HasScouted() const
 {
 	return scouted_;
@@ -469,16 +482,19 @@ void AICommander::MaintainHarvesters()
 		}
 		OrderHarvesterToIron(id);
 	});
-	while (static_cast<int>(harvesters_.size()) < params_.harvesters)
+	if (HasDepot())
 	{
-		const Entity id = factory_.Spawn(UnitType::Engineer, teamID_,
-										 cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
-		if (id == kInvalidEntity)
+		while (static_cast<int>(harvesters_.size()) < params_.harvesters)
 		{
-			break;
+			const Entity id = factory_.Spawn(UnitType::Engineer, teamID_,
+											 cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
+			if (id == kInvalidEntity)
+			{
+				break;
+			}
+			OrderHarvesterToIron(id);
+			harvesters_.push_back(id);
 		}
-		OrderHarvesterToIron(id);
-		harvesters_.push_back(id);
 	}
 }
 

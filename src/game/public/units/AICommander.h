@@ -97,6 +97,7 @@ public:
 	cc::IVec2 LastSeenEnemy() const;
 	bool HasBootcamp() const;
 	bool HasWorkshop() const;
+	bool HasDepot() const;
 
 private:
 	void MaintainHarvesters();

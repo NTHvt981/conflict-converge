@@ -109,6 +109,7 @@ void RunAICommanderTests()
 		AICommander recycleAi(recycleRegistry, recycleMap, recycleNodes, recycleEvents, kEnemyTeam,
 							  AIDifficulty::Medium, { 16, 9 }, { 1, 10 });
 		recycleAi.SetupBase();
+		UpdateBuildingConstruction(recycleRegistry, 20.0f);
 		recycleNodes.SpawnNode(recycleMap, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
 		for (int i = 0; i < 60; ++i)
 		{
@@ -147,6 +148,29 @@ void RunAICommanderTests()
 			}
 		});
 		CC_CHECK(working >= 1); // the replacement is actually sent to the field
+	}
+
+	// --- replacement gate on Operational Depot ---
+	{
+		Registry registry;
+		TileMap map(20, 15);
+		ResourceNodes nodes;
+		EventDispatcher events;
+		AICommander ai(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Medium, { 16, 9 },
+					   { 1, 10 });
+		ai.SetupBase();
+		nodes.SpawnNode(map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
+		for (int i = 0; i < 60; ++i)
+		{
+			ai.Update(1.0f / 60.0f);
+		}
+		CC_CHECK(ai.HarvesterCount() == 0);
+		UpdateBuildingConstruction(registry, 20.0f);
+		for (int i = 0; i < 60; ++i)
+		{
+			ai.Update(1.0f / 60.0f);
+		}
+		CC_CHECK(ai.HarvesterCount() == medium.harvesters);
 	}
 
 	// --- wave launches on army-size threshold, ordering the army ---
@@ -237,6 +261,7 @@ void RunAICommanderTests()
 		AICommander ai(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Medium, { 16, 9 },
 					   { 1, 10 });
 		ai.SetupBase();
+		UpdateBuildingConstruction(registry, 20.0f);
 		ai.SetOccupancy(&occ);
 		nodes.SpawnNode(map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
 		const Entity blocker = registry.Create();
