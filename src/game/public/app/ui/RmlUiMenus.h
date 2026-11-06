@@ -4,6 +4,8 @@
 #include <string>
 #include <string_view>
 
+#include "app/ui/CursorHint.h"
+
 #include <RmlUi/Core/EventListener.h>
 
 #include "core/MenuScreens.h"
@@ -119,6 +121,8 @@ private:
 	MenuState shownState_ = MenuState::MainMenu;
 	bool shownConfirm_ = false;
 	ConfirmChoice pendingChoice_ = ConfirmChoice::None;
+	CursorHint hint_;
+	std::vector<CursorHintEntry> hintEntries_;
 	Rml::ElementDocument *menuDoc_ = nullptr;
 	Rml::ElementDocument *setupDoc_ = nullptr;
 	Rml::ElementDocument *settingsDoc_ = nullptr;

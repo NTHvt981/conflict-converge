@@ -13,6 +13,7 @@
 
 #include "app/data/Audio.h"
 #include "app/match/Menu.h"
+#include "app/ui/CursorHint.h"
 #include "app/ui/RmlUiHost.h"
 #include "app/ui/UiIds.h"
 
@@ -226,6 +227,8 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
 	Listen(confirmDoc_, "click", { UiIds::BtnYes, UiIds::BtnNo });
 	Listen(remapDoc_, "click", { UiIds::BtnRemapBack });
 	PopulateMaps();
+	hintEntries_.push_back({UiIds::BtnStart, {}});
+	hint_.Bind(setupDoc_, UiIds::CursorHint, hintEntries_);
 	ready_ = true;
 	ShowState();
 	return true;
@@ -315,6 +318,10 @@ ConfirmChoice RmlUiMenus::Draw(int screenWidth, int screenHeight)
 	if (!shown_ || menu_.state != shownState_ || menu_.ConfirmOpen() != shownConfirm_)
 	{
 		ShowState();
+	}
+	if (menu_.state == MenuState::SkirmishSetup)
+	{
+		hint_.Update(context_, !menu_.ConfirmOpen());
 	}
 	host_->BeginFrame(screenWidth, screenHeight, menu_.settings.uiScale);
 	BeginDrawing();

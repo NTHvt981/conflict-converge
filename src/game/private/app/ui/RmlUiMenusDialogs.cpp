@@ -298,6 +298,9 @@ void RmlUiMenus::RefreshSetup()
 	{
 		SetDisabled(start, !menu_.setup.CanStart());
 	}
+	hint_.SetText(UiIds::BtnStart,
+				  !menu_.setup.CanStart() ? std::string("select a map first")
+										  : std::string{});
 }
 
 void RmlUiMenus::RefreshSettings()

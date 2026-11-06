@@ -114,6 +114,9 @@ inline constexpr std::string_view HkColA = "hkcol-a";
 inline constexpr std::string_view HkColB = "hkcol-b";
 inline constexpr std::string_view BtnRemapBack = "btn-remap-back";
 
+// cursor-hint element: one per participating document
+inline constexpr std::string_view CursorHint = "cursor-hint";
+
 // Row families: the element id is the prefix followed by the row index.
 inline constexpr std::string_view CgRow = "cg-";
 inline constexpr std::string_view ProdInfantryRow = "prod-i-";

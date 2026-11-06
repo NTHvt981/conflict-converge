@@ -17,5 +17,6 @@
 				<button id="btn-start">Start match</button><button id="btn-back-right">Back</button>
 			</div>
 		</div>
+		<div id="cursor-hint"></div>
 	</body>
 </rml>
