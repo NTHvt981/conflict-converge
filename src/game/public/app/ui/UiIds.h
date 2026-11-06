@@ -84,7 +84,6 @@ inline constexpr std::string_view MapList = "maplist";
 inline constexpr std::string_view MapDetail = "mapdetail";
 inline constexpr std::string_view BtnStart = "btn-start";
 inline constexpr std::string_view BtnBackRight = "btn-back-right";
-inline constexpr std::string_view StartHint = "start-hint";
 
 // settings.rml
 inline constexpr std::string_view BtnSettingsBack = "btn-settings-back";
@@ -114,6 +113,10 @@ inline constexpr std::string_view RemapStatus = "remap-status";
 inline constexpr std::string_view HkColA = "hkcol-a";
 inline constexpr std::string_view HkColB = "hkcol-b";
 inline constexpr std::string_view BtnRemapBack = "btn-remap-back";
+
+// Cursor hint element (UiIds::CursorHint), one per participating
+// document, shared by every screen that fills a CursorHint table.
+inline constexpr std::string_view CursorHint = "cursor-hint";
 
 // Row families: the element id is the prefix followed by the row index.
 inline constexpr std::string_view CgRow = "cg-";

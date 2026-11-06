@@ -13,6 +13,7 @@
 
 #include "app/data/Audio.h"
 #include "app/match/Menu.h"
+#include "app/ui/CursorHint.h"
 #include "app/ui/RmlUiHost.h"
 #include "app/ui/UiIds.h"
 
@@ -164,53 +165,6 @@ void PumpInput(Rml::Context *context)
 	}
 }
 
-// Setup-screen start hint: hover answers "is the cursor resting on
-// #btn-start" (from the element under the cursor up to its document);
-// placement is the cursor plus a small offset, clamped inside the window
-// by a rough hint-width reserve.
-constexpr int kHintOffsetX = 14;
-constexpr int kHintOffsetY = 22;
-constexpr int kHintWidthReserve = 240;
-constexpr int kHintHeightReserve = 40;
-constexpr int kHintEdge = 4;
-
-bool StartHintHovered(Rml::Context *context, Rml::ElementDocument *doc)
-{
-	for (Rml::Element *el = context->GetHoverElement(); el != nullptr;
-		 el = el->GetParentNode())
-	{
-		if (el->GetId() == Rml::String(UiIds::BtnStart))
-		{
-			return true;
-		}
-		if (el == doc)
-		{
-			return false;
-		}
-	}
-	return false;
-}
-
-int ClampPx(int value, int lo, int hi)
-{
-	if (hi < lo)
-	{
-		hi = lo;
-	}
-	return value < lo ? lo : (value > hi ? hi : value);
-}
-
-void SetHintPosition(Rml::Element *hint, int left, int top)
-{
-	char text[32];
-	snprintf(text, sizeof(text), "%dpx", ClampPx(left, kHintEdge,
-												GetScreenWidth() - kHintWidthReserve));
-	hint->SetProperty("left", text);
-	snprintf(text, sizeof(text), "%dpx", ClampPx(top, kHintEdge,
-												GetScreenHeight() - kHintHeightReserve));
-	hint->SetProperty("top", text);
-}
-
 } // namespace
 
 RmlUiMenus::RmlUiMenus(MenuFlow &menu, HotkeyMap &hotkeys, Art &art, Audio &audio,
@@ -273,6 +227,8 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
 	Listen(confirmDoc_, "click", { UiIds::BtnYes, UiIds::BtnNo });
 	Listen(remapDoc_, "click", { UiIds::BtnRemapBack });
 	PopulateMaps();
+	hintEntries_.push_back({UiIds::BtnStart, {}});
+	hint_.Bind(setupDoc_, UiIds::CursorHint, hintEntries_);
 	ready_ = true;
 	ShowState();
 	return true;
@@ -365,7 +321,7 @@ ConfirmChoice RmlUiMenus::Draw(int screenWidth, int screenHeight)
 	}
 	if (menu_.state == MenuState::SkirmishSetup)
 	{
-		UpdateStartHint();
+		hint_.Update(context_, !menu_.ConfirmOpen());
 	}
 	host_->BeginFrame(screenWidth, screenHeight, menu_.settings.uiScale);
 	BeginDrawing();
@@ -375,24 +331,6 @@ ConfirmChoice RmlUiMenus::Draw(int screenWidth, int screenHeight)
 	const ConfirmChoice out = pendingChoice_;
 	pendingChoice_ = ConfirmChoice::None;
 	return out;
-}
-
-void RmlUiMenus::UpdateStartHint()
-{
-	Rml::Element *hint = ById(setupDoc_, UiIds::StartHint);
-	if (hint == nullptr)
-	{
-		return;
-	}
-	const bool show = menu_.state == MenuState::SkirmishSetup && !menu_.ConfirmOpen() &&
-					  !menu_.setup.CanStart() && StartHintHovered(context_, setupDoc_);
-	hint->SetProperty("display", Rml::String(show ? "block" : "none"));
-	if (show)
-	{
-		const Vector2 mouse = GetMousePosition();
-		SetHintPosition(hint, static_cast<int>(mouse.x) + kHintOffsetX,
-						static_cast<int>(mouse.y) + kHintOffsetY);
-	}
 }
 
 void RmlUiMenus::DrawRemapScreen(int screenWidth, int screenHeight)

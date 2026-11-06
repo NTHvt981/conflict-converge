@@ -49,7 +49,7 @@ Observations 2 and 4 are each **observed once**.
 
 - Hovering the disabled `Start match` shows `select a map first` next to the
   cursor (obs 2, observed once). The box anchors offset below-right of the rest
-  point, matching the as-built description in `docs/features/skirmish-setup-hint.md`.
+  point, matching the as-built description in `docs/features/cursor-hints.md`.
 - Once a map is selected, hovering the enabled button draws no hint (obs 3 + 4;
   the hover state itself is obs 4, observed once).
 - The issue #79 `CONFIRM` — "a setup-screen smoke where the hint shows under

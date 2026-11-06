@@ -384,7 +384,7 @@ button.hkkey {
 	height: 34dp;
 }
 
-#start-hint {
+#cursor-hint {
 	position: absolute;
 	display: none;
 	pointer-events: none;
