@@ -338,12 +338,7 @@ bool LoadSettings(MenuSettings &settings, const std::string &path)
 
 bool TeamHasUnits(const Registry &registry, TeamId teamID)
 {
-	bool found = false;
-	registry.Each<Unit>([&](Entity, const Unit &unit) {
-		if (unit.teamID == teamID && unit.health > 0.0f)
-		{
-			found = true;
-		}
+	return registry.Any<Unit>([&](Entity, const Unit &unit) {
+		return unit.teamID == teamID && unit.health > 0.0f;
 	});
-	return found;
 }

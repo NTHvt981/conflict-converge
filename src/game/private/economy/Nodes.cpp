@@ -15,18 +15,16 @@ namespace
 
 bool OnDepotEntrance(const Registry &registry, cc::IVec2 tile, TeamId teamID)
 {
-	bool found = false;
-	registry.Each<Building>([&](Entity, const Building &building) {
-		if (found || building.teamID != teamID ||
-			building.state != BuildingState::Operational ||
+	return registry.Any<Building>([&](Entity, const Building &building) {
+		if (building.teamID != teamID || building.state != BuildingState::Operational ||
 			building.type != BuildingType::ResourceDepot)
 		{
-			return;
+			return false;
 		}
 		const cc::IVec2 fp = Footprint(building.type);
-		for (int dy = -1; dy <= fp.y && !found; ++dy)
+		for (int dy = -1; dy <= fp.y; ++dy)
 		{
-			for (int dx = -1; dx <= fp.x && !found; ++dx)
+			for (int dx = -1; dx <= fp.x; ++dx)
 			{
 				if (dx >= 0 && dx < fp.x && dy >= 0 && dy < fp.y)
 				{
@@ -34,12 +32,12 @@ bool OnDepotEntrance(const Registry &registry, cc::IVec2 tile, TeamId teamID)
 				}
 				if (tile == cc::IVec2(building.tileX + dx, building.tileY + dy))
 				{
-					found = true;
+					return true;
 				}
 			}
 		}
+		return false;
 	});
-	return found;
 }
 
 cc::IVec2 NearestDepotEntrance(const Registry &registry, const TileMap &map, cc::IVec2 from,
@@ -101,19 +99,14 @@ void OrderHarvestMove(Registry &registry, Unit &unit, Entity id, const TileMap &
 
 bool HarvestFieldClaimed(const Registry &registry, cc::IVec2 tile, Entity self, TeamId teamID)
 {
-	bool claimed = false;
-	registry.Each<Unit>([&](Entity id, const Unit &unit) {
-		if (claimed || id == self || unit.teamID != teamID || unit.health <= 0.0f)
+	return registry.Any<Unit>([&](Entity id, const Unit &unit) {
+		if (id == self || unit.teamID != teamID || unit.health <= 0.0f)
 		{
-			return;
+			return false;
 		}
 		const Harvester *other = registry.Get<Harvester>(id);
-		if (other != nullptr && other->nodeTile == tile)
-		{
-			claimed = true;
-		}
+		return other != nullptr && other->nodeTile == tile;
 	});
-	return claimed;
 }
 
 bool ResourceNode::IsDepleted() const

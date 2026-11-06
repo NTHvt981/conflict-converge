@@ -33,6 +33,7 @@ public:
 
 	template <typename T, typename Fn> void Each(Fn fn);
 	template <typename T, typename Fn> void Each(Fn fn) const;
+	template <typename T, typename Pred> bool Any(Pred pred) const;
 
 	void Clear();
 
@@ -153,4 +154,21 @@ template <typename T, typename Fn> void Registry::Each(Fn fn) const
 	{
 		fn(pair.first, pair.second);
 	}
+}
+
+template <typename T, typename Pred> bool Registry::Any(Pred pred) const
+{
+	auto it = pools_.find(std::type_index(typeid(T)));
+	if (it == pools_.end())
+	{
+		return false;
+	}
+	for (const auto &pair : static_cast<const Pool<T> *>(it->second.get())->data)
+	{
+		if (pred(pair.first, pair.second))
+		{
+			return true;
+		}
+	}
+	return false;
 }
