@@ -154,7 +154,6 @@ void RunSimulationTests()
 		constexpr float kDt = 1.0f / 60.0f;
 		std::vector<Entity> spawned;
 		std::vector<cc::IVec2> spawnTiles;
-		std::vector<bool> hadOrder;
 		std::vector<int> spawnFrames;
 		for (int i = 0; i < 3600 && spawned.size() < 2; ++i)
 		{
@@ -174,17 +173,14 @@ void RunSimulationTests()
 				spawned.push_back(id);
 				spawnTiles.push_back(cc::WorldToTile(cc::ToGlm(unit.position)));
 				spawnFrames.push_back(i);
-				const Mover *mover = (*fx.registry).Get<Mover>(id);
-				hadOrder.push_back(mover != nullptr &&
-								   (mover->hasMoveOrder || mover->hasPath));
 			});
 		}
 		CC_CHECK(spawned.size() == 2);
 		CC_CHECK(spawnTiles[0] == cc::IVec2(3, 4));
 		CC_CHECK(spawnTiles[1] == cc::IVec2(13, 12));
 		CC_CHECK(spawnFrames[1] < 200); // two producers share the head: ~150, not 300
-		CC_CHECK(hadOrder[0] && hadOrder[1]);
 
+		std::vector<bool> ordered(spawned.size(), false);
 		bool arrived = false;
 		for (int i = 0; i < 3600 && !arrived; ++i)
 		{
@@ -193,6 +189,11 @@ void RunSimulationTests()
 			for (std::size_t k = 0; k < spawned.size(); ++k)
 			{
 				const Unit *unit = fx.registry->Get<Unit>(spawned[k]);
+				const Mover *mover = fx.registry->Get<Mover>(spawned[k]);
+				if (mover != nullptr && (mover->hasMoveOrder || mover->hasPath))
+				{
+					ordered[k] = true;
+				}
 				const cc::IVec2 want = (k == 0) ? cc::IVec2(2, 6) : cc::IVec2(12, 14);
 				if (unit == nullptr || !(cc::WorldToTile(cc::ToGlm(unit->position)) == want))
 				{
@@ -201,5 +202,6 @@ void RunSimulationTests()
 			}
 		}
 		CC_CHECK(arrived);
+		CC_CHECK(ordered[0] && ordered[1]);
 	}
 }

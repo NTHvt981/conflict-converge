@@ -7,6 +7,7 @@
 #include "units/AICommander.h"
 #include "app/data/AIConfig.h"
 #include "economy/Building.h" // building-count query
+#include "units/Deploy.h"
 #include "units/Extensions.h"
 #include "economy/Nodes.h"
 #include "world/FogOfWar.h"
@@ -215,6 +216,7 @@ void RunAICommanderTests()
 	{
 		left.Update(kDt);
 		right.Update(kDt);
+		UpdateDeploy(simRegistry, simMap, nullptr, kDt);
 		UpdateBuildingConstruction(simRegistry, kDt); // sites -> Operational, like Game
 		simNodes.Update(kDt);
 		simNodes.GatherTick(simRegistry, simResources, kDt);

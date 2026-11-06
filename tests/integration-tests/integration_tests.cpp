@@ -8,6 +8,7 @@
 #include "units/Combat.h" // G2: headless drivers step UpdateProjectiles
 #include "core/Event.h"
 #include "units/AICommander.h" // Difficulty ladder decides games
+#include "units/Deploy.h"
 #include "world/FogOfWar.h" // WorldState carries fog memory
 #include "app/ui/GameCamera.h" // WorldState carries the camera
 #include "core/MathUtils.h"
@@ -102,6 +103,7 @@ int RunAISoak(Registry &registry, TileMap &map, ResourceNodes &nodes, AICommande
 	{
 		first.Update(kDt);
 		second.Update(kDt);
+		UpdateDeploy(registry, map, nullptr, kDt);
 		UpdateBuildingConstruction(registry, kDt); // sites -> Operational, like Game
 		nodes.Update(kDt);
 		registry.Each<Unit>([&](Entity id, Unit &unit) {

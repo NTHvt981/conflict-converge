@@ -6,12 +6,16 @@
 #include "app/data/UnitConfig.h"
 #include "app/input/Selection.h"
 #include "app/ui/GameCamera.h"
+#include "economy/Building.h"
 #include "units/Combat.h"
+#include "units/Deploy.h"
 #include "units/Deployment.h"
 #include "units/Extensions.h"
 #include "units/Targeting.h"
 #include "units/Unit.h"
 #include "units/UnitInternal.h"
+
+#include <cmath>
 #include "units/UnitStats.h"
 #include "world/TileMap.h"
 
@@ -196,5 +200,129 @@ void RunDeployTests()
 		CC_CHECK(victim.health < before);
 		SelectOnly(registry, plain);
 		CC_CHECK(registry.Get<Unit>(plain)->isSelected);
+	}
+
+	// --- BeginDeploy: door placement, member budget, no reserve, no orders ---
+	{
+		Registry registry;
+		TileMap map(20, 15);
+		OccupancyGrid occ(20, 15);
+		const Entity bootcamp =
+			PlaceBuilding(registry, map, BuildingType::Bootcamp, kPlayerTeam, 2, 2);
+		CC_CHECK(bootcamp != kInvalidEntity);
+		const Entity unitId =
+			SpawnTileUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 8, 8);
+		BeginDeploy(registry, unitId, bootcamp, map, &occ, 2);
+
+		CC_CHECK(IsDeploying(registry, unitId));
+		const Deployment *deployment = registry.Get<Deployment>(unitId);
+		CC_CHECK(deployment != nullptr);
+		CC_CHECK(deployment->membersTotal == 5);
+		const cc::IVec2 door =
+			BuildingSpawnTile(map, &occ, *registry.Get<Building>(bootcamp));
+		CC_CHECK(cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(unitId)->position)) == door);
+		CC_CHECK(occ.GetUnit(door).entity == kOccEmpty);
+		CC_CHECK(!registry.Has<Mover>(unitId) || (!registry.Get<Mover>(unitId)->hasMoveOrder &&
+												  !registry.Get<Mover>(unitId)->hasPath));
+		CC_CHECK(!registry.Has<Orders>(unitId) || !registry.Get<Orders>(unitId)->attackMove);
+		CC_CHECK(registry.Get<Unit>(unitId)->controlGroups == 0);
+
+		const Entity seeker =
+			SpawnTileUnit(registry, UnitType::RifleInfantry, kEnemyTeam, door.x + 2, door.y);
+		CC_CHECK(AcquireTarget(registry, seeker, nullptr, nullptr) != unitId);
+	}
+
+	// --- UpdateDeploy: staggered exit, slot walk, assembly, rally, group bit ---
+	{
+		Registry registry;
+		TileMap map(20, 15);
+		OccupancyGrid occ(20, 15);
+		const Entity bootcamp =
+			PlaceBuilding(registry, map, BuildingType::Bootcamp, kPlayerTeam, 2, 2);
+		registry.Get<Building>(bootcamp)->rallyTile = { 10, 12 };
+		const Entity unitId =
+			SpawnTileUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 8, 8);
+		BeginDeploy(registry, unitId, bootcamp, map, &occ, 2);
+		const cc::IVec2 door =
+			BuildingSpawnTile(map, &occ, *registry.Get<Building>(bootcamp));
+
+		constexpr float kDt = 1.0f / 60.0f;
+		const float delay = kDeployExitDelayPerMember;
+		// The k-th member exits when cumulative time crosses k * delay;
+		// ceil gives that tick exactly, and any tick before it is safely
+		// below the threshold.
+		const auto ticksToSpawn = [&](float member) {
+			return static_cast<int>(std::ceil(member * delay / kDt));
+		};
+		const int firstExit = ticksToSpawn(1);
+		const auto run = [&](int ticks) {
+			for (int i = 0; i < ticks; ++i)
+			{
+				UpdateDeploy(registry, map, &occ, kDt);
+			}
+		};
+		run(firstExit - 1);
+		CC_CHECK(registry.Get<Deployment>(unitId)->membersSpawned == 0);
+		run(1);
+		CC_CHECK(registry.Get<Deployment>(unitId)->membersSpawned == 1);
+		run(ticksToSpawn(2) - firstExit - 1);
+		CC_CHECK(registry.Get<Deployment>(unitId)->membersSpawned == 1);
+		run(1);
+		CC_CHECK(registry.Get<Deployment>(unitId)->membersSpawned == 2);
+		const cc::Vec2 walking = registry.Get<Deployment>(unitId)->memberSpawnedPos[1];
+		run(1);
+		CC_CHECK(!(registry.Get<Deployment>(unitId)->memberSpawnedPos[1] == walking));
+
+		for (int i = 0; i < 1200 && IsDeploying(registry, unitId); ++i)
+		{
+			UpdateDeploy(registry, map, &occ, kDt);
+		}
+		CC_CHECK(!IsDeploying(registry, unitId));
+		CC_CHECK(cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(unitId)->position)) == door);
+		CC_CHECK(occ.GetUnit(door).entity == unitId);
+		const Mover *mover = registry.Get<Mover>(unitId);
+		CC_CHECK(mover != nullptr && (mover->hasMoveOrder || mover->hasPath));
+		CC_CHECK((registry.Get<Unit>(unitId)->controlGroups & (1u << 2)) != 0);
+
+		// --- post-assembly: targetable and damageable like any other squad ---
+		const Entity seeker = SpawnTileUnit(registry, UnitType::RifleInfantry, kEnemyTeam,
+											door.x + 2, door.y);
+		CC_CHECK(AcquireTarget(registry, seeker, nullptr, nullptr) == unitId);
+		Unit &attacker = *registry.Get<Unit>(seeker);
+		attacker.attackPower = 7;
+		attacker.damageType = DamageType::KINETIC;
+		attacker.cooldownTime = 1.0f;
+		Unit &victim = *registry.Get<Unit>(unitId);
+		const float before = victim.health;
+		CC_CHECK(ResolveAttack(registry, unitId, attacker, GetCombatState(registry, seeker),
+							   victim, GetCombatState(registry, unitId)) > 0.0f);
+		CC_CHECK(victim.health < before);
+	}
+
+	// --- determinism: cumulative time alone drives the exit cadence ---
+	{
+		const auto spawnedAfter = [](float step, int ticks) {
+			Registry registry;
+			TileMap map(20, 15);
+			OccupancyGrid occ(20, 15);
+			const Entity bootcamp =
+				PlaceBuilding(registry, map, BuildingType::Bootcamp, kPlayerTeam, 2, 2);
+			const Entity unitId =
+				SpawnTileUnit(registry, UnitType::RifleInfantry, kPlayerTeam, 8, 8);
+			BeginDeploy(registry, unitId, bootcamp, map, &occ, -1);
+			for (int i = 0; i < ticks; ++i)
+			{
+				UpdateDeploy(registry, map, &occ, step);
+			}
+			const Deployment *deployment = registry.Get<Deployment>(unitId);
+			return deployment == nullptr ? -1 : deployment->membersSpawned;
+		};
+		// Same total time, quantized differently: splitting the walk into
+		// pieces must not change how many members have exited. Both totals
+		// (1.5x and 0.75x of the stagger) sit clear of any threshold.
+		const int coarse = spawnedAfter(kDeployExitDelayPerMember * 0.5f, 3);
+		const int fine = spawnedAfter(kDeployExitDelayPerMember * 0.25f, 6);
+		CC_CHECK(coarse == 1);
+		CC_CHECK(coarse == fine);
 	}
 }
