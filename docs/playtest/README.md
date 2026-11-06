@@ -79,6 +79,7 @@ frames per note is the budget.
 
 | Note | Build | Question | Decision |
 |---|---|---|---|
+| [2026-11-05-smoke-and-first-order.md](2026-11-05-smoke-and-first-order.md) | Release `2066fcb` | Can a player reach a match and issue one move order from what the screens say, and does every screen name the next action? | retune |
 | [2026-11-06-skirmish-setup-hint](2026-11-06-skirmish-setup-hint.md) | Release `33ac981` | disabled `Start match` cursor hint shows before selection, none after | keep |
 
 ## Decision log
@@ -88,4 +89,5 @@ because of a playtest.
 
 | Date | Note | Decision | Change | Confirmed by |
 |---|---|---|---|---|
+| 2026-11-05 | [2026-11-05-smoke-and-first-order.md](2026-11-05-smoke-and-first-order.md) | retune | Skirmish setup: show a "select a map first" hint next to the disabled `Start match` ([#79](https://github.com/NTHvt981/conflict-converge/issues/79)) | [2026-11-06-skirmish-setup-hint](2026-11-06-skirmish-setup-hint.md) |
 | 2026-11-06 | [2026-11-06-skirmish-setup-hint](2026-11-06-skirmish-setup-hint.md) | keep | none | the issue #79 `CONFIRM` run in that note |
