@@ -11,10 +11,13 @@ struct Deployment
 	int membersTotal = 0;
 	int membersSpawned = 0;
 	int membersDied = 0;
+	int groupBit = -1;
 	float nextSpawnAt = 0.0f;
 	float exitDelay = 0.0f;
 	cc::IVec2 doorTile{ -1, -1 };
 	std::vector<cc::Vec2> memberSpawnedPos;
+	std::vector<cc::Vec2> memberSlotPos;
+	std::vector<bool> memberParked;
 };
 
 inline bool IsDeploying(const Registry &registry, Entity id)

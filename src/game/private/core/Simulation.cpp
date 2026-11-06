@@ -3,10 +3,10 @@
 
 #include "core/PlayingInput.h"
 #include "economy/Building.h"
+#include "units/Deploy.h"
 #include "units/Extensions.h"
 #include "app/ui/Shake.h"
 #include "units/Unit.h"
-#include "world/Pathfinder.h"
 #include <cmath>
 #include <vector>
 
@@ -131,6 +131,7 @@ void Simulation::Step(float dt)
 	StepEconomy(dt);
 	RefreshProducers();
 	PumpProduction(dt);
+	UpdateDeploy(registry_, map_, &occ_, dt);
 	RecordReplayFrame(dt);
 	UpdateStructures(dt);
 	UpdateRetreat();
@@ -309,7 +310,6 @@ void Simulation::PumpQueue(ProductionQueue &queue, BuildingType type, int &curso
 	{
 		return;
 	}
-	const cc::IVec2 rally = producer->rallyTile;
 	const cc::IVec2 spawnTile = BuildingSpawnTile(map_, &occ_, *producer);
 	const Vector2 spawnPos = cc::ToRaylib(cc::TileToWorld(spawnTile.x, spawnTile.y));
 	for (int n = 0; n < producers; ++n)
@@ -321,19 +321,7 @@ void Simulation::PumpQueue(ProductionQueue &queue, BuildingType type, int &curso
 			continue;
 		}
 		++cursor;
-		if (Unit *fresh = registry_.Get<Unit>(spawned))
-		{
-			if (!(cc::WorldToTile(cc::ToGlm(fresh->position)) == rally))
-			{
-				IssuePathOrderFootprint(*fresh,
-										MakeOrderContext(registry_, spawned, map_, &occ_),
-										cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)));
-			}
-			if (const int autoAddGroupBit = input_.AutoAddGroupBit(); autoAddGroupBit >= 0)
-			{
-				fresh->controlGroups |= (1u << static_cast<unsigned int>(autoAddGroupBit));
-			}
-		}
+		BeginDeploy(registry_, spawned, producerId, map_, &occ_, input_.AutoAddGroupBit());
 	}
 }
 

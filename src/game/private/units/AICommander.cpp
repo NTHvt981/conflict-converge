@@ -4,6 +4,7 @@
 
 #include "app/data/AIConfig.h"
 #include "economy/Building.h"
+#include "units/Deploy.h"
 #include "units/Deployment.h"
 #include "units/Extensions.h"
 #include "units/Formation.h"
@@ -355,7 +356,6 @@ void AICommander::Update(float dt)
 		{
 			return;
 		}
-		const cc::IVec2 rally = producer->rallyTile;
 		const cc::IVec2 spawnTile = BuildingSpawnTile(map_, occ_, *producer);
 		const Vector2 spawnPos = cc::ToRaylib(cc::TileToWorld(spawnTile.x, spawnTile.y));
 		for (int n = 0; n < producers; ++n)
@@ -367,14 +367,7 @@ void AICommander::Update(float dt)
 				continue;
 			}
 			++cursor;
-			if (Unit *fresh = registry_.Get<Unit>(spawned))
-			{
-				if (!(cc::WorldToTile(cc::ToGlm(fresh->position)) == rally))
-				{
-					OrderMove(*fresh, spawned,
-							  cc::ToRaylib(cc::TileToWorld(rally.x, rally.y)));
-				}
-			}
+			BeginDeploy(registry_, spawned, producerId, map_, occ_, -1);
 		}
 	};
 	if (HasBootcamp())
