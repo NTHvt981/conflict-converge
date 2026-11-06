@@ -1,6 +1,7 @@
 #include "units/Combat.h"
 
 #include "economy/Building.h"
+#include "units/Deployment.h"
 #include "units/Extensions.h"
 #include "units/UnitInternal.h"
 #include "units/UnitTypeInfo.h"
@@ -13,9 +14,13 @@ float Effectiveness(DamageType dealt, ArmorType armor)
 	return rules.damageMatrix[static_cast<int>(dealt)][static_cast<int>(armor)];
 }
 
-float ResolveAttack(Unit &attacker, CombatState &attackerCombat, Unit &defender,
-					CombatState &defenderCombat)
+float ResolveAttack(const Registry &registry, Entity defenderId, Unit &attacker,
+					CombatState &attackerCombat, Unit &defender, CombatState &defenderCombat)
 {
+	if (IsDeploying(registry, defenderId))
+	{
+		return 0.0f;
+	}
 	const float effective = static_cast<float>(attacker.attackPower) *
 							Effectiveness(attacker.damageType, defender.armorType);
 	defender.health -= effective;
@@ -49,7 +54,8 @@ void ResolveGroundAttack(Registry &registry, Unit &attacker, CombatState &attack
 	Vector2 bestPos = {};
 	float bestDistSq = 64.0f * 64.0f;
 	registry.Each<Unit>([&](Entity id, const Unit &unit) {
-		if (unit.health <= 0.0f || unit.teamID == attacker.teamID || IsEmbarked(registry, id))
+		if (unit.health <= 0.0f || unit.teamID == attacker.teamID || IsEmbarked(registry, id) ||
+			IsDeploying(registry, id))
 		{
 			return;
 		}
@@ -70,7 +76,7 @@ void ResolveGroundAttack(Registry &registry, Unit &attacker, CombatState &attack
 	}
 	if (Unit *defender = registry.Get<Unit>(best))
 	{
-		ResolveAttack(attacker, attackerCombat, *defender,
+		ResolveAttack(registry, best, attacker, attackerCombat, *defender,
 					  GetCombatState(registry, best));
 	}
 }
@@ -88,7 +94,7 @@ bool HitboxesOverlap(const Unit &a, const Unit &b)
 void QueryUnitsInRect(Registry &registry, Rectangle area, TeamId teamID, std::vector<Entity> &out)
 {
 	registry.Each<Unit>([&](Entity id, const Unit &unit) {
-		if (unit.health <= 0.0f || IsEmbarked(registry, id))
+		if (unit.health <= 0.0f || IsEmbarked(registry, id) || IsDeploying(registry, id))
 		{
 			return;
 		}
@@ -161,7 +167,8 @@ void ResolveStrike(Registry &registry, Entity attackerId, Unit &attacker,
 	}
 	if (Unit *target = registry.Get<Unit>(targetId))
 	{
-		ResolveAttack(attacker, attackerCombat, *target, GetCombatState(registry, targetId));
+		ResolveAttack(registry, targetId, attacker, attackerCombat, *target,
+					  GetCombatState(registry, targetId));
 	}
 }
 

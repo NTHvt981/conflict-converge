@@ -4,6 +4,7 @@
 #include "units/UnitInternal.h"
 #include "economy/Building.h"
 #include "units/Combat.h"
+#include "units/Deployment.h"
 #include "units/Extensions.h"
 #include "units/Targeting.h"
 #include "world/FogOfWar.h"
@@ -93,7 +94,8 @@ bool ValidateTarget(Registry &registry, const Unit &seeker, Entity id, const Fog
 	if (Unit *target = registry.Get<Unit>(id))
 	{
 		if (target->health <= 0.0f || target->teamID == seeker.teamID ||
-			IsEmbarked(registry, id) || LostToFog(seeker, *target, fog))
+			IsEmbarked(registry, id) || IsDeploying(registry, id) ||
+			LostToFog(seeker, *target, fog))
 		{
 			return false;
 		}
@@ -226,7 +228,8 @@ void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector
 					TeamId teamID, float healthFraction, bool onlyAutoRetreat)
 {
 	registry.Each<Unit>([&](Entity id, Unit &unit) {
-		if (unit.teamID != teamID || unit.health <= 0.0f || unit.type == UnitType::Engineer)
+		if (unit.teamID != teamID || unit.health <= 0.0f || unit.type == UnitType::Engineer ||
+			IsDeploying(registry, id))
 		{
 			return;
 		}

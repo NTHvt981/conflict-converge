@@ -4,6 +4,7 @@
 #include "units/UnitInternal.h"
 #include "economy/Building.h"
 #include "units/Combat.h"
+#include "units/Deployment.h"
 #include "units/Extensions.h"
 #include "core/MathUtils.h"
 #include "units/Targeting.h"
@@ -52,7 +53,7 @@ bool RepairAim(const Registry &registry, const Unit &engineer, Entity target, Ve
 	if (const Unit *u = registry.Get<Unit>(target))
 	{
 		if (u->health <= 0.0f || u->teamID != engineer.teamID || !IsRepairableUnit(*u) ||
-			IsEmbarked(registry, target))
+			IsEmbarked(registry, target) || IsDeploying(registry, target))
 		{
 			return false;
 		}
@@ -126,7 +127,7 @@ bool HealAim(const Registry &registry, const Unit &medic, Entity target, Vector2
 	if (const Unit *u = registry.Get<Unit>(target))
 	{
 		if (u->health <= 0.0f || u->teamID != medic.teamID || !IsHealableUnit(*u) ||
-			IsEmbarked(registry, target))
+			IsEmbarked(registry, target) || IsDeploying(registry, target))
 		{
 			return false;
 		}

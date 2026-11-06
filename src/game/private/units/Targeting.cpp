@@ -2,6 +2,7 @@
 
 #include "economy/Building.h"
 #include "units/Combat.h"
+#include "units/Deployment.h"
 #include "units/Extensions.h"
 #include "units/UnitFactory.h"
 #include "units/UnitInternal.h"
@@ -48,7 +49,7 @@ Entity AcquireTarget(const Registry &registry, Entity seeker, const FogOfWar *fo
 	Vector2 bestPos = {};
 	registry.Each<Unit>([&](Entity candidate, const Unit &unit) {
 		if (candidate == seeker || unit.teamID == self->teamID || unit.health <= 0.0f ||
-			IsEmbarked(registry, candidate))
+			IsEmbarked(registry, candidate) || IsDeploying(registry, candidate))
 		{
 			return;
 		}

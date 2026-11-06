@@ -13,8 +13,8 @@ float Effectiveness(DamageType dealt, ArmorType armor);
 
 // Seconds a victim flashes after taking a hit (overlay + number).
 inline constexpr float kHitFlashDuration = 0.25f;
-float ResolveAttack(Unit &attacker, CombatState &attackerCombat, Unit &defender,
-					CombatState &defenderCombat);
+float ResolveAttack(const Registry &registry, Entity defenderId, Unit &attacker,
+					CombatState &attackerCombat, Unit &defender, CombatState &defenderCombat);
 
 float ResolveBuildingAttack(Unit &attacker, CombatState &attackerCombat, Building &building);
 

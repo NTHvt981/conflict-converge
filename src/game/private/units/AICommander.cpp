@@ -4,6 +4,7 @@
 
 #include "app/data/AIConfig.h"
 #include "economy/Building.h"
+#include "units/Deployment.h"
 #include "units/Extensions.h"
 #include "units/Formation.h"
 #include "economy/Nodes.h"
@@ -71,8 +72,9 @@ AIDifficulty AICommander::Difficulty() const
 int AICommander::CombatUnitCount() const
 {
 	int count = 0;
-	registry_.Each<Unit>([&](Entity, const Unit &unit) {
-		if (unit.teamID == teamID_ && unit.health > 0.0f && unit.type != UnitType::Engineer)
+	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
+		if (unit.teamID == teamID_ && unit.health > 0.0f && unit.type != UnitType::Engineer &&
+			!IsDeploying(registry_, id))
 		{
 			++count;
 		}
@@ -518,7 +520,8 @@ void AICommander::PruneTeam(AITeam &team)
 	for (Entity id : team.members)
 	{
 		const Unit *unit = registry_.Get<Unit>(id);
-		if (unit != nullptr && unit->health > 0.0f && unit->teamID == teamID_)
+		if (unit != nullptr && unit->health > 0.0f && unit->teamID == teamID_ &&
+			!IsDeploying(registry_, id))
 		{
 			alive.push_back(id);
 		}
@@ -774,7 +777,8 @@ std::vector<Entity> AICommander::GatherUnassignedUnits()
 {
 	std::vector<Entity> unassigned;
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
-		if (unit.teamID != teamID_ || unit.health <= 0.0f || unit.type == UnitType::Engineer)
+		if (unit.teamID != teamID_ || unit.health <= 0.0f || unit.type == UnitType::Engineer ||
+			IsDeploying(registry_, id))
 		{
 			return;
 		}

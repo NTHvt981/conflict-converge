@@ -2,6 +2,7 @@
 
 #include "units/UnitInternal.h"
 #include "units/Combat.h"
+#include "units/Deployment.h"
 #include "units/Extensions.h"
 #include "world/FogOfWar.h"
 #include "core/MathUtils.h"
@@ -322,7 +323,7 @@ void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,
 			return;
 		}
 
-		if (IsEmbarked(registry, id))
+		if (IsEmbarked(registry, id) || IsDeploying(registry, id))
 		{
 			return;
 		}

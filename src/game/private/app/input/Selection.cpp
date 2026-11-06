@@ -1,6 +1,7 @@
 #include "app/input/Selection.h"
 
 #include "economy/Building.h"
+#include "units/Deployment.h"
 #include "units/Extensions.h"
 #include "core/MathUtils.h"
 #include "units/Unit.h"
@@ -9,7 +10,8 @@ Entity PickUnitAt(Registry &registry, Vector2 worldPos)
 {
 	Entity found = kInvalidEntity;
 	registry.Each<Unit>([&](Entity entity, Unit &unit) {
-		if (found != kInvalidEntity || IsEmbarked(registry, entity))
+		if (found != kInvalidEntity || IsEmbarked(registry, entity) ||
+			IsDeploying(registry, entity))
 		{
 			return;
 		}
@@ -25,7 +27,10 @@ Entity PickUnitAt(Registry &registry, Vector2 worldPos)
 
 void SelectOnly(Registry &registry, Entity entity)
 {
-	registry.Each<Unit>([&](Entity current, Unit &unit) { unit.isSelected = (current == entity); });
+	const bool pickable = !IsDeploying(registry, entity);
+	registry.Each<Unit>([&](Entity current, Unit &unit) {
+		unit.isSelected = pickable && current == entity;
+	});
 }
 
 void DeselectAll(Registry &registry)
@@ -85,7 +90,7 @@ int SelectInRect(Registry &registry, Rectangle worldBox, bool add)
 										  worldBox.y + worldBox.height });
 	int picked = 0;
 	registry.Each<Unit>([&](Entity id, Unit &unit) {
-		if (IsEmbarked(registry, id))
+		if (IsEmbarked(registry, id) || IsDeploying(registry, id))
 		{
 			unit.isSelected = false;
 			return;
@@ -173,8 +178,8 @@ int RecallControlGroup(Registry &registry, int groupBit)
 	}
 	const unsigned int mask = GroupMask(groupBit);
 	int picked = 0;
-	registry.Each<Unit>([&](Entity, Unit &unit) {
-		unit.isSelected = (unit.controlGroups & mask) != 0;
+	registry.Each<Unit>([&](Entity id, Unit &unit) {
+		unit.isSelected = (unit.controlGroups & mask) != 0 && !IsDeploying(registry, id);
 		if (unit.isSelected)
 		{
 			++picked;
@@ -186,8 +191,9 @@ int RecallControlGroup(Registry &registry, int groupBit)
 int SelectAllOfType(Registry &registry, UnitType type, TeamId teamID, bool add)
 {
 	int picked = 0;
-	registry.Each<Unit>([&](Entity, Unit &unit) {
-		const bool match = unit.teamID == teamID && unit.type == type;
+	registry.Each<Unit>([&](Entity id, Unit &unit) {
+		const bool match = unit.teamID == teamID && unit.type == type &&
+						   !IsDeploying(registry, id);
 		if (!add)
 		{
 			unit.isSelected = match;
@@ -211,12 +217,13 @@ int SelectAllOfTypeInRect(Registry &registry, Rectangle worldViewport, UnitType 
 										{ worldViewport.x + worldViewport.width,
 										  worldViewport.y + worldViewport.height });
 	int picked = 0;
-	registry.Each<Unit>([&](Entity, Unit &unit) {
+	registry.Each<Unit>([&](Entity id, Unit &unit) {
 		const float cx = unit.position.x + cc::kHalfTile;
 		const float cy = unit.position.y + cc::kHalfTile;
 		const bool inside = cx >= box.x && cx <= box.x + box.width && cy >= box.y &&
 							cy <= box.y + box.height;
-		const bool match = inside && unit.teamID == teamID && unit.type == type;
+		const bool match = inside && unit.teamID == teamID && unit.type == type &&
+						   !IsDeploying(registry, id);
 		if (!add)
 		{
 			unit.isSelected = match;
