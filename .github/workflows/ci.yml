@@ -58,5 +58,21 @@ jobs:
         run: msbuild prj/ConflictConverge.sln /p:Configuration=${{ matrix.config }} /p:Platform=x64 /v:minimal /nologo /clp:ErrorsOnly
 
       - name: Run tests (${{ matrix.config }}, exit 1 on failure)
-        run: prj/bin/${{ matrix.config }}/conflict-converge-test.exe
+        run: |
+          prj/bin/${{ matrix.config }}/conflict-converge-test.exe 2>&1 | Tee-Object -FilePath test-output.txt
+          exit $LASTEXITCODE
         timeout-minutes: 15
+
+      - name: Report test warnings (soft checks, does not fail the job)
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path test-output.txt)
+          {
+            $warns = Get-Content test-output.txt | Where-Object { $_.StartsWith('WARN ') }
+            if ($warns)
+            {
+              Write-Host "::warning title=Soft checks warned::$($warns.Count) softened check(s) failed:"
+              $warns | ForEach-Object { Write-Host "::warning::$_" }
+            }
+          }
