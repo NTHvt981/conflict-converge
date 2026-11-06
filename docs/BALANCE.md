@@ -48,6 +48,9 @@ unit roles and pacing, not faction asymmetry. All values from
 Harvest: 10 iron/s or 8 oil/s per Engineer on a live node. Starting funds:
 1000 iron / 500 oil (both sides, fair rules).
 
+Replacement rule: a team replaces lost Engineers only while it holds an
+Operational Depot; without one, unloading (income) and replacement both stop.
+
 ## AI waves (M8)
 
 | Difficulty | Harvesters | Threshold | Scout | Cooldown | Comp |
