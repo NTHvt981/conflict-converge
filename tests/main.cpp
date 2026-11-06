@@ -69,6 +69,7 @@ void RunSkirmishTests();
 void RunFootprintTests();
 void RunSpriteDataTests();
 void RunUnitConfigTests();
+void RunCombatRulesTests();
 void RunMovementStallTests();
 void RunYieldTests();
 void RunUnitStackResolutionTests();
@@ -151,6 +152,7 @@ const Suite kSuites[] = {
 	{ "Footprint", RunFootprintTests },
 	{ "SpriteData", RunSpriteDataTests },
 	{ "UnitConfig", RunUnitConfigTests },
+	{ "CombatRules", RunCombatRulesTests },
 	{ "MovementStall", RunMovementStallTests },
 	{ "Yield", RunYieldTests },
 	{ "UnitStackResolution", RunUnitStackResolutionTests },

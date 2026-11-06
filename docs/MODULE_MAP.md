@@ -106,7 +106,8 @@ app/match: Menu, Skirmish
   position/team/selection)
 - `UnitTypeInfo.h` - Per-type descriptor table: name/cost/art stems/footprint/locomotor;
   `InfoOf` is the only reader
-- `Combat.h` - 3x3 damage matrix (`Effectiveness`), `ResolveAttack` (scales, restarts
+- `Combat.h` - Damage-matrix `Effectiveness` reads `data/configs/combat_rules.json`
+  via `app/data/CombatRules.h` (compiled-default fallback), `ResolveAttack` (scales, restarts
   cooldown, stamps hit-flash), hitboxes, crush rule, M13 `ResolveBuildingAttack`;
   M3 `ResolveStrike`/`ResolveStrikeGround` dispatch (direct vs arcing launch) +
   `UpdateProjectiles` ballistics (dodgeable AoE, no friendly fire, never persisted)
@@ -176,6 +177,11 @@ app/match: Menu, Skirmish
 - `ConfigError.h` - Failure cause shared by the config loaders (`FileUnreadable`,
   `MalformedJson`, `UnknownName`, `Mismatch`, `UnknownAbilityKey`, `InvalidData`,
   `FileUnwritable`) + `Describe` for log lines and the editor status. Header-only
+- `CombatRules.h` - `data/configs/combat_rules.json` damage-matrix catalog:
+  `ParseCombatRulesJson`/`LoadCombatRulesFile` return
+  `expected<CombatRules, ConfigError>`, the active matrix is read through
+  `ActiveCombatRules` with compiled defaults; `RefreshCombatRules` probes a
+  directory and the search variant covers the repo-root-relative candidates
 - `AIConfig.h` - `data/configs/ai.json` difficulty catalog: `ParseAIDifficultyJson`/
   `LoadAIDifficultyFile` return `expected<AIDifficultyParams, ConfigError>`, the active
   per-difficulty params are read through `ActiveAIDifficultyParams` with compiled fallbacks

@@ -4,16 +4,13 @@
 #include "units/Extensions.h"
 #include "units/UnitInternal.h"
 #include "units/UnitTypeInfo.h"
+#include "app/data/CombatRules.h"
 #include "app/data/UnitConfig.h"
 
 float Effectiveness(DamageType dealt, ArmorType armor)
 {
-	static constexpr float kMatrix[3][3] = {
-		{ 1.00f, 0.75f, 0.50f },
-		{ 1.25f, 1.00f, 0.75f },
-		{ 0.50f, 1.25f, 1.00f },
-	};
-	return kMatrix[static_cast<int>(dealt)][static_cast<int>(armor)];
+	const CombatRules &rules = ActiveCombatRules();
+	return rules.damageMatrix[static_cast<int>(dealt)][static_cast<int>(armor)];
 }
 
 float ResolveAttack(Unit &attacker, CombatState &attackerCombat, Unit &defender,

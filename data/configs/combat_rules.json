@@ -1,0 +1,19 @@
+{
+  "damageMatrix": {
+    "KINETIC": {
+      "STEEL": 1.0,
+      "RUBBER": 0.75,
+      "COMPOSITE": 0.5
+    },
+    "EXPLOSIVE": {
+      "STEEL": 1.25,
+      "RUBBER": 1.0,
+      "COMPOSITE": 0.75
+    },
+    "ENERGY": {
+      "STEEL": 0.5,
+      "RUBBER": 1.25,
+      "COMPOSITE": 1.0
+    }
+  }
+}

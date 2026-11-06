@@ -4,7 +4,8 @@ Mirror factions (Q82): both sides share one stat table, so balance is about
 unit roles and pacing, not faction asymmetry. All values from
 `UnitStats.cpp` (`BaseStats`), `UnitFactory.cpp` (`CostOf`),
 `Production.cpp` (`BuildTime = max(2s, 2 + iron/50)`), `Combat.cpp`
-(damage matrix), `Building.cpp` (structure HP).
+(reading `data/configs/combat_rules.json` for the damage matrix),
+`Building.cpp` (structure HP).
 
 ## Units
 
