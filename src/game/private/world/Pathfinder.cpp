@@ -33,7 +33,15 @@ struct OpenNode
 
 bool operator<(const OpenNode &a, const OpenNode &b)
 {
-	return a.priority > b.priority;
+	if (a.priority != b.priority)
+	{
+		return a.priority > b.priority;
+	}
+	if (a.tile.y != b.tile.y)
+	{
+		return a.tile.y < b.tile.y;
+	}
+	return a.tile.x < b.tile.x;
 }
 
 const cc::IVec2 kDirs8[] = {

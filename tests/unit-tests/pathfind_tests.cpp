@@ -126,6 +126,30 @@ void RunPathfindTests()
 	CC_CHECK(FindPath(blocked, { 1, 1 }, { 2, 2 }).empty()); // blocked goal
 	CC_CHECK(FindPath(blocked, { -1, 0 }, { 1, 1 }).empty()); // out of bounds
 
+	// --- equal-cost corridors: the heap tie-break decides on tile key ---
+	TileMap diamond(7, 7);
+	diamond.Set({ 3, 3 }, TerrainType::Water);
+	const TilePath across = FindPath(diamond, { 0, 3 }, { 6, 3 });
+	CC_CHECK(IsValidRoute(diamond, across, { 0, 3 }, { 6, 3 }));
+	bool viaNorth = false, viaSouth = false;
+	for (cc::IVec2 tile : across)
+	{
+		viaNorth = viaNorth || (tile == cc::IVec2(3, 2));
+		viaSouth = viaSouth || (tile == cc::IVec2(3, 4));
+	}
+	CC_CHECK(viaSouth); // canonical tie-break: larger tile.y pops (heap top) first
+	CC_CHECK(!viaNorth);
+	const TilePath down = FindPath(diamond, { 3, 0 }, { 3, 6 });
+	CC_CHECK(IsValidRoute(diamond, down, { 3, 0 }, { 3, 6 }));
+	bool viaWest = false, viaEast = false;
+	for (cc::IVec2 tile : down)
+	{
+		viaWest = viaWest || (tile == cc::IVec2(2, 3));
+		viaEast = viaEast || (tile == cc::IVec2(4, 3));
+	}
+	CC_CHECK(viaEast); // same rule on the x axis at the y-tied crossing
+	CC_CHECK(!viaWest);
+
 	// --- IssuePathOrder walks around the wall to a snapped arrival ---
 	TileMap map(8, 6);
 	for (int y = 0; y < 5; ++y)
