@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <typeindex>
 #include <unordered_map>
@@ -47,7 +48,7 @@ private:
 
 	template <typename T> struct Pool : IPool
 	{
-		std::unordered_map<Entity, T> data;
+		std::map<Entity, T> data;
 		void RemoveEntity(Entity entity) override
 		{
 			data.erase(entity);
@@ -58,8 +59,8 @@ private:
 		}
 	};
 
-	template <typename T> std::unordered_map<Entity, T> &MutablePool();
-	template <typename T> const std::unordered_map<Entity, T> *FindPool() const;
+	template <typename T> std::map<Entity, T> &MutablePool();
+	template <typename T> const std::map<Entity, T> *FindPool() const;
 
 	std::unordered_map<std::type_index, std::unique_ptr<IPool>> pools_;
 	std::unordered_set<Entity> alive_;
@@ -69,20 +70,20 @@ private:
 	Entity next_ = 1;
 };
 
-template <typename T> std::unordered_map<Entity, T> &Registry::MutablePool()
+template <typename T> std::map<Entity, T> &Registry::MutablePool()
 {
 	auto it = pools_.find(std::type_index(typeid(T)));
 	if (it == pools_.end())
 	{
 		auto pool = std::make_unique<Pool<T>>();
-		std::unordered_map<Entity, T> &data = pool->data;
+		std::map<Entity, T> &data = pool->data;
 		pools_.emplace(std::type_index(typeid(T)), std::move(pool));
 		return data;
 	}
 	return static_cast<Pool<T> *>(it->second.get())->data;
 }
 
-template <typename T> const std::unordered_map<Entity, T> *Registry::FindPool() const
+template <typename T> const std::map<Entity, T> *Registry::FindPool() const
 {
 	auto it = pools_.find(std::type_index(typeid(T)));
 	if (it == pools_.end())

@@ -132,4 +132,39 @@ void RunRegistryTests()
 	const Registry &anyView = anyRegistry;
 	CC_CHECK(anyView.Any<Marker>([](Entity, const Marker &m) { return m.tag == 22; }));
 	CC_CHECK(!anyView.Any<Marker>([](Entity, const Marker &m) { return m.tag == 99; }));
+
+	// --- each/any iterate entity ids ascending regardless of insertion order ---
+	Registry orderRegistry;
+	Entity oa = orderRegistry.Create();
+	Entity ob = orderRegistry.Create();
+	Entity oc = orderRegistry.Create();
+	orderRegistry.Add(oc, Marker{ 3 }); // insert descending: 3, 1, 2
+	orderRegistry.Add(oa, Marker{ 1 });
+	orderRegistry.Add(ob, Marker{ 2 });
+
+	std::vector<Entity> eachOrder;
+	orderRegistry.Each<Marker>([&](Entity id, const Marker &) { eachOrder.push_back(id); });
+	CC_CHECK(eachOrder.size() == 3);
+	CC_CHECK(eachOrder[0] == oa && eachOrder[1] == ob && eachOrder[2] == oc);
+
+	const Registry &orderView = orderRegistry;
+	std::vector<Entity> eachConstOrder;
+	orderView.Each<Marker>([&](Entity id, const Marker &) { eachConstOrder.push_back(id); });
+	CC_CHECK(eachConstOrder.size() == 3);
+	CC_CHECK(eachConstOrder[0] == oa && eachConstOrder[1] == ob && eachConstOrder[2] == oc);
+
+	// First match of a always-true predicate is the lowest id, not insertion order.
+	Entity anyFirst = kInvalidEntity;
+	orderRegistry.Any<Marker>([&](Entity id, const Marker &) {
+		anyFirst = id;
+		return true;
+	});
+	CC_CHECK(anyFirst == oa);
+
+	// Erase-out-of-middle keeps the surviving ids ascending.
+	orderRegistry.Remove<Marker>(ob);
+	eachOrder.clear();
+	orderRegistry.Each<Marker>([&](Entity id, const Marker &) { eachOrder.push_back(id); });
+	CC_CHECK(eachOrder.size() == 2);
+	CC_CHECK(eachOrder[0] == oa && eachOrder[1] == oc);
 }
