@@ -42,36 +42,14 @@ struct UnitConfig
 	std::string atlasMovePrefix; // "" = flat-PNG fallback
 };
 
-// Hardcoded baseline for `type`; used when a type has no file and as the
-// per-field fallback below.
-UnitConfig DefaultUnitConfig(UnitType type);
-
-// Enum <-> enumerator-spelling names ("RUBBER", "KINETIC", "RifleInfantry").
-[[nodiscard]] std::expected<UnitType, ConfigError> ParseUnitTypeName(const std::string &name);
-[[nodiscard]] std::expected<ArmorType, ConfigError> ParseArmorTypeName(const std::string &name);
-[[nodiscard]] std::expected<DamageType, ConfigError> ParseDamageTypeName(const std::string &name);
-const char *ArmorTypeName(ArmorType type);
-const char *DamageTypeName(DamageType type);
-
 // Canonical file stem for `type` in data/configs/ (snake_case for
 // multi-word types).
 const char *UnitConfigFilename(UnitType type);
-
-// True when `stem` is a unit type's canonical file stem. data/configs/ also
-// holds the atlas and AI documents, so the catalog only reports rejections
-// for names that claim to be unit configs.
-bool IsUnitConfigStem(const std::string &stem);
-
-// Parse one file's contents; `filenameStem` is the file's own stem. A
-// mismatched or unknown type rejects the whole file.
-[[nodiscard]] std::expected<UnitConfig, ConfigError>
-ParseUnitConfigJson(const std::string &json, const std::string &filenameStem);
 
 // Single-file load/save; Save pretty-prints the hand-editable JSON style.
 [[nodiscard]] std::expected<UnitConfig, ConfigError> LoadUnitConfig(const std::string &path);
 [[nodiscard]] std::expected<void, ConfigError> SaveUnitConfig(const std::string &path,
                                                              const UnitConfig &config);
-std::string UnitConfigToJson(const UnitConfig &config);
 
 // Enumerate dir/*.json, keeping only files that parse; sorted by path. Each
 // rejected file logs one warning naming its cause.

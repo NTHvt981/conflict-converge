@@ -1,56 +1,19 @@
 #pragma once
 
-#include <array>
 #include <cstddef>
-#include <cstdint>
-#include <expected>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "raylib.h"
-#include "economy/Building.h"
-#include "economy/Nodes.h"
+#include "app/data/ArtDraw.h"
+#include "app/data/ArtSprites.h"
 #include "app/data/InitMode.h"
-#include "app/data/SpriteData.h"
 #include "core/Subsystem.h"
 #include "core/Team.h"
-#include "units/Unit.h"
 
 enum class TerrainType : std::uint8_t;
 
-// Sprite art + particles + floating damage numbers. Assets live under
-// data/sprites/ and data/fonts/ (see Art.h.context.md for the contract);
-// Init(InitMode::Headless) is the headless rectangle-fallback path.
-
-// AttackPhase -> sprite frame. WindUp telegraphs and Recover follows
-// through on the attack frame; everything else idles. Pure: unit-tested.
-enum class UnitFrame
-{
-	Idle,
-	Attack
-};
-UnitFrame FrameForPhase(AttackPhase phase);
-
-enum class BuildingFrame
-{
-	Operational,
-	UnderConstruction,
-	Count
-};
-
-// Rifle-infantry squad visual. count is the number of soldier sprites to draw
-// (driven by healthFraction, capped per type); slots holds that many pixel
-// offsets from the unit's tile-corner position. Deterministic per-entity.
-// scale shrinks with the count so clustered soldiers don't overlap; pass it to
-// DrawAtlasFrame.
-struct SquadLayout
-{
-	std::array<Vector2, 6> slots = {};
-	int count = 0;
-	float scale = 1.0f;
-};
-SquadLayout SquadSlots(UnitType type, unsigned int id, float healthFraction);
+// Sprite art + particles + floating damage numbers.
 
 // CPU particle pool: impact sparks, muzzle flashes, death bursts.
 // Logic is device-independent (tested); Draw needs a live window.
@@ -106,6 +69,9 @@ private:
 	std::vector<DamageNumber> live_;
 };
 
+// Facade over the sprite/resolution component (ArtSprites), the draw-call
+// component (ArtDraw) and the effect pools. Owns Init/Shutdown order and
+// forwards every public call; callers hold this, never the parts.
 class Art : public Subsystem
 {
 public:
@@ -161,51 +127,24 @@ public:
 	std::string TankHeadSprite(UnitType type, int facingDir) const;
 	// True when the type has layered body art loaded in the atlas.
 	bool HasTankArt(UnitType type) const;
-	// Base art scale multiplier (prototype infantry renders at 2x).
-	static float BaseArtScale(UnitType type);
-	// Terrain filename stem + tile slot per type (`<stem>_64px.png`).
-	// Slots index terrain_[], so they run 0..kTerrainSlots-1.
-	static constexpr int kTerrainSlots = 4;
-	static const char *TerrainFile(TerrainType type);
-	static int TerrainSlot(TerrainType type);
 	// Team color for atlas mask tinting (mask layer only); color-blind mode
 	// swaps in the Okabe-Ito pair.
 	Color TeamTint(TeamId teamID) const;
 	void SetColorBlindMode(bool enabled);
 
+	// Base art scale multiplier (prototype infantry renders at 2x).
+	static float BaseArtScale(UnitType type);
+	// Terrain filename stem + tile slot per type (`<stem>_64px.png`).
+	// Slots index terrain_[], so they run 0..kTerrainSlots-1.
+	static constexpr int kTerrainSlots = ArtSprites::kTerrainSlots;
+	static const char *TerrainFile(TerrainType type);
+	static int TerrainSlot(TerrainType type);
+
 	Particles &ParticlesPool();
 	const Particles &ParticlesPool() const;
 
 private:
-	static int TeamSlot(TeamId teamID); // 0 -> blue, anything else -> red
-	void DrawOneAtlasSprite(const SpriteDefInfo &sprite, Vector2 tileCorner, Color tint,
-							float scale, float rotationDeg = 0.0f) const;
-	bool ready_ = false;
-	bool fallback_ = true;
-	bool atlasReady_ = false;
-	bool sheetLoaded_ = false;
-	bool colorBlindMode_ = false; // Okabe-Ito team palette when true
-	SpriteSheetData sheet_;
-	std::unordered_map<std::string, Texture2D> atlas_; // SpriteTextureInfo.id -> sheet
+	ArtSprites sprites_;
+	ArtDraw draw_;
 	Particles particles_;
-	Texture2D units_[static_cast<int>(UnitType::Count)][2][2] = {}; // [type][team][frame]
-	struct BuildingFrameArt
-	{
-		Texture2D flat[2] = {};
-		Texture2D base = {};
-		Texture2D mask = {};
-	};
-	struct BuildingArt
-	{
-		BuildingFrameArt frames[static_cast<int>(BuildingFrame::Count)];
-		bool hasFrame[static_cast<int>(BuildingFrame::Count)] = {};
-	};
-	BuildingArt buildingArt_[static_cast<int>(BuildingType::Count)];
-	Texture2D nodes_[2] = {};        // [kind]
-	Texture2D icons_[2] = {};        // [kind]
-	Texture2D rallyBase_ = {};
-	Texture2D rallyMask_ = {};
-	Texture2D terrain_[kTerrainSlots] = {}; // [TerrainSlot]
-	Font uiFont_ = {};               // Porto Buena (valid only when fontReady_)
-	bool fontReady_ = false;
 };

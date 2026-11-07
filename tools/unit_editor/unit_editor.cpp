@@ -6,6 +6,7 @@
 #include "raygui.h"
 
 #include "app/data/Art.h"
+#include "app/data/UnitConfigDefaults.h"
 
 namespace
 {

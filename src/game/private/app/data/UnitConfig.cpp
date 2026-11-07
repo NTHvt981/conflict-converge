@@ -1,5 +1,8 @@
 #include "app/data/UnitConfig.h"
 
+#include "app/data/UnitConfigEmit.h"
+#include "app/data/UnitConfigParse.h"
+
 #include <filesystem>
 #include <fstream>
 #include <sstream>

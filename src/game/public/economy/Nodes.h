@@ -4,13 +4,14 @@
 #include <vector>
 
 #include "core/MathUtils.h"
-#include "core/Registry.h"
-#include "core/Team.h"
-#include "economy/ResourceSystem.h"
 #include "core/Subsystem.h"
+#include "core/Team.h"
+#include "economy/NodeHarvesters.h"
 
 class TileMap;
 class OccupancyGrid;
+class Registry;
+class ResourceSystem;
 
 enum class ResourceKind
 {
@@ -58,9 +59,5 @@ public:
 
 private:
 	std::vector<ResourceNode> nodes_;
-	float ironCarry_ = 0.0f;
-	float oilCarry_ = 0.0f;
+	NodeHarvesters harvesters_;
 };
-
-// True when another live unit of the team works the tile.
-bool HarvestFieldClaimed(const Registry &registry, cc::IVec2 tile, Entity self, TeamId teamID);

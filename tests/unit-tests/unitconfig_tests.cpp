@@ -6,6 +6,9 @@
 #include "test_harness.h"
 
 #include "app/data/UnitConfig.h"
+#include "app/data/UnitConfigDefaults.h"
+#include "app/data/UnitConfigEmit.h"
+#include "app/data/UnitConfigParse.h"
 #include "units/UnitFactory.h"
 #include "units/UnitStats.h"
 

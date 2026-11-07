@@ -6,6 +6,7 @@
 #include "units/Extensions.h"
 #include "economy/ResourceSystem.h"
 #include "app/data/UnitConfig.h"
+#include "app/data/UnitConfigDefaults.h"
 #include "units/UnitFactory.h"
 #include "units/UnitStats.h"
 
