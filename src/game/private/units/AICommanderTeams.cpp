@@ -1,7 +1,8 @@
-#include "units/AICommander.h"
+#include "units/AICommanderTeams.h"
 
 #include <algorithm>
 
+#include "units/AICommanderIntel.h"
 #include "economy/Building.h"
 #include "units/Extensions.h"
 #include "units/Formation.h"
@@ -51,9 +52,38 @@ bool ByBaseStat::operator()(Entity lhs, Entity rhs) const
 	};
 	return value(lhs) > value(rhs);
 }
+} // namespace
+
+AICommanderTeams::AICommanderTeams(Registry &registry, TileMap &map, AICommanderIntel &intel,
+								   AICommanderEconomy &economy)
+	: registry_(registry), map_(map), intel_(intel), economy_(economy)
+{
 }
 
-void AICommander::PruneTeam(AITeam &team)
+void AICommanderTeams::Reset(TeamId teamID, const AIDifficultyParams &params, cc::IVec2 homeTile,
+							 cc::IVec2 enemyTile)
+{
+	teamID_ = teamID;
+	homeTile_ = homeTile;
+	enemyTile_ = enemyTile;
+	rallyTile_ = homeTile + cc::IVec2(0, 3);
+	teams_.clear();
+	timeSinceLaunch_ = params.relaunchCooldown;
+	matchTime_ = 0.0f;
+	wavesLaunched_ = 0;
+}
+
+void AICommanderTeams::SetOccupancy(OccupancyGrid *occ)
+{
+	occ_ = occ;
+}
+
+int AICommanderTeams::WavesLaunched() const
+{
+	return wavesLaunched_;
+}
+
+void AICommanderTeams::PruneTeam(AITeam &team)
 {
 	std::vector<Entity> alive;
 	alive.reserve(team.members.size());
@@ -68,7 +98,7 @@ void AICommander::PruneTeam(AITeam &team)
 	team.members.swap(alive);
 }
 
-bool AICommander::TeamAllIdle(const AITeam &team)
+bool AICommanderTeams::TeamAllIdle(const AITeam &team)
 {
 	for (Entity id : team.members)
 	{
@@ -81,7 +111,7 @@ bool AICommander::TeamAllIdle(const AITeam &team)
 	return true;
 }
 
-void AICommander::IssueTeamStep(AITeam &team)
+void AICommanderTeams::IssueTeamStep(AITeam &team)
 {
 	if (team.step >= team.script.size())
 	{
@@ -101,10 +131,10 @@ void AICommander::IssueTeamStep(AITeam &team)
 		switch (mission.kind)
 		{
 		case AIMissionKind::Move:
-			OrderMove(*unit, team.members[i], dest);
+			economy_.OrderMove(*unit, team.members[i], dest);
 			break;
 		case AIMissionKind::Guard:
-			OrderMove(*unit, team.members[i], dest);
+			economy_.OrderMove(*unit, team.members[i], dest);
 			if (CombatState *combat = registry_.Get<CombatState>(team.members[i]))
 			{
 				SetStance(*unit, GetOrders(registry_, team.members[i]), *combat, Stance::Guard);
@@ -112,18 +142,18 @@ void AICommander::IssueTeamStep(AITeam &team)
 			break;
 		case AIMissionKind::AttackMove:
 		default:
-			OrderAttackMove(*unit, team.members[i], dest);
+			economy_.OrderAttackMove(*unit, team.members[i], dest);
 			break;
 		}
 	}
 }
 
-cc::IVec2 AICommander::SelectTarget()
+cc::IVec2 AICommanderTeams::SelectTarget()
 {
 	return SelectTarget(ThreatScope::Units);
 }
 
-cc::IVec2 AICommander::SelectTarget(ThreatScope scope)
+cc::IVec2 AICommanderTeams::SelectTarget(ThreatScope scope)
 {
 	if (scope == ThreatScope::Buildings)
 	{
@@ -136,7 +166,7 @@ cc::IVec2 AICommander::SelectTarget(ThreatScope scope)
 				return;
 			}
 			const cc::IVec2 tile{ building.tileX, building.tileY };
-			if (!Sees(tile))
+			if (!intel_.Sees(tile))
 			{
 				return;
 			}
@@ -158,11 +188,12 @@ cc::IVec2 AICommander::SelectTarget(ThreatScope scope)
 		});
 		if (richest == kInvalidEntity)
 		{
-			return lastSeenEnemy_;
+			return intel_.LastSeenEnemy();
 		}
 		const Building *target = registry_.Get<Building>(richest);
-		lastSeenEnemy_ = { target->tileX, target->tileY };
-		return lastSeenEnemy_;
+		const cc::IVec2 sighted{ target->tileX, target->tileY };
+		intel_.ReportSighting(sighted);
+		return sighted;
 	}
 	Entity nearest = kInvalidEntity;
 	int best = 0;
@@ -172,7 +203,7 @@ cc::IVec2 AICommander::SelectTarget(ThreatScope scope)
 			return;
 		}
 		const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
-		if (!Sees(tile))
+		if (!intel_.Sees(tile))
 		{
 			return;
 		}
@@ -186,7 +217,7 @@ cc::IVec2 AICommander::SelectTarget(ThreatScope scope)
 	});
 	if (nearest == kInvalidEntity)
 	{
-		return lastSeenEnemy_;
+		return intel_.LastSeenEnemy();
 	}
 	const Unit *anchor = registry_.Get<Unit>(nearest);
 	const cc::IVec2 anchorTile = cc::WorldToTile(cc::ToGlm(anchor->position));
@@ -199,7 +230,7 @@ cc::IVec2 AICommander::SelectTarget(ThreatScope scope)
 			return;
 		}
 		const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
-		if (!Sees(tile))
+		if (!intel_.Sees(tile))
 		{
 			return;
 		}
@@ -214,44 +245,47 @@ cc::IVec2 AICommander::SelectTarget(ThreatScope scope)
 	});
 	if (count == 0)
 	{
-		return lastSeenEnemy_;
+		return intel_.LastSeenEnemy();
 	}
-	lastSeenEnemy_ = { static_cast<int>(sumX / count), static_cast<int>(sumY / count) };
-	return lastSeenEnemy_;
+	const cc::IVec2 sighted{ static_cast<int>(sumX / count), static_cast<int>(sumY / count) };
+	intel_.ReportSighting(sighted);
+	return sighted;
 }
 
-int AICommander::Escalation() const
+int AICommanderTeams::Escalation() const
 {
-	if (matchTime_ >= 240.0f || losses_ >= 8)
+	if (matchTime_ >= 240.0f || intel_.Losses() >= 8)
 	{
 		return 2;
 	}
-	if (contact_ || matchTime_ >= 45.0f)
+	if (intel_.Contact() || matchTime_ >= 45.0f)
 	{
 		return 1;
 	}
 	return 0;
 }
 
-int AICommander::EffectiveThreshold() const
+int AICommanderTeams::EffectiveThreshold() const
 {
+	const int threshold = economy_.Params().waveThreshold;
 	if (Escalation() >= 2)
 	{
-		return params_.waveThreshold > 2 ? params_.waveThreshold - 1 : 2;
+		return threshold > 2 ? threshold - 1 : 2;
 	}
-	return params_.waveThreshold;
+	return threshold;
 }
 
-float AICommander::EffectiveCooldown() const
+float AICommanderTeams::EffectiveCooldown() const
 {
+	const float cooldown = economy_.Params().relaunchCooldown;
 	if (Escalation() >= 2)
 	{
-		return params_.relaunchCooldown * 0.75f;
+		return cooldown * 0.75f;
 	}
-	return params_.relaunchCooldown;
+	return cooldown;
 }
 
-void AICommander::MusterTeams()
+void AICommanderTeams::MusterTeams()
 {
 	for (AITeam &team : teams_)
 	{
@@ -267,7 +301,7 @@ void AICommander::MusterTeams()
 	AssignRemainingToMain(unassigned);
 }
 
-std::vector<Entity> AICommander::GatherUnassignedUnits()
+std::vector<Entity> AICommanderTeams::GatherUnassignedUnits()
 {
 	std::vector<Entity> unassigned;
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
@@ -287,7 +321,7 @@ std::vector<Entity> AICommander::GatherUnassignedUnits()
 	return unassigned;
 }
 
-void AICommander::EnsureGuardTeam(std::vector<Entity> &unassigned)
+void AICommanderTeams::EnsureGuardTeam(std::vector<Entity> &unassigned)
 {
 	bool hasGuard = false;
 	for (const AITeam &team : teams_)
@@ -297,8 +331,8 @@ void AICommander::EnsureGuardTeam(std::vector<Entity> &unassigned)
 			hasGuard = true;
 		}
 	}
-	if (!hasGuard && difficulty_ == AIDifficulty::Hard &&
-		static_cast<int>(unassigned.size()) >= params_.waveThreshold + 4)
+	if (!hasGuard && economy_.Difficulty() == AIDifficulty::Hard &&
+		static_cast<int>(unassigned.size()) >= economy_.Params().waveThreshold + 4)
 	{
 		std::sort(unassigned.begin(), unassigned.end(), ByBaseStat{ registry_, BaseStat::Health });
 		AITeam guard;
@@ -310,9 +344,10 @@ void AICommander::EnsureGuardTeam(std::vector<Entity> &unassigned)
 	}
 }
 
-void AICommander::EnsureHarassTeam(std::vector<Entity> &unassigned)
+void AICommanderTeams::EnsureHarassTeam(std::vector<Entity> &unassigned)
 {
-	if (unassigned.size() >= 8 && difficulty_ != AIDifficulty::Easy && Escalation() >= 1)
+	if (unassigned.size() >= 8 && economy_.Difficulty() != AIDifficulty::Easy &&
+		Escalation() >= 1)
 	{
 		std::vector<Entity> willing;
 		for (Entity id : unassigned)
@@ -349,7 +384,7 @@ void AICommander::EnsureHarassTeam(std::vector<Entity> &unassigned)
 	}
 }
 
-void AICommander::AssignRemainingToMain(std::vector<Entity> &unassigned)
+void AICommanderTeams::AssignRemainingToMain(std::vector<Entity> &unassigned)
 {
 	if (!unassigned.empty())
 	{
@@ -367,7 +402,7 @@ void AICommander::AssignRemainingToMain(std::vector<Entity> &unassigned)
 			main.role = AITeamRole::Main;
 			main.members = unassigned;
 			const ThreatScope scope =
-				EnemyForceSighted() ? ThreatScope::Units : ThreatScope::Buildings;
+				intel_.EnemyForceSighted() ? ThreatScope::Units : ThreatScope::Buildings;
 			main.script = { { AIMissionKind::AttackMove, SelectTarget(scope), 120.0f } };
 			teams_.push_back(main);
 		}
@@ -385,7 +420,7 @@ void AICommander::AssignRemainingToMain(std::vector<Entity> &unassigned)
 	}
 }
 
-void AICommander::LaunchTeams()
+void AICommanderTeams::LaunchTeams()
 {
 	for (AITeam &team : teams_)
 	{
@@ -403,7 +438,7 @@ void AICommander::LaunchTeams()
 	timeSinceLaunch_ = 0.0f;
 }
 
-void AICommander::UpdateTeams(float dt)
+void AICommanderTeams::UpdateTeams(float dt)
 {
 	for (AITeam &team : teams_)
 	{
@@ -462,7 +497,7 @@ void AICommander::UpdateTeams(float dt)
 			if (mission.kind == AIMissionKind::AttackMove)
 			{
 				ThreatScope scope = ThreatScope::Units;
-				if (team.role == AITeamRole::Main && !EnemyForceSighted())
+				if (team.role == AITeamRole::Main && !intel_.EnemyForceSighted())
 				{
 					scope = ThreatScope::Buildings;
 				}
@@ -481,7 +516,7 @@ void AICommander::UpdateTeams(float dt)
 	}
 }
 
-void AICommander::UpdateGuardPost()
+void AICommanderTeams::UpdateGuardPost()
 {
 	long sumX = 0;
 	long sumY = 0;
@@ -492,7 +527,7 @@ void AICommander::UpdateGuardPost()
 			return;
 		}
 		const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
-		if (!Sees(tile))
+		if (!intel_.Sees(tile))
 		{
 			return;
 		}
@@ -529,7 +564,7 @@ void AICommander::UpdateGuardPost()
 	}
 }
 
-void AICommander::MaybeLaunchWave()
+void AICommanderTeams::MaybeLaunchWave()
 {
 	MusterTeams();
 	const AITeam *main = nullptr;
@@ -549,30 +584,44 @@ void AICommander::MaybeLaunchWave()
 	LaunchTeams();
 }
 
-void AICommander::ScoutTick(float dt)
+void AICommanderTeams::ScoutTick(float dt)
 {
-	scoutTimer_ -= dt;
-	if (scoutTimer_ > 0.0f)
+	if (!intel_.SpendScoutTimer(dt))
 	{
 		return;
 	}
-	const Entity scout = factory_.Spawn(UnitType::RifleInfantry, teamID_,
-										cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
-	scoutTimer_ = params_.scoutInterval;
+	const Entity scout = economy_.Factory().Spawn(UnitType::RifleInfantry, teamID_,
+												  cc::ToRaylib(cc::TileToWorld(homeTile_.x,
+																			  homeTile_.y)));
+	intel_.ResetScoutTimer(economy_.Params().scoutInterval);
 	if (scout == kInvalidEntity)
 	{
 		return;
 	}
 	if (Unit *unit = registry_.Get<Unit>(scout))
 	{
-		OrderMove(*unit, scout, cc::ToRaylib(cc::TileToWorld(enemyTile_.x, enemyTile_.y)));
+		economy_.OrderMove(*unit, scout,
+						   cc::ToRaylib(cc::TileToWorld(enemyTile_.x, enemyTile_.y)));
 	}
-	scouted_ = true;
-	lastSeenEnemy_ = enemyTile_;
+	intel_.MarkScouted(enemyTile_);
 }
 
-void AICommander::RetreatTick()
+void AICommanderTeams::RetreatTick()
 {
 	const Vector2 home = cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y));
 	RetreatIfLowHP(registry_, map_, occ_, home, teamID_, kRetreatHealthFraction, false);
+}
+
+void AICommanderTeams::Update(float dt)
+{
+	timeSinceLaunch_ += dt;
+	matchTime_ += dt;
+	MaybeLaunchWave();
+	UpdateTeams(dt);
+	UpdateGuardPost();
+	ScoutTick(dt);
+	if (economy_.Params().retreats)
+	{
+		RetreatTick();
+	}
 }
