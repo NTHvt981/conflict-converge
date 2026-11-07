@@ -1,4 +1,6 @@
 
+#include "app/data/UnitConfigDefaults.h"
+
 #include "app/data/UnitConfig.h"
 #include "units/UnitTypeInfo.h"
 

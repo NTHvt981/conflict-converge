@@ -1,14 +1,16 @@
 
-#include "app/data/UnitConfig.h"
+#include "app/data/UnitConfigEmit.h"
 
-#include "UnitConfigJson.h"
+#include "app/data/UnitConfigJson.h"
+#include "app/data/UnitConfigParse.h"
 
 #include <sstream>
 #include <string>
 
 std::string UnitConfigToJson(const UnitConfig &config)
 {
-	JsonConfig out;
+	UnitConfigJson bridge;
+	JsonConfig &out = bridge.cfg;
 	out.type = config.type;
 	out.stats.health = config.stats.health;
 	out.stats.armorType = ArmorTypeName(config.stats.armorType);
@@ -51,9 +53,7 @@ std::string UnitConfigToJson(const UnitConfig &config)
 	std::ostringstream json;
 	{
 		cereal::JSONOutputArchive ar(json);
-		ar(cereal::make_nvp("type", out.type), cereal::make_nvp("stats", out.stats),
-		   cereal::make_nvp("cost", out.cost), cereal::make_nvp("abilities", out.abilities),
-		   cereal::make_nvp("collision", out.collision), cereal::make_nvp("art", out.art));
+		bridge.Save(ar);
 	}
 	return json.str();
 }

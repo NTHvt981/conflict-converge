@@ -362,6 +362,7 @@ project "conflict-converge-editor"
         "src/game/private/units/UnitStats.cpp",
         "src/game/private/app/data/UnitConfig.cpp",
         "src/game/private/app/data/UnitConfigParse.cpp",
+        "src/game/private/app/data/UnitConfigJson.cpp",
         "src/game/private/app/data/UnitConfigDefaults.cpp",
         "src/game/private/app/data/UnitConfigEmit.cpp",
         "src/game/private/app/data/SpriteData.cpp",

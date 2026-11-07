@@ -17,6 +17,7 @@
 #include "raylib.h"
 
 #include "app/data/UnitConfig.h"
+#include "app/data/UnitConfigParse.h"
 
 namespace
 {

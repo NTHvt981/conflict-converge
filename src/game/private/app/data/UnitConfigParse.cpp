@@ -1,7 +1,8 @@
 
-#include "app/data/UnitConfig.h"
+#include "app/data/UnitConfigParse.h"
 
-#include "UnitConfigJson.h"
+#include "app/data/UnitConfigDefaults.h"
+#include "app/data/UnitConfigJson.h"
 
 #include <cctype>
 #include <ranges>
@@ -9,9 +10,6 @@
 #include <string>
 
 #include "units/UnitTypeInfo.h"
-
-namespace
-{
 
 std::string NormalizedStem(std::string s)
 {
@@ -108,8 +106,6 @@ bool HasUnknownAbilityKey(const std::string &json)
 		i = end + 1;
 	}
 	return false;
-}
-
 }
 
 bool IsUnitConfigStem(const std::string &stem)
@@ -214,22 +210,18 @@ ParseUnitConfigJson(const std::string &json, const std::string &filenameStem)
 	{
 		return std::unexpected(ConfigError::UnknownAbilityKey);
 	}
-	JsonConfig cfg;
+	UnitConfigJson bridge;
 	try
 	{
 		std::istringstream in(json);
 		cereal::JSONInputArchive ar(in);
-		TryLoadValue(ar, "type", cfg.type);
-		TryLoadValue(ar, "stats", cfg.stats);
-		TryLoadValue(ar, "cost", cfg.cost);
-		TryLoadValue(ar, "abilities", cfg.abilities);
-		TryLoadValue(ar, "collision", cfg.collision);
-		TryLoadValue(ar, "art", cfg.art);
+		bridge.Load(ar);
 	}
 	catch (const std::exception &)
 	{
 		return std::unexpected(ConfigError::MalformedJson);
 	}
+	const JsonConfig &cfg = bridge.cfg;
 	const std::expected<UnitType, ConfigError> type = ParseUnitTypeName(cfg.type);
 	if (!type)
 	{
