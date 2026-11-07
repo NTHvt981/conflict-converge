@@ -364,7 +364,9 @@ project "conflict-converge-editor"
         "src/game/private/app/data/UnitConfigParse.cpp",
         "src/game/private/app/data/SpriteData.cpp",
         "src/game/private/app/data/Art.cpp",
-        "src/game/private/app/data/ArtEffects.cpp"
+        "src/game/private/app/data/ArtDraw.cpp",
+        "src/game/private/app/data/ArtEffects.cpp",
+        "src/game/private/app/data/ArtSprites.cpp",
     }
 
     includedirs {
