@@ -156,20 +156,25 @@ src/game/private/app/Hud.cpp
 src/game/public/app/Hotkeys.h
 ```
 
-### Split an oversized TU by phase, keep one header
+### Split an oversized class by phase, compose, one header per cpp
 
 **✅ Do**
 ```
-src/game/public/core/GameRenderer.h
-src/game/private/core/GameRendererWorld.cpp
-src/game/private/core/GameRendererHud.cpp
+src/game/public/app/data/Art.h         // facade: public API, owns components
+src/game/public/app/data/ArtSprites.h  // assets + resolution
+src/game/private/app/data/ArtSprites.cpp
+src/game/public/app/data/ArtDraw.h     // draw calls, reads ArtSprites
+src/game/private/app/data/ArtDraw.cpp
 ```
+
+Callers outside the Art family include only `Art.h`, whose public API stays
+stable while the components carry the phases.
 
 **❌ Don't**
 ```
-src/game/private/core/GameRenderer.cpp   // 3000 lines mixing world and HUD
-src/game/public/core/GameRendererWorld.h // header split nobody includes
+src/game/private/core/GameRenderer.cpp // 3000 lines mixing world and HUD
 ```
+
 
 ### Never name a header like a CRT header
 

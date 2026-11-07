@@ -17,14 +17,17 @@ core:    MathUtils, CcAssert, CcPch, Registry, Event, Subsystem, Team
 world:   TileMap, Pathfinder, MapFile, FogOfWar
 units:   Unit (+UnitInternal, UnitOrders/UnitCombat/UnitRepair/UnitMovement/
           UnitTransport TUs), UnitStats, UnitTypeInfo, Locomotor, Combat, UnitFactory,
-          Targeting, Formation (+FormationAssignment), AICommander, Extensions, UnitCommands
-economy: Building, BuildingTypeInfo, Nodes, ResourceSystem, Production
+          Targeting, Formation (+FormationAssignment), AICommander
+          (+AICommanderIntel/AICommanderEconomy/AICommanderTeams), Extensions, UnitCommands
+economy: Building, BuildingTypeInfo, Nodes (+NodeHarvesters), ResourceSystem, Production
 app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, RmlUiHost, RmlUiMenus,
          (+RmlUiMenusRemap/RmlUiMenusDialogs), RmlUiHud (+RmlUiHudPanels/RmlUiHudEvents),
          CursorHint, UiIds, RmlRaylibRenderInterface, RmlRaylibSystemInterface, RmlRaylibFileInterface
 app/input: InputManager, Selection, Shortcuts, Hotkeys
 app/save: SaveGame (+SaveEncode/SaveDecode), SaveWire
-app/data: Art (+ArtEffects), SpriteData, UnitConfig (+UnitConfigParse/UnitConfigCatalog),
+app/data: Art (+ArtSprites/ArtDraw/ArtEffects), SpriteData,
+          UnitConfig (+UnitConfigDefaults/UnitConfigParse/UnitConfigEmit/
+          UnitConfigJson/UnitConfigCatalog),
           ConfigError, AIConfig, Audio, InitMode, Log, DataRoot
 app/match: Menu, Skirmish
 ```
@@ -118,14 +121,17 @@ app/match: Menu, Skirmish
   near-ties; M13 `AcquireBuildingTarget`/`BuildingCenter`; wave destination scopes
   (`ThreatScope`: units vs production)
 - `Formation.h` - Row-major offsets + `IssueFormationMove`
-- `AICommander.h` - Enemy commander: fair-rules economy, Main/Harass/Guard teams with
-  mission scripts, fog-honest targeting (`SetFog`: unseen enemies fall back to
-  last-seen memory, guard posts react to sightings only), Main waves march on the
-  sighted army and raze production when the field is dark, low-strength regroup, difficulty-gated
-  behaviors, time/loss escalation; `data/configs/ai.json` catalog via `app/data/AIConfig.h`
-  (compiled `ParamsFor` fallback); M14 `Reset` (team + difficulty + homes; re-arm for a new
-  match or bare for the load path); 2v2 overflow via `allyAI` (team 0) + `enemyAI2` (team 1),
-  shared-team economy credit
+- `AICommander.h` - Enemy commander facade over its phases, composed as one
+  component class per phase, each with its own header and cpp:
+  `AICommanderIntel` (fog-honest sighted/threat memory: `SetFog`, unseen
+  enemies fall back to last-seen memory), `AICommanderEconomy` (fair-rules
+  economy, harvester sustain, production queues, difficulty params with the
+  compiled fallback via `app/data/AIConfig.h`), `AICommanderTeams`
+  (Main/Guard/Harass teams with mission scripts, wave launches on the
+  sighted army, razing production when the field is dark, low-strength
+  regroup, time/loss escalation); guard posts react to sightings only;
+  `Reset` re-arms for a new match or loads a bare state; 2v2 overflow via
+  `allyAI` (team 0) + `enemyAI2` (team 1), shared-team economy credit
 
 ## economy
 
@@ -143,9 +149,11 @@ app/match: Menu, Skirmish
   so output scales with factory count, spawns rotate exits)
 - `ResourceSystem.h` - Iron/oil ledger: `Add`/`TrySpend` + `TickIncome` (fractional carry);
   storage cap (500 + 1000 per depot, overflow lost) via `Deposit*`/`TickIncomeCapped`
-- `Nodes.h` - Resource nodes: spawn/gather/deplete/respawn, loop harvesters
-  (`Harvester`: field load, depot dock, `UpdateHarvesters`) plus legacy stand-and-trickle
-  for engineers without the component, `Each` iteration
+- `Nodes.h` - Resource node facade: spawn/gather/deplete/respawn, `Each`
+  iteration; the harvester loop lives in the composed `NodeHarvesters`
+  component (own header + cpp): per-harvester field load, depot dock
+  (`UpdateHarvesters`), carry amounts, plus legacy stand-and-trickle for
+  engineers without the component
 
 ## app
 
@@ -168,9 +176,11 @@ app/match: Menu, Skirmish
   `BuildingSummary`, `SelectionLineText` selection line, `ShortcutHintLines`,
   production category/tab orders, `AbilitiesForSelection`
   panel data); the RmlUi HUD owns the panels
-- `Art.h` - M12 sprites + particles (`data/sprites/` via `tools/gen_sprites.py`) + tank
-  body/head layered atlas art; `Init(InitMode::Headless)`
-  is the headless rectangle-fallback path
+- `Art.h` - Sprite/particles facade over two components, each with its own
+  header and cpp: `ArtSprites` (`data/sprites/` via `tools/gen_sprites.py`,
+  tank atlas art, headless `Init(InitMode::Headless)` fallback, team tints)
+  and `ArtDraw` (blits, draw calls); `ArtEffects` carries the
+  device-independent particle/damage-number logic
 - `SpriteData.h` - Sprite-atlas data (JSON in `data/configs/`: textures/sprites/animations
   merged at load); `LoadSpriteSheet`/`ParseSpriteSheetJson` return
   `expected<SpriteSheetData, ConfigError>`, plus name/id lookups
@@ -186,10 +196,15 @@ app/match: Menu, Skirmish
   `LoadAIDifficultyFile` return `expected<AIDifficultyParams, ConfigError>`, the active
   per-difficulty params are read through `ActiveAIDifficultyParams` with compiled fallbacks
 - `UnitConfig.h` - Unit-config editor data layer: one `UnitConfig` per
-  `data/configs/<type>.json`, enum↔name parsing, load/save/enumerate, all reporting
-  `expected<..., ConfigError>`. Pure logic, no raylib.
-  M1 runtime authority: optional `abilities` block (turret/arcing/crush/transport/sniper,
-  unknown keys reject) + `cost`; `ActiveUnitConfig` catalog loaded at match start with
+  `data/configs/<type>.json`, load/save/enumerate, all reporting
+  `expected<..., ConfigError>`. The parse/emit/defaults phases are separate
+  units, one header + cpp each: `UnitConfigParse` (enum↔name parsing +
+  `ParseUnitConfigJson`, unknown keys reject), `UnitConfigEmit`
+  (`UnitConfigToJson`), `UnitConfigDefaults` (compiled per-type fallback),
+  and the shared JSON bridge `UnitConfigJson` (cereal structs +
+  `Load`/`Save`). Pure logic, no raylib.
+  M1 runtime authority: optional `abilities` block (turret/arcing/crush/transport/sniper)
+  + `cost`; `ActiveUnitConfig` catalog loaded at match start with
   per-type compiled fallback and one warning per rejected unit-config file; `CostOf` reads
   the catalog
 - `Extensions.h` - M2 gimmick components in `Registry` pools: `Turret`/`Cargo`/`EmbarkedOn`
