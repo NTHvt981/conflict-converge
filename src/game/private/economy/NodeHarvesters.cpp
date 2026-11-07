@@ -1,10 +1,10 @@
-#include "economy/Nodes.h"
+#include "economy/NodeHarvesters.h"
 
 #include "economy/Building.h"
 #include "units/Extensions.h"
+#include "units/Unit.h"
 #include "world/Pathfinder.h"
 #include "world/TileMap.h"
-#include "units/Unit.h"
 
 inline constexpr float kGatherIronPerSecond = 10.0f;
 inline constexpr float kGatherOilPerSecond = 8.0f;
@@ -12,6 +12,18 @@ inline constexpr float kLoadIronPerSecond = 16.0f;
 
 namespace
 {
+
+const ResourceNode *FindNodeAt(const std::vector<ResourceNode> &nodes, cc::IVec2 tile)
+{
+	for (const ResourceNode &node : nodes)
+	{
+		if (node.tile == tile)
+		{
+			return &node;
+		}
+	}
+	return nullptr;
+}
 
 bool OnDepotEntrance(const Registry &registry, cc::IVec2 tile, TeamId teamID)
 {
@@ -161,8 +173,8 @@ void UnloadAtDepot(Registry &registry, ResourceSystem &resources, Harvester &har
 	}
 }
 
-void TrickleIntoNode(std::vector<ResourceNode> &nodes, ResourceSystem &resources, float &ironCarry,
-					 float &oilCarry, cc::IVec2 tile, float dt)
+void TrickleIntoNode(std::vector<ResourceNode> &nodes, ResourceSystem &resources,
+					 float &ironCarry, float &oilCarry, cc::IVec2 tile, float dt)
 {
 	for (ResourceNode &node : nodes)
 	{
@@ -198,11 +210,11 @@ void TrickleIntoNode(std::vector<ResourceNode> &nodes, ResourceSystem &resources
 	}
 }
 
-void HandleToField(ResourceNodes &self, Registry &registry, const TileMap &map,
-				   const OccupancyGrid *occ, Entity id, Unit &unit, Harvester &harvester, bool idle,
-				   cc::IVec2 here)
+void HandleToField(std::vector<ResourceNode> &nodes, Registry &registry, const TileMap &map,
+				   const OccupancyGrid *occ, Entity id, Unit &unit, Harvester &harvester,
+				   bool idle, cc::IVec2 here)
 {
-	const ResourceNode *node = self.FindAt(harvester.nodeTile);
+	const ResourceNode *node = FindNodeAt(nodes, harvester.nodeTile);
 	const bool live = node != nullptr && !node->IsDepleted();
 	const bool taken = live && here == harvester.nodeTile &&
 					   HarvestFieldClaimed(registry, harvester.nodeTile, id, unit.teamID);
@@ -219,11 +231,12 @@ void HandleToField(ResourceNodes &self, Registry &registry, const TileMap &map,
 		}
 		const ResourceNode *best = nullptr;
 		int bestDist = 0;
-		self.Each([&](const ResourceNode &candidate) {
+		for (const ResourceNode &candidate : nodes)
+		{
 			if (candidate.IsDepleted() ||
 				HarvestFieldClaimed(registry, candidate.tile, id, unit.teamID))
 			{
-				return;
+				continue;
 			}
 			const int dist = (candidate.tile.x - here.x) * (candidate.tile.x - here.x) +
 							 (candidate.tile.y - here.y) * (candidate.tile.y - here.y);
@@ -232,7 +245,7 @@ void HandleToField(ResourceNodes &self, Registry &registry, const TileMap &map,
 				best = &candidate;
 				bestDist = dist;
 			}
-		});
+		}
 		if (best == nullptr)
 		{
 			harvester.nodeTile = { -1, -1 };
@@ -248,7 +261,7 @@ void HandleToField(ResourceNodes &self, Registry &registry, const TileMap &map,
 	}
 }
 
-void HandleLoading(ResourceNodes &self, Harvester &harvester, cc::IVec2 here)
+void HandleLoading(std::vector<ResourceNode> &nodes, Harvester &harvester, cc::IVec2 here)
 {
 	if (harvester.load >= harvester.capacity)
 	{
@@ -256,7 +269,7 @@ void HandleLoading(ResourceNodes &self, Harvester &harvester, cc::IVec2 here)
 		harvester.nodeTile = { -1, -1 };
 		return;
 	}
-	const ResourceNode *node = self.FindAt(harvester.nodeTile);
+	const ResourceNode *node = FindNodeAt(nodes, harvester.nodeTile);
 	if (node == nullptr || node->IsDepleted() || !(here == harvester.nodeTile))
 	{
 		harvester.phase = HarvestPhase::ToField;
@@ -317,7 +330,7 @@ void TickHarvester(std::vector<ResourceNode> &nodes, Registry &registry,
 	}
 }
 
-void StepHarvester(ResourceNodes &self, Registry &registry, const TileMap &map,
+void StepHarvester(std::vector<ResourceNode> &nodes, Registry &registry, const TileMap &map,
 				   const OccupancyGrid *occ, Entity id, Unit &unit, float dt, TeamId teamID)
 {
 	Harvester *harvester = registry.Get<Harvester>(id);
@@ -331,10 +344,10 @@ void StepHarvester(ResourceNodes &self, Registry &registry, const TileMap &map,
 	switch (harvester->phase)
 	{
 	case HarvestPhase::ToField:
-		HandleToField(self, registry, map, occ, id, unit, *harvester, idle, here);
+		HandleToField(nodes, registry, map, occ, id, unit, *harvester, idle, here);
 		break;
 	case HarvestPhase::Loading:
-		HandleLoading(self, *harvester, here);
+		HandleLoading(nodes, *harvester, here);
 		break;
 	case HarvestPhase::ToDepot:
 		HandleToDepot(registry, map, occ, id, unit, *harvester, idle, here);
@@ -359,8 +372,8 @@ bool HarvestFieldClaimed(const Registry &registry, cc::IVec2 tile, Entity self, 
 	});
 }
 
-void ResourceNodes::GatherTick(Registry &registry, ResourceSystem &resources, float dt,
-							   TeamId teamID)
+void NodeHarvesters::GatherTick(std::vector<ResourceNode> &nodes, Registry &registry,
+								ResourceSystem &resources, float dt, TeamId teamID)
 {
 	if (dt <= 0.0f)
 	{
@@ -374,16 +387,17 @@ void ResourceNodes::GatherTick(Registry &registry, ResourceSystem &resources, fl
 		Harvester *harvester = registry.Get<Harvester>(id);
 		if (harvester != nullptr)
 		{
-			TickHarvester(nodes_, registry, resources, id, unit, dt);
+			TickHarvester(nodes, registry, resources, id, unit, dt);
 			return;
 		}
 		const cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(unit.position));
-		TrickleIntoNode(nodes_, resources, ironCarry_, oilCarry_, tile, dt);
+		TrickleIntoNode(nodes, resources, ironCarry_, oilCarry_, tile, dt);
 	});
 }
 
-void ResourceNodes::UpdateHarvesters(Registry &registry, const TileMap &map,
-									 const OccupancyGrid *occ, float dt, TeamId teamID)
+void NodeHarvesters::UpdateHarvesters(std::vector<ResourceNode> &nodes, Registry &registry,
+									  const TileMap &map, const OccupancyGrid *occ, float dt,
+									  TeamId teamID)
 {
 	if (dt <= 0.0f)
 	{
@@ -394,6 +408,22 @@ void ResourceNodes::UpdateHarvesters(Registry &registry, const TileMap &map,
 		{
 			return;
 		}
-		StepHarvester(*this, registry, map, occ, id, unit, dt, teamID);
+		StepHarvester(nodes, registry, map, occ, id, unit, dt, teamID);
 	});
+}
+
+float NodeHarvesters::IronCarry() const
+{
+	return ironCarry_;
+}
+
+float NodeHarvesters::OilCarry() const
+{
+	return oilCarry_;
+}
+
+void NodeHarvesters::SetCarry(float ironCarry, float oilCarry)
+{
+	ironCarry_ = ironCarry;
+	oilCarry_ = oilCarry;
 }

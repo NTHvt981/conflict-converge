@@ -47,6 +47,18 @@ void ResourceNodes::Update(float dt)
 	}
 }
 
+void ResourceNodes::GatherTick(Registry &registry, ResourceSystem &resources, float dt,
+							   TeamId teamID)
+{
+	harvesters_.GatherTick(nodes_, registry, resources, dt, teamID);
+}
+
+void ResourceNodes::UpdateHarvesters(Registry &registry, const TileMap &map,
+									 const OccupancyGrid *occ, float dt, TeamId teamID)
+{
+	harvesters_.UpdateHarvesters(nodes_, registry, map, occ, dt, teamID);
+}
+
 std::size_t ResourceNodes::Count() const
 {
 	return nodes_.size();
@@ -87,16 +99,15 @@ void ResourceNodes::RestoreNode(ResourceKind kind, cc::IVec2 tile, float amount,
 
 float ResourceNodes::IronCarry() const
 {
-	return ironCarry_;
+	return harvesters_.IronCarry();
 }
 
 float ResourceNodes::OilCarry() const
 {
-	return oilCarry_;
+	return harvesters_.OilCarry();
 }
 
 void ResourceNodes::SetCarry(float ironCarry, float oilCarry)
 {
-	ironCarry_ = ironCarry;
-	oilCarry_ = oilCarry;
+	harvesters_.SetCarry(ironCarry, oilCarry);
 }
