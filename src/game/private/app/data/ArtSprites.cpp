@@ -1,4 +1,4 @@
-#include "app/data/Art.h"
+#include "app/data/ArtSprites.h"
 
 #include <cstdio>
 
@@ -54,7 +54,7 @@ constexpr bool TerrainSlotsFit()
 {
 	for (const TerrainArtInfo &art : kTerrainArt)
 	{
-		if (art.slot >= Art::kTerrainSlots)
+		if (art.slot >= ArtSprites::kTerrainSlots)
 		{
 			return false;
 		}
@@ -62,26 +62,26 @@ constexpr bool TerrainSlotsFit()
 	return true;
 }
 
-static_assert(TerrainSlotsFit(), "terrain slot exceeds Art::kTerrainSlots");
+static_assert(TerrainSlotsFit(), "terrain slot exceeds ArtSprites::kTerrainSlots");
 
 }
 
-const char *Art::TerrainFile(TerrainType type)
+const char *ArtSprites::TerrainFile(TerrainType type)
 {
 	return kTerrainArt[static_cast<std::size_t>(type)].file;
 }
 
-int Art::TerrainSlot(TerrainType type)
+int ArtSprites::TerrainSlot(TerrainType type)
 {
 	return kTerrainArt[static_cast<std::size_t>(type)].slot;
 }
 
-int Art::TeamSlot(TeamId teamID)
+int ArtSprites::TeamSlot(TeamId teamID)
 {
 	return teamID == kPlayerTeam ? 0 : 1;
 }
 
-bool Art::Init(InitMode mode)
+bool ArtSprites::Init(InitMode mode)
 {
 	Shutdown();
 	if (mode == InitMode::Headless)
@@ -302,7 +302,113 @@ bool Art::Init(InitMode mode)
 	return ready_;
 }
 
-std::expected<void, ConfigError> Art::LoadAtlas()
+void ArtSprites::Shutdown()
+{
+	for (int t = 0; t < static_cast<int>(UnitType::Count); ++t)
+	{
+		for (int team = 0; team < 2; ++team)
+		{
+			for (int f = 0; f < 2; ++f)
+			{
+				if (units_[t][team][f].id != 0)
+				{
+					UnloadTexture(units_[t][team][f]);
+					units_[t][team][f] = {};
+				}
+			}
+		}
+	}
+	for (int t = 0; t < static_cast<int>(BuildingType::Count); ++t)
+	{
+		for (int f = 0; f < static_cast<int>(BuildingFrame::Count); ++f)
+		{
+			BuildingFrameArt &frame = buildingArt_[t].frames[f];
+			for (int team = 0; team < 2; ++team)
+			{
+				if (frame.flat[team].id != 0)
+				{
+					UnloadTexture(frame.flat[team]);
+					frame.flat[team] = {};
+				}
+			}
+			if (frame.base.id != 0)
+			{
+				UnloadTexture(frame.base);
+				frame.base = {};
+			}
+			if (frame.mask.id != 0)
+			{
+				UnloadTexture(frame.mask);
+				frame.mask = {};
+			}
+			buildingArt_[t].hasFrame[f] = false;
+		}
+	}
+	for (int k = 0; k < 2; ++k)
+	{
+		if (nodes_[k].id != 0)
+		{
+			UnloadTexture(nodes_[k]);
+			nodes_[k] = {};
+		}
+		if (icons_[k].id != 0)
+		{
+			UnloadTexture(icons_[k]);
+			icons_[k] = {};
+		}
+	}
+	if (rallyBase_.id != 0)
+	{
+		UnloadTexture(rallyBase_);
+		rallyBase_ = {};
+	}
+	if (rallyMask_.id != 0)
+	{
+		UnloadTexture(rallyMask_);
+		rallyMask_ = {};
+	}
+	for (int s = 0; s < ArtSprites::kTerrainSlots; ++s)
+	{
+		if (terrain_[s].id != 0)
+		{
+			UnloadTexture(terrain_[s]);
+			terrain_[s] = {};
+		}
+	}
+	if (fontReady_)
+	{
+		UnloadFont(uiFont_);
+		uiFont_ = {};
+		fontReady_ = false;
+	}
+	for (const auto &entry : atlas_)
+	{
+		UnloadTexture(entry.second);
+	}
+	atlas_.clear();
+	sheet_ = SpriteSheetData{};
+	atlasReady_ = false;
+	sheetLoaded_ = false;
+	ready_ = false;
+	fallback_ = true;
+}
+
+bool ArtSprites::IsReady() const
+{
+	return ready_;
+}
+
+bool ArtSprites::UseRectangles() const
+{
+	return fallback_;
+}
+
+bool ArtSprites::UseAtlas() const
+{
+	return atlasReady_;
+}
+
+std::expected<void, ConfigError> ArtSprites::LoadAtlas()
 {
 	const std::expected<SpriteSheetData, ConfigError> sheet = LoadSpriteSheet();
 	if (!sheet)
@@ -314,8 +420,18 @@ std::expected<void, ConfigError> Art::LoadAtlas()
 	return {};
 }
 
-std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
-							float timeSeconds, int facingDir, bool attacking) const
+bool ArtSprites::HasFont() const
+{
+	return fontReady_;
+}
+
+const Font &ArtSprites::UiFont() const
+{
+	return uiFont_;
+}
+
+std::string ArtSprites::UnitSprite(UnitType type, bool moving, unsigned int id,
+								   float timeSeconds, int facingDir, bool attacking) const
 {
 	if (!sheetLoaded_)
 	{
@@ -398,7 +514,7 @@ std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id,
 	return {};
 }
 
-bool Art::HasTankArt(UnitType type) const
+bool ArtSprites::HasTankArt(UnitType type) const
 {
 	const char *prefix = InfoOf(type).tankArtPrefix;
 	if (prefix == nullptr || !sheetLoaded_)
@@ -408,7 +524,7 @@ bool Art::HasTankArt(UnitType type) const
 	return FindSpriteByName(sheet_, std::string(prefix) + "_body_idle_0_0") != nullptr;
 }
 
-std::string Art::TankBodySprite(UnitType type, int facingDir) const
+std::string ArtSprites::TankBodySprite(UnitType type, int facingDir) const
 {
 	const char *prefix = InfoOf(type).tankArtPrefix;
 	if (prefix == nullptr || !sheetLoaded_)
@@ -421,7 +537,7 @@ std::string Art::TankBodySprite(UnitType type, int facingDir) const
 	return FindSpriteByName(sheet_, name) != nullptr ? name : std::string{};
 }
 
-std::string Art::TankHeadSprite(UnitType type, int facingDir) const
+std::string ArtSprites::TankHeadSprite(UnitType type, int facingDir) const
 {
 	const char *prefix = InfoOf(type).tankArtPrefix;
 	if (prefix == nullptr || !sheetLoaded_)
@@ -433,7 +549,7 @@ std::string Art::TankHeadSprite(UnitType type, int facingDir) const
 	return FindSpriteByName(sheet_, name) != nullptr ? name : std::string{};
 }
 
-Color Art::TeamTint(TeamId teamID) const
+Color ArtSprites::TeamTint(TeamId teamID) const
 {
 	if (colorBlindMode_)
 	{
@@ -442,12 +558,12 @@ Color Art::TeamTint(TeamId teamID) const
 	return teamID == kPlayerTeam ? BLUE : RED;
 }
 
-void Art::SetColorBlindMode(bool enabled)
+void ArtSprites::SetColorBlindMode(bool enabled)
 {
 	colorBlindMode_ = enabled;
 }
 
-float Art::BaseArtScale(UnitType type)
+float ArtSprites::BaseArtScale(UnitType type)
 {
 	return 1.0f;
 }

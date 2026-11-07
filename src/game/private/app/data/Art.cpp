@@ -1,110 +1,138 @@
 #include "app/data/Art.h"
 
+bool Art::Init(InitMode mode)
+{
+	return sprites_.Init(mode);
+}
+
 void Art::Shutdown()
 {
-	for (int t = 0; t < static_cast<int>(UnitType::Count); ++t)
-	{
-		for (int team = 0; team < 2; ++team)
-		{
-			for (int f = 0; f < 2; ++f)
-			{
-				if (units_[t][team][f].id != 0)
-				{
-					UnloadTexture(units_[t][team][f]);
-					units_[t][team][f] = {};
-				}
-			}
-		}
-	}
-	for (int t = 0; t < static_cast<int>(BuildingType::Count); ++t)
-	{
-		for (int f = 0; f < static_cast<int>(BuildingFrame::Count); ++f)
-		{
-			BuildingFrameArt &frame = buildingArt_[t].frames[f];
-			for (int team = 0; team < 2; ++team)
-			{
-				if (frame.flat[team].id != 0)
-				{
-					UnloadTexture(frame.flat[team]);
-					frame.flat[team] = {};
-				}
-			}
-			if (frame.base.id != 0)
-			{
-				UnloadTexture(frame.base);
-				frame.base = {};
-			}
-			if (frame.mask.id != 0)
-			{
-				UnloadTexture(frame.mask);
-				frame.mask = {};
-			}
-			buildingArt_[t].hasFrame[f] = false;
-		}
-	}
-	for (int k = 0; k < 2; ++k)
-	{
-		if (nodes_[k].id != 0)
-		{
-			UnloadTexture(nodes_[k]);
-			nodes_[k] = {};
-		}
-		if (icons_[k].id != 0)
-		{
-			UnloadTexture(icons_[k]);
-			icons_[k] = {};
-		}
-	}
-	if (rallyBase_.id != 0)
-	{
-		UnloadTexture(rallyBase_);
-		rallyBase_ = {};
-	}
-	if (rallyMask_.id != 0)
-	{
-		UnloadTexture(rallyMask_);
-		rallyMask_ = {};
-	}
-	for (int s = 0; s < 4; ++s)
-	{
-		if (terrain_[s].id != 0)
-		{
-			UnloadTexture(terrain_[s]);
-			terrain_[s] = {};
-		}
-	}
-	if (fontReady_)
-	{
-		UnloadFont(uiFont_);
-		uiFont_ = {};
-		fontReady_ = false;
-	}
-	for (const auto &entry : atlas_)
-	{
-		UnloadTexture(entry.second);
-	}
-	atlas_.clear();
-	sheet_ = SpriteSheetData{};
-	atlasReady_ = false;
-	sheetLoaded_ = false;
+	sprites_.Shutdown();
 	particles_.Clear();
-	ready_ = false;
-	fallback_ = true;
 }
 
 bool Art::IsReady() const
 {
-	return ready_;
+	return sprites_.IsReady();
 }
 
 bool Art::UseRectangles() const
 {
-	return fallback_;
+	return sprites_.UseRectangles();
 }
 
 bool Art::UseAtlas() const
 {
-	return atlasReady_;
+	return sprites_.UseAtlas();
+}
+
+std::expected<void, ConfigError> Art::LoadAtlas()
+{
+	return sprites_.LoadAtlas();
+}
+
+void Art::DrawUnit(UnitType type, TeamId teamID, UnitFrame frame, Vector2 tileCorner) const
+{
+	draw_.DrawUnit(sprites_, type, teamID, frame, tileCorner);
+}
+
+void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
+						 float scale, float rotationDeg) const
+{
+	draw_.DrawAtlasFrame(sprites_, spriteName, tileCorner, tint, scale, rotationDeg);
+}
+
+bool Art::SpriteDrawRect(const std::string &spriteName, Vector2 tileCorner, Rectangle &out,
+						 float scale) const
+{
+	return draw_.SpriteDrawRect(sprites_, spriteName, tileCorner, out, scale);
+}
+
+void Art::DrawBuilding(BuildingType type, TeamId teamID, int tileX, int tileY,
+					   BuildingFrame frame, Color tint) const
+{
+	draw_.DrawBuilding(sprites_, type, teamID, tileX, tileY, frame, tint);
+}
+
+void Art::DrawNode(ResourceKind kind, Vector2 center) const
+{
+	draw_.DrawNode(sprites_, kind, center);
+}
+
+void Art::DrawIcon(ResourceKind kind, Vector2 screenPos) const
+{
+	draw_.DrawIcon(sprites_, kind, screenPos);
+}
+
+void Art::DrawRallyMarker(TeamId teamID, Vector2 worldCenter) const
+{
+	draw_.DrawRallyMarker(sprites_, teamID, worldCenter);
+}
+
+void Art::DrawTerrain(TerrainType type, Vector2 corner) const
+{
+	draw_.DrawTerrain(sprites_, type, corner);
+}
+
+bool Art::HasFont() const
+{
+	return sprites_.HasFont();
+}
+
+const Font &Art::UiFont() const
+{
+	return sprites_.UiFont();
+}
+
+void Art::DrawUiText(const Art *art, const char *text, int x, int y, int size, Color color)
+{
+	ArtDraw::DrawUiText(art != nullptr ? &art->sprites_ : nullptr, text, x, y, size, color);
+}
+
+std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id, float timeSeconds,
+							int facingDir, bool attacking) const
+{
+	return sprites_.UnitSprite(type, moving, id, timeSeconds, facingDir, attacking);
+}
+
+std::string Art::TankBodySprite(UnitType type, int facingDir) const
+{
+	return sprites_.TankBodySprite(type, facingDir);
+}
+
+std::string Art::TankHeadSprite(UnitType type, int facingDir) const
+{
+	return sprites_.TankHeadSprite(type, facingDir);
+}
+
+bool Art::HasTankArt(UnitType type) const
+{
+	return sprites_.HasTankArt(type);
+}
+
+Color Art::TeamTint(TeamId teamID) const
+{
+	return sprites_.TeamTint(teamID);
+}
+
+void Art::SetColorBlindMode(bool enabled)
+{
+	sprites_.SetColorBlindMode(enabled);
+}
+
+float Art::BaseArtScale(UnitType type)
+{
+	return ArtSprites::BaseArtScale(type);
+}
+
+const char *Art::TerrainFile(TerrainType type)
+{
+	return ArtSprites::TerrainFile(type);
+}
+
+int Art::TerrainSlot(TerrainType type)
+{
+	return ArtSprites::TerrainSlot(type);
 }
 
 Particles &Art::ParticlesPool()

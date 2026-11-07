@@ -1,4 +1,4 @@
-#include "app/data/Art.h"
+#include "app/data/ArtDraw.h"
 
 #include "core/MathUtils.h"
 
@@ -96,48 +96,51 @@ Color MultiplyColor(Color a, Color b)
 
 }
 
-void Art::DrawUnit(UnitType type, TeamId teamID, UnitFrame frame, Vector2 tileCorner) const
+void ArtDraw::DrawUnit(const ArtSprites &sprites, UnitType type, TeamId teamID,
+					   UnitFrame frame, Vector2 tileCorner) const
 {
-	if (fallback_)
+	if (sprites.UseRectangles())
 	{
 		return;
 	}
-	const Texture2D tex = units_[static_cast<int>(type)][TeamSlot(teamID)][static_cast<int>(frame)];
+	const Texture2D &tex = sprites.units_[static_cast<int>(type)][ArtSprites::TeamSlot(teamID)][static_cast<int>(frame)];
 	DrawTextureV(tex, { tileCorner.x + 16.0f, tileCorner.y + 16.0f }, WHITE);
 }
 
-void Art::DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
-						 float scale, float rotationDeg) const
+void ArtDraw::DrawAtlasFrame(const ArtSprites &sprites, const std::string &spriteName,
+							 Vector2 tileCorner, Color tint, float scale,
+							 float rotationDeg) const
 {
-	if (!atlasReady_ || spriteName.empty())
+	if (!sprites.UseAtlas() || spriteName.empty())
 	{
 		return;
 	}
-	const SpriteDefInfo *s = FindSpriteByName(sheet_, spriteName);
+	const SpriteDefInfo *s = FindSpriteByName(sprites.sheet_, spriteName);
 	if (s == nullptr)
 	{
 		return;
 	}
 	if (s->maskSprite == 0)
 	{
-		DrawOneAtlasSprite(*s, tileCorner, tint, scale, rotationDeg);
+		DrawOneAtlasSprite(sprites, *s, tileCorner, tint, scale, rotationDeg);
 		return;
 	}
-	DrawOneAtlasSprite(*s, tileCorner, WHITE, scale, rotationDeg);
-	if (const SpriteDefInfo *mask = FindSpriteById(sheet_, s->maskSprite); mask != nullptr)
+	DrawOneAtlasSprite(sprites, *s, tileCorner, WHITE, scale, rotationDeg);
+	if (const SpriteDefInfo *mask = FindSpriteById(sprites.sheet_, s->maskSprite);
+		mask != nullptr)
 	{
-		DrawOneAtlasSprite(*mask, tileCorner, tint, scale, rotationDeg);
+		DrawOneAtlasSprite(sprites, *mask, tileCorner, tint, scale, rotationDeg);
 	}
 }
 
-bool Art::SpriteDrawRect(const std::string &spriteName, Vector2 tileCorner, Rectangle &out,
-						 float scale) const
+bool ArtDraw::SpriteDrawRect(const ArtSprites &sprites, const std::string &spriteName,
+							 Vector2 tileCorner, Rectangle &out, float scale) const
 {
-	if (!atlasReady_ || spriteName.empty())
+	if (!sprites.UseAtlas() || spriteName.empty())
 	{
 		return false;
 	}
-	const SpriteDefInfo *s = FindSpriteByName(sheet_, spriteName);
+	const SpriteDefInfo *s = FindSpriteByName(sprites.sheet_, spriteName);
 	if (s == nullptr)
 	{
 		return false;
@@ -150,11 +153,12 @@ bool Art::SpriteDrawRect(const std::string &spriteName, Vector2 tileCorner, Rect
 	return true;
 }
 
-void Art::DrawOneAtlasSprite(const SpriteDefInfo &s, Vector2 tileCorner, Color tint,
-							 float scale, float rotationDeg) const
+void ArtDraw::DrawOneAtlasSprite(const ArtSprites &sprites, const SpriteDefInfo &s,
+								 Vector2 tileCorner, Color tint, float scale,
+								 float rotationDeg) const
 {
-	const auto it = atlas_.find(s.texture);
-	if (it == atlas_.end() || it->second.id == 0)
+	const auto it = sprites.atlas_.find(s.texture);
+	if (it == sprites.atlas_.end() || it->second.id == 0)
 	{
 		return;
 	}
@@ -175,84 +179,87 @@ void Art::DrawOneAtlasSprite(const SpriteDefInfo &s, Vector2 tileCorner, Color t
 	DrawTexturePro(it->second, src, dest, pivot, rotationDeg, tint);
 }
 
-void Art::DrawBuilding(BuildingType type, TeamId teamID, int tileX, int tileY,
-					   BuildingFrame frame, Color tint) const
+void ArtDraw::DrawBuilding(const ArtSprites &sprites, BuildingType type, TeamId teamID,
+						   int tileX, int tileY, BuildingFrame frame, Color tint) const
 {
-	if (fallback_)
+	if (sprites.UseRectangles())
 	{
 		return;
 	}
 	const Vector2 corner = cc::ToRaylib(cc::TileToWorld(tileX, tileY));
 	const int t = static_cast<int>(type);
 	const int f = static_cast<int>(frame);
-	const BuildingFrameArt &art =
-		buildingArt_[t].hasFrame[f] ? buildingArt_[t].frames[f] : buildingArt_[t].frames[0];
+	const ArtSprites::BuildingFrameArt &art =
+		sprites.buildingArt_[t].hasFrame[f] ? sprites.buildingArt_[t].frames[f]
+											: sprites.buildingArt_[t].frames[0];
 	if (art.mask.id != 0)
 	{
 		DrawTextureV(art.base, corner, tint);
-		DrawTextureV(art.mask, corner, MultiplyColor(TeamTint(teamID), tint));
+		DrawTextureV(art.mask, corner, MultiplyColor(sprites.TeamTint(teamID), tint));
 		return;
 	}
-	DrawTextureV(art.flat[TeamSlot(teamID)], corner, tint);
+	DrawTextureV(art.flat[ArtSprites::TeamSlot(teamID)], corner, tint);
 }
 
-void Art::DrawTerrain(TerrainType type, Vector2 corner) const
+void ArtDraw::DrawTerrain(const ArtSprites &sprites, TerrainType type, Vector2 corner) const
 {
-	const int slot = TerrainSlot(type);
-	if (fallback_ || slot < 0)
+	const int slot = ArtSprites::TerrainSlot(type);
+	if (sprites.UseRectangles() || slot < 0)
 	{
 		return;
 	}
-	DrawTextureV(terrain_[slot], corner, WHITE);
+	DrawTextureV(sprites.terrain_[slot], corner, WHITE);
 }
 
-bool Art::HasFont() const
+bool ArtDraw::HasFont(const ArtSprites &sprites) const
 {
-	return fontReady_;
+	return sprites.HasFont();
 }
 
-const Font &Art::UiFont() const
+const Font &ArtDraw::UiFont(const ArtSprites &sprites) const
 {
-	return uiFont_;
+	return sprites.UiFont();
 }
 
-void Art::DrawUiText(const Art *art, const char *text, int x, int y, int size, Color color)
+void ArtDraw::DrawUiText(const ArtSprites *sprites, const char *text, int x, int y, int size,
+						 Color color)
 {
-	if (art != nullptr && art->fontReady_)
+	if (sprites != nullptr && sprites->HasFont())
 	{
-		DrawTextEx(art->uiFont_, text, { static_cast<float>(x), static_cast<float>(y) },
+		DrawTextEx(sprites->UiFont(), text, { static_cast<float>(x), static_cast<float>(y) },
 				   static_cast<float>(size), static_cast<float>(size) / 10.0f, color);
 		return;
 	}
 	DrawText(text, x, y, size, color);
 }
 
-void Art::DrawNode(ResourceKind kind, Vector2 center) const
+void ArtDraw::DrawNode(const ArtSprites &sprites, ResourceKind kind, Vector2 center) const
 {
-	if (fallback_)
+	if (sprites.UseRectangles())
 	{
 		return;
 	}
-	const Texture2D tex = nodes_[static_cast<int>(kind)];
+	const Texture2D tex = sprites.nodes_[static_cast<int>(kind)];
 	DrawTextureV(tex, { center.x - 16.0f, center.y - 16.0f }, WHITE);
 }
 
-void Art::DrawIcon(ResourceKind kind, Vector2 screenPos) const
+void ArtDraw::DrawIcon(const ArtSprites &sprites, ResourceKind kind, Vector2 screenPos) const
 {
-	if (fallback_)
+	if (sprites.UseRectangles())
 	{
 		return;
 	}
-	DrawTextureV(icons_[static_cast<int>(kind)], screenPos, WHITE);
+	DrawTextureV(sprites.icons_[static_cast<int>(kind)], screenPos, WHITE);
 }
 
-void Art::DrawRallyMarker(TeamId teamID, Vector2 worldCenter) const
+void ArtDraw::DrawRallyMarker(const ArtSprites &sprites, TeamId teamID,
+							  Vector2 worldCenter) const
 {
-	if (fallback_ || rallyBase_.id == 0)
+	if (sprites.UseRectangles() || sprites.rallyBase_.id == 0)
 	{
 		return;
 	}
 	const Vector2 corner = { worldCenter.x - 8.0f, worldCenter.y - 8.0f };
-	DrawTextureV(rallyBase_, corner, WHITE);
-	DrawTextureV(rallyMask_, corner, TeamTint(teamID));
+	DrawTextureV(sprites.rallyBase_, corner, WHITE);
+	DrawTextureV(sprites.rallyMask_, corner, sprites.TeamTint(teamID));
 }
