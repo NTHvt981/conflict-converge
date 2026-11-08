@@ -14,10 +14,7 @@ add-unit-behavior topic, beyond this recipe.
 
 ## Prerequisites
 
-A Debug build that compiles and passes the test suite. Three
-compile-time tripwires keep the recipe honest: the type-info row pairs
-the enum entry (step 2), the stats row pairs the type again (step 3),
-and the save decode count is bumped on purpose, not silently (step 4).
+A Debug build that compiles and passes the test suite.
 
 ## Steps
 
