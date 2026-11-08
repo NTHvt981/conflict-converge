@@ -64,6 +64,11 @@ In-match keys: WASD pan, wheel zoom, left-click select (drag for box, Shift exte
 right-click order, A attack-move, H/G stances, V patrol, R rally mode, Space halt,
 Esc deselect, P pause, F1 hints, F5/F9 quicksave/load, F6–F8 slots (Shift loads).
 
+## Extending
+
+Recipes for extending the game live in [`docs/how-to/`](docs/how-to/README.md),
+one standalone how-to per activity, each verified against a build.
+
 ## Playtest
 
 [`docs/playtest/`](docs/playtest/README.md) holds the note protocol, the template,
