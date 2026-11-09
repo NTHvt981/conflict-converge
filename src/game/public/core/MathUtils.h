@@ -9,6 +9,7 @@ namespace cc
 
 using Vec2 = glm::vec2;
 using IVec2 = glm::ivec2;
+using TileUnit = float;
 
 inline constexpr float TILE_SIZE = 64.0f;
 inline constexpr float kHalfTile = TILE_SIZE * 0.5f;
