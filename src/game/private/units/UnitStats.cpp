@@ -44,11 +44,10 @@ void ApplyBaseStats(Unit &unit)
 	unit.armorType = stats.armorType;
 	unit.damageType = stats.damageType;
 	unit.attackPower = stats.attackPower;
-	unit.attackRange =
-		static_cast<int>(std::lroundf(stats.attackRangeTiles * cc::TILE_SIZE));
+	unit.attackRange = static_cast<int>(std::lroundf(stats.attackRange * cc::TILE_SIZE));
 	unit.cooldownTime = stats.cooldownTime;
-	unit.speed = stats.speedTilesPerSec * cc::TILE_SIZE;
-	unit.sightRange = stats.sightRangeTiles * cc::TILE_SIZE;
+	unit.speed = stats.speed * cc::TILE_SIZE;
+	unit.sightRange = stats.sightRange * cc::TILE_SIZE;
 	const cc::IVec2 fp = UnitFootprint(unit.type);
 	unit.footprintWidth = fp.x;
 	unit.footprintHeight = fp.y;

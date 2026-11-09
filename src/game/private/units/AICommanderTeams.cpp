@@ -48,7 +48,7 @@ bool ByBaseStat::operator()(Entity lhs, Entity rhs) const
 			return 0.0f;
 		}
 		const UnitStats &base = BaseStats(unit->type);
-		return stat == BaseStat::Health ? base.health : base.speedTilesPerSec;
+		return stat == BaseStat::Health ? base.health : base.speed;
 	};
 	return value(lhs) > value(rhs);
 }

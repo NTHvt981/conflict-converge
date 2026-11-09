@@ -98,9 +98,9 @@ void DrawStatsTab(EditorState &editor)
 	y = SliderRow("Health", kX, y, kW, &config.stats.health, 20.0f, 1000.0f, "%.0f");
 	y = SliderRow("Cooldown (s)", kX, y, kW, &config.stats.cooldownTime, 0.1f, 5.0f,
 				  "%.2f");
-	y = SliderRow("Speed (tiles/s)", kX, y, kW, &config.stats.speedTilesPerSec, 0.25f,
-				  4.0f, "%.2f");
-	y = SliderRow("Sight (tiles)", kX, y, kW, &config.stats.sightRangeTiles, 0.0f, 10.0f,
+	y = SliderRow("Speed (tiles/s)", kX, y, kW, &config.stats.speed, 0.25f, 4.0f,
+				  "%.2f");
+	y = SliderRow("Sight (tiles)", kX, y, kW, &config.stats.sightRange, 0.0f, 10.0f,
 				  "%.1f");
 
 	GuiLabel({ kX, y, 130.0f, 20.0f }, "Attack power");
@@ -112,9 +112,9 @@ void DrawStatsTab(EditorState &editor)
 	config.stats.attackPower = editor.attackPowerBox;
 	GuiLabel({ kX + 400.0f, y, 130.0f, 20.0f }, "Attack range (tiles)");
 	GuiSlider({ kX + 535.0f, y, 120.0f, 20.0f }, nullptr, nullptr,
-			   &config.stats.attackRangeTiles, 0.0f, 12.0f);
+			   &config.stats.attackRange, 0.0f, 12.0f);
 	char rangeText[32];
-	std::snprintf(rangeText, sizeof(rangeText), "%.1f", config.stats.attackRangeTiles);
+	std::snprintf(rangeText, sizeof(rangeText), "%.1f", config.stats.attackRange);
 	GuiLabel({ kX + 660.0f, y, 65.0f, 20.0f }, rangeText);
 	y += 30.0f;
 

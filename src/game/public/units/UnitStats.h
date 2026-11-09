@@ -11,10 +11,10 @@ struct UnitStats
 	ArmorType armorType = ArmorType::STEEL;
 	DamageType damageType = DamageType::KINETIC;
 	int attackPower = 0;
-	cc::TileUnit attackRangeTiles = 0.0f;
+	cc::TileUnit attackRange = 0.0f;
 	float cooldownTime = 1.0f;
-	cc::TileUnit speedTilesPerSec = 1.0f;
-	cc::TileUnit sightRangeTiles = 5.0f;
+	cc::TileUnit speed = 1.0f;
+	cc::TileUnit sightRange = 5.0f;
 };
 
 const UnitStats &BaseStats(UnitType type);

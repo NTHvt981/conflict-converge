@@ -254,7 +254,7 @@ ParseUnitConfigJson(const std::string &json, const std::string &filenameStem)
 	}
 	if (stats.attackRange.has_value())
 	{
-		config.stats.attackRangeTiles = *stats.attackRange;
+		config.stats.attackRange = *stats.attackRange;
 	}
 	if (stats.cooldownTime.has_value())
 	{
@@ -262,11 +262,11 @@ ParseUnitConfigJson(const std::string &json, const std::string &filenameStem)
 	}
 	if (stats.speed.has_value())
 	{
-		config.stats.speedTilesPerSec = *stats.speed;
+		config.stats.speed = *stats.speed;
 	}
 	if (stats.sightRange.has_value())
 	{
-		config.stats.sightRangeTiles = *stats.sightRange;
+		config.stats.sightRange = *stats.sightRange;
 	}
 	if (cfg.cost.iron.has_value() && *cfg.cost.iron >= 0)
 	{

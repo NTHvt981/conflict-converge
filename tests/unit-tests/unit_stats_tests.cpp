@@ -25,19 +25,19 @@ void RunUnitStatsTests()
 		const UnitStats &stats = BaseStats(type);
 		CC_CHECK(stats.health > 0.0f);
 		CC_CHECK(stats.cooldownTime > 0.0f);
-		CC_CHECK(stats.speedTilesPerSec > 0.0f);
-		CC_CHECK(stats.sightRangeTiles > 0.0f);
+		CC_CHECK(stats.speed > 0.0f);
+		CC_CHECK(stats.sightRange > 0.0f);
 		if (stats.attackPower > 0)
 		{
-			CC_CHECK(stats.attackRangeTiles > 0.0f);
+			CC_CHECK(stats.attackRange > 0.0f);
 		}
 	}
 
 	// --- spot values pin the table (change deliberately, not by accident) ---
 	CC_CHECK(BaseStats(UnitType::RifleInfantry).health == 100.0f);
 	CC_CHECK(BaseStats(UnitType::HeavyTank).health == 500.0f);
-	CC_CHECK(BaseStats(UnitType::Artillery).attackRangeTiles == 6.0f);
-	CC_CHECK(BaseStats(UnitType::IFV).speedTilesPerSec == 2.0f);
+	CC_CHECK(BaseStats(UnitType::Artillery).attackRange == 6.0f);
+	CC_CHECK(BaseStats(UnitType::IFV).speed == 2.0f);
 	CC_CHECK(BaseStats(UnitType::AntiArmorInfantry).damageType == DamageType::EXPLOSIVE);
 	CC_CHECK(BaseStats(UnitType::HeavyTank).armorType == ArmorType::COMPOSITE);
 	// Support types cannot attack (heal/repair instead).
@@ -52,8 +52,8 @@ void RunUnitStatsTests()
 	{
 		if (type != UnitType::Artillery)
 		{
-			CC_CHECK(BaseStats(UnitType::Artillery).attackRangeTiles >
-					 BaseStats(type).attackRangeTiles);
+			CC_CHECK(BaseStats(UnitType::Artillery).attackRange >
+					 BaseStats(type).attackRange);
 		}
 	}
 
