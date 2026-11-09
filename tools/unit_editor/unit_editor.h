@@ -31,9 +31,7 @@ struct EditorState
 	bool armorEdit = false;
 	bool damageEdit = false;
 	int attackPowerBox = 0;
-	int attackRangeBox = 0;
 	bool attackPowerEdit = false;
-	bool attackRangeEdit = false;
 	// Collision-tab boxes: bounds L/T/R/B + origin X/Y (footprint derives
 	// as R-L x B-T; see the schema doc in proto/unitconfig.proto).
 	int boundLBox = 0;

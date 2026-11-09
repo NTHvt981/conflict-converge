@@ -44,7 +44,6 @@ void SyncBuffers(EditorState &editor)
 	editor.armorActive = ArmorIndex(config.stats.armorType);
 	editor.damageActive = DamageIndex(config.stats.damageType);
 	editor.attackPowerBox = config.stats.attackPower;
-	editor.attackRangeBox = config.stats.attackRange;
 	editor.boundLBox = config.boundLeft;
 	editor.boundTBox = config.boundTop;
 	editor.boundRBox = config.boundLeft + config.footprintWidth;
@@ -53,7 +52,7 @@ void SyncBuffers(EditorState &editor)
 	editor.originYBox = config.originY;
 	editor.spriteEdit = editor.idleEdit = editor.moveEdit = false;
 	editor.armorEdit = editor.damageEdit = false;
-	editor.attackPowerEdit = editor.attackRangeEdit = false;
+	editor.attackPowerEdit = false;
 	editor.boundLEdit = editor.boundTEdit = editor.boundREdit = false;
 	editor.boundBEdit = editor.originXEdit = editor.originYEdit = false;
 }
@@ -99,9 +98,10 @@ void DrawStatsTab(EditorState &editor)
 	y = SliderRow("Health", kX, y, kW, &config.stats.health, 20.0f, 1000.0f, "%.0f");
 	y = SliderRow("Cooldown (s)", kX, y, kW, &config.stats.cooldownTime, 0.1f, 5.0f,
 				  "%.2f");
-	y = SliderRow("Speed (px/s)", kX, y, kW, &config.stats.speed, 16.0f, 256.0f, "%.0f");
-	y = SliderRow("Sight (px)", kX, y, kW, &config.stats.sightRange, 0.0f, 640.0f,
-				  "%.0f");
+	y = SliderRow("Speed (tiles/s)", kX, y, kW, &config.stats.speed, 0.25f, 4.0f,
+				  "%.2f");
+	y = SliderRow("Sight (tiles)", kX, y, kW, &config.stats.sightRange, 0.0f, 10.0f,
+				  "%.1f");
 
 	GuiLabel({ kX, y, 130.0f, 20.0f }, "Attack power");
 	if (GuiValueBox({ kX + 135.0f, y, 120.0f, 20.0f }, nullptr, &editor.attackPowerBox,
@@ -110,13 +110,12 @@ void DrawStatsTab(EditorState &editor)
 		editor.attackPowerEdit = !editor.attackPowerEdit;
 	}
 	config.stats.attackPower = editor.attackPowerBox;
-	GuiLabel({ kX + 400.0f, y, 130.0f, 20.0f }, "Attack range (px)");
-	if (GuiValueBox({ kX + 535.0f, y, 120.0f, 20.0f }, nullptr, &editor.attackRangeBox,
-					 0, 1024, editor.attackRangeEdit))
-	{
-		editor.attackRangeEdit = !editor.attackRangeEdit;
-	}
-	config.stats.attackRange = editor.attackRangeBox;
+	GuiLabel({ kX + 400.0f, y, 130.0f, 20.0f }, "Attack range (tiles)");
+	GuiSlider({ kX + 535.0f, y, 120.0f, 20.0f }, nullptr, nullptr,
+			   &config.stats.attackRange, 0.0f, 12.0f);
+	char rangeText[32];
+	std::snprintf(rangeText, sizeof(rangeText), "%.1f", config.stats.attackRange);
+	GuiLabel({ kX + 660.0f, y, 65.0f, 20.0f }, rangeText);
 	y += 30.0f;
 
 	GuiLabel({ kX, y, 130.0f, 20.0f }, "Armor");

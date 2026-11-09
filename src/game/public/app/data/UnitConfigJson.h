@@ -3,6 +3,8 @@
 #define CEREAL_RAPIDJSON_ASSERT(x) \
 	do { if (!(x)) throw std::runtime_error("malformed unit-config JSON"); } while (0)
 
+#include "core/MathUtils.h"
+
 #include <cereal/archives/json.hpp>
 #include <cereal/cereal.hpp>
 #include <cereal/types/string.hpp>
@@ -18,10 +20,10 @@ struct JsonStats
 	std::string armorType;
 	std::string damageType;
 	std::optional<int> attackPower;
-	std::optional<int> attackRange;
+	std::optional<cc::TileUnit> attackRange; // tiles
 	std::optional<float> cooldownTime;
-	std::optional<float> speed;
-	std::optional<float> sightRange;
+	std::optional<cc::TileUnit> speed;      // tiles per second
+	std::optional<cc::TileUnit> sightRange; // tiles
 };
 
 struct JsonBounds

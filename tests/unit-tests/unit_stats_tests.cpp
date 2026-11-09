@@ -29,15 +29,15 @@ void RunUnitStatsTests()
 		CC_CHECK(stats.sightRange > 0.0f);
 		if (stats.attackPower > 0)
 		{
-			CC_CHECK(stats.attackRange > 0);
+			CC_CHECK(stats.attackRange > 0.0f);
 		}
 	}
 
 	// --- spot values pin the table (change deliberately, not by accident) ---
 	CC_CHECK(BaseStats(UnitType::RifleInfantry).health == 100.0f);
 	CC_CHECK(BaseStats(UnitType::HeavyTank).health == 500.0f);
-	CC_CHECK(BaseStats(UnitType::Artillery).attackRange == 384);
-	CC_CHECK(BaseStats(UnitType::IFV).speed == 128.0f);
+	CC_CHECK(BaseStats(UnitType::Artillery).attackRange == 6.0f);
+	CC_CHECK(BaseStats(UnitType::IFV).speed == 2.0f);
 	CC_CHECK(BaseStats(UnitType::AntiArmorInfantry).damageType == DamageType::EXPLOSIVE);
 	CC_CHECK(BaseStats(UnitType::HeavyTank).armorType == ArmorType::COMPOSITE);
 	// Support types cannot attack (heal/repair instead).
@@ -52,7 +52,8 @@ void RunUnitStatsTests()
 	{
 		if (type != UnitType::Artillery)
 		{
-			CC_CHECK(BaseStats(UnitType::Artillery).attackRange > BaseStats(type).attackRange);
+			CC_CHECK(BaseStats(UnitType::Artillery).attackRange >
+					 BaseStats(type).attackRange);
 		}
 	}
 
@@ -65,7 +66,9 @@ void RunUnitStatsTests()
 	ApplyBaseStats(unit);
 	CC_CHECK(unit.health == 300.0f);
 	CC_CHECK(unit.attackPower == 20);
-	CC_CHECK(unit.speed == 96.0f);
+	CC_CHECK(unit.speed == 96.0f); // 1.5 tiles/s against TILE_SIZE 64
+	CC_CHECK(unit.attackRange == 192); // 3.0 tiles
+	CC_CHECK(unit.sightRange == 320.0f); // 5.0 tiles
 	CC_CHECK(CombatState{}.cooldown == 0.0f); // live cooldown starts at zero, not from stats
 	CC_CHECK(unit.teamID == kEnemyTeam);
 	CC_CHECK(unit.position.x == 128.0f);

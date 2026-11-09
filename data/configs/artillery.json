@@ -5,10 +5,10 @@
     "armorType": "STEEL",
     "damageType": "EXPLOSIVE",
     "attackPower": 40,
-    "attackRange": 384,
+    "attackRange": 6,
     "cooldownTime": 3,
-    "speed": 48,
-    "sightRange": 320
+    "speed": 0.75,
+    "sightRange": 5
   },
   "collision": {
     "bounds": { "left": 0, "top": 0, "right": 2, "bottom": 2 },

@@ -7,8 +7,8 @@
     "attackPower": 0,
     "attackRange": 0,
     "cooldownTime": 1,
-    "speed": 64,
-    "sightRange": 256
+    "speed": 1,
+    "sightRange": 4
   },
   "collision": {
     "bounds": { "left": 0, "top": 0, "right": 1, "bottom": 1 },

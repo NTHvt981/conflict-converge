@@ -5,10 +5,10 @@
     "armorType": "RUBBER",
     "damageType": "KINETIC",
     "attackPower": 10,
-    "attackRange": 128,
+    "attackRange": 2,
     "cooldownTime": 1,
-    "speed": 64,
-    "sightRange": 320
+    "speed": 1,
+    "sightRange": 5
   },
   "collision": {
     "bounds": { "left": 0, "top": 0, "right": 1, "bottom": 1 },
