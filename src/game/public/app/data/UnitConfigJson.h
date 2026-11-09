@@ -18,10 +18,10 @@ struct JsonStats
 	std::string armorType;
 	std::string damageType;
 	std::optional<int> attackPower;
-	std::optional<int> attackRange;
+	std::optional<float> attackRange; // tiles
 	std::optional<float> cooldownTime;
-	std::optional<float> speed;
-	std::optional<float> sightRange;
+	std::optional<float> speed;      // tiles per second
+	std::optional<float> sightRange; // tiles
 };
 
 struct JsonBounds

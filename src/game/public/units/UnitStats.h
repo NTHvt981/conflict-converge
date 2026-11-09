@@ -2,7 +2,8 @@
 
 #include "units/Unit.h"
 
-// Ranges and sight are in pixels (64px tiles).
+// Distances are in tiles, speed in tiles per second; ApplyBaseStats
+// converts both to world pixels against the current TILE_SIZE.
 
 struct UnitStats
 {
@@ -10,10 +11,10 @@ struct UnitStats
 	ArmorType armorType = ArmorType::STEEL;
 	DamageType damageType = DamageType::KINETIC;
 	int attackPower = 0;
-	int attackRange = 0;
+	float attackRangeTiles = 0.0f;
 	float cooldownTime = 1.0f;
-	float speed = 64.0f;
-	float sightRange = 320.0f;
+	float speedTilesPerSec = 1.0f;
+	float sightRangeTiles = 5.0f;
 };
 
 const UnitStats &BaseStats(UnitType type);

@@ -5,10 +5,10 @@
     "armorType": "COMPOSITE",
     "damageType": "EXPLOSIVE",
     "attackPower": 35,
-    "attackRange": 224,
+    "attackRange": 3.5,
     "cooldownTime": 1.8,
-    "speed": 64,
-    "sightRange": 320
+    "speed": 1,
+    "sightRange": 5
   },
   "collision": {
     "bounds": { "left": 0, "top": 0, "right": 2, "bottom": 2 },

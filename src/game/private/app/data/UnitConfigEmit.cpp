@@ -16,10 +16,10 @@ std::string UnitConfigToJson(const UnitConfig &config)
 	out.stats.armorType = ArmorTypeName(config.stats.armorType);
 	out.stats.damageType = DamageTypeName(config.stats.damageType);
 	out.stats.attackPower = config.stats.attackPower;
-	out.stats.attackRange = config.stats.attackRange;
+	out.stats.attackRange = config.stats.attackRangeTiles;
 	out.stats.cooldownTime = config.stats.cooldownTime;
-	out.stats.speed = config.stats.speed;
-	out.stats.sightRange = config.stats.sightRange;
+	out.stats.speed = config.stats.speedTilesPerSec;
+	out.stats.sightRange = config.stats.sightRangeTiles;
 	out.cost.iron = config.costIron;
 	out.cost.oil = config.costOil;
 	{

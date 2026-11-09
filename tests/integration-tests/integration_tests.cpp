@@ -70,7 +70,10 @@ void SimulateCombatFrames(Registry &registry, TileMap &map, UnitFactory &factory
 void DeployFaceoff(Registry &registry, UnitFactory &factory, UnitType type)
 {
 	const UnitStats stats = BaseStats(type);
-	const float gap = (stats.sightRange < stats.attackRange ? stats.sightRange : stats.attackRange) * 0.8f;
+	const float gap = (stats.sightRangeTiles < stats.attackRangeTiles
+						   ? stats.sightRangeTiles
+						   : stats.attackRangeTiles) *
+						  0.8f * cc::TILE_SIZE;
 	for (int i = 0; i < 3; ++i)
 	{
 		const float y = 320.0f + static_cast<float>(i) * 64.0f;

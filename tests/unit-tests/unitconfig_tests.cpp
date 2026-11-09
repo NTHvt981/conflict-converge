@@ -24,9 +24,10 @@ bool ConfigsEqual(const UnitConfig &a, const UnitConfig &b)
 		   a.stats.armorType == b.stats.armorType &&
 		   a.stats.damageType == b.stats.damageType &&
 		   a.stats.attackPower == b.stats.attackPower &&
-		   a.stats.attackRange == b.stats.attackRange &&
+		   a.stats.attackRangeTiles == b.stats.attackRangeTiles &&
 		   a.stats.cooldownTime == b.stats.cooldownTime &&
-		   a.stats.speed == b.stats.speed && a.stats.sightRange == b.stats.sightRange &&
+		   a.stats.speedTilesPerSec == b.stats.speedTilesPerSec &&
+		   a.stats.sightRangeTiles == b.stats.sightRangeTiles &&
 		   a.costIron == b.costIron && a.costOil == b.costOil &&
 		   a.abilities.turretTurnRate == b.abilities.turretTurnRate &&
 		   a.abilities.arcingFlightTime == b.abilities.arcingFlightTime &&

@@ -5,10 +5,10 @@
     "armorType": "STEEL",
     "damageType": "KINETIC",
     "attackPower": 20,
-    "attackRange": 192,
+    "attackRange": 3,
     "cooldownTime": 1.2,
-    "speed": 96,
-    "sightRange": 320
+    "speed": 1.5,
+    "sightRange": 5
   },
   "collision": {
     "bounds": { "left": 0, "top": 0, "right": 1, "bottom": 1 },
