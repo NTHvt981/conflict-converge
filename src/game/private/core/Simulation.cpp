@@ -154,7 +154,7 @@ void Simulation::ReapDeadUnits()
 		{
 			art_.ParticlesPool().SpawnBurst(
 				{ corpse->position.x + cc::kHalfTile, corpse->position.y + cc::kHalfTile },
-				ORANGE, 24, 120.0f, 0.6f);
+				ORANGE, 24, 240.0f, 0.6f);
 			const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(corpse->position));
 			occ_.ReleaseFootprintOwned(anchor, corpse->footprintWidth,
 									   corpse->footprintHeight, id,
@@ -177,8 +177,8 @@ void Simulation::UpdateCombatVfx()
 		const CombatState *combat = registry_.Get<CombatState>(id);
 		if (combat != nullptr && combat->hitFlashTime > 0.20f)
 		{
-			art_.ParticlesPool().SpawnBurst(center, YELLOW, 6, 90.0f, 0.25f);
-			damageNumbers_.Spawn({ center.x, unit.position.y - 2.0f },
+			art_.ParticlesPool().SpawnBurst(center, YELLOW, 6, 180.0f, 0.25f);
+			damageNumbers_.Spawn({ center.x, unit.position.y - 4.0f },
 								 combat->lastDamageTaken);
 			shakeTrauma_ = AddShakeTrauma(shakeTrauma_, kShakeHitTrauma);
 			if (unit.teamID == kPlayerTeam)
@@ -196,8 +196,8 @@ void Simulation::UpdateCombatVfx()
 				if (len > 1.0f)
 				{
 					art_.ParticlesPool().SpawnBurst(
-						{ center.x + dir.x / len * 20.0f, center.y + dir.y / len * 20.0f },
-						ORANGE, 2, 40.0f, 0.15f);
+						{ center.x + dir.x / len * 40.0f, center.y + dir.y / len * 40.0f },
+						ORANGE, 2, 80.0f, 0.15f);
 				}
 			}
 		}

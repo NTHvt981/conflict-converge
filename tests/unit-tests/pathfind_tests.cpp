@@ -164,18 +164,18 @@ void RunPathfindTests()
 	ApplyBaseStats(unit);
 	unit.position = cc::ToRaylib(cc::TileToWorld(1, 1));
 	IssuePathOrder(unit, unitOrders, unitMover, map,
-				   cc::ToRaylib(cc::Vec2(6 * 64.0f + 10.0f, 1 * 64.0f + 5.0f)));
+				   cc::ToRaylib(cc::Vec2(6 * 128.0f + 10.0f, 1 * 128.0f + 5.0f)));
 	CC_CHECK(unitMover.hasPath);
 	CC_CHECK(unitMover.hasMoveOrder);
-	CC_CHECK(unitMover.moveTarget.x == 6 * 64.0f); // target snapped to tile corner
-	CC_CHECK(unitMover.moveTarget.y == 1 * 64.0f);
+	CC_CHECK(unitMover.moveTarget.x == 6 * 128.0f); // target snapped to tile corner
+	CC_CHECK(unitMover.moveTarget.y == 1 * 128.0f);
 
 	const int frames = WalkUntilIdle(unit, unitOrders, unitMover, unitCombat, map, unit.speed,
 									 1.0f / 60.0f, 60 * 60);
 	CC_CHECK(!unitMover.hasMoveOrder && !unitMover.hasPath);
 	CC_CHECK(unit.state == UnitState::Idle);
-	CC_CHECK(unit.position.x == 6 * 64.0f);
-	CC_CHECK(unit.position.y == 1 * 64.0f);
+	CC_CHECK(unit.position.x == 6 * 128.0f);
+	CC_CHECK(unit.position.y == 1 * 128.0f);
 	CC_CHECK(frames < 60 * 60); // arrived, did not time out
 
 	// --- unreachable target falls back to a straight order ---

@@ -17,7 +17,7 @@ void Particles::SpawnBurst(Vector2 center, Color color, int count, float speed, 
 		p.vel = { std::cos(angle) * magnitude, std::sin(angle) * magnitude };
 		p.life = life;
 		p.maxLife = life > 0.0f ? life : 1.0f;
-		p.size = 2.0f + 2.0f * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+		p.size = 4.0f + 4.0f * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 		p.color = color;
 		live_.push_back(p);
 	}
@@ -97,8 +97,8 @@ void DamageNumbers::Draw() const
 	{
 		const float alpha = n.life / n.maxLife;
 		const char *text = TextFormat("-%.0f", n.value);
-		const int x = static_cast<int>(n.pos.x) - MeasureText(text, 16) / 2;
-		DrawText(text, x, static_cast<int>(n.pos.y), 16, Fade(RED, alpha > 1.0f ? 1.0f : alpha));
+		const int x = static_cast<int>(n.pos.x) - MeasureText(text, 32) / 2;
+		DrawText(text, x, static_cast<int>(n.pos.y), 32, Fade(RED, alpha > 1.0f ? 1.0f : alpha));
 	}
 }
 

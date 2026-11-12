@@ -8,7 +8,7 @@ update).
 
 ## Behavior
 
-- `DamageNumbers` pool (256 cap, 0.7s life, 40px/s rise) with
+- `DamageNumbers` pool (256 cap, 0.7s life, 80px/s rise) with
   spawn/update/draw/clear.
 - Spawned once per hit on the hit-flash edge trigger (`hitFlashTime`
   crossing 0.20s); hit flash overlay itself untouched and independently

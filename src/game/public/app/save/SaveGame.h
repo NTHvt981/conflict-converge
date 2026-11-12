@@ -15,7 +15,8 @@ class FogOfWar;
 // tolerant (missing keys take defaults), so old saves keep loading as new
 // fields are appended; versions outside [kMinSupportedVersion, kSaveVersion]
 // and unknown enum values still reject the load.
-inline constexpr unsigned int kSaveVersion = 3;
+// v4 (128px tiles): pixel-space fields rescale x2 on load for v3 payloads.
+inline constexpr unsigned int kSaveVersion = 4;
 inline constexpr unsigned int kMinSupportedVersion = 3;
 inline constexpr char kMagic[4] = { 'C', 'C', 'J', '3' };
 

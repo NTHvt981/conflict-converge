@@ -75,8 +75,8 @@ void RunAreaRepairTests()
 
 		// Zone covers tiles x 0..11, y 0..5 (everything above except farTank).
 		std::vector<Entity> candidates;
-		CollectAreaRepairCandidates(registry, WorldRect(0.0f, 0.0f, 12.0f * 64.0f,
-														6.0f * 64.0f),
+		CollectAreaRepairCandidates(registry, WorldRect(0.0f, 0.0f, 12.0f * 128.0f,
+														6.0f * 128.0f),
 									kPlayerTeam, candidates);
 		CC_CHECK(candidates.size() == 3);
 		bool hasTank = false;

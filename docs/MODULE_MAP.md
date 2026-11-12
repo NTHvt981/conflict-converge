@@ -61,7 +61,7 @@ app/match: Menu, Skirmish
 - `Event.h` - `EventDispatcher`: Subscribe/Dispatch(in order)/Clear by EventType, base-`Event`
   + downcast payloads, M14 Q57 categories (game-state: MatchStarted/Paused/GameOver/Victory;
   UI: MenuAction/ProductionOrdered)
-- `MathUtils.h` - `cc::Vec2`, raylib conversions, 64x64 tile helpers (top-left-corner
+- `MathUtils.h` - `cc::Vec2`, raylib conversions, 128x128 tile helpers (top-left-corner
   convention, `cc::kHalfTile` = centre offset)
 - `Team.h` - `TeamId` (`Any`/`Player`/`Enemy`) + `kAnyTeam`/`kPlayerTeam`/`kEnemyTeam`;
   every team field and parameter is typed

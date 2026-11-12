@@ -12,7 +12,7 @@ enum class BuildingType;
 enum class UnitType;
 
 // Mouse selection (left-click pick) over the unit registry. Hit test is the
-// unit's 64x64 tile box at its snapped position.
+// unit's tile box at its snapped position.
 
 Entity PickUnitAt(Registry &registry, Vector2 worldPos);
 void SelectOnly(Registry &registry, Entity entity);

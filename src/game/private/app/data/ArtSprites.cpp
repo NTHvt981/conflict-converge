@@ -242,7 +242,7 @@ bool ArtSprites::Init(InitMode mode)
 		{
 			continue;
 		}
-		std::snprintf(path, sizeof(path), "data/sprites/terrain_tiles/%s_64px.png", art.file);
+		std::snprintf(path, sizeof(path), "data/sprites/terrain_tiles/%s_128px.png", art.file);
 		terrain_[art.slot] = LoadTexture(path);
 		if (terrain_[art.slot].id == 0)
 		{

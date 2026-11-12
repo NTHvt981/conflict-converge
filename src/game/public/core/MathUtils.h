@@ -11,8 +11,9 @@ using Vec2 = glm::vec2;
 using IVec2 = glm::ivec2;
 using TileUnit = float;
 
-inline constexpr float TILE_SIZE = 64.0f;
+inline constexpr float TILE_SIZE = 128.0f;
 inline constexpr float kHalfTile = TILE_SIZE * 0.5f;
+inline constexpr float kQuarterTile = TILE_SIZE * 0.25f;
 
 Vec2 ToGlm(Vector2 v);
 Vector2 ToRaylib(Vec2 v);

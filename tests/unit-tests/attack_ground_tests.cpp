@@ -150,13 +150,13 @@ void RunAttackGroundTests()
 			Entity rightFoe = kInvalidEntity;
 			if (rightFirst)
 			{
-				rightFoe = spawnFoe(r, corner.x + 32.0f, corner.y);
-				leftFoe = spawnFoe(r, corner.x - 32.0f, corner.y);
+				rightFoe = spawnFoe(r, corner.x + 64.0f, corner.y);
+				leftFoe = spawnFoe(r, corner.x - 64.0f, corner.y);
 			}
 			else
 			{
-				leftFoe = spawnFoe(r, corner.x - 32.0f, corner.y);
-				rightFoe = spawnFoe(r, corner.x + 32.0f, corner.y);
+				leftFoe = spawnFoe(r, corner.x - 64.0f, corner.y);
+				rightFoe = spawnFoe(r, corner.x + 64.0f, corner.y);
 			}
 			const float leftFull = r.Get<Unit>(leftFoe)->health;
 			const float rightFull = r.Get<Unit>(rightFoe)->health;

@@ -62,11 +62,11 @@ void RunLineFormationTests()
 		const Vector2 ta = registry.Get<Mover>(a)->moveTarget;
 		const Vector2 tb = registry.Get<Mover>(b)->moveTarget;
 		const Vector2 tc = registry.Get<Mover>(c)->moveTarget;
-		// Distinct tiles spread along row 2 (y = 128), x increasing.
+		// Distinct tiles spread along row 2 (y = 256), x increasing.
 		CC_CHECK(ta.x != tb.x || ta.y != tb.y);
 		CC_CHECK(tb.x != tc.x || tb.y != tc.y);
 		CC_CHECK(ta.x != tc.x || ta.y != tc.y);
-		CC_CHECK(ta.y == 128.0f && tb.y == 128.0f && tc.y == 128.0f);
+		CC_CHECK(ta.y == 256.0f && tb.y == 256.0f && tc.y == 256.0f);
 		CC_CHECK(ta.x < tb.x && tb.x < tc.x);
 		CC_CHECK(registry.Get<Mover>(a)->hasPath);
 	}

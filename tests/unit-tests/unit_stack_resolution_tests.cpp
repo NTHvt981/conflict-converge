@@ -198,8 +198,8 @@ void RunUnitStackResolutionTests()
 		const Entity b = registry.Create();
 		registry.Add(b, MakeUnit(5, 5));
 		// Past the east edge: tile.x = 10 is OOB on a 10-wide map.
-		registry.Get<Unit>(a)->position = Vector2{ 10.0f * 64.0f + 1.0f, 5.0f * 64.0f };
-		registry.Get<Unit>(b)->position = Vector2{ 10.0f * 64.0f + 1.0f, 5.0f * 64.0f };
+		registry.Get<Unit>(a)->position = Vector2{ 10.0f * 128.0f + 1.0f, 5.0f * 128.0f };
+		registry.Get<Unit>(b)->position = Vector2{ 10.0f * 128.0f + 1.0f, 5.0f * 128.0f };
 
 		SeedOccupancy(registry, occ);
 		ResolveStackedUnits(registry, map, occ); // used to assert InBounds in GetUnit
@@ -221,7 +221,7 @@ void RunUnitStackResolutionTests()
 		Unit *unit = registry.Get<Unit>(solo);
 		unit->speed = 200.0f;
 		IssueMoveOrder(*unit, GetOrders(registry, solo), GetMover(registry, solo),
-					   Vector2{ 10.0f * 64.0f + cc::kHalfTile, 5.0f * 64.0f }); // OOB target
+					   Vector2{ 10.0f * 128.0f + cc::kHalfTile, 5.0f * 128.0f }); // OOB target
 		UpdateUnitMovement(*unit, MakeOrderContext(registry, solo, map, &occ),
 						   GetCombatState(registry, solo),
 						   EffectiveSpeed(*unit, GetMover(registry, solo)), 1.0f);

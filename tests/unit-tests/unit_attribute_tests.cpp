@@ -38,10 +38,10 @@ void RunUnitAttributeTests()
 	CC_CHECK(u.health == 55.0f);
 
 	// --- snapping touches position only ---
-	u.position = { 70.0f, 130.0f };
+	u.position = { 140.0f, 260.0f };
 	SnapUnitToTile(u);
-	CC_CHECK(u.position.x == 64.0f);
-	CC_CHECK(u.position.y == 128.0f);
+	CC_CHECK(u.position.x == 128.0f);
+	CC_CHECK(u.position.y == 256.0f);
 	CC_CHECK(u.speed == 96.0f);
 	CC_CHECK(c.target == 42);
 	CC_CHECK(c.cooldown == 0.75f);

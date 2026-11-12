@@ -40,7 +40,7 @@ void RunCommandUiTests()
 		const Vector2 clamped = minimap.MinimapToWorld({ 0.0f, 0.0f }, 24, 18);
 		CC_CHECK(clamped.x == 0.0f && clamped.y == 0.0f);
 		const Vector2 far = minimap.MinimapToWorld({ 9999.0f, 9999.0f }, 24, 18);
-		CC_CHECK(far.x == 24.0f * 64.0f && far.y == 18.0f * 64.0f);
+		CC_CHECK(far.x == 24.0f * 128.0f && far.y == 18.0f * 128.0f);
 		CC_CHECK(minimap.Contains({ 630.0f, 320.0f })); // edges inclusive
 		CC_CHECK(minimap.Contains({ 700.0f, 380.0f }));
 		CC_CHECK(!minimap.Contains({ 629.0f, 380.0f }));

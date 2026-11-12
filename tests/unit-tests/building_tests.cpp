@@ -316,23 +316,23 @@ void RunBuildingTests()
 		depot.tileX = 3;
 		depot.tileY = 4;
 		const Rectangle depotRect = BuildingFootprintRect(depot);
-		CC_CHECK(depotRect.x == 3.0f * 64.0f && depotRect.y == 4.0f * 64.0f);
-		CC_CHECK(depotRect.width == 64.0f && depotRect.height == 64.0f);
+		CC_CHECK(depotRect.x == 3.0f * 128.0f && depotRect.y == 4.0f * 128.0f);
+		CC_CHECK(depotRect.width == 128.0f && depotRect.height == 128.0f);
 
 		Building base;
 		base.type = BuildingType::Base;
 		base.tileX = 1;
 		base.tileY = 1;
 		const Rectangle baseRect = BuildingFootprintRect(base);
-		CC_CHECK(baseRect.x == 64.0f && baseRect.y == 64.0f);
-		CC_CHECK(baseRect.width == 128.0f && baseRect.height == 128.0f);
+		CC_CHECK(baseRect.x == 128.0f && baseRect.y == 128.0f);
+		CC_CHECK(baseRect.width == 256.0f && baseRect.height == 256.0f);
 	}
 
 	// --- QoL QueryBuildingsInRect: overlap + team filter ---
 	{
 		Registry query;
 		TileMap queryMap(20, 15);
-		// (64,64)-(192,192)
+		// (128,128)-(384,384)
 		const Entity inBase =
 			PlaceBuilding(query, queryMap, BuildingType::Base, kPlayerTeam, 1, 1);
 		const Entity inDepot = PlaceBuilding(query, queryMap, BuildingType::ResourceDepot,
@@ -348,7 +348,7 @@ void RunBuildingTests()
 		CC_CHECK(found.size() == 1 && found[0] == inBase);
 		// Small rect strictly inside the depot tile.
 		found.clear();
-		QueryBuildingsInRect(query, { 5.0f * 64.0f, 5.0f * 64.0f, 10.0f, 10.0f }, kPlayerTeam,
+		QueryBuildingsInRect(query, { 5.0f * 128.0f, 5.0f * 128.0f, 10.0f, 10.0f }, kPlayerTeam,
 							 found);
 		CC_CHECK(found.size() == 1 && found[0] == inDepot);
 		// Rect over nothing.
@@ -357,12 +357,12 @@ void RunBuildingTests()
 		CC_CHECK(found.empty());
 		// Negative team: every team.
 		found.clear();
-		QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 64.0f, 15.0f * 64.0f }, kAnyTeam,
+		QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 128.0f, 15.0f * 128.0f }, kAnyTeam,
 							 found);
 		CC_CHECK(found.size() == 3);
 		// Team 1 alone.
 		found.clear();
-		QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 64.0f, 15.0f * 64.0f }, kEnemyTeam,
+		QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 128.0f, 15.0f * 128.0f }, kEnemyTeam,
 							 found);
 		CC_CHECK(found.size() == 1 && found[0] == foeBase);
 	}

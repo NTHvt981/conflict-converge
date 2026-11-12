@@ -1,4 +1,4 @@
-// Unit tests for unit snapping (Unit <-> 64x64 tile grid).
+// Unit tests for unit snapping (Unit <-> 128x128 tile grid).
 
 #include "test_harness.h"
 
@@ -8,10 +8,10 @@ void RunUnitSnapTests()
 {
 	// --- arbitrary position snaps to its tile's top-left corner ---
 	Unit unit;
-	unit.position = { 70.0f, 130.0f };
+	unit.position = { 140.0f, 260.0f };
 	SnapUnitToTile(unit);
-	CC_CHECK(unit.position.x == 64.0f);
-	CC_CHECK(unit.position.y == 128.0f);
+	CC_CHECK(unit.position.x == 128.0f);
+	CC_CHECK(unit.position.y == 256.0f);
 
 	// --- origin and exact corners are fixed points ---
 	Unit origin;
@@ -21,20 +21,20 @@ void RunUnitSnapTests()
 	CC_CHECK(origin.position.y == 0.0f);
 
 	Unit corner;
-	corner.position = { 192.0f, 64.0f };
+	corner.position = { 384.0f, 128.0f };
 	SnapUnitToTile(corner);
-	CC_CHECK(corner.position.x == 192.0f);
-	CC_CHECK(corner.position.y == 64.0f);
+	CC_CHECK(corner.position.x == 384.0f);
+	CC_CHECK(corner.position.y == 128.0f);
 
 	// --- snapping only touches position; stats survive ---
 	Unit stats;
-	stats.position = { 100.0f, 100.0f };
+	stats.position = { 200.0f, 200.0f };
 	stats.health = 55.0f;
 	stats.type = UnitType::LightTank;
 	stats.isSelected = true;
 	SnapUnitToTile(stats);
-	CC_CHECK(stats.position.x == 64.0f);
-	CC_CHECK(stats.position.y == 64.0f);
+	CC_CHECK(stats.position.x == 128.0f);
+	CC_CHECK(stats.position.y == 128.0f);
 	CC_CHECK(stats.health == 55.0f);
 	CC_CHECK(stats.type == UnitType::LightTank);
 	CC_CHECK(stats.isSelected);

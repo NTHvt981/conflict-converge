@@ -6,24 +6,24 @@
 
 void RunHitboxTests()
 {
-	// --- geometry: 32x32 body centered in the 64x64 tile ---
+	// --- geometry: 64x64 body centered in the 128x128 tile ---
 	Unit unit;
 	unit.position = { 64.0f, 128.0f };
 	const Rectangle box = HitboxOf(unit);
-	CC_CHECK(box.x == 80.0f && box.y == 144.0f);
-	CC_CHECK(box.width == 32.0f && box.height == 32.0f);
+	CC_CHECK(box.x == 96.0f && box.y == 160.0f);
+	CC_CHECK(box.width == 64.0f && box.height == 64.0f);
 
 	// --- overlap: same tile touches; far tiles don't; edge contact counts ---
 	Unit same = unit;
 	CC_CHECK(HitboxesOverlap(unit, same));
 	Unit neighbor = unit;
-	neighbor.position = { 128.0f, 128.0f }; // adjacent tile: bodies 32px apart
+	neighbor.position = { 128.0f, 128.0f }; // adjacent tile: bodies edge to edge
 	CC_CHECK(!HitboxesOverlap(unit, neighbor));
 	Unit grazed = unit;
-	grazed.position = { 64.0f + 31.0f, 128.0f }; // 1px body overlap
+	grazed.position = { 64.0f + 63.0f, 128.0f }; // 1px body overlap
 	CC_CHECK(HitboxesOverlap(unit, grazed));
 	Unit edged = unit;
-	edged.position = { 64.0f + 32.0f, 128.0f }; // edges exactly adjacent: no overlap
+	edged.position = { 64.0f + 64.0f, 128.0f }; // edges exactly adjacent: no overlap
 	CC_CHECK(!HitboxesOverlap(unit, edged));
 
 	// --- area query: team filter, dead exclusion ---

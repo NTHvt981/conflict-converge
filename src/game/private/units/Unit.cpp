@@ -42,9 +42,9 @@ bool ReissueDriverOrder(Unit &unit, Mover &mover, TileMap &map, OccupancyGrid *o
 
 }
 
-constexpr float kLoadRange = 128.0f;
+constexpr float kLoadRange = 2.0f * cc::TILE_SIZE;
 
-constexpr float kRepairRange = 128.0f;
+constexpr float kRepairRange = 2.0f * cc::TILE_SIZE;
 constexpr float kRepairRate = 15.0f;
 
 void UpdateUnit(Entity self, Registry &registry, TileMap &map, float dtSeconds,

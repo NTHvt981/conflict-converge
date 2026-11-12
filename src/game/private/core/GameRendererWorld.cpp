@@ -32,34 +32,34 @@ Rectangle SquadSelectionBox(const Art &art, const Unit &unit, Entity id, bool at
 	float x0, y0, x1, y1;
 	if (atlasCells)
 	{
-		x0 = unit.position.x + squad.slots[0].x + cc::kHalfTile - 8.0f * s;
-		y0 = unit.position.y + squad.slots[0].y + cc::kHalfTile - 16.0f * s;
-		x1 = unit.position.x + squad.slots[0].x + cc::kHalfTile + 8.0f * s;
-		y1 = unit.position.y + squad.slots[0].y + cc::kHalfTile + 16.0f * s;
+		x0 = unit.position.x + squad.slots[0].x + cc::kHalfTile - 16.0f * s;
+		y0 = unit.position.y + squad.slots[0].y + cc::kHalfTile - 32.0f * s;
+		x1 = unit.position.x + squad.slots[0].x + cc::kHalfTile + 16.0f * s;
+		y1 = unit.position.y + squad.slots[0].y + cc::kHalfTile + 32.0f * s;
 	}
 	else
 	{
-		x0 = unit.position.x + squad.slots[0].x + 16.0f;
-		y0 = unit.position.y + squad.slots[0].y + 16.0f;
-		x1 = x0 + 32.0f;
-		y1 = y0 + 32.0f;
+		x0 = unit.position.x + squad.slots[0].x + cc::kQuarterTile;
+		y0 = unit.position.y + squad.slots[0].y + cc::kQuarterTile;
+		x1 = x0 + cc::kHalfTile;
+		y1 = y0 + cc::kHalfTile;
 	}
 	for (int i = 1; i < squad.count; ++i)
 	{
 		float cx0, cy0, cx1, cy1;
 		if (atlasCells)
 		{
-			cx0 = unit.position.x + squad.slots[i].x + cc::kHalfTile - 8.0f * s;
-			cy0 = unit.position.y + squad.slots[i].y + cc::kHalfTile - 16.0f * s;
-			cx1 = unit.position.x + squad.slots[i].x + cc::kHalfTile + 8.0f * s;
-			cy1 = unit.position.y + squad.slots[i].y + cc::kHalfTile + 16.0f * s;
+			cx0 = unit.position.x + squad.slots[i].x + cc::kHalfTile - 16.0f * s;
+			cy0 = unit.position.y + squad.slots[i].y + cc::kHalfTile - 32.0f * s;
+			cx1 = unit.position.x + squad.slots[i].x + cc::kHalfTile + 16.0f * s;
+			cy1 = unit.position.y + squad.slots[i].y + cc::kHalfTile + 32.0f * s;
 		}
 		else
 		{
-			cx0 = unit.position.x + squad.slots[i].x + 16.0f;
-			cy0 = unit.position.y + squad.slots[i].y + 16.0f;
-			cx1 = cx0 + 32.0f;
-			cy1 = cy0 + 32.0f;
+			cx0 = unit.position.x + squad.slots[i].x + cc::kQuarterTile;
+			cy0 = unit.position.y + squad.slots[i].y + cc::kQuarterTile;
+			cx1 = cx0 + cc::kHalfTile;
+			cy1 = cy0 + cc::kHalfTile;
 		}
 		x0 = std::min(x0, cx0);
 		y0 = std::min(y0, cy0);
@@ -490,8 +490,10 @@ void GameRenderer::DrawUnitEntity(Entity id, Unit &unit)
 							static_cast<int>(unit.position.y), 12, YELLOW);
 		}
 	)
-	const Rectangle body = { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };
-	const Vector2 center = { body.x + 16.0f, body.y + 16.0f };
+	const Rectangle body = { unit.position.x + cc::kQuarterTile,
+							 unit.position.y + cc::kQuarterTile, cc::kHalfTile,
+							 cc::kHalfTile };
+	const Vector2 center = { body.x + cc::kQuarterTile, body.y + cc::kQuarterTile };
 	const UnitArtPath path = UnitArtPath::Of(art_);
 	TankArt tank;
 	if (path.BodyRectangles())
@@ -539,9 +541,9 @@ void GameRenderer::DrawProjectiles()
 							: 1.0f;
 		const Vector2 ground = { shell.start.x + (shell.target.x - shell.start.x) * t,
 								 shell.start.y + (shell.target.y - shell.start.y) * t };
-		const float height = std::sin(3.141592653589793f * t) * 48.0f;
-		DrawCircleV(ground, 4.0f, Fade(DARKGRAY, 0.4f));
-		DrawCircleV({ ground.x, ground.y - height }, 5.0f, DARKGRAY);
+		const float height = std::sin(3.141592653589793f * t) * 96.0f;
+		DrawCircleV(ground, 8.0f, Fade(DARKGRAY, 0.4f));
+		DrawCircleV({ ground.x, ground.y - height }, 10.0f, DARKGRAY);
 	});
 }
 

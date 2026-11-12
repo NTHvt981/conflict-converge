@@ -16,10 +16,10 @@ void RunMovementTests()
 	Mover unitMover;
 	CombatState unitCombat;
 	unit.position = { 0.0f, 0.0f };
-	IssueMoveOrder(unit, unitOrders, unitMover, { 200.0f, 100.0f });
+	IssueMoveOrder(unit, unitOrders, unitMover, { 400.0f, 200.0f });
 	CC_CHECK(unitMover.hasMoveOrder);
-	CC_CHECK(unitMover.moveTarget.x == 192.0f);
-	CC_CHECK(unitMover.moveTarget.y == 64.0f);
+	CC_CHECK(unitMover.moveTarget.x == 384.0f);
+	CC_CHECK(unitMover.moveTarget.y == 128.0f);
 
 	// --- stepping advances toward the target, state + velocity set ---
 	UpdateUnitMovement(unit, OrderContext{ unitOrders, unitMover, map }, unitCombat, 100.0f,
@@ -47,12 +47,12 @@ void RunMovementTests()
 	Mover arrivingMover;
 	CombatState arrivingCombat;
 	arriving.position = { 0.0f, 0.0f };
-	IssueMoveOrder(arriving, arrivingOrders, arrivingMover, { 64.0f, 0.0f });
+	IssueMoveOrder(arriving, arrivingOrders, arrivingMover, { 128.0f, 0.0f });
 	UpdateUnitMovement(arriving, OrderContext{ arrivingOrders, arrivingMover, map },
 					   arrivingCombat, 1000.0f, 1.0f); // overshoot step
 	CC_CHECK(!arrivingMover.hasMoveOrder);
 	CC_CHECK(arriving.state == UnitState::Idle);
-	CC_CHECK(arriving.position.x == 64.0f);
+	CC_CHECK(arriving.position.x == 128.0f);
 	CC_CHECK(arriving.position.y == 0.0f);
 
 	// --- blocked tile stops the unit, order cancelled ---
@@ -63,9 +63,9 @@ void RunMovementTests()
 	Mover walkerMover;
 	CombatState walkerCombat;
 	walker.position = { 0.0f, 0.0f };
-	IssueMoveOrder(walker, walkerOrders, walkerMover, { 192.0f, 0.0f }); // path crosses the water tile
+	IssueMoveOrder(walker, walkerOrders, walkerMover, { 384.0f, 0.0f }); // path crosses the water tile
 	UpdateUnitMovement(walker, OrderContext{ walkerOrders, walkerMover, blocked }, walkerCombat,
-					   64.0f, 1.0f);
+					   128.0f, 1.0f);
 	CC_CHECK(!walkerMover.hasMoveOrder);
 	CC_CHECK(walker.state == UnitState::Idle);
 	CC_CHECK(walker.position.x == 0.0f); // never entered tile (1,0)
@@ -79,9 +79,9 @@ void RunMovementTests()
 	Mover trappedMover;
 	CombatState trappedCombat;
 	trapped.position = { 0.0f, 0.0f };
-	IssueMoveOrder(trapped, trappedOrders, trappedMover, { 320.0f, 0.0f });
+	IssueMoveOrder(trapped, trappedOrders, trappedMover, { 640.0f, 0.0f });
 	UpdateUnitMovement(trapped, OrderContext{ trappedOrders, trappedMover, footprint },
-					   trappedCombat, 64.0f, 1.0f);
+					   trappedCombat, 128.0f, 1.0f);
 	CC_CHECK(trappedMover.hasMoveOrder); // order survives the escape step
 	CC_CHECK(trapped.position.x > 0.0f); // stepped out of tile (0,0)
 	// Full escape: keep walking until the order resolves off the footprint.

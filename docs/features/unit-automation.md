@@ -18,7 +18,7 @@ non-goal (economy soak-tuned without it).
   AI retreats on its own path (`RetreatTick`).
 - Building auto-repair: per-Engineer `Orders::autoRepair` toggle —
   idle Engineers acquire the nearest damaged same-team vehicle or
-  Operational building in 256px and repair it through the channeled
+  Operational building within 4 tiles and repair it through the channeled
   order path; Engineers still repair free.
 
 ## Key files
