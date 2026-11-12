@@ -47,7 +47,7 @@ void ResolveGroundAttack(Registry &registry, Unit &attacker, CombatState &attack
 {
 	Entity best = kInvalidEntity;
 	Vector2 bestPos = {};
-	float bestDistSq = 64.0f * 64.0f;
+	float bestDistSq = cc::TILE_SIZE * cc::TILE_SIZE;
 	registry.Each<Unit>([&](Entity id, const Unit &unit) {
 		if (unit.health <= 0.0f || unit.teamID == attacker.teamID || IsEmbarked(registry, id))
 		{
@@ -77,7 +77,8 @@ void ResolveGroundAttack(Registry &registry, Unit &attacker, CombatState &attack
 
 Rectangle HitboxOf(const Unit &unit)
 {
-	return { unit.position.x + 16.0f, unit.position.y + 16.0f, 32.0f, 32.0f };
+	return { unit.position.x + cc::kQuarterTile, unit.position.y + cc::kQuarterTile,
+			 cc::kHalfTile, cc::kHalfTile };
 }
 
 bool HitboxesOverlap(const Unit &a, const Unit &b)
@@ -196,7 +197,7 @@ void UpdateProjectiles(Registry &registry, TileMap &map, float dtSeconds)
 		{
 			continue;
 		}
-		const float half = static_cast<float>(shell->splashTiles) * 32.0f;
+		const float half = static_cast<float>(shell->splashTiles) * cc::kHalfTile;
 		const Rectangle area = { shell->target.x - half, shell->target.y - half, half * 2.0f,
 								 half * 2.0f };
 		std::vector<Entity> victims;

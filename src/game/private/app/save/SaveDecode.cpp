@@ -182,6 +182,14 @@ bool Decode(const std::string &payload, SavedWorld &out)
 	{
 		return false;
 	}
+	// v3 payloads store pixel-space fields against the 64px tile; v4 is the
+	// 128px metric, so legacy pixel values rescale x2 on load.
+	const bool legacyPx = msg.saveVersion < kSaveVersion;
+	if (legacyPx)
+	{
+		out.camera.target.x *= 2.0f;
+		out.camera.target.y *= 2.0f;
+	}
 	if (!InRange(msg.resources.iron) || !InRange(msg.resources.oil))
 	{
 		return false;
@@ -229,6 +237,18 @@ bool Decode(const std::string &payload, SavedWorld &out)
 		if (!DecodeUnit(in, saved, out.mapWidth, out.mapHeight))
 		{
 			return false;
+		}
+		if (legacyPx)
+		{
+			saved.unit.position.x *= 2.0f;
+			saved.unit.position.y *= 2.0f;
+			saved.unit.velocity.x *= 2.0f;
+			saved.unit.velocity.y *= 2.0f;
+			saved.unit.attackRange *= 2;
+			saved.unit.speed *= 2.0f;
+			saved.unit.sightRange *= 2.0f;
+			saved.mover.moveTarget.x *= 2.0f;
+			saved.mover.moveTarget.y *= 2.0f;
 		}
 		out.units.push_back(saved);
 	}

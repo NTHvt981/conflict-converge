@@ -27,16 +27,16 @@ Entity SpawnAt(Registry &registry, float x, float y)
 void RunSelectionTests()
 {
 	Registry registry;
-	Entity a = SpawnAt(registry, 64.0f, 64.0f);   // tile (1,1)
-	Entity b = SpawnAt(registry, 256.0f, 128.0f); // tile (4,2)
+	Entity a = SpawnAt(registry, 128.0f, 128.0f);  // tile (1,1)
+	Entity b = SpawnAt(registry, 512.0f, 256.0f); // tile (4,2)
 
-	// --- pick: inside the 64x64 box hits, outside misses ---
-	CC_CHECK(PickUnitAt(registry, { 65.0f, 65.0f }) == a);
-	CC_CHECK(PickUnitAt(registry, { 127.0f, 127.0f }) == a);
-	CC_CHECK(PickUnitAt(registry, { 260.0f, 130.0f }) == b);
+	// --- pick: inside the tile box hits, outside misses ---
+	CC_CHECK(PickUnitAt(registry, { 129.0f, 129.0f }) == a);
+	CC_CHECK(PickUnitAt(registry, { 255.0f, 255.0f }) == a);
+	CC_CHECK(PickUnitAt(registry, { 516.0f, 258.0f }) == b);
 	CC_CHECK(PickUnitAt(registry, { 0.0f, 0.0f }) == kInvalidEntity);
-	CC_CHECK(PickUnitAt(registry, { 128.0f, 64.0f }) == kInvalidEntity); // box edge is exclusive
-	CC_CHECK(PickUnitAt(registry, { 500.0f, 500.0f }) == kInvalidEntity);
+	CC_CHECK(PickUnitAt(registry, { 768.0f, 256.0f }) == kInvalidEntity); // box edge is exclusive
+	CC_CHECK(PickUnitAt(registry, { 1000.0f, 1000.0f }) == kInvalidEntity);
 
 	// --- selection is exclusive; empty registry is safe ---
 	CC_CHECK(SelectedUnit(registry) == kInvalidEntity);
@@ -77,15 +77,15 @@ void RunSelectionTests()
 	const Rectangle same = NormalizeRect({ 2.0f, 2.0f }, { 2.0f, 2.0f });
 	CC_CHECK(same.width == 0.0f && same.height == 0.0f);
 
-	// --- SelectInRect: body centers are (96,96)=a and (288,160)=b ---
+	// --- SelectInRect: body centers are (192,192)=a and (576,320)=b ---
 	DeselectAll(registry);
-	CC_CHECK(SelectInRect(registry, { 80.0f, 80.0f, 240.0f, 120.0f }, false) == 2);
+	CC_CHECK(SelectInRect(registry, { 160.0f, 160.0f, 480.0f, 240.0f }, false) == 2);
 	CC_CHECK(registry.Get<Unit>(a)->isSelected && registry.Get<Unit>(b)->isSelected);
-	CC_CHECK(SelectInRect(registry, { 80.0f, 80.0f, 40.0f, 40.0f }, false) == 1);
+	CC_CHECK(SelectInRect(registry, { 160.0f, 160.0f, 80.0f, 80.0f }, false) == 1);
 	CC_CHECK(registry.Get<Unit>(a)->isSelected);
 	CC_CHECK(!registry.Get<Unit>(b)->isSelected);
 	// Shift extends the selection instead of replacing it.
-	CC_CHECK(SelectInRect(registry, { 270.0f, 140.0f, 60.0f, 60.0f }, true) == 1);
+	CC_CHECK(SelectInRect(registry, { 520.0f, 300.0f, 80.0f, 80.0f }, true) == 1);
 	CC_CHECK(registry.Get<Unit>(a)->isSelected && registry.Get<Unit>(b)->isSelected);
 	// Empty box in replace mode clears everything.
 	CC_CHECK(SelectInRect(registry, { 600.0f, 600.0f, 50.0f, 50.0f }, false) == 0);

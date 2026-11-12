@@ -39,17 +39,17 @@ SquadLayout SquadSlots(UnitType type, unsigned int id, float healthFraction);
 class ArtDraw
 {
 public:
-	// tileCorner = unit.position (snapped); sprite fills the 32x32 body inset.
+	// tileCorner = unit.position (snapped); sprite fills the half-tile body inset.
 	void DrawUnit(const ArtSprites &sprites, UnitType type, TeamId teamID,
 				  UnitFrame frame, Vector2 tileCorner) const;
-	// Atlas blit of a named sprite, origin-aligned to the 32x32 body center;
+	// Atlas blit of a named sprite, origin-aligned to the half-tile body center;
 	// no-op when the atlas is down or the name is unknown. rotationDeg spins
 	// the blit around the body center (turret layer, 0 = unrotated).
 	void DrawAtlasFrame(const ArtSprites &sprites, const std::string &spriteName,
 						Vector2 tileCorner, Color tint, float scale = 1.0f,
 						float rotationDeg = 0.0f) const;
 	// Screen rectangle a named sprite occupies when drawn at tileCorner, so a
-	// selection box can match art larger than the 32x32 body inset. False when
+	// selection box can match art larger than the half-tile body inset. False when
 	// the atlas is down or the name is unknown.
 	bool SpriteDrawRect(const ArtSprites &sprites, const std::string &spriteName,
 						Vector2 tileCorner, Rectangle &out, float scale = 1.0f) const;
@@ -62,7 +62,7 @@ public:
 				  Vector2 screenPos) const; // 16px HUD icon
 	void DrawRallyMarker(const ArtSprites &sprites, TeamId teamID,
 						 Vector2 worldCenter) const;
-	// Terrain tile blit (64px, team-neutral); no-op when rectangles are up
+	// Terrain tile blit (128px, team-neutral); no-op when rectangles are up
 	// or the type has no tile.
 	void DrawTerrain(const ArtSprites &sprites, TerrainType type, Vector2 corner) const;
 

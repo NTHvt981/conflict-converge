@@ -68,7 +68,7 @@ void RunProductionTests()
 	CC_CHECK(rig.resources.iron == ironBefore); // prepaid: balances untouched
 	bool found = false;
 	rig.registry.Each<Unit>([&](Entity, const Unit &unit) {
-		if (unit.teamID == kEnemyTeam && unit.position.x == 256.0f && unit.position.y == 256.0f)
+		if (unit.teamID == kEnemyTeam && unit.position.x == 512.0f && unit.position.y == 512.0f)
 		{
 			found = true;
 		}

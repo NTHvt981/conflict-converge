@@ -66,9 +66,9 @@ void RunUnitStatsTests()
 	ApplyBaseStats(unit);
 	CC_CHECK(unit.health == 300.0f);
 	CC_CHECK(unit.attackPower == 20);
-	CC_CHECK(unit.speed == 96.0f); // 1.5 tiles/s against TILE_SIZE 64
-	CC_CHECK(unit.attackRange == 192); // 3.0 tiles
-	CC_CHECK(unit.sightRange == 320.0f); // 5.0 tiles
+	CC_CHECK(unit.speed == 192.0f); // 1.5 tiles/s against TILE_SIZE 128
+	CC_CHECK(unit.attackRange == 384); // 3.0 tiles
+	CC_CHECK(unit.sightRange == 640.0f); // 5.0 tiles
 	CC_CHECK(CombatState{}.cooldown == 0.0f); // live cooldown starts at zero, not from stats
 	CC_CHECK(unit.teamID == kEnemyTeam);
 	CC_CHECK(unit.position.x == 128.0f);

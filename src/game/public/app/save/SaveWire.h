@@ -1,6 +1,7 @@
 #pragma once
 
-// Tolerant JSON wire format ("CCJ3" magic, saveVersion 3+).
+// Tolerant JSON wire format ("CCJ3" magic, saveVersion 3 = 64px tiles,
+// 4 = 128px tiles).
 //
 // Contract: NVP NAMES are the on-disk contract (never rename one).
 // The payload root is {"value0": {...}}: cereal auto-names the unnamed

@@ -11,12 +11,12 @@ void RunMinimapTests()
 	minimap.screenRect = { 640.0f, 330.0f, 160.0f, 120.0f };
 	minimap.refreshInterval = 0.5f;
 
-	// --- world -> minimap mapping (20x15 map = 1280x960 world px) ---
+	// --- world -> minimap mapping (20x15 map = 2560x1920 world px) ---
 	const Vector2 origin = minimap.WorldToMinimap({ 0.0f, 0.0f }, 20, 15);
 	CC_CHECK(CcNear(origin.x, 640.0f) && CcNear(origin.y, 330.0f));
-	const Vector2 mid = minimap.WorldToMinimap({ 640.0f, 480.0f }, 20, 15);
+	const Vector2 mid = minimap.WorldToMinimap({ 1280.0f, 960.0f }, 20, 15);
 	CC_CHECK(CcNear(mid.x, 720.0f) && CcNear(mid.y, 390.0f));
-	const Vector2 far = minimap.WorldToMinimap({ 1280.0f, 960.0f }, 20, 15);
+	const Vector2 far = minimap.WorldToMinimap({ 2560.0f, 1920.0f }, 20, 15);
 	CC_CHECK(CcNear(far.x, 800.0f) && CcNear(far.y, 450.0f));
 
 	// --- refresh cadence ---
@@ -33,11 +33,11 @@ void RunMinimapTests()
 	view.target = { 0.0f, 0.0f };
 	view.zoom = 1.0f;
 	const Rectangle box = minimap.ViewportRect(view, 800, 450, 20, 15);
-	// Visible world is [-400,400]x[-225,225] -> minimap pixels at 0.125 scale.
-	CC_CHECK(CcNear(box.x, 590.0f));
-	CC_CHECK(CcNear(box.y, 301.875f));
-	CC_CHECK(CcNear(box.width, 100.0f));
-	CC_CHECK(CcNear(box.height, 56.25f));
+	// Visible world is [-400,400]x[-225,225] -> minimap pixels at 0.0625 scale.
+	CC_CHECK(CcNear(box.x, 615.0f));
+	CC_CHECK(CcNear(box.y, 315.9375f));
+	CC_CHECK(CcNear(box.width, 50.0f));
+	CC_CHECK(CcNear(box.height, 28.125f));
 
 	// --- letterbox: square frame, wide map -> bars top/bottom ---
 	Minimap square;
@@ -47,13 +47,13 @@ void RunMinimapTests()
 	CC_CHECK(CcNear(content.height, 90.0f));
 	CC_CHECK(CcNear(content.x, 640.0f));
 	CC_CHECK(CcNear(content.y, 345.0f));
-	const Vector2 sqMid = square.WorldToMinimap({ 640.0f, 480.0f }, 20, 15);
+	const Vector2 sqMid = square.WorldToMinimap({ 1280.0f, 960.0f }, 20, 15);
 	CC_CHECK(CcNear(sqMid.x, 700.0f) && CcNear(sqMid.y, 390.0f));
 	const Vector2 sqBack =
 		square.MinimapToWorld(square.WorldToMinimap({ 768.0f, 576.0f }, 20, 15), 20, 15);
 	CC_CHECK(CcNear(sqBack.x, 768.0f, 1.0f) && CcNear(sqBack.y, 576.0f, 1.0f));
 	const Vector2 barHit = square.MinimapToWorld({ 700.0f, 332.0f }, 20, 15);
-	CC_CHECK(barHit.x == 640.0f && barHit.y == 0.0f); // bar clamps into bounds
+	CC_CHECK(barHit.x == 1280.0f && barHit.y == 0.0f); // bar clamps into bounds
 
 	// --- square top-right placement scales with height ---
 	const Rectangle placed = Minimap::TopRightSquare(1280, 720);

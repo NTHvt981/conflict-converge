@@ -65,7 +65,7 @@ public:
 
 	// Base art scale multiplier (prototype infantry renders at 2x).
 	static float BaseArtScale(UnitType type);
-	// Terrain filename stem + tile slot per type (`<stem>_64px.png`).
+	// Terrain filename stem + tile slot per type (`<stem>_128px.png`).
 	// Slots index terrain_[], so they run 0..kTerrainSlots-1.
 	static constexpr int kTerrainSlots = 4;
 	static const char *TerrainFile(TerrainType type);

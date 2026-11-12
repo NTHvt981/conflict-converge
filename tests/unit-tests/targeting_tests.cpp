@@ -35,16 +35,16 @@ void RunTargetingTests()
 	b.position = { 3.0f, 4.0f };
 	CC_CHECK(CcNear(DistanceBetween(a, b), 5.0f));
 
-	// --- range check with RifleInfantry (range 128) ---
+	// --- range check with RifleInfantry (range 256) ---
 	Unit attacker;
 	attacker.type = UnitType::RifleInfantry;
 	ApplyBaseStats(attacker);
 	Unit close;
-	close.position = { 100.0f, 0.0f };
+	close.position = { 200.0f, 0.0f };
 	Unit far;
-	far.position = { 200.0f, 0.0f };
+	far.position = { 400.0f, 0.0f };
 	Unit edge;
-	edge.position = { 128.0f, 0.0f };
+	edge.position = { 256.0f, 0.0f };
 	CC_CHECK(InAttackRange(attacker, close));
 	CC_CHECK(!InAttackRange(attacker, far));
 	CC_CHECK(InAttackRange(attacker, edge)); // boundary counts as in range

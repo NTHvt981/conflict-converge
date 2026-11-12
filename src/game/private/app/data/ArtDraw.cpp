@@ -59,19 +59,19 @@ SquadLayout SquadSlots(UnitType type, unsigned int id, float healthFraction)
 	};
 	static constexpr SquadPreset kPresets[6] = {
 		{ 1.00f, { { 0, 0 } } },
-		{ 0.80f, { { -14, 0 }, { 14, 0 } } },
-		{ 0.70f, { { 0, -14 }, { -13, 10 }, { 13, 10 } } },
-		{ 0.65f, { { -13, -13 }, { 13, -13 }, { -13, 13 }, { 13, 13 } } },
-		{ 0.55f, { { 0, 0 }, { -15, -15 }, { 15, -15 }, { -15, 15 }, { 15, 15 } } },
+		{ 0.80f, { { -28, 0 }, { 28, 0 } } },
+		{ 0.70f, { { 0, -28 }, { -26, 20 }, { 26, 20 } } },
+		{ 0.65f, { { -26, -26 }, { 26, -26 }, { -26, 26 }, { 26, 26 } } },
+		{ 0.55f, { { 0, 0 }, { -30, -30 }, { 30, -30 }, { -30, 30 }, { 30, 30 } } },
 		{ 0.50f,
-		  { { -18, -17 }, { 0, -17 }, { 18, -17 }, { -18, 17 }, { 0, 17 }, { 18, 17 } } },
+		  { { -36, -34 }, { 0, -34 }, { 36, -34 }, { -36, 34 }, { 0, 34 }, { 36, 34 } } },
 	};
 	const SquadPreset &preset = kPresets[count - 1];
 	layout.count = count;
 	layout.scale = preset.scale;
 
 	const unsigned int h = HashId(id);
-	const float jitterPx = 2.0f * preset.scale;
+	const float jitterPx = 4.0f * preset.scale;
 	for (int i = 0; i < count; ++i)
 	{
 		const unsigned int jitter = HashId(h + static_cast<unsigned int>(i));
@@ -104,7 +104,8 @@ void ArtDraw::DrawUnit(const ArtSprites &sprites, UnitType type, TeamId teamID,
 		return;
 	}
 	const Texture2D &tex = sprites.units_[static_cast<int>(type)][ArtSprites::TeamSlot(teamID)][static_cast<int>(frame)];
-	DrawTextureV(tex, { tileCorner.x + 16.0f, tileCorner.y + 16.0f }, WHITE);
+	DrawTextureV(tex, { tileCorner.x + cc::kQuarterTile, tileCorner.y + cc::kQuarterTile },
+				 WHITE);
 }
 
 void ArtDraw::DrawAtlasFrame(const ArtSprites &sprites, const std::string &spriteName,
@@ -240,7 +241,7 @@ void ArtDraw::DrawNode(const ArtSprites &sprites, ResourceKind kind, Vector2 cen
 		return;
 	}
 	const Texture2D tex = sprites.nodes_[static_cast<int>(kind)];
-	DrawTextureV(tex, { center.x - 16.0f, center.y - 16.0f }, WHITE);
+	DrawTextureV(tex, { center.x - cc::kHalfTile, center.y - cc::kHalfTile }, WHITE);
 }
 
 void ArtDraw::DrawIcon(const ArtSprites &sprites, ResourceKind kind, Vector2 screenPos) const
@@ -259,7 +260,8 @@ void ArtDraw::DrawRallyMarker(const ArtSprites &sprites, TeamId teamID,
 	{
 		return;
 	}
-	const Vector2 corner = { worldCenter.x - 8.0f, worldCenter.y - 8.0f };
+	const Vector2 corner = { worldCenter.x - cc::kQuarterTile,
+							 worldCenter.y - cc::kQuarterTile };
 	DrawTextureV(sprites.rallyBase_, corner, WHITE);
 	DrawTextureV(sprites.rallyMask_, corner, sprites.TeamTint(teamID));
 }

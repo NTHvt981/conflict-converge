@@ -33,7 +33,7 @@ void RunFactoryTests()
 	events.Subscribe(EventType::UnitSpawned, [&](const Event &) { ++spawned; });
 	UnitFactory factory(registry, resources, events);
 
-	const Entity id = factory.Spawn(UnitType::RifleInfantry, kEnemyTeam, { 70.0f, 130.0f });
+	const Entity id = factory.Spawn(UnitType::RifleInfantry, kEnemyTeam, { 140.0f, 260.0f });
 	CC_CHECK(id != kInvalidEntity);
 	CC_CHECK(spawned == 1);
 	CC_CHECK(resources.iron == 1000 - rifle.iron);
@@ -44,7 +44,7 @@ void RunFactoryTests()
 	CC_CHECK(unit->health == BaseStats(UnitType::RifleInfantry).health);
 	CC_CHECK(unit->teamID == kEnemyTeam);
 	CC_CHECK(unit->state == UnitState::Idle);
-	CC_CHECK(unit->position.x == 64.0f && unit->position.y == 128.0f);
+	CC_CHECK(unit->position.x == 128.0f && unit->position.y == 256.0f);
 	CC_CHECK(registry.Get<CombatState>(id)->target == kInvalidEntity);
 
 	// --- insufficient funds: nothing spent, created, or announced ---

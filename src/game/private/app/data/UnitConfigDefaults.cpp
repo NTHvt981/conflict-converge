@@ -24,7 +24,7 @@ UnitConfig DefaultUnitConfig(UnitType type)
 	}
 	// G2: artillery lobs dodgeable shells (visible arc, small AoE). Tuned
 	// so Medium closes soak games: 0.6s flight, splash 1 (foot cannot
-	// outwalk ±32px + hitbox, vehicles still dodge).
+	// outwalk ±half tile + hitbox, vehicles still dodge).
 	if (type == UnitType::Artillery)
 	{
 		config.abilities.arcingFlightTime = 0.6f;

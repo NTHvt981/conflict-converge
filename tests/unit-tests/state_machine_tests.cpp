@@ -94,7 +94,7 @@ void RunStateMachineTests()
 		const Entity chaser =
 			AddSoldier(registry, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
 		const Entity prey =
-			AddSoldier(registry, UnitType::RifleInfantry, kEnemyTeam, 256.0f, 0.0f); // > 128 range
+			AddSoldier(registry, UnitType::RifleInfantry, kEnemyTeam, 512.0f, 0.0f); // > 256 range
 		UpdateUnit(chaser, registry, map, kDt);
 		const Unit *unit = registry.Get<Unit>(chaser);
 		CC_CHECK(registry.Get<CombatState>(chaser)->target == prey);
@@ -116,7 +116,7 @@ void RunStateMachineTests()
 			AddSoldier(registry, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
 		AddSoldier(registry, UnitType::RifleInfantry, kEnemyTeam, 100.0f, 0.0f);
 		IssueMoveOrder(*registry.Get<Unit>(ordered), GetOrders(registry, ordered),
-					   GetMover(registry, ordered), { 5 * 64.0f, 0.0f });
+					   GetMover(registry, ordered), { 5 * 128.0f, 0.0f });
 		StepAll(registry, map, kDt, 5);
 		const Unit *unit = registry.Get<Unit>(ordered);
 		CC_CHECK(unit->state == UnitState::Moving);

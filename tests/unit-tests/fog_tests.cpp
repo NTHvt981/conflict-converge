@@ -29,11 +29,11 @@ Entity AddWatcher(Registry &registry, TeamId teamID, UnitType type, float sightR
 
 void RunFogTests()
 {
-	// --- circle reveal: sight 128px = 2 tiles from (5,5) ---
+	// --- circle reveal: sight 256px = 2 tiles from (5,5) ---
 	Registry registry;
 	FogOfWar fog;
 	fog.Resize(20, 15);
-	AddWatcher(registry, kPlayerTeam, UnitType::LightTank, 128.0f, 5, 5);
+	AddWatcher(registry, kPlayerTeam, UnitType::LightTank, 256.0f, 5, 5);
 	fog.Recompute(registry);
 	CC_CHECK(fog.IsVisible(kPlayerTeam, { 5, 5 }));
 	CC_CHECK(fog.IsVisible(kPlayerTeam, { 7, 5 }));
@@ -49,7 +49,7 @@ void RunFogTests()
 
 	// --- explored persists after the watcher leaves ---
 	registry.Clear();
-	AddWatcher(registry, kPlayerTeam, UnitType::LightTank, 128.0f, 15, 12);
+	AddWatcher(registry, kPlayerTeam, UnitType::LightTank, 256.0f, 15, 12);
 	fog.Recompute(registry);
 	CC_CHECK(!fog.IsVisible(kPlayerTeam, { 5, 5 }));
 	CC_CHECK(fog.IsExplored(kPlayerTeam, { 5, 5 })); // frozen snapshot
@@ -70,8 +70,8 @@ void RunFogTests()
 	Registry scoutRegistry;
 	FogOfWar scoutFog;
 	scoutFog.Resize(20, 15);
-	AddWatcher(scoutRegistry, kPlayerTeam, UnitType::LightTank, 64.0f, 5, 5);
-	AddWatcher(scoutRegistry, kEnemyTeam, UnitType::RifleInfantry, 64.0f, 15, 5);
+	AddWatcher(scoutRegistry, kPlayerTeam, UnitType::LightTank, 128.0f, 5, 5);
+	AddWatcher(scoutRegistry, kEnemyTeam, UnitType::RifleInfantry, 128.0f, 15, 5);
 	scoutFog.Recompute(scoutRegistry);
 	// Radius 1 without bonus: (6,5) yes, (7,5) no. With 1.5x: radius 2.
 	CC_CHECK(scoutFog.IsVisible(kPlayerTeam, { 6, 5 }));
@@ -113,7 +113,7 @@ void RunFogCombatTests()
 	foe.teamID = kEnemyTeam;
 	foe.type = UnitType::LightTank;
 	foe.health = 100.0f;
-	foe.sightRange = 64.0f;
+	foe.sightRange = 128.0f;
 	foe.position = cc::ToRaylib(cc::TileToWorld(10, 2));
 	const Entity foeId = registry.Create();
 	registry.Add(foeId, foe);
@@ -123,9 +123,9 @@ void RunFogCombatTests()
 	seeker.teamID = kPlayerTeam;
 	seeker.type = UnitType::LightTank;
 	seeker.health = 100.0f;
-	seeker.sightRange = 512.0f; // reaches (10,2): 8 tiles away
+	seeker.sightRange = 1024.0f; // reaches (10,2): 8 tiles away
 	seeker.attackPower = 10;
-	seeker.attackRange = 512;
+	seeker.attackRange = 1024;
 	seeker.cooldownTime = 1.0f;
 	seeker.speed = 64.0f;
 	seeker.position = cc::ToRaylib(cc::TileToWorld(2, 2));

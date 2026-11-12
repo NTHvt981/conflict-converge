@@ -20,7 +20,7 @@ hotkeys around build and placement flows.
   live producers of the type. The Rally ability re-points the rally of
   every selected producer to the clicked tile.
 - Rally marker: each selected producer draws its faction-tinted rally
-  marker in the world at its rally tile center (16px base + team mask).
+  marker in the world at its rally tile center (32px base + team mask).
 - Production tabs: the infantry tab drives the Bootcamp queue, the
   vehicles tab drives the Workshop queue, and the building tab drives
   neither (`SelectPlacingType` enters placement mode per type). Unit

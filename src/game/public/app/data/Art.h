@@ -57,7 +57,7 @@ class DamageNumbers
 public:
 	static constexpr std::size_t kMax = 256;
 	static constexpr float kLife = 0.7f;
-	static constexpr float kRiseSpeed = 40.0f; // pixels per second, upward
+	static constexpr float kRiseSpeed = 80.0f; // pixels per second, upward
 
 	void Spawn(Vector2 pos, float value);
 	void Update(float dt);
@@ -83,15 +83,15 @@ public:
 	bool IsReady() const;
 	bool UseRectangles() const; // fallback flag: draw colored rects instead
 
-	// tileCorner = unit.position (snapped); sprite fills the 32x32 body inset.
+	// tileCorner = unit.position (snapped); sprite fills the half-tile body inset.
 	void DrawUnit(UnitType type, TeamId teamID, UnitFrame frame, Vector2 tileCorner) const;
-	// Atlas blit of a named sprite, origin-aligned to the 32x32 body center;
+	// Atlas blit of a named sprite, origin-aligned to the half-tile body center;
 	// no-op when the atlas is down or the name is unknown. rotationDeg spins
 	// the blit around the body center (turret layer, 0 = unrotated).
 	void DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
 						float scale = 1.0f, float rotationDeg = 0.0f) const;
 	// Screen rectangle a named sprite occupies when drawn at tileCorner, so a
-	// selection box can match art larger than the 32x32 body inset. False when
+	// selection box can match art larger than the half-tile body inset. False when
 	// the atlas is down or the name is unknown.
 	bool SpriteDrawRect(const std::string &spriteName, Vector2 tileCorner, Rectangle &out,
 						float scale = 1.0f) const;
@@ -108,7 +108,7 @@ public:
 	// is down. Spacing matches DrawText (size/10).
 	static void DrawUiText(const Art *art, const char *text, int x, int y, int size,
 						   Color color);
-	// Terrain tile blit (64px, team-neutral); no-op when rectangles are up
+	// Terrain tile blit (128px, team-neutral); no-op when rectangles are up
 	// or the type has no tile.
 	void DrawTerrain(TerrainType type, Vector2 corner) const;
 
@@ -134,7 +134,7 @@ public:
 
 	// Base art scale multiplier (prototype infantry renders at 2x).
 	static float BaseArtScale(UnitType type);
-	// Terrain filename stem + tile slot per type (`<stem>_64px.png`).
+	// Terrain filename stem + tile slot per type (`<stem>_128px.png`).
 	// Slots index terrain_[], so they run 0..kTerrainSlots-1.
 	static constexpr int kTerrainSlots = ArtSprites::kTerrainSlots;
 	static const char *TerrainFile(TerrainType type);

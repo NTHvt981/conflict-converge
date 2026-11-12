@@ -6,7 +6,7 @@
 #include "core/MathUtils.h"
 
 static_assert(sizeof(cc::Vec2) == 8, "cc::Vec2 must be two floats");
-static_assert(cc::TILE_SIZE == 64.0f, "tile grid must be 64x64");
+static_assert(cc::TILE_SIZE == 128.0f, "tile grid must be 128x128");
 
 void RunMathUtilsTests()
 {
@@ -18,13 +18,13 @@ void RunMathUtilsTests()
 
 	// --- tile grid: known mappings ---
 	CC_CHECK(cc::TileToWorld(0, 0) == cc::Vec2(0.0f, 0.0f));
-	CC_CHECK(cc::TileToWorld(2, 3) == cc::Vec2(128.0f, 192.0f));
-	CC_CHECK(cc::WorldToTile(cc::Vec2(70.0f, 130.0f)) == cc::IVec2(1, 2));
-	CC_CHECK(cc::SnapToTile(cc::Vec2(70.0f, 130.0f)) == cc::Vec2(64.0f, 128.0f));
+	CC_CHECK(cc::TileToWorld(2, 3) == cc::Vec2(256.0f, 384.0f));
+	CC_CHECK(cc::WorldToTile(cc::Vec2(140.0f, 260.0f)) == cc::IVec2(1, 2));
+	CC_CHECK(cc::SnapToTile(cc::Vec2(140.0f, 260.0f)) == cc::Vec2(128.0f, 256.0f));
 
 	// Tile origin snaps to itself; exact corner belongs to its own tile.
-	CC_CHECK(cc::SnapToTile(cc::Vec2(64.0f, 128.0f)) == cc::Vec2(64.0f, 128.0f));
-	CC_CHECK(cc::WorldToTile(cc::Vec2(64.0f, 128.0f)) == cc::IVec2(1, 2));
+	CC_CHECK(cc::SnapToTile(cc::Vec2(128.0f, 256.0f)) == cc::Vec2(128.0f, 256.0f));
+	CC_CHECK(cc::WorldToTile(cc::Vec2(128.0f, 256.0f)) == cc::IVec2(1, 2));
 
 	// --- round-trips: tile -> world -> tile, world -> tile -> snapped world ---
 	for (int x = 0; x < 4; ++x)
@@ -34,7 +34,7 @@ void RunMathUtilsTests()
 			CC_CHECK(cc::WorldToTile(cc::TileToWorld(x, y)) == cc::IVec2(x, y));
 		}
 	}
-	cc::Vec2 snapped = cc::SnapToTile(cc::Vec2(200.0f, 10.0f));
-	CC_CHECK(snapped == cc::Vec2(192.0f, 0.0f));
+	cc::Vec2 snapped = cc::SnapToTile(cc::Vec2(400.0f, 20.0f));
+	CC_CHECK(snapped == cc::Vec2(384.0f, 0.0f));
 	CC_CHECK(cc::WorldToTile(snapped) == cc::IVec2(3, 0));
 }

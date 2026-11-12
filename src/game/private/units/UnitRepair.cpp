@@ -39,7 +39,7 @@ Vector2 RepairCandidatePos(const Registry &registry, Entity candidate)
 	return { 0.0f, 0.0f };
 }
 
-constexpr float kAutoRepairAcquireRange = 256.0f;
+constexpr float kAutoRepairAcquireRange = 4.0f * cc::TILE_SIZE;
 
 }
 

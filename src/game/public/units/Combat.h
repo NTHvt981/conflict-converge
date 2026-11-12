@@ -34,7 +34,7 @@ void UpdateProjectiles(Registry &registry, TileMap &map, float dtSeconds);
 
 bool IsVehicleHull(UnitType attackerType);
 
-// Every unit body is a 32x32 rect centered in its tile.
+// Every unit body is a half-tile rect centered in its tile.
 Rectangle HitboxOf(const Unit &unit);
 // Edge-touch doesn't count (raylib semantics).
 bool HitboxesOverlap(const Unit &a, const Unit &b);

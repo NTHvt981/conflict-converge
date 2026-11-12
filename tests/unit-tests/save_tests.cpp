@@ -398,7 +398,7 @@ void RunSaveGameTests()
 				 !sparseWorld.registry.Get<Mover>(only)->hasMoveOrder &&
 				 !sparseWorld.registry.Get<Mover>(only)->hasPath);
 		CC_CHECK(u->attackPower == 0 && u->attackRange == 0); // absent: zero, not table
-		CC_CHECK(u->position.x == 128.0f && u->position.y == 128.0f);
+		CC_CHECK(u->position.x == 256.0f && u->position.y == 256.0f); // v3 px rescale x2
 		CC_CHECK(sparseWorld.resources.iron == 0 && sparseWorld.nodes.Count() == 0);
 	}
 

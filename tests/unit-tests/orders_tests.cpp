@@ -24,10 +24,10 @@ Unit Soldier(TeamId team, UnitType type, int tileX, int tileY)
 	u.teamID = team;
 	u.health = 100.0f;
 	u.attackPower = 20;
-	u.attackRange = 64;
+	u.attackRange = 128;
 	u.cooldownTime = 0.1f;
-	u.speed = 64.0f;
-	u.sightRange = 512.0f;
+	u.speed = 128.0f;
+	u.sightRange = 1024.0f;
 	u.damageType = DamageType::KINETIC;
 	u.armorType = ArmorType::STEEL;
 	u.position = cc::ToRaylib(cc::TileToWorld(tileX, tileY));
@@ -207,7 +207,7 @@ void RunOrdersTests()
 		const Entity tankId = AddUnit(registry, tank);
 		const Entity engId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Engineer, 2, 2));
 		Unit *eng = registry.Get<Unit>(engId);
-		eng->speed = 64.0f;
+		eng->speed = 128.0f;
 		IssueRepairOrder(*eng, GetOrders(registry, engId), GetMover(registry, engId), tankId);
 		CC_CHECK(GetOrders(registry, engId).hasRepairOrder);
 		StepUnits(registry, map, 3600);
@@ -228,7 +228,7 @@ void RunOrdersTests()
 		const Entity tankId = AddUnit(registry, tank);
 		const Entity engId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Engineer, 2, 2));
 		Unit *eng = registry.Get<Unit>(engId);
-		eng->speed = 64.0f;
+		eng->speed = 128.0f;
 		eng->attackPower = 0;
 		IssueRepairOrder(*eng, GetOrders(registry, engId), GetMover(registry, engId), tankId);
 		StepUnits(registry, map, 120);
@@ -300,7 +300,7 @@ void RunOrdersTests()
 		registry.Get<Building>(baseId)->health = 100.0f; // battle damage (simulated)
 		const Entity engId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Engineer, 5, 4));
 		Unit *eng = registry.Get<Unit>(engId);
-		eng->speed = 64.0f;
+		eng->speed = 128.0f;
 		IssueRepairOrder(*eng, GetOrders(registry, engId), GetMover(registry, engId), baseId);
 		StepUnits(registry, map, 3600);
 		CC_CHECK(registry.Get<Building>(baseId)->health == 400.0f);
@@ -313,7 +313,7 @@ void RunOrdersTests()
 		TileMap map(20, 15);
 		const Entity seekerId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::LightTank, 2, 2));
 		Unit *seeker = registry.Get<Unit>(seekerId);
-		seeker->sightRange = 512.0f;
+		seeker->sightRange = 1024.0f;
 		const Entity farBase =
 			PlaceBuilding(registry, map, BuildingType::Base, kEnemyTeam, 7, 2);
 		const Entity nearDepot =
@@ -344,7 +344,7 @@ void RunOrdersTests()
 		UpdateBuildingConstruction(registry, 20.0f); // raidable only when Operational
 		const Entity raiderId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::LightTank, 3, 2));
 		Unit *raider = registry.Get<Unit>(raiderId);
-		raider->sightRange = 512.0f;
+		raider->sightRange = 1024.0f;
 		StepUnits(registry, map, 3600);
 		CC_CHECK(registry.Get<Building>(depotId) == nullptr); // demolished at zero HP
 		CC_CHECK(map.Get({ 5, 2 }) == TerrainType::Grass);     // footprint restored
