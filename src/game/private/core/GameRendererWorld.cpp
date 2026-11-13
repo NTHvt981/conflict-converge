@@ -150,6 +150,18 @@ TankArt DrawArtLayers(const Art &art, Registry &registry, Entity id, Unit &unit,
 					  UnitArtPath path)
 {
 	TankArt tank;
+	if (const DeathFx *fx = registry.Get<DeathFx>(id); fx != nullptr)
+	{
+		const std::string sprite =
+			art.UnitDeathSprite(unit.type, id, kDeathLingerSeconds - fx->timeLeft,
+								static_cast<int>(unit.facing));
+		if (!sprite.empty())
+		{
+			art.DrawAtlasFrame(sprite, { unit.position.x, unit.position.y },
+							   art.TeamTint(unit.teamID), Art::BaseArtScale(unit.type));
+		}
+		return tank; // dying units don't aim: no turret layers
+	}
 	const SquadLayout squad = SquadSlots(unit.type, id, UnitHealthFraction(unit));
 	const bool moving = unit.state == UnitState::Moving;
 	const bool attacking = unit.state == UnitState::Attacking;

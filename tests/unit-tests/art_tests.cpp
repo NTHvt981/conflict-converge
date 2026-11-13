@@ -175,7 +175,9 @@ void RunArtTests()
 	{
 		Art art;
 		CC_CHECK(!art.UseAtlas());
+		CC_CHECK(!art.HasUnitDeathAnim(UnitType::RifleInfantry));
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6).empty());
+		CC_CHECK(art.UnitDeathSprite(UnitType::RifleInfantry, 1, 0.0f, 6).empty());
 		art.DrawAtlasFrame("rifle_infantry_idle_0_0", { 0.0f, 0.0f }, WHITE); // no crash
 		// Default mode: raw BLUE/RED (colorBlindMode_ defaults to false).
 		const Color blue = art.TeamTint(kPlayerTeam);
@@ -198,20 +200,21 @@ void RunArtTests()
 		Art art;
 		CC_CHECK(art.LoadAtlas().has_value());
 		CC_CHECK(!art.UseAtlas()); // parsed, but no GPU textures headless
-		// Idle resolves to the facing column's pose (column 0 = top).
+		// Idle anim is 8x42ms per direction column (column 0 = top);
+		// id 1 offsets 37ms in: t=0 -> frame 0.
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 0) == "rifle_infantry_idle_0_0");
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6) == "rifle_infantry_idle_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 3) == "rifle_infantry_idle_0_3");
-		// Move anim is 4x120ms per direction column (column 6 = right);
+		// Move anim is 8x42ms per direction column (column 6 = right);
 		// id 1 offsets 37ms in: t=0 -> frame 0.
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 6) == "rifle_infantry_move_0_6");
-		// t=130ms + 37 offset = 167 -> frame 1.
-		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6) == "rifle_infantry_move_1_6");
-		// Per-entity desync: id 200 offsets 200*37%480=200ms in -> frame 1 at t=0.
-		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 200, 0.0f, 6) == "rifle_infantry_move_1_6");
-		// Direction 0 moves column 0 (sprites 100/108/116/124).
+		// t=130ms + 37 offset = 167 -> frame 3.
+		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6) == "rifle_infantry_move_3_6");
+		// Per-entity desync: id 200 offsets 200*37%336=8ms in -> frame 0 at t=0.
+		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 200, 0.0f, 6) == "rifle_infantry_move_0_6");
+		// Direction 0 moves column 0 (sprites 2200..2256).
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 0) == "rifle_infantry_move_0_0");
-		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 0) == "rifle_infantry_move_1_0");
+		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 0) == "rifle_infantry_move_3_0");
 		// Out-of-range facing clamps to Right (column 6).
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 9) == "rifle_infantry_move_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, -1) == "rifle_infantry_idle_0_6");
@@ -225,8 +228,9 @@ void RunArtTests()
 		// Deterministic: same args -> same frame.
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6) ==
 				 art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6));
-		// Attack anim is 2x120ms per direction column and wins over
-		// move/idle while attacking (column 6 = right: sprites 406/414).
+		// Attack anim is 4x125ms per direction column and wins over
+		// move/idle while attacking (column 6 = right: sprites
+		// 2406/2414/2422/2430).
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6, true) ==
 				 "rifle_infantry_attack_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.13f, 6, true) ==
@@ -236,35 +240,49 @@ void RunArtTests()
 		// Types without attack anims fall back to move/idle when attacking.
 		CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, false, 1, 0.0f, 6, true) ==
 				 "prototypeinfantry_idle_0_6");
-		// AntiArmorInfantry resolves the antiarmor namespace (32x48 cells):
-		// idle is sprite-direct, move is 4x120ms, attack 3x120ms per column.
+		// AntiArmorInfantry resolves the antiarmor namespace (72x72 cells):
+		// idle + move are 8x42ms, attack 4x125ms per column.
 		CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, false, 1, 0.0f, 6) ==
 				 "antiarmor_idle_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, true, 1, 0.0f, 6) ==
 				 "antiarmor_move_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, true, 1, 0.13f, 6) ==
-				 "antiarmor_move_1_6");
+				 "antiarmor_move_3_6");
 		CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, false, 1, 0.0f, 6, true) ==
 				 "antiarmor_attack_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, false, 1, 0.25f, 6, true) ==
 				 "antiarmor_attack_2_6");
-		// Engineer resolves the engineer namespace (32x32 cells, 4-frame
-		// move; no attack sheets, so attacking falls back to move/idle).
+		// Engineer resolves the engineer namespace (72x72 cells, 8-frame
+		// move and 4-frame attack per column).
 		CC_CHECK(art.UnitSprite(UnitType::Engineer, false, 1, 0.0f, 6) == "engineer_idle_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.0f, 6) == "engineer_move_0_6");
-		CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.13f, 6) == "engineer_move_1_6");
+		CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.13f, 6) == "engineer_move_3_6");
 		CC_CHECK(art.UnitSprite(UnitType::Engineer, false, 1, 0.0f, 6, true) ==
-				 "engineer_idle_0_6");
-		// Medic resolves the medic namespace (32x32 cells, 4-frame move;
-		// no attack sheets, so attacking falls back to move/idle).
+				 "engineer_attack_0_6");
+		// Medic resolves the medic namespace (72x72 cells, 8-frame move and
+		// 4-frame attack per column).
 		CC_CHECK(art.UnitSprite(UnitType::Medic, false, 1, 0.0f, 6) == "medic_idle_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.0f, 6) == "medic_move_0_6");
-		CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.13f, 6) == "medic_move_1_6");
+		CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.13f, 6) == "medic_move_3_6");
 		CC_CHECK(art.UnitSprite(UnitType::Medic, false, 1, 0.0f, 6, true) ==
-				 "medic_idle_0_6");
+				 "medic_attack_0_6");
 		// Types without atlas entries resolve empty (legacy DrawUnit covers).
 		CC_CHECK(art.UnitSprite(UnitType::HeavyTank, true, 1, 0.0f, 0).empty());
 		CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f, 0).empty());
+		// Death anims: non-looping, clamped, holding the last frame.
+		CC_CHECK(art.HasUnitDeathAnim(UnitType::RifleInfantry));
+		CC_CHECK(art.HasUnitDeathAnim(UnitType::Medic));
+		CC_CHECK(!art.HasUnitDeathAnim(UnitType::HeavyTank));
+		CC_CHECK(art.UnitDeathSprite(UnitType::RifleInfantry, 1, 0.0f, 6) ==
+				 "rifle_infantry_death_0_6");
+		CC_CHECK(art.UnitDeathSprite(UnitType::RifleInfantry, 1, 0.3f, 6) ==
+				 "rifle_infantry_death_2_6");
+		// 0.6s is past the 4x125ms total: the last frame holds.
+		CC_CHECK(art.UnitDeathSprite(UnitType::RifleInfantry, 1, 0.6f, 6) ==
+				 "rifle_infantry_death_3_6");
+		CC_CHECK(art.UnitDeathSprite(UnitType::RifleInfantry, 1, 0.0f, 9) ==
+				 "rifle_infantry_death_0_6"); // facing clamps to Right
+		CC_CHECK(art.UnitDeathSprite(UnitType::HeavyTank, 1, 0.0f, 6).empty());
 	}
 
 	// --- layered tank art: lighttank body/head grids, heavytank fallback ---
@@ -294,10 +312,14 @@ void RunArtTests()
 						   WHITE); // no crash
 	}
 
-	// --- BaseArtScale: prototype infantry's 2x is baked into its 32px art ---
+	// --- BaseArtScale: foot infantry renders 72px cells at 0.8x in the
+	// 128px tile; everything else stays at 1x ---
 	{
 		CC_CHECK(Art::BaseArtScale(UnitType::PrototypeInfantry) == 1.0f);
-		CC_CHECK(Art::BaseArtScale(UnitType::RifleInfantry) == 1.0f);
+		CC_CHECK(Art::BaseArtScale(UnitType::RifleInfantry) == 0.8f);
+		CC_CHECK(Art::BaseArtScale(UnitType::AntiArmorInfantry) == 0.8f);
+		CC_CHECK(Art::BaseArtScale(UnitType::Engineer) == 0.8f);
+		CC_CHECK(Art::BaseArtScale(UnitType::Medic) == 0.8f);
 		CC_CHECK(Art::BaseArtScale(UnitType::HeavyTank) == 1.0f);
 	}
 

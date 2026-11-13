@@ -32,6 +32,54 @@ const char *TeamName(TeamId teamID)
 	return teamID == kPlayerTeam ? "blue" : "red";
 }
 
+int AnimTotalMs(const SpriteAnimInfo &anim)
+{
+	int total = 0;
+	for (const SpriteAnimFrame &f : anim.frames)
+	{
+		total += f.durationMs;
+	}
+	return total;
+}
+
+// Sprite name for the anim frame at tMs. Wrapping playback reduces tMs
+// modulo the total; clamped playback holds the last frame past the end.
+std::string AnimFrameName(const SpriteSheetData &sheet, const SpriteAnimInfo &anim,
+						  int tMs, bool clamped)
+{
+	const int total = AnimTotalMs(anim);
+	if (total <= 0)
+	{
+		return {};
+	}
+	int t = tMs;
+	if (clamped)
+	{
+		t = t < 0 ? 0 : (t > total - 1 ? total - 1 : t);
+	}
+	else
+	{
+		t %= total;
+		if (t < 0)
+		{
+			t += total;
+		}
+	}
+	for (const SpriteAnimFrame &f : anim.frames)
+	{
+		if (t < f.durationMs)
+		{
+			if (const SpriteDefInfo *s = FindSpriteById(sheet, f.sprite); s != nullptr)
+			{
+				return s->name;
+			}
+			break;
+		}
+		t -= f.durationMs;
+	}
+	return {};
+}
+
 struct TerrainArtInfo
 {
 	const char *file; // nullptr = no tile art
@@ -445,35 +493,14 @@ std::string ArtSprites::UnitSprite(UnitType type, bool moving, unsigned int id,
 		{
 			return {};
 		}
-		int total = 0;
-		for (const SpriteAnimFrame &f : anim->frames)
-		{
-			total += f.durationMs;
-		}
+		const int total = AnimTotalMs(*anim);
 		if (total <= 0)
 		{
 			return {};
 		}
-		int t = static_cast<int>(timeSeconds * 1000.0f) +
-				static_cast<int>(id * 37u % static_cast<unsigned int>(total));
-		t %= total;
-		if (t < 0)
-		{
-			t += total;
-		}
-		for (const SpriteAnimFrame &f : anim->frames)
-		{
-			if (t < f.durationMs)
-			{
-				if (const SpriteDefInfo *s = FindSpriteById(sheet_, f.sprite); s != nullptr)
-				{
-					return s->name;
-				}
-				break;
-			}
-			t -= f.durationMs;
-		}
-		return {};
+		const int t = static_cast<int>(timeSeconds * 1000.0f) +
+					  static_cast<int>(id * 37u % static_cast<unsigned int>(total));
+		return AnimFrameName(sheet_, *anim, t, false);
 	};
 	if (attacking)
 	{
@@ -499,6 +526,17 @@ std::string ArtSprites::UnitSprite(UnitType type, bool moving, unsigned int id,
 			}
 		}
 	}
+	{
+		const std::string names[] = { prefix + "_idle_" + std::to_string(dir),
+									  prefix + "_idle" };
+		for (const std::string &name : names)
+		{
+			if (std::string sprite = animSprite(name); !sprite.empty())
+			{
+				return sprite;
+			}
+		}
+	}
 	if (const SpriteDefInfo *idle =
 			FindSpriteByName(sheet_, prefix + "_idle_0_" + std::to_string(dir));
 		idle != nullptr)
@@ -510,6 +548,44 @@ std::string ArtSprites::UnitSprite(UnitType type, bool moving, unsigned int id,
 		baseIdle != nullptr)
 	{
 		return baseIdle->name;
+	}
+	return {};
+}
+
+bool ArtSprites::HasUnitDeathAnim(UnitType type) const
+{
+	if (!sheetLoaded_)
+	{
+		return false;
+	}
+	return FindAnimByName(sheet_,
+						  std::string(InfoOf(type).spriteStem) + "_death_0") != nullptr;
+}
+
+std::string ArtSprites::UnitDeathSprite(UnitType type, unsigned int id,
+										float elapsedSeconds, int facingDir) const
+{
+	if (!sheetLoaded_)
+	{
+		return {};
+	}
+	(void)id;
+	const int dir = (facingDir < 0 || facingDir > 7) ? 6 : facingDir;
+	const std::string prefix = InfoOf(type).spriteStem;
+	const std::string names[] = { prefix + "_death_" + std::to_string(dir),
+								  prefix + "_death" };
+	for (const std::string &name : names)
+	{
+		const SpriteAnimInfo *anim = FindAnimByName(sheet_, name);
+		if (anim == nullptr || anim->frames.empty())
+		{
+			continue;
+		}
+		const int t = static_cast<int>(elapsedSeconds * 1000.0f);
+		if (std::string sprite = AnimFrameName(sheet_, *anim, t, true); !sprite.empty())
+		{
+			return sprite;
+		}
 	}
 	return {};
 }
@@ -565,5 +641,14 @@ void ArtSprites::SetColorBlindMode(bool enabled)
 
 float ArtSprites::BaseArtScale(UnitType type)
 {
-	return 1.0f;
+	switch (type)
+	{
+	case UnitType::RifleInfantry:
+	case UnitType::AntiArmorInfantry:
+	case UnitType::Engineer:
+	case UnitType::Medic:
+		return 0.8f;
+	default:
+		return 1.0f;
+	}
 }

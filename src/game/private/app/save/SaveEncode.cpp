@@ -148,7 +148,12 @@ bool SaveWorld(const WorldState &world, const std::string &path)
 		}
 	}
 	std::vector<Entity> order;
-	world.registry->Each<Unit>([&](Entity id, const Unit &) { order.push_back(id); });
+	world.registry->Each<Unit>([&](Entity id, const Unit &u) {
+		if (u.health > 0.0f)
+		{
+			order.push_back(id);
+		}
+	});
 	for (Entity id : order)
 	{
 		const Unit &u = *world.registry->Get<Unit>(id);

@@ -9,7 +9,8 @@ Entity PickUnitAt(Registry &registry, Vector2 worldPos)
 {
 	Entity found = kInvalidEntity;
 	registry.Each<Unit>([&](Entity entity, Unit &unit) {
-		if (found != kInvalidEntity || IsEmbarked(registry, entity))
+		if (found != kInvalidEntity || IsEmbarked(registry, entity) ||
+			unit.health <= 0.0f)
 		{
 			return;
 		}

@@ -123,7 +123,7 @@ void Simulation::Step(float dt)
 {
 	fog_.Recompute(registry_);
 	RunUnitMovementFrame(registry_, map_, occ_, &fog_, dt);
-	ReapDeadUnits();
+	ReapDeadUnits(dt);
 	UpdateCombatVfx();
 	UpdateParticlePools(dt);
 	UpdateAttackSfx(dt);
@@ -139,14 +139,29 @@ void Simulation::Step(float dt)
 	UpdateOutcome();
 }
 
-void Simulation::ReapDeadUnits()
+void Simulation::ReapDeadUnits(float dt)
 {
 	std::vector<Entity> dead;
 	registry_.Each<Unit>([&](Entity id, const Unit &unit) {
-		if (unit.health <= 0.0f)
+		if (unit.health > 0.0f)
 		{
-			dead.push_back(id);
+			return;
 		}
+		if (registry_.Has<DeathFx>(id))
+		{
+			DeathFx *fx = registry_.Get<DeathFx>(id);
+			fx->timeLeft -= dt;
+			if (fx->timeLeft > 0.0f)
+			{
+				return;
+			}
+		}
+		else if (art_.HasUnitDeathAnim(unit.type))
+		{
+			registry_.Add(id, DeathFx{kDeathLingerSeconds});
+			return;
+		}
+		dead.push_back(id);
 	});
 	for (Entity id : dead)
 	{
