@@ -48,7 +48,7 @@ public:
 
 private:
 	void Announce(EventType type);
-	void ReapDeadUnits();
+	void ReapDeadUnits(float dtSeconds);
 	void UpdateCombatVfx();
 	void UpdateParticlePools(float dt);
 	void UpdateAttackSfx(float dt);

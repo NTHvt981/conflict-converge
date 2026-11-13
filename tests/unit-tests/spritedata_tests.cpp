@@ -192,126 +192,150 @@ void RunSpriteDataTests()
 		CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
 	}
 
-	// --- real data/configs atlas files: 26 sheets, 504 sprites, 56 anims ---
-	// Rifle-infantry renders from base+mask team-tint sheets (8 idle +
-	// 8 dirs x 4 move frames + 8 dirs x 2 attack frames, each with a mask);
-	// antiarmor mirrors it on taller 64x96 cells (8 idle + 8 dirs x 4 move
-	// + 8 dirs x 3 attack, each with a mask); engineer adds idle plus a
-	// 4-frame move on 64x64 cells (each with a mask); medic adds the same
-	// idle + 4-frame move pair; lighttank adds body + head 8-column stacks
-	// (each with a mask); prototype keeps its untinted sheets.
+	// --- real data/configs atlas files: 38 sheets, 1608 sprites, 136 anims ---
+	// Rifle-infantry renders from base+mask team-tint sheets on 72x72 cells
+	// (8 rows x 8 direction columns per action: idle + move + 4-frame
+	// attack + 4-frame death, each with a mask); antiarmor mirrors it on
+	// the same 72x72 cells; engineer and medic add the same 4-action set;
+	// lighttank adds body + head 8-column stacks (each with a mask);
+	// prototype keeps its untinted sheets.
 	// PrototypeInfantry resolves its own namespace, not rifle_infantry's.
 	{
 		const std::expected<SpriteSheetData, ConfigError> loaded = LoadSpriteSheet();
 		CC_CHECK(loaded.has_value());
 		const SpriteSheetData sheet = loaded.value_or(SpriteSheetData{});
-		CC_CHECK(sheet.textures.size() == 26);
-		CC_CHECK(sheet.sprites.size() == 504);
-		CC_CHECK(sheet.animations.size() == 56);
+		CC_CHECK(sheet.textures.size() == 38);
+		CC_CHECK(sheet.sprites.size() == 1608);
+		CC_CHECK(sheet.animations.size() == 136);
 		const SpriteDefInfo *first = FindSpriteByName(sheet, "rifle_infantry_idle_0_0");
-		CC_CHECK(first != nullptr && first->id == 0 && first->texture == "rifle_idle_base");
+		CC_CHECK(first != nullptr && first->id == 2000 && first->texture == "rifle_infantry_idle_base");
 		CC_CHECK(first->bounds.left == 0 && first->bounds.top == 0);
-		CC_CHECK(first->bounds.right == 64 && first->bounds.bottom == 64);
-		CC_CHECK(first->origin.x == 32 && first->origin.y == 32);
-		CC_CHECK(first->maskSprite == 500); // team-tint mask grid
-		const SpriteDefInfo *firstMask = FindSpriteById(sheet, 500);
+		CC_CHECK(first->bounds.right == 72 && first->bounds.bottom == 72);
+		CC_CHECK(first->origin.x == 36 && first->origin.y == 36);
+		CC_CHECK(first->maskSprite == 2100); // team-tint mask grid
+		const SpriteDefInfo *firstMask = FindSpriteById(sheet, 2100);
 		CC_CHECK(firstMask != nullptr && firstMask->name == "rifle_infantry_idle_mask_0_0" &&
-				 firstMask->texture == "rifle_idle_mask" && firstMask->maskSprite == 0);
-		// Move grid is 8 direction columns x 4 frames; the wired anim uses
-		// column 6 (right): ids 106/114/122/130.
+				 firstMask->texture == "rifle_infantry_idle_mask" && firstMask->maskSprite == 0);
+		// Move grid is 8 direction columns x 8 frame rows; the wired anim
+		// uses column 6 (right): ids 2206..2262.
 		const SpriteDefInfo *last = FindSpriteByName(sheet, "rifle_infantry_move_3_6");
-		CC_CHECK(last != nullptr && last->id == 130 && last->texture == "rifle_move_base");
-		CC_CHECK(last->bounds.left == 384 && last->bounds.top == 192);
-		CC_CHECK(last->bounds.right == 448 && last->bounds.bottom == 256);
-		CC_CHECK(last->maskSprite == 630);
+		CC_CHECK(last != nullptr && last->id == 2230 && last->texture == "rifle_infantry_move_base");
+		CC_CHECK(last->bounds.left == 432 && last->bounds.top == 216);
+		CC_CHECK(last->bounds.right == 504 && last->bounds.bottom == 288);
+		CC_CHECK(last->maskSprite == 2330);
 		const SpriteAnimInfo *move = FindAnimByName(sheet, "rifle_infantry_move_6");
-		CC_CHECK(move != nullptr && move->loop && move->frames.size() == 4);
-		CC_CHECK(move->frames[0].sprite == 106 && move->frames[3].sprite == 130);
+		CC_CHECK(move != nullptr && move->loop && move->frames.size() == 8);
+		CC_CHECK(move->frames[0].sprite == 2206 && move->frames[7].sprite == 2262);
+		CC_CHECK(move->frames[0].durationMs == 42);
 		const SpriteAnimInfo *moveTop = FindAnimByName(sheet, "rifle_infantry_move_0");
-		CC_CHECK(moveTop != nullptr && moveTop->frames.size() == 4);
-		CC_CHECK(moveTop->frames[0].sprite == 100 && moveTop->frames[3].sprite == 124);
-		// Attack grid is 8 direction columns x 2 frames (column 6: 406/414).
+		CC_CHECK(moveTop != nullptr && moveTop->frames.size() == 8);
+		CC_CHECK(moveTop->frames[0].sprite == 2200 && moveTop->frames[7].sprite == 2256);
+		// Attack grid is 8 direction columns x 4 frames (column 6:
+		// 2406/2414/2422/2430).
 		const SpriteDefInfo *strike = FindSpriteByName(sheet, "rifle_infantry_attack_1_6");
-		CC_CHECK(strike != nullptr && strike->id == 414 &&
-				 strike->texture == "rifle_attack_base");
-		CC_CHECK(strike->bounds.left == 384 && strike->bounds.top == 64);
-		CC_CHECK(strike->bounds.right == 448 && strike->bounds.bottom == 128);
-		CC_CHECK(strike->maskSprite == 714);
+		CC_CHECK(strike != nullptr && strike->id == 2414 &&
+				 strike->texture == "rifle_infantry_attack_base");
+		CC_CHECK(strike->bounds.left == 432 && strike->bounds.top == 72);
+		CC_CHECK(strike->bounds.right == 504 && strike->bounds.bottom == 144);
+		CC_CHECK(strike->maskSprite == 2514);
 		const SpriteAnimInfo *attack = FindAnimByName(sheet, "rifle_infantry_attack_6");
-		CC_CHECK(attack != nullptr && attack->loop && attack->frames.size() == 2);
-		CC_CHECK(attack->frames[0].sprite == 406 && attack->frames[1].sprite == 414);
+		CC_CHECK(attack != nullptr && attack->loop && attack->frames.size() == 4);
+		CC_CHECK(attack->frames[0].sprite == 2406 && attack->frames[3].sprite == 2430);
+		CC_CHECK(attack->frames[0].durationMs == 125);
+		// Death grid is 8 direction columns x 4 frames; its per-direction
+		// anims play once (no loop) so the last frame holds.
+		const SpriteDefInfo *deathCell = FindSpriteByName(sheet, "rifle_infantry_death_2_6");
+		CC_CHECK(deathCell != nullptr && deathCell->id == 2622 &&
+				 deathCell->texture == "rifle_infantry_death_base");
+		const SpriteAnimInfo *death = FindAnimByName(sheet, "rifle_infantry_death_6");
+		CC_CHECK(death != nullptr && !death->loop && death->frames.size() == 4);
+		CC_CHECK(death->frames[0].sprite == 2606 && death->frames[3].sprite == 2630);
 		CC_CHECK(FindAnimByName(sheet, "rifle_infantry_move") == nullptr); // split by direction
-		CC_CHECK(FindAnimByName(sheet, "rifle_infantry_idle") == nullptr); // idle is sprite-direct
+		CC_CHECK(FindAnimByName(sheet, "rifle_infantry_idle") == nullptr); // split by direction
 		CC_CHECK(FindAnimByName(sheet, "rifle_infantry_attack") == nullptr); // split by direction
-		// Antiarmor namespace on 64x96 cells (ids 800+/900+/1000+, masks
-		// 850+/950+/1050+; move column 6: 906/914/922/930).
+		// Antiarmor namespace on 72x72 cells (idle 2800+/move 3000+/attack
+		// 3200+/death 3400+; move column 6: 3006..3062).
 		const SpriteDefInfo *aaIdle = FindSpriteByName(sheet, "antiarmor_idle_0_0");
-		CC_CHECK(aaIdle != nullptr && aaIdle->id == 800 &&
+		CC_CHECK(aaIdle != nullptr && aaIdle->id == 2800 &&
 				 aaIdle->texture == "antiarmor_idle_base");
 		CC_CHECK(aaIdle->bounds.left == 0 && aaIdle->bounds.top == 0);
-		CC_CHECK(aaIdle->bounds.right == 64 && aaIdle->bounds.bottom == 96);
-		CC_CHECK(aaIdle->origin.x == 32 && aaIdle->origin.y == 48);
-		CC_CHECK(aaIdle->maskSprite == 850);
+		CC_CHECK(aaIdle->bounds.right == 72 && aaIdle->bounds.bottom == 72);
+		CC_CHECK(aaIdle->origin.x == 36 && aaIdle->origin.y == 36);
+		CC_CHECK(aaIdle->maskSprite == 2900);
 		const SpriteDefInfo *aaMove = FindSpriteByName(sheet, "antiarmor_move_3_6");
-		CC_CHECK(aaMove != nullptr && aaMove->id == 930 &&
+		CC_CHECK(aaMove != nullptr && aaMove->id == 3030 &&
 				 aaMove->texture == "antiarmor_move_base");
-		CC_CHECK(aaMove->bounds.left == 384 && aaMove->bounds.top == 288);
-		CC_CHECK(aaMove->bounds.right == 448 && aaMove->bounds.bottom == 384);
-		CC_CHECK(aaMove->maskSprite == 980);
+		CC_CHECK(aaMove->bounds.left == 432 && aaMove->bounds.top == 216);
+		CC_CHECK(aaMove->bounds.right == 504 && aaMove->bounds.bottom == 288);
+		CC_CHECK(aaMove->maskSprite == 3130);
 		const SpriteAnimInfo *aaMoveAnim = FindAnimByName(sheet, "antiarmor_move_6");
-		CC_CHECK(aaMoveAnim != nullptr && aaMoveAnim->loop && aaMoveAnim->frames.size() == 4);
-		CC_CHECK(aaMoveAnim->frames[0].sprite == 906 && aaMoveAnim->frames[3].sprite == 930);
-		// Attack grid is 8 direction columns x 3 frames (column 6:
-		// 1006/1014/1022).
+		CC_CHECK(aaMoveAnim != nullptr && aaMoveAnim->loop && aaMoveAnim->frames.size() == 8);
+		CC_CHECK(aaMoveAnim->frames[0].sprite == 3006 && aaMoveAnim->frames[7].sprite == 3062);
+		// Attack grid is 8 direction columns x 4 frames (column 6:
+		// 3206/3214/3222/3230).
 		const SpriteDefInfo *aaStrike = FindSpriteByName(sheet, "antiarmor_attack_2_6");
-		CC_CHECK(aaStrike != nullptr && aaStrike->id == 1022 &&
+		CC_CHECK(aaStrike != nullptr && aaStrike->id == 3222 &&
 				 aaStrike->texture == "antiarmor_attack_base");
-		CC_CHECK(aaStrike->bounds.left == 384 && aaStrike->bounds.top == 192);
-		CC_CHECK(aaStrike->bounds.right == 448 && aaStrike->bounds.bottom == 288);
-		CC_CHECK(aaStrike->maskSprite == 1072);
+		CC_CHECK(aaStrike->bounds.left == 432 && aaStrike->bounds.top == 144);
+		CC_CHECK(aaStrike->bounds.right == 504 && aaStrike->bounds.bottom == 216);
+		CC_CHECK(aaStrike->maskSprite == 3322);
 		const SpriteAnimInfo *aaAttack = FindAnimByName(sheet, "antiarmor_attack_6");
-		CC_CHECK(aaAttack != nullptr && aaAttack->loop && aaAttack->frames.size() == 3);
-		CC_CHECK(aaAttack->frames[0].sprite == 1006 && aaAttack->frames[2].sprite == 1022);
-		// Engineer namespace on 64x64 cells (ids 1100+/1200+, masks
-		// 1150+/1250+; move column 6 across 6 frames: 1206..1246).
+		CC_CHECK(aaAttack != nullptr && aaAttack->loop && aaAttack->frames.size() == 4);
+		CC_CHECK(aaAttack->frames[0].sprite == 3206 && aaAttack->frames[3].sprite == 3230);
+		// Engineer namespace on 72x72 cells (idle 3600+/move 3800+/attack
+		// 4000+/death 4200+; move column 6 across 8 frames: 3806..3862).
 		const SpriteDefInfo *engIdle = FindSpriteByName(sheet, "engineer_idle_0_0");
-		CC_CHECK(engIdle != nullptr && engIdle->id == 1100 &&
+		CC_CHECK(engIdle != nullptr && engIdle->id == 3600 &&
 				 engIdle->texture == "engineer_idle_base");
 		CC_CHECK(engIdle->bounds.left == 0 && engIdle->bounds.top == 0);
-		CC_CHECK(engIdle->bounds.right == 64 && engIdle->bounds.bottom == 64);
-		CC_CHECK(engIdle->origin.x == 32 && engIdle->origin.y == 32);
-		CC_CHECK(engIdle->maskSprite == 1150);
+		CC_CHECK(engIdle->bounds.right == 72 && engIdle->bounds.bottom == 72);
+		CC_CHECK(engIdle->origin.x == 36 && engIdle->origin.y == 36);
+		CC_CHECK(engIdle->maskSprite == 3700);
 		const SpriteDefInfo *engMove = FindSpriteByName(sheet, "engineer_move_5_6");
-		CC_CHECK(engMove != nullptr && engMove->id == 1246 &&
+		CC_CHECK(engMove != nullptr && engMove->id == 3846 &&
 				 engMove->texture == "engineer_move_base");
-		CC_CHECK(engMove->bounds.left == 384 && engMove->bounds.top == 320);
-		CC_CHECK(engMove->bounds.right == 448 && engMove->bounds.bottom == 384);
-		CC_CHECK(engMove->maskSprite == 1296);
+		CC_CHECK(engMove->bounds.left == 432 && engMove->bounds.top == 360);
+		CC_CHECK(engMove->bounds.right == 504 && engMove->bounds.bottom == 432);
+		CC_CHECK(engMove->maskSprite == 3946);
 		const SpriteAnimInfo *engMoveAnim = FindAnimByName(sheet, "engineer_move_6");
 		CC_CHECK(engMoveAnim != nullptr && engMoveAnim->loop &&
-				 engMoveAnim->frames.size() == 4);
-		CC_CHECK(engMoveAnim->frames[0].sprite == 1206 &&
-				 engMoveAnim->frames[3].sprite == 1230);
-		// Medic namespace on 64x64 cells (ids 1300+/1400+, masks
-		// 1350+/1450+; move column 6 across 4 frames: 1406..1430).
+				 engMoveAnim->frames.size() == 8);
+		CC_CHECK(engMoveAnim->frames[0].sprite == 3806 &&
+				 engMoveAnim->frames[7].sprite == 3862);
+		// Engineer has its own 4-frame attack and death anims per direction.
+		const SpriteAnimInfo *engAttack = FindAnimByName(sheet, "engineer_attack_6");
+		CC_CHECK(engAttack != nullptr && engAttack->loop && engAttack->frames.size() == 4);
+		CC_CHECK(engAttack->frames[0].sprite == 4006 && engAttack->frames[3].sprite == 4030);
+		const SpriteAnimInfo *engDeath = FindAnimByName(sheet, "engineer_death_6");
+		CC_CHECK(engDeath != nullptr && !engDeath->loop && engDeath->frames.size() == 4);
+		CC_CHECK(engDeath->frames[0].sprite == 4206 && engDeath->frames[3].sprite == 4230);
+		// Medic namespace on 72x72 cells (idle 4400+/move 4600+/attack
+		// 4800+/death 5000+; move column 6 across 8 frames: 4606..4662).
 		const SpriteDefInfo *medIdle = FindSpriteByName(sheet, "medic_idle_0_0");
-		CC_CHECK(medIdle != nullptr && medIdle->id == 1300 &&
+		CC_CHECK(medIdle != nullptr && medIdle->id == 4400 &&
 				 medIdle->texture == "medic_idle_base");
 		CC_CHECK(medIdle->bounds.left == 0 && medIdle->bounds.top == 0);
-		CC_CHECK(medIdle->bounds.right == 64 && medIdle->bounds.bottom == 64);
-		CC_CHECK(medIdle->origin.x == 32 && medIdle->origin.y == 32);
-		CC_CHECK(medIdle->maskSprite == 1350);
+		CC_CHECK(medIdle->bounds.right == 72 && medIdle->bounds.bottom == 72);
+		CC_CHECK(medIdle->origin.x == 36 && medIdle->origin.y == 36);
+		CC_CHECK(medIdle->maskSprite == 4500);
 		const SpriteDefInfo *medMove = FindSpriteByName(sheet, "medic_move_3_6");
-		CC_CHECK(medMove != nullptr && medMove->id == 1430 &&
+		CC_CHECK(medMove != nullptr && medMove->id == 4630 &&
 				 medMove->texture == "medic_move_base");
-		CC_CHECK(medMove->bounds.left == 384 && medMove->bounds.top == 192);
-		CC_CHECK(medMove->bounds.right == 448 && medMove->bounds.bottom == 256);
-		CC_CHECK(medMove->maskSprite == 1480);
+		CC_CHECK(medMove->bounds.left == 432 && medMove->bounds.top == 216);
+		CC_CHECK(medMove->bounds.right == 504 && medMove->bounds.bottom == 288);
+		CC_CHECK(medMove->maskSprite == 4730);
 		const SpriteAnimInfo *medMoveAnim = FindAnimByName(sheet, "medic_move_6");
 		CC_CHECK(medMoveAnim != nullptr && medMoveAnim->loop &&
-				 medMoveAnim->frames.size() == 4);
-		CC_CHECK(medMoveAnim->frames[0].sprite == 1406 &&
-				 medMoveAnim->frames[3].sprite == 1430);
+				 medMoveAnim->frames.size() == 8);
+		CC_CHECK(medMoveAnim->frames[0].sprite == 4606 &&
+				 medMoveAnim->frames[7].sprite == 4662);
+		// Medic has its own 4-frame attack and death anims per direction.
+		const SpriteAnimInfo *medAttack = FindAnimByName(sheet, "medic_attack_6");
+		CC_CHECK(medAttack != nullptr && medAttack->loop && medAttack->frames.size() == 4);
+		CC_CHECK(medAttack->frames[0].sprite == 4806 && medAttack->frames[3].sprite == 4830);
+		const SpriteAnimInfo *medDeath = FindAnimByName(sheet, "medic_death_6");
+		CC_CHECK(medDeath != nullptr && !medDeath->loop && medDeath->frames.size() == 4);
+		CC_CHECK(medDeath->frames[0].sprite == 5006 && medDeath->frames[3].sprite == 5030);
 		// Prototype namespace mirrors it (own textures, ids 200+/300+).
 		const SpriteDefInfo *protoIdle = FindSpriteByName(sheet, "prototypeinfantry_idle_0_0");
 		CC_CHECK(protoIdle != nullptr && protoIdle->id == 200 &&

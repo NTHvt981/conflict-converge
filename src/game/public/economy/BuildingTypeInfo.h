@@ -24,7 +24,7 @@ inline constexpr BuildingTypeInfo kBuildingTypes[] = {
 	  ProductionCategory::Infantry },
 	{ "Depot", "depot", nullptr, { 1, 1 }, 200.0f, 2.0f, 150, 0, false,
 	  ProductionCategory::Infantry },
-	{ "Bootcamp", nullptr, "bootcamp", { 2, 2 }, 350.0f, 4.0f, 200, 0, true,
+	{ "Bootcamp", nullptr, "barrack", { 2, 2 }, 350.0f, 4.0f, 200, 0, true,
 	  ProductionCategory::Infantry },
 	{ "Workshop", nullptr, "workshop", { 3, 3 }, 500.0f, 5.0f, 300, 0, true,
 	  ProductionCategory::Vehicle },

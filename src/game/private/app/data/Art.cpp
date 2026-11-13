@@ -110,6 +110,17 @@ bool Art::HasTankArt(UnitType type) const
 	return sprites_.HasTankArt(type);
 }
 
+bool Art::HasUnitDeathAnim(UnitType type) const
+{
+	return sprites_.HasUnitDeathAnim(type);
+}
+
+std::string Art::UnitDeathSprite(UnitType type, unsigned int id, float elapsedSeconds,
+								 int facingDir) const
+{
+	return sprites_.UnitDeathSprite(type, id, elapsedSeconds, facingDir);
+}
+
 Color Art::TeamTint(TeamId teamID) const
 {
 	return sprites_.TeamTint(teamID);

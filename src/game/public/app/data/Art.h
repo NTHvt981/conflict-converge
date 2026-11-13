@@ -117,10 +117,18 @@ public:
 	// Parse the atlas files without touching the GPU (tests).
 	[[nodiscard]] std::expected<void, ConfigError> LoadAtlas();
 	// Sprite name for a unit at timeSeconds: directional attack (when
-	// attacking and the type has attack anims), walk/idle otherwise, with
-	// directional-to-base fallback. Empty when no sheet or no entries.
+	// attacking and the type has attack anims), directional walk/idle anims
+	// otherwise, with directional-to-base and static-pose fallbacks. Empty
+	// when no sheet or no entries.
 	std::string UnitSprite(UnitType type, bool moving, unsigned int id,
 						   float timeSeconds, int facingDir, bool attacking = false) const;
+	// True when the type has a directional death anim in the atlas.
+	bool HasUnitDeathAnim(UnitType type) const;
+	// Non-looping death-anim frame for a unit `elapsedSeconds` into its death:
+	// clamped to the anim's total duration, holding the last frame past the
+	// end. facingDir is a Facing octant (0..7); "" when no death anim exists.
+	std::string UnitDeathSprite(UnitType type, unsigned int id, float elapsedSeconds,
+								int facingDir) const;
 	// Layered tank art: body follows movement facing, head follows turret aim.
 	// facingDir is a Facing octant (0..7); "" when the type has no layered art.
 	std::string TankBodySprite(UnitType type, int facingDir) const;
@@ -132,7 +140,8 @@ public:
 	Color TeamTint(TeamId teamID) const;
 	void SetColorBlindMode(bool enabled);
 
-	// Base art scale multiplier (prototype infantry renders at 2x).
+	// Base art scale multiplier (foot infantry renders 72px cells down to
+	// the 128px tile; everything else at 1x).
 	static float BaseArtScale(UnitType type);
 	// Terrain filename stem + tile slot per type (`<stem>_128px.png`).
 	// Slots index terrain_[], so they run 0..kTerrainSlots-1.
