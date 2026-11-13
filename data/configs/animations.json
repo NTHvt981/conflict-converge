@@ -1,317 +1,5 @@
 {
   "animations": [
-    { "name": "rifle_infantry_move_0", "id": 10, "loop": true,
-      "frames": [
-        { "sprite": 100, "durationMs": 120 },
-        { "sprite": 108, "durationMs": 120 },
-        { "sprite": 116, "durationMs": 120 },
-        { "sprite": 124, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_move_1", "id": 11, "loop": true,
-      "frames": [
-        { "sprite": 101, "durationMs": 120 },
-        { "sprite": 109, "durationMs": 120 },
-        { "sprite": 117, "durationMs": 120 },
-        { "sprite": 125, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_move_2", "id": 12, "loop": true,
-      "frames": [
-        { "sprite": 102, "durationMs": 120 },
-        { "sprite": 110, "durationMs": 120 },
-        { "sprite": 118, "durationMs": 120 },
-        { "sprite": 126, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_move_3", "id": 13, "loop": true,
-      "frames": [
-        { "sprite": 103, "durationMs": 120 },
-        { "sprite": 111, "durationMs": 120 },
-        { "sprite": 119, "durationMs": 120 },
-        { "sprite": 127, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_move_4", "id": 14, "loop": true,
-      "frames": [
-        { "sprite": 104, "durationMs": 120 },
-        { "sprite": 112, "durationMs": 120 },
-        { "sprite": 120, "durationMs": 120 },
-        { "sprite": 128, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_move_5", "id": 15, "loop": true,
-      "frames": [
-        { "sprite": 105, "durationMs": 120 },
-        { "sprite": 113, "durationMs": 120 },
-        { "sprite": 121, "durationMs": 120 },
-        { "sprite": 129, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_move_6", "id": 16, "loop": true,
-      "frames": [
-        { "sprite": 106, "durationMs": 120 },
-        { "sprite": 114, "durationMs": 120 },
-        { "sprite": 122, "durationMs": 120 },
-        { "sprite": 130, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_move_7", "id": 17, "loop": true,
-      "frames": [
-        { "sprite": 107, "durationMs": 120 },
-        { "sprite": 115, "durationMs": 120 },
-        { "sprite": 123, "durationMs": 120 },
-        { "sprite": 131, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_attack_0", "id": 40, "loop": true,
-      "frames": [
-        { "sprite": 400, "durationMs": 120 },
-        { "sprite": 408, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_attack_1", "id": 41, "loop": true,
-      "frames": [
-        { "sprite": 401, "durationMs": 120 },
-        { "sprite": 409, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_attack_2", "id": 42, "loop": true,
-      "frames": [
-        { "sprite": 402, "durationMs": 120 },
-        { "sprite": 410, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_attack_3", "id": 43, "loop": true,
-      "frames": [
-        { "sprite": 403, "durationMs": 120 },
-        { "sprite": 411, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_attack_4", "id": 44, "loop": true,
-      "frames": [
-        { "sprite": 404, "durationMs": 120 },
-        { "sprite": 412, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_attack_5", "id": 45, "loop": true,
-      "frames": [
-        { "sprite": 405, "durationMs": 120 },
-        { "sprite": 413, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_attack_6", "id": 46, "loop": true,
-      "frames": [
-        { "sprite": 406, "durationMs": 120 },
-        { "sprite": 414, "durationMs": 120 }
-      ] },
-    { "name": "rifle_infantry_attack_7", "id": 47, "loop": true,
-      "frames": [
-        { "sprite": 407, "durationMs": 120 },
-        { "sprite": 415, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_move_0", "id": 50, "loop": true,
-      "frames": [
-        { "sprite": 900, "durationMs": 120 },
-        { "sprite": 908, "durationMs": 120 },
-        { "sprite": 916, "durationMs": 120 },
-        { "sprite": 924, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_move_1", "id": 51, "loop": true,
-      "frames": [
-        { "sprite": 901, "durationMs": 120 },
-        { "sprite": 909, "durationMs": 120 },
-        { "sprite": 917, "durationMs": 120 },
-        { "sprite": 925, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_move_2", "id": 52, "loop": true,
-      "frames": [
-        { "sprite": 902, "durationMs": 120 },
-        { "sprite": 910, "durationMs": 120 },
-        { "sprite": 918, "durationMs": 120 },
-        { "sprite": 926, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_move_3", "id": 53, "loop": true,
-      "frames": [
-        { "sprite": 903, "durationMs": 120 },
-        { "sprite": 911, "durationMs": 120 },
-        { "sprite": 919, "durationMs": 120 },
-        { "sprite": 927, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_move_4", "id": 54, "loop": true,
-      "frames": [
-        { "sprite": 904, "durationMs": 120 },
-        { "sprite": 912, "durationMs": 120 },
-        { "sprite": 920, "durationMs": 120 },
-        { "sprite": 928, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_move_5", "id": 55, "loop": true,
-      "frames": [
-        { "sprite": 905, "durationMs": 120 },
-        { "sprite": 913, "durationMs": 120 },
-        { "sprite": 921, "durationMs": 120 },
-        { "sprite": 929, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_move_6", "id": 56, "loop": true,
-      "frames": [
-        { "sprite": 906, "durationMs": 120 },
-        { "sprite": 914, "durationMs": 120 },
-        { "sprite": 922, "durationMs": 120 },
-        { "sprite": 930, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_move_7", "id": 57, "loop": true,
-      "frames": [
-        { "sprite": 907, "durationMs": 120 },
-        { "sprite": 915, "durationMs": 120 },
-        { "sprite": 923, "durationMs": 120 },
-        { "sprite": 931, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_attack_0", "id": 60, "loop": true,
-      "frames": [
-        { "sprite": 1000, "durationMs": 120 },
-        { "sprite": 1008, "durationMs": 120 },
-        { "sprite": 1016, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_attack_1", "id": 61, "loop": true,
-      "frames": [
-        { "sprite": 1001, "durationMs": 120 },
-        { "sprite": 1009, "durationMs": 120 },
-        { "sprite": 1017, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_attack_2", "id": 62, "loop": true,
-      "frames": [
-        { "sprite": 1002, "durationMs": 120 },
-        { "sprite": 1010, "durationMs": 120 },
-        { "sprite": 1018, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_attack_3", "id": 63, "loop": true,
-      "frames": [
-        { "sprite": 1003, "durationMs": 120 },
-        { "sprite": 1011, "durationMs": 120 },
-        { "sprite": 1019, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_attack_4", "id": 64, "loop": true,
-      "frames": [
-        { "sprite": 1004, "durationMs": 120 },
-        { "sprite": 1012, "durationMs": 120 },
-        { "sprite": 1020, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_attack_5", "id": 65, "loop": true,
-      "frames": [
-        { "sprite": 1005, "durationMs": 120 },
-        { "sprite": 1013, "durationMs": 120 },
-        { "sprite": 1021, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_attack_6", "id": 66, "loop": true,
-      "frames": [
-        { "sprite": 1006, "durationMs": 120 },
-        { "sprite": 1014, "durationMs": 120 },
-        { "sprite": 1022, "durationMs": 120 }
-      ] },
-    { "name": "antiarmor_attack_7", "id": 67, "loop": true,
-      "frames": [
-        { "sprite": 1007, "durationMs": 120 },
-        { "sprite": 1015, "durationMs": 120 },
-        { "sprite": 1023, "durationMs": 120 }
-      ] },
-    { "name": "engineer_move_0", "id": 70, "loop": true,
-      "frames": [
-        { "sprite": 1200, "durationMs": 120 },
-        { "sprite": 1208, "durationMs": 120 },
-        { "sprite": 1216, "durationMs": 120 },
-        { "sprite": 1224, "durationMs": 120 }
-      ] },
-    { "name": "engineer_move_1", "id": 71, "loop": true,
-      "frames": [
-        { "sprite": 1201, "durationMs": 120 },
-        { "sprite": 1209, "durationMs": 120 },
-        { "sprite": 1217, "durationMs": 120 },
-        { "sprite": 1225, "durationMs": 120 }
-      ] },
-    { "name": "engineer_move_2", "id": 72, "loop": true,
-      "frames": [
-        { "sprite": 1202, "durationMs": 120 },
-        { "sprite": 1210, "durationMs": 120 },
-        { "sprite": 1218, "durationMs": 120 },
-        { "sprite": 1226, "durationMs": 120 }
-      ] },
-    { "name": "engineer_move_3", "id": 73, "loop": true,
-      "frames": [
-        { "sprite": 1203, "durationMs": 120 },
-        { "sprite": 1211, "durationMs": 120 },
-        { "sprite": 1219, "durationMs": 120 },
-        { "sprite": 1227, "durationMs": 120 }
-      ] },
-    { "name": "engineer_move_4", "id": 74, "loop": true,
-      "frames": [
-        { "sprite": 1204, "durationMs": 120 },
-        { "sprite": 1212, "durationMs": 120 },
-        { "sprite": 1220, "durationMs": 120 },
-        { "sprite": 1228, "durationMs": 120 }
-      ] },
-    { "name": "engineer_move_5", "id": 75, "loop": true,
-      "frames": [
-        { "sprite": 1205, "durationMs": 120 },
-        { "sprite": 1213, "durationMs": 120 },
-        { "sprite": 1221, "durationMs": 120 },
-        { "sprite": 1229, "durationMs": 120 }
-      ] },
-    { "name": "engineer_move_6", "id": 76, "loop": true,
-      "frames": [
-        { "sprite": 1206, "durationMs": 120 },
-        { "sprite": 1214, "durationMs": 120 },
-        { "sprite": 1222, "durationMs": 120 },
-        { "sprite": 1230, "durationMs": 120 }
-      ] },
-    { "name": "engineer_move_7", "id": 77, "loop": true,
-      "frames": [
-        { "sprite": 1207, "durationMs": 120 },
-        { "sprite": 1215, "durationMs": 120 },
-        { "sprite": 1223, "durationMs": 120 },
-        { "sprite": 1231, "durationMs": 120 }
-      ] },
-    { "name": "medic_move_0", "id": 80, "loop": true,
-      "frames": [
-        { "sprite": 1400, "durationMs": 120 },
-        { "sprite": 1408, "durationMs": 120 },
-        { "sprite": 1416, "durationMs": 120 },
-        { "sprite": 1424, "durationMs": 120 }
-      ] },
-    { "name": "medic_move_1", "id": 81, "loop": true,
-      "frames": [
-        { "sprite": 1401, "durationMs": 120 },
-        { "sprite": 1409, "durationMs": 120 },
-        { "sprite": 1417, "durationMs": 120 },
-        { "sprite": 1425, "durationMs": 120 }
-      ] },
-    { "name": "medic_move_2", "id": 82, "loop": true,
-      "frames": [
-        { "sprite": 1402, "durationMs": 120 },
-        { "sprite": 1410, "durationMs": 120 },
-        { "sprite": 1418, "durationMs": 120 },
-        { "sprite": 1426, "durationMs": 120 }
-      ] },
-    { "name": "medic_move_3", "id": 83, "loop": true,
-      "frames": [
-        { "sprite": 1403, "durationMs": 120 },
-        { "sprite": 1411, "durationMs": 120 },
-        { "sprite": 1419, "durationMs": 120 },
-        { "sprite": 1427, "durationMs": 120 }
-      ] },
-    { "name": "medic_move_4", "id": 84, "loop": true,
-      "frames": [
-        { "sprite": 1404, "durationMs": 120 },
-        { "sprite": 1412, "durationMs": 120 },
-        { "sprite": 1420, "durationMs": 120 },
-        { "sprite": 1428, "durationMs": 120 }
-      ] },
-    { "name": "medic_move_5", "id": 85, "loop": true,
-      "frames": [
-        { "sprite": 1405, "durationMs": 120 },
-        { "sprite": 1413, "durationMs": 120 },
-        { "sprite": 1421, "durationMs": 120 },
-        { "sprite": 1429, "durationMs": 120 }
-      ] },
-    { "name": "medic_move_6", "id": 86, "loop": true,
-      "frames": [
-        { "sprite": 1406, "durationMs": 120 },
-        { "sprite": 1414, "durationMs": 120 },
-        { "sprite": 1422, "durationMs": 120 },
-        { "sprite": 1430, "durationMs": 120 }
-      ] },
-    { "name": "medic_move_7", "id": 87, "loop": true,
-      "frames": [
-        { "sprite": 1407, "durationMs": 120 },
-        { "sprite": 1415, "durationMs": 120 },
-        { "sprite": 1423, "durationMs": 120 },
-        { "sprite": 1431, "durationMs": 120 }
-      ] },
     { "name": "prototypeinfantry_move_0", "id": 20, "loop": true,
       "frames": [
         { "sprite": 300, "durationMs": 120 },
@@ -367,6 +55,1158 @@
         { "sprite": 315, "durationMs": 120 },
         { "sprite": 323, "durationMs": 120 },
         { "sprite": 331, "durationMs": 120 }
+      ] },
+    { "name": "rifle_infantry_idle_0", "id": 1000, "loop": true,
+      "frames": [
+        { "sprite": 2000, "durationMs": 42 },
+        { "sprite": 2008, "durationMs": 42 },
+        { "sprite": 2016, "durationMs": 42 },
+        { "sprite": 2024, "durationMs": 42 },
+        { "sprite": 2032, "durationMs": 42 },
+        { "sprite": 2040, "durationMs": 42 },
+        { "sprite": 2048, "durationMs": 42 },
+        { "sprite": 2056, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_idle_1", "id": 1001, "loop": true,
+      "frames": [
+        { "sprite": 2001, "durationMs": 42 },
+        { "sprite": 2009, "durationMs": 42 },
+        { "sprite": 2017, "durationMs": 42 },
+        { "sprite": 2025, "durationMs": 42 },
+        { "sprite": 2033, "durationMs": 42 },
+        { "sprite": 2041, "durationMs": 42 },
+        { "sprite": 2049, "durationMs": 42 },
+        { "sprite": 2057, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_idle_2", "id": 1002, "loop": true,
+      "frames": [
+        { "sprite": 2002, "durationMs": 42 },
+        { "sprite": 2010, "durationMs": 42 },
+        { "sprite": 2018, "durationMs": 42 },
+        { "sprite": 2026, "durationMs": 42 },
+        { "sprite": 2034, "durationMs": 42 },
+        { "sprite": 2042, "durationMs": 42 },
+        { "sprite": 2050, "durationMs": 42 },
+        { "sprite": 2058, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_idle_3", "id": 1003, "loop": true,
+      "frames": [
+        { "sprite": 2003, "durationMs": 42 },
+        { "sprite": 2011, "durationMs": 42 },
+        { "sprite": 2019, "durationMs": 42 },
+        { "sprite": 2027, "durationMs": 42 },
+        { "sprite": 2035, "durationMs": 42 },
+        { "sprite": 2043, "durationMs": 42 },
+        { "sprite": 2051, "durationMs": 42 },
+        { "sprite": 2059, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_idle_4", "id": 1004, "loop": true,
+      "frames": [
+        { "sprite": 2004, "durationMs": 42 },
+        { "sprite": 2012, "durationMs": 42 },
+        { "sprite": 2020, "durationMs": 42 },
+        { "sprite": 2028, "durationMs": 42 },
+        { "sprite": 2036, "durationMs": 42 },
+        { "sprite": 2044, "durationMs": 42 },
+        { "sprite": 2052, "durationMs": 42 },
+        { "sprite": 2060, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_idle_5", "id": 1005, "loop": true,
+      "frames": [
+        { "sprite": 2005, "durationMs": 42 },
+        { "sprite": 2013, "durationMs": 42 },
+        { "sprite": 2021, "durationMs": 42 },
+        { "sprite": 2029, "durationMs": 42 },
+        { "sprite": 2037, "durationMs": 42 },
+        { "sprite": 2045, "durationMs": 42 },
+        { "sprite": 2053, "durationMs": 42 },
+        { "sprite": 2061, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_idle_6", "id": 1006, "loop": true,
+      "frames": [
+        { "sprite": 2006, "durationMs": 42 },
+        { "sprite": 2014, "durationMs": 42 },
+        { "sprite": 2022, "durationMs": 42 },
+        { "sprite": 2030, "durationMs": 42 },
+        { "sprite": 2038, "durationMs": 42 },
+        { "sprite": 2046, "durationMs": 42 },
+        { "sprite": 2054, "durationMs": 42 },
+        { "sprite": 2062, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_idle_7", "id": 1007, "loop": true,
+      "frames": [
+        { "sprite": 2007, "durationMs": 42 },
+        { "sprite": 2015, "durationMs": 42 },
+        { "sprite": 2023, "durationMs": 42 },
+        { "sprite": 2031, "durationMs": 42 },
+        { "sprite": 2039, "durationMs": 42 },
+        { "sprite": 2047, "durationMs": 42 },
+        { "sprite": 2055, "durationMs": 42 },
+        { "sprite": 2063, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_move_0", "id": 1008, "loop": true,
+      "frames": [
+        { "sprite": 2200, "durationMs": 42 },
+        { "sprite": 2208, "durationMs": 42 },
+        { "sprite": 2216, "durationMs": 42 },
+        { "sprite": 2224, "durationMs": 42 },
+        { "sprite": 2232, "durationMs": 42 },
+        { "sprite": 2240, "durationMs": 42 },
+        { "sprite": 2248, "durationMs": 42 },
+        { "sprite": 2256, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_move_1", "id": 1009, "loop": true,
+      "frames": [
+        { "sprite": 2201, "durationMs": 42 },
+        { "sprite": 2209, "durationMs": 42 },
+        { "sprite": 2217, "durationMs": 42 },
+        { "sprite": 2225, "durationMs": 42 },
+        { "sprite": 2233, "durationMs": 42 },
+        { "sprite": 2241, "durationMs": 42 },
+        { "sprite": 2249, "durationMs": 42 },
+        { "sprite": 2257, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_move_2", "id": 1010, "loop": true,
+      "frames": [
+        { "sprite": 2202, "durationMs": 42 },
+        { "sprite": 2210, "durationMs": 42 },
+        { "sprite": 2218, "durationMs": 42 },
+        { "sprite": 2226, "durationMs": 42 },
+        { "sprite": 2234, "durationMs": 42 },
+        { "sprite": 2242, "durationMs": 42 },
+        { "sprite": 2250, "durationMs": 42 },
+        { "sprite": 2258, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_move_3", "id": 1011, "loop": true,
+      "frames": [
+        { "sprite": 2203, "durationMs": 42 },
+        { "sprite": 2211, "durationMs": 42 },
+        { "sprite": 2219, "durationMs": 42 },
+        { "sprite": 2227, "durationMs": 42 },
+        { "sprite": 2235, "durationMs": 42 },
+        { "sprite": 2243, "durationMs": 42 },
+        { "sprite": 2251, "durationMs": 42 },
+        { "sprite": 2259, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_move_4", "id": 1012, "loop": true,
+      "frames": [
+        { "sprite": 2204, "durationMs": 42 },
+        { "sprite": 2212, "durationMs": 42 },
+        { "sprite": 2220, "durationMs": 42 },
+        { "sprite": 2228, "durationMs": 42 },
+        { "sprite": 2236, "durationMs": 42 },
+        { "sprite": 2244, "durationMs": 42 },
+        { "sprite": 2252, "durationMs": 42 },
+        { "sprite": 2260, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_move_5", "id": 1013, "loop": true,
+      "frames": [
+        { "sprite": 2205, "durationMs": 42 },
+        { "sprite": 2213, "durationMs": 42 },
+        { "sprite": 2221, "durationMs": 42 },
+        { "sprite": 2229, "durationMs": 42 },
+        { "sprite": 2237, "durationMs": 42 },
+        { "sprite": 2245, "durationMs": 42 },
+        { "sprite": 2253, "durationMs": 42 },
+        { "sprite": 2261, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_move_6", "id": 1014, "loop": true,
+      "frames": [
+        { "sprite": 2206, "durationMs": 42 },
+        { "sprite": 2214, "durationMs": 42 },
+        { "sprite": 2222, "durationMs": 42 },
+        { "sprite": 2230, "durationMs": 42 },
+        { "sprite": 2238, "durationMs": 42 },
+        { "sprite": 2246, "durationMs": 42 },
+        { "sprite": 2254, "durationMs": 42 },
+        { "sprite": 2262, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_move_7", "id": 1015, "loop": true,
+      "frames": [
+        { "sprite": 2207, "durationMs": 42 },
+        { "sprite": 2215, "durationMs": 42 },
+        { "sprite": 2223, "durationMs": 42 },
+        { "sprite": 2231, "durationMs": 42 },
+        { "sprite": 2239, "durationMs": 42 },
+        { "sprite": 2247, "durationMs": 42 },
+        { "sprite": 2255, "durationMs": 42 },
+        { "sprite": 2263, "durationMs": 42 }
+      ] },
+    { "name": "rifle_infantry_attack_0", "id": 1016, "loop": true,
+      "frames": [
+        { "sprite": 2400, "durationMs": 125 },
+        { "sprite": 2408, "durationMs": 125 },
+        { "sprite": 2416, "durationMs": 125 },
+        { "sprite": 2424, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_attack_1", "id": 1017, "loop": true,
+      "frames": [
+        { "sprite": 2401, "durationMs": 125 },
+        { "sprite": 2409, "durationMs": 125 },
+        { "sprite": 2417, "durationMs": 125 },
+        { "sprite": 2425, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_attack_2", "id": 1018, "loop": true,
+      "frames": [
+        { "sprite": 2402, "durationMs": 125 },
+        { "sprite": 2410, "durationMs": 125 },
+        { "sprite": 2418, "durationMs": 125 },
+        { "sprite": 2426, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_attack_3", "id": 1019, "loop": true,
+      "frames": [
+        { "sprite": 2403, "durationMs": 125 },
+        { "sprite": 2411, "durationMs": 125 },
+        { "sprite": 2419, "durationMs": 125 },
+        { "sprite": 2427, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_attack_4", "id": 1020, "loop": true,
+      "frames": [
+        { "sprite": 2404, "durationMs": 125 },
+        { "sprite": 2412, "durationMs": 125 },
+        { "sprite": 2420, "durationMs": 125 },
+        { "sprite": 2428, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_attack_5", "id": 1021, "loop": true,
+      "frames": [
+        { "sprite": 2405, "durationMs": 125 },
+        { "sprite": 2413, "durationMs": 125 },
+        { "sprite": 2421, "durationMs": 125 },
+        { "sprite": 2429, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_attack_6", "id": 1022, "loop": true,
+      "frames": [
+        { "sprite": 2406, "durationMs": 125 },
+        { "sprite": 2414, "durationMs": 125 },
+        { "sprite": 2422, "durationMs": 125 },
+        { "sprite": 2430, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_attack_7", "id": 1023, "loop": true,
+      "frames": [
+        { "sprite": 2407, "durationMs": 125 },
+        { "sprite": 2415, "durationMs": 125 },
+        { "sprite": 2423, "durationMs": 125 },
+        { "sprite": 2431, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_death_0", "id": 1024, "loop": false,
+      "frames": [
+        { "sprite": 2600, "durationMs": 125 },
+        { "sprite": 2608, "durationMs": 125 },
+        { "sprite": 2616, "durationMs": 125 },
+        { "sprite": 2624, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_death_1", "id": 1025, "loop": false,
+      "frames": [
+        { "sprite": 2601, "durationMs": 125 },
+        { "sprite": 2609, "durationMs": 125 },
+        { "sprite": 2617, "durationMs": 125 },
+        { "sprite": 2625, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_death_2", "id": 1026, "loop": false,
+      "frames": [
+        { "sprite": 2602, "durationMs": 125 },
+        { "sprite": 2610, "durationMs": 125 },
+        { "sprite": 2618, "durationMs": 125 },
+        { "sprite": 2626, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_death_3", "id": 1027, "loop": false,
+      "frames": [
+        { "sprite": 2603, "durationMs": 125 },
+        { "sprite": 2611, "durationMs": 125 },
+        { "sprite": 2619, "durationMs": 125 },
+        { "sprite": 2627, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_death_4", "id": 1028, "loop": false,
+      "frames": [
+        { "sprite": 2604, "durationMs": 125 },
+        { "sprite": 2612, "durationMs": 125 },
+        { "sprite": 2620, "durationMs": 125 },
+        { "sprite": 2628, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_death_5", "id": 1029, "loop": false,
+      "frames": [
+        { "sprite": 2605, "durationMs": 125 },
+        { "sprite": 2613, "durationMs": 125 },
+        { "sprite": 2621, "durationMs": 125 },
+        { "sprite": 2629, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_death_6", "id": 1030, "loop": false,
+      "frames": [
+        { "sprite": 2606, "durationMs": 125 },
+        { "sprite": 2614, "durationMs": 125 },
+        { "sprite": 2622, "durationMs": 125 },
+        { "sprite": 2630, "durationMs": 125 }
+      ] },
+    { "name": "rifle_infantry_death_7", "id": 1031, "loop": false,
+      "frames": [
+        { "sprite": 2607, "durationMs": 125 },
+        { "sprite": 2615, "durationMs": 125 },
+        { "sprite": 2623, "durationMs": 125 },
+        { "sprite": 2631, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_idle_0", "id": 1032, "loop": true,
+      "frames": [
+        { "sprite": 2800, "durationMs": 42 },
+        { "sprite": 2808, "durationMs": 42 },
+        { "sprite": 2816, "durationMs": 42 },
+        { "sprite": 2824, "durationMs": 42 },
+        { "sprite": 2832, "durationMs": 42 },
+        { "sprite": 2840, "durationMs": 42 },
+        { "sprite": 2848, "durationMs": 42 },
+        { "sprite": 2856, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_idle_1", "id": 1033, "loop": true,
+      "frames": [
+        { "sprite": 2801, "durationMs": 42 },
+        { "sprite": 2809, "durationMs": 42 },
+        { "sprite": 2817, "durationMs": 42 },
+        { "sprite": 2825, "durationMs": 42 },
+        { "sprite": 2833, "durationMs": 42 },
+        { "sprite": 2841, "durationMs": 42 },
+        { "sprite": 2849, "durationMs": 42 },
+        { "sprite": 2857, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_idle_2", "id": 1034, "loop": true,
+      "frames": [
+        { "sprite": 2802, "durationMs": 42 },
+        { "sprite": 2810, "durationMs": 42 },
+        { "sprite": 2818, "durationMs": 42 },
+        { "sprite": 2826, "durationMs": 42 },
+        { "sprite": 2834, "durationMs": 42 },
+        { "sprite": 2842, "durationMs": 42 },
+        { "sprite": 2850, "durationMs": 42 },
+        { "sprite": 2858, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_idle_3", "id": 1035, "loop": true,
+      "frames": [
+        { "sprite": 2803, "durationMs": 42 },
+        { "sprite": 2811, "durationMs": 42 },
+        { "sprite": 2819, "durationMs": 42 },
+        { "sprite": 2827, "durationMs": 42 },
+        { "sprite": 2835, "durationMs": 42 },
+        { "sprite": 2843, "durationMs": 42 },
+        { "sprite": 2851, "durationMs": 42 },
+        { "sprite": 2859, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_idle_4", "id": 1036, "loop": true,
+      "frames": [
+        { "sprite": 2804, "durationMs": 42 },
+        { "sprite": 2812, "durationMs": 42 },
+        { "sprite": 2820, "durationMs": 42 },
+        { "sprite": 2828, "durationMs": 42 },
+        { "sprite": 2836, "durationMs": 42 },
+        { "sprite": 2844, "durationMs": 42 },
+        { "sprite": 2852, "durationMs": 42 },
+        { "sprite": 2860, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_idle_5", "id": 1037, "loop": true,
+      "frames": [
+        { "sprite": 2805, "durationMs": 42 },
+        { "sprite": 2813, "durationMs": 42 },
+        { "sprite": 2821, "durationMs": 42 },
+        { "sprite": 2829, "durationMs": 42 },
+        { "sprite": 2837, "durationMs": 42 },
+        { "sprite": 2845, "durationMs": 42 },
+        { "sprite": 2853, "durationMs": 42 },
+        { "sprite": 2861, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_idle_6", "id": 1038, "loop": true,
+      "frames": [
+        { "sprite": 2806, "durationMs": 42 },
+        { "sprite": 2814, "durationMs": 42 },
+        { "sprite": 2822, "durationMs": 42 },
+        { "sprite": 2830, "durationMs": 42 },
+        { "sprite": 2838, "durationMs": 42 },
+        { "sprite": 2846, "durationMs": 42 },
+        { "sprite": 2854, "durationMs": 42 },
+        { "sprite": 2862, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_idle_7", "id": 1039, "loop": true,
+      "frames": [
+        { "sprite": 2807, "durationMs": 42 },
+        { "sprite": 2815, "durationMs": 42 },
+        { "sprite": 2823, "durationMs": 42 },
+        { "sprite": 2831, "durationMs": 42 },
+        { "sprite": 2839, "durationMs": 42 },
+        { "sprite": 2847, "durationMs": 42 },
+        { "sprite": 2855, "durationMs": 42 },
+        { "sprite": 2863, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_move_0", "id": 1040, "loop": true,
+      "frames": [
+        { "sprite": 3000, "durationMs": 42 },
+        { "sprite": 3008, "durationMs": 42 },
+        { "sprite": 3016, "durationMs": 42 },
+        { "sprite": 3024, "durationMs": 42 },
+        { "sprite": 3032, "durationMs": 42 },
+        { "sprite": 3040, "durationMs": 42 },
+        { "sprite": 3048, "durationMs": 42 },
+        { "sprite": 3056, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_move_1", "id": 1041, "loop": true,
+      "frames": [
+        { "sprite": 3001, "durationMs": 42 },
+        { "sprite": 3009, "durationMs": 42 },
+        { "sprite": 3017, "durationMs": 42 },
+        { "sprite": 3025, "durationMs": 42 },
+        { "sprite": 3033, "durationMs": 42 },
+        { "sprite": 3041, "durationMs": 42 },
+        { "sprite": 3049, "durationMs": 42 },
+        { "sprite": 3057, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_move_2", "id": 1042, "loop": true,
+      "frames": [
+        { "sprite": 3002, "durationMs": 42 },
+        { "sprite": 3010, "durationMs": 42 },
+        { "sprite": 3018, "durationMs": 42 },
+        { "sprite": 3026, "durationMs": 42 },
+        { "sprite": 3034, "durationMs": 42 },
+        { "sprite": 3042, "durationMs": 42 },
+        { "sprite": 3050, "durationMs": 42 },
+        { "sprite": 3058, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_move_3", "id": 1043, "loop": true,
+      "frames": [
+        { "sprite": 3003, "durationMs": 42 },
+        { "sprite": 3011, "durationMs": 42 },
+        { "sprite": 3019, "durationMs": 42 },
+        { "sprite": 3027, "durationMs": 42 },
+        { "sprite": 3035, "durationMs": 42 },
+        { "sprite": 3043, "durationMs": 42 },
+        { "sprite": 3051, "durationMs": 42 },
+        { "sprite": 3059, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_move_4", "id": 1044, "loop": true,
+      "frames": [
+        { "sprite": 3004, "durationMs": 42 },
+        { "sprite": 3012, "durationMs": 42 },
+        { "sprite": 3020, "durationMs": 42 },
+        { "sprite": 3028, "durationMs": 42 },
+        { "sprite": 3036, "durationMs": 42 },
+        { "sprite": 3044, "durationMs": 42 },
+        { "sprite": 3052, "durationMs": 42 },
+        { "sprite": 3060, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_move_5", "id": 1045, "loop": true,
+      "frames": [
+        { "sprite": 3005, "durationMs": 42 },
+        { "sprite": 3013, "durationMs": 42 },
+        { "sprite": 3021, "durationMs": 42 },
+        { "sprite": 3029, "durationMs": 42 },
+        { "sprite": 3037, "durationMs": 42 },
+        { "sprite": 3045, "durationMs": 42 },
+        { "sprite": 3053, "durationMs": 42 },
+        { "sprite": 3061, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_move_6", "id": 1046, "loop": true,
+      "frames": [
+        { "sprite": 3006, "durationMs": 42 },
+        { "sprite": 3014, "durationMs": 42 },
+        { "sprite": 3022, "durationMs": 42 },
+        { "sprite": 3030, "durationMs": 42 },
+        { "sprite": 3038, "durationMs": 42 },
+        { "sprite": 3046, "durationMs": 42 },
+        { "sprite": 3054, "durationMs": 42 },
+        { "sprite": 3062, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_move_7", "id": 1047, "loop": true,
+      "frames": [
+        { "sprite": 3007, "durationMs": 42 },
+        { "sprite": 3015, "durationMs": 42 },
+        { "sprite": 3023, "durationMs": 42 },
+        { "sprite": 3031, "durationMs": 42 },
+        { "sprite": 3039, "durationMs": 42 },
+        { "sprite": 3047, "durationMs": 42 },
+        { "sprite": 3055, "durationMs": 42 },
+        { "sprite": 3063, "durationMs": 42 }
+      ] },
+    { "name": "antiarmor_attack_0", "id": 1048, "loop": true,
+      "frames": [
+        { "sprite": 3200, "durationMs": 125 },
+        { "sprite": 3208, "durationMs": 125 },
+        { "sprite": 3216, "durationMs": 125 },
+        { "sprite": 3224, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_attack_1", "id": 1049, "loop": true,
+      "frames": [
+        { "sprite": 3201, "durationMs": 125 },
+        { "sprite": 3209, "durationMs": 125 },
+        { "sprite": 3217, "durationMs": 125 },
+        { "sprite": 3225, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_attack_2", "id": 1050, "loop": true,
+      "frames": [
+        { "sprite": 3202, "durationMs": 125 },
+        { "sprite": 3210, "durationMs": 125 },
+        { "sprite": 3218, "durationMs": 125 },
+        { "sprite": 3226, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_attack_3", "id": 1051, "loop": true,
+      "frames": [
+        { "sprite": 3203, "durationMs": 125 },
+        { "sprite": 3211, "durationMs": 125 },
+        { "sprite": 3219, "durationMs": 125 },
+        { "sprite": 3227, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_attack_4", "id": 1052, "loop": true,
+      "frames": [
+        { "sprite": 3204, "durationMs": 125 },
+        { "sprite": 3212, "durationMs": 125 },
+        { "sprite": 3220, "durationMs": 125 },
+        { "sprite": 3228, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_attack_5", "id": 1053, "loop": true,
+      "frames": [
+        { "sprite": 3205, "durationMs": 125 },
+        { "sprite": 3213, "durationMs": 125 },
+        { "sprite": 3221, "durationMs": 125 },
+        { "sprite": 3229, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_attack_6", "id": 1054, "loop": true,
+      "frames": [
+        { "sprite": 3206, "durationMs": 125 },
+        { "sprite": 3214, "durationMs": 125 },
+        { "sprite": 3222, "durationMs": 125 },
+        { "sprite": 3230, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_attack_7", "id": 1055, "loop": true,
+      "frames": [
+        { "sprite": 3207, "durationMs": 125 },
+        { "sprite": 3215, "durationMs": 125 },
+        { "sprite": 3223, "durationMs": 125 },
+        { "sprite": 3231, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_death_0", "id": 1056, "loop": false,
+      "frames": [
+        { "sprite": 3400, "durationMs": 125 },
+        { "sprite": 3408, "durationMs": 125 },
+        { "sprite": 3416, "durationMs": 125 },
+        { "sprite": 3424, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_death_1", "id": 1057, "loop": false,
+      "frames": [
+        { "sprite": 3401, "durationMs": 125 },
+        { "sprite": 3409, "durationMs": 125 },
+        { "sprite": 3417, "durationMs": 125 },
+        { "sprite": 3425, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_death_2", "id": 1058, "loop": false,
+      "frames": [
+        { "sprite": 3402, "durationMs": 125 },
+        { "sprite": 3410, "durationMs": 125 },
+        { "sprite": 3418, "durationMs": 125 },
+        { "sprite": 3426, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_death_3", "id": 1059, "loop": false,
+      "frames": [
+        { "sprite": 3403, "durationMs": 125 },
+        { "sprite": 3411, "durationMs": 125 },
+        { "sprite": 3419, "durationMs": 125 },
+        { "sprite": 3427, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_death_4", "id": 1060, "loop": false,
+      "frames": [
+        { "sprite": 3404, "durationMs": 125 },
+        { "sprite": 3412, "durationMs": 125 },
+        { "sprite": 3420, "durationMs": 125 },
+        { "sprite": 3428, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_death_5", "id": 1061, "loop": false,
+      "frames": [
+        { "sprite": 3405, "durationMs": 125 },
+        { "sprite": 3413, "durationMs": 125 },
+        { "sprite": 3421, "durationMs": 125 },
+        { "sprite": 3429, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_death_6", "id": 1062, "loop": false,
+      "frames": [
+        { "sprite": 3406, "durationMs": 125 },
+        { "sprite": 3414, "durationMs": 125 },
+        { "sprite": 3422, "durationMs": 125 },
+        { "sprite": 3430, "durationMs": 125 }
+      ] },
+    { "name": "antiarmor_death_7", "id": 1063, "loop": false,
+      "frames": [
+        { "sprite": 3407, "durationMs": 125 },
+        { "sprite": 3415, "durationMs": 125 },
+        { "sprite": 3423, "durationMs": 125 },
+        { "sprite": 3431, "durationMs": 125 }
+      ] },
+    { "name": "engineer_idle_0", "id": 1064, "loop": true,
+      "frames": [
+        { "sprite": 3600, "durationMs": 42 },
+        { "sprite": 3608, "durationMs": 42 },
+        { "sprite": 3616, "durationMs": 42 },
+        { "sprite": 3624, "durationMs": 42 },
+        { "sprite": 3632, "durationMs": 42 },
+        { "sprite": 3640, "durationMs": 42 },
+        { "sprite": 3648, "durationMs": 42 },
+        { "sprite": 3656, "durationMs": 42 }
+      ] },
+    { "name": "engineer_idle_1", "id": 1065, "loop": true,
+      "frames": [
+        { "sprite": 3601, "durationMs": 42 },
+        { "sprite": 3609, "durationMs": 42 },
+        { "sprite": 3617, "durationMs": 42 },
+        { "sprite": 3625, "durationMs": 42 },
+        { "sprite": 3633, "durationMs": 42 },
+        { "sprite": 3641, "durationMs": 42 },
+        { "sprite": 3649, "durationMs": 42 },
+        { "sprite": 3657, "durationMs": 42 }
+      ] },
+    { "name": "engineer_idle_2", "id": 1066, "loop": true,
+      "frames": [
+        { "sprite": 3602, "durationMs": 42 },
+        { "sprite": 3610, "durationMs": 42 },
+        { "sprite": 3618, "durationMs": 42 },
+        { "sprite": 3626, "durationMs": 42 },
+        { "sprite": 3634, "durationMs": 42 },
+        { "sprite": 3642, "durationMs": 42 },
+        { "sprite": 3650, "durationMs": 42 },
+        { "sprite": 3658, "durationMs": 42 }
+      ] },
+    { "name": "engineer_idle_3", "id": 1067, "loop": true,
+      "frames": [
+        { "sprite": 3603, "durationMs": 42 },
+        { "sprite": 3611, "durationMs": 42 },
+        { "sprite": 3619, "durationMs": 42 },
+        { "sprite": 3627, "durationMs": 42 },
+        { "sprite": 3635, "durationMs": 42 },
+        { "sprite": 3643, "durationMs": 42 },
+        { "sprite": 3651, "durationMs": 42 },
+        { "sprite": 3659, "durationMs": 42 }
+      ] },
+    { "name": "engineer_idle_4", "id": 1068, "loop": true,
+      "frames": [
+        { "sprite": 3604, "durationMs": 42 },
+        { "sprite": 3612, "durationMs": 42 },
+        { "sprite": 3620, "durationMs": 42 },
+        { "sprite": 3628, "durationMs": 42 },
+        { "sprite": 3636, "durationMs": 42 },
+        { "sprite": 3644, "durationMs": 42 },
+        { "sprite": 3652, "durationMs": 42 },
+        { "sprite": 3660, "durationMs": 42 }
+      ] },
+    { "name": "engineer_idle_5", "id": 1069, "loop": true,
+      "frames": [
+        { "sprite": 3605, "durationMs": 42 },
+        { "sprite": 3613, "durationMs": 42 },
+        { "sprite": 3621, "durationMs": 42 },
+        { "sprite": 3629, "durationMs": 42 },
+        { "sprite": 3637, "durationMs": 42 },
+        { "sprite": 3645, "durationMs": 42 },
+        { "sprite": 3653, "durationMs": 42 },
+        { "sprite": 3661, "durationMs": 42 }
+      ] },
+    { "name": "engineer_idle_6", "id": 1070, "loop": true,
+      "frames": [
+        { "sprite": 3606, "durationMs": 42 },
+        { "sprite": 3614, "durationMs": 42 },
+        { "sprite": 3622, "durationMs": 42 },
+        { "sprite": 3630, "durationMs": 42 },
+        { "sprite": 3638, "durationMs": 42 },
+        { "sprite": 3646, "durationMs": 42 },
+        { "sprite": 3654, "durationMs": 42 },
+        { "sprite": 3662, "durationMs": 42 }
+      ] },
+    { "name": "engineer_idle_7", "id": 1071, "loop": true,
+      "frames": [
+        { "sprite": 3607, "durationMs": 42 },
+        { "sprite": 3615, "durationMs": 42 },
+        { "sprite": 3623, "durationMs": 42 },
+        { "sprite": 3631, "durationMs": 42 },
+        { "sprite": 3639, "durationMs": 42 },
+        { "sprite": 3647, "durationMs": 42 },
+        { "sprite": 3655, "durationMs": 42 },
+        { "sprite": 3663, "durationMs": 42 }
+      ] },
+    { "name": "engineer_move_0", "id": 1072, "loop": true,
+      "frames": [
+        { "sprite": 3800, "durationMs": 42 },
+        { "sprite": 3808, "durationMs": 42 },
+        { "sprite": 3816, "durationMs": 42 },
+        { "sprite": 3824, "durationMs": 42 },
+        { "sprite": 3832, "durationMs": 42 },
+        { "sprite": 3840, "durationMs": 42 },
+        { "sprite": 3848, "durationMs": 42 },
+        { "sprite": 3856, "durationMs": 42 }
+      ] },
+    { "name": "engineer_move_1", "id": 1073, "loop": true,
+      "frames": [
+        { "sprite": 3801, "durationMs": 42 },
+        { "sprite": 3809, "durationMs": 42 },
+        { "sprite": 3817, "durationMs": 42 },
+        { "sprite": 3825, "durationMs": 42 },
+        { "sprite": 3833, "durationMs": 42 },
+        { "sprite": 3841, "durationMs": 42 },
+        { "sprite": 3849, "durationMs": 42 },
+        { "sprite": 3857, "durationMs": 42 }
+      ] },
+    { "name": "engineer_move_2", "id": 1074, "loop": true,
+      "frames": [
+        { "sprite": 3802, "durationMs": 42 },
+        { "sprite": 3810, "durationMs": 42 },
+        { "sprite": 3818, "durationMs": 42 },
+        { "sprite": 3826, "durationMs": 42 },
+        { "sprite": 3834, "durationMs": 42 },
+        { "sprite": 3842, "durationMs": 42 },
+        { "sprite": 3850, "durationMs": 42 },
+        { "sprite": 3858, "durationMs": 42 }
+      ] },
+    { "name": "engineer_move_3", "id": 1075, "loop": true,
+      "frames": [
+        { "sprite": 3803, "durationMs": 42 },
+        { "sprite": 3811, "durationMs": 42 },
+        { "sprite": 3819, "durationMs": 42 },
+        { "sprite": 3827, "durationMs": 42 },
+        { "sprite": 3835, "durationMs": 42 },
+        { "sprite": 3843, "durationMs": 42 },
+        { "sprite": 3851, "durationMs": 42 },
+        { "sprite": 3859, "durationMs": 42 }
+      ] },
+    { "name": "engineer_move_4", "id": 1076, "loop": true,
+      "frames": [
+        { "sprite": 3804, "durationMs": 42 },
+        { "sprite": 3812, "durationMs": 42 },
+        { "sprite": 3820, "durationMs": 42 },
+        { "sprite": 3828, "durationMs": 42 },
+        { "sprite": 3836, "durationMs": 42 },
+        { "sprite": 3844, "durationMs": 42 },
+        { "sprite": 3852, "durationMs": 42 },
+        { "sprite": 3860, "durationMs": 42 }
+      ] },
+    { "name": "engineer_move_5", "id": 1077, "loop": true,
+      "frames": [
+        { "sprite": 3805, "durationMs": 42 },
+        { "sprite": 3813, "durationMs": 42 },
+        { "sprite": 3821, "durationMs": 42 },
+        { "sprite": 3829, "durationMs": 42 },
+        { "sprite": 3837, "durationMs": 42 },
+        { "sprite": 3845, "durationMs": 42 },
+        { "sprite": 3853, "durationMs": 42 },
+        { "sprite": 3861, "durationMs": 42 }
+      ] },
+    { "name": "engineer_move_6", "id": 1078, "loop": true,
+      "frames": [
+        { "sprite": 3806, "durationMs": 42 },
+        { "sprite": 3814, "durationMs": 42 },
+        { "sprite": 3822, "durationMs": 42 },
+        { "sprite": 3830, "durationMs": 42 },
+        { "sprite": 3838, "durationMs": 42 },
+        { "sprite": 3846, "durationMs": 42 },
+        { "sprite": 3854, "durationMs": 42 },
+        { "sprite": 3862, "durationMs": 42 }
+      ] },
+    { "name": "engineer_move_7", "id": 1079, "loop": true,
+      "frames": [
+        { "sprite": 3807, "durationMs": 42 },
+        { "sprite": 3815, "durationMs": 42 },
+        { "sprite": 3823, "durationMs": 42 },
+        { "sprite": 3831, "durationMs": 42 },
+        { "sprite": 3839, "durationMs": 42 },
+        { "sprite": 3847, "durationMs": 42 },
+        { "sprite": 3855, "durationMs": 42 },
+        { "sprite": 3863, "durationMs": 42 }
+      ] },
+    { "name": "engineer_attack_0", "id": 1080, "loop": true,
+      "frames": [
+        { "sprite": 4000, "durationMs": 125 },
+        { "sprite": 4008, "durationMs": 125 },
+        { "sprite": 4016, "durationMs": 125 },
+        { "sprite": 4024, "durationMs": 125 }
+      ] },
+    { "name": "engineer_attack_1", "id": 1081, "loop": true,
+      "frames": [
+        { "sprite": 4001, "durationMs": 125 },
+        { "sprite": 4009, "durationMs": 125 },
+        { "sprite": 4017, "durationMs": 125 },
+        { "sprite": 4025, "durationMs": 125 }
+      ] },
+    { "name": "engineer_attack_2", "id": 1082, "loop": true,
+      "frames": [
+        { "sprite": 4002, "durationMs": 125 },
+        { "sprite": 4010, "durationMs": 125 },
+        { "sprite": 4018, "durationMs": 125 },
+        { "sprite": 4026, "durationMs": 125 }
+      ] },
+    { "name": "engineer_attack_3", "id": 1083, "loop": true,
+      "frames": [
+        { "sprite": 4003, "durationMs": 125 },
+        { "sprite": 4011, "durationMs": 125 },
+        { "sprite": 4019, "durationMs": 125 },
+        { "sprite": 4027, "durationMs": 125 }
+      ] },
+    { "name": "engineer_attack_4", "id": 1084, "loop": true,
+      "frames": [
+        { "sprite": 4004, "durationMs": 125 },
+        { "sprite": 4012, "durationMs": 125 },
+        { "sprite": 4020, "durationMs": 125 },
+        { "sprite": 4028, "durationMs": 125 }
+      ] },
+    { "name": "engineer_attack_5", "id": 1085, "loop": true,
+      "frames": [
+        { "sprite": 4005, "durationMs": 125 },
+        { "sprite": 4013, "durationMs": 125 },
+        { "sprite": 4021, "durationMs": 125 },
+        { "sprite": 4029, "durationMs": 125 }
+      ] },
+    { "name": "engineer_attack_6", "id": 1086, "loop": true,
+      "frames": [
+        { "sprite": 4006, "durationMs": 125 },
+        { "sprite": 4014, "durationMs": 125 },
+        { "sprite": 4022, "durationMs": 125 },
+        { "sprite": 4030, "durationMs": 125 }
+      ] },
+    { "name": "engineer_attack_7", "id": 1087, "loop": true,
+      "frames": [
+        { "sprite": 4007, "durationMs": 125 },
+        { "sprite": 4015, "durationMs": 125 },
+        { "sprite": 4023, "durationMs": 125 },
+        { "sprite": 4031, "durationMs": 125 }
+      ] },
+    { "name": "engineer_death_0", "id": 1088, "loop": false,
+      "frames": [
+        { "sprite": 4200, "durationMs": 125 },
+        { "sprite": 4208, "durationMs": 125 },
+        { "sprite": 4216, "durationMs": 125 },
+        { "sprite": 4224, "durationMs": 125 }
+      ] },
+    { "name": "engineer_death_1", "id": 1089, "loop": false,
+      "frames": [
+        { "sprite": 4201, "durationMs": 125 },
+        { "sprite": 4209, "durationMs": 125 },
+        { "sprite": 4217, "durationMs": 125 },
+        { "sprite": 4225, "durationMs": 125 }
+      ] },
+    { "name": "engineer_death_2", "id": 1090, "loop": false,
+      "frames": [
+        { "sprite": 4202, "durationMs": 125 },
+        { "sprite": 4210, "durationMs": 125 },
+        { "sprite": 4218, "durationMs": 125 },
+        { "sprite": 4226, "durationMs": 125 }
+      ] },
+    { "name": "engineer_death_3", "id": 1091, "loop": false,
+      "frames": [
+        { "sprite": 4203, "durationMs": 125 },
+        { "sprite": 4211, "durationMs": 125 },
+        { "sprite": 4219, "durationMs": 125 },
+        { "sprite": 4227, "durationMs": 125 }
+      ] },
+    { "name": "engineer_death_4", "id": 1092, "loop": false,
+      "frames": [
+        { "sprite": 4204, "durationMs": 125 },
+        { "sprite": 4212, "durationMs": 125 },
+        { "sprite": 4220, "durationMs": 125 },
+        { "sprite": 4228, "durationMs": 125 }
+      ] },
+    { "name": "engineer_death_5", "id": 1093, "loop": false,
+      "frames": [
+        { "sprite": 4205, "durationMs": 125 },
+        { "sprite": 4213, "durationMs": 125 },
+        { "sprite": 4221, "durationMs": 125 },
+        { "sprite": 4229, "durationMs": 125 }
+      ] },
+    { "name": "engineer_death_6", "id": 1094, "loop": false,
+      "frames": [
+        { "sprite": 4206, "durationMs": 125 },
+        { "sprite": 4214, "durationMs": 125 },
+        { "sprite": 4222, "durationMs": 125 },
+        { "sprite": 4230, "durationMs": 125 }
+      ] },
+    { "name": "engineer_death_7", "id": 1095, "loop": false,
+      "frames": [
+        { "sprite": 4207, "durationMs": 125 },
+        { "sprite": 4215, "durationMs": 125 },
+        { "sprite": 4223, "durationMs": 125 },
+        { "sprite": 4231, "durationMs": 125 }
+      ] },
+    { "name": "medic_idle_0", "id": 1096, "loop": true,
+      "frames": [
+        { "sprite": 4400, "durationMs": 42 },
+        { "sprite": 4408, "durationMs": 42 },
+        { "sprite": 4416, "durationMs": 42 },
+        { "sprite": 4424, "durationMs": 42 },
+        { "sprite": 4432, "durationMs": 42 },
+        { "sprite": 4440, "durationMs": 42 },
+        { "sprite": 4448, "durationMs": 42 },
+        { "sprite": 4456, "durationMs": 42 }
+      ] },
+    { "name": "medic_idle_1", "id": 1097, "loop": true,
+      "frames": [
+        { "sprite": 4401, "durationMs": 42 },
+        { "sprite": 4409, "durationMs": 42 },
+        { "sprite": 4417, "durationMs": 42 },
+        { "sprite": 4425, "durationMs": 42 },
+        { "sprite": 4433, "durationMs": 42 },
+        { "sprite": 4441, "durationMs": 42 },
+        { "sprite": 4449, "durationMs": 42 },
+        { "sprite": 4457, "durationMs": 42 }
+      ] },
+    { "name": "medic_idle_2", "id": 1098, "loop": true,
+      "frames": [
+        { "sprite": 4402, "durationMs": 42 },
+        { "sprite": 4410, "durationMs": 42 },
+        { "sprite": 4418, "durationMs": 42 },
+        { "sprite": 4426, "durationMs": 42 },
+        { "sprite": 4434, "durationMs": 42 },
+        { "sprite": 4442, "durationMs": 42 },
+        { "sprite": 4450, "durationMs": 42 },
+        { "sprite": 4458, "durationMs": 42 }
+      ] },
+    { "name": "medic_idle_3", "id": 1099, "loop": true,
+      "frames": [
+        { "sprite": 4403, "durationMs": 42 },
+        { "sprite": 4411, "durationMs": 42 },
+        { "sprite": 4419, "durationMs": 42 },
+        { "sprite": 4427, "durationMs": 42 },
+        { "sprite": 4435, "durationMs": 42 },
+        { "sprite": 4443, "durationMs": 42 },
+        { "sprite": 4451, "durationMs": 42 },
+        { "sprite": 4459, "durationMs": 42 }
+      ] },
+    { "name": "medic_idle_4", "id": 1100, "loop": true,
+      "frames": [
+        { "sprite": 4404, "durationMs": 42 },
+        { "sprite": 4412, "durationMs": 42 },
+        { "sprite": 4420, "durationMs": 42 },
+        { "sprite": 4428, "durationMs": 42 },
+        { "sprite": 4436, "durationMs": 42 },
+        { "sprite": 4444, "durationMs": 42 },
+        { "sprite": 4452, "durationMs": 42 },
+        { "sprite": 4460, "durationMs": 42 }
+      ] },
+    { "name": "medic_idle_5", "id": 1101, "loop": true,
+      "frames": [
+        { "sprite": 4405, "durationMs": 42 },
+        { "sprite": 4413, "durationMs": 42 },
+        { "sprite": 4421, "durationMs": 42 },
+        { "sprite": 4429, "durationMs": 42 },
+        { "sprite": 4437, "durationMs": 42 },
+        { "sprite": 4445, "durationMs": 42 },
+        { "sprite": 4453, "durationMs": 42 },
+        { "sprite": 4461, "durationMs": 42 }
+      ] },
+    { "name": "medic_idle_6", "id": 1102, "loop": true,
+      "frames": [
+        { "sprite": 4406, "durationMs": 42 },
+        { "sprite": 4414, "durationMs": 42 },
+        { "sprite": 4422, "durationMs": 42 },
+        { "sprite": 4430, "durationMs": 42 },
+        { "sprite": 4438, "durationMs": 42 },
+        { "sprite": 4446, "durationMs": 42 },
+        { "sprite": 4454, "durationMs": 42 },
+        { "sprite": 4462, "durationMs": 42 }
+      ] },
+    { "name": "medic_idle_7", "id": 1103, "loop": true,
+      "frames": [
+        { "sprite": 4407, "durationMs": 42 },
+        { "sprite": 4415, "durationMs": 42 },
+        { "sprite": 4423, "durationMs": 42 },
+        { "sprite": 4431, "durationMs": 42 },
+        { "sprite": 4439, "durationMs": 42 },
+        { "sprite": 4447, "durationMs": 42 },
+        { "sprite": 4455, "durationMs": 42 },
+        { "sprite": 4463, "durationMs": 42 }
+      ] },
+    { "name": "medic_move_0", "id": 1104, "loop": true,
+      "frames": [
+        { "sprite": 4600, "durationMs": 42 },
+        { "sprite": 4608, "durationMs": 42 },
+        { "sprite": 4616, "durationMs": 42 },
+        { "sprite": 4624, "durationMs": 42 },
+        { "sprite": 4632, "durationMs": 42 },
+        { "sprite": 4640, "durationMs": 42 },
+        { "sprite": 4648, "durationMs": 42 },
+        { "sprite": 4656, "durationMs": 42 }
+      ] },
+    { "name": "medic_move_1", "id": 1105, "loop": true,
+      "frames": [
+        { "sprite": 4601, "durationMs": 42 },
+        { "sprite": 4609, "durationMs": 42 },
+        { "sprite": 4617, "durationMs": 42 },
+        { "sprite": 4625, "durationMs": 42 },
+        { "sprite": 4633, "durationMs": 42 },
+        { "sprite": 4641, "durationMs": 42 },
+        { "sprite": 4649, "durationMs": 42 },
+        { "sprite": 4657, "durationMs": 42 }
+      ] },
+    { "name": "medic_move_2", "id": 1106, "loop": true,
+      "frames": [
+        { "sprite": 4602, "durationMs": 42 },
+        { "sprite": 4610, "durationMs": 42 },
+        { "sprite": 4618, "durationMs": 42 },
+        { "sprite": 4626, "durationMs": 42 },
+        { "sprite": 4634, "durationMs": 42 },
+        { "sprite": 4642, "durationMs": 42 },
+        { "sprite": 4650, "durationMs": 42 },
+        { "sprite": 4658, "durationMs": 42 }
+      ] },
+    { "name": "medic_move_3", "id": 1107, "loop": true,
+      "frames": [
+        { "sprite": 4603, "durationMs": 42 },
+        { "sprite": 4611, "durationMs": 42 },
+        { "sprite": 4619, "durationMs": 42 },
+        { "sprite": 4627, "durationMs": 42 },
+        { "sprite": 4635, "durationMs": 42 },
+        { "sprite": 4643, "durationMs": 42 },
+        { "sprite": 4651, "durationMs": 42 },
+        { "sprite": 4659, "durationMs": 42 }
+      ] },
+    { "name": "medic_move_4", "id": 1108, "loop": true,
+      "frames": [
+        { "sprite": 4604, "durationMs": 42 },
+        { "sprite": 4612, "durationMs": 42 },
+        { "sprite": 4620, "durationMs": 42 },
+        { "sprite": 4628, "durationMs": 42 },
+        { "sprite": 4636, "durationMs": 42 },
+        { "sprite": 4644, "durationMs": 42 },
+        { "sprite": 4652, "durationMs": 42 },
+        { "sprite": 4660, "durationMs": 42 }
+      ] },
+    { "name": "medic_move_5", "id": 1109, "loop": true,
+      "frames": [
+        { "sprite": 4605, "durationMs": 42 },
+        { "sprite": 4613, "durationMs": 42 },
+        { "sprite": 4621, "durationMs": 42 },
+        { "sprite": 4629, "durationMs": 42 },
+        { "sprite": 4637, "durationMs": 42 },
+        { "sprite": 4645, "durationMs": 42 },
+        { "sprite": 4653, "durationMs": 42 },
+        { "sprite": 4661, "durationMs": 42 }
+      ] },
+    { "name": "medic_move_6", "id": 1110, "loop": true,
+      "frames": [
+        { "sprite": 4606, "durationMs": 42 },
+        { "sprite": 4614, "durationMs": 42 },
+        { "sprite": 4622, "durationMs": 42 },
+        { "sprite": 4630, "durationMs": 42 },
+        { "sprite": 4638, "durationMs": 42 },
+        { "sprite": 4646, "durationMs": 42 },
+        { "sprite": 4654, "durationMs": 42 },
+        { "sprite": 4662, "durationMs": 42 }
+      ] },
+    { "name": "medic_move_7", "id": 1111, "loop": true,
+      "frames": [
+        { "sprite": 4607, "durationMs": 42 },
+        { "sprite": 4615, "durationMs": 42 },
+        { "sprite": 4623, "durationMs": 42 },
+        { "sprite": 4631, "durationMs": 42 },
+        { "sprite": 4639, "durationMs": 42 },
+        { "sprite": 4647, "durationMs": 42 },
+        { "sprite": 4655, "durationMs": 42 },
+        { "sprite": 4663, "durationMs": 42 }
+      ] },
+    { "name": "medic_attack_0", "id": 1112, "loop": true,
+      "frames": [
+        { "sprite": 4800, "durationMs": 125 },
+        { "sprite": 4808, "durationMs": 125 },
+        { "sprite": 4816, "durationMs": 125 },
+        { "sprite": 4824, "durationMs": 125 }
+      ] },
+    { "name": "medic_attack_1", "id": 1113, "loop": true,
+      "frames": [
+        { "sprite": 4801, "durationMs": 125 },
+        { "sprite": 4809, "durationMs": 125 },
+        { "sprite": 4817, "durationMs": 125 },
+        { "sprite": 4825, "durationMs": 125 }
+      ] },
+    { "name": "medic_attack_2", "id": 1114, "loop": true,
+      "frames": [
+        { "sprite": 4802, "durationMs": 125 },
+        { "sprite": 4810, "durationMs": 125 },
+        { "sprite": 4818, "durationMs": 125 },
+        { "sprite": 4826, "durationMs": 125 }
+      ] },
+    { "name": "medic_attack_3", "id": 1115, "loop": true,
+      "frames": [
+        { "sprite": 4803, "durationMs": 125 },
+        { "sprite": 4811, "durationMs": 125 },
+        { "sprite": 4819, "durationMs": 125 },
+        { "sprite": 4827, "durationMs": 125 }
+      ] },
+    { "name": "medic_attack_4", "id": 1116, "loop": true,
+      "frames": [
+        { "sprite": 4804, "durationMs": 125 },
+        { "sprite": 4812, "durationMs": 125 },
+        { "sprite": 4820, "durationMs": 125 },
+        { "sprite": 4828, "durationMs": 125 }
+      ] },
+    { "name": "medic_attack_5", "id": 1117, "loop": true,
+      "frames": [
+        { "sprite": 4805, "durationMs": 125 },
+        { "sprite": 4813, "durationMs": 125 },
+        { "sprite": 4821, "durationMs": 125 },
+        { "sprite": 4829, "durationMs": 125 }
+      ] },
+    { "name": "medic_attack_6", "id": 1118, "loop": true,
+      "frames": [
+        { "sprite": 4806, "durationMs": 125 },
+        { "sprite": 4814, "durationMs": 125 },
+        { "sprite": 4822, "durationMs": 125 },
+        { "sprite": 4830, "durationMs": 125 }
+      ] },
+    { "name": "medic_attack_7", "id": 1119, "loop": true,
+      "frames": [
+        { "sprite": 4807, "durationMs": 125 },
+        { "sprite": 4815, "durationMs": 125 },
+        { "sprite": 4823, "durationMs": 125 },
+        { "sprite": 4831, "durationMs": 125 }
+      ] },
+    { "name": "medic_death_0", "id": 1120, "loop": false,
+      "frames": [
+        { "sprite": 5000, "durationMs": 125 },
+        { "sprite": 5008, "durationMs": 125 },
+        { "sprite": 5016, "durationMs": 125 },
+        { "sprite": 5024, "durationMs": 125 }
+      ] },
+    { "name": "medic_death_1", "id": 1121, "loop": false,
+      "frames": [
+        { "sprite": 5001, "durationMs": 125 },
+        { "sprite": 5009, "durationMs": 125 },
+        { "sprite": 5017, "durationMs": 125 },
+        { "sprite": 5025, "durationMs": 125 }
+      ] },
+    { "name": "medic_death_2", "id": 1122, "loop": false,
+      "frames": [
+        { "sprite": 5002, "durationMs": 125 },
+        { "sprite": 5010, "durationMs": 125 },
+        { "sprite": 5018, "durationMs": 125 },
+        { "sprite": 5026, "durationMs": 125 }
+      ] },
+    { "name": "medic_death_3", "id": 1123, "loop": false,
+      "frames": [
+        { "sprite": 5003, "durationMs": 125 },
+        { "sprite": 5011, "durationMs": 125 },
+        { "sprite": 5019, "durationMs": 125 },
+        { "sprite": 5027, "durationMs": 125 }
+      ] },
+    { "name": "medic_death_4", "id": 1124, "loop": false,
+      "frames": [
+        { "sprite": 5004, "durationMs": 125 },
+        { "sprite": 5012, "durationMs": 125 },
+        { "sprite": 5020, "durationMs": 125 },
+        { "sprite": 5028, "durationMs": 125 }
+      ] },
+    { "name": "medic_death_5", "id": 1125, "loop": false,
+      "frames": [
+        { "sprite": 5005, "durationMs": 125 },
+        { "sprite": 5013, "durationMs": 125 },
+        { "sprite": 5021, "durationMs": 125 },
+        { "sprite": 5029, "durationMs": 125 }
+      ] },
+    { "name": "medic_death_6", "id": 1126, "loop": false,
+      "frames": [
+        { "sprite": 5006, "durationMs": 125 },
+        { "sprite": 5014, "durationMs": 125 },
+        { "sprite": 5022, "durationMs": 125 },
+        { "sprite": 5030, "durationMs": 125 }
+      ] },
+    { "name": "medic_death_7", "id": 1127, "loop": false,
+      "frames": [
+        { "sprite": 5007, "durationMs": 125 },
+        { "sprite": 5015, "durationMs": 125 },
+        { "sprite": 5023, "durationMs": 125 },
+        { "sprite": 5031, "durationMs": 125 }
       ] }
   ]
 }
