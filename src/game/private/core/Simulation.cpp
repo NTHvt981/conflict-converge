@@ -156,9 +156,9 @@ void Simulation::ReapDeadUnits(float dt)
 				return;
 			}
 		}
-		else if (art_.HasUnitDeathAnim(unit.type))
+		else if (float seconds = art_.UnitDeathAnimSeconds(unit.type); seconds > 0.0f)
 		{
-			registry_.Add(id, DeathFx{kDeathLingerSeconds});
+			registry_.Add(id, DeathFx{seconds});
 			return;
 		}
 		dead.push_back(id);

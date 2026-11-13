@@ -153,7 +153,8 @@ TankArt DrawArtLayers(const Art &art, Registry &registry, Entity id, Unit &unit,
 	if (const DeathFx *fx = registry.Get<DeathFx>(id); fx != nullptr)
 	{
 		const std::string sprite =
-			art.UnitDeathSprite(unit.type, id, kDeathLingerSeconds - fx->timeLeft,
+			art.UnitDeathSprite(unit.type, id,
+								art.UnitDeathAnimSeconds(unit.type) - fx->timeLeft,
 								static_cast<int>(unit.facing));
 		if (!sprite.empty())
 		{

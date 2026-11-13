@@ -122,8 +122,9 @@ public:
 	// when no sheet or no entries.
 	std::string UnitSprite(UnitType type, bool moving, unsigned int id,
 						   float timeSeconds, int facingDir, bool attacking = false) const;
-	// True when the type has a directional death anim in the atlas.
-	bool HasUnitDeathAnim(UnitType type) const;
+	// Total playback length of the type's directional death anim in seconds;
+	// 0 when the atlas is down or the type has no death anim.
+	float UnitDeathAnimSeconds(UnitType type) const;
 	// Non-looping death-anim frame for a unit `elapsedSeconds` into its death:
 	// clamped to the anim's total duration, holding the last frame past the
 	// end. facingDir is a Facing octant (0..7); "" when no death anim exists.

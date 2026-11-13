@@ -162,13 +162,10 @@ inline CombatState &GetCombatState(Registry &registry, Entity entity)
 	return GetOrAdd<CombatState>(registry, entity);
 }
 
-// Ephemeral corpse-linger timer constant: a dying unit plays its death
-// animation for this long before the usual burst-and-remove reaping.
-inline constexpr float kDeathLingerSeconds = 0.5f;
-
 // Ephemeral corpse-linger timer: a dying unit plays its death animation
-// for this long before the usual burst-and-remove reaping. Never saved;
-// a freshly loaded save never contains one.
+// for the anim's full length (set at spawn from the atlas) before the
+// usual burst-and-remove reaping. Never saved; a freshly loaded save
+// never contains one.
 struct DeathFx
 {
 	float timeLeft = 0.0f;

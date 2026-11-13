@@ -552,14 +552,19 @@ std::string ArtSprites::UnitSprite(UnitType type, bool moving, unsigned int id,
 	return {};
 }
 
-bool ArtSprites::HasUnitDeathAnim(UnitType type) const
+float ArtSprites::UnitDeathAnimSeconds(UnitType type) const
 {
 	if (!sheetLoaded_)
 	{
-		return false;
+		return 0.0f;
 	}
-	return FindAnimByName(sheet_,
-						  std::string(InfoOf(type).spriteStem) + "_death_0") != nullptr;
+	if (const SpriteAnimInfo *anim =
+			FindAnimByName(sheet_, std::string(InfoOf(type).spriteStem) + "_death_0");
+		anim != nullptr)
+	{
+		return static_cast<float>(AnimTotalMs(*anim)) / 1000.0f;
+	}
+	return 0.0f;
 }
 
 std::string ArtSprites::UnitDeathSprite(UnitType type, unsigned int id,
