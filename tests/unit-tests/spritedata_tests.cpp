@@ -226,7 +226,7 @@ void RunSpriteDataTests()
 		const SpriteAnimInfo *move = FindAnimByName(sheet, "rifle_infantry_move_6");
 		CC_CHECK(move != nullptr && move->loop && move->frames.size() == 8);
 		CC_CHECK(move->frames[0].sprite == 2206 && move->frames[7].sprite == 2262);
-		CC_CHECK(move->frames[0].durationMs == 42);
+		CC_CHECK(move->frames[0].durationMs == 250);
 		const SpriteAnimInfo *moveTop = FindAnimByName(sheet, "rifle_infantry_move_0");
 		CC_CHECK(moveTop != nullptr && moveTop->frames.size() == 8);
 		CC_CHECK(moveTop->frames[0].sprite == 2200 && moveTop->frames[7].sprite == 2256);
@@ -241,7 +241,7 @@ void RunSpriteDataTests()
 		const SpriteAnimInfo *attack = FindAnimByName(sheet, "rifle_infantry_attack_6");
 		CC_CHECK(attack != nullptr && attack->loop && attack->frames.size() == 4);
 		CC_CHECK(attack->frames[0].sprite == 2406 && attack->frames[3].sprite == 2430);
-		CC_CHECK(attack->frames[0].durationMs == 125);
+		CC_CHECK(attack->frames[0].durationMs == 250);
 		// Death grid is 8 direction columns x 4 frames; its per-direction
 		// anims play once (no loop) so the last frame holds.
 		const SpriteDefInfo *deathCell = FindSpriteByName(sheet, "rifle_infantry_death_2_6");

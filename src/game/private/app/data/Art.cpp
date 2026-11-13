@@ -110,9 +110,9 @@ bool Art::HasTankArt(UnitType type) const
 	return sprites_.HasTankArt(type);
 }
 
-bool Art::HasUnitDeathAnim(UnitType type) const
+float Art::UnitDeathAnimSeconds(UnitType type) const
 {
-	return sprites_.HasUnitDeathAnim(type);
+	return sprites_.UnitDeathAnimSeconds(type);
 }
 
 std::string Art::UnitDeathSprite(UnitType type, unsigned int id, float elapsedSeconds,

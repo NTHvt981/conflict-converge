@@ -87,7 +87,7 @@ ID_BLOCKS = {
     "medic": {"idle": 4400, "move": 4600, "attack": 4800, "death": 5000},
 }
 ANIM_ID_START = 1000
-ANIM_DURATION = {"idle": 42, "move": 42, "attack": 125, "death": 125}
+ANIM_DURATION = {"idle": 250, "move": 250, "attack": 250, "death": 250}  # 4 fps
 ANIM_LOOP = {"idle": True, "move": True, "attack": True, "death": False}
 
 # old infantry entries removed from the configs (prototypeinfantry_*, lighttank_* stay)
