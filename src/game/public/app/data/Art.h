@@ -1,8 +1,6 @@
 #pragma once
 
-#include <cstddef>
 #include <string>
-#include <vector>
 
 #include "raylib.h"
 #include "app/data/ArtDraw.h"
@@ -13,65 +11,11 @@
 
 enum class TerrainType : std::uint8_t;
 
-// Sprite art + particles + floating damage numbers.
+// Sprite art.
 
-// CPU particle pool: impact sparks, muzzle flashes, death bursts.
-// Logic is device-independent (tested); Draw needs a live window.
-struct Particle
-{
-	Vector2 pos = {};
-	Vector2 vel = {};
-	float life = 0.0f;
-	float maxLife = 1.0f;
-	float size = 3.0f;
-	Color color = WHITE;
-};
-
-class Particles
-{
-public:
-	static constexpr std::size_t kMax = 512;
-
-	void SpawnBurst(Vector2 center, Color color, int count, float speed, float life);
-	void Update(float dt);
-	void Draw() const;
-	void Clear();
-	std::size_t Count() const;
-
-private:
-	std::vector<Particle> live_;
-};
-
-// Floating damage numbers: rise-and-fade text spawned once per hit. Same
-// pool shape as Particles; logic is device-independent, Draw needs a window.
-struct DamageNumber
-{
-	Vector2 pos = {};
-	float value = 0.0f;
-	float life = 0.0f;
-	float maxLife = 1.0f;
-};
-
-class DamageNumbers
-{
-public:
-	static constexpr std::size_t kMax = 256;
-	static constexpr float kLife = 0.7f;
-	static constexpr float kRiseSpeed = 80.0f; // pixels per second, upward
-
-	void Spawn(Vector2 pos, float value);
-	void Update(float dt);
-	void Draw() const; // world-space: call inside BeginMode2D/EndMode2D
-	void Clear();
-	std::size_t Count() const;
-
-private:
-	std::vector<DamageNumber> live_;
-};
-
-// Facade over the sprite/resolution component (ArtSprites), the draw-call
-// component (ArtDraw) and the effect pools. Owns Init/Shutdown order and
-// forwards every public call; callers hold this, never the parts.
+// Facade over the sprite/resolution component (ArtSprites) and the draw-call
+// component (ArtDraw). Owns Init/Shutdown order and forwards every public
+// call; callers hold this, never the parts.
 class Art : public Subsystem
 {
 public:
@@ -150,11 +94,7 @@ public:
 	static const char *TerrainFile(TerrainType type);
 	static int TerrainSlot(TerrainType type);
 
-	Particles &ParticlesPool();
-	const Particles &ParticlesPool() const;
-
 private:
 	ArtSprites sprites_;
 	ArtDraw draw_;
-	Particles particles_;
 };

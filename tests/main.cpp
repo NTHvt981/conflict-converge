@@ -63,6 +63,7 @@ void RunDataRootTests();
 void RunMapFileTests();
 void RunAudioTests();
 void RunArtTests();
+void RunVfxTests();
 void RunOrdersTests();
 void RunCommandUiTests();
 void RunSkirmishTests();
@@ -146,6 +147,7 @@ const Suite kSuites[] = {
 	{ "MapFile", RunMapFileTests },
 	{ "Audio", RunAudioTests },
 	{ "Art", RunArtTests },
+	{ "Vfx", RunVfxTests },
 	{ "Orders", RunOrdersTests },
 	{ "CommandUi", RunCommandUiTests },
 	{ "Skirmish", RunSkirmishTests },

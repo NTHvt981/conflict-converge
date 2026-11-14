@@ -11,8 +11,7 @@
 #include <vector>
 
 Simulation::Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
-					   const WorldState &worldState, DamageNumbers &damageNumbers,
-					   const PlayingInput &input,
+					   const WorldState &worldState, const PlayingInput &input,
 					   const bool &sandboxMode, const bool &worldIs2v2,
 					   float &shakeTrauma, MenuState &lastOutcomeState)
 	: registry_(world.Get<Registry>())
@@ -33,7 +32,7 @@ Simulation::Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
 	, menu_(menu)
 	, minimap_(world.Get<Minimap>())
 	, worldState_(worldState)
-	, damageNumbers_(damageNumbers)
+	, vfx_(world.Get<Vfx>())
 	, events_(engine.Get<EventDispatcher>())
 	, input_(input)
 	, sandboxMode_(sandboxMode)
@@ -125,7 +124,7 @@ void Simulation::Step(float dt)
 	RunUnitMovementFrame(registry_, map_, occ_, &fog_, dt);
 	ReapDeadUnits(dt);
 	UpdateCombatVfx();
-	UpdateParticlePools(dt);
+	UpdateVfx(dt);
 	UpdateAttackSfx(dt);
 	AnnounceEconomyChanges();
 	StepEconomy(dt);
@@ -167,7 +166,7 @@ void Simulation::ReapDeadUnits(float dt)
 	{
 		if (const Unit *corpse = registry_.Get<Unit>(id))
 		{
-			art_.ParticlesPool().SpawnBurst(
+			vfx_.SpawnBurst(
 				{ corpse->position.x + cc::kHalfTile, corpse->position.y + cc::kHalfTile },
 				ORANGE, 24, 240.0f, 0.6f);
 			const cc::IVec2 anchor = cc::WorldToTile(cc::ToGlm(corpse->position));
@@ -192,9 +191,9 @@ void Simulation::UpdateCombatVfx()
 		const CombatState *combat = registry_.Get<CombatState>(id);
 		if (combat != nullptr && combat->hitFlashTime > 0.20f)
 		{
-			art_.ParticlesPool().SpawnBurst(center, YELLOW, 6, 180.0f, 0.25f);
-			damageNumbers_.Spawn({ center.x, unit.position.y - 4.0f },
-								 combat->lastDamageTaken);
+			vfx_.SpawnBurst(center, YELLOW, 6, 180.0f, 0.25f);
+			vfx_.SpawnDamageNumber({ center.x, unit.position.y - 4.0f },
+								   combat->lastDamageTaken);
 			shakeTrauma_ = AddShakeTrauma(shakeTrauma_, kShakeHitTrauma);
 			if (unit.teamID == kPlayerTeam)
 			{
@@ -210,7 +209,7 @@ void Simulation::UpdateCombatVfx()
 				const float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
 				if (len > 1.0f)
 				{
-					art_.ParticlesPool().SpawnBurst(
+					vfx_.SpawnBurst(
 						{ center.x + dir.x / len * 40.0f, center.y + dir.y / len * 40.0f },
 						ORANGE, 2, 80.0f, 0.15f);
 				}
@@ -219,10 +218,9 @@ void Simulation::UpdateCombatVfx()
 	});
 }
 
-void Simulation::UpdateParticlePools(float dt)
+void Simulation::UpdateVfx(float dt)
 {
-	art_.ParticlesPool().Update(dt);
-	damageNumbers_.Update(dt);
+	vfx_.Update(dt);
 }
 
 void Simulation::UpdateAttackSfx(float dt)

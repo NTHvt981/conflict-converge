@@ -8,7 +8,6 @@ bool Art::Init(InitMode mode)
 void Art::Shutdown()
 {
 	sprites_.Shutdown();
-	particles_.Clear();
 }
 
 bool Art::IsReady() const
@@ -144,14 +143,4 @@ const char *Art::TerrainFile(TerrainType type)
 int Art::TerrainSlot(TerrainType type)
 {
 	return ArtSprites::TerrainSlot(type);
-}
-
-Particles &Art::ParticlesPool()
-{
-	return particles_;
-}
-
-const Particles &Art::ParticlesPool() const
-{
-	return particles_;
 }
