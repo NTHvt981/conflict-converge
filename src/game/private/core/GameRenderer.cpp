@@ -3,7 +3,7 @@
 
 GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry &registry,
 						   FogOfWar &fog, ResourceNodes &nodes, Minimap &minimap, Pings &pings,
-						   DamageNumbers &damageNumbers, PlayingInput &playingInput, MenuFlow &menu,
+						   Vfx &vfx, PlayingInput &playingInput, MenuFlow &menu,
 						   Simulation &sim, ResourceSystem &resources,
 							HotkeyMap &hotkeys, InputManager &input, AICommander &ai,
 							EventDispatcher &events, const int &replayCursor,
@@ -18,7 +18,7 @@ GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry 
 	, nodes_(nodes)
 	, minimap_(minimap)
 	, pings_(pings)
-	, damageNumbers_(damageNumbers)
+	, vfx_(vfx)
 	, playingInput_(playingInput)
 	, menu_(menu)
 	, sim_(sim)
@@ -56,8 +56,7 @@ void GameRenderer::DrawWorld()
 	DrawUnits();
 	DrawRallyMarkers();
 	DrawProjectiles();
-	art_.ParticlesPool().Draw();
-	damageNumbers_.Draw();
+	vfx_.DrawWorld();
 	DrawFogVeil();
 	EndMode2D();
 }

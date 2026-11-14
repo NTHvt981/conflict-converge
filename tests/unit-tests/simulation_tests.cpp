@@ -14,6 +14,7 @@
 #include "app/ui/Minimap.h"
 #include "economy/Nodes.h"
 #include "app/ui/Pings.h"
+#include "app/ui/Vfx.h"
 #include "economy/Production.h"
 #include "core/PlayingInput.h"
 #include "core/Registry.h"
@@ -39,7 +40,6 @@ struct Fixture
 	MenuFlow menu;
 	GameCamera camera;
 	WorldState worldState{};
-	DamageNumbers damageNumbers;
 	MenuSettings settings;
 	bool sandboxMode = true; // skip AI + outcome: covered by soak/integration tests
 	bool worldIs2v2 = false;
@@ -82,6 +82,7 @@ struct Fixture
 									AIDifficulty::Medium, cc::IVec2{ 0, 0 },
 									cc::IVec2{ 0, 0 });
 		world.Add<Pings>();
+		world.Add<Vfx>();
 		world.Add<Minimap>();
 		world.Get<FogOfWar>().Resize(20, 15);
 		// No GL context headless: keep the minimap texture refresh disarmed
@@ -97,7 +98,7 @@ struct Fixture
 					  world.Get<ResourceNodes>(), camera, world.Get<Minimap>(),
 					  engine.Get<InputManager>(), engine.Get<Audio>(), settings,
 					  world.Get<ResourceSystem>());
-		sim.emplace(world, engine, menu, worldState, damageNumbers, *input, sandboxMode,
+		sim.emplace(world, engine, menu, worldState, *input, sandboxMode,
 					worldIs2v2, shakeTrauma, lastOutcomeState);
 	}
 };

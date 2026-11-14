@@ -50,7 +50,7 @@ private:
 
 	// World/match-lifetime service scope: owns Registry, ResourceSystem,
 	// TileMap, OccupancyGrid, FogOfWar, ResourceNodes, two keyed ProductionQueues,
-	// UnitFactory, three keyed AICommanders, Pings, and Minimap. Declared
+	// UnitFactory, three keyed AICommanders, Pings, Vfx, and Minimap. Declared
 	// after engine_ (factory/AI bind the engine EventDispatcher) and before
 	// every consumer, so init-list expressions may bind world_.Get<T>().
 	struct WorldScope : public Subsystems
@@ -81,7 +81,6 @@ private:
 	int replayCursor_ = 0;
 	float replayPlayTimer_ = 0.0f;
 	float shakeTrauma_ = 0.0f; // 0..1, render copy only
-	DamageNumbers damageNumbers_;
 	MenuState previousMenuState_ = MenuState::MainMenu;
 	float menuStateTime_ = 0.0f;
 	MenuState lastOutcomeState_ = MenuState::MainMenu;

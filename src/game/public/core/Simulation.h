@@ -10,6 +10,7 @@
 #include "economy/Building.h"
 #include "economy/Nodes.h"
 #include "app/ui/Pings.h"
+#include "app/ui/Vfx.h"
 #include "economy/Production.h"
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
@@ -27,8 +28,7 @@ class Simulation
 {
 public:
 	Simulation(Subsystems &world, Subsystems &engine, MenuFlow &menu,
-			   const WorldState &worldState, DamageNumbers &damageNumbers,
-			   const PlayingInput &input,
+			   const WorldState &worldState, const PlayingInput &input,
 				const bool &sandboxMode, const bool &worldIs2v2,
 				float &shakeTrauma, MenuState &lastOutcomeState);
 	Simulation(const Simulation &) = delete;
@@ -50,7 +50,7 @@ private:
 	void Announce(EventType type);
 	void ReapDeadUnits(float dtSeconds);
 	void UpdateCombatVfx();
-	void UpdateParticlePools(float dt);
+	void UpdateVfx(float dt);
 	void UpdateAttackSfx(float dt);
 	void AnnounceEconomyChanges();
 	void StepEconomy(float dt);
@@ -81,7 +81,7 @@ private:
 	MenuFlow &menu_;
 	Minimap &minimap_;
 	const WorldState &worldState_;
-	DamageNumbers &damageNumbers_;
+	Vfx &vfx_;
 	EventDispatcher &events_;
 	const PlayingInput &input_;
 	const bool &sandboxMode_;

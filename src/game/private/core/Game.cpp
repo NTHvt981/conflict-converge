@@ -14,6 +14,7 @@
 #include "app/ui/Minimap.h"
 #include "economy/Nodes.h"
 #include "app/ui/Pings.h"
+#include "app/ui/Vfx.h"
 #include "core/PlayingInput.h"
 #include "economy/Production.h"
 #include "core/Registry.h"
@@ -51,6 +52,7 @@ Game::WorldScope::WorldScope(Subsystems &engine)
 						  events, kEnemyTeam, AIDifficulty::Medium, cc::IVec2{ 0, 0 },
 						  cc::IVec2{ 0, 0 });
 	Add<Pings>();
+	Add<Vfx>();
 	Add<Minimap>();
 }
 
@@ -76,7 +78,7 @@ Game::Game()
 				  &world_.Get<TileMap>(), &player_.Get<GameCamera>(),
 				  &world_.Get<ResourceNodes>(), &world_.Get<FogOfWar>(),
 				  &world_.Get<OccupancyGrid>() }
-	, sim_(world_, engine_, menu_, worldState_, damageNumbers_,
+	, sim_(world_, engine_, menu_, worldState_,
 		  player_.Get<PlayingInput>(), sandboxMode_, worldIs2v2_,
 		  shakeTrauma_, lastOutcomeState_)
 	, menuScreens_(menu_, engine_.Get<Art>(), engine_.Get<Audio>(), engine_.Get<InputManager>(),
@@ -118,7 +120,7 @@ Game::Game()
 			   [this](MenuState returnTo) { rmlUiMenus_.BeginRemap(returnTo); })
 	 , renderer_(engine_.Get<Art>(), player_.Get<GameCamera>(), world_.Get<TileMap>(), world_.Get<Registry>(),
 			   world_.Get<FogOfWar>(), world_.Get<ResourceNodes>(), world_.Get<Minimap>(),
-			   world_.Get<Pings>(), damageNumbers_, player_.Get<PlayingInput>(), menu_, sim_,
+			   world_.Get<Pings>(), world_.Get<Vfx>(), player_.Get<PlayingInput>(), menu_, sim_,
 			   world_.Get<ResourceSystem>(),
 			   engine_.Get<HotkeyMap>(), engine_.Get<InputManager>(),
 			   world_.GetKeyed<AICommander>("ai"),

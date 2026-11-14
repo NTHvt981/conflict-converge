@@ -15,6 +15,7 @@
 #include "app/ui/Minimap.h"
 #include "economy/Nodes.h"
 #include "app/ui/Pings.h"
+#include "app/ui/Vfx.h"
 #include "core/PlayingInput.h"
 #include "economy/Production.h"
 #include "core/Registry.h"
@@ -32,7 +33,7 @@ class GameRenderer
 public:
 	GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry &registry,
 				 FogOfWar &fog, ResourceNodes &nodes, Minimap &minimap, Pings &pings,
-				 DamageNumbers &damageNumbers, PlayingInput &playingInput, MenuFlow &menu,
+				 Vfx &vfx, PlayingInput &playingInput, MenuFlow &menu,
 				 Simulation &sim, ResourceSystem &resources,
 				 HotkeyMap &hotkeys, InputManager &input, AICommander &ai,
 				 EventDispatcher &events, const int &replayCursor,
@@ -69,7 +70,7 @@ private:
 	ResourceNodes &nodes_;
 	Minimap &minimap_;
 	Pings &pings_;
-	DamageNumbers &damageNumbers_;
+	Vfx &vfx_;
 	PlayingInput &playingInput_;
 	MenuFlow &menu_;
 	Simulation &sim_;
