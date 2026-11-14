@@ -20,12 +20,12 @@ units:   Unit (+UnitInternal, UnitOrders/UnitCombat/UnitRepair/UnitMovement/
           Targeting, Formation (+FormationAssignment), AICommander
           (+AICommanderIntel/AICommanderEconomy/AICommanderTeams), Extensions, UnitCommands
 economy: Building, BuildingTypeInfo, Nodes (+NodeHarvesters), ResourceSystem, Production
-app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, RmlUiHost, RmlUiMenus,
+app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, Vfx, RmlUiHost, RmlUiMenus,
          (+RmlUiMenusRemap/RmlUiMenusDialogs), RmlUiHud (+RmlUiHudPanels/RmlUiHudEvents),
          CursorHint, UiIds, RmlRaylibRenderInterface, RmlRaylibSystemInterface, RmlRaylibFileInterface
 app/input: InputManager, Selection, Shortcuts, Hotkeys
 app/save: SaveGame (+SaveEncode/SaveDecode), SaveWire
-app/data: Art (+ArtSprites/ArtDraw/ArtEffects), SpriteData,
+app/data: Art (+ArtSprites/ArtDraw), SpriteData,
           UnitConfig (+UnitConfigDefaults/UnitConfigParse/UnitConfigEmit/
           UnitConfigJson/UnitConfigCatalog),
           ConfigError, AIConfig, Audio, InitMode, Log, DataRoot
@@ -176,11 +176,13 @@ app/match: Menu, Skirmish
   `BuildingSummary`, `SelectionLineText` selection line, `ShortcutHintLines`,
   production category/tab orders, `AbilitiesForSelection`
   panel data); the RmlUi HUD owns the panels
-- `Art.h` - Sprite/particles facade over two components, each with its own
+- `Art.h` - Sprite facade over two components, each with its own
   header and cpp: `ArtSprites` (`data/sprites/` via `tools/gen_sprites.py`,
   tank atlas art, headless `Init(InitMode::Headless)` fallback, team tints)
-  and `ArtDraw` (blits, draw calls); `ArtEffects` carries the
-  device-independent particle/damage-number logic
+  and `ArtDraw` (blits, draw calls)
+- `Vfx.h` - World-space particle bursts and floating damage numbers in capped
+  pools (`kMaxParticles`/`kMaxDamageNumbers`), device-independent update and
+  draw; world-scope subsystem whose `ResetForMatch` clears both pools
 - `SpriteData.h` - Sprite-atlas data (JSON in `data/configs/`: textures/sprites/animations
   merged at load); `LoadSpriteSheet`/`ParseSpriteSheetJson` return
   `expected<SpriteSheetData, ConfigError>`, plus name/id lookups

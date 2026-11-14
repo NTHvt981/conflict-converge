@@ -967,7 +967,7 @@ void Simulation::Step(float dt)
 	RunUnitMovementFrame(registry_, map_, occ_, &fog_, dt);
 	ReapDeadUnits();
 	UpdateCombatVfx();
-	UpdateParticlePools(dt);
+	UpdateVfx(dt);
 	// ... one named phase per line
 	UpdateOutcome();
 }
