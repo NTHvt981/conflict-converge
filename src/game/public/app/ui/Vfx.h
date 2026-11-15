@@ -6,9 +6,8 @@
 #include "raylib.h"
 #include "core/Subsystem.h"
 
-// World-space effect pools: particle bursts (impact sparks, muzzle flashes,
-// death bursts) and floating damage numbers. Logic is device-independent
-// (tested headless); DrawWorld needs a live window.
+// World-space particle bursts and floating damage numbers. Logic is device-
+// independent (tested headless); DrawWorld needs a live window.
 
 struct Particle
 {
