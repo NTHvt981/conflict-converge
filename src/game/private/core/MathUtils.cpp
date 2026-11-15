@@ -15,9 +15,9 @@ Vector2 ToRaylib(Vec2 v)
 	return Vector2{v.x, v.y};
 }
 
-Vec2 TileToWorld(int tileX, int tileY)
+Vec2 TileToWorld(TileUnit x, TileUnit y)
 {
-	return Vec2(static_cast<float>(tileX) * TILE_SIZE, static_cast<float>(tileY) * TILE_SIZE);
+	return Vec2(x * TILE_SIZE, y * TILE_SIZE);
 }
 
 IVec2 WorldToTile(Vec2 worldPos)
