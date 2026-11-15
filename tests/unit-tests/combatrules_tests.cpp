@@ -1,7 +1,5 @@
-// Unit tests for the combat-rules config layer (damage-matrix parse
-// validation, rejection cases, the runtime Effectiveness hookup, and the
-// directory refresh path). Renderer-adjacent gameplay stays untested per
-// project convention.
+// Unit tests for the combat-rules config layer: matrix parse validation,
+// rejection cases, the Effectiveness hookup, and the directory refresh path.
 
 #include "test_harness.h"
 
@@ -38,7 +36,6 @@ void RunCombatRulesTests()
 {
 	ResetCombatRules();
 
-	// --- defaults: the compiled matrix is the historical table ---
 	{
 		const CombatRules defaults = DefaultCombatRules();
 		const float expected[3][3] = { { 1.00f, 0.75f, 0.50f },
@@ -53,7 +50,6 @@ void RunCombatRulesTests()
 		}
 	}
 
-	// --- shipped seed file parses to the defaults, Effectiveness follows ---
 	{
 		bool found = false;
 		for (const char *dir : kConfigDirs)
@@ -84,7 +80,6 @@ void RunCombatRulesTests()
 		CC_CHECK(Effectiveness(DamageType::ENERGY, ArmorType::COMPOSITE) == 1.00f);
 	}
 
-	// --- runtime hook: override feeds Effectiveness, reset restores it ---
 	{
 		CombatRules custom = DefaultCombatRules();
 		custom.damageMatrix[static_cast<int>(DamageType::KINETIC)]
@@ -95,7 +90,6 @@ void RunCombatRulesTests()
 		CC_CHECK(Effectiveness(DamageType::KINETIC, ArmorType::STEEL) == 1.00f);
 	}
 
-	// --- rejections: malformed JSON -> MalformedJson ---
 	{
 		const std::expected<CombatRules, ConfigError> garbage =
 			ParseCombatRulesJson("{ this is not json");
@@ -106,7 +100,6 @@ void RunCombatRulesTests()
 				 wrongType.error() == ConfigError::MalformedJson);
 	}
 
-	// --- rejections: unknown enum names -> UnknownName ---
 	{
 		const std::expected<CombatRules, ConfigError> badDamage = ParseCombatRulesJson(
 			"{\"damageMatrix\":{\"PLASMA\":{\"RUBBER\":1.0,\"STEEL\":2.0,"
@@ -120,7 +113,6 @@ void RunCombatRulesTests()
 				 badArmor.error() == ConfigError::UnknownName);
 	}
 
-	// --- rejections: missing matrix key or cell -> InvalidData ---
 	{
 		const std::expected<CombatRules, ConfigError> missing = ParseCombatRulesJson("{}");
 		CC_CHECK(!missing.has_value() && missing.error() == ConfigError::InvalidData);
@@ -131,7 +123,6 @@ void RunCombatRulesTests()
 		CC_CHECK(!holes.has_value() && holes.error() == ConfigError::InvalidData);
 	}
 
-	// --- rejections: zero or negative cells -> InvalidData ---
 	{
 		const std::expected<CombatRules, ConfigError> zero = ParseCombatRulesJson(
 			"{\"damageMatrix\":{\"KINETIC\":{\"RUBBER\":0.0,\"STEEL\":2.0,"
@@ -147,7 +138,6 @@ void RunCombatRulesTests()
 		CC_CHECK(!negative.has_value() && negative.error() == ConfigError::InvalidData);
 	}
 
-	// --- refresh: a temp dir with a modified file installs it ---
 	{
 		const std::string dir = TempDir("cc_combatrules_refresh");
 		std::error_code ec;
@@ -168,7 +158,6 @@ void RunCombatRulesTests()
 		ResetCombatRules();
 	}
 
-	// --- refresh: a rejected file never touches the active rules ---
 	{
 		const std::string dir = TempDir("cc_combatrules_reject");
 		std::error_code ec;

@@ -6,13 +6,11 @@
 
 void RunIncomeTests()
 {
-	// --- whole-unit banking, no cap ---
 	ResourceSystem resources;
 	resources.TickIncome(5.0f, 3.0f, 1.0f);
 	CC_CHECK(resources.iron == 5);
 	CC_CHECK(resources.oil == 3);
 
-	// --- fractional carry across ticks ---
 	ResourceSystem trickle;
 	trickle.TickIncome(0.5f, 0.25f, 1.0f);
 	CC_CHECK(trickle.iron == 0 && trickle.oil == 0);
@@ -22,7 +20,6 @@ void RunIncomeTests()
 	trickle.TickIncome(0.5f, 0.25f, 1.0f);
 	CC_CHECK(trickle.iron == 2 && trickle.oil == 1);
 
-	// --- variable dt accumulates the same total ---
 	ResourceSystem paced;
 	for (int i = 0; i < 60; ++i)
 	{
@@ -30,14 +27,12 @@ void RunIncomeTests()
 	}
 	CC_CHECK(paced.iron == 60);
 
-	// --- degenerate inputs never move balances ---
 	ResourceSystem guarded;
 	guarded.TickIncome(10.0f, 10.0f, 0.0f);
 	guarded.TickIncome(10.0f, 10.0f, -1.0f);
 	guarded.TickIncome(-5.0f, -5.0f, 1.0f);
 	CC_CHECK(guarded.iron == 0 && guarded.oil == 0);
 
-	// --- income composes with spending ---
 	ResourceSystem economy;
 	economy.AddIron(100);
 	economy.TickIncome(10.0f, 0.0f, 1.0f);

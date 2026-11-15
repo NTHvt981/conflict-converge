@@ -3,7 +3,7 @@
 #include "test_harness.h"
 
 #include "units/Combat.h"   // expected damage via Effectiveness
-#include "units/Extensions.h" // G1 turret traverse/fire-gate
+#include "units/Extensions.h" // turret traverse/fire-gate
 #include "units/Targeting.h" // InAttackRange sanity
 #include "world/TileMap.h"  // UpdateUnit needs the full map type
 #include "units/Unit.h"
@@ -43,7 +43,6 @@ void RunAttackPhaseTests()
 {
 	constexpr float kDt = 1.0f / 60.0f;
 
-	// --- full strike cycle: telegraph, single hit, recover, re-fire ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -74,9 +73,7 @@ void RunAttackPhaseTests()
 		CC_CHECK(registry.Get<Unit>(victim)->health < hpAfterFirst);
 	}
 
-	// --- unarmed units never leave Ready ---
-	// Acquisition refuses power-0 seekers, so the target is assigned
-	// directly to isolate the fire gate below.
+	// Acquisition skips power-0 seekers, so the target is assigned directly.
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -96,7 +93,6 @@ void RunAttackPhaseTests()
 		CC_CHECK(unit->state == UnitState::Attacking); // engaged, but holds fire
 	}
 
-	// --- moving cancels the telegraph ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -114,7 +110,6 @@ void RunAttackPhaseTests()
 		CC_CHECK(unit->position.x > 0.0f);
 	}
 
-	// --- G1 traverse: head turns at turnRate, body facing untouched ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -131,7 +126,6 @@ void RunAttackPhaseTests()
 		CC_CHECK(registry.Get<Unit>(tank)->facing == bodyBefore);
 	}
 
-	// --- G1 fire-only-when-aimed: traversing holds WindUp, aligned fires ---
 	{
 		Registry registry;
 		TileMap map(10, 10);

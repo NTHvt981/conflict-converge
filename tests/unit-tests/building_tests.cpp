@@ -11,25 +11,21 @@
 
 void RunBuildingTests()
 {
-	// --- footprints ---
 	CC_CHECK(Footprint(BuildingType::Base) == cc::IVec2(2, 2));
 	CC_CHECK(Footprint(BuildingType::ResourceDepot) == cc::IVec2(1, 1));
 	CC_CHECK(Footprint(BuildingType::Bootcamp) == cc::IVec2(2, 2));
 	CC_CHECK(Footprint(BuildingType::Workshop) == cc::IVec2(3, 3));
 
-	// --- producers bind one category each; other types bind none ---
 	CC_CHECK(ProducerCategory(BuildingType::Bootcamp) == ProductionCategory::Infantry);
 	CC_CHECK(ProducerCategory(BuildingType::Workshop) == ProductionCategory::Vehicle);
 	CC_CHECK(!ProducerCategory(BuildingType::Base).has_value());
 	CC_CHECK(!ProducerCategory(BuildingType::ResourceDepot).has_value());
 
-	// --- structure health per type ---
 	CC_CHECK(BuildingMaxHealth(BuildingType::Base) == 400.0f);
 	CC_CHECK(BuildingMaxHealth(BuildingType::ResourceDepot) == 200.0f);
 	CC_CHECK(BuildingMaxHealth(BuildingType::Bootcamp) == 350.0f);
 	CC_CHECK(BuildingMaxHealth(BuildingType::Workshop) == 500.0f);
 
-	// --- valid placement marks terrain + stores the component ---
 	Registry registry;
 	TileMap map(20, 15);
 	const Entity base = PlaceBuilding(registry, map, BuildingType::Base, kPlayerTeam, 1, 1);
@@ -44,13 +40,11 @@ void RunBuildingTests()
 	CC_CHECK(map.Get({ 2, 2 }) == TerrainType::Building);
 	CC_CHECK(map.Get({ 3, 1 }) == TerrainType::Grass);
 
-	// --- overlap with the placed footprint is rejected ---
 	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Bootcamp, kPlayerTeam, 2, 2) ==
 			  kInvalidEntity);
 	CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 1, 1) ==
 			 kInvalidEntity);
 
-	// --- water and out-of-bounds rejected ---
 	map.Set({ 5, 5 }, TerrainType::Water);
 	CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 5, 5) ==
 			 kInvalidEntity);
@@ -59,7 +53,6 @@ void RunBuildingTests()
 	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Base, kPlayerTeam, -1, 0) ==
 			  kInvalidEntity);
 
-	// --- demolish restores terrain and removes the entity ---
 	CC_CHECK(DemolishBuilding(registry, map, base));
 	CC_CHECK(!registry.IsAlive(base));
 	CC_CHECK(map.Get({ 1, 1 }) == TerrainType::Grass);
@@ -67,7 +60,6 @@ void RunBuildingTests()
 	CC_CHECK(!DemolishBuilding(registry, map, base)); // already gone: no-op
 	CC_CHECK(!DemolishBuilding(registry, map, kInvalidEntity));
 
-	// --- sell refunds half cost through the cap, then clears the footprint ---
 	CC_CHECK(BuildingCost(BuildingType::Base).iron == 350);
 	CC_CHECK(BuildingCost(BuildingType::Workshop).iron == 300);
 	{
@@ -92,11 +84,9 @@ void RunBuildingTests()
 		CC_CHECK(funds.iron == 100000); // +100 would overflow: lost
 	}
 
-	// --- the freed footprint accepts a new building ---
 	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Bootcamp, kEnemyTeam, 1, 1) !=
 			  kInvalidEntity);
 
-	// --- base income: per-Operational-Base trickle, team-filtered ---
 	Registry economy;
 	TileMap emap(20, 15);
 	PlaceBuilding(economy, emap, BuildingType::Base, kPlayerTeam, 0, 0);
@@ -111,7 +101,6 @@ void RunBuildingTests()
 	UpdateBaseIncome(economy, team0, 1.0f, kPlayerTeam);
 	CC_CHECK(team0.iron == 2 && team0.oil == 1);
 
-	// --- demolished bases stop generating ---
 	ResourceSystem after;
 	std::vector<Entity> doomed;
 	economy.Each<Building>([&](Entity id, const Building &) { doomed.push_back(id); });
@@ -122,7 +111,6 @@ void RunBuildingTests()
 	UpdateBaseIncome(economy, after, 10.0f);
 	CC_CHECK(after.iron == 0 && after.oil == 0);
 
-	// --- construction: sites ramp 0 -> max, then go Operational exactly ---
 	{
 		Registry site;
 		TileMap siteMap(20, 15);
@@ -152,7 +140,6 @@ void RunBuildingTests()
 		CC_CHECK(depotB->state == BuildingState::Operational);
 		CC_CHECK(depotB->health == depotB->maxHealth); // exact, never overshoots
 		CC_CHECK(baseB->state == BuildingState::UnderConstruction);
-		// Base completes; income flows again.
 		UpdateBuildingConstruction(site, 2.0f);
 		CC_CHECK(baseB->state == BuildingState::Operational);
 		CC_CHECK(baseB->health == baseB->maxHealth);
@@ -168,14 +155,12 @@ void RunBuildingTests()
 		CC_CHECK(site.Get<Building>(lateId)->health == 0.0f);
 	}
 
-	// --- : BuildingEntrances ---
 	{
 		// 20x15 map, base at (5,5) footprint 2x2 → tiles (5,5)(6,5)(5,6)(6,6)
 		TileMap map2(20, 15);
 		auto entrances = BuildingEntrances(map2, 5, 5, 2, 2);
 		// All 12 one-ring tiles should be walkable on an empty grass map
 		CC_CHECK(static_cast<int>(entrances.size()) == 12);
-		// Verify none of the footprint tiles appear
 		for (const cc::IVec2 &e : entrances)
 		{
 			bool insideFootprint = (e.x >= 5 && e.x <= 6 && e.y >= 5 && e.y <= 6);
@@ -186,12 +171,10 @@ void RunBuildingTests()
 		// Building at (0,0): corner reduces ring size (out-of-bounds excluded)
 		TileMap map2(20, 15);
 		auto entrances = BuildingEntrances(map2, 0, 0, 2, 2);
-		// Only 5 walkable tiles: (2,0)(0,2)(1,2)(2,1)(2,2)
-		// (0,1),(1,1) are inside; (-1,*) and (*,-1) are OOB
+		// Only 5 walkable tiles (e.g. (2,0), (2,2)); (0,1)/(1,1) are inside.
 		CC_CHECK(static_cast<int>(entrances.size()) == 5);
 	}
 	{
-		// Water blocks entrance tiles
 		TileMap map2(20, 15);
 		map2.Set({ 7, 5 }, TerrainType::Water);
 		map2.Set({ 4, 5 }, TerrainType::Water);
@@ -200,13 +183,10 @@ void RunBuildingTests()
 		CC_CHECK(static_cast<int>(entrances.size()) == 10);
 	}
 
-	// --- : BuildingAttackPositions ---
 	{
 		TileMap map2(20, 15);
 		auto positions = BuildingAttackPositions(map2, 5, 5, 2, 2, 8);
-		// 12 available, max 8 → should return exactly 8
 		CC_CHECK(static_cast<int>(positions.size()) == 8);
-		// All returned positions are walkable
 		for (const cc::IVec2 &p : positions)
 		{
 			CC_CHECK(map2.InBounds(p));
@@ -214,9 +194,7 @@ void RunBuildingTests()
 		}
 	}
 	{
-		// Fewer available than max → returns all available
 		TileMap map2(20, 15);
-		// Block most tiles around the building
 		for (int dy = -1; dy <= 2; ++dy)
 		{
 			for (int dx = -1; dx <= 2; ++dx)
@@ -233,7 +211,6 @@ void RunBuildingTests()
 		CC_CHECK(static_cast<int>(positions.size()) == 0);
 	}
 
-	// --- QoL SelectAllBuildings: same-team same-type only, replaces ---
 	{
 		Registry lots;
 		TileMap lotsMap(20, 15);
@@ -257,7 +234,6 @@ void RunBuildingTests()
 		CC_CHECK(lots.Get<Building>(depot)->isSelected);
 	}
 
-	// --- QoL SelectAllProductionBuildings: both producers, one pass ---
 	{
 		Registry lots;
 		TileMap lotsMap(20, 15);
@@ -275,7 +251,6 @@ void RunBuildingTests()
 		CC_CHECK(!lots.Get<Building>(foe)->isSelected);
 	}
 
-	// --- QoL CanPlaceBuilding: mirrors PlaceBuilding's validation ---
 	{
 		Registry yard;
 		TileMap yardMap(20, 15);
@@ -288,14 +263,13 @@ void RunBuildingTests()
 		CC_CHECK(yardNodes.SpawnNode(yardMap, ResourceKind::Iron, { 8, 8 }, 200.0f, 10.0f));
 		CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::ResourceDepot, 8, 8));
 		CC_CHECK(!CanPlaceBuilding(yardMap, &yardNodes, BuildingType::Base, 7, 7));
-		// Null nodes = legacy grass-only check.
+		// Null nodes: grass-only check.
 		CC_CHECK(CanPlaceBuilding(yardMap, nullptr, BuildingType::ResourceDepot, 8, 8));
 		// ...but placing there still fails through the nodes-aware overload.
 		CC_CHECK(PlaceBuilding(yard, yardMap, BuildingType::ResourceDepot, kPlayerTeam, 8, 8,
 							   &yardNodes) == kInvalidEntity);
 	}
 
-	// --- QoL AreaBuildSlots: footprint-stepped tiling, inclusive range ---
 	{
 		// Depot (1x1) over a 3x2 range: every tile is a slot.
 		const auto singles = AreaBuildSlots(BuildingType::ResourceDepot, { 1, 1 }, { 3, 2 });
@@ -309,7 +283,6 @@ void RunBuildingTests()
 		CC_CHECK(AreaBuildSlots(BuildingType::Base, { 3, 3 }, { 0, 0 }).empty());
 	}
 
-	// --- QoL BuildingFootprintRect: tile footprint as a world rect ---
 	{
 		Building depot;
 		depot.type = BuildingType::ResourceDepot;
@@ -328,7 +301,6 @@ void RunBuildingTests()
 		CC_CHECK(baseRect.width == 256.0f && baseRect.height == 256.0f);
 	}
 
-	// --- QoL QueryBuildingsInRect: overlap + team filter ---
 	{
 		Registry query;
 		TileMap queryMap(20, 15);
@@ -351,7 +323,6 @@ void RunBuildingTests()
 		QueryBuildingsInRect(query, { 5.0f * 128.0f, 5.0f * 128.0f, 10.0f, 10.0f }, kPlayerTeam,
 							 found);
 		CC_CHECK(found.size() == 1 && found[0] == inDepot);
-		// Rect over nothing.
 		found.clear();
 		QueryBuildingsInRect(query, { 0.0f, 600.0f, 100.0f, 100.0f }, kPlayerTeam, found);
 		CC_CHECK(found.empty());
@@ -360,14 +331,12 @@ void RunBuildingTests()
 		QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 128.0f, 15.0f * 128.0f }, kAnyTeam,
 							 found);
 		CC_CHECK(found.size() == 3);
-		// Team 1 alone.
 		found.clear();
 		QueryBuildingsInRect(query, { 0.0f, 0.0f, 20.0f * 128.0f, 15.0f * 128.0f }, kEnemyTeam,
 							 found);
 		CC_CHECK(found.size() == 1 && found[0] == foeBase);
 	}
 
-	// --- UpdateBuildingFlash: decays by dt, clamps at 0, no-op for dt <= 0 ---
 	{
 		Registry flash;
 		TileMap flashMap(20, 15);
@@ -417,7 +386,6 @@ void RunBuildingTests()
 		CC_CHECK(!shopInside);
 	}
 
-	// --- ProducerBuildingAt: operational producers of type/team in registry order ---
 	{
 		Registry producers;
 		TileMap producerMap(20, 15);
@@ -447,7 +415,6 @@ void RunBuildingTests()
 				  kInvalidEntity);
 	}
 
-	// --- BuildingSpawnTile: unblocked exit tile outside the footprint ---
 	{
 		Registry spawns;
 		TileMap spawnMap(20, 15);

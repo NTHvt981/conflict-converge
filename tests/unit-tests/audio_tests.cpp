@@ -1,6 +1,5 @@
-// Unit tests for audio (headless guard, volume clamps, settings defaults).
-// Nothing here touches an audio device: Audio::Init(InitMode::Headless) must load nothing
-// and every Play must no-op, so the suite runs on machines without sound.
+// Unit tests for audio headless behavior: Init(Headless) loads nothing and
+// every Play no-ops, so the suite runs on machines without a sound device.
 
 #include "test_harness.h"
 
@@ -9,7 +8,6 @@
 
 void RunAudioTests()
 {
-	// --- uninitialized audio is inert ---
 	{
 		Audio audio;
 		CC_CHECK(!audio.IsReady());
@@ -22,7 +20,6 @@ void RunAudioTests()
 		CC_CHECK(!audio.IsReady());
 	}
 
-	// --- headless init loads nothing but still records settings ---
 	{
 		Audio audio;
 		CC_CHECK(!audio.Init(InitMode::Headless));
@@ -37,7 +34,6 @@ void RunAudioTests()
 		audio.Shutdown();
 	}
 
-	// --- volumes clamp to 0..1, mute latches ---
 	{
 		Audio audio;
 		audio.ApplySettings(2.0f, -1.0f, 99.0f, true);
@@ -49,7 +45,6 @@ void RunAudioTests()
 		CC_CHECK(!audio.IsMuted());
 	}
 
-	// --- out-of-range SFX ids never crash, even uninitialized ---
 	{
 		Audio audio;
 		audio.Play(static_cast<SfxId>(-1));
@@ -57,7 +52,6 @@ void RunAudioTests()
 		audio.Play(SfxId::Count);
 	}
 
-	// --- menu settings carry sane audio defaults ---
 	{
 		MenuSettings settings;
 		CC_CHECK(settings.masterVolume == 1.0f);
@@ -66,9 +60,8 @@ void RunAudioTests()
 		CC_CHECK(!settings.mute);
 	}
 
-	// --- per-sound rate limiting: combat retrigger storms collapse ---
-	// (Game::Update plays Explosion on every death-frame and Attack every
-	// 0.12s while anything winds up; without floors that is a 60Hz roar.)
+	// Combat retrigger storms: Game::Update plays Explosion per death frame and
+	// Attack every 0.12s; the per-sound floors stop a 60Hz roar.
 	{
 		Audio audio;
 		CC_CHECK(audio.ShouldPlay(SfxId::Explosion, 100.0));
@@ -84,7 +77,6 @@ void RunAudioTests()
 		CC_CHECK(audio.ShouldPlay(SfxId::Defeat, 0.0));
 		// Floors are per-sound: Attack plays even right after an Explosion.
 		CC_CHECK(audio.ShouldPlay(SfxId::Attack, 100.15));
-		// Out-of-range ids never play, never crash.
 		CC_CHECK(!audio.ShouldPlay(static_cast<SfxId>(-1), 100.0));
 		CC_CHECK(!audio.ShouldPlay(SfxId::Count, 100.0));
 	}

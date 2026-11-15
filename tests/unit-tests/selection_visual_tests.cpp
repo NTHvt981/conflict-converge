@@ -11,7 +11,6 @@
 
 void RunSelectionVisualTests()
 {
-	// --- health fraction: full / half / empty / overkill / negative ---
 	Unit full;
 	full.type = UnitType::LightTank;
 	full.health = BaseStats(UnitType::LightTank).health;
@@ -33,7 +32,6 @@ void RunSelectionVisualTests()
 	overheal.health = BaseStats(UnitType::LightTank).health * 1.5f;
 	CC_CHECK(UnitHealthFraction(overheal) == 1.0f);
 
-	// --- shortcut hints: one line per binding, no duplicates ---
 	const HotkeyMap defaultHotkeys;
 	const std::vector<std::string> hints = ShortcutHintLines(defaultHotkeys);
 	CC_CHECK(!hints.empty());
@@ -48,7 +46,6 @@ void RunSelectionVisualTests()
 	}
 	CC_CHECK(hasPause);
 	CC_CHECK(hasHintsToggle);
-	// --- live overlay: rebinding an action updates its hint line ---
 	HotkeyMap rebound = defaultHotkeys;
 	rebound.Rebind("AttackMove", KEY_Q);
 	const std::vector<std::string> reboundHints = ShortcutHintLines(rebound);
@@ -63,7 +60,6 @@ void RunSelectionVisualTests()
 	CC_CHECK(hasNewBinding);
 	CC_CHECK(!hasOldBinding);
 
-	// --- hover tooltip debounce: new target resets, hold past delay shows ---
 	HoverTooltipState tip;
 	Registry tipReg;
 	Entity u1 = tipReg.Create();
@@ -81,7 +77,6 @@ void RunSelectionVisualTests()
 	CC_CHECK(UpdateHoverTooltip(tip, u2, 0.1f, kHoverTooltipDelay));  // 0.45s >= delay
 	CC_CHECK(!UpdateHoverTooltip(tip, kInvalidEntity, 1.0f, kHoverTooltipDelay)); // lost: hides
 
-	// --- tooltip lines: summary + stance/state ---
 	const Orders tipOrders;
 	const std::vector<std::string> tipLines = UnitTooltipLines(uu1, tipOrders);
 	CC_CHECK(tipLines.size() == 2);

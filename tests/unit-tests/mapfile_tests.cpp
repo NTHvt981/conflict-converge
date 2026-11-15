@@ -101,7 +101,6 @@ const char *kValidMap = "# Conflict Converge map v1\n"
 
 void RunMapFileTests()
 {
-	// --- terrain types + cost hook ---
 	CC_CHECK(!TileMap(4, 4).IsBlocked({ 0, 0 })); // grass
 	TileMap blocked(4, 4);
 	blocked.Set({ 0, 0 }, TerrainType::Forest);
@@ -120,7 +119,6 @@ void RunMapFileTests()
 	CC_CHECK(InfoOf(UnitType::PrototypeInfantry).locomotor == Locomotor::Foot);
 	CC_CHECK(InfoOf(UnitType::Medic).locomotor == Locomotor::Foot);
 
-	// --- NearestFreeTile: walkable spawn points around footprints ---
 	TileMap freeMap(8, 8);
 	CC_CHECK(NearestFreeTile(freeMap, 3, 3) == cc::IVec2(3, 3)); // open ground
 	freeMap.Set({ 3, 3 }, TerrainType::Building);
@@ -131,7 +129,6 @@ void RunMapFileTests()
 	solid.Clear(TerrainType::Water);
 	CC_CHECK(NearestFreeTile(solid, 1, 1) == cc::IVec2(1, 1)); // nowhere: fallback
 
-	// --- valid parse: every legend character lands correctly ---
 	const std::string good = TempMap("cc_map_good.map");
 	WriteFile(good, kValidMap);
 	MapData data;
@@ -150,7 +147,6 @@ void RunMapFileTests()
 	CC_CHECK(data.aiSpawns.size() == 1 && data.aiSpawns[0] == cc::IVec2(3, 1));
 	CC_CHECK(data.nodes.size() == 2);
 
-	// --- rejection paths ---
 	MapData bad;
 	CC_CHECK(!ParseMapFile(TempMap("cc_map_missing.map"), bad)); // absent file
 	const std::string badChar = TempMap("cc_map_badchar.map");
@@ -172,7 +168,6 @@ void RunMapFileTests()
 	WriteFile(noComment, "name=N\nauthor=\nwidth=2\nheight=1\n..\n");
 	CC_CHECK(!ParseMapFile(noComment, bad));
 
-	// --- apply: resize + terrain + default node amounts ---
 	TileMap applied(2, 2);
 	ResourceNodes appliedNodes;
 	CC_CHECK(ApplyMapData(data, applied, appliedNodes));
@@ -185,7 +180,6 @@ void RunMapFileTests()
 	const ResourceNode *iron = appliedNodes.FindAt({ 2, 1 });
 	CC_CHECK(iron != nullptr && iron->kind == ResourceKind::Iron && iron->amount == 200.0f);
 
-	// --- shipped maps: load, dims, markers, connectivity ---
 	const char *shipped[] = { "crossroads.map", "twin_basins.map", "high_ridge.map",
 								"salt_flats.map" };
 	for (const char *name : shipped)
@@ -221,7 +215,6 @@ void RunMapFileTests()
 		}
 	}
 
-	// --- 2v2 map: two markers per side, wider dims, same guarantees ---
 	{
 		MapData falls;
 		CC_CHECK(LoadShipped("twin_falls_2v2.map", falls));
@@ -250,7 +243,6 @@ void RunMapFileTests()
 		}
 	}
 
-	// --- demo smoke: the exact placements main.cpp uses must fit ---
 	{
 		MapData demo;
 		CC_CHECK(LoadShipped("crossroads.map", demo));
@@ -302,7 +294,6 @@ void RunMapFileTests()
 		}
 	}
 
-	// --- save/load roundtrip on a loaded map ---
 	MapData cross;
 	CC_CHECK(LoadShipped("crossroads.map", cross));
 	Registry registry;
@@ -343,7 +334,6 @@ void RunMapFileTests()
 	std::remove(savePath.c_str());
 	std::remove(good.c_str());
 
-	// --- ListMaps enumerates the shipped data/maps dir for setup ---
 	const std::string dataDirs[] = { "data/maps", "../../data/maps", "../../../data/maps" };
 	std::string dataDir;
 	for (const std::string &dir : dataDirs)
@@ -376,7 +366,6 @@ void RunMapFileTests()
 	}
 	CC_CHECK(ListMaps(TempMap("cc_no_such_dir_xyz")).empty()); // missing dir
 
-	// --- QoL editor Save-As: name guard + derived-path roundtrip ---
 	{
 		CC_CHECK(IsValidMapSaveName("custom"));
 		CC_CHECK(IsValidMapSaveName("my_map-2"));
@@ -407,7 +396,6 @@ void RunMapFileTests()
 		std::remove(outPath.c_str());
 	}
 
-	// --- QoL editor: WriteMapFile round-trips through ParseMapFile ---
 	{
 		MapData draft;
 		draft.name = "Probe";
@@ -433,7 +421,6 @@ void RunMapFileTests()
 		std::remove(outPath.c_str());
 	}
 
-	// --- QoL editor: oversize/empty writes fail without touching disk ---
 	{
 		MapData huge;
 		huge.name = "Huge";
@@ -451,7 +438,6 @@ void RunMapFileTests()
 		CC_CHECK(!WriteMapFile(noname, TempMap("cc_editor_noname.map")));
 	}
 
-	// --- QoL editor: PaintEditorCell marker bookkeeping ---
 	{
 		MapData canvas;
 		canvas.name = "Paint";
@@ -471,7 +457,6 @@ void RunMapFileTests()
 		CC_CHECK(canvas.nodes.empty());
 	}
 
-	// --- QoL editor: ValidateMapPlayable names the first problem ---
 	{
 		MapData empty;
 		empty.name = "Empty";

@@ -24,16 +24,8 @@ class HotkeyMap;
 class RmlUiHost;
 struct MenuFlow;
 
-// Parity notes vs MenuScreens (raygui), kept deliberately:
-// - Esc/Back stays with ShortcutBindings (game owns Esc); forwarded keys
-//   exclude Escape so RmlUi never double-handles it.
-// - Settings write live into MenuSettings but persist to settings.cfg on
-//   Back, like the raygui screen (plus the TEXT_SIZE + color-blind live
-//   applies the raygui screen does every draw).
-// - Clicks that raygui does not announce (Start, load-slot, replay) stay
-//   silent here too.
-// - HotkeyRemap/MapEditor/ReplayViewer stay with MenuScreens (capture and
-//   editor canvas are Phase 4); the remap entry point routes there.
+// Esc/Back stays with ShortcutBindings (game owns Esc); forwarded keys exclude
+// Escape so RmlUi never double-handles it.
 class RmlUiMenus : public Rml::EventListener
 {
 public:
@@ -42,38 +34,30 @@ public:
 	RmlUiMenus(const RmlUiMenus &) = delete;
 	RmlUiMenus &operator=(const RmlUiMenus &) = delete;
 
-	// Loads the five menu documents and attaches listeners. Hides the Phase 1
-	// stub on success. False when the host is not ready or a document is
-	// missing (caller falls back to the raygui branch).
+	// False when the host is not ready or a document is missing (caller falls back).
 	bool Init(RmlUiHost &host, const std::string &dataDir);
 	void Shutdown();
 	bool IsReady() const { return ready_; }
 
-	// True for the states this owner draws (caller skips MenuScreens::Draw).
-	// False before Init succeeds, so a document failure falls back to the
-	// raygui branch instead of dereferencing a null context.
+	// States this owner draws; false before Init so a document failure falls back
+	// instead of dereferencing a null context.
 	bool HandlesState() const;
-	// Hides every document (call when falling back to another branch).
+	// Hides every document; call when falling back.
 	void HideAll();
 	// RCSS-only restyle of every owned document: DOM, state and listeners survive.
 	void ReloadStyleSheets();
-	// One menu-branch frame: audio parity, input pump, doc sync, own
-	// Begin/EndDrawing pair. Returns the confirm-modal button pressed.
+	// One menu-branch frame (own Begin/EndDrawing pair); returns the confirm button.
 	// HotkeyRemap routes internally to the remap screen.
 	ConfirmChoice Draw(int screenWidth, int screenHeight);
-	// World-branch remap overlay (Phase 4): no frame management, no audio —
-	// the caller owns BeginDrawing and the HUD pumps the mouse. Shares the
-	// capture machine below.
+	// World-branch overlay: no frame management or audio (caller owns BeginDrawing,
+	// the HUD pumps the mouse). Shares the capture machine.
 	void DrawRemapOverlay();
-	// Menu-branch remap screen: own Begin/EndDrawing pair (called from Draw
-	// for HotkeyRemap).
+	// Menu-branch remap screen: own Begin/EndDrawing pair.
 	void DrawRemapScreen(int screenWidth, int screenHeight);
-	// Arm a remap capture (mirrors MenuScreens::BeginRemap; RML remap entries
-	// from Settings or pause call this instead).
+	// Arms a remap capture; RML remap entries call this.
 	void BeginRemap(MenuState returnTo);
-	// Esc: cancel an armed capture, else back out; true when consumed
-	// (mirrors MenuScreens::CancelRemapCapture; ShortcutBindings prefers this
-	// while the RML remap screen owns the state).
+	// Esc: cancel an armed capture, else back out; true when consumed.
+	// ShortcutBindings prefers this while the RML remap screen owns the state.
 	bool CancelRemapCapture();
 
 	void ProcessEvent(Rml::Event &event) override;
@@ -129,10 +113,10 @@ private:
 	Rml::ElementDocument *loadDoc_ = nullptr;
 	Rml::ElementDocument *confirmDoc_ = nullptr;
 	Rml::ElementDocument *remapDoc_ = nullptr;
-	int remapArming_ = -1; // action being rebound (-1 = none)
-	std::string remapConflictAction_; // pending conflict (awaiting steal click)
+	int remapArming_ = -1; // action being rebound, -1 = none
+	std::string remapConflictAction_; // pending conflict, awaiting the steal click
 	int remapConflictKey_ = 0;
-	MenuState remapReturn_ = MenuState::Settings; // where Back returns to
+	MenuState remapReturn_ = MenuState::Settings;
 	std::string remapCache_;
 	std::string mapCache_;
 };

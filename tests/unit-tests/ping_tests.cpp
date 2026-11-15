@@ -12,7 +12,6 @@
 
 void RunPingTests()
 {
-	// --- raise + active + latest ---
 	{
 		Pings pings;
 		Vector2 pos = {};
@@ -25,7 +24,6 @@ void RunPingTests()
 		CC_CHECK(pos.x == 100.0f && pos.y == 200.0f);
 	}
 
-	// --- ResetForMatch clears pings and restores the retrigger floor ---
 	{
 		Pings pings;
 		pings.RaiseAt({ 0.0f, 0.0f }, PingKind::UnderAttack, 10.0);
@@ -35,12 +33,10 @@ void RunPingTests()
 		CC_CHECK(pings.Active().empty());
 		Vector2 pos = {};
 		CC_CHECK(!pings.Latest(pos));
-		// Floors restored: same-kind raise at the same clock passes again.
 		pings.RaiseAt({ 2.0f, 2.0f }, PingKind::UnderAttack, 10.0);
 		CC_CHECK(pings.Active().size() == 1);
 	}
 
-	// --- same-kind retrigger floor swallows spam, other kinds pass ---
 	{
 		Pings pings;
 		pings.RaiseAt({ 0.0f, 0.0f }, PingKind::UnderAttack, 10.0);
@@ -52,7 +48,6 @@ void RunPingTests()
 		CC_CHECK(pings.Active().size() == 3);
 	}
 
-	// --- aging expiry + dt<=0 no-op ---
 	{
 		Pings pings;
 		pings.RaiseAt({ 0.0f, 0.0f }, PingKind::UnderAttack, 0.0);
@@ -68,10 +63,7 @@ void RunPingTests()
 		CC_CHECK(!pings.Latest(pos));
 	}
 
-	// --- expiry preserves chronological order (no swap-and-pop reorder) ---
-	// RaiseAt evicts from the front and Latest reads the back, so Update
-	// must remove expired pings order-preservingly. A expires here while
-	// B and C survive: survivors must stay [B, C] with C latest.
+	// Expiry preserves order: RaiseAt evicts from the front, Latest reads the back.
 	{
 		Pings ordered;
 		ordered.RaiseAt({ 1.0f, 1.0f }, PingKind::UnderAttack, 0.0);
@@ -87,7 +79,6 @@ void RunPingTests()
 		CC_CHECK(latest.x == 3.0f && latest.y == 3.0f);
 	}
 
-	// --- factory lifecycle events carry position + team ---
 	{
 		Registry registry;
 		ResourceSystem resources;

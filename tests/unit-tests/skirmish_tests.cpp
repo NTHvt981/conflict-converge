@@ -4,12 +4,12 @@
 #include "test_harness.h"
 
 #include "units/AICommander.h"
-#include "economy/Building.h" // UpdateBaseIncome, HasBootcamp placement
+#include "economy/Building.h"
 #include "core/Event.h"
 #include "world/FogOfWar.h"
 #include "app/ui/GameCamera.h"
 #include "world/MapFile.h"
-#include "app/match/Menu.h" // TeamHasUnits
+#include "app/match/Menu.h"
 #include "economy/Nodes.h"
 #include "economy/Production.h"
 #include "core/Registry.h"
@@ -17,7 +17,7 @@
 #include "app/match/Skirmish.h"
 #include "world/Pathfinder.h"
 #include "world/TileMap.h"
-#include "units/Unit.h" // UpdateUnit
+#include "units/Unit.h"
 #include "units/UnitFactory.h"
 
 #include <string>
@@ -60,8 +60,7 @@ struct Harness
 						 &camera };
 };
 
-// 2v2 overflow: allied commander (team 0) + second enemy (team 1) wired
-// into the bundle; 1v1 Harness above leaves them null by default.
+// 2v2: allied commander (team 0) + second enemy (team 1); 1v1 Harness leaves them null.
 struct Harness2v2
 {
 	Registry registry;
@@ -106,7 +105,6 @@ Vector2 ProducerSpawnPos(T &game, BuildingType type)
 
 void RunSkirmishTests()
 {
-	// --- SpotsForMap: markers win, missing files fall back to legacy ---
 	const std::string cross = ShippedMap("crossroads.map");
 	CC_CHECK(!cross.empty());
 	SkirmishSpots spots;
@@ -131,11 +129,9 @@ void RunSkirmishTests()
 	CC_CHECK(legacy.playerHome == cc::IVec2(2, 2));
 	CC_CHECK(legacy.aiHome == cc::IVec2(16, 9));
 
-	// --- null bundle refused ---
 	SkirmishWorld empty;
 	CC_CHECK(!BuildSkirmish(empty, cross, AIDifficulty::Medium));
 
-	// --- BuildSkirmish fields both sides headless ---
 	Harness game;
 	CC_CHECK(BuildSkirmish(game.world, cross, AIDifficulty::Hard));
 	CC_CHECK(game.ai.Difficulty() == AIDifficulty::Hard);
@@ -147,14 +143,12 @@ void RunSkirmishTests()
 	CC_CHECK(game.ai.HasBootcamp());
 	CC_CHECK(game.ai.HasWorkshop());
 	CC_CHECK(game.resources.iron >= 0 && game.resources.oil >= 0);
-	// Camera aims at the player home.
 	const Vector2 expectTarget =
 		cc::ToRaylib(cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) +
 					 cc::Vec2(cc::kHalfTile, cc::kHalfTile));
 	CC_CHECK(game.camera.view.target.x == expectTarget.x);
 	CC_CHECK(game.camera.view.target.y == expectTarget.y);
 
-	// --- headless Start simulates: 10 seconds, both sides live ---
 	for (int i = 0; i < 600; ++i)
 	{
 		const float dt = 1.0f / 60.0f;
@@ -183,7 +177,6 @@ void RunSkirmishTests()
 	CC_CHECK(TeamHasUnits(game.registry, kPlayerTeam));
 	CC_CHECK(TeamHasUnits(game.registry, kEnemyTeam));
 
-	// --- ResetSkirmish drops the match (quit-to-menu teardown) ---
 	ResetSkirmish(game.world);
 	CC_CHECK(!TeamHasUnits(game.registry, kPlayerTeam));
 	CC_CHECK(!TeamHasUnits(game.registry, kEnemyTeam));
@@ -195,13 +188,11 @@ void RunSkirmishTests()
 	ResetSkirmish(game.world); // safe on an empty world too
 	CC_CHECK(true);
 
-	// --- a fresh Build after Reset re-arms everything ---
 	CC_CHECK(BuildSkirmish(game.world, cross, AIDifficulty::Easy));
 	CC_CHECK(game.ai.Difficulty() == AIDifficulty::Easy);
 	CC_CHECK(TeamHasUnits(game.registry, kPlayerTeam));
 	CC_CHECK(TeamHasUnits(game.registry, kEnemyTeam));
 
-	// --- BuildSandbox: terrain + player prototype squad, nothing else ---
 	const std::string proto = ShippedMap("prototype.map");
 	CC_CHECK(!proto.empty());
 	if (!proto.empty())
@@ -215,11 +206,8 @@ void RunSkirmishTests()
 		Harness sand;
 		CC_CHECK(BuildSandbox(sand.world, proto));
 		CC_CHECK(sand.map.Width() == 20 && sand.map.Height() == 10);
-		// Sandbox seeds player-side foot units stacked at the same spawn
-		// tile (BuildSandbox computes the free tile once and reuses it for
-		// every SpawnPrepaid call). Composition is BuildSandbox's business:
-		// this block only checks the match-level invariants below.
-		// No buildings, no enemy side, no funds, no queue.
+		// Sandbox stacks the foot squad on one spawn tile; only match-level
+		// invariants: no buildings, no enemy side, no funds, no queue.
 		int buildings = 0;
 		sand.registry.Each<Building>([&](Entity, const Building &) { ++buildings; });
 		CC_CHECK(buildings == 0);
@@ -227,21 +215,17 @@ void RunSkirmishTests()
 		CC_CHECK(sand.resources.iron == 0 && sand.resources.oil == 0);
 		CC_CHECK(sand.bootcampQueue.Empty());
 		CC_CHECK(sand.workshopQueue.Empty());
-		// The squad parks on walkable ground at the marker (spawn tiles are
-		// free by construction: BuildSandbox places units via NearestFreeTile
-		// from the player spawn, so read the marker back instead of a
-		// hardcoded tile that rots when the map is reworked).
+		// Read the spawn marker back rather than hardcoding a tile that rots
+		// when the map is reworked.
 		CC_CHECK(sand.map.Get(protoData.playerSpawns[0]) != TerrainType::Water);
 	}
 
-	// --- BuildSandbox refuses maps without a player spawn ---
 	{
 		Harness sand;
 		CC_CHECK(!BuildSandbox(sand.world, "data/does-not-exist.map"));
 		CC_CHECK(!TeamHasUnits(sand.registry, kPlayerTeam));
 	}
 
-	// --- prototype.map: producer rallies avoid footprints, spawns land on free tiles ---
 	const std::string stuckMap = ShippedMap("prototype.map");
 	CC_CHECK(!stuckMap.empty());
 	if (!stuckMap.empty())
@@ -296,7 +280,6 @@ void RunSkirmishTests()
 		CC_CHECK(TeamHasUnits(stuck.registry, kPlayerTeam));
 	}
 
-	// --- 2v2: twin-falls markers arm the allied + second enemy commanders ---
 	const std::string falls = ShippedMap("twin_falls_2v2.map");
 	CC_CHECK(!falls.empty());
 	if (!falls.empty())

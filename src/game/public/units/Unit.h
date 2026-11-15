@@ -63,8 +63,6 @@ enum class AttackPhase
 	Count
 };
 
-// Combat stances: Guard acquires and chases, Hold stands and fires,
-// Patrol loops waypoints when no combat interrupts.
 enum class Stance
 {
 	Hold,
@@ -73,7 +71,6 @@ enum class Stance
 	Count
 };
 
-// Shift-queued order; `kind` selects which payload fields are valid.
 enum class QueuedOrderKind
 {
 	Move,
@@ -90,12 +87,11 @@ struct QueuedOrder
 {
 	QueuedOrderKind kind = QueuedOrderKind::Move;
 	Vector2 pointA = {};
-	Vector2 pointB = {}; // Patrol's second waypoint
-	Entity target = kInvalidEntity; // Repair's target
+	Vector2 pointB = {};
+	Entity target = kInvalidEntity;
 };
 
-// 8-way facing = prototype sheet column: 0 top, 1 top-left, 2 left,
-// 3 bottom-left, 4 bottom, 5 bottom-right, 6 right, 7 top-right.
+// Atlas column: 0 top, then counter-clockwise to 7 top-right.
 enum class Facing : int
 {
 	Top = 0,
@@ -109,7 +105,7 @@ enum class Facing : int
 	Count
 };
 
-// Screen-space velocity (y down) -> nearest octant column; zero -> Right.
+// Nearest octant from screen velocity (y down); zero -> Right.
 Facing FacingFromVelocity(Vector2 velocity);
 
 struct Unit
@@ -119,25 +115,25 @@ struct Unit
 	DamageType damageType = DamageType::KINETIC; // dealt by this unit
 	int attackPower = 0;
 	int attackRange = 0; // pixels
-	float cooldownTime = 0.0f; // seconds between attacks
-	float windupTime = 0.15f; // telegraph before the hit lands
+	float cooldownTime = 0.0f; // seconds
+	float windupTime = 0.15f;
 	float speed = 0.0f; // pixels per second
 	float sightRange = 0.0f; // pixels
-	Vector2 position = {}; // snapped to 64x64 grid
+	Vector2 position = {}; // snapped to the tile grid
 	Vector2 velocity = {};
 	bool isSelected = false;
-	unsigned int controlGroups = 0; // bit N = control group N; 0 = none
+	unsigned int controlGroups = 0;
 	TeamId teamID = kPlayerTeam;
 	UnitType type = UnitType::RifleInfantry;
 	UnitState state = UnitState::Idle;
 	Facing facing = Facing::Right;
-	// Anchor tile is the unit's logical position; the footprint extends
-	// toward +x/+y from the anchor. Occupancy and CanEnter check all tiles.
+	// Anchor tile is the logical position; the footprint extends toward
+	// +x/+y from it, and occupancy checks all covered tiles.
 	int footprintWidth = 1;
 	int footprintHeight = 1;
 };
 
-// Snap a unit's world position to its tile's top-left corner (64x64 grid).
+// Top-left corner of the unit's tile.
 inline void SnapUnitToTile(Unit &unit)
 {
 	unit.position = cc::ToRaylib(cc::SnapToTile(cc::ToGlm(unit.position)));
@@ -160,14 +156,11 @@ float EffectiveSpeed(const Unit &unit, const Mover &mover);
 
 void IssueMoveOrder(Unit &unit, Orders &orders, Mover &mover, Vector2 worldTarget);
 
-// Call before issuing a fresh non-queued order.
 void ClearOrders(Unit &unit, Orders &orders, Mover &mover);
 
-// Attack-move: engage enemies on contact and resume the march when lost.
 void IssueAttackMoveOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
 						  Vector2 worldTarget);
 
-// Footprint-aware attack-move: the initial march routes around units.
 void IssueAttackMoveOrderFootprint(Unit &unit, const OrderContext &ctx, Vector2 worldTarget);
 
 // Leaving Patrol drops the route.
@@ -176,15 +169,13 @@ void SetStance(Unit &unit, Orders &orders, CombatState &combat, Stance stance);
 void IssuePatrolOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map, Vector2 pointA,
 					  Vector2 pointB);
 
-// Engineer repair order on a same-team mechanical unit or Operational building.
+// Same-team mechanical unit or Operational building.
 void IssueRepairOrder(Unit &engineer, Orders &orders, Mover &mover, Entity target);
 
-// Player-side pre-check for the right-click repair gesture.
 bool CanRepairTarget(const Registry &registry, const Unit &engineer, Entity target);
 
 void IssueHealOrder(Unit &medic, Orders &orders, Mover &mover, Entity target);
 
-// Player-side pre-check for the right-click heal gesture.
 bool CanHealTarget(const Registry &registry, const Unit &medic, Entity target);
 
 struct RepairAssignment
@@ -193,9 +184,7 @@ struct RepairAssignment
 	Entity target = kInvalidEntity;
 };
 
-// Pure sweep of damaged supportable units/buildings overlapping worldArea:
-// repairable vehicles + operational buildings (engineers) plus wounded
-// flesh units (medics).
+// Repairable vehicles + operational buildings, plus wounded flesh units (medics).
 void CollectAreaRepairCandidates(Registry &registry, Rectangle worldArea, TeamId teamID,
 								 std::vector<Entity> &out);
 
@@ -204,7 +193,7 @@ int AssignAreaRepair(const Registry &registry, const std::vector<Entity> &engine
 					 const std::vector<Entity> &candidates,
 					 std::vector<RepairAssignment> &out);
 
-// Attack-ground: shell worldPos continuously until cancelled.
+// Attack-ground: shell worldPos until cancelled.
 void IssueAttackGroundOrder(Unit &unit, Orders &orders, Mover &mover, const TileMap &map,
 							Vector2 worldPos);
 void IssueAttackGroundOrderFootprint(Unit &unit, const OrderContext &ctx, Vector2 worldPos);
@@ -212,18 +201,15 @@ void IssueAttackGroundOrderFootprint(Unit &unit, const OrderContext &ctx, Vector
 void IssueLoadOrder(Unit &carrier, Orders &orders, Mover &mover, Entity passenger);
 void IssueUnloadOrder(Unit &carrier, Orders &orders, Mover &mover, const TileMap &map,
 					  Vector2 worldPos);
-// Foot-only, same-team, live, non-embarked passenger with a free seat.
-// Enemies/vehicles/full carriers reject like heal validation.
 bool CanLoadTarget(const Registry &registry, Entity carrier, const Unit &carrierUnit,
 				   Entity passenger);
 // False when invalid.
 bool BoardTransport(Registry &registry, Entity carrier, Entity passenger);
 int UnloadTransport(Registry &registry, const TileMap &map, Entity carrier, Vector2 worldPos);
 
-// Shared retreat threshold: fraction of type-max HP below which units fall back.
+// Fraction of type-max HP; shared by player and AI.
 inline constexpr float kRetreatHealthFraction = 0.3f;
 
-// Resolve the player's retreat home: nearest owned Base to the army centroid.
 Vector2 ResolvePlayerRetreatHome(Registry &registry);
 
 void RetreatIfLowHP(Registry &registry, TileMap &map, OccupancyGrid *occ, Vector2 home,
@@ -244,9 +230,6 @@ void ResolveStackedUnits(Registry &registry, const TileMap &map, OccupancyGrid &
 void PumpYieldHandshake(Registry &registry, const TileMap &map, OccupancyGrid &occ,
 						float dtSeconds);
 
-// G3 crush: a `crushesFlesh` unit overlapping an enemy foot unit kills it
-// instead of pushing. Team-checked (no friendly crush); kills resolve before
-// occupancy so the tile frees. Vehicles/buildings are never crushed.
 void ResolveCrush(Registry &registry);
 
 void RunUnitMovementFrame(Registry &registry, TileMap &map, OccupancyGrid &occ,

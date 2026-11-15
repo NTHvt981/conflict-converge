@@ -1,11 +1,10 @@
-// Unit tests for QoL shift-queued order chains (enqueue, FIFO dequeue on
-// completion, patrol/cancel semantics, idle-immediate).
+// Unit tests for shift-queued order chains (enqueue, FIFO dequeue, patrol/cancel, idle-immediate).
 
 #include "test_harness.h"
 
 #include "units/Extensions.h"
 #include "units/Formation.h"
-#include "world/Pathfinder.h" // OccupancyGrid for the footprint-aware order paths
+#include "world/Pathfinder.h"
 #include "world/TileMap.h"
 #include "units/Unit.h"
 #include "units/UnitStats.h"
@@ -32,7 +31,6 @@ Vector2 TilePos(int tileX, int tileY)
 	return cc::ToRaylib(cc::TileToWorld(tileX, tileY));
 }
 
-// Walk frames until `unit` is attack-moving (or the budget runs out).
 void WalkUntilAttackMove(Entity id, Registry &registry, TileMap &map, int maxFrames)
 {
 	for (int i = 0; i < maxFrames; ++i)
@@ -49,7 +47,6 @@ void WalkUntilAttackMove(Entity id, Registry &registry, TileMap &map, int maxFra
 
 void RunOrderQueueTests()
 {
-	// --- queueing behind a live order ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -71,12 +68,10 @@ void RunOrderQueueTests()
 					   true, QueuedOrder{ QueuedOrderKind::Patrol, TilePos(8, 8), TilePos(1, 8) });
 		CC_CHECK(orders.orderQueue.size() == 2);
 
-		// First order completes -> attack-move dequeues and starts.
 		WalkUntilAttackMove(id, registry, map, 30);
 		CC_CHECK(orders.attackMove);
 		CC_CHECK(orders.orderQueue.size() == 1);
 
-		// March completes (no enemies: sightRange 0) -> patrol takes over.
 		for (int i = 0; i < 60 && !orders.hasPatrol; ++i)
 		{
 			UpdateUnit(id, registry, map, 1.0f);
@@ -85,7 +80,6 @@ void RunOrderQueueTests()
 		CC_CHECK(orders.orderQueue.empty());
 	}
 
-	// --- queueing on an idle unit issues immediately ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -99,7 +93,6 @@ void RunOrderQueueTests()
 		CC_CHECK(orders.orderQueue.empty());
 	}
 
-	// --- non-queued issue replaces the whole queue ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -117,7 +110,6 @@ void RunOrderQueueTests()
 		CC_CHECK(orders.orderQueue.empty());
 	}
 
-	// --- patrol legs never dequeue what waits behind them ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -135,7 +127,6 @@ void RunOrderQueueTests()
 		CC_CHECK(orders.orderQueue.size() == 1); // nothing dequeued
 	}
 
-	// --- blocked cancel drops the rest of the queue ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -153,7 +144,6 @@ void RunOrderQueueTests()
 		CC_CHECK(orders.orderQueue.empty()); // stuck: rest dropped, not marched
 	}
 
-	// --- repair orders queue and complete like other order types ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -186,7 +176,6 @@ void RunOrderQueueTests()
 		CC_CHECK(patient->health == maxHp);
 	}
 
-	// --- Bugfix: fresh single move clears a stale repair order ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -212,7 +201,6 @@ void RunOrderQueueTests()
 		CC_CHECK(registry.Get<Mover>(eng)->hasMoveOrder || registry.Get<Mover>(eng)->hasPath);
 	}
 
-	// --- Bugfix: squad formation move clears a stale attack-ground order ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -234,7 +222,6 @@ void RunOrderQueueTests()
 				 registry.Get<Mover>(squad[0])->hasPath);
 	}
 
-	// --- Bugfix: line formation move clears a stale patrol (no resume) ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -250,7 +237,6 @@ void RunOrderQueueTests()
 											TilePos(12, 10), false);
 		CC_CHECK(!orders.hasPatrol);
 		CC_CHECK(registry.Get<Mover>(id)->hasMoveOrder || registry.Get<Mover>(id)->hasPath);
-		// Walk to arrival: must stop, not resume the old patrol route.
 		for (int i = 0; i < 60; ++i)
 		{
 			UpdateUnit(id, registry, map, 1.0f);
@@ -258,7 +244,6 @@ void RunOrderQueueTests()
 		CC_CHECK(!orders.hasPatrol);
 	}
 
-	// --- Bugfix: line formation move drops a queued backlog ---
 	{
 		Registry registry;
 		TileMap map(20, 15);

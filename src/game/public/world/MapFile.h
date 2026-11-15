@@ -10,9 +10,6 @@
 class ResourceNodes;
 class OccupancyGrid;
 
-// Text `.map` format: 5-line header (comment, name, author, width, height),
-// then exactly height rows of exactly width legend characters.
-
 struct MapNodeSpawn
 {
 	ResourceKind kind = ResourceKind::Iron;
@@ -31,26 +28,24 @@ struct MapData
 	std::vector<cc::IVec2> aiSpawns;
 };
 
-// Parse a .map file; false leaves `out` untouched.
+// False leaves `out` untouched.
 bool ParseMapFile(const std::string &path, MapData &out);
 
-// False only on dimension overflow. The OccupancyGrid overload resyncs and
-// clears the grid to the new dims.
+// False only on dimension overflow; the OccupancyGrid overload clears the grid to
+// the new dims.
 bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes);
 bool ApplyMapData(const MapData &data, TileMap &map, ResourceNodes &nodes,
 				  OccupancyGrid *occ);
 
-// QoL map editor: inverse of ParseMapFile. False (writing nothing) on data
-// that would not load back.
+// Inverse of ParseMapFile; writes nothing and returns false on data that would
+// not reload.
 bool WriteMapFile(const MapData &data, const std::string &path);
 
-// QoL map editor: playability check (warns, never blocks). False sets
-// *warning to the first failed check.
+// Warns, never blocks; false sets *warning to the first failed check.
 bool ValidateMapPlayable(const MapData &data, std::string *warning);
 
 void PaintEditorCell(MapData &map, char brush, cc::IVec2 tile);
 
-// Filename guard before WriteMapFile.
 bool IsValidMapSaveName(const std::string &name);
 
 struct MapEntry
@@ -64,6 +59,5 @@ struct MapEntry
 
 std::vector<MapEntry> ListMaps(const std::string &dir);
 
-// Nearest walkable tile within a small spiral (avoid spawning inside
-// footprints); falls back to the requested tile.
+// Small spiral search; falls back to the requested tile.
 cc::IVec2 NearestFreeTile(const TileMap &map, int tileX, int tileY);

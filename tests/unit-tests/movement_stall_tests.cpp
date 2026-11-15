@@ -1,16 +1,5 @@
-// Regression tests for the "units stuck when moving" bug report: converging
-// units must always resolve (arrive or cleanly cancel) within budget, never
-// freeze forever. Both scenarios rely on ordinary occupancy-grid blocking
-// (StepToward's CanEnter -> StepResult::BlockedUnit -> TryBlockedRetry's
-// wait/replan/cancel budget), not on any continuous-space separation pass
-// (removed -- see plans/UnitStackResolution_Plan.md -- stacking is now
-// resolved separately, per exact anchor tile, by ResolveStackedUnits).
-//   1. A head-on corridor swap through a single-tile-wide gap. The corridor
-//      is a dead end (no room to yield), so completing the swap isn't
-//      achievable -- the correct fix outcome is a clean cancel within
-//      budget, not a silent forever-freeze.
-//   2. A 5-unit formation move funneling through a single-tile gap, which
-//      does have room to resolve and must fully complete.
+// Converging units always resolve within budget (arrive or cancel cleanly),
+// never freeze; a dead-end 1-tile corridor swap can only cancel.
 
 #include "test_harness.h"
 
@@ -42,11 +31,6 @@ void RunMovementStallTests()
 {
 	constexpr float kDt = 1.0f / 60.0f;
 
-	// --- Scenario 1: head-on corridor swap through a 1-tile-wide gap ---
-	// A single row (y=1) is the only passable lane between two units
-	// approaching from opposite ends; everything above/below is walled, so
-	// there is no room to route around each other -- they must meet and
-	// pass through the middle.
 	{
 		TileMap map(5, 3);
 		for (int x = 0; x < 5; ++x)
@@ -85,13 +69,6 @@ void RunMovementStallTests()
 			}
 		}
 
-		// A true head-on swap in a dead-end 1-tile corridor has no room for
-		// either side to yield, so completing it isn't achievable without a
-		// backtrack/yield behavior this codebase doesn't have -- cancelling
-		// (same as the existing "permanent wall" behavior) is the correct
-		// outcome. What must never happen is a silent forever-freeze: both
-		// orders must resolve (complete or cancel) well within budget, and
-		// the units must not end up wedged on top of each other.
 		CC_CHECK(!registry.Get<Mover>(a)->hasMoveOrder && !registry.Get<Mover>(a)->hasPath);
 		CC_CHECK(!registry.Get<Mover>(b)->hasMoveOrder && !registry.Get<Mover>(b)->hasPath);
 		CC_CHECK(!(cc::WorldToTile(cc::ToGlm(ua->position)) ==
@@ -99,7 +76,6 @@ void RunMovementStallTests()
 		CC_CHECK(frame < kBudget);
 	}
 
-	// --- Scenario 2: 5-unit formation move funneled through a 1-tile gap ---
 	{
 		TileMap map(10, 5);
 		for (int y = 0; y < 5; ++y)

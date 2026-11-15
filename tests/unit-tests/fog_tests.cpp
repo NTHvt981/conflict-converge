@@ -1,5 +1,5 @@
-// Unit tests for FogOfWar (visibility circles, explored memory,
-// team isolation, scout bonus, save/load byte roundtrip).
+// Unit tests for FogOfWar: visibility circles, explored memory, team
+// isolation, scout bonus, and save/load byte roundtrip.
 
 #include "test_harness.h"
 
@@ -29,7 +29,6 @@ Entity AddWatcher(Registry &registry, TeamId teamID, UnitType type, float sightR
 
 void RunFogTests()
 {
-	// --- circle reveal: sight 256px = 2 tiles from (5,5) ---
 	Registry registry;
 	FogOfWar fog;
 	fog.Resize(20, 15);
@@ -43,11 +42,9 @@ void RunFogTests()
 	CC_CHECK(fog.IsExplored(kPlayerTeam, { 7, 5 }));
 	CC_CHECK(!fog.IsExplored(kPlayerTeam, { 8, 5 }));
 
-	// --- team isolation: team 1 sees nothing from team 0's eyes ---
 	CC_CHECK(!fog.IsVisible(kEnemyTeam, { 5, 5 }));
 	CC_CHECK(!fog.IsExplored(kEnemyTeam, { 5, 5 }));
 
-	// --- explored persists after the watcher leaves ---
 	registry.Clear();
 	AddWatcher(registry, kPlayerTeam, UnitType::LightTank, 256.0f, 15, 12);
 	fog.Recompute(registry);
@@ -55,7 +52,6 @@ void RunFogTests()
 	CC_CHECK(fog.IsExplored(kPlayerTeam, { 5, 5 })); // frozen snapshot
 	CC_CHECK(fog.IsVisible(kPlayerTeam, { 15, 12 }));
 
-	// --- the blind and the dead reveal nothing ---
 	registry.Clear();
 	AddWatcher(registry, kPlayerTeam, UnitType::LightTank, 0.0f, 5, 5);
 	const Entity corpse = AddWatcher(registry, kPlayerTeam, UnitType::LightTank, 500.0f, 5, 5);
@@ -66,7 +62,6 @@ void RunFogTests()
 	CC_CHECK(!dark.IsVisible(kPlayerTeam, { 5, 5 }));
 	CC_CHECK(!dark.IsExplored(kPlayerTeam, { 5, 5 }));
 
-	// --- scout bonus: same sightRange, Infantry out-sees LightTank ---
 	Registry scoutRegistry;
 	FogOfWar scoutFog;
 	scoutFog.Resize(20, 15);
@@ -78,7 +73,6 @@ void RunFogTests()
 	CC_CHECK(!scoutFog.IsVisible(kPlayerTeam, { 7, 5 }));
 	CC_CHECK(scoutFog.IsVisible(kEnemyTeam, { 17, 5 })); // scout bonus reaches
 
-	// --- explored byte roundtrip (+ size-mismatch guard) ---
 	const std::vector<std::uint8_t> bytes = fog.ExploredBytes(kPlayerTeam);
 	CC_CHECK(bytes.size() == 20 * 15);
 	FogOfWar restored;
@@ -94,7 +88,6 @@ void RunFogTests()
 	const std::vector<TeamId> teams = fog.Teams();
 	CC_CHECK(teams.size() == 1 && teams[0] == kPlayerTeam);
 
-	// --- resize wipes memory ---
 	fog.Resize(20, 15);
 	CC_CHECK(!fog.IsExplored(kPlayerTeam, { 5, 5 }));
 	CC_CHECK(fog.Teams().empty());
@@ -102,9 +95,8 @@ void RunFogTests()
 
 void RunFogCombatTests()
 {
-	// Stale-fog setup: recompute with only the enemy present, then drop the
-	// seeker in range WITHOUT recomputing — the enemy tile is unseen by
-	// team 0 although inside the seeker's sightRange.
+	// Stale fog: recompute with only the enemy present, then drop the seeker in
+	// range without recomputing — its tile stays unseen.
 	Registry registry;
 	TileMap map(20, 15);
 	FogOfWar fog;
@@ -132,15 +124,13 @@ void RunFogCombatTests()
 	const Entity seekerId = registry.Create();
 	registry.Add(seekerId, seeker);
 
-	// Ungated legacy path still acquires (default nullptr).
+	// Ungated call (fog omitted) still acquires; gated call holds fire.
 	CC_CHECK(AcquireTarget(registry, seekerId) == foeId);
-	// Gated: shrouded tile holds fire.
 	CC_CHECK(AcquireTarget(registry, seekerId, &fog) == kInvalidEntity);
-	// Fresh recon reveals: recompute with the seeker watching, then acquire.
+	// Fresh recon (recompute with the seeker watching) reveals the tile.
 	fog.Recompute(registry);
 	CC_CHECK(AcquireTarget(registry, seekerId, &fog) == foeId);
 
-	// --- artillery blind-fires into shroud at no penalty ---
 	Registry artyRegistry;
 	FogOfWar artyFog;
 	artyFog.Resize(20, 15);
@@ -152,7 +142,6 @@ void RunFogCombatTests()
 	artyRegistry.Add(batteryId, battery);
 	CC_CHECK(AcquireTarget(artyRegistry, batteryId, &artyFog) == foeId);
 
-	// --- UpdateUnit under fog: blind units idle, artillery engages ---
 	// Fresh registry: foe revealed to nobody, seeker added after recon.
 	Registry blindRegistry;
 	FogOfWar blindFog;

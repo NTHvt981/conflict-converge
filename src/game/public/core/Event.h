@@ -6,8 +6,6 @@
 
 #include "core/Subsystem.h"
 
-// Handlers downcast the base Event to the concrete payload.
-
 enum class EventType
 {
 	None,
@@ -36,7 +34,6 @@ public:
 	using Handler = std::function<void(const Event &)>;
 
 	void Subscribe(EventType type, Handler handler);
-	// In subscription order.
 	void Dispatch(const Event &event) const;
 	void Clear();
 

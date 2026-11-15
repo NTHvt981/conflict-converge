@@ -2,8 +2,8 @@
 
 #include "units/Unit.h"
 
-// Distances are tile units, speed in tile units per second; ApplyBaseStats
-// converts both to world pixels against the current TILE_SIZE.
+// Distances in tiles, speed in tiles per second; ApplyBaseStats converts both
+// to world pixels against the current TILE_SIZE.
 
 struct UnitStats
 {
@@ -19,7 +19,7 @@ struct UnitStats
 
 const UnitStats &BaseStats(UnitType type);
 
-// Anchor footprint in tiles: LightTank is 1x1; IFV/Artillery/HeavyTank span 2x2.
+// Footprint in tiles; vehicles span 2x2 except LightTank.
 cc::IVec2 UnitFootprint(UnitType type);
 
 // Preserves position, team, selection, and orders.

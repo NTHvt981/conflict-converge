@@ -3,9 +3,8 @@
 #include <string>
 #include <string_view>
 
-// Element ids of data/ui/*.rml. The refresh path and the click/change
-// handlers share these, so an id typo fails to compile instead of
-// no-opping at runtime.
+// Element ids of data/ui/*.rml, shared by the refresh path and the click/change
+// handlers so a typo fails to compile instead of no-opping at runtime.
 namespace UiIds
 {
 

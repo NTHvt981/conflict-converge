@@ -10,10 +10,8 @@
 
 void RunMenuTests()
 {
-	// --- Boot lands on the title screen, not in battle ---
 	MenuFlow menu;
 	CC_CHECK(menu.state == MenuState::MainMenu);
-	// --- pause toggle only touches Playing/Paused ---
 	menu.state = MenuState::Playing;
 	menu.TogglePause();
 	CC_CHECK(menu.state == MenuState::Paused);
@@ -27,7 +25,6 @@ void RunMenuTests()
 	menu.TogglePause();
 	CC_CHECK(menu.state == MenuState::Victory);
 
-	// --- outcome matrix; player loss wins ties ---
 	menu.state = MenuState::Playing;
 	menu.ShowOutcome(true, true);
 	CC_CHECK(menu.state == MenuState::Playing);
@@ -40,14 +37,12 @@ void RunMenuTests()
 	menu.ShowOutcome(false, false);
 	CC_CHECK(menu.state == MenuState::GameOver);
 
-	// --- defaults ---
 	MenuFlow fresh;
 	CC_CHECK(fresh.settings.cameraSpeed == 400.0f);
 	CC_CHECK(fresh.settings.showMinimap);
 	CC_CHECK(!fresh.settings.showHints); // hints hide by default
 	CC_CHECK(!fresh.quitRequested);
 
-	// --- team aliveness ignores corpses and other teams ---
 	Registry registry;
 	CC_CHECK(!TeamHasUnits(registry, kPlayerTeam));
 
@@ -70,7 +65,6 @@ void RunMenuTests()
 	CC_CHECK(TeamHasUnits(registry, kEnemyTeam));
 	CC_CHECK(!TeamHasUnits(registry, kPlayerTeam));
 
-	// --- Setup validation (no map = Start disabled) ---
 	MenuFlow boot;
 	CC_CHECK(boot.state == MenuState::MainMenu);
 	CC_CHECK(!boot.setup.CanStart());
@@ -108,7 +102,6 @@ void RunMenuTests()
 	CC_CHECK(boot.state == MenuState::Playing);
 	CC_CHECK(!boot.StartMatch()); // only from the setup screen
 
-	// --- Navigation between menu screens ---
 	boot.OpenMainMenu();
 	CC_CHECK(boot.state == MenuState::MainMenu);
 	boot.OpenSettings();
@@ -120,16 +113,13 @@ void RunMenuTests()
 	boot.ShowOutcome(false, true); // terminal states still reachable
 	CC_CHECK(boot.state == MenuState::GameOver);
 
-	// --- Esc/Back policy: modals, submenu back, direct teardown ---
 	{
 		MenuFlow esc;
 		CC_CHECK(!esc.ConfirmOpen());
-		// MainMenu: ask before quitting to desktop
 		CC_CHECK(esc.OnBackPressed() == BackAction::OpenQuitConfirm);
 		CC_CHECK(esc.confirm == ConfirmKind::QuitApp);
 		CC_CHECK(esc.OnBackPressed() == BackAction::None); // Esc cancels the modal
 		CC_CHECK(!esc.ConfirmOpen());
-		// Sub-menus navigate back to the title
 		esc.OpenSetup({});
 		CC_CHECK(esc.OnBackPressed() == BackAction::Navigate);
 		CC_CHECK(esc.state == MenuState::MainMenu);
@@ -139,7 +129,6 @@ void RunMenuTests()
 		esc.OpenLoad();
 		CC_CHECK(esc.OnBackPressed() == BackAction::Navigate);
 		CC_CHECK(esc.state == MenuState::MainMenu);
-		// Playing/Paused: confirm abandoning the match
 		esc.state = MenuState::Playing;
 		CC_CHECK(esc.OnBackPressed() == BackAction::OpenBackToMenuConfirm);
 		CC_CHECK(esc.confirm == ConfirmKind::BackToMenu);
@@ -148,7 +137,6 @@ void RunMenuTests()
 		CC_CHECK(esc.OnBackPressed() == BackAction::OpenBackToMenuConfirm);
 		CC_CHECK(esc.confirm == ConfirmKind::BackToMenu);
 		esc.CloseConfirm();
-		// Terminal/outcome/replay: straight back to the menu (no modal)
 		esc.state = MenuState::GameOver;
 		CC_CHECK(esc.OnBackPressed() == BackAction::QuitToMenu);
 		CC_CHECK(!esc.ConfirmOpen());
@@ -161,7 +149,6 @@ void RunMenuTests()
 		CC_CHECK(esc.OnBackPressed() == BackAction::None);
 	}
 
-	// --- Settings file roundtrip (standalone file) ---
 	MenuSettings saved;
 	saved.cameraSpeed = 512.5f;
 	saved.showMinimap = false;
@@ -215,7 +202,7 @@ void RunMenuTests()
 	strict.rightDragPan = true;
 	strict.colorBlindMode = true;
 	strict.uiScale = 1.0f;
-	strict.hotkeyOverrides = { { "Halt", KEY_SPACE } }; // replaced below
+	strict.hotkeyOverrides = { { "Halt", KEY_SPACE } };
 	strict.mute = false;
 	CC_CHECK(LoadSettings(strict, settingsPath));
 	CC_CHECK(strict.cameraSpeed == 400.0f); // garbage kept the old value
@@ -228,7 +215,7 @@ void RunMenuTests()
 	CC_CHECK(strict.hotkeyOverrides[0].first == "Halt");
 	CC_CHECK(strict.hotkeyOverrides[0].second == KEY_H); // replaced, not appended
 	CC_CHECK(strict.hotkeyOverrides[1].first == "ToggleHints");
-	CC_CHECK(strict.hotkeyOverrides[1].second == KEY_F2); // new entry appended
+	CC_CHECK(strict.hotkeyOverrides[1].second == KEY_F2);
 	CC_CHECK(strict.mute);
 	{
 		std::ofstream clamp(settingsPath, std::ios::trunc);
@@ -246,7 +233,6 @@ void RunMenuTests()
 	CC_CHECK(lo.uiScale == 0.75f);
 	std::remove(settingsPath.c_str());
 
-	// --- menu transition clock: resets on change, accumulates otherwise ---
 	MenuState previous = MenuState::MainMenu;
 	float time = 0.0f;
 	TrackMenuTransition(previous, time, MenuState::MainMenu, 0.1f);

@@ -3,9 +3,8 @@
 #include <functional>
 #include <unordered_map>
 
-// Keyboard shortcut registry. Keys are raylib key codes; actions are nullary
-// callbacks bound by game code. PollAndFire polls live input; Fire invokes
-// one binding directly so tests cover routing headless.
+// Keys are raylib key codes, actions nullary callbacks. Fire invokes one binding
+// directly so routing is testable headless.
 
 class ShortcutRegistry
 {
@@ -19,15 +18,14 @@ public:
 	bool Has(int raylibKey) const;
 
 	bool Fire(int raylibKey) const;
-	// Headless chord path: fires only when a shift-chord is bound.
+	// Fires only when a shift-chord is bound.
 	bool FireChord(int raylibKey) const;
 	// Fire one key honoring PollAndFire's shift-chord priority.
 	bool FireWithShift(int raylibKey, bool shift) const;
 
 	void PollAndFire() const;
 
-	// While disabled, Fire/FireChord/FireWithShift/PollAndFire are no-ops.
-	// Used to gate shortcuts behind a modal without unbinding them.
+	// Disabled: every Fire* path is a no-op; gates shortcuts behind a modal.
 	void SetEnabled(bool enabled) { enabled_ = enabled; }
 	bool Enabled() const { return enabled_; }
 

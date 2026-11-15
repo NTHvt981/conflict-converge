@@ -41,8 +41,8 @@ public:
 	void Update(float dt);
 	void GatherTick(Registry &registry, ResourceSystem &resources, float dt,
 					TeamId teamID = kAnyTeam);
-	// Drives loop harvesters between fields and depots; engineers without a
-	// Harvester component keep the legacy stand-and-trickle behavior.
+	// Drives loop harvesters between fields and depots; units without a
+	// Harvester component stand on the field and trickle.
 	void UpdateHarvesters(Registry &registry, const TileMap &map, const OccupancyGrid *occ,
 						  float dt, TeamId teamID = kAnyTeam);
 
@@ -50,7 +50,6 @@ public:
 	const ResourceNode *FindAt(cc::IVec2 tile) const;
 	void Each(const std::function<void(const ResourceNode &)> &fn) const;
 
-	// Save/load: restore a node verbatim (loader already validated the map).
 	void RestoreNode(ResourceKind kind, cc::IVec2 tile, float amount, float maxAmount,
 					 float respawnDelay, float respawnTimer);
 	float IronCarry() const;

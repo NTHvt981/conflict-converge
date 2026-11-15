@@ -1,7 +1,5 @@
 // Unit tests for context-sensitive cursor intent prediction (Cursor.h).
-// Pure function, no window: hovering enemies/repair patients/heal patients/
-// ground maps to Attack/Repair/Heal/Move; power-0 support types never offer
-// Attack; empty selection always yields Default.
+// Pure function, no window needed.
 
 #include "test_harness.h"
 
@@ -53,43 +51,33 @@ void RunCursorTests()
 	const Unit *eng = registry.Get<Unit>(engineer);
 	const Unit *med = registry.Get<Unit>(medic);
 
-	// --- empty selection never predicts an order cursor ---
 	CC_CHECK(PredictCursorIntent(registry, nullptr, UnitCenter(registry, enemy)) ==
 			 CursorIntent::Default);
 	CC_CHECK(PredictCursorIntent(registry, nullptr, { 800.0f, 800.0f }) == CursorIntent::Default);
 
-	// --- enemy unit under an attack-capable selection: Attack ---
 	CC_CHECK(PredictCursorIntent(registry, sel, UnitCenter(registry, enemy)) ==
 			 CursorIntent::Attack);
 
-	// --- empty ground: Move ---
 	CC_CHECK(PredictCursorIntent(registry, sel, { 800.0f, 800.0f }) == CursorIntent::Move);
 
-	// --- friendly unit that needs nothing: Move (no repair, no attack) ---
 	CC_CHECK(PredictCursorIntent(registry, sel, UnitCenter(registry, healthy)) ==
 			 CursorIntent::Move);
 
-	// --- non-Engineer over a damaged friendly vehicle: still Move ---
 	CC_CHECK(PredictCursorIntent(registry, sel, UnitCenter(registry, wounded)) ==
 			 CursorIntent::Move);
 
-	// --- Engineer over a damaged friendly vehicle: Repair ---
 	CC_CHECK(PredictCursorIntent(registry, eng, UnitCenter(registry, wounded)) ==
 			 CursorIntent::Repair);
 
-	// --- Engineer over a healthy friendly vehicle: Move ---
 	CC_CHECK(PredictCursorIntent(registry, eng, UnitCenter(registry, healthy)) ==
 			 CursorIntent::Move);
 
-	// --- Engineer over a damaged ENEMY vehicle: Move (support cannot attack) ---
 	CC_CHECK(PredictCursorIntent(registry, eng, UnitCenter(registry, enemyTank)) ==
 			 CursorIntent::Move);
 
-	// --- Medic over a wounded friendly squadmate: Heal ---
 	CC_CHECK(PredictCursorIntent(registry, med, UnitCenter(registry, hurtFoot)) ==
 			 CursorIntent::Heal);
 
-	// --- Medic over healthy flesh, vehicles, or enemies: Move ---
 	CC_CHECK(PredictCursorIntent(registry, med, UnitCenter(registry, wholeFoot)) ==
 			 CursorIntent::Move);
 	CC_CHECK(PredictCursorIntent(registry, med, UnitCenter(registry, wounded)) ==
@@ -97,13 +85,11 @@ void RunCursorTests()
 	CC_CHECK(PredictCursorIntent(registry, med, UnitCenter(registry, foeFoot)) ==
 			 CursorIntent::Move);
 
-	// --- non-Medic over wounded flesh: still Move ---
 	CC_CHECK(PredictCursorIntent(registry, sel, UnitCenter(registry, hurtFoot)) ==
 			 CursorIntent::Move);
 	CC_CHECK(PredictCursorIntent(registry, eng, UnitCenter(registry, hurtFoot)) ==
 			 CursorIntent::Move);
 
-	// --- G4 carrier over friendly foot: Load; enemy still wins as Attack ---
 	Entity carrier = SpawnUnit(registry, UnitType::IFV, kPlayerTeam, 64.0f, 576.0f);
 	Cargo cargo;
 	cargo.capacity = 4;
@@ -116,7 +102,6 @@ void RunCursorTests()
 	CC_CHECK(PredictCursorIntent(registry, drv, UnitCenter(registry, wounded)) ==
 			 CursorIntent::Move); // vehicles are not passengers
 
-	// --- full carrier: back to Move ---
 	for (int i = 0; i < 4; ++i)
 	{
 		const Entity seat =

@@ -22,7 +22,7 @@ One line per area; the linked section carries the Do/Don't pair.
 | [Structure](#structure) | Data structs with defaults; free-function systems; `Subsystem` scopes, no globals |
 | [Steps](#keep-a-long-function-a-list-of-named-steps) | A screen-long function is a table of contents: one named method per phase |
 | [Errors](#error-handling) | `CC_ASSERT` invariants; `expected` from loaders; bool/sentinel in gameplay; throw only while parsing |
-| [Comments](#comments) | Contract, not syntax; present tense; units on meaningful numbers |
+| [Comments](#comments) | Only what code cannot carry: invariants, traps, units, wire contracts |
 | [Data](#data-saves-and-assets) | camelCase JSON; append-only save wire; version and magic bump on a break |
 | [Tests](#tests) | `CC_CHECK`; suite registered in `tests/main.cpp`; headless; Debug and Release |
 | [Docs](#docs) | One page per feature, indexed; live docs describe current behavior |
@@ -1161,52 +1161,106 @@ if (version > kSaveVersion)
 
 ## Comments
 
-### Comment the contract, not the syntax
+### Comment only what code cannot carry
+
+A comment exists only for information the code cannot carry. If a rename, a
+constant name, an assert, or a test could carry the information, the code
+carries it and the comment does not exist. Comments are the last resort on the
+ladder below, not the default documentation layer.
+
+### Keep only these six kinds
+
+1. A non-obvious invariant or trap: code that looks like a bug but is
+   required (member-declaration order, "never call X from Y", a deliberately
+   skipped check).
+2. A hidden consequence absent from the signature: returns empty when the
+   map has no tiles; out-of-bounds counts as blocked.
+3. A unit or bound a name cannot hold: pixels vs tiles, 8 facing octants,
+   seconds.
+4. An external-format contract, compressed to the invariant: on-disk NVP
+   names, magic string, cereal unnamed-struct wrapper, raylib edge-touch.
+5. An external-tool quirk that would otherwise read as a bug: MSVC/CRT
+   header shadowing.
+6. In tests, what the scenario guards and what a passing value means, at
+   most two lines.
+
+### Delete these
+
+- A restatement of the name or signature.
+- Per-field echoes after every struct member.
+- Section banners and phase separators.
+- Plan or history references: `plans/`, dates, commit hashes, milestone
+  IDs, "replaced the old", "before the fix".
+- API walkthroughs duplicating `docs/MODULE_MAP.md` or a `docs/features`
+  page.
+- Anything an existing `CC_ASSERT` or `CC_CHECK` already enforces.
+
+### Absorb the note into the code first
+
+Before writing a comment, try the ladder in order; stop at the first rung
+that carries the information.
+
+```cpp
+// 1. rename so the name carries it
+inline constexpr float kTraumaLostPerSecond = 2.0f;
+// 2. named constant with the unit in the name
+if (replayFrame > kReplayMaxFrames) { Retreat(kRetreatHealthFraction); }
+```
+
+```cpp
+// 3. assert the stated precondition
+CC_ASSERT(InBounds(tile));
+// 4. a test or CC_CHECK label carries the behavior promise
+CC_CHECK(FormatResources(resources) == "Iron: 380  Oil: 310");
+```
+
+At the last rung, move narrative to its doc page and leave only the
+invariant in code. An absorption edit stays in the same file or module; a
+rename touching more than about three call sites gets its own change
+instead of riding along.
+
+### Header why-notes live in a companion file
+
+A header's ownership, ordering, or format rationale goes in
+`<Header>.h.context.md` next to the header. Companion files are gitignored
+and hidden by `tools/hide_context_files.py`, are not compiled, and keep the
+headers declaration-only, so a header diff stays a comment-free diff.
 
 **✅ Do**
 ```cpp
-float attackRange = 0; // pixels
-float cooldownTime = 0; // seconds between attacks
+// Unit.h: declaration-only, one invariant comment
+float health = 100.0f; // 0..1 fraction of kHealthMax
+```
 
-// Empty when unreachable, either end blocked, or the map has no tiles.
-TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal);
+```
+Unit.h.context.md: why Unit owns Mover by value, why the
+member order freezes the save layout, and how the
+UnitOrders/UnitCombat split maps to files.
 ```
 
 **❌ Don't**
 ```cpp
-float attackRange = 0; // attack range
-// This function finds a path.
-TilePath FindPath(const TileMap &map, cc::IVec2 start, cc::IVec2 goal);
+// Unit.h
+// WHY THIS EXISTS: the unit system grew out of ... (ten lines of
+// rationale that block the declarations and churn in every diff)
+struct Unit { ... };
 ```
 
-### Write live comments in present tense
+### Rewrite trailing comments as units or drop them
+
+A trailing comment states a unit, a bound, or a range; it never echoes the
+name. Name meaningful numbers or state their unit.
 
 **✅ Do**
 ```cpp
-// Returns the nearest free tile; the caller spawns there.
-cc::IVec2 NearestFreeTile(const TileMap &map, cc::IVec2 want);
-```
-
-**❌ Don't**
-```cpp
-// Will return the nearest free tile once the spawn rework lands.
-cc::IVec2 NearestFreeTile(const TileMap &map, cc::IVec2 want);
-```
-
-### Name meaningful numbers or state their unit
-
-**✅ Do**
-```cpp
+float hitTrauma = 0.0f; // 0..1, 1 is a full-screen jolt
 inline constexpr int kReplayMaxFrames = 300; // 10 min at the 2s cadence
-inline constexpr float kRetreatHealthFraction = 0.3f;
 ```
 
 **❌ Don't**
 ```cpp
-if (replayFrame > 300)
-{
-	Retreat(0.3f);
-}
+float hitTrauma = 0.0f; // trauma
+float attackRange = 0;  // attack range
 ```
 
 ## Data, saves, and assets
@@ -1455,4 +1509,5 @@ symbol. See `docs/conventions/ascii-diagram.md`.
 - [ ] `CC_ASSERT` invariants, `expected` from loaders, bool/sentinel gameplay, no throwing gameplay
 - [ ] JSON camelCase, save wire append-only, version bumped on a break
 - [ ] `CC_CHECK` covers the behavior and is registered in `tests/main.cpp`
+- [ ] every comment states an invariant, trap, unit, or wire contract; nothing restates the code
 - [ ] feature doc and index updated, present tense, diagrams per ASCII convention

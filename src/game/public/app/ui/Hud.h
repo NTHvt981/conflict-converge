@@ -15,7 +15,7 @@ struct Building;
 class HotkeyMap;
 struct Orders;
 
-// HUD text content: pure functions (tested); the RmlUi HUD owns the panels.
+// Pure text builders; the RmlUi HUD owns the panels.
 
 const char *UnitTypeName(UnitType type);
 const char *BuildingTypeName(BuildingType type);
@@ -38,16 +38,14 @@ constexpr float kHoverTooltipDelay = 0.4f;
 bool UpdateHoverTooltip(HoverTooltipState &state, Entity hovered, float dt, float delay);
 std::vector<std::string> UnitTooltipLines(const Unit &unit, const Orders &orders);
 
-// Production UI. Display order for the 8 unit types; per-tab
-// filters partition that order. Building tab enters placement mode.
+// Display order; per-tab filters partition it. Building tab enters placement mode.
 std::vector<UnitType> ProductionMenuOrder();
 std::vector<UnitType> InfantryMenuOrder();
 std::vector<UnitType> VehicleMenuOrder();
 std::vector<BuildingType> BuildingMenuOrder();
 
-// Abilities panel data. Pure selection-context query; the RmlUi HUD renders
-// the list and G3 commands execute it. Active marks toggle state, reason
-// explains a disabled entry (empty when enabled).
+// Pure selection-context query; the RmlUi HUD renders it, commands execute it.
+// active = every selected unit has it; reason is non-empty only when disabled.
 enum class AbilityId
 {
 	Hold,

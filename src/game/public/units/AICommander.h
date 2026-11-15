@@ -18,19 +18,15 @@ public:
 				TeamId teamID, AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile);
 
 	void SetupBase();
-	// Restart for a new match: team, difficulty, homes, timers, harvesters,
-	// and the owned economy/queue. Reference members are untouched.
 	void Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile, TeamId teamID);
 	void Update(float dt);
-	// Bind shared unit occupancy for footprint-aware orders (null = plain point orders).
 	void SetOccupancy(OccupancyGrid *occ);
-	// Bind live fog for honest targeting (null = legacy omniscient).
 	void SetFog(const FogOfWar *fog);
 
 	TeamId TeamID() const;
 	AIDifficulty Difficulty() const;
-	int CombatUnitCount() const; // living non-Engineer units on our team
-	int HarvesterCount() const;  // living Engineers on our team
+	int CombatUnitCount() const; // living units excluding Engineers
+	int HarvesterCount() const;
 	int WavesLaunched() const;
 	bool HasScouted() const;
 	cc::IVec2 LastSeenEnemy() const;

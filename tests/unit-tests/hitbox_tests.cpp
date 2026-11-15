@@ -6,14 +6,12 @@
 
 void RunHitboxTests()
 {
-	// --- geometry: 64x64 body centered in the 128x128 tile ---
 	Unit unit;
 	unit.position = { 64.0f, 128.0f };
 	const Rectangle box = HitboxOf(unit);
 	CC_CHECK(box.x == 96.0f && box.y == 160.0f);
 	CC_CHECK(box.width == 64.0f && box.height == 64.0f);
 
-	// --- overlap: same tile touches; far tiles don't; edge contact counts ---
 	Unit same = unit;
 	CC_CHECK(HitboxesOverlap(unit, same));
 	Unit neighbor = unit;
@@ -26,7 +24,6 @@ void RunHitboxTests()
 	edged.position = { 64.0f + 64.0f, 128.0f }; // edges exactly adjacent: no overlap
 	CC_CHECK(!HitboxesOverlap(unit, edged));
 
-	// --- area query: team filter, dead exclusion ---
 	Registry registry;
 	auto addAt = [&](TeamId team, float x, float y, float hp) {
 		Unit u;

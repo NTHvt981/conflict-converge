@@ -62,7 +62,6 @@ int WalkUntilIdle(Unit &unit, Orders &orders, Mover &mover, CombatState &combat,
 
 void RunFootprintTests()
 {
-	// --- OccupancyGrid: basic set/get ---
 	{
 		OccupancyGrid occ(8, 8);
 		CC_CHECK(occ.Width() == 8);
@@ -71,28 +70,23 @@ void RunFootprintTests()
 		CC_CHECK(occ.InBounds({ 0, 0 }));
 		CC_CHECK(occ.InBounds({ 7, 7 }));
 
-		// Unit occupancy
 		CC_CHECK(occ.GetUnit({ 3, 4 }).entity == kOccEmpty);
 		occ.SetUnit({ 3, 4 }, 42, 5);
 		CC_CHECK(occ.GetUnit({ 3, 4 }).entity == 42);
 		CC_CHECK(occ.GetUnit({ 3, 4 }).generation == 5);
 
-		// Building occupancy
 		CC_CHECK(occ.GetBuilding({ 1, 1 }) == kOccEmpty);
 		occ.SetBuilding({ 1, 1 }, 99);
 		CC_CHECK(occ.GetBuilding({ 1, 1 }) == 99);
 	}
 
-	// --- ReserveFootprint / ReleaseFootprint ---
 	{
 		OccupancyGrid occ(8, 8);
 		occ.ReserveFootprint({ 2, 2 }, 2, 2, 10, 1);
-		// All 4 tiles of a 2x2 footprint reserved
 		CC_CHECK(occ.GetUnit({ 2, 2 }).entity == 10);
 		CC_CHECK(occ.GetUnit({ 3, 2 }).entity == 10);
 		CC_CHECK(occ.GetUnit({ 2, 3 }).entity == 10);
 		CC_CHECK(occ.GetUnit({ 3, 3 }).entity == 10);
-		// Adjacent tile is free
 		CC_CHECK(occ.GetUnit({ 4, 2 }).entity == kOccEmpty);
 
 		occ.ReleaseFootprint({ 2, 2 }, 2, 2);
@@ -100,47 +94,36 @@ void RunFootprintTests()
 		CC_CHECK(occ.GetUnit({ 3, 3 }).entity == kOccEmpty);
 	}
 
-	// --- CanEnter: terrain blocking ---
 	{
 		TileMap map(8, 8);
 		map.Set({ 3, 3 }, TerrainType::Water);
 		OccupancyGrid occ(8, 8);
-		// 1x1 unit can enter (2,2) but not (3,3) — water
 		CC_CHECK(occ.CanEnter(map, { 2, 2 }, 1, 1, 0, 1));
 		CC_CHECK(!occ.CanEnter(map, { 3, 3 }, 1, 1, 0, 1));
-		// 2x2 unit can enter (1,1) — all grass
 		CC_CHECK(occ.CanEnter(map, { 1, 1 }, 2, 2, 0, 1));
 		// 2x2 unit cannot enter (2,2) — extends into (3,3) which is water
 		CC_CHECK(!occ.CanEnter(map, { 2, 2 }, 2, 2, 0, 1));
 	}
 
-	// --- CanEnter: unit occupancy blocking ---
 	{
 		TileMap map(8, 8);
 		OccupancyGrid occ(8, 8);
 		occ.ReserveFootprint({ 3, 3 }, 2, 2, 10, 1);
-		// Same entity+gen: allowed (self-overlap)
 		CC_CHECK(occ.CanEnter(map, { 3, 3 }, 2, 2, 10, 1));
-		// Different entity: blocked
 		CC_CHECK(!occ.CanEnter(map, { 3, 3 }, 2, 2, 20, 1));
 		// Partial overlap: 1x1 unit at (4,4) is inside the 2x2 footprint
 		CC_CHECK(!occ.CanEnter(map, { 4, 4 }, 1, 1, 20, 1));
-		// Adjacent non-overlapping: OK
 		CC_CHECK(occ.CanEnter(map, { 5, 3 }, 2, 2, 20, 1));
 	}
 
-	// --- CanEnter: stale generation rejected ---
 	{
 		TileMap map(8, 8);
 		OccupancyGrid occ(8, 8);
 		occ.ReserveFootprint({ 0, 0 }, 1, 1, 10, 1);
-		// Same entity, old generation: blocked
 		CC_CHECK(!occ.CanEnter(map, { 0, 0 }, 1, 1, 10, 0));
-		// Same entity, correct generation: allowed
 		CC_CHECK(occ.CanEnter(map, { 0, 0 }, 1, 1, 10, 1));
 	}
 
-	// --- CanEnter: out-of-bounds ---
 	{
 		TileMap map(8, 8);
 		OccupancyGrid occ(8, 8);
@@ -148,7 +131,6 @@ void RunFootprintTests()
 		CC_CHECK(!occ.CanEnter(map, { 7, 7 }, 2, 2, 0, 1)); // extends past edge
 	}
 
-	// --- ApplyBaseStats sets footprints ---
 	{
 		Unit inf;
 		inf.type = UnitType::RifleInfantry;
@@ -181,7 +163,6 @@ void RunFootprintTests()
 		CC_CHECK(light.footprintHeight == 1);
 	}
 
-	// --- 1x1 pathfinding still works (backward compat) ---
 	{
 		TileMap map(8, 8);
 		OccupancyGrid occ(8, 8);
@@ -191,7 +172,6 @@ void RunFootprintTests()
 		CC_CHECK(route.back() == cc::IVec2(3, 3));
 	}
 
-	// --- 2x2 pathfinding: full wall with no gap forces detour ---
 	{
 		TileMap map(8, 8);
 		for (int y = 0; y < 8; ++y)
@@ -199,14 +179,11 @@ void RunFootprintTests()
 			map.Set({ 4, y }, TerrainType::Water); // full vertical wall
 		}
 		OccupancyGrid occ(8, 8);
-		// 2x2 unit from (1,3) to (6,3): wall blocks direct path.
-		// Must go around via map edges (top or bottom).
 		TilePath route = FindPathFootprint(map, occ, { 1, 3 }, { 6, 3 }, 2, 2, 0, 1);
 		// On an 8x8 map with a full wall, the 2x2 can't cross — goal unreachable
 		CC_CHECK(route.empty());
 	}
 
-	// --- 2x2 pathfinding: wide gap lets 2x2 through ---
 	{
 		TileMap map(8, 8);
 		for (int y = 0; y < 8; ++y)
@@ -221,10 +198,8 @@ void RunFootprintTests()
 		CC_CHECK(IsValidFootprintRoute(map, occ, route, { 1, 3 }, { 6, 3 }, 2, 2, 0, 1));
 	}
 
-	// --- 2x2 vs 1x1: 1-tile gap blocks 2x2 but admits 1x1 ---
 	{
 		TileMap map(10, 6);
-		// Wall at x=5, gap only at y=2
 		for (int y = 0; y < 6; ++y)
 		{
 			if (y != 2)
@@ -233,7 +208,6 @@ void RunFootprintTests()
 			}
 		}
 		OccupancyGrid occ(10, 6);
-		// 1x1 can fit through the gap at y=2
 		TilePath route1x1 = FindPathFootprint(map, occ, { 0, 2 }, { 7, 2 }, 1, 1, 0, 1);
 		CC_CHECK(!route1x1.empty());
 
@@ -242,9 +216,7 @@ void RunFootprintTests()
 		CC_CHECK(route2x2.empty());
 	}
 
-	// --- Corner-cutting prevention for 2x2 ---
 	{
-		// Two parallel walls creating a corridor that 2x2 can pass through
 		TileMap map(8, 6);
 		map.Set({ 3, 0 }, TerrainType::Water);
 		map.Set({ 3, 1 }, TerrainType::Water);
@@ -257,7 +229,6 @@ void RunFootprintTests()
 		CC_CHECK(IsValidFootprintRoute(map, occ, route, { 1, 2 }, { 6, 2 }, 2, 2, 0, 1));
 	}
 
-	// --- 2x2 unit movement via UpdateUnitMovement with occupancy ---
 	{
 		TileMap map(8, 8);
 		OccupancyGrid occ(8, 8);
@@ -278,21 +249,16 @@ void RunFootprintTests()
 		CC_CHECK(frames < 300);
 	}
 
-	// --- NearestEnterableTile: goal sanitization ---
 	{
 		TileMap map(10, 10);
 		OccupancyGrid occ(10, 10);
-		// Free goal returns unchanged.
 		CC_CHECK(NearestEnterableTile(map, occ, { 5, 5 }, 1, 1, 7, 1) == cc::IVec2(5, 5));
-		// Occupied goal (other entity) shifts to an enterable neighbor.
 		occ.ReserveFootprint({ 5, 5 }, 1, 1, 9, 1);
 		const cc::IVec2 near = NearestEnterableTile(map, occ, { 5, 5 }, 1, 1, 7, 1);
 		CC_CHECK(!(near == cc::IVec2(5, 5)));
 		CC_CHECK(occ.CanEnter(map, near, 1, 1, 7, 1));
-		// Self-occupied goal stays (self-exclusion).
 		occ.ReserveFootprint({ 2, 2 }, 1, 1, 7, 1);
 		CC_CHECK(NearestEnterableTile(map, occ, { 2, 2 }, 1, 1, 7, 1) == cc::IVec2(2, 2));
-		// Nothing enterable nearby returns the request unchanged.
 		for (int y = 0; y < 10; ++y)
 		{
 			for (int x = 0; x < 10; ++x)
@@ -303,7 +269,6 @@ void RunFootprintTests()
 		CC_CHECK(NearestEnterableTile(map, occ, { 5, 5 }, 1, 1, 7, 1) == cc::IVec2(5, 5));
 	}
 
-	// --- IssuePathOrderFootprint: occupied goal stops beside the blocker ---
 	{
 		TileMap map(10, 10);
 		OccupancyGrid occ(10, 10);
@@ -326,7 +291,6 @@ void RunFootprintTests()
 		CC_CHECK(occ.CanEnter(map, dest, 1, 1, mover, registry.Generation(mover)));
 	}
 
-	// --- IssueFormationMoveFP: slots on blockers sanitize, no shared tile ---
 	{
 		TileMap map(20, 15);
 		OccupancyGrid occ(20, 15);
@@ -366,7 +330,6 @@ void RunFootprintTests()
 		CC_CHECK(dests.size() == 2);
 	}
 
-	// --- Owned release/reserve: nobody wipes or steals another anchor ---
 	{
 		OccupancyGrid occ(8, 8);
 		occ.ReserveFootprint({ 3, 3 }, 1, 1, 10, 1);
@@ -382,7 +345,6 @@ void RunFootprintTests()
 		CC_CHECK(occ.ReserveFootprintOwned({ 3, 3 }, 2, 2, 20, 1) == 3);
 		CC_CHECK(occ.GetUnit({ 4, 4 }).entity == 10); // untouched
 		CC_CHECK(occ.GetUnit({ 3, 3 }).entity == 20);
-		// Fully overlapped reserve takes nothing.
 		CC_CHECK(occ.ReserveFootprintOwned({ 4, 4 }, 1, 1, 30, 1) == 0);
 		CC_CHECK(occ.GetUnit({ 4, 4 }).entity == 10);
 		// Pre-pass order (release own, then reserve) with a foreign squatter:
@@ -394,7 +356,6 @@ void RunFootprintTests()
 		CC_CHECK(occ.GetUnit({ 4, 4 }).entity == 10);
 	}
 
-	// --- Blocked retry: transient blocker waits, replans, arrives ---
 	{
 		TileMap map(10, 10);
 		OccupancyGrid occ(10, 10);
@@ -414,7 +375,7 @@ void RunFootprintTests()
 		IssuePathOrderFootprint(*m, MakeOrderContext(registry, mover, map, &occ),
 								cc::ToRaylib(cc::TileToWorld(4, 0)));
 		CC_CHECK(mm.hasPath);
-		// Drop a blocker onto the route mid-walk (old code cancels here).
+		// Drop a blocker onto the route mid-walk; the retry must replan.
 		occ.ReserveFootprint({ 2, 0 }, 1, 1, blocker, registry.Generation(blocker));
 		int frames = 0;
 		while ((mm.hasMoveOrder || mm.hasPath) && frames < 1200)
@@ -429,7 +390,6 @@ void RunFootprintTests()
 		CC_CHECK(frames < 1200);
 	}
 
-	// --- Blocked retry: permanent wall exhausts the budget and cancels ---
 	{
 		TileMap map(10, 10);
 		OccupancyGrid occ(10, 10);
@@ -467,25 +427,20 @@ void RunFootprintTests()
 		CC_CHECK(frames < 600);
 	}
 
-	// --- Blocked start still paths: units live on building tiles ---
-	// Spawns, rally points, and harvesters sit inside/on footprints; the
-	// search must route out of them (StepToward's step-out allowance covers
-	// the first step) instead of stranding the unit on straight fallback.
+	// Spawns, rally points, and harvesters sit inside/on footprints; the search
+	// must route out of them instead of stranding the unit on straight fallback.
 	{
 		TileMap map(10, 10);
 		map.Set({ 0, 0 }, TerrainType::Building);
 		OccupancyGrid occ(10, 10);
-		// Terrain-blocked anchor routes out.
 		const TilePath route = FindPathFootprint(map, occ, { 0, 0 }, { 3, 0 }, 1, 1, 7, 1);
 		CC_CHECK(!route.empty());
 		CC_CHECK(route.front() == cc::IVec2(0, 0));
 		CC_CHECK(route.back() == cc::IVec2(3, 0));
-		// Occupied-by-other anchor routes out too.
 		occ.ReserveFootprint({ 5, 5 }, 1, 1, 9, 1);
 		const TilePath route2 = FindPathFootprint(map, occ, { 5, 5 }, { 7, 5 }, 1, 1, 7, 1);
 		CC_CHECK(!route2.empty());
 		CC_CHECK(route2.back() == cc::IVec2(7, 5));
-		// Truly enclosed starts still fail closed (surrounded on all sides).
 		OccupancyGrid box(3, 3);
 		box.ReserveFootprint({ 0, 0 }, 1, 1, 9, 1);
 		box.ReserveFootprint({ 1, 0 }, 1, 1, 9, 1);
@@ -499,7 +454,6 @@ void RunFootprintTests()
 		CC_CHECK(FindPathFootprint(boxMap, box, { 1, 1 }, { 0, 0 }, 1, 1, 7, 1).empty());
 	}
 
-	// --- Guard chase detour routes footprint-aware with occ, blind without ---
 	{
 		constexpr float kDt = 1.0f / 60.0f;
 		auto makeDuel = []() {
@@ -544,7 +498,6 @@ void RunFootprintTests()
 			UpdateUnit(chaser, registry, map, kDt, nullptr, &occ);
 			CC_CHECK(registry.Get<Mover>(chaser)->path == first);
 		}
-		// Without occ: legacy blind detour drives at the target tile.
 		{
 			auto [registry, chaser, prey] = makeDuel();
 			TileMap map(10, 10);

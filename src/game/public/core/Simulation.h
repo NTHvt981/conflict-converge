@@ -21,9 +21,6 @@
 
 class PlayingInput;
 
-// It polls no input: the one player state it reads is the auto-add control-group
-// bit, at spawn. It refreshes the minimap texture and gates the match outcome,
-// so unit tests can drive Step headlessly over fixture worlds.
 class Simulation
 {
 public:
@@ -39,11 +36,9 @@ public:
 	void StopRecording();
 	void SetReplayCount(int count);
 	int ReplayCount() const;
-	// Re-runnable for the paused HUD.
 	void RefreshProducers();
 	bool HasBootcamp() const;
 	bool HasWorkshop() const;
-	// Runs only while Playing.
 	void Step(float dt);
 
 private:

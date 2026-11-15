@@ -2,8 +2,6 @@
 
 #include "core/Subsystem.h"
 
-// Iron and oil ledger, uncapped.
-
 class ResourceSystem : public Subsystem
 {
 public:

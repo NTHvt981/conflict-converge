@@ -5,9 +5,6 @@
 #include <stacktrace>
 #include <string>
 
-// Central assertion macro: active in Debug, compiled out under NDEBUG.
-// Use for invariant checks, never external input validation.
-
 #ifndef NDEBUG
 namespace cc_assert_detail
 {
@@ -25,8 +22,7 @@ inline const char *BaseName(const char *path)
 	return base;
 }
 
-// Explicit depth: MSVC's default asks for 0xFFFF frames and walks the whole
-// stack (797us against 1.8us in Debug for the same 12 frames).
+// Explicit small depth: MSVC's default walks the whole stack (0xFFFF frames).
 inline void PrintTrace(const char *expression, const char *file, int line)
 {
 	std::fprintf(stderr, "\nCC_ASSERT failed: %s\n  at %s:%d\n", expression, file, line);

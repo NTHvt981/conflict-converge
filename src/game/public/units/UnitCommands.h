@@ -8,9 +8,6 @@
 class TileMap;
 class OccupancyGrid;
 
-// Selection-batch orders shared by hotkeys and HUD ability buttons.
-// Each command applies to every selected unit; map-dependent ones route
-// through IssueOrEnqueue like the right-click path.
 void SetSelectionStance(Registry &registry, Stance stance);
 void HaltSelection(Registry &registry);
 void ToggleSelectionAutoRetreat(Registry &registry);

@@ -1,7 +1,6 @@
 #pragma once
 
-// Screen shake (trauma pattern): pure math only; Game renders through a
-// shaken camera copy, never mutating camera.view.
+// Trauma-pattern shake: Game draws through a shaken camera copy, never mutating camera.view.
 
 constexpr float kShakeDecayRate = 1.5f; // trauma per second (full hit clears in ~0.7s)
 constexpr float kShakeMaxPixels = 12.0f; // offset at trauma == 1

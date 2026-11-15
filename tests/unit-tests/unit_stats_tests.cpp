@@ -7,9 +7,7 @@
 
 void RunUnitStatsTests()
 {
-	// --- every type has a sane (positive) stat line ---
-	// Support types (Medic, Engineer) cannot attack: attackPower 0 and no
-	// attack range; everything else must reach past its own tile.
+	// Support types (Medic, Engineer) cannot attack; the rest out-range their tile.
 	const UnitType all[] = {
 		UnitType::RifleInfantry,
 		UnitType::AntiArmorInfantry,
@@ -33,19 +31,16 @@ void RunUnitStatsTests()
 		}
 	}
 
-	// --- spot values pin the table (change deliberately, not by accident) ---
 	CC_CHECK(BaseStats(UnitType::RifleInfantry).health == 100.0f);
 	CC_CHECK(BaseStats(UnitType::HeavyTank).health == 500.0f);
 	CC_CHECK(BaseStats(UnitType::Artillery).attackRange == 6.0f);
 	CC_CHECK(BaseStats(UnitType::IFV).speed == 2.0f);
 	CC_CHECK(BaseStats(UnitType::AntiArmorInfantry).damageType == DamageType::EXPLOSIVE);
 	CC_CHECK(BaseStats(UnitType::HeavyTank).armorType == ArmorType::COMPOSITE);
-	// Support types cannot attack (heal/repair instead).
 	CC_CHECK(BaseStats(UnitType::Medic).attackPower == 0);
 	CC_CHECK(BaseStats(UnitType::Medic).health == 60.0f);
 	CC_CHECK(BaseStats(UnitType::Engineer).attackPower == 0);
 
-	// --- ordering sanity: heavies outlive lights, artillery outranges all ---
 	CC_CHECK(BaseStats(UnitType::HeavyTank).health > BaseStats(UnitType::LightTank).health);
 	CC_CHECK(BaseStats(UnitType::LightTank).health > BaseStats(UnitType::RifleInfantry).health);
 	for (UnitType type : all)
@@ -57,7 +52,6 @@ void RunUnitStatsTests()
 		}
 	}
 
-	// --- ApplyBaseStats fills stats but preserves identity/placement ---
 	Unit unit;
 	unit.type = UnitType::LightTank;
 	unit.teamID = kEnemyTeam;

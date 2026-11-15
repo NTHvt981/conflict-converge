@@ -10,7 +10,6 @@ void RunMovementTests()
 {
 	TileMap map(8, 8);
 
-	// --- order snaps the destination to the tile corner ---
 	Unit unit;
 	Orders unitOrders;
 	Mover unitMover;
@@ -21,7 +20,6 @@ void RunMovementTests()
 	CC_CHECK(unitMover.moveTarget.x == 384.0f);
 	CC_CHECK(unitMover.moveTarget.y == 128.0f);
 
-	// --- stepping advances toward the target, state + velocity set ---
 	UpdateUnitMovement(unit, OrderContext{ unitOrders, unitMover, map }, unitCombat, 100.0f,
 					   1.0f);
 	CC_CHECK(unitMover.hasMoveOrder);
@@ -30,7 +28,6 @@ void RunMovementTests()
 	CC_CHECK(unit.position.y > 0.0f);
 	CC_CHECK(unit.velocity.x > 0.0f);
 
-	// --- no order: no-op ---
 	Unit idle;
 	Orders idleOrders;
 	Mover idleMover;
@@ -41,7 +38,6 @@ void RunMovementTests()
 	CC_CHECK(idle.position.y == 64.0f);
 	CC_CHECK(idle.state == UnitState::Idle);
 
-	// --- arrival lands exactly snapped, order cleared ---
 	Unit arriving;
 	Orders arrivingOrders;
 	Mover arrivingMover;
@@ -55,7 +51,6 @@ void RunMovementTests()
 	CC_CHECK(arriving.position.x == 128.0f);
 	CC_CHECK(arriving.position.y == 0.0f);
 
-	// --- blocked tile stops the unit, order cancelled ---
 	TileMap blocked(8, 8);
 	blocked.Set({ 1, 0 }, TerrainType::Water);
 	Unit walker;
@@ -71,7 +66,6 @@ void RunMovementTests()
 	CC_CHECK(walker.position.x == 0.0f); // never entered tile (1,0)
 	CC_CHECK(walker.position.y == 0.0f);
 
-	// --- unit spawned inside a building footprint walks out, not stuck ---
 	TileMap footprint(8, 8);
 	footprint.Set({ 0, 0 }, TerrainType::Building);
 	Unit trapped;
@@ -92,7 +86,6 @@ void RunMovementTests()
 	}
 	CC_CHECK(!footprint.IsBlocked(cc::WorldToTile(cc::ToGlm(trapped.position))));
 
-	// --- FacingFromVelocity: screen-space octants, y-down ---
 	CC_CHECK(FacingFromVelocity({ 1.0f, 0.0f }) == Facing::Right);
 	CC_CHECK(FacingFromVelocity({ 0.0f, 1.0f }) == Facing::Bottom);
 	CC_CHECK(FacingFromVelocity({ -1.0f, 0.0f }) == Facing::Left);
@@ -105,13 +98,12 @@ void RunMovementTests()
 	CC_CHECK(FacingFromVelocity({ 10.0f, 4.0f }) == Facing::Right); // ~22deg
 	CC_CHECK(FacingFromVelocity({ 10.0f, 5.0f }) == Facing::BottomRight); // ~27deg
 
-	// --- facing tracks travel direction, persists on stop ---
 	Unit marcher;
 	Orders marcherOrders;
 	Mover marcherMover;
 	CombatState marcherCombat;
 	marcher.position = { 0.0f, 0.0f };
-	CC_CHECK(marcher.facing == Facing::Right); // default matches old rendering
+	CC_CHECK(marcher.facing == Facing::Right); // default facing
 	IssueMoveOrder(marcher, marcherOrders, marcherMover, { 0.0f, 192.0f }); // straight south
 	UpdateUnitMovement(marcher, OrderContext{ marcherOrders, marcherMover, map }, marcherCombat,
 					   64.0f, 1.0f);

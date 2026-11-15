@@ -1,5 +1,4 @@
 // Unit tests for math helpers (cc:: tile grid + raylib interop).
-// Tile convention: indices -> world position of the tile's top-left corner.
 
 #include "test_harness.h"
 
@@ -10,13 +9,11 @@ static_assert(cc::TILE_SIZE == 128.0f, "tile grid must be 128x128");
 
 void RunMathUtilsTests()
 {
-	// --- raylib interop round-trip ---
 	Vector2 ray = { 12.5f, -3.25f };
 	CC_CHECK(cc::ToRaylib(cc::ToGlm(ray)).x == ray.x);
 	CC_CHECK(cc::ToRaylib(cc::ToGlm(ray)).y == ray.y);
 	CC_CHECK(cc::ToGlm(cc::ToRaylib(cc::Vec2(7.0f, 9.0f))) == cc::Vec2(7.0f, 9.0f));
 
-	// --- tile grid: known mappings ---
 	CC_CHECK(cc::TileToWorld(0, 0) == cc::Vec2(0.0f, 0.0f));
 	CC_CHECK(cc::TileToWorld(2, 3) == cc::Vec2(256.0f, 384.0f));
 	CC_CHECK(cc::WorldToTile(cc::Vec2(140.0f, 260.0f)) == cc::IVec2(1, 2));
@@ -26,7 +23,6 @@ void RunMathUtilsTests()
 	CC_CHECK(cc::SnapToTile(cc::Vec2(128.0f, 256.0f)) == cc::Vec2(128.0f, 256.0f));
 	CC_CHECK(cc::WorldToTile(cc::Vec2(128.0f, 256.0f)) == cc::IVec2(1, 2));
 
-	// --- round-trips: tile -> world -> tile, world -> tile -> snapped world ---
 	for (int x = 0; x < 4; ++x)
 	{
 		for (int y = 0; y < 4; ++y)

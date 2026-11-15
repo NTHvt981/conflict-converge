@@ -11,11 +11,6 @@
 
 #include "core/CcAssert.h"
 
-// Auto-instanced service base (UE5-inspired, no reflection). Subsystems are
-// owned by a Subsystems container; lifetime is explicit Add + InitAll/Shutdown.
-// Engine scope lives for the process, world scope resets per match, player
-// scope holds per-viewport state. No global accessor: pass Subsystems & explicitly.
-
 class Subsystem
 {
 public:

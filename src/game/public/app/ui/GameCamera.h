@@ -21,11 +21,10 @@ public:
 	// Screen-space delta.
 	void Pan(Vector2 delta);
 
-	// Scroll-wheel zoom: each step scales 1.125x, clamped to [kMinZoom, kMaxZoom].
+	// Each wheel step scales 1.125x, clamped to [kMinZoom, kMaxZoom].
 	void AdjustZoom(float wheelSteps);
 
-	// Smallest zoom that still fills the screen with world (no void beyond
-	// the map edge). Degenerate dims fall back to kMinZoom.
+	// Smallest zoom that fills the screen with world; degenerate dims -> kMinZoom.
 	float MinZoomForWorld(float mapWidthPx, float mapHeightPx, int screenW, int screenH) const;
 	void ClampZoomToWorld(float mapWidthPx, float mapHeightPx, int screenW, int screenH);
 

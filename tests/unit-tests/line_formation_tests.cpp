@@ -24,7 +24,6 @@ Entity SpawnFoot(Registry &registry, int tileX, int tileY)
 
 void RunLineFormationTests()
 {
-	// --- geometry: endpoints inclusive, midpoint for one, empty for none ---
 	CC_CHECK(formation::LineFormationPositions(0, { 0.0f, 0.0f }, { 100.0f, 0.0f }).empty());
 	{
 		const auto single = formation::LineFormationPositions(1, { 0.0f, 0.0f }, { 100.0f, 0.0f });
@@ -46,7 +45,6 @@ void RunLineFormationTests()
 		}
 	}
 
-	// --- dispatch: squad fans out along the drawn line ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -71,7 +69,6 @@ void RunLineFormationTests()
 		CC_CHECK(registry.Get<Mover>(a)->hasPath);
 	}
 
-	// --- missing IDs don't shift surviving slots ---
 	{
 		Registry registry;
 		TileMap map(20, 15);

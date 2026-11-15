@@ -12,7 +12,6 @@
 
 void RunCommandUiTests()
 {
-	// --- zoom clamps to [0.5, 2.0] ---
 	{
 		GameCamera camera;
 		camera.view.zoom = 1.0f;
@@ -29,9 +28,8 @@ void RunCommandUiTests()
 		CC_CHECK(CcNear(fresh.view.zoom, 1.125f));
 	}
 
-	// --- minimap inverse roundtrips, clamps, contains ---
-	// (screenRect assigned directly: Init/Unload need a GPU window.)
 	{
+		// Init/Unload need a GPU window, so screenRect is assigned directly.
 		Minimap minimap;
 		minimap.screenRect = { 630.0f, 320.0f, 160.0f, 120.0f };
 		const Vector2 world{ 768.0f, 576.0f };
@@ -49,7 +47,6 @@ void RunCommandUiTests()
 		CC_CHECK(degenerate.x == 0.0f && degenerate.y == 0.0f);
 	}
 
-	// --- shift chords route independently from plain bindings ---
 	{
 		ShortcutRegistry shortcuts;
 		int plain = 0, chord = 0;
@@ -65,8 +62,6 @@ void RunCommandUiTests()
 		CC_CHECK(!shortcuts.FireChord(11));
 	}
 
-	// --- production menu covers all 8 buildables exactly once ---
-	// (PrototypeInfantry is sandbox-only, never in production menus.)
 	{
 		const std::vector<UnitType> order = ProductionMenuOrder();
 		CC_CHECK(order.size() == 8);
@@ -80,7 +75,6 @@ void RunCommandUiTests()
 		CC_CHECK(!seen[static_cast<int>(UnitType::PrototypeInfantry)]);
 	}
 
-	// --- save slots map to data/ paths with clamping ---
 	{
 		CC_CHECK(SaveSlotPath(1) == "data/slot1.ccpb");
 		CC_CHECK(SaveSlotPath(2) == "data/slot2.ccpb");
@@ -89,7 +83,6 @@ void RunCommandUiTests()
 		CC_CHECK(SaveSlotPath(99) == "data/slot3.ccpb");
 	}
 
-	// --- input snapshot carries wheel + shift (defaults zeroed) ---
 	{
 		InputManager input;
 		CC_CHECK(input.WheelDelta() == 0.0f && !input.ShiftDown());

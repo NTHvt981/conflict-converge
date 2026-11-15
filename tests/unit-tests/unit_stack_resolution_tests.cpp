@@ -1,14 +1,10 @@
-// Unit tests for ResolveStackedUnits (Unit.cpp), which replaced the old
-// continuous-space SeparateUnits push + crush damage (see
-// plans/UnitStackResolution_Plan.md). Detects units sharing the exact same
-// anchor tile and relocates one per stack per call via a completely
-// ordinary footprint-aware move order -- no per-unit collision flag, no
-// state machine.
+// ResolveStackedUnits relocates one unit per shared anchor tile via an ordinary
+// footprint-aware move order; stacked squads must never deadlock or wedge.
 
 #include "test_harness.h"
 
 #include "units/Extensions.h"
-#include "world/Pathfinder.h" // IssuePathOrderFootprint (not used directly, transitively needed)
+#include "world/Pathfinder.h"
 #include "world/TileMap.h"
 #include "units/Unit.h"
 #include "units/UnitStats.h"
@@ -25,13 +21,8 @@ Unit MakeUnit(int tileX, int tileY, UnitType type = UnitType::RifleInfantry)
 	return unit;
 }
 
-// ResolveStackedUnits reads OccupancyGrid to tell "the tile's current
-// reservation holder" apart from everyone else sharing it (see the picking
-// logic's own comment in Unit.cpp) -- it does not populate occ itself.
-// RunUnitMovementFrame's pre-pass normally does this before calling it every
-// frame; tests calling ResolveStackedUnits directly (not through the full
-// pipeline) must reproduce that pre-pass themselves or the grid stays empty
-// and every unit looks like it has no neighbor.
+// ResolveStackedUnits reads OccupancyGrid but never fills it; direct callers
+// must reproduce RunUnitMovementFrame's occupancy pre-pass.
 void SeedOccupancy(Registry &registry, OccupancyGrid &occ)
 {
 	registry.Each<Unit>([&](Entity id, Unit &unit) {
@@ -50,7 +41,6 @@ void SeedOccupancy(Registry &registry, OccupancyGrid &occ)
 
 void RunUnitStackResolutionTests()
 {
-	// --- two units on the same tile, no orders: exactly one gets relocated ---
 	{
 		TileMap map(10, 10);
 		OccupancyGrid occ(10, 10);
@@ -69,9 +59,6 @@ void RunUnitStackResolutionTests()
 		const bool bActive = ub != nullptr && (ub->hasMoveOrder || ub->hasPath);
 		CC_CHECK(aActive != bActive); // exactly one, not both, not neither
 
-		// A second call in the same frame must not also pick the other one
-		// (per-stack serialize: a relocation already in flight leaves the
-		// stack alone).
 		SeedOccupancy(registry, occ);
 		ResolveStackedUnits(registry, map, occ);
 		const Mover *ua2 = registry.Get<Mover>(a);
@@ -82,7 +69,6 @@ void RunUnitStackResolutionTests()
 		CC_CHECK(aActive == aActive2 && bActive == bActive2); // same one stays picked
 	}
 
-	// --- stepped via the real per-frame pipeline: both end up separated ---
 	{
 		TileMap map(10, 10);
 		OccupancyGrid occ(10, 10);
@@ -111,7 +97,6 @@ void RunUnitStackResolutionTests()
 		CC_CHECK(!(tileA == tileB));
 	}
 
-	// --- 2x2 vehicle stack: the destination must actually fit the footprint ---
 	{
 		TileMap map(10, 10);
 		OccupancyGrid occ(10, 10);
@@ -134,13 +119,9 @@ void RunUnitStackResolutionTests()
 				 (pickedMover->hasMoveOrder || pickedMover->hasPath));
 		const cc::IVec2 dest = cc::WorldToTile(cc::ToGlm(pickedMover->moveTarget));
 		CC_CHECK(!(dest == cc::IVec2(5, 5))); // actually moved off the stack tile
-		// The chosen destination must genuinely fit the full 2x2 footprint,
-		// not just a single free tile (NearestFreeTile-style would be wrong
-		// here -- see the plan's correction re: NearestEnterableTile).
 		CC_CHECK(occ.CanEnter(map, dest, 2, 2, picked, registry.Generation(picked)));
 	}
 
-	// --- two independent stacks resolved in the same call: both progress ---
 	{
 		TileMap map(20, 20);
 		OccupancyGrid occ(20, 20);
@@ -167,7 +148,6 @@ void RunUnitStackResolutionTests()
 		CC_CHECK(stackProgressed(b0, b1)); // near (17,17) resolved, independently
 	}
 
-	// --- a solo unit with an active order is left completely untouched ---
 	{
 		TileMap map(10, 10);
 		OccupancyGrid occ(10, 10);
@@ -187,8 +167,6 @@ void RunUnitStackResolutionTests()
 		CC_CHECK(after->moveTarget.x == targetBefore.x && after->moveTarget.y == targetBefore.y);
 	}
 
-	// --- regression (e2e InBounds assert): stacked units with off-map
-	// positions must not reach OccupancyGrid::GetUnit ---
 	{
 		TileMap map(10, 10);
 		OccupancyGrid occ(10, 10);
@@ -202,16 +180,15 @@ void RunUnitStackResolutionTests()
 		registry.Get<Unit>(b)->position = Vector2{ 10.0f * 128.0f + 1.0f, 5.0f * 128.0f };
 
 		SeedOccupancy(registry, occ);
-		ResolveStackedUnits(registry, map, occ); // used to assert InBounds in GetUnit
+		ResolveStackedUnits(registry, map, occ);
 
 		// OOB stacks are skipped, not relocated.
 		CC_CHECK(!GetMover(registry, a).hasMoveOrder && !GetMover(registry, a).hasPath);
 		CC_CHECK(!GetMover(registry, b).hasMoveOrder && !GetMover(registry, b).hasPath);
 	}
 
-	// --- regression: an off-map move target within one step cancels
-	// in-bounds instead of teleporting the unit out of bounds (the e2e
-	// real-dt spike path: StepToward's arrive shortcut skipped IsBlocked) ---
+	// An off-map target within one step cancels in bounds instead of
+	// teleporting the unit out (StepToward's arrive shortcut).
 	{
 		TileMap map(10, 10);
 		OccupancyGrid occ(10, 10);

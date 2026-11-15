@@ -18,7 +18,7 @@ inline constexpr float kQuarterTile = TILE_SIZE * 0.25f;
 Vec2 ToGlm(Vector2 v);
 Vector2 ToRaylib(Vec2 v);
 
-// Tile indices -> world position of the tile's top-left corner.
+// World position of the tile's top-left corner.
 Vec2 TileToWorld(int tileX, int tileY);
 IVec2 WorldToTile(Vec2 worldPos);
 Vec2 SnapToTile(Vec2 worldPos);

@@ -27,15 +27,13 @@ public:
 	Pings();
 	void ResetForMatch() override;
 
-	// Raise a ping stamped with live time; swallowed within the same kind's
-	// retrigger floor (combat spam guard).
+	// Live-time stamp; within a kind's retrigger floor the raise is dropped.
 	void Raise(Vector2 worldPos, PingKind kind);
-	// Explicit-clock variant.
 	void RaiseAt(Vector2 worldPos, PingKind kind, double nowSeconds);
 	// No-op on dt <= 0.
 	void Update(float dt);
 	const std::vector<Ping> &Active() const;
-	// Most recent ping position for camera jump. False when none active.
+	// Latest ping position for a camera jump; false when none is active.
 	bool Latest(Vector2 &outPos) const;
 
 private:

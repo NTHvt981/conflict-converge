@@ -28,7 +28,6 @@ public:
 	UnitFactory(Registry &registry, ResourceSystem &resources, EventDispatcher &events);
 
 	Entity Spawn(UnitType type, TeamId teamID, Vector2 worldPos);
-	// Without charging (prepaid via queue).
 	Entity SpawnPrepaid(UnitType type, TeamId teamID, Vector2 worldPos);
 	void DestroyUnit(Entity entity);
 

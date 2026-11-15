@@ -20,7 +20,6 @@ struct SpawnedEvent : Event
 
 void RunEventTests()
 {
-	// --- routing + subscription order ---
 	EventDispatcher dispatcher;
 	std::vector<std::string> calls;
 	dispatcher.Subscribe(EventType::UnitSpawned, [&](const Event &) { calls.push_back("first"); });
@@ -35,7 +34,6 @@ void RunEventTests()
 	CC_CHECK(calls[0] == "first");
 	CC_CHECK(calls[1] == "second");
 
-	// --- handlers receive the concrete payload via downcast ---
 	TeamId seenTeam = kAnyTeam;
 	dispatcher.Subscribe(EventType::UnitDestroyed, [&](const Event &e) {
 		seenTeam = static_cast<const SpawnedEvent &>(e).teamID;
@@ -46,24 +44,20 @@ void RunEventTests()
 	dispatcher.Dispatch(destroyed);
 	CC_CHECK(seenTeam == kEnemyTeam);
 
-	// --- event types are isolated: UnitSpawned handlers did not re-fire ---
 	CC_CHECK(calls.size() == 2);
 
-	// --- dispatch with no listeners is a safe no-op ---
 	EventDispatcher empty;
 	Event none;
 	none.type = EventType::ResourceChanged;
 	empty.Dispatch(none);
 	CC_CHECK(true);
 
-	// --- Clear drops every subscription ---
 	dispatcher.Clear();
 	dispatcher.Dispatch(spawned);
 	dispatcher.Dispatch(destroyed);
 	CC_CHECK(calls.size() == 2);
 	CC_CHECK(seenTeam == kEnemyTeam);
 
-	// --- Game-state + UI categories ride the same dispatcher ---
 	EventDispatcher flow;
 	std::vector<EventType> seen;
 	flow.Subscribe(EventType::MatchStarted,
@@ -92,11 +86,8 @@ void RunEventTests()
 	CC_CHECK(seen[3] == EventType::ProductionOrdered);
 	CC_CHECK(seen[4] == EventType::Victory);
 
-	// --- re-entrant Subscribe during Dispatch is safe ---
-	// A handler that subscribes mid-dispatch reallocates the listener
-	// vector; iterating the live vector would be UB (checked iterators
-	// abort in Debug). Snapshot semantics: the newcomer runs from the
-	// NEXT dispatch, the in-flight one completes untouched.
+	// Re-entrant Subscribe during Dispatch: iterating the live listener vector
+	// would be UB, so the newcomer runs from the NEXT dispatch, not this one.
 	EventDispatcher reentrant;
 	std::vector<std::string> order;
 	reentrant.Subscribe(EventType::MenuAction, [&](const Event &) {
@@ -114,7 +105,6 @@ void RunEventTests()
 	CC_CHECK(order[1] == "host");
 	CC_CHECK(order[2] == "guest");
 
-	// --- stress: many mid-dispatch subscriptions force reallocations ---
 	EventDispatcher storm;
 	int fired = 0;
 	storm.Subscribe(EventType::Victory, [&](const Event &) {

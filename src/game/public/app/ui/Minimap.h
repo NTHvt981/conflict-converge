@@ -3,9 +3,7 @@
 #include "raylib.h"
 #include "core/Subsystem.h"
 
-// Periodic refresh, not per-frame; unit positions draw as markers.
-// The frame is square, sized by screen height; rectangle maps letterbox
-// inside it (black bars), so the world never stretches.
+// Periodic refresh, not per-frame. Square frame; rectangle maps letterbox.
 inline constexpr float kMinimapHeightFraction = 1.0f / 3.0f;
 inline constexpr float kMinimapMargin = 10.0f;
 
@@ -29,11 +27,9 @@ struct Minimap : public Subsystem
 
 	// Aspect-preserved map area inside the square frame; bars fill the rest.
 	Rectangle ContentRect(int mapW, int mapH) const;
-	// Square top-right placement sized by screen height.
 	static Rectangle TopRightSquare(int screenW, int screenH);
 
-	// Minimap pixel -> world position (click-to-move); inverse of
-	// WorldToMinimap, clamped into map bounds.
+	// Inverse of WorldToMinimap (click-to-move), clamped into map bounds.
 	Vector2 MinimapToWorld(Vector2 minimapPx, int mapW, int mapH) const;
 
 	// Edges inclusive.

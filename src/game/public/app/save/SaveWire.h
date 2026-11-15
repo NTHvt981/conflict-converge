@@ -1,17 +1,11 @@
 #pragma once
 
-// Tolerant JSON wire format ("CCJ3" magic, saveVersion 3 = 64px tiles,
-// 4 = 128px tiles).
+// Tolerant JSON wire format ("CCJ3" magic).
 //
-// Contract: NVP NAMES are the on-disk contract (never rename one).
-// The payload root is {"value0": {...}}: cereal auto-names the unnamed
-// top-level struct, so hand-written saves must wrap in "value0" too.
-// Additive changes only: append new fields with defaults; never remove or
-// reinterpret a field. Every field except saveVersion loads tolerantly
-// (missing -> the member-initializer default), so old saves keep loading as
-// the unit surface grows. Unknown enum values still fail validation in
-// Decode (SaveGame.cpp) rather than here, and versions outside
-// [kMinSupportedVersion, kSaveVersion] are rejected outright.
+// NVP names are the on-disk contract: never rename one. The payload root is
+// {"value0": {...}} (cereal auto-names the unnamed top-level struct).
+// Changes are additive with defaults; versions outside
+// [kMinSupportedVersion, kSaveVersion] are rejected in Decode.
 
 #include <cereal/cereal.hpp>
 
@@ -22,8 +16,7 @@
 namespace save_detail
 {
 
-// Load one NVP without failing when it is absent (mirrors UnitConfig's
-// TryLoadValue); a present-but-malformed value still throws via the archive.
+// Absent NVP loads as-is; a present-but-malformed value still throws.
 template <class Archive, class T>
 void TryLoadValue(Archive &ar, const char *name, T &out)
 {
@@ -164,10 +157,9 @@ struct SaveUnit
 	std::vector<SaveIVec2> path;
 	std::uint32_t pathNext = 0;
 	bool hasPath = false;
-	// M2 extension state (append-only; missing -> defaults, old saves load).
 	bool hasTurret = false;
 	float turretFacing = 0.0f;
-	std::int32_t facing = 6; // body Facing enum (Right); G1 persists both facings
+	std::int32_t facing = 6; // body Facing enum (Right)
 	std::vector<std::int32_t> cargoManifest;
 	std::int32_t embarkedOn = -1;
 	template <class Archive>
@@ -302,8 +294,8 @@ struct SaveNode
 struct SaveFog
 {
 	std::int32_t team = 0;
-	// Raw explored bytes as numbers: cereal JSON truncates std::string at
-	// the first NUL on load, so binary blobs must be numeric arrays.
+	// Raw bytes as numbers: cereal JSON truncates std::string at the first NUL,
+	// so binary blobs must be numeric arrays.
 	std::vector<std::uint8_t> explored;
 	template <class Archive>
 	void save(Archive &ar) const

@@ -5,10 +5,10 @@
 #include "units/Extensions.h"
 #include "units/Unit.h"
 
-#include "units/Combat.h"    // expected damage via the Effectiveness matrix
-#include "units/Targeting.h" // InAttackRange sanity in chase expectations
-#include "world/TileMap.h"   // UpdateUnit needs the full map type (Unit.h fwd-declares)
-#include "units/UnitStats.h" // ApplyBaseStats for real power/range/cooldowns
+#include "units/Combat.h"
+#include "units/Targeting.h"
+#include "world/TileMap.h"
+#include "units/UnitStats.h"
 
 namespace
 {
@@ -42,7 +42,6 @@ void RunStateMachineTests()
 {
 	constexpr float kDt = 1.0f / 60.0f;
 
-	// --- lone unit idles with no contacts ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -53,7 +52,6 @@ void RunStateMachineTests()
 		CC_CHECK(registry.Get<CombatState>(id)->target == kInvalidEntity);
 	}
 
-	// --- enemy inside attack range: acquires, attacks on cooldown ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -82,12 +80,10 @@ void RunStateMachineTests()
 		UpdateUnit(attacker, registry, map, kDt);
 		CC_CHECK(registry.Get<Unit>(victim)->health == hpAfterFirst);
 
-		// After a full cooldown cycle (1.0s) + windup, it fires again.
 		StepAll(registry, map, kDt, 70);
 		CC_CHECK(registry.Get<Unit>(victim)->health < hpAfterFirst);
 	}
 
-	// --- enemy in sight but out of range: chases via path order ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -101,14 +97,12 @@ void RunStateMachineTests()
 		CC_CHECK(unit->state == UnitState::Moving);
 		CC_CHECK(registry.Get<Mover>(chaser)->hasPath);
 
-		// Walking the chase to its end arrives in attack range, attacking.
 		StepAll(registry, map, kDt, 60 * 30);
 		const Unit *done = registry.Get<Unit>(chaser);
 		CC_CHECK(done->state == UnitState::Attacking);
 		CC_CHECK(InAttackRange(*done, *registry.Get<Unit>(prey)));
 	}
 
-	// --- explicit player orders beat AI engagement ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -124,7 +118,6 @@ void RunStateMachineTests()
 		CC_CHECK(unit->position.x > 0.0f);
 	}
 
-	// --- killing the target clears it back to Idle ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -139,7 +132,6 @@ void RunStateMachineTests()
 		CC_CHECK(unit->state == UnitState::Idle);
 	}
 
-	// --- dead units are skipped, never crash ---
 	{
 		Registry registry;
 		TileMap map(10, 10);

@@ -1,6 +1,5 @@
-// Unit tests for the cereal-JSON sprite-atlas loader (SpriteData).
-// Covers the real data/configs atlas happy path plus every validation
-// rejection via inline JSON (no temp files). Headless-safe: no textures.
+// Unit tests for the cereal-JSON sprite-atlas loader (SpriteData): the shipped
+// data/configs atlas plus every validation rejection via inline JSON.
 
 #include "../unit-tests/test_harness.h"
 
@@ -44,7 +43,6 @@ bool Rejects(const char *json)
 
 void RunSpriteDataTests()
 {
-	// --- valid doc: explicit sprite + 2x2 grid + animation ---
 	{
 		SpriteSheetData sheet;
 		CC_CHECK(Parses(kValid, sheet));
@@ -72,8 +70,6 @@ void RunSpriteDataTests()
 		CC_CHECK(FindAnimById(sheet, 999) == nullptr);
 	}
 
-	// --- malformed JSON yields no sheet (missing atlas files fail the
-	// same way: LoadSpriteSheet is all-or-nothing over data/configs) ---
 	{
 		const std::expected<SpriteSheetData, ConfigError> malformed =
 			ParseSpriteSheetJson("{ not json");
@@ -81,24 +77,20 @@ void RunSpriteDataTests()
 				 malformed.error() == ConfigError::MalformedJson);
 	}
 
-	// --- duplicate texture id (and empty ids) ---
 	CC_CHECK(Rejects(R"({ "textures": [
 	  { "id": "a", "file": "a.png", "width": 32, "height": 32 },
 	  { "id": "a", "file": "b.png", "width": 32, "height": 32 } ] })"));
 	CC_CHECK(Rejects(R"({ "textures": [
 	  { "id": "", "file": "a.png", "width": 32, "height": 32 } ] })"));
 
-	// --- zero-size texture dims ---
 	CC_CHECK(Rejects(R"({ "textures": [
 	  { "id": "a", "file": "a.png", "width": 0, "height": 32 } ] })"));
 
-	// --- sprite referencing a missing texture ---
 	CC_CHECK(Rejects(R"({ "textures": [
 	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
 	  "sprites": [{ "name": "s", "id": 0, "texture": "nope",
 		"bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 } }] })"));
 
-	// --- out-of-bounds and degenerate rects ---
 	CC_CHECK(Rejects(R"({ "textures": [
 	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
 	  "sprites": [{ "name": "s", "id": 0, "texture": "a",
@@ -108,7 +100,6 @@ void RunSpriteDataTests()
 	  "sprites": [{ "name": "s", "id": 0, "texture": "a",
 		"bounds": { "left": 8, "top": 8, "right": 8, "bottom": 16 } }] })"));
 
-	// --- duplicate sprite ids and names ---
 	CC_CHECK(Rejects(R"({ "textures": [
 	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
 	  "sprites": [
@@ -124,13 +115,11 @@ void RunSpriteDataTests()
 		{ "name": "same", "id": 1, "texture": "a",
 		  "bounds": { "left": 8, "top": 0, "right": 16, "bottom": 8 } } ] })"));
 
-	// --- grid overflowing its texture ---
 	CC_CHECK(Rejects(R"({ "textures": [
 	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
 	  "grids": [{ "texture": "a", "prefix": "g", "startId": 0,
 		"rows": 2, "cols": 2, "cellW": 32, "cellH": 32 }] })"));
 
-	// --- grid colliding with an explicit sprite id ---
 	CC_CHECK(Rejects(R"({ "textures": [
 	  { "id": "a", "file": "a.png", "width": 64, "height": 64 } ],
 	  "sprites": [{ "name": "s", "id": 1, "texture": "a",
@@ -138,7 +127,6 @@ void RunSpriteDataTests()
 	  "grids": [{ "texture": "a", "prefix": "g", "startId": 0,
 		"rows": 1, "cols": 2, "cellW": 32, "cellH": 32 }] })"));
 
-	// --- empty animation, bad duration, dangling sprite ref ---
 	CC_CHECK(Rejects(R"({ "textures": [
 	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
 	  "animations": [{ "name": "a", "id": 0, "loop": true, "frames": [] }] })"));
@@ -153,14 +141,12 @@ void RunSpriteDataTests()
 	  "animations": [{ "name": "a", "id": 0, "loop": true,
 		"frames": [{ "sprite": 42, "durationMs": 100 }] }] })"));
 
-	// --- dangling mask ref ---
 	CC_CHECK(Rejects(R"({ "textures": [
 	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
 	  "sprites": [{ "name": "s", "id": 0, "texture": "a",
 		"bounds": { "left": 0, "top": 0, "right": 8, "bottom": 8 },
 		"maskSprite": 42 }] })"));
 
-	// --- mask/base size mismatch ---
 	CC_CHECK(Rejects(R"({ "textures": [
 	  { "id": "a", "file": "a.png", "width": 32, "height": 32 } ],
 	  "sprites": [
@@ -170,7 +156,6 @@ void RunSpriteDataTests()
 		{ "name": "m", "id": 1, "texture": "a",
 		  "bounds": { "left": 0, "top": 0, "right": 16, "bottom": 16 } } ] })"));
 
-	// --- valid mask pair + mask grid pairing ---
 	{
 		const std::expected<SpriteSheetData, ConfigError> parsed = ParseSpriteSheetJson(R"({ "textures": [
 		  { "id": "base", "file": "base.png", "width": 64, "height": 32 },
@@ -192,14 +177,8 @@ void RunSpriteDataTests()
 		CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
 	}
 
-	// --- real data/configs atlas files: 38 sheets, 1608 sprites, 136 anims ---
-	// Rifle-infantry renders from base+mask team-tint sheets on 72x72 cells
-	// (8 rows x 8 direction columns per action: idle + move + 4-frame
-	// attack + 4-frame death, each with a mask); antiarmor mirrors it on
-	// the same 72x72 cells; engineer and medic add the same 4-action set;
-	// lighttank adds body + head 8-column stacks (each with a mask);
-	// prototype keeps its untinted sheets.
-	// PrototypeInfantry resolves its own namespace, not rifle_infantry's.
+	// Shipped roster: 8-row x 8-direction-column grids on 72x72 cells, a base+mask
+	// pair per action; PrototypeInfantry resolves its own namespace.
 	{
 		const std::expected<SpriteSheetData, ConfigError> loaded = LoadSpriteSheet();
 		CC_CHECK(loaded.has_value());
@@ -216,8 +195,6 @@ void RunSpriteDataTests()
 		const SpriteDefInfo *firstMask = FindSpriteById(sheet, 2100);
 		CC_CHECK(firstMask != nullptr && firstMask->name == "rifle_infantry_idle_mask_0_0" &&
 				 firstMask->texture == "rifle_infantry_idle_mask" && firstMask->maskSprite == 0);
-		// Move grid is 8 direction columns x 8 frame rows; the wired anim
-		// uses column 6 (right): ids 2206..2262.
 		const SpriteDefInfo *last = FindSpriteByName(sheet, "rifle_infantry_move_3_6");
 		CC_CHECK(last != nullptr && last->id == 2230 && last->texture == "rifle_infantry_move_base");
 		CC_CHECK(last->bounds.left == 432 && last->bounds.top == 216);
@@ -230,8 +207,6 @@ void RunSpriteDataTests()
 		const SpriteAnimInfo *moveTop = FindAnimByName(sheet, "rifle_infantry_move_0");
 		CC_CHECK(moveTop != nullptr && moveTop->frames.size() == 8);
 		CC_CHECK(moveTop->frames[0].sprite == 2200 && moveTop->frames[7].sprite == 2256);
-		// Attack grid is 8 direction columns x 4 frames (column 6:
-		// 2406/2414/2422/2430).
 		const SpriteDefInfo *strike = FindSpriteByName(sheet, "rifle_infantry_attack_1_6");
 		CC_CHECK(strike != nullptr && strike->id == 2414 &&
 				 strike->texture == "rifle_infantry_attack_base");
@@ -242,8 +217,7 @@ void RunSpriteDataTests()
 		CC_CHECK(attack != nullptr && attack->loop && attack->frames.size() == 4);
 		CC_CHECK(attack->frames[0].sprite == 2406 && attack->frames[3].sprite == 2430);
 		CC_CHECK(attack->frames[0].durationMs == 250);
-		// Death grid is 8 direction columns x 4 frames; its per-direction
-		// anims play once (no loop) so the last frame holds.
+		// Death anims play once per direction (no loop), so the last frame holds.
 		const SpriteDefInfo *deathCell = FindSpriteByName(sheet, "rifle_infantry_death_2_6");
 		CC_CHECK(deathCell != nullptr && deathCell->id == 2622 &&
 				 deathCell->texture == "rifle_infantry_death_base");
@@ -253,8 +227,6 @@ void RunSpriteDataTests()
 		CC_CHECK(FindAnimByName(sheet, "rifle_infantry_move") == nullptr); // split by direction
 		CC_CHECK(FindAnimByName(sheet, "rifle_infantry_idle") == nullptr); // split by direction
 		CC_CHECK(FindAnimByName(sheet, "rifle_infantry_attack") == nullptr); // split by direction
-		// Antiarmor namespace on 72x72 cells (idle 2800+/move 3000+/attack
-		// 3200+/death 3400+; move column 6: 3006..3062).
 		const SpriteDefInfo *aaIdle = FindSpriteByName(sheet, "antiarmor_idle_0_0");
 		CC_CHECK(aaIdle != nullptr && aaIdle->id == 2800 &&
 				 aaIdle->texture == "antiarmor_idle_base");
@@ -271,8 +243,6 @@ void RunSpriteDataTests()
 		const SpriteAnimInfo *aaMoveAnim = FindAnimByName(sheet, "antiarmor_move_6");
 		CC_CHECK(aaMoveAnim != nullptr && aaMoveAnim->loop && aaMoveAnim->frames.size() == 8);
 		CC_CHECK(aaMoveAnim->frames[0].sprite == 3006 && aaMoveAnim->frames[7].sprite == 3062);
-		// Attack grid is 8 direction columns x 4 frames (column 6:
-		// 3206/3214/3222/3230).
 		const SpriteDefInfo *aaStrike = FindSpriteByName(sheet, "antiarmor_attack_2_6");
 		CC_CHECK(aaStrike != nullptr && aaStrike->id == 3222 &&
 				 aaStrike->texture == "antiarmor_attack_base");
@@ -282,8 +252,6 @@ void RunSpriteDataTests()
 		const SpriteAnimInfo *aaAttack = FindAnimByName(sheet, "antiarmor_attack_6");
 		CC_CHECK(aaAttack != nullptr && aaAttack->loop && aaAttack->frames.size() == 4);
 		CC_CHECK(aaAttack->frames[0].sprite == 3206 && aaAttack->frames[3].sprite == 3230);
-		// Engineer namespace on 72x72 cells (idle 3600+/move 3800+/attack
-		// 4000+/death 4200+; move column 6 across 8 frames: 3806..3862).
 		const SpriteDefInfo *engIdle = FindSpriteByName(sheet, "engineer_idle_0_0");
 		CC_CHECK(engIdle != nullptr && engIdle->id == 3600 &&
 				 engIdle->texture == "engineer_idle_base");
@@ -302,15 +270,12 @@ void RunSpriteDataTests()
 				 engMoveAnim->frames.size() == 8);
 		CC_CHECK(engMoveAnim->frames[0].sprite == 3806 &&
 				 engMoveAnim->frames[7].sprite == 3862);
-		// Engineer has its own 4-frame attack and death anims per direction.
 		const SpriteAnimInfo *engAttack = FindAnimByName(sheet, "engineer_attack_6");
 		CC_CHECK(engAttack != nullptr && engAttack->loop && engAttack->frames.size() == 4);
 		CC_CHECK(engAttack->frames[0].sprite == 4006 && engAttack->frames[3].sprite == 4030);
 		const SpriteAnimInfo *engDeath = FindAnimByName(sheet, "engineer_death_6");
 		CC_CHECK(engDeath != nullptr && !engDeath->loop && engDeath->frames.size() == 4);
 		CC_CHECK(engDeath->frames[0].sprite == 4206 && engDeath->frames[3].sprite == 4230);
-		// Medic namespace on 72x72 cells (idle 4400+/move 4600+/attack
-		// 4800+/death 5000+; move column 6 across 8 frames: 4606..4662).
 		const SpriteDefInfo *medIdle = FindSpriteByName(sheet, "medic_idle_0_0");
 		CC_CHECK(medIdle != nullptr && medIdle->id == 4400 &&
 				 medIdle->texture == "medic_idle_base");
@@ -329,14 +294,12 @@ void RunSpriteDataTests()
 				 medMoveAnim->frames.size() == 8);
 		CC_CHECK(medMoveAnim->frames[0].sprite == 4606 &&
 				 medMoveAnim->frames[7].sprite == 4662);
-		// Medic has its own 4-frame attack and death anims per direction.
 		const SpriteAnimInfo *medAttack = FindAnimByName(sheet, "medic_attack_6");
 		CC_CHECK(medAttack != nullptr && medAttack->loop && medAttack->frames.size() == 4);
 		CC_CHECK(medAttack->frames[0].sprite == 4806 && medAttack->frames[3].sprite == 4830);
 		const SpriteAnimInfo *medDeath = FindAnimByName(sheet, "medic_death_6");
 		CC_CHECK(medDeath != nullptr && !medDeath->loop && medDeath->frames.size() == 4);
 		CC_CHECK(medDeath->frames[0].sprite == 5006 && medDeath->frames[3].sprite == 5030);
-		// Prototype namespace mirrors it (own textures, ids 200+/300+).
 		const SpriteDefInfo *protoIdle = FindSpriteByName(sheet, "prototypeinfantry_idle_0_0");
 		CC_CHECK(protoIdle != nullptr && protoIdle->id == 200 &&
 				 protoIdle->texture == "prototype_infantry_idle");

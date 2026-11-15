@@ -4,9 +4,9 @@
 
 #include "units/Extensions.h"
 #include "world/Pathfinder.h"
-#include "units/UnitStats.h" // ApplyBaseStats for walkable test units
+#include "units/UnitStats.h"
 
-#include <cstdlib> // std::abs for adjacency checks
+#include <cstdlib>
 
 namespace
 {
@@ -17,7 +17,6 @@ bool Adjacent(cc::IVec2 a, cc::IVec2 b)
 		   (a.x != b.x || a.y != b.y);
 }
 
-// A valid route: endpoints match, every step is 8-adjacent, no step blocked.
 bool IsValidRoute(const TileMap &map, const TilePath &path, cc::IVec2 start, cc::IVec2 goal)
 {
 	if (path.empty() || !(path.front() == start) || !(path.back() == goal))
@@ -57,13 +56,11 @@ int WalkUntilIdle(Unit &unit, Orders &orders, Mover &mover, CombatState &combat,
 
 void RunPathfindTests()
 {
-	// --- open map: optimal octile route ---
 	TileMap open(5, 5);
 	TilePath route = FindPath(open, { 0, 0 }, { 3, 2 });
 	CC_CHECK(IsValidRoute(open, route, { 0, 0 }, { 3, 2 }));
 	CC_CHECK(route.size() == 4); // 2 diagonals + 1 straight -> 4 nodes
 
-	// --- wall with a gap: route detours through it ---
 	TileMap walled(5, 5);
 	for (int y = 0; y < 5; ++y)
 	{
@@ -82,7 +79,6 @@ void RunPathfindTests()
 	CC_CHECK(throughGap);
 	CC_CHECK(detour.size() > 5); // detour costs more than the open 4-step run
 
-	// --- forest slows vehicles, not infantry ---
 	TileMap woods(8, 5);
 	for (int y = 2; y <= 3; ++y)
 	{
@@ -110,14 +106,12 @@ void RunPathfindTests()
 		CC_CHECK(woods.Get(tile) == TerrainType::Grass);
 	}
 
-	// --- unreachable goal (walled in): empty path ---
 	TileMap pocket(5, 5);
 	pocket.Set({ 0, 1 }, TerrainType::Water);
 	pocket.Set({ 1, 0 }, TerrainType::Water);
 	pocket.Set({ 1, 1 }, TerrainType::Water);
 	CC_CHECK(FindPath(pocket, { 0, 0 }, { 4, 4 }).empty());
 
-	// --- degenerate inputs ---
 	CC_CHECK(FindPath(open, { 1, 1 }, { 1, 1 }).size() == 1); // start == goal
 	TileMap blocked(3, 3);
 	blocked.Set({ 0, 0 }, TerrainType::Water);
@@ -126,7 +120,6 @@ void RunPathfindTests()
 	CC_CHECK(FindPath(blocked, { 1, 1 }, { 2, 2 }).empty()); // blocked goal
 	CC_CHECK(FindPath(blocked, { -1, 0 }, { 1, 1 }).empty()); // out of bounds
 
-	// --- equal-cost corridors: the heap tie-break decides on tile key ---
 	TileMap diamond(7, 7);
 	diamond.Set({ 3, 3 }, TerrainType::Water);
 	const TilePath across = FindPath(diamond, { 0, 3 }, { 6, 3 });
@@ -150,7 +143,6 @@ void RunPathfindTests()
 	CC_CHECK(viaEast); // same rule on the x axis at the y-tied crossing
 	CC_CHECK(!viaWest);
 
-	// --- IssuePathOrder walks around the wall to a snapped arrival ---
 	TileMap map(8, 6);
 	for (int y = 0; y < 5; ++y)
 	{
@@ -178,7 +170,6 @@ void RunPathfindTests()
 	CC_CHECK(unit.position.y == 1 * 128.0f);
 	CC_CHECK(frames < 60 * 60); // arrived, did not time out
 
-	// --- unreachable target falls back to a straight order ---
 	Unit stuck;
 	Orders stuckOrders;
 	Mover stuckMover;
@@ -187,7 +178,6 @@ void RunPathfindTests()
 	CC_CHECK(stuckMover.hasMoveOrder);
 	CC_CHECK(!stuckMover.hasPath);
 
-	// --- NearestFreeFootprintTile keeps a free anchor, resolves blocked ones ---
 	TileMap terrain(9, 9);
 	terrain.Set({ 4, 4 }, TerrainType::Water);
 	terrain.Set({ 6, 6 }, TerrainType::Building);
@@ -217,7 +207,6 @@ void RunPathfindTests()
 	CC_CHECK(!cluster.IsBlocked(wide + cc::IVec2(0, 1)));
 	CC_CHECK(!cluster.IsBlocked(wide + cc::IVec2(1, 1)));
 
-	// --- IssuePathOrderFootprint from a fully-blocked start still orders out ---
 	TileMap trap(7, 7);
 	for (int y = 2; y <= 4; ++y)
 	{

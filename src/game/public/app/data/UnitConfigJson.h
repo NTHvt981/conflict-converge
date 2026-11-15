@@ -94,10 +94,8 @@ struct JsonConfig
 	JsonArt art;
 };
 
-// Cereal-json bridge between data/configs files and `UnitConfig`. `Load`
-// reads every top-level key tolerantly (missing keys keep their default
-// members); `Save` emits the hand-editable key order. All serialization
-// lives in UnitConfigJson.cpp.
+// Cereal-json bridge between data/configs files and `UnitConfig`: `Load` reads
+// every top-level key tolerantly, `Save` emits the hand-editable key order.
 class UnitConfigJson
 {
 public:

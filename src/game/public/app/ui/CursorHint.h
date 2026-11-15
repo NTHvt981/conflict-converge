@@ -11,9 +11,7 @@ class Element;
 class ElementDocument;
 }
 
-// Cursor-following hint for RmlUi screens. The screen owns policy (the
-// entry texts and the Update gate); this matches the hovered element and
-// places the hint.
+// The screen owns entry texts and the gate; this matches hover and places the hint.
 struct CursorHintEntry
 {
 	std::string_view id;

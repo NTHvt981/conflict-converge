@@ -10,7 +10,6 @@ void RunShortcutTests()
 	ShortcutRegistry shortcuts;
 	CC_CHECK(!shortcuts.Has(1));
 
-	// --- bind + fire routes to the right action, in order ---
 	int callsA = 0;
 	int callsB = 0;
 	shortcuts.Bind(1, [&] { ++callsA; });
@@ -25,16 +24,13 @@ void RunShortcutTests()
 	CC_CHECK(callsA == 1);
 	CC_CHECK(callsB == 1);
 
-	// --- unbound fire is a safe no-op ---
 	CC_CHECK(!shortcuts.Fire(99));
 	CC_CHECK(callsA == 1);
 
-	// --- rebind replaces the action ---
 	shortcuts.Bind(1, [&] { callsA += 10; });
 	shortcuts.Fire(1);
 	CC_CHECK(callsA == 11);
 
-	// --- unbind + clear ---
 	shortcuts.Unbind(1);
 	CC_CHECK(!shortcuts.Has(1));
 	CC_CHECK(!shortcuts.Fire(1));
@@ -46,7 +42,6 @@ void RunShortcutTests()
 	CC_CHECK(!shortcuts.Has(2));
 	CC_CHECK(!shortcuts.Fire(2));
 
-	// --- FireWithShift keeps poll-time chord priority, headlessly ---
 	ShortcutRegistry chords;
 	int plain = 0;
 	int chord = 0;
@@ -61,10 +56,8 @@ void RunShortcutTests()
 	CC_CHECK(plain == 2);
 	CC_CHECK(!chords.FireWithShift(99, false));
 
-	// --- re-entrant Bind/Unbind/Clear around firing is safe ---
-	// PollAndFire snapshots keys for exactly this reason; FireWithShift
-	// itself is a single live-table lookup, so table surgery mid-action
-	// cannot invalidate anything.
+	// PollAndFire snapshots keys before firing; FireWithShift is a single live
+	// table lookup, so table surgery mid-action cannot invalidate anything.
 	ShortcutRegistry mut;
 	int a = 0;
 	int b = 0;
@@ -88,7 +81,6 @@ void RunShortcutTests()
 	CC_CHECK(!mut.Has(4)); // cleared mid-flight
 	CC_CHECK(!mut.FireWithShift(4, false));
 
-	// --- rehash storm mid-action: 200 binds, then fire through ---
 	ShortcutRegistry storm;
 	int fired = 0;
 	storm.Bind(1, [&] {
@@ -103,7 +95,6 @@ void RunShortcutTests()
 	CC_CHECK(storm.FireWithShift(100, false));
 	CC_CHECK(fired == 2);
 
-	// --- disabled registry is inert (modal gating), re-enables cleanly ---
 	ShortcutRegistry gate;
 	int gated = 0;
 	gate.Bind(5, [&] { ++gated; });

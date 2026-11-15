@@ -6,10 +6,8 @@
 #include "core/MathUtils.h"
 #include "units/Extensions.h"
 
-// Shared by the Unit TUs (Unit.cpp, UnitOrders, UnitCombat, UnitRepair,
-// UnitMovement, UnitTransport) and the Targeting/Combat scans. Not general API:
-// helpers that two or more Unit TUs call but no other subsystem needs stay off
-// Unit.h.
+// Shared by the Unit TUs and the Targeting/Combat scans. Helpers that two or
+// more Unit TUs call but no other subsystem needs stay off Unit.h.
 void LoseTarget(Unit &unit, CombatState &combat);
 void StopMoving(Unit &unit, Mover &mover);
 void OnOrderFinished(Unit &unit, const OrderContext &ctx);

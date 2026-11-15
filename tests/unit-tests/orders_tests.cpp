@@ -2,17 +2,17 @@
 
 #include "test_harness.h"
 
-#include "units/AICommander.h" // bootcamp-gate test
-#include "economy/Building.h" // PlaceBuilding, BuildingMaxHealth
-#include "core/Event.h"    // commander event routing
-#include "units/Extensions.h" // Orders pool (Unit split slice 1)
-#include "world/FogOfWar.h" // structure acquisition under fog
-#include "economy/Nodes.h"    // ResourceNodes for the commander fixture
-#include "app/input/Selection.h" // G4 embarked pick/select guards
-#include "units/Targeting.h" // AcquireBuildingTarget
+#include "units/AICommander.h"
+#include "economy/Building.h"
+#include "core/Event.h"
+#include "units/Extensions.h"
+#include "world/FogOfWar.h"
+#include "economy/Nodes.h"
+#include "app/input/Selection.h"
+#include "units/Targeting.h"
 #include "world/TileMap.h"
 #include "units/Unit.h"
-#include "units/UnitStats.h" // ApplyBaseStats, BaseStats max-health
+#include "units/UnitStats.h"
 
 namespace
 {
@@ -59,7 +59,6 @@ void StepUnits(Registry &registry, TileMap &map, int frames)
 
 void RunOrdersTests()
 {
-	// --- attack-move engages on contact, then resumes the march ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -95,7 +94,6 @@ void RunOrdersTests()
 			}
 		}
 		CC_CHECK(engaged); // made contact instead of walking past
-		// Finish the victim (destroyed would clear it; health check suffices).
 		for (int i = 0; i < 600; ++i)
 		{
 			StepUnits(registry, map, 1);
@@ -107,7 +105,6 @@ void RunOrdersTests()
 		}
 		const Unit *v = registry.Get<Unit>(victimId);
 		CC_CHECK(v == nullptr || v->health <= 0.0f);
-		// March resumes to the recorded destination.
 		for (int i = 0; i < 1200; ++i)
 		{
 			StepUnits(registry, map, 1);
@@ -123,7 +120,6 @@ void RunOrdersTests()
 				 cc::IVec2(10, 2));
 	}
 
-	// --- attack-move with no contact walks like a plain order ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -137,7 +133,6 @@ void RunOrdersTests()
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(id)->position)) == cc::IVec2(6, 2));
 	}
 
-	// --- Hold: no chase out of range, fires in range ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -161,7 +156,6 @@ void RunOrdersTests()
 				 cc::IVec2(2, 2));
 	}
 
-	// --- Patrol loops its legs while idle ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -172,7 +166,6 @@ void RunOrdersTests()
 		IssuePatrolOrder(*u, orders, mover, map, cc::ToRaylib(cc::TileToWorld(2, 2)),
 						 cc::ToRaylib(cc::TileToWorld(6, 2)));
 		CC_CHECK(orders.stance == Stance::Patrol && orders.hasPatrol);
-		// Walk to B (bounded): arrival clears the leg order...
 		bool arrived = false;
 		for (int i = 0; i < 900; ++i)
 		{
@@ -186,17 +179,14 @@ void RunOrdersTests()
 		}
 		CC_CHECK(arrived);
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(registry.Get<Unit>(id)->position)) == cc::IVec2(6, 2));
-		// ...and the next idle tick issues the return leg.
 		StepUnits(registry, map, 5);
 		const Mover *back = registry.Get<Mover>(id);
 		CC_CHECK(back->hasMoveOrder || back->hasPath);
-		// Leaving patrol drops the route.
 		SetStance(*registry.Get<Unit>(id), GetOrders(registry, id),
 				  GetCombatState(registry, id), Stance::Guard);
 		CC_CHECK(!GetOrders(registry, id).hasPatrol);
 	}
 
-	// --- repair heals a damaged vehicle, then completes ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -216,7 +206,6 @@ void RunOrdersTests()
 		CC_CHECK(!GetOrders(registry, engId).hasRepairOrder); // job done, order clears
 	}
 
-	// --- repair approaches from range ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -240,7 +229,6 @@ void RunOrdersTests()
 		CC_CHECK(registry.Get<Unit>(tankId)->health == BaseStats(UnitType::LightTank).health);
 	}
 
-	// --- repair rejects the invalid ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -249,13 +237,11 @@ void RunOrdersTests()
 		tank.teamID = kPlayerTeam;
 		tank.health = 10.0f;
 		const Entity tankId = AddUnit(registry, tank);
-		// Non-engineer issuer: no-op.
 		const Entity gruntId =
 			AddUnit(registry, Soldier(kPlayerTeam, UnitType::RifleInfantry, 3, 2));
 		IssueRepairOrder(*registry.Get<Unit>(gruntId), GetOrders(registry, gruntId),
 						 GetMover(registry, gruntId), tankId);
 		CC_CHECK(!GetOrders(registry, gruntId).hasRepairOrder);
-		// Enemy patient: order dies on the first tick.
 		const Entity spyId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Engineer, 3, 2));
 		Unit foe = Soldier(kEnemyTeam, UnitType::LightTank, 4, 2);
 		ApplyBaseStats(foe);
@@ -266,7 +252,6 @@ void RunOrdersTests()
 						 GetMover(registry, spyId), foeId);
 		StepUnits(registry, map, 5);
 		CC_CHECK(!GetOrders(registry, spyId).hasRepairOrder);
-		// Healthy patient: nothing to fix.
 		Unit whole = Soldier(kPlayerTeam, UnitType::LightTank, 5, 2);
 		ApplyBaseStats(whole);
 		whole.teamID = kPlayerTeam;
@@ -275,7 +260,6 @@ void RunOrdersTests()
 						 GetMover(registry, spyId), wholeId);
 		StepUnits(registry, map, 5);
 		CC_CHECK(!GetOrders(registry, spyId).hasRepairOrder);
-		// Flesh (infantry) is not repairable.
 		const Entity mateId =
 			AddUnit(registry, Soldier(kPlayerTeam, UnitType::RifleInfantry, 6, 2));
 		registry.Get<Unit>(mateId)->health = 10.0f;
@@ -285,7 +269,6 @@ void RunOrdersTests()
 		CC_CHECK(!GetOrders(registry, spyId).hasRepairOrder);
 	}
 
-	// --- repair heals damaged buildings ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -307,7 +290,6 @@ void RunOrdersTests()
 		CC_CHECK(!GetOrders(registry, engId).hasRepairOrder);
 	}
 
-	// --- structures are acquired like targets (nearest, hostile, standing) ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -322,9 +304,7 @@ void RunOrdersTests()
 			PlaceBuilding(registry, map, BuildingType::Bootcamp, kPlayerTeam, 2, 5);
 		UpdateBuildingConstruction(registry, 20.0f); // targets must be Operational
 		CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) == nearDepot);
-		// Own structures are never targets.
 		CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) != ownBootcamp);
-		// Wrecks drop out: demolish the depot, the base becomes the target.
 		DemolishBuilding(registry, map, nearDepot);
 		CC_CHECK(AcquireBuildingTarget(registry, seekerId, nullptr) == farBase);
 		// Fog hides structures from everyone but artillery.
@@ -335,7 +315,6 @@ void RunOrdersTests()
 		CC_CHECK(AcquireBuildingTarget(registry, seekerId, &fog) == farBase);
 	}
 
-	// --- driver razes structures: depot falls, tiles free up ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -351,7 +330,6 @@ void RunOrdersTests()
 		CC_CHECK(registry.Get<CombatState>(raiderId)->target == kInvalidEntity);
 	}
 
-	// --- production dies with the bootcamp; the queue stalls ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -382,7 +360,6 @@ void RunOrdersTests()
 		CC_CHECK(ai.CombatUnitCount() == 1);
 	}
 
-	// --- the workshop gates vehicles only; infantry keeps producing ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -428,7 +405,6 @@ void RunOrdersTests()
 		CC_CHECK(foot > 0);
 	}
 
-	// --- G4 load: adjacent foot boards, carrier keeps the manifest ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -447,7 +423,6 @@ void RunOrdersTests()
 		CC_CHECK(!GetOrders(registry, carrierId).hasLoadOrder); // order consumed
 	}
 
-	// --- G4 load validation: enemies, vehicles, full, and carrier-less ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -471,7 +446,6 @@ void RunOrdersTests()
 								firstId)); // no Cargo
 	}
 
-	// --- G4 unload: passengers land on free tiles, manifest clears ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -491,7 +465,6 @@ void RunOrdersTests()
 		CC_CHECK(registry.IsAlive(riderId));
 	}
 
-	// --- G4 embarked: untargetable, unpickable, unselectable ---
 	{
 		Registry registry;
 		TileMap map(20, 15);

@@ -2,8 +2,6 @@
 
 #include <cstdio>
 
-// Launch hardening: pick the directory to chdir to so data/ resolves again
-// when launched from a foreign CWD (see DataRoot.h.context.md).
 inline const char *PickDataRoot(bool cwdHasData, const char *appDir,
 								bool (*dirExists)(const char *))
 {

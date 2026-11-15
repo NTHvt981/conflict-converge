@@ -1,7 +1,5 @@
-// Unit tests for fatal logging (Log.h). Fatal itself exits the process
-// (raylib LOG_FATAL semantics), so it cannot run in-process here; these
-// cover Init/Shutdown plus the file+console routing through a non-fatal
-// level, which exercises the same callback Fatal uses.
+// Unit tests for Log.h. Fatal exits the process, so these cover Init/Shutdown
+// plus the file+console routing shared with Fatal, via a non-fatal level.
 
 #include "test_harness.h"
 
@@ -35,13 +33,11 @@ std::string ReadWholeFile(const std::string &path)
 
 void RunLogTests()
 {
-	// --- null/empty path refuses without crashing; shutdown is safe bare ---
 	Log::Shutdown();
 	CC_CHECK(!Log::Init(nullptr));
 	CC_CHECK(!Log::Init(""));
 	Log::Shutdown();
 
-	// --- init routes raylib messages to the file (same path Fatal uses) ---
 	const std::filesystem::path dir =
 		std::filesystem::temp_directory_path() / "cc_log_tests";
 	const std::string path = (dir / "nested" / "game.log").string();
@@ -51,7 +47,6 @@ void RunLogTests()
 	Log::Shutdown();
 	CC_CHECK(ReadWholeFile(path).find("WARNING: disk 99% full") != std::string::npos);
 
-	// --- re-init swaps files; repeated shutdown stays safe ---
 	const std::string second = (dir / "second.log").string();
 	CC_CHECK(Log::Init(path.c_str()));
 	CC_CHECK(Log::Init(second.c_str()));

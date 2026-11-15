@@ -57,7 +57,6 @@ public:
 
 void RunSubsystemTests()
 {
-	// --- InitAll runs forward, Shutdown runs reverse then clears ---
 	{
 		std::vector<std::string> log;
 		Subsystems systems;
@@ -77,7 +76,6 @@ void RunSubsystemTests()
 		CC_CHECK(systems.Size() == 0);
 	}
 
-	// --- Get / Has / TryGet for present and absent types ---
 	{
 		Subsystems systems;
 		CC_CHECK(!systems.Has<ValueSubsystem>());
@@ -90,7 +88,6 @@ void RunSubsystemTests()
 		CC_CHECK(&systems.Get<ValueSubsystem>() == &added);
 	}
 
-	// --- keyed lookup keeps repeated types distinct ---
 	{
 		std::vector<std::string> log;
 		Subsystems systems;
@@ -125,7 +122,6 @@ void RunSubsystemTests()
 		CC_CHECK(log[1] == "init:keyed");
 	}
 
-	// --- ResetForMatch fans out to every subsystem in order ---
 	{
 		std::vector<std::string> log;
 		Subsystems systems;

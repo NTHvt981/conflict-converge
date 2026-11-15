@@ -30,7 +30,6 @@ void RunSelectionTests()
 	Entity a = SpawnAt(registry, 128.0f, 128.0f);  // tile (1,1)
 	Entity b = SpawnAt(registry, 512.0f, 256.0f); // tile (4,2)
 
-	// --- pick: inside the tile box hits, outside misses ---
 	CC_CHECK(PickUnitAt(registry, { 129.0f, 129.0f }) == a);
 	CC_CHECK(PickUnitAt(registry, { 255.0f, 255.0f }) == a);
 	CC_CHECK(PickUnitAt(registry, { 516.0f, 258.0f }) == b);
@@ -38,7 +37,6 @@ void RunSelectionTests()
 	CC_CHECK(PickUnitAt(registry, { 768.0f, 256.0f }) == kInvalidEntity); // box edge is exclusive
 	CC_CHECK(PickUnitAt(registry, { 1000.0f, 1000.0f }) == kInvalidEntity);
 
-	// --- selection is exclusive; empty registry is safe ---
 	CC_CHECK(SelectedUnit(registry) == kInvalidEntity);
 	SelectOnly(registry, a);
 	CC_CHECK(SelectedUnit(registry) == a);
@@ -59,7 +57,6 @@ void RunSelectionTests()
 	DeselectAll(empty); // no-op, must not crash
 	CC_CHECK(true);
 
-	// --- SelectedUnitCount: 0 / N / mixed selected+unselected ---
 	CC_CHECK(SelectedUnitCount(registry) == 0);
 	SelectOnly(registry, a);
 	CC_CHECK(SelectedUnitCount(registry) == 1);
@@ -70,28 +67,23 @@ void RunSelectionTests()
 	(void)c;
 	CC_CHECK(SelectedUnitCount(empty) == 0);
 
-	// --- NormalizeRect: either corner may lead ---
 	const Rectangle norm = NormalizeRect({ 5.0f, 9.0f }, { 1.0f, 3.0f });
 	CC_CHECK(norm.x == 1.0f && norm.y == 3.0f);
 	CC_CHECK(norm.width == 4.0f && norm.height == 6.0f);
 	const Rectangle same = NormalizeRect({ 2.0f, 2.0f }, { 2.0f, 2.0f });
 	CC_CHECK(same.width == 0.0f && same.height == 0.0f);
 
-	// --- SelectInRect: body centers are (192,192)=a and (576,320)=b ---
 	DeselectAll(registry);
 	CC_CHECK(SelectInRect(registry, { 160.0f, 160.0f, 480.0f, 240.0f }, false) == 2);
 	CC_CHECK(registry.Get<Unit>(a)->isSelected && registry.Get<Unit>(b)->isSelected);
 	CC_CHECK(SelectInRect(registry, { 160.0f, 160.0f, 80.0f, 80.0f }, false) == 1);
 	CC_CHECK(registry.Get<Unit>(a)->isSelected);
 	CC_CHECK(!registry.Get<Unit>(b)->isSelected);
-	// Shift extends the selection instead of replacing it.
 	CC_CHECK(SelectInRect(registry, { 520.0f, 300.0f, 80.0f, 80.0f }, true) == 1);
 	CC_CHECK(registry.Get<Unit>(a)->isSelected && registry.Get<Unit>(b)->isSelected);
-	// Empty box in replace mode clears everything.
 	CC_CHECK(SelectInRect(registry, { 600.0f, 600.0f, 50.0f, 50.0f }, false) == 0);
 	CC_CHECK(SelectedUnit(registry) == kInvalidEntity);
 
-	// --- DraggedWorldBox: screen drag -> normalized world rect ---
 	GameCamera camera;
 	camera.view.offset = { 400.0f, 225.0f };
 	camera.view.zoom = 1.0f;
@@ -101,13 +93,11 @@ void RunSelectionTests()
 		DraggedWorldBox(camera, { 464.0f, 257.0f }, { 400.0f, 225.0f });
 	CC_CHECK(CcNear(dragged.x, 64.0f) && CcNear(dragged.y, 64.0f));
 	CC_CHECK(CcNear(dragged.width, 64.0f) && CcNear(dragged.height, 32.0f));
-	// Matches the manual NormalizeRect(ScreenToWorld x2) it replaced.
 	const Rectangle manual = NormalizeRect(camera.ScreenToWorld({ 464.0f, 257.0f }),
 										   camera.ScreenToWorld({ 400.0f, 225.0f }));
 	CC_CHECK(dragged.x == manual.x && dragged.y == manual.y);
 	CC_CHECK(dragged.width == manual.width && dragged.height == manual.height);
 
-	// --- SelectAllOfType: same-team same-type only; add extends ---
 	Registry typeReg;
 	const Entity infA = SpawnAt(typeReg, 64.0f, 64.0f);
 	typeReg.Get<Unit>(infA)->type = UnitType::RifleInfantry;
@@ -124,7 +114,6 @@ void RunSelectionTests()
 	CC_CHECK(SelectAllOfType(typeReg, UnitType::LightTank, kPlayerTeam, true) == 1); // extends
 	CC_CHECK(typeReg.Get<Unit>(infA)->isSelected && typeReg.Get<Unit>(tank)->isSelected);
 
-	// --- SelectAllOfTypeInRect: type + team + viewport, replace/extend ---
 	Registry viewReg;
 	const Entity inA = SpawnAt(viewReg, 64.0f, 64.0f); // center (96,96): inside
 	viewReg.Get<Unit>(inA)->type = UnitType::RifleInfantry;

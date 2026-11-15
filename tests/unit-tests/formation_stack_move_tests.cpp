@@ -1,9 +1,5 @@
-// Coverage gap closed after a live-game report of a squad that looked stuck
-// after a formation move order: a stacked squad (all units on the exact same
-// tile, as a freshly production-queued squad sits before ResolveStackedUnits
-// has a chance to spread them -- see plans/UnitStackResolution_Plan.md) must
-// still fully complete a real formation::IssueFormationMoveFP order, the same
-// dispatch PlayingInput.cpp uses for a plain multi-unit right-click move.
+// A stacked squad (all units on the same tile) must still fully complete a
+// real formation::IssueFormationMoveFP order.
 
 #include "test_harness.h"
 
@@ -50,9 +46,8 @@ void RunFormationStackMoveTests()
 		CC_CHECK(mover != nullptr && (mover->hasMoveOrder || mover->hasPath));
 	}
 
-	// Infantry crosses one diagonal tile (~90.5px at 64px/s) in ~1.4s; the
-	// full ~15-tile diagonal march is ~21s. 40s is a generous budget --
-	// this must fully complete, not just make partial progress.
+	// A ~15-tile diagonal march is ~21s at 64px/s; 40s is a generous budget
+	// and the order must fully complete, not just make progress.
 	constexpr float kDt = 1.0f / 60.0f;
 	constexpr int kBudget = 2400; // 40s at 60fps
 	int frame = 0;

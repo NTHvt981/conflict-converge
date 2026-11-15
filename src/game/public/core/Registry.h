@@ -13,7 +13,6 @@
 
 using Entity = std::uint32_t;
 
-// Reserved sentinel: Create never returns this value.
 inline constexpr Entity kInvalidEntity = 0;
 
 class Registry : public Subsystem
