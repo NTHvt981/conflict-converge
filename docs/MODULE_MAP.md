@@ -105,8 +105,9 @@ app/match: Menu, Skirmish
 - `UnitCommands.h` - Selection-batch orders shared by hotkeys, HUD ability
   buttons, and armed right-clicks: stances, halt, auto-retreat/repair toggles,
   attack-move/patrol/repair/heal issue
-- `UnitStats.h` - `BaseStats` table for 7 types + `ApplyBaseStats` (preserves
-  position/team/selection)
+- `UnitStats.h` - `BaseStats` compiled table for 9 types + `UnitFootprint`;
+  `ApplyBaseStats` copies the active `UnitConfig` stats and footprint into the
+  `Unit` in world pixels (preserves position/team/selection)
 - `UnitTypeInfo.h` - Per-type descriptor table: name/cost/art stems/footprint/locomotor;
   `InfoOf` is the only reader
 - `Combat.h` - Damage-matrix `Effectiveness` reads `data/configs/combat_rules.json`

@@ -4,9 +4,22 @@
 
 #include "units/Extensions.h"
 #include "units/UnitStats.h"
+#include "app/data/UnitConfig.h"
+#include "app/data/UnitConfigDefaults.h"
+#include "units/UnitTypeInfo.h"
 
 void RunUnitStatsTests()
 {
+	ResetActiveUnitConfigs();
+	for (int i = 0; i < static_cast<int>(UnitType::Count); ++i)
+	{
+		const UnitType type = static_cast<UnitType>(i);
+		const UnitConfig &config = DefaultUnitConfig(type);
+		CC_CHECK(config.footprintWidth == UnitFootprint(type).x);
+		CC_CHECK(config.footprintHeight == UnitFootprint(type).y);
+		CC_CHECK(ActiveUnitConfig(type).type == InfoOf(type).configName);
+	}
+
 	// Support types (Medic, Engineer) cannot attack; the rest out-range their tile.
 	const UnitType all[] = {
 		UnitType::RifleInfantry,
@@ -68,4 +81,21 @@ void RunUnitStatsTests()
 	CC_CHECK(unit.position.x == 128.0f);
 	CC_CHECK(unit.position.y == 192.0f);
 	CC_CHECK(unit.isSelected);
+
+	{
+		UnitConfig rifle = DefaultUnitConfig(UnitType::RifleInfantry);
+		rifle.stats.health = 77.0f;
+		rifle.stats.attackRange = 2.5f;
+		rifle.stats.speed = 1.5f;
+		rifle.footprintWidth = 2;
+		SetActiveUnitConfigs(std::vector<UnitConfig>{ rifle });
+		Unit tuned;
+		tuned.type = UnitType::RifleInfantry;
+		ApplyBaseStats(tuned);
+		CC_CHECK(tuned.health == 77.0f);
+		CC_CHECK(tuned.attackRange == 320); // 2.5 tiles, lround against TILE_SIZE 128
+		CC_CHECK(tuned.speed == 192.0f);    // 1.5 tiles/s
+		CC_CHECK(tuned.footprintWidth == 2);
+		ResetActiveUnitConfigs();
+	}
 }
