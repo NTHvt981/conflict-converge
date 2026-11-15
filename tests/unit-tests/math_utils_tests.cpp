@@ -16,6 +16,10 @@ void RunMathUtilsTests()
 
 	CC_CHECK(cc::TileToWorld(0, 0) == cc::Vec2(0.0f, 0.0f));
 	CC_CHECK(cc::TileToWorld(2, 3) == cc::Vec2(256.0f, 384.0f));
+	// Fractional tile coordinates scale linearly; negative tiles floor, not truncate.
+	CC_CHECK(cc::TileToWorld(2.5f, 3.25f) == cc::Vec2(320.0f, 416.0f));
+	CC_CHECK(cc::WorldToTile(cc::TileToWorld(2.5f, 3.25f)) == cc::IVec2(2, 3));
+	CC_CHECK(cc::WorldToTile(cc::TileToWorld(-0.5f, -2.5f)) == cc::IVec2(-1, -3));
 	CC_CHECK(cc::WorldToTile(cc::Vec2(140.0f, 260.0f)) == cc::IVec2(1, 2));
 	CC_CHECK(cc::SnapToTile(cc::Vec2(140.0f, 260.0f)) == cc::Vec2(128.0f, 256.0f));
 
