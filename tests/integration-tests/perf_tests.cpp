@@ -1,6 +1,5 @@
-// Simulation performance budget. Headless UpdateUnit sweep over
-// 200 mixed units (no rendering) — validates sim cost stays well inside the
-// 16.7ms frame budget at 60 FPS. Prints observed timing for profiling.
+// Simulation performance budget: headless UpdateUnit sweep over 200 mixed
+// units (no rendering), printed timing plus a budget check.
 
 #include "../unit-tests/test_harness.h"
 

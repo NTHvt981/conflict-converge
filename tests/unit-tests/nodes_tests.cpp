@@ -6,7 +6,7 @@
 #include "economy/Building.h"
 #include "world/TileMap.h"
 #include "units/Extensions.h"
-#include "units/UnitStats.h" // ApplyBaseStats for live Engineers
+#include "units/UnitStats.h"
 
 namespace
 {
@@ -27,7 +27,6 @@ Entity SpawnEngineer(Registry &registry, cc::IVec2 tile)
 
 void RunNodesTests()
 {
-	// --- spawn validation ---
 	ResourceNodes nodes;
 	TileMap map(20, 15);
 	CC_CHECK(nodes.SpawnNode(map, ResourceKind::Iron, { 3, 3 }, 100.0f, 5.0f));
@@ -41,7 +40,6 @@ void RunNodesTests()
 	CC_CHECK(nodes.FindAt({ 3, 3 }) != nullptr);
 	CC_CHECK(nodes.FindAt({ 0, 0 }) == nullptr);
 
-	// --- Engineers gather; others don't ---
 	Registry registry;
 	ResourceSystem resources;
 	SpawnEngineer(registry, { 3, 3 });
@@ -58,7 +56,6 @@ void RunNodesTests()
 	CC_CHECK(resources.oil == 0);
 	CC_CHECK(nodes.FindAt({ 3, 3 })->amount == 90.0f);
 
-	// --- depletion stops the flow; the node refills after its delay ---
 	nodes.GatherTick(registry, resources, 9.0f); // 90 units over 9s
 	CC_CHECK(resources.iron == 100);
 	CC_CHECK(nodes.FindAt({ 3, 3 })->IsDepleted());
@@ -71,7 +68,6 @@ void RunNodesTests()
 	CC_CHECK(!nodes.FindAt({ 3, 3 })->IsDepleted());
 	CC_CHECK(nodes.FindAt({ 3, 3 })->amount == 100.0f);
 
-	// --- oil nodes feed the oil stockpile ---
 	ResourceNodes oilField;
 	CC_CHECK(oilField.SpawnNode(map, ResourceKind::Oil, { 7, 7 }, 40.0f, 5.0f));
 	Registry crew;
@@ -81,7 +77,6 @@ void RunNodesTests()
 	CC_CHECK(oilBank.oil == 8);
 	CC_CHECK(oilBank.iron == 0);
 
-	// --- fractional rates accumulate instead of truncating away ---
 	ResourceNodes trickle;
 	CC_CHECK(trickle.SpawnNode(map, ResourceKind::Iron, { 8, 8 }, 1000.0f, 5.0f));
 	Registry solo;
@@ -93,7 +88,6 @@ void RunNodesTests()
 	}
 	CC_CHECK(pocket.iron == 1); // 10/s * 0.1s, carried across ticks
 
-	// --- negative respawn exhausts the node forever ---
 	CC_CHECK(trickle.SpawnNode(map, ResourceKind::Iron, { 9, 9 }, 20.0f, -1.0f));
 	Registry claim;
 	SpawnEngineer(claim, { 9, 9 });
@@ -102,7 +96,6 @@ void RunNodesTests()
 	trickle.Update(60.0f);
 	CC_CHECK(trickle.FindAt({ 9, 9 })->IsDepleted());
 
-	// --- dead Engineers gather nothing ---
 	Registry morgue;
 	const Entity corpse = SpawnEngineer(morgue, { 8, 8 });
 	morgue.Get<Unit>(corpse)->health = 0.0f;
@@ -110,7 +103,6 @@ void RunNodesTests()
 	trickle.GatherTick(morgue, quiet, 5.0f);
 	CC_CHECK(quiet.iron == 0);
 
-	// --- loop harvesters fill at the field, ledger untouched until dock ---
 	ResourceNodes loop;
 	TileMap field(20, 15);
 	CC_CHECK(loop.SpawnNode(field, ResourceKind::Iron, { 3, 3 }, 1000.0f, 5.0f));
@@ -131,7 +123,6 @@ void RunNodesTests()
 	CC_CHECK(plan.load == 100.0f);
 	CC_CHECK(plan.phase == HarvestPhase::ToDepot);
 
-	// --- docked harvesters dump through the storage cap, overflow lost ---
 	crew2.Get<Unit>(hauler)->position = cc::ToRaylib(cc::TileToWorld(7, 8));
 	plan.phase = HarvestPhase::Unloading;
 	loop.GatherTick(crew2, bank, 1.0f);
@@ -146,14 +137,12 @@ void RunNodesTests()
 	CC_CHECK(plan.load == 90.0f);
 	CC_CHECK(plan.phase == HarvestPhase::Unloading);
 
-	// --- base income stalls at the cap ---
 	CC_CHECK(PlaceBuilding(crew2, field, BuildingType::Base, kPlayerTeam, 12, 12, &loop) !=
 			 kInvalidEntity);
 	UpdateBuildingConstruction(crew2, 5.0f);
 	UpdateBaseIncome(crew2, bank, 60.0f, kPlayerTeam);
 	CC_CHECK(bank.iron == 1500);
 
-	// --- idle loop harvesters take orders to their field ---
 	plan.phase = HarvestPhase::ToField;
 	plan.load = 0.0f;
 	plan.nodeTile = { 3, 3 };
@@ -161,7 +150,6 @@ void RunNodesTests()
 	const Mover *haulMover = crew2.Get<Mover>(hauler);
 	CC_CHECK(haulMover != nullptr && (haulMover->hasMoveOrder || haulMover->hasPath));
 
-	// --- one harvester per field: the second takes the free node ---
 	ResourceNodes shared;
 	TileMap duplex(20, 15);
 	CC_CHECK(shared.SpawnNode(duplex, ResourceKind::Iron, { 3, 3 }, 1000.0f, 5.0f));

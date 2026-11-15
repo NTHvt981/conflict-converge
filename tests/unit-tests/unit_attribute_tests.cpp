@@ -1,5 +1,4 @@
-// Unit tests for attributes: defaults, field independence, and
-// snap preserving the new combat/AI fields.
+// Unit tests for attributes: defaults, field independence, and snap preserving combat/AI fields.
 
 #include "test_harness.h"
 
@@ -8,7 +7,6 @@
 
 void RunUnitAttributeTests()
 {
-	// --- defaults: harmless until the stat table fills them ---
 	Unit fresh;
 	CC_CHECK(fresh.speed == 0.0f);
 	CC_CHECK(fresh.sightRange == 0.0f);
@@ -19,7 +17,6 @@ void RunUnitAttributeTests()
 	CC_CHECK(freshCombat.cooldown == 0.0f);
 	CC_CHECK(freshCombat.target == kInvalidEntity);
 
-	// --- fields are independent and assignable ---
 	Unit u;
 	u.speed = 96.0f;
 	u.sightRange = 320.0f;
@@ -37,7 +34,6 @@ void RunUnitAttributeTests()
 	CC_CHECK(c.target == 42);
 	CC_CHECK(u.health == 55.0f);
 
-	// --- snapping touches position only ---
 	u.position = { 140.0f, 260.0f };
 	SnapUnitToTile(u);
 	CC_CHECK(u.position.x == 128.0f);

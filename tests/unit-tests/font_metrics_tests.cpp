@@ -1,16 +1,5 @@
-// Headless font-metric tests over data/font_metrics.txt (baked by
-// tools/bake_font_metrics.py from raylib's static charsWidth table).
-//
-// Why this works without a GPU: measuring never touches GL -- raygui's
-// GetLineWidth only reads glyph advance/rec widths, baseSize, and the
-// TEXT_SPACING style. The default font sets advanceX=0 for every glyph,
-// so the width of a line is entirely determined by the baked table:
-//   x += recWidth[cp] * (fontSize / baseSize) + textSpacing, truncated.
-// HeadlessLineWidth below replicates that loop op-for-op (ASCII/Latin-1
-// single bytes only -- every UI string in the game qualifies); the
-// goldens in the data file were proven float32/float64-stable at bake
-// time, so a match here proves the replication, and re-running the bake
-// script after a raylib update proves the table.
+// Headless font-metric tests over data/font_metrics.txt; measuring reads only
+// the baked table, so it runs without a GPU.
 
 #include "test_harness.h"
 
@@ -126,10 +115,8 @@ bool LoadBakedFont(const char *path, BakedFont &out)
 	return static_cast<bool>(in) || in.eof();
 }
 
-// raygui GetLineWidth, op-for-op, over the baked table: single line only
-// (stops at \n/\0 like the original), unknown bytes fall back to '?'
-// (codepoint 63, mirroring GetGlyphIndex), advanceX==0 branch always
-// taken (rec.width), TEXT_SPACING per glyph, float sum truncated to int.
+// raygui GetLineWidth, op-for-op over the baked table: single line, unknown
+// bytes fall back to '?', advanceX==0 branch (rec.width), float sum truncated.
 int HeadlessLineWidth(const BakedFont &font, const char *text, int fontSize)
 {
 	if (text == nullptr || text[0] == '\0' || font.baseSize <= 0)
@@ -161,7 +148,6 @@ void RunFontMetricsTests()
 	BakedFont font;
 	CC_CHECK(LoadBakedFont("data/font_metrics.txt", font));
 
-	// --- file integrity: the table raygui measures against ---
 	CC_CHECK(font.baseSize == 10);
 	CC_CHECK(font.firstChar == 32);
 	CC_CHECK(font.textSpacing == 1);
@@ -172,7 +158,6 @@ void RunFontMetricsTests()
 	}
 	CC_CHECK(!font.goldens.empty());
 
-	// --- replication shape: empty, single glyph, fallback ---
 	CC_CHECK(HeadlessLineWidth(font, "", 10) == 0);
 	CC_CHECK(HeadlessLineWidth(font, nullptr, 10) == 0);
 	// 'A' is codepoint 65: width*1.0 + spacing, single term (exact).
@@ -181,7 +166,6 @@ void RunFontMetricsTests()
 	CC_CHECK(HeadlessLineWidth(font, "\x01", 10) ==
 			 HeadlessLineWidth(font, "?", 10));
 
-	// --- goldens: byte-identical to raygui's in-engine measurement ---
 	for (const BakedFont::Golden &golden : font.goldens)
 	{
 		CC_CHECK(HeadlessLineWidth(font, golden.text.c_str(), golden.size) == golden.width);

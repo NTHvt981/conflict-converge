@@ -12,7 +12,6 @@
 
 void RunFactoryTests()
 {
-	// --- price list sanity ---
 	const UnitCost rifle = CostOf(UnitType::RifleInfantry);
 	const UnitCost heavy = CostOf(UnitType::HeavyTank);
 	CC_CHECK(rifle.iron >= 0 && rifle.oil >= 0);
@@ -23,7 +22,6 @@ void RunFactoryTests()
 		CC_CHECK(cost.iron >= 0 && cost.oil >= 0);
 	}
 
-	// --- successful spawn: spends, stats, snaps, announces ---
 	Registry registry;
 	ResourceSystem resources;
 	resources.AddIron(1000);
@@ -47,7 +45,6 @@ void RunFactoryTests()
 	CC_CHECK(unit->position.x == 128.0f && unit->position.y == 256.0f);
 	CC_CHECK(registry.Get<CombatState>(id)->target == kInvalidEntity);
 
-	// --- insufficient funds: nothing spent, created, or announced ---
 	ResourceSystem broke;
 	EventDispatcher brokeEvents;
 	int brokeSpawned = 0;
@@ -60,7 +57,6 @@ void RunFactoryTests()
 	CC_CHECK(brokeSpawned == 0);
 	CC_CHECK(broke.iron == 0 && broke.oil == 0);
 
-	// --- exact funds succeed and drain to zero ---
 	ResourceSystem exact;
 	exact.AddIron(heavy.iron);
 	exact.AddOil(heavy.oil);
@@ -69,7 +65,6 @@ void RunFactoryTests()
 	CC_CHECK(exactFactory.Spawn(UnitType::HeavyTank, kEnemyTeam, { 0.0f, 0.0f }) != kInvalidEntity);
 	CC_CHECK(exact.iron == 0 && exact.oil == 0);
 
-	// --- destroy: announces once, removes; repeat is a silent no-op ---
 	int destroyed = 0;
 	events.Subscribe(EventType::UnitDestroyed, [&](const Event &) { ++destroyed; });
 	factory.DestroyUnit(id);
@@ -80,7 +75,6 @@ void RunFactoryTests()
 	factory.DestroyUnit(kInvalidEntity);
 	CC_CHECK(destroyed == 1);
 
-	// --- M2 spawn: gimmick units get extension components, others don't ---
 	{
 		ResetActiveUnitConfigs();
 		Registry reg;
@@ -91,7 +85,7 @@ void RunFactoryTests()
 		UnitFactory fac(reg, res, ev);
 		const Entity heavy = fac.SpawnPrepaid(UnitType::HeavyTank, kPlayerTeam, { 0.0f, 0.0f });
 		CC_CHECK(heavy != kInvalidEntity);
-		CC_CHECK(reg.Has<Turret>(heavy)); // G1: heavies are turreted by default
+		CC_CHECK(reg.Has<Turret>(heavy)); // heavies are turreted by default
 		CC_CHECK(reg.Get<Turret>(heavy)->turnRate == 3.0f);
 		CC_CHECK(!reg.Has<Cargo>(heavy));
 		const Entity rifle =
@@ -116,7 +110,6 @@ void RunFactoryTests()
 		ResetActiveUnitConfigs();
 	}
 
-	// --- M2 destroy: passengers eject at the carrier's tile ---
 	{
 		Registry reg;
 		Unit hull;

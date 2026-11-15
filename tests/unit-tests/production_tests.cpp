@@ -31,11 +31,9 @@ struct Rig
 
 void RunProductionTests()
 {
-	// --- build times scale with cost, floored at 2s ---
 	CC_CHECK(BuildTime(UnitType::RifleInfantry) >= 2.0f);
 	CC_CHECK(BuildTime(UnitType::HeavyTank) > BuildTime(UnitType::RifleInfantry));
 
-	// --- enqueue charges upfront; broke orders rejected ---
 	Rig rig;
 	ProductionQueue queue;
 	CC_CHECK(queue.Empty());
@@ -51,7 +49,6 @@ void RunProductionTests()
 	CC_CHECK(!brokeQueue.Enqueue(broke, UnitType::HeavyTank));
 	CC_CHECK(brokeQueue.Empty());
 
-	// --- partial progress advances without spawning ---
 	queue.Update(rig.factory, rig.resources, kPlayerTeam, { 0.0f, 0.0f },
 				 BuildTime(UnitType::RifleInfantry) * 0.5f);
 	CC_CHECK(queue.Size() == 1);
@@ -59,7 +56,6 @@ void RunProductionTests()
 	const float half = queue.HeadProgress();
 	CC_CHECK(half > 0.4f && half < 0.6f);
 
-	// --- completion spawns prepaid at the rally point (no second charge) ---
 	const long ironBefore = rig.resources.iron;
 	queue.Update(rig.factory, rig.resources, kEnemyTeam, cc::ToRaylib(cc::TileToWorld(4, 4)),
 				 BuildTime(UnitType::RifleInfantry));
@@ -75,7 +71,6 @@ void RunProductionTests()
 	});
 	CC_CHECK(found);
 
-	// --- items build strictly in order ---
 	Rig line;
 	ProductionQueue lineQueue;
 	CC_CHECK(lineQueue.Enqueue(line.resources, UnitType::RifleInfantry));
@@ -89,7 +84,6 @@ void RunProductionTests()
 	CC_CHECK(lineQueue.Empty());
 	CC_CHECK(line.spawned == 2);
 
-	// --- repeat items re-charge and restart instead of popping ---
 	Rig rep;
 	ProductionQueue repQueue;
 	CC_CHECK(repQueue.Enqueue(rep.resources, UnitType::RifleInfantry, true));
@@ -105,7 +99,6 @@ void RunProductionTests()
 	CC_CHECK(repQueue.Size() == 1);
 	CC_CHECK(rep.spawned == 2);
 
-	// --- broke repeat parks at 100% and resumes when funded ---
 	Rig poor;
 	ProductionQueue poorQueue;
 	CC_CHECK(poorQueue.Enqueue(poor.resources, UnitType::RifleInfantry, true));
@@ -123,14 +116,12 @@ void RunProductionTests()
 	poorQueue.Update(poor.factory, poor.resources, kPlayerTeam, { 0.0f, 0.0f }, 0.01f);
 	CC_CHECK(poor.spawned == 2); // resumes on the next tick once affordable
 
-	// --- cancel still refunds + removes repeat items ("until cancelled") ---
 	CC_CHECK(!repQueue.Empty());
 	const long beforeCancel = rep.resources.iron;
 	repQueue.CancelTop(rep.resources);
 	CC_CHECK(repQueue.Empty());
 	CC_CHECK(rep.resources.iron == beforeCancel + repCost.iron);
 
-	// --- cancel refunds the head and drops it ---
 	Rig refund;
 	ProductionQueue refundQueue;
 	CC_CHECK(refundQueue.Enqueue(refund.resources, UnitType::LightTank));
@@ -141,7 +132,6 @@ void RunProductionTests()
 	refundQueue.CancelTop(refund.resources); // empty cancel: safe no-op
 	CC_CHECK(refund.resources.iron == 1000);
 
-	// --- SpawnPrepaid never charges, even when broke ---
 	ResourceSystem empty;
 	EventDispatcher events;
 	Registry registry;
@@ -150,7 +140,6 @@ void RunProductionTests()
 			 kInvalidEntity);
 	CC_CHECK(empty.iron == 0 && empty.oil == 0);
 
-	// --- bound queues reject the other category without charging ---
 	Rig bound;
 	ProductionQueue bootcamp{ ProductionCategory::Infantry };
 	ProductionQueue workshop{ ProductionCategory::Vehicle };
@@ -165,7 +154,6 @@ void RunProductionTests()
 	CC_CHECK(bound.resources.iron == afterTank);
 	CC_CHECK(workshop.Size() == 1);
 
-	// --- ResetForMatch clears items but keeps the binding ---
 	bootcamp.ResetForMatch();
 	workshop.ResetForMatch();
 	CC_CHECK(bootcamp.Empty() && workshop.Empty());

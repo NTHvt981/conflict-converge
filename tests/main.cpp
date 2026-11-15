@@ -1,9 +1,5 @@
 // Test runner: calls every unit-tests TU entry point, reports failures.
-// Multi-system scenarios driven headless live in integration-tests/.
 // Usage: conflict-converge-test.exe [--filter=Sub [--filter=...]] [--list]
-// No args runs everything; --filter runs suites whose short name contains
-// the substring (e.g. --filter=Art runs Art; --filter=Selection runs
-// Selection + SelectionVisual). Repeatable (union). --list prints names.
 
 #include "unit-tests/test_harness.h"
 
@@ -93,8 +89,7 @@ struct Suite
 	void (*run)();
 };
 
-// Same order as the historical flat call list below (suites are
-// independent, but keep the sequence stable for log diffing).
+// Keep the order stable for log diffing (suites are independent).
 const Suite kSuites[] = {
 	{ "MathUtils", RunMathUtilsTests },
 	{ "Event", RunEventTests },

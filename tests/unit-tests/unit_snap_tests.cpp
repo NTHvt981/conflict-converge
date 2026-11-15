@@ -6,14 +6,12 @@
 
 void RunUnitSnapTests()
 {
-	// --- arbitrary position snaps to its tile's top-left corner ---
 	Unit unit;
 	unit.position = { 140.0f, 260.0f };
 	SnapUnitToTile(unit);
 	CC_CHECK(unit.position.x == 128.0f);
 	CC_CHECK(unit.position.y == 256.0f);
 
-	// --- origin and exact corners are fixed points ---
 	Unit origin;
 	origin.position = { 0.0f, 0.0f };
 	SnapUnitToTile(origin);
@@ -26,7 +24,6 @@ void RunUnitSnapTests()
 	CC_CHECK(corner.position.x == 384.0f);
 	CC_CHECK(corner.position.y == 128.0f);
 
-	// --- snapping only touches position; stats survive ---
 	Unit stats;
 	stats.position = { 200.0f, 200.0f };
 	stats.health = 55.0f;
@@ -39,7 +36,6 @@ void RunUnitSnapTests()
 	CC_CHECK(stats.type == UnitType::LightTank);
 	CC_CHECK(stats.isSelected);
 
-	// --- snapped unit sits on the tile WorldToTile reports ---
 	cc::IVec2 tile = cc::WorldToTile(cc::ToGlm(stats.position));
 	CC_CHECK(tile == cc::IVec2(1, 1));
 }

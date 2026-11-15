@@ -1,4 +1,4 @@
-// Unit tests for damage matrix + ResolveAttack + G3 crush rule.
+// Unit tests for the damage matrix, ResolveAttack, crush rules, and sniper fire.
 
 #include "test_harness.h"
 
@@ -16,7 +16,6 @@
 
 void RunCombatTests()
 {
-	// --- full matrix spot values ---
 	CC_CHECK(Effectiveness(DamageType::KINETIC, ArmorType::STEEL) == 1.00f);
 	CC_CHECK(Effectiveness(DamageType::KINETIC, ArmorType::RUBBER) == 0.75f);
 	CC_CHECK(Effectiveness(DamageType::KINETIC, ArmorType::COMPOSITE) == 0.50f);
@@ -27,7 +26,6 @@ void RunCombatTests()
 	CC_CHECK(Effectiveness(DamageType::ENERGY, ArmorType::RUBBER) == 1.25f);
 	CC_CHECK(Effectiveness(DamageType::ENERGY, ArmorType::COMPOSITE) == 1.00f);
 
-	// --- scaled damage + cooldown restart ---
 	Unit attacker;
 	attacker.attackPower = 100;
 	attacker.damageType = DamageType::KINETIC;
@@ -43,7 +41,6 @@ void RunCombatTests()
 	CC_CHECK(defender.health == 150.0f);
 	CC_CHECK(attackerCombat.cooldown == 1.5f);
 
-	// --- bonus matchup: EXPLOSIVE cracks STEEL ---
 	Unit bomber;
 	bomber.attackPower = 80;
 	bomber.damageType = DamageType::EXPLOSIVE;
@@ -56,7 +53,6 @@ void RunCombatTests()
 	CC_CHECK(ResolveAttack(bomber, bomberCombat, tank, tankCombat) == 100.0f);
 	CC_CHECK(tank.health == 400.0f);
 
-	// --- zero power deals nothing but still cycles the cooldown ---
 	Unit peashooter;
 	peashooter.attackPower = 0;
 	peashooter.cooldownTime = 0.5f;
@@ -68,7 +64,6 @@ void RunCombatTests()
 	CC_CHECK(wall.health == 100.0f);
 	CC_CHECK(peashooterCombat.cooldown == 0.5f);
 
-	// --- G3 crush: overlapping enemy foot dies, friendlies/vehicles spared ---
 	{
 		ResetActiveUnitConfigs(); // HeavyTank crushesFlesh = true by default
 		Registry registry;
@@ -112,7 +107,6 @@ void RunCombatTests()
 		ResetActiveUnitConfigs();
 	}
 
-	// --- G3 crush: non-crusher overlap never kills ---
 	{
 		Registry registry;
 		Unit light;
@@ -133,7 +127,6 @@ void RunCombatTests()
 		CC_CHECK(registry.Get<Unit>(footId)->health > 0.0f);
 	}
 
-	// --- G5 sniper: one marksman hit visibly removes one squad sprite ---
 	{
 		ResetActiveUnitConfigs();
 		CC_CHECK(ActiveUnitConfig(UnitType::AntiArmorInfantry).abilities.sniper);

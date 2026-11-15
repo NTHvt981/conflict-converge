@@ -1,11 +1,10 @@
-// Integration tests: multi-system scenarios driven headless through the
-// same per-frame calls main.cpp makes (UpdateUnit, death sweep, economy,
-// production, save/load). Unit suites cover components; these cover play.
+// Integration tests: multi-system scenarios driven headless through the same
+// per-frame calls main.cpp makes (combat, economy, production, save/load).
 
 #include "../unit-tests/test_harness.h"
 
 #include "economy/Building.h"
-#include "units/Combat.h" // G2: headless drivers step UpdateProjectiles
+#include "units/Combat.h" // headless drivers step UpdateProjectiles
 #include "core/Event.h"
 #include "units/AICommander.h" // Difficulty ladder decides games
 #include "world/FogOfWar.h" // WorldState carries fog memory
@@ -46,9 +45,8 @@ void SimulateCombatFrames(Registry &registry, TileMap &map, UnitFactory &factory
 	for (int i = 0; i < frames; ++i)
 	{
 		registry.Each<Unit>([&](Entity id, Unit &unit) { UpdateUnit(id, registry, map, kDt); });
-		// G2: shells are a per-frame system like movement — any headless
-		// driver that steps UpdateUnit must step them too, or arcing units
-		// read as zero-DPS and sieges stall.
+		// Shells are a per-frame system: a driver that steps UpdateUnit must
+		// step UpdateProjectiles too, or arcing units read as zero-DPS.
 		UpdateProjectiles(registry, map, kDt);
 		std::vector<Entity> dead;
 		registry.Each<Unit>([&](Entity id, const Unit &unit) {
@@ -64,9 +62,8 @@ void SimulateCombatFrames(Registry &registry, TileMap &map, UnitFactory &factory
 	}
 }
 
-// Place asymmetric squads (3 vs 2) facing off at 80% of the shorter of
-// sight/range (data-driven: no hardcoded stat assumptions). The extra body
-// guarantees a decisive winner — mirror matches can mutually annihilate.
+// Place asymmetric squads (3 vs 2) at 80% of the shorter of sight/range
+// (data-driven); the extra body guarantees a decisive winner.
 void DeployFaceoff(Registry &registry, UnitFactory &factory, UnitType type)
 {
 	const UnitStats stats = BaseStats(type);
@@ -86,18 +83,15 @@ void DeployFaceoff(Registry &registry, UnitFactory &factory, UnitType type)
 
 constexpr int kSoakFrameCap = 72000;
 
-// AI-vs-AI driver: two commanders build, harvest, wave, and scrap
-// until one team is wiped or the cap hits. Prints kill/wave telemetry every
-// 20 sim-seconds. Returns frames simulated. Death sweep mirrors the game
-// loop (corpse kill-credit by team, then destroy).
+// AI-vs-AI driver: build, harvest, wave, and scrap until one team is wiped
+// or the cap hits; prints kill/wave telemetry every 20 sim-seconds.
 int RunAISoak(Registry &registry, TileMap &map, ResourceNodes &nodes, AICommander &first,
 			  AICommander &second, const char *label)
 {
 	int frames = 0;
 	int kills0 = 0, kills1 = 0;
-	// 20 sim-minutes: support units (Medic, Engineer) cannot attack, so
-	// harvesters ride out raids instead of chasing to their deaths and
-	// games legitimately run longer than the old all-combatant casts.
+	// 20 sim-minutes: support units cannot attack, so harvesters ride out
+	// raids and games legitimately run long.
 	constexpr int kCap = kSoakFrameCap;
 	while (CountTeam(registry, kPlayerTeam) > 0 && CountTeam(registry, kEnemyTeam) > 0 &&
 		   frames < kCap)
@@ -109,7 +103,7 @@ int RunAISoak(Registry &registry, TileMap &map, ResourceNodes &nodes, AICommande
 		registry.Each<Unit>([&](Entity id, Unit &unit) {
 			UpdateUnit(id, registry, map, kDt);
 		});
-		UpdateProjectiles(registry, map, kDt); // G2: headless soak steps shells too
+		UpdateProjectiles(registry, map, kDt); // headless soak steps shells too
 		std::vector<Entity> dead;
 		registry.Each<Unit>([&](Entity id, const Unit &unit) {
 			if (unit.health <= 0.0f)
@@ -144,11 +138,8 @@ int RunAISoak(Registry &registry, TileMap &map, ResourceNodes &nodes, AICommande
 	return frames;
 }
 
-// Mirror arena factory: Crossroads-sized (24x18) with corner
-// homes, so range, scouting, and retreats — Hard's whole kit — actually
-// matter. The old 16x12 phone booth decided by cost-efficiency alone at
-// contact range, which structurally negates artillery/scouts and flattered
-// cheap mass. Nodes and homes are 180-degree symmetric.
+// Mirror arena: Crossroads-sized (24x18) with corner homes, so range,
+// scouting, and retreats matter; nodes and homes are 180-degree symmetric.
 void SeedSoakArena(TileMap &map, ResourceNodes &nodes)
 {
 	nodes.SpawnNode(map, ResourceKind::Iron, { 4, 13 }, 300.0f, 10.0f);
@@ -161,7 +152,6 @@ void SeedSoakArena(TileMap &map, ResourceNodes &nodes)
 
 void RunIntegrationTests()
 {
-	// --- squad battle resolves: one side wipes the other in frame budget ---
 	{
 		Registry registry;
 		ResourceSystem resources;
@@ -184,7 +174,6 @@ void RunIntegrationTests()
 		CC_CHECK(frames < 3600);               // it terminated, not timed out
 	}
 
-	// --- economy cycle: base trickle + harvest + queue produce a unit ---
 	{
 		Registry registry;
 		ResourceSystem resources;
@@ -216,7 +205,6 @@ void RunIntegrationTests()
 		CC_CHECK(resources.iron > 500 - CostOf(UnitType::RifleInfantry).iron); // income outpaced cost
 	}
 
-	// --- mid-combat save/load: snapshot, resume, sim completes ---
 	{
 		Registry registry;
 		ResourceSystem resources;
@@ -259,10 +247,8 @@ void RunIntegrationTests()
 		std::filesystem::remove(path, ec);
 	}
 
-	// --- Balance: the difficulty ladder decides games, no stalemates ---
-	// Easy-vs-Medium: Medium wins outright. Split Bootcamp/Workshop queues
-	// produce infantry and LightTanks in parallel, compounding Medium's
-	// composition edge into a wipe.
+	// Easy-vs-Medium: Medium wins outright; split Camp/Workshop queues
+	// compound its composition edge into a wipe.
 	{
 		Registry registry;
 		TileMap map(24, 18);

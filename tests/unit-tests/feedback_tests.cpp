@@ -33,7 +33,6 @@ Unit MakeVictim()
 
 void RunFeedbackTests()
 {
-	// --- a landed hit stamps the victim's feedback fields ---
 	{
 		Unit gun = MakeGun();
 		CombatState gunCombat;
@@ -45,7 +44,6 @@ void RunFeedbackTests()
 		CC_CHECK(victimCombat.hitFlashTime == kHitFlashDuration);
 	}
 
-	// --- matrix-scaled number is what gets stamped ---
 	{
 		Unit gun = MakeGun();
 		gun.damageType = DamageType::ENERGY; // ENERGY vs STEEL: 0.5x
@@ -57,7 +55,6 @@ void RunFeedbackTests()
 		CC_CHECK(victimCombat.lastDamageTaken == 5.0f);
 	}
 
-	// --- zero-power hit cycles cooldown but shows no feedback ---
 	{
 		Unit gun = MakeGun(0.0f);
 		CombatState gunCombat;
@@ -68,7 +65,6 @@ void RunFeedbackTests()
 		CC_CHECK(victimCombat.hitFlashTime == 0.0f);
 	}
 
-	// --- flash decays through the AI driver and clamps at zero ---
 	{
 		Registry registry;
 		TileMap map(20, 15);

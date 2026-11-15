@@ -1,7 +1,5 @@
-// Unit tests for the standalone unit-config editor data layer (schema
-// parse/serialize round-trip, directory discovery, tolerant-load cases,
-// enum round-trips). Draw-call code (preview pane, overlay) stays untested
-// per project convention — verified visually when the editor runs.
+// Unit tests for the unit-config editor data layer: parse/serialize round-trip,
+// discovery, tolerant load. Draw code (preview, overlay) is verified visually.
 
 #include "test_harness.h"
 
@@ -69,7 +67,6 @@ const char *kConfigDirs[] = { "data/configs", "../../data/configs",
 
 void RunUnitConfigTests()
 {
-	// --- single-file round-trip: save, reload, field-for-field equal ---
 	{
 		UnitConfig heavy = DefaultUnitConfig(UnitType::HeavyTank);
 		const std::string json = UnitConfigToJson(heavy);
@@ -80,7 +77,6 @@ void RunUnitConfigTests()
 		CC_CHECK(ConfigsEqual(heavy, reloaded.value_or(UnitConfig{})));
 	}
 
-	// --- round-trip preserves edited (non-default) values ---
 	{
 		UnitConfig edited = DefaultUnitConfig(UnitType::RifleInfantry);
 		edited.stats.health = 150.0f;
@@ -98,7 +94,6 @@ void RunUnitConfigTests()
 		CC_CHECK(ConfigsEqual(edited, reloaded.value_or(UnitConfig{})));
 	}
 
-	// --- canonical filenames: snake_case stems, underscore-tolerant match ---
 	{
 		CC_CHECK(std::string(UnitConfigFilename(UnitType::RifleInfantry)) == "rifle_infantry");
 		CC_CHECK(std::string(UnitConfigFilename(UnitType::AntiArmorInfantry)) ==
@@ -111,7 +106,6 @@ void RunUnitConfigTests()
 		CC_CHECK(std::string(UnitConfigFilename(UnitType::PrototypeInfantry)) ==
 				 "prototype_infantry");
 
-		// Underscored stems validate; a genuinely different type still fails.
 		const std::string heavy = UnitConfigToJson(DefaultUnitConfig(UnitType::HeavyTank));
 		CC_CHECK(ParseUnitConfigJson(heavy, "heavy_tank").has_value());
 		CC_CHECK(ParseUnitConfigJson(heavy, "HEAVY_TANK").has_value()); // case-insensitive
@@ -119,15 +113,13 @@ void RunUnitConfigTests()
 			ParseUnitConfigJson(heavy, "light_tank");
 		CC_CHECK(!mismatch.has_value() && mismatch.error() == ConfigError::Mismatch);
 
-		// Only stems that claim to be unit configs are reported when they
-		// reject; data/configs/ also holds the atlas and AI documents.
+		// data/configs/ also holds atlas and AI documents; only unit stems are reported.
 		CC_CHECK(IsUnitConfigStem("heavy_tank"));
 		CC_CHECK(IsUnitConfigStem("HEAVY_TANK"));
 		CC_CHECK(!IsUnitConfigStem("ai"));
 		CC_CHECK(!IsUnitConfigStem("sprites"));
 	}
 
-	// --- shipped seed files load with the compiled-in values ---
 	{
 		const std::vector<UnitConfig> *found = nullptr;
 		std::vector<UnitConfig> configs;
@@ -199,7 +191,6 @@ void RunUnitConfigTests()
 		}
 	}
 
-	// --- directory discovery: 3 valid + 1 garbage -> exactly 3 ---
 	{
 		const std::string dir = TempDir("cc_unitconfig_discovery");
 		std::error_code ec;
@@ -219,19 +210,16 @@ void RunUnitConfigTests()
 		std::filesystem::remove_all(dir, ec);
 	}
 
-	// --- missing dir -> empty, not a crash ---
 	{
 		CC_CHECK(LoadAllUnitConfigs(TempDir("cc_unitconfig_no_such_dir")).empty());
 	}
 
-	// --- tolerant load: missing file -> FileUnreadable (caller falls back) ---
 	{
 		const std::expected<UnitConfig, ConfigError> missing =
 			LoadUnitConfig(TempDir("cc_unitconfig_missing.json"));
 		CC_CHECK(!missing.has_value() && missing.error() == ConfigError::FileUnreadable);
 	}
 
-	// --- tolerant load: type/filename mismatch + unknown type skipped ---
 	{
 		const std::string rifle =
 			UnitConfigToJson(DefaultUnitConfig(UnitType::RifleInfantry));
@@ -249,9 +237,7 @@ void RunUnitConfigTests()
 		CC_CHECK(!typeless.has_value() && typeless.error() == ConfigError::UnknownName);
 	}
 
-	// --- tolerant load: missing/unknown/out-of-range fields -> defaults ---
 	{
-		// Missing everything but type: full baseline.
 		const std::expected<UnitConfig, ConfigError> bare =
 			ParseUnitConfigJson("{\"type\":\"Artillery\"}", "artillery");
 		CC_CHECK(bare.has_value());
@@ -291,7 +277,6 @@ void RunUnitConfigTests()
 		CC_CHECK(bounds.boundLeft == 1 && bounds.boundTop == 0);
 	}
 
-	// --- enum round-trips: every value serializes and parses back ---
 	{
 		for (int i = 0; i < static_cast<int>(ArmorType::Count); ++i)
 		{
@@ -324,11 +309,10 @@ void RunUnitConfigTests()
 		CC_CHECK(!noArmor.has_value() && noArmor.error() == ConfigError::UnknownName);
 		CC_CHECK(!noDamage.has_value() && noDamage.error() == ConfigError::UnknownName);
 		CC_CHECK(!noUnit.has_value() && noUnit.error() == ConfigError::UnknownName);
-		// Pre-rename "Infantry" stays a valid alias for old configs/saves.
+		// "Infantry" stays a valid alias for old configs/saves.
 		CC_CHECK(ParseUnitTypeName("Infantry") == UnitType::RifleInfantry);
 	}
 
-	// --- M1 abilities: defaults off, tolerant parse, round-trip ---
 	{
 		const UnitConfig baseline = DefaultUnitConfig(UnitType::HeavyTank);
 		CC_CHECK(baseline.abilities.turretTurnRate == 3.0f); // G1: tanks turreted
@@ -360,7 +344,7 @@ void RunUnitConfigTests()
 		CC_CHECK(reloaded.has_value());
 		CC_CHECK(ConfigsEqual(config, reloaded.value_or(UnitConfig{})));
 
-		// Missing abilities block -> defaults (old files keep working).
+		// Missing abilities block -> defaults.
 		const std::expected<UnitConfig, ConfigError> sparse =
 			ParseUnitConfigJson("{\"type\":\"HeavyTank\"}", "heavy_tank");
 		CC_CHECK(sparse.has_value());
@@ -368,7 +352,6 @@ void RunUnitConfigTests()
 								DefaultUnitConfig(UnitType::HeavyTank).abilities));
 	}
 
-	// --- M1 abilities: unknown keys reject (fail fast on typos) ---
 	{
 		const std::expected<UnitConfig, ConfigError> turbo = ParseUnitConfigJson(
 			"{\"type\":\"HeavyTank\",\"abilities\":{\"turboTurret\":1.0}}",
@@ -379,7 +362,6 @@ void RunUnitConfigTests()
 		CC_CHECK(!seats.has_value() && seats.error() == ConfigError::UnknownAbilityKey);
 	}
 
-	// --- M1 cost: per-field fallback, negative rejected ---
 	{
 		const std::expected<UnitConfig, ConfigError> priced =
 			ParseUnitConfigJson("{\"type\":\"IFV\",\"cost\":{\"iron\":90}}", "ifv");
@@ -395,7 +377,6 @@ void RunUnitConfigTests()
 		CC_CHECK(clamped.costOil == DefaultUnitConfig(UnitType::IFV).costOil);
 	}
 
-	// --- M1 catalog: CostOf reads active configs, reset restores defaults ---
 	{
 		ResetActiveUnitConfigs();
 		const UnitCost before = CostOf(UnitType::RifleInfantry);
@@ -408,7 +389,6 @@ void RunUnitConfigTests()
 		SetActiveUnitConfigs(override);
 		const UnitCost after = CostOf(UnitType::RifleInfantry);
 		CC_CHECK(after.iron == 77 && after.oil == 11);
-		// Types missing from the override fall back per-type.
 		CC_CHECK(ActiveUnitConfig(UnitType::HeavyTank).costIron == 250);
 		ResetActiveUnitConfigs();
 		CC_CHECK(CostOf(UnitType::RifleInfantry).iron == 25);

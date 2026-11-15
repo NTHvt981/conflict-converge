@@ -40,7 +40,6 @@ void RunArmedAbilityTests();
 
 void RunUnitCommandsTests()
 {
-	// --- stance applies to every selected unit ---
 	{
 		Registry registry;
 		const Entity a = AddCommandUnit(registry, UnitType::RifleInfantry, true);
@@ -50,7 +49,6 @@ void RunUnitCommandsTests()
 		CC_CHECK(registry.Get<Orders>(b)->stance == Stance::Hold);
 	}
 
-	// --- halt clears movement, combat, and queued orders ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -67,7 +65,6 @@ void RunUnitCommandsTests()
 		CC_CHECK(registry.Get<Mover>(id)->speedCapPixelsPerSec == -1.0f);
 	}
 
-	// --- halt cancels a transport load order and it is not re-issued ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -99,7 +96,6 @@ void RunUnitCommandsTests()
 		CC_CHECK(registry.Get<Unit>(patroller)->state == UnitState::Idle);
 	}
 
-	// --- halt cancels an unload order and it is not re-issued ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -122,7 +118,6 @@ void RunUnitCommandsTests()
 		CC_CHECK(registry.Get<Unit>(carrier)->state == UnitState::Idle);
 	}
 
-	// --- auto-retreat toggles as a group ---
 	{
 		Registry registry;
 		const Entity a = AddCommandUnit(registry, UnitType::RifleInfantry, true);
@@ -134,7 +129,6 @@ void RunUnitCommandsTests()
 		CC_CHECK(!registry.Get<Orders>(a)->autoRetreat);
 	}
 
-	// --- attack-move and patrol arm the selection, skipping the unselected ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -149,7 +143,6 @@ void RunUnitCommandsTests()
 		CC_CHECK(!registry.Get<Orders>(parked)->hasPatrol);
 	}
 
-	// --- repair arms engineers on damaged targets, nobody else ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -165,7 +158,6 @@ void RunUnitCommandsTests()
 		CC_CHECK(IssueSelectionRepair(registry, map, &occ, rifle, false) == 0);
 	}
 
-	// --- heal arms medics on wounded flesh, nobody else ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -198,7 +190,6 @@ void StepCommandUnits(Registry &registry, TileMap &map, int frames)
 
 void RunAutoRepairTests()
 {
-	// --- toggle flips every selected engineer as a group ---
 	{
 		Registry registry;
 		const Entity a = AddCommandUnit(registry, UnitType::Engineer, true);
@@ -212,7 +203,6 @@ void RunAutoRepairTests()
 		CC_CHECK(!registry.Get<Orders>(b)->autoRepair);
 	}
 
-	// --- toggled engineer acquires and heals a nearby damaged vehicle ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -228,7 +218,6 @@ void RunAutoRepairTests()
 		CC_CHECK(!GetOrders(registry, engId).hasRepairOrder);
 	}
 
-	// --- toggled engineer acquires and heals a nearby damaged building ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -243,7 +232,6 @@ void RunAutoRepairTests()
 		CC_CHECK(registry.Get<Building>(baseId)->health == 400.0f);
 	}
 
-	// --- untoggled, busy, and distant engineers acquire nothing ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -298,7 +286,6 @@ struct InputRig
 
 void RunArmedAbilityTests()
 {
-	// --- arming toggles; same id disarms ---
 	{
 		InputRig rig;
 		rig.playing.ArmAbility(AbilityId::AttackMove);
@@ -311,7 +298,6 @@ void RunArmedAbilityTests()
 		CC_CHECK(!rig.playing.ArmedAbility().has_value());
 	}
 
-	// --- armed attack-move issues at the click point, then disarms ---
 	{
 		InputRig rig;
 		const Entity id = AddCommandUnit(rig.registry, UnitType::RifleInfantry, true);
@@ -321,7 +307,6 @@ void RunArmedAbilityTests()
 		CC_CHECK(!rig.playing.ArmedAbility().has_value());
 	}
 
-	// --- armed patrol and heal behave the same; misses stay armed ---
 	{
 		InputRig rig;
 		const Entity id = AddCommandUnit(rig.registry, UnitType::RifleInfantry, true);
@@ -341,7 +326,6 @@ void RunArmedAbilityTests()
 		CC_CHECK(rig.registry.Get<Orders>(medic)->repairTarget == wounded);
 	}
 
-	// --- nothing armed issues nothing ---
 	{
 		InputRig rig;
 		AddCommandUnit(rig.registry, UnitType::RifleInfantry, true);

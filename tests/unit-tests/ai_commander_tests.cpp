@@ -1,6 +1,5 @@
-// Unit tests for the AICommander (params, setup, waves, scouting,
-// headless skirmish). The commander drives the same per-frame calls as
-// main.cpp; the skirmish below mirrors tests/integration-tests battle setup.
+// Unit tests for AICommander: params, setup, waves, scouting, and a headless
+// skirmish that mirrors the integration-test battle setup.
 
 #include "test_harness.h"
 
@@ -59,7 +58,6 @@ bool ParamsEqual(const AIDifficultyParams &a, const AIDifficultyParams &b)
 
 void RunAICommanderTests()
 {
-	// --- difficulty params scale monotonically (Easy/Medium/Hard) ---
 	const AIDifficultyParams easy = ParamsFor(AIDifficulty::Easy);
 	const AIDifficultyParams medium = ParamsFor(AIDifficulty::Medium);
 	const AIDifficultyParams hard = ParamsFor(AIDifficulty::Hard);
@@ -72,7 +70,6 @@ void RunAICommanderTests()
 	CC_CHECK(hard.composition.size() > easy.composition.size());
 	CC_CHECK(!easy.retreats && !medium.retreats && hard.retreats);
 
-	// --- SetupBase: buildings placed, starting guard fielded ---
 	Registry registry;
 	TileMap map(20, 15);
 	ResourceNodes nodes;
@@ -90,7 +87,6 @@ void RunAICommanderTests()
 	CC_CHECK(ai.HasWorkshop());
 	CC_CHECK(ai.CombatUnitCount() >= 1); // guard: team never starts empty
 
-	// --- harvesters sustain to the difficulty count ---
 	nodes.SpawnNode(map, ResourceKind::Iron, { 15, 3 }, 200.0f, 10.0f);
 	for (int i = 0; i < 60; ++i)
 	{
@@ -98,7 +94,6 @@ void RunAICommanderTests()
 	}
 	CC_CHECK(ai.HarvesterCount() == medium.harvesters);
 
-	// --- harvester replacement survives id recycling by a non-Engineer ---
 	{
 		Registry recycleRegistry;
 		TileMap recycleMap(20, 15);
@@ -150,7 +145,6 @@ void RunAICommanderTests()
 		CC_CHECK(working >= 1); // the replacement is actually sent to the field
 	}
 
-	// --- replacement gate on Operational Depot ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -173,7 +167,6 @@ void RunAICommanderTests()
 		CC_CHECK(ai.HarvesterCount() == medium.harvesters);
 	}
 
-	// --- wave launches on army-size threshold, ordering the army ---
 	Registry warRegistry;
 	TileMap warMap(20, 15);
 	ResourceNodes warNodes;
@@ -201,7 +194,6 @@ void RunAICommanderTests()
 	});
 	CC_CHECK(ordered >= 3);
 
-	// --- scouting: Hard cadence dispatches within its interval ---
 	Registry scoutRegistry;
 	TileMap scoutMap(20, 15);
 	ResourceNodes scoutNodes;
@@ -217,7 +209,6 @@ void RunAICommanderTests()
 	CC_CHECK(scout.HasScouted());
 	CC_CHECK(scout.LastSeenEnemy() == cc::IVec2(1, 10));
 
-	// --- headless skirmish: two Easy commanders, economies grow, wave fires ---
 	Registry simRegistry;
 	TileMap simMap(24, 18);
 	ResourceNodes simNodes;
@@ -251,7 +242,6 @@ void RunAICommanderTests()
 	CC_CHECK(simRegistry.EntityCount() > startEntities);
 	CC_CHECK(left.HarvesterCount() + right.HarvesterCount() >= 1);
 
-	// --- bound occupancy: harvester order sanitizes off the blocked node ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -294,7 +284,6 @@ void RunAICommanderTests()
 		CC_CHECK(standby == medium.harvesters - 1);
 	}
 
-	// --- bound occupancy: wave keeps attack-move, slots avoid blockers ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -344,7 +333,6 @@ void RunAICommanderTests()
 		CC_CHECK(ordered >= 3);
 	}
 
-	// --- unbound commander keeps legacy blind orders (null occ) ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -355,7 +343,7 @@ void RunAICommanderTests()
 		AICommander ai(registry, map, nodes, events, kEnemyTeam, AIDifficulty::Easy,
 					   { 16, 9 }, { 1, 10 });
 		ai.SetupBase();
-		// NOTE: no SetOccupancy — legacy path.
+		// No SetOccupancy: exercises the unbound path.
 		UnitFactory factory(registry, resources, events);
 		for (int i = 0; i < 3; ++i)
 		{
@@ -385,7 +373,6 @@ void RunAICommanderTests()
 		CC_CHECK(droveAtBlocker);
 	}
 
-	// --- fog-honest targeting: unseen enemies fall back to last-seen memory ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -422,7 +409,6 @@ void RunAICommanderTests()
 		});
 	}
 
-	// --- visible enemies retarget the wave off stale memory ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -465,7 +451,6 @@ void RunAICommanderTests()
 		});
 	}
 
-	// --- AI catalog: compiled defaults match ParamsFor until refreshed ---
 	CC_CHECK(ParamsEqual(ActiveAIDifficultyParams(AIDifficulty::Easy),
 						 ParamsFor(AIDifficulty::Easy)));
 	CC_CHECK(ParamsEqual(ActiveAIDifficultyParams(AIDifficulty::Medium),
@@ -473,7 +458,6 @@ void RunAICommanderTests()
 	CC_CHECK(ParamsEqual(ActiveAIDifficultyParams(AIDifficulty::Hard),
 						 ParamsFor(AIDifficulty::Hard)));
 
-	// --- AI parse: partial block overlays defaults, unknown types reject ---
 	{
 		const std::string json =
 			"{\"medium\": {\"waveThreshold\": 9, \"composition\": [\"LightTank\"]}}";
@@ -495,7 +479,6 @@ void RunAICommanderTests()
 		CC_CHECK(!ParseAIDifficultyJson("{\"easy\": {}}", AIDifficulty::Medium).has_value());
 	}
 
-	// --- AI catalog: file round-trip then reset restores defaults ---
 	{
 		const std::string scratch =
 			(std::filesystem::temp_directory_path() / "cc_ai_roundtrip.json").string();

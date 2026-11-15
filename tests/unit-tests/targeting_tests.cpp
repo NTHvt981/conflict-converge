@@ -4,7 +4,7 @@
 
 #include "units/Targeting.h"
 
-#include "units/UnitStats.h" // ApplyBaseStats for realistic power/sight values
+#include "units/UnitStats.h"
 
 #include "economy/Building.h"
 #include "world/TileMap.h"
@@ -28,14 +28,12 @@ Entity AddSoldier(Registry &registry, UnitType type, TeamId team, float x, float
 
 void RunTargetingTests()
 {
-	// --- distance helper: 3-4-5 triangle ---
 	Unit a;
 	a.position = { 0.0f, 0.0f };
 	Unit b;
 	b.position = { 3.0f, 4.0f };
 	CC_CHECK(CcNear(DistanceBetween(a, b), 5.0f));
 
-	// --- range check with RifleInfantry (range 256) ---
 	Unit attacker;
 	attacker.type = UnitType::RifleInfantry;
 	ApplyBaseStats(attacker);
@@ -49,7 +47,6 @@ void RunTargetingTests()
 	CC_CHECK(!InAttackRange(attacker, far));
 	CC_CHECK(InAttackRange(attacker, edge)); // boundary counts as in range
 
-	// --- acquisition: threat (power) beats proximity ---
 	Registry registry;
 	const Entity seeker = AddSoldier(registry, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
 	const Entity weakNear = AddSoldier(registry, UnitType::RifleInfantry, kEnemyTeam, 100.0f, 0.0f);
@@ -58,11 +55,9 @@ void RunTargetingTests()
 		AddSoldier(registry, UnitType::LightTank, kEnemyTeam, 200.0f, 0.0f); // pow 20
 	CC_CHECK(AcquireTarget(registry, seeker) == strongFar);
 
-	// --- equal power: costlier unit wins, exact ties go nearest ---
 	registry.Get<Unit>(strongFar)->attackPower = 2;
 	CC_CHECK(AcquireTarget(registry, seeker) == strongFar); // 200-iron threat out-pulls 25
 
-	// --- target priority: armor hunters prefer vehicles at equal power ---
 	{
 		Registry duel;
 		const Entity heavy = AddSoldier(duel, UnitType::HeavyTank, kPlayerTeam, 0.0f, 0.0f);
@@ -78,19 +73,16 @@ void RunTargetingTests()
 		CC_CHECK(TargetPriorityWeight(UnitType::HeavyTank, UnitType::RifleInfantry) == 1.0f);
 	}
 
-	// --- allies, the dead, and the out-of-sight are ignored ---
 	AddSoldier(registry, UnitType::HeavyTank, kPlayerTeam, 50.0f, 0.0f); // ally, pow 35
 	const Entity corpse = AddSoldier(registry, UnitType::HeavyTank, kEnemyTeam, 60.0f, 0.0f);
 	registry.Get<Unit>(corpse)->health = 0.0f;
 	AddSoldier(registry, UnitType::HeavyTank, kEnemyTeam, 1000.0f, 0.0f); // beyond sight 320
 	CC_CHECK(AcquireTarget(registry, seeker) == strongFar);
 
-	// --- nobody qualifies: invalid ---
 	registry.Destroy(weakNear);
 	registry.Destroy(strongFar);
 	CC_CHECK(AcquireTarget(registry, seeker) == kInvalidEntity);
 
-	// --- missing seeker / blind seeker: invalid ---
 	CC_CHECK(AcquireTarget(registry, kInvalidEntity) == kInvalidEntity);
 	CC_CHECK(AcquireTarget(registry, 9999) == kInvalidEntity);
 	Unit blind;
@@ -100,27 +92,22 @@ void RunTargetingTests()
 	registry.Add(blindId, blind);
 	CC_CHECK(AcquireTarget(registry, blindId) == kInvalidEntity);
 
-	// --- overkill protection: reserved-lethal targets are skipped ---
 	{
 		Registry battle;
 		const Entity hunter = AddSoldier(battle, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
 		const Entity doomed = AddSoldier(battle, UnitType::LightTank, kEnemyTeam, 100.0f, 0.0f);
 		const Entity healthy = AddSoldier(battle, UnitType::Engineer, kEnemyTeam, 150.0f, 0.0f);
 		battle.Get<Unit>(doomed)->health = 5.0f; // one hit from anything
-		// No reservation: threat logic picks the tank (power 20 > 2).
 		CC_CHECK(AcquireTarget(battle, hunter) == doomed);
 		// 10 power committed mid-windup: hunter spreads to the engineer.
 		ReservedDamageMap reserved;
 		reserved[doomed] = 10.0f;
 		CC_CHECK(AcquireTarget(battle, hunter, nullptr, &reserved) == healthy);
-		// Partial reservation below lethal: still a valid target.
 		reserved[doomed] = 4.0f;
 		CC_CHECK(AcquireTarget(battle, hunter, nullptr, &reserved) == doomed);
-		// Null map (legacy callers, direct UpdateUnit tests): unchanged.
 		CC_CHECK(AcquireTarget(battle, hunter, nullptr, nullptr) == doomed);
 	}
 
-	// --- cost breaks equal-power ties at equal distance ---
 	{
 		Registry duel;
 		const Entity seeker = AddSoldier(duel, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
@@ -132,7 +119,6 @@ void RunTargetingTests()
 		CC_CHECK(ThreatWorth(UnitType::LightTank) > ThreatWorth(UnitType::RifleInfantry));
 	}
 
-	// --- identical threats: nearest wins ---
 	{
 		Registry field;
 		const Entity seeker = AddSoldier(field, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
@@ -143,7 +129,6 @@ void RunTargetingTests()
 		CC_CHECK(AcquireTarget(field, seeker) == near);
 	}
 
-	// --- equal threats at mirrored positions: the tile key wins, any creation order ---
 	{
 		Registry leftFirst;
 		const Entity seekerA =
@@ -161,7 +146,6 @@ void RunTargetingTests()
 		CC_CHECK(AcquireTarget(rightFirst, seekerB) == leftB);
 	}
 
-	// --- equal-distance buildings: same pick regardless of creation order ---
 	{
 		Registry leftFirst;
 		TileMap mapA(20, 15);

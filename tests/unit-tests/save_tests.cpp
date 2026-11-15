@@ -4,7 +4,7 @@
 
 #include "economy/Building.h"
 #include "units/Extensions.h"
-#include "world/FogOfWar.h" // fixture carries fog memory for the team_fog roundtrip
+#include "world/FogOfWar.h"
 #include "app/ui/GameCamera.h"
 #include "economy/Nodes.h"
 #include "core/Registry.h"
@@ -14,13 +14,13 @@
 #include "world/TileMap.h"
 #include "units/Unit.h"
 #include "units/UnitStats.h"
-#include "app/save/SaveWire.h" // wire structs for the version-99 probe
+#include "app/save/SaveWire.h"
 
 #include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 
-#include <cstdint> // INT32_MAX crafted-save probe
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -63,7 +63,6 @@ bool Near(float a, float b)
 
 void RunSaveGameTests()
 {
-	// --- build a representative world ---
 	Fixture src;
 	src.resources.AddIron(1234);
 	src.resources.AddOil(567);
@@ -124,7 +123,6 @@ void RunSaveGameTests()
 		[&](Entity, const Building &b) { srcRallies.push_back({ b.type, b.rallyTile }); });
 	CC_CHECK(SaveWorld(src.State(), path));
 
-	// --- load into a differently-shaped world (tests Resize + Clear) ---
 	Fixture dst;
 	dst.map = TileMap(4, 4);
 	Unit junk;
@@ -152,7 +150,6 @@ void RunSaveGameTests()
 	CC_CHECK(iron != nullptr && iron->kind == ResourceKind::Iron);
 	CC_CHECK(Near(iron->amount, 200.0f) && Near(iron->maxAmount, 200.0f));
 
-	// Find the loaded pair by team and verify the target remap.
 	Entity loadedScout = kInvalidEntity, loadedHunter = kInvalidEntity;
 	dst.registry.Each<Unit>([&](Entity id, const Unit &u) {
 		if (u.teamID == kPlayerTeam)
@@ -203,7 +200,6 @@ void RunSaveGameTests()
 	});
 	CC_CHECK(bases == 1 && bootcamps == 1 && workshops == 1);
 
-	// --- wire value 2 decodes as Bootcamp ---
 	{
 		std::ostringstream wire2;
 		wire2 << "{\"value0\":{\"saveVersion\":3,"
@@ -234,7 +230,6 @@ void RunSaveGameTests()
 		CC_CHECK(wireBootcamps == 1);
 	}
 
-	// --- a building payload without rally fields keeps the -1,-1 sentinel ---
 	{
 		SaveBuilding old;
 		{
@@ -246,13 +241,11 @@ void RunSaveGameTests()
 		CC_CHECK(old.rallyX == -1 && old.rallyY == -1);
 	}
 
-	// --- loaded world keeps simulating (save is not a freeze-frame) ---
 	const float hpBefore = lh->health;
 	(void)hpBefore;
 	UpdateUnit(loadedHunter, dst.registry, dst.map, 1.0f / 60.0f);
 	CC_CHECK(dst.registry.IsAlive(loadedHunter));
 
-	// --- rejection paths leave the destination untouched ---
 	Fixture victim;
 	victim.resources.AddIron(42);
 	const WorldState victimState = victim.State();
@@ -260,7 +253,6 @@ void RunSaveGameTests()
 	CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
 	{
-		// Bad magic.
 		std::ofstream bad(path, std::ios::binary | std::ios::trunc);
 		const char junk2[] = { 'N', 'O', 'P', 'E', 0, 0, 0, 0 };
 		bad.write(junk2, sizeof(junk2));
@@ -269,7 +261,6 @@ void RunSaveGameTests()
 	CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
 	{
-		// Old CCSV custom-binary files are not loadable (no back-compat shim).
 		std::ofstream old(path, std::ios::binary | std::ios::trunc);
 		const char legacy[] = { 'C', 'C', 'S', 'V', 1, 0, 0, 0 };
 		old.write(legacy, sizeof(legacy));
@@ -278,7 +269,6 @@ void RunSaveGameTests()
 	CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
 	{
-		// Old CCPB (protobuf-era) saves are rejected at the magic check.
 		std::ofstream old(path, std::ios::binary | std::ios::trunc);
 		const char legacy[] = { 'C', 'C', 'P', 'B', 2, 0, 0, 0 };
 		old.write(legacy, sizeof(legacy));
@@ -287,7 +277,6 @@ void RunSaveGameTests()
 	CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
 	{
-		// Unsupported save_version inside a well-formed payload.
 		SaveGameData future;
 		future.saveVersion = 99;
 		std::ostringstream payload(std::ios::binary);
@@ -304,7 +293,6 @@ void RunSaveGameTests()
 	CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
 	{
-		// Previous binary format (CCB2 magic) is rejected at the magic check.
 		std::ofstream old(path, std::ios::binary | std::ios::trunc);
 		const char legacy[] = { 'C', 'C', 'B', '2', 2, 0, 0, 0, 0, 0, 0, 0 };
 		old.write(legacy, sizeof(legacy));
@@ -313,7 +301,6 @@ void RunSaveGameTests()
 	CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
 	{
-		// Truncated mid-stream (valid header, cut off early).
 		Fixture tiny;
 		CC_CHECK(SaveWorld(tiny.State(), path));
 		std::error_code ec;
@@ -324,9 +311,8 @@ void RunSaveGameTests()
 	CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
 	{
-		// Well-formed JSON with the wrong value type where the version number
-		// belongs: rapidjson asserts on the type query, so the decoder must
-		// turn that into a fail-closed load error.
+		// Wrong value type where the version belongs: rapidjson asserts on the
+		// type query, so the decoder must fail closed.
 		std::ofstream out(path, std::ios::binary | std::ios::trunc);
 		out.write("CCJ3", 4);
 		const char badType[] = "{\"value0\":{\"saveVersion\":\"three\"}}";
@@ -336,11 +322,8 @@ void RunSaveGameTests()
 	CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
 	{
-		// Crafted save: building tile_x at INT32_MAX smuggled through the
-		// real encode path (hand-added to the registry, bypassing placement
-		// validation). The old `tile_x + fp.x > mapWidth` check
-		// signed-overflows and wraps negative, passing validation to smuggle
-		// an out-of-range tile; the subtraction form must reject it.
+		// INT32_MAX tile through the real encode path: `tile_x + fp.x` overflows
+		// negative, so the subtraction form must reject it.
 		Fixture trap;
 		Building evil;
 		evil.type = BuildingType::Base;
@@ -356,10 +339,8 @@ void RunSaveGameTests()
 	CC_CHECK(!LoadWorld(victimState, path));
 	CC_CHECK(victim.resources.iron == 42 && victim.registry.EntityCount() == 0);
 
-	// --- tolerant decode: missing keys take defaults, unknown keys ignored ---
-	// A hand-written sparse v3 save (map + one partial unit, future and
-	// mystery keys sprinkled in) must load with defaults elsewhere. Note
-	// the "value0" root: cereal auto-names the unnamed top-level struct.
+	// Sparse v3 save: absent keys take defaults, unknown keys are ignored.
+	// cereal names the unnamed top-level struct "value0".
 	{
 		std::ostringstream sparse;
 		sparse << "{\"value0\":{\"saveVersion\":3,"
@@ -402,7 +383,6 @@ void RunSaveGameTests()
 		CC_CHECK(sparseWorld.resources.iron == 0 && sparseWorld.nodes.Count() == 0);
 	}
 
-	// --- QoL replay sequencing: frames save/load in order with motion ---
 	{
 		const std::string dir =
 			(std::filesystem::temp_directory_path() / "cc_replay_test").string();
@@ -431,7 +411,6 @@ void RunSaveGameTests()
 		CC_CHECK(ReplayFrameCount(dir) == 3);
 		CC_CHECK(ReplayFramePath(dir, 0).find("replay_0000.ccpb") != std::string::npos);
 
-		// Reload each frame in order: positions match the recorded motion.
 		for (int frame = 0; frame < 3; ++frame)
 		{
 			Fixture viewer;
@@ -441,13 +420,11 @@ void RunSaveGameTests()
 			CC_CHECK(seen != kInvalidEntity);
 			CC_CHECK(Near(viewer.registry.Get<Unit>(seen)->position.x, expectedX[frame]));
 		}
-		// A gap stops the count (stops at first missing frame).
 		std::filesystem::remove(ReplayFramePath(dir, 1), ec);
 		CC_CHECK(ReplayFrameCount(dir) == 1);
 		std::filesystem::remove_all(dir, ec);
 	}
 
-	// --- M2 extension round-trip: turret facing + cargo manifest + embarked ---
 	{
 		Fixture carrier;
 		Unit hull;
@@ -507,7 +484,6 @@ void RunSaveGameTests()
 		std::remove(xpath.c_str());
 	}
 
-	// --- acquisition tie-breaks survive save/load (ids renumbered, tiles do not) ---
 	{
 		Fixture src;
 		Unit seeker;

@@ -1,5 +1,4 @@
-// Unit tests for QoL shared retreat (RetreatIfLowHP): threshold,
-// fighting-withdrawal shape, Engineer exclusion, player opt-in gating.
+// Unit tests for RetreatIfLowHP: threshold, fighting withdrawal, Engineer exclusion, opt-in gating.
 
 #include "test_harness.h"
 
@@ -49,7 +48,6 @@ Entity SpawnBase(Registry &registry, int tileX, int tileY)
 
 void RunRetreatTests()
 {
-	// --- below threshold + opted in: fighting withdrawal toward home ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -65,7 +63,6 @@ void RunRetreatTests()
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(orders.attackMoveDest)) == cc::IVec2(1, 1));
 	}
 
-	// --- healthy units hold regardless of the flag ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -80,7 +77,6 @@ void RunRetreatTests()
 		CC_CHECK(!registry.Get<Mover>(id)->hasMoveOrder && !registry.Get<Mover>(id)->hasPath);
 	}
 
-	// --- Engineers never retreat, even flagged and bleeding ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -95,7 +91,6 @@ void RunRetreatTests()
 		CC_CHECK(!registry.Get<Mover>(id)->hasMoveOrder && !registry.Get<Mover>(id)->hasPath);
 	}
 
-	// --- opt-in gating: AI path (false) ignores the flag either way ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -111,7 +106,6 @@ void RunRetreatTests()
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(orders.attackMoveDest)) == cc::IVec2(1, 1));
 	}
 
-	// --- wrong team never retreats ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -123,7 +117,6 @@ void RunRetreatTests()
 		CC_CHECK(!orders.attackMove);
 	}
 
-	// --- Bugfix: no-rally fallback prefers the Base nearest the army ---
 	{
 		Registry registry;
 		TileMap map(20, 15); // center ~(10, 7): Base B is nearer the center,
@@ -133,9 +126,8 @@ void RunRetreatTests()
 		Orders &orders = GetOrders(registry, id);
 		orders.autoRetreat = true;
 
-		// Single retreating unit: army centroid == its own position, so the
-		// "nearest to centroid" and "nearest to the unit" answers agree and
-		// both disagree with the old "nearest to map center" (Base B).
+		// One retreating unit: the army centroid is its own position, so the home
+		// answer is Base A, not the map-center Base B.
 		const Vector2 home = ResolvePlayerRetreatHome(registry);
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(home)) == cc::IVec2(2, 2));
 

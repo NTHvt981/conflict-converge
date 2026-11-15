@@ -29,7 +29,6 @@ Entity SpawnArty(Registry &registry, int tileX, int tileY, TeamId team = kPlayer
 
 void RunAttackGroundTests()
 {
-	// --- out-of-range order marches, then holds and shells ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -40,13 +39,11 @@ void RunAttackGroundTests()
 		IssueAttackGroundOrder(gun, gunOrders, GetMover(registry, id), map,
 							   cc::ToRaylib(cc::TileToWorld(15, 2)));
 		CC_CHECK(gunOrders.hasAttackGroundOrder);
-		// Marches first: still moving after a few frames.
 		for (int i = 0; i < 3; ++i)
 		{
 			UpdateUnit(id, registry, map, 1.0f);
 		}
 		CC_CHECK(gun.state == UnitState::Moving);
-		// Arrives in range and starts the firing cycle.
 		for (int i = 0; i < 60 && gun.state != UnitState::Attacking; ++i)
 		{
 			UpdateUnit(id, registry, map, 1.0f);
@@ -55,7 +52,6 @@ void RunAttackGroundTests()
 		CC_CHECK(GetOrders(registry, id).hasAttackGroundOrder); // standing order, not one-shot
 	}
 
-	// --- enemy at the impact point takes damage through the phase machine ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -75,12 +71,11 @@ void RunAttackGroundTests()
 		for (int i = 0; i < 60 && registry.Get<Unit>(foe)->health >= fullHp; ++i)
 		{
 			UpdateUnit(id, registry, map, 1.0f);
-			UpdateProjectiles(registry, map, 1.0f); // G2: shells fly after WindUp
+			UpdateProjectiles(registry, map, 1.0f); // shells fly after WindUp
 		}
 		CC_CHECK(registry.Get<Unit>(foe)->health < fullHp);
 	}
 
-	// --- empty ground: no crash, order persists (continuous, not one-shot) ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -96,7 +91,6 @@ void RunAttackGroundTests()
 		CC_CHECK(GetOrders(registry, id).hasAttackGroundOrder);
 	}
 
-	// --- ResolveGroundAttack: nearest in splash takes it, corpses excluded ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -115,7 +109,6 @@ void RunAttackGroundTests()
 							cc::ToRaylib(cc::TileToWorld(5, 5)));
 		CC_CHECK(registry.Get<Unit>(near)->health < nearFull);
 
-		// Ally at the impact point is never hit.
 		const Entity pal = registry.Create();
 		Unit ally;
 		ally.type = UnitType::RifleInfantry;
@@ -129,7 +122,6 @@ void RunAttackGroundTests()
 		CC_CHECK(registry.Get<Unit>(pal)->health == palFull);
 	}
 
-	// --- equal splash distance: the tile key picks the victim, any creation order ---
 	{
 		const auto spawnFoe = [](Registry &r, float x, float y) {
 			const Entity id = r.Create();
@@ -170,7 +162,6 @@ void RunAttackGroundTests()
 		CC_CHECK(run(rightFirst, true));
 	}
 
-	// --- new move orders clear shelling (exactly-one-active invariant) ---
 	{
 		Registry registry;
 		TileMap map(10, 10);
@@ -185,7 +176,6 @@ void RunAttackGroundTests()
 		CC_CHECK(!GetOrders(registry, id).hasAttackGroundOrder);
 	}
 
-	// --- G2 arc: WindUp launches a shell, impact lands on the ordered tile ---
 	{
 		ResetActiveUnitConfigs(); // Artillery arcs by default (0.6s, splash 1)
 		Registry registry;
@@ -207,7 +197,6 @@ void RunAttackGroundTests()
 		ResetActiveUnitConfigs();
 	}
 
-	// --- G2 AoE: close enemy hit, distant enemy and friendlies spared ---
 	{
 		ResetActiveUnitConfigs();
 		Registry registry;
@@ -254,7 +243,6 @@ void RunAttackGroundTests()
 		ResetActiveUnitConfigs();
 	}
 
-	// --- G2 dodge: a fast vehicle escapes the snapshot landing point ---
 	{
 		ResetActiveUnitConfigs();
 		Registry registry;
@@ -288,7 +276,6 @@ void RunAttackGroundTests()
 		ResetActiveUnitConfigs();
 	}
 
-	// --- G2 tuned splash: foot cannot outwalk it ---
 	{
 		ResetActiveUnitConfigs();
 		Registry registry;

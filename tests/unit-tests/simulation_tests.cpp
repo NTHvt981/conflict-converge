@@ -48,8 +48,6 @@ struct Fixture
 	std::optional<PlayingInput> input; // emplaced: PlayingInput is non-copyable
 	std::optional<Simulation> sim;      // emplaced: Simulation is non-copyable
 
-	// Non-owning views into world_ (bound in the ctor after the Adds) for
-	// the checks below; sim binds the same objects.
 	Registry *registry = nullptr;
 	ResourceSystem *resources = nullptr;
 
@@ -85,8 +83,7 @@ struct Fixture
 		world.Add<Vfx>();
 		world.Add<Minimap>();
 		world.Get<FogOfWar>().Resize(20, 15);
-		// No GL context headless: keep the minimap texture refresh disarmed
-		// (Step would BeginTextureMode into an un-Init'ed target).
+		// No GL context headless: refreshInterval disarms the texture refresh.
 		world.Get<Minimap>().refreshInterval = 1.0e9f;
 		registry = &world.Get<Registry>();
 		resources = &world.Get<ResourceSystem>();
@@ -107,7 +104,6 @@ struct Fixture
 
 void RunSimulationTests()
 {
-	// --- empty-world steps run clean, nothing accrued ---
 	{
 		Fixture fx;
 		fx.sim->Step(1.0f / 60.0f);
@@ -120,7 +116,6 @@ void RunSimulationTests()
 		CC_CHECK(fx.resources->iron == 0); // no Base: no base trickle
 		CC_CHECK(fx.registry->EntityCount() == 0);
 	}
-	// --- match reset arms recording; stop + viewer count behave ---
 	{
 		Fixture fx;
 		fx.sim->ResetForMatch();
@@ -134,7 +129,6 @@ void RunSimulationTests()
 		CC_CHECK(!fx.sim->HasWorkshop());
 		CC_CHECK(fx.sim->ReplayCount() == 5); // polls only: recording untouched
 	}
-	// --- round-robin production: alternating exits, units walk to their rally ---
 	{
 		Fixture fx;
 		TileMap &map = fx.world.Get<TileMap>();

@@ -27,7 +27,6 @@ void RunYieldTests()
 {
 	constexpr float kDt = 1.0f / 60.0f;
 
-	// --- Scenario 1: idle friendly blocker steps into the side pocket ---
 	{
 		TileMap map(7, 3);
 		for (int x = 0; x < 7; ++x)
@@ -69,8 +68,7 @@ void RunYieldTests()
 		CC_CHECK(blockerUnit->state == UnitState::Idle);
 	}
 
-	// --- Scenario 2: no side pocket, the blocker declines and the mover
-	// cancels cleanly instead of freezing ---
+	// No side pocket: the blocker declines and the mover cancels, never freezes.
 	{
 		TileMap map(7, 3);
 		for (int x = 0; x < 7; ++x)
@@ -106,7 +104,6 @@ void RunYieldTests()
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(moverUnit->position)) != cc::IVec2(6, 1));
 	}
 
-	// --- Scenario 3: an enemy blocker never steps aside ---
 	{
 		TileMap map(7, 3);
 		for (int x = 0; x < 7; ++x)
@@ -143,7 +140,6 @@ void RunYieldTests()
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(blockerUnit->position)) == cc::IVec2(2, 1));
 	}
 
-	// --- Scenario 4: an idle unit beside the path is never asked to move ---
 	{
 		TileMap map(7, 3);
 		for (int x = 0; x < 7; ++x)

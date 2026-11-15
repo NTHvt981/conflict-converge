@@ -1,6 +1,5 @@
-// Unit tests for art (phase→frame mapping, rectangle fallback, atlas,
-// squad slots, terrain tiles). Nothing here needs a GPU or audio device:
-// Art::Init(InitMode::Headless) loads nothing and draw calls are never made headless.
+// Unit tests for art: phase→frame mapping, rectangle fallback, atlas, squad
+// slots, and terrain tiles. Headless: no GPU or audio device needed.
 
 #include "test_harness.h"
 
@@ -9,12 +8,10 @@
 
 void RunArtTests()
 {
-	// --- attack phases map to sprite frames ---
 	CC_CHECK(FrameForPhase(AttackPhase::Ready) == UnitFrame::Idle);
 	CC_CHECK(FrameForPhase(AttackPhase::WindUp) == UnitFrame::Attack);
 	CC_CHECK(FrameForPhase(AttackPhase::Recover) == UnitFrame::Attack);
 
-	// --- headless art stays on rectangles ---
 	{
 		Art art;
 		CC_CHECK(!art.Init(InitMode::Headless));
@@ -26,65 +23,53 @@ void RunArtTests()
 		CC_CHECK(!art.HasFont());
 	}
 
-	// --- : SquadSlots ---
 	{
-		// RifleInfantry at full health → 5 soldiers
 		const SquadLayout inf = SquadSlots(UnitType::RifleInfantry, 42, 1.0f);
 		CC_CHECK(inf.count == 5);
 		CC_CHECK(inf.scale < 1.0f); // clusters shrink: 5-wide at 0.55
-		// All 5 offsets must be non-identical (spaced apart)
 		CC_CHECK(inf.slots[0].x != inf.slots[3].x || inf.slots[0].y != inf.slots[3].y);
 
-		// RifleInfantry at 40% health → 2 soldiers (0.40 is not > 0.40)
 		const SquadLayout mid = SquadSlots(UnitType::RifleInfantry, 42, 0.40f);
-		CC_CHECK(mid.count == 2);
+		CC_CHECK(mid.count == 2); // 0.40 is not > 0.40
 		CC_CHECK(mid.scale > inf.scale); // fewer soldiers → larger blit
 
-		// RifleInfantry at 5% health → 1 soldier at full scale
 		const SquadLayout low = SquadSlots(UnitType::RifleInfantry, 42, 0.05f);
 		CC_CHECK(low.count == 1);
 		CC_CHECK(low.scale == 1.0f);
 
-		// AntiArmorInfantry: 2-man team above half health, 1 below.
 		const SquadLayout aa = SquadSlots(UnitType::AntiArmorInfantry, 10, 0.90f);
 		CC_CHECK(aa.count == 2);
 		CC_CHECK(aa.scale == 0.80f);
 		CC_CHECK(SquadSlots(UnitType::AntiArmorInfantry, 10, 0.40f).count == 1);
 
-		// Medic: 2-man team above half health, 1 below (like AntiArmor).
 		const SquadLayout medic = SquadSlots(UnitType::Medic, 11, 0.90f);
 		CC_CHECK(medic.count == 2);
 		CC_CHECK(medic.scale == 0.80f);
 		CC_CHECK(SquadSlots(UnitType::Medic, 11, 0.40f).count == 1);
 
-		// Engineer: always a single centered sprite, like a vehicle.
 		const SquadLayout engineer = SquadSlots(UnitType::Engineer, 20, 1.0f);
 		CC_CHECK(engineer.count == 1);
 		CC_CHECK(engineer.slots[0].x == 0.0f && engineer.slots[0].y == 0.0f);
 		CC_CHECK(engineer.scale == 1.0f);
 
-		// PrototypeInfantry clusters exactly like RifleInfantry (5 at full health).
 		const SquadLayout prototype = SquadSlots(UnitType::PrototypeInfantry, 10, 1.0f);
 		CC_CHECK(prototype.count == 5);
 		CC_CHECK(prototype.scale == 0.55f);
 		CC_CHECK(SquadSlots(UnitType::PrototypeInfantry, 10, 0.10f).count == 1);
 
-		// Non-infantry always returns 1 with offset {0,0}
 		const SquadLayout tank = SquadSlots(UnitType::HeavyTank, 99, 1.0f);
 		CC_CHECK(tank.count == 1);
 		CC_CHECK(tank.slots[0].x == 0.0f);
 		CC_CHECK(tank.slots[0].y == 0.0f);
 		CC_CHECK(tank.scale == 1.0f);
 
-		// Deterministic: same id + health → same offsets
 		const SquadLayout a = SquadSlots(UnitType::RifleInfantry, 77, 0.90f);
 		const SquadLayout b = SquadSlots(UnitType::RifleInfantry, 77, 0.90f);
 		CC_CHECK(a.slots[0].x == b.slots[0].x);
 		CC_CHECK(a.slots[0].y == b.slots[0].y);
 		CC_CHECK(a.scale == b.scale);
 
-		// No overlap: every pair of active slots in a full-strength
-		// RifleInfantry squad stays >= scale * 32px apart (jitter included).
+		// No overlap: active slots stay >= scale * 32px apart (jitter included).
 		const SquadLayout full = SquadSlots(UnitType::RifleInfantry, 1234, 1.0f);
 		CC_CHECK(full.count == 5);
 		for (int i = 0; i < full.count; ++i)
@@ -98,7 +83,6 @@ void RunArtTests()
 		}
 	}
 
-	// --- atlas: down headless, draw is a safe no-op ---
 	{
 		Art art;
 		CC_CHECK(!art.UseAtlas());
@@ -122,7 +106,6 @@ void RunArtTests()
 		CC_CHECK(backToBlue.r == BLUE.r && backToBlue.g == BLUE.g && backToBlue.b == BLUE.b);
 	}
 
-	// --- atlas: idle sprite + move cycle from the data/configs atlas ---
 	{
 		Art art;
 		CC_CHECK(art.LoadAtlas().has_value());
@@ -132,8 +115,6 @@ void RunArtTests()
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 0) == "rifle_infantry_idle_0_0");
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6) == "rifle_infantry_idle_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 3) == "rifle_infantry_idle_0_3");
-		// Move anim is 8x250ms (4 fps) per direction column (column 6 = right);
-		// id 1 offsets 37ms in: t=0 -> frame 0.
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.0f, 6) == "rifle_infantry_move_0_6");
 		// t=800ms + 37 offset = 837 -> frame 3.
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.8f, 6) == "rifle_infantry_move_3_6");
@@ -152,12 +133,10 @@ void RunArtTests()
 				 "prototypeinfantry_move_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, true, 1, 0.3f, 6) ==
 				 "prototypeinfantry_move_1_6");
-		// Deterministic: same args -> same frame.
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6) ==
 				 art.UnitSprite(UnitType::RifleInfantry, true, 1, 0.13f, 6));
-		// Attack anim is 4x250ms (4 fps) per direction column and wins over
-		// move/idle while attacking (column 6 = right: sprites
-		// 2406/2414/2422/2430).
+		// Attack anim is 4x250ms per direction column and wins over move/idle;
+		// column 6 = right (sprites 2406/2414/2422/2430).
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.0f, 6, true) ==
 				 "rifle_infantry_attack_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::RifleInfantry, false, 1, 0.3f, 6, true) ==
@@ -167,8 +146,6 @@ void RunArtTests()
 		// Types without attack anims fall back to move/idle when attacking.
 		CC_CHECK(art.UnitSprite(UnitType::PrototypeInfantry, false, 1, 0.0f, 6, true) ==
 				 "prototypeinfantry_idle_0_6");
-		// AntiArmorInfantry resolves the antiarmor namespace (72x72 cells):
-		// idle + move are 8x250ms (4 fps), attack 4x250ms per column.
 		CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, false, 1, 0.0f, 6) ==
 				 "antiarmor_idle_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, true, 1, 0.0f, 6) ==
@@ -179,21 +156,17 @@ void RunArtTests()
 				 "antiarmor_attack_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::AntiArmorInfantry, false, 1, 0.6f, 6, true) ==
 				 "antiarmor_attack_2_6");
-		// Engineer resolves the engineer namespace (72x72 cells, 8-frame
-		// move and 4-frame attack per column).
 		CC_CHECK(art.UnitSprite(UnitType::Engineer, false, 1, 0.0f, 6) == "engineer_idle_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.0f, 6) == "engineer_move_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::Engineer, true, 1, 0.8f, 6) == "engineer_move_3_6");
 		CC_CHECK(art.UnitSprite(UnitType::Engineer, false, 1, 0.0f, 6, true) ==
 				 "engineer_attack_0_6");
-		// Medic resolves the medic namespace (72x72 cells, 8-frame move and
-		// 4-frame attack per column).
 		CC_CHECK(art.UnitSprite(UnitType::Medic, false, 1, 0.0f, 6) == "medic_idle_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.0f, 6) == "medic_move_0_6");
 		CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.8f, 6) == "medic_move_3_6");
 		CC_CHECK(art.UnitSprite(UnitType::Medic, false, 1, 0.0f, 6, true) ==
 				 "medic_attack_0_6");
-		// Types without atlas entries resolve empty (legacy DrawUnit covers).
+		// Types without atlas entries resolve empty (rectangle fallback covers).
 		CC_CHECK(art.UnitSprite(UnitType::HeavyTank, true, 1, 0.0f, 0).empty());
 		CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f, 0).empty());
 		// Death anims: non-looping, clamped, holding the last frame.
@@ -215,7 +188,6 @@ void RunArtTests()
 		CC_CHECK(art.UnitDeathSprite(UnitType::HeavyTank, 1, 0.0f, 6).empty());
 	}
 
-	// --- layered tank art: lighttank body/head grids, heavytank fallback ---
 	{
 		Art art;
 		CC_CHECK(!art.HasTankArt(UnitType::LightTank));
@@ -242,8 +214,8 @@ void RunArtTests()
 						   WHITE); // no crash
 	}
 
-	// --- BaseArtScale: foot infantry renders 72px cells at 0.8x in the
-	// 128px tile; everything else stays at 1x ---
+	// Foot infantry renders 72px cells at 0.8x in the 128px tile; everything
+	// else stays at 1x.
 	{
 		CC_CHECK(Art::BaseArtScale(UnitType::PrototypeInfantry) == 1.0f);
 		CC_CHECK(Art::BaseArtScale(UnitType::RifleInfantry) == 0.8f);
@@ -253,7 +225,6 @@ void RunArtTests()
 		CC_CHECK(Art::BaseArtScale(UnitType::HeavyTank) == 1.0f);
 	}
 
-	// --- terrain tiles: stem + slot per type, none for Building ---
 	{
 		CC_CHECK(std::string(Art::TerrainFile(TerrainType::Grass)) == "grass");
 		CC_CHECK(std::string(Art::TerrainFile(TerrainType::Water)) == "water");

@@ -13,7 +13,6 @@
 
 void RunFormationTests()
 {
-	// --- offset shapes ---
 	CC_CHECK(formation::FormationOffsets(0).empty());
 
 	const std::vector<cc::IVec2> one = formation::FormationOffsets(1);
@@ -27,7 +26,6 @@ void RunFormationTests()
 	CC_CHECK(four[2] == cc::IVec2(0, 1));
 	CC_CHECK(four[3] == cc::IVec2(1, 1));
 
-	// 7 units -> 3 columns, all slots unique.
 	const std::vector<cc::IVec2> seven = formation::FormationOffsets(7);
 	CC_CHECK(seven.size() == 7);
 	std::set<std::pair<int, int>> slots;
@@ -38,7 +36,6 @@ void RunFormationTests()
 	}
 	CC_CHECK(slots.size() == 7);
 
-	// --- group order: distinct slots around the anchor tile ---
 	Registry registry;
 	TileMap map(20, 15);
 	std::vector<Entity> squad;
@@ -71,7 +68,6 @@ void RunFormationTests()
 	CC_CHECK(ordered == 3);
 	CC_CHECK(targets.size() == 3); // no two units stacked on one tile
 
-	// --- missing IDs are skipped without shifting surviving slots ---
 	std::vector<Entity> withGhost = squad;
 	withGhost.push_back(kInvalidEntity);
 	formation::IssueFormationMove(registry, withGhost, map, cc::ToRaylib(cc::TileToWorld(10, 10)));
@@ -86,9 +82,8 @@ void RunFormationTests()
 	});
 	CC_CHECK(reordered == 3);
 
-	// --- : FormationOffsetsFP ---
 	{
-		// cellSize=1 matches legacy FormationOffsets
+		// cellSize=1 matches FormationOffsets
 		const std::vector<cc::IVec2> fp1 = formation::FormationOffsetsFP(4, 1);
 		CC_CHECK(fp1.size() == 4);
 		CC_CHECK(fp1[0] == cc::IVec2(0, 0));
@@ -97,7 +92,6 @@ void RunFormationTests()
 		CC_CHECK(fp1[3] == cc::IVec2(1, 1));
 	}
 	{
-		// cellSize=2: 4 units get 2-tile spacing
 		const std::vector<cc::IVec2> fp2 = formation::FormationOffsetsFP(4, 2);
 		CC_CHECK(fp2.size() == 4);
 		CC_CHECK(fp2[0] == cc::IVec2(0, 0));
@@ -106,12 +100,10 @@ void RunFormationTests()
 		CC_CHECK(fp2[3] == cc::IVec2(2, 2));
 	}
 	{
-		// cellSize=0 or negative returns empty
 		CC_CHECK(formation::FormationOffsetsFP(4, 0).empty());
 		CC_CHECK(formation::FormationOffsetsFP(4, -1).empty());
 	}
 	{
-		// 6 units, cellSize=2: 3 columns × 2 rows, all unique
 		const std::vector<cc::IVec2> fp6 = formation::FormationOffsetsFP(6, 2);
 		CC_CHECK(fp6.size() == 6);
 		std::set<std::pair<int, int>> seen;
@@ -120,7 +112,6 @@ void RunFormationTests()
 			seen.insert({ v.x, v.y });
 		}
 		CC_CHECK(seen.size() == 6);
-		// All offsets are multiples of 2
 		for (const auto &v : fp6)
 		{
 			CC_CHECK(v.x % 2 == 0);
@@ -128,7 +119,6 @@ void RunFormationTests()
 		}
 	}
 
-	// --- : IssueFormationMoveFP with 2x2 vehicles ---
 	{
 		Registry fpRegistry;
 		TileMap fpMap(20, 15);
@@ -146,7 +136,6 @@ void RunFormationTests()
 		}
 		formation::IssueFormationMoveFP(fpRegistry, vehicles, fpMap, fpOcc,
 										cc::ToRaylib(cc::TileToWorld(10, 10)));
-		// Both units should have orders
 		int orderedCount = 0;
 		fpRegistry.Each<Unit>([&](Entity id, const Unit &unit) {
 			(void)unit;
@@ -159,7 +148,6 @@ void RunFormationTests()
 		CC_CHECK(orderedCount == 2);
 	}
 
-	// --- QoL slowest-speed: squad capped at the minimum, cleared after ---
 	{
 		Registry capRegistry;
 		TileMap capMap(20, 15);
@@ -202,12 +190,8 @@ void RunFormationTests()
 		}
 	}
 
-	// --- Bottleneck assignment: selection order is ignored ---
-	// A(0,0) B(1,0) C(0,1) D(1,1) ordered to anchor (10,10) with the squad
-	// list reversed (D first). The fair match is identity by position:
-	// A->(10,10) B->(11,10) C->(10,11) D->(11,11) even though D was picked
-	// first; index-order issue would give D->(10,10) with max cost 294
-	// instead of 280.
+	// Bottleneck assignment ignores selection order: a reversed issue still
+	// maps each unit to the slot nearest its own start (max cost 280, not 294).
 	{
 		Registry asRegistry;
 		TileMap asMap(30, 30);
@@ -224,7 +208,6 @@ void RunFormationTests()
 			byPos[i] = asRegistry.Create();
 			asRegistry.Add(byPos[i], unit);
 		}
-		// Reversed pick order: D, C, B, A.
 		const std::vector<Entity> reversed{ byPos[3], byPos[2], byPos[1], byPos[0] };
 		formation::IssueFormationMoveFP(asRegistry, reversed, asMap, asOcc,
 										cc::ToRaylib(cc::TileToWorld(10, 10)), false);

@@ -13,7 +13,6 @@ void RunHudSelectionLineTests();
 
 void RunHudTests()
 {
-	// --- unit type names cover all 9 types ---
 	CC_CHECK(std::string(UnitTypeName(UnitType::RifleInfantry)) == "Rifle Infantry");
 	CC_CHECK(std::string(UnitTypeName(UnitType::AntiArmorInfantry)) == "Anti-Armor");
 	CC_CHECK(std::string(UnitTypeName(UnitType::Engineer)) == "Engineer");
@@ -24,19 +23,16 @@ void RunHudTests()
 	CC_CHECK(std::string(UnitTypeName(UnitType::PrototypeInfantry)) == "Prototype Infantry");
 	CC_CHECK(std::string(UnitTypeName(UnitType::Medic)) == "Medic");
 
-	// --- resource formatting ---
 	ResourceSystem resources;
 	resources.AddIron(380);
 	resources.AddOil(310);
 	CC_CHECK(FormatResources(resources) == "Iron: 380  Oil: 310");
 
-	// --- queue line counts both production queues ---
 	CC_CHECK(QueueLineText(0, 0) == "Queue: 0");
 	CC_CHECK(QueueLineText(2, 0) == "Queue: 2");
 	CC_CHECK(QueueLineText(0, 1) == "Queue: 1");
 	CC_CHECK(QueueLineText(2, 1) == "Queue: 2 + 1");
 
-	// --- selection summary shows type, health, team ---
 	Unit unit;
 	unit.type = UnitType::HeavyTank;
 	ApplyBaseStats(unit);
@@ -47,7 +43,6 @@ void RunHudTests()
 	CC_CHECK(summary.find("320/500") != std::string::npos);
 	CC_CHECK(summary.find("Team 1") != std::string::npos);
 
-	// --- production tabs partition the production menu order ---
 	CC_CHECK(ProductionCategoryOf(UnitType::RifleInfantry) == ProductionCategory::Infantry);
 	CC_CHECK(ProductionCategoryOf(UnitType::AntiArmorInfantry) == ProductionCategory::Infantry);
 	CC_CHECK(ProductionCategoryOf(UnitType::Engineer) == ProductionCategory::Infantry);
@@ -65,7 +60,6 @@ void RunHudTests()
 	CC_CHECK(vehicles[0] == UnitType::IFV && vehicles[3] == UnitType::HeavyTank);
 	CC_CHECK(infantry.size() + vehicles.size() == ProductionMenuOrder().size());
 
-	// --- building tab covers all placeable types exactly once ---
 	const std::vector<BuildingType> buildings = BuildingMenuOrder();
 	CC_CHECK(buildings.size() == 4);
 	CC_CHECK(buildings[0] == BuildingType::Base);
@@ -73,7 +67,6 @@ void RunHudTests()
 	CC_CHECK(buildings[2] == BuildingType::Bootcamp);
 	CC_CHECK(buildings[3] == BuildingType::Workshop);
 
-	// --- production row text and affordability ---
 	CC_CHECK(ProductionRowText("Base", BuildingCost(BuildingType::Base)) == "Base 350/100");
 	CC_CHECK(ProductionRowText("Depot", BuildingCost(BuildingType::ResourceDepot)) ==
 			 "Depot 150/0");
@@ -88,7 +81,6 @@ void RunHudTests()
 	CC_CHECK(CanAfford(affordable, { 150, 20 }));
 	CC_CHECK(!CanAfford(affordable, { 150, 21 }));
 
-	// --- BuildingHealthFraction: full, half, over-max clamp, max guard ---
 	{
 		Building full;
 		full.health = 400.0f;
@@ -154,13 +146,11 @@ const AbilityEntry *FindAbility(const std::vector<AbilityEntry> &entries, Abilit
 
 void RunHudAbilityTests()
 {
-	// --- empty selection shows nothing ---
 	{
 		Registry registry;
 		CC_CHECK(AbilitiesForSelection(registry, {}).empty());
 	}
 
-	// --- single combat unit: stances + orders, Guard active by default ---
 	{
 		Registry registry;
 		const Entity soldier = AddHudUnit(registry, UnitType::RifleInfantry);
@@ -176,7 +166,6 @@ void RunHudAbilityTests()
 		CC_CHECK(FindAbility(entries, AbilityId::Heal) == nullptr);
 	}
 
-	// --- single engineer gains the Repair toggle ---
 	{
 		Registry registry;
 		const Entity engineer = AddHudUnit(registry, UnitType::Engineer);
@@ -188,7 +177,6 @@ void RunHudAbilityTests()
 		CC_CHECK(FindAbility(entries, AbilityId::Repair)->active);
 	}
 
-	// --- single medic gains Heal, mixed foot keeps the intersection ---
 	{
 		Registry registry;
 		const Entity medic = AddHudUnit(registry, UnitType::Medic);
@@ -202,7 +190,6 @@ void RunHudAbilityTests()
 		CC_CHECK(FindAbility(mixed, AbilityId::Repair) == nullptr);
 	}
 
-	// --- split stances deactivate both toggles ---
 	{
 		Registry registry;
 		const Entity a = AddHudUnit(registry, UnitType::RifleInfantry);
@@ -213,7 +200,6 @@ void RunHudAbilityTests()
 		CC_CHECK(!FindAbility(entries, AbilityId::Guard)->active);
 	}
 
-	// --- either producer selection enables Rally, depot explains the disabled one ---
 	{
 		Registry registry;
 		const Entity bootcamp = AddHudBuilding(registry, BuildingType::Bootcamp);
@@ -232,7 +218,6 @@ void RunHudAbilityTests()
 		CC_CHECK(!rally->enabled && !rally->reason.empty());
 	}
 
-	// --- mixed unit + building selection keeps Halt only ---
 	{
 		Registry registry;
 		const Entity soldier = AddHudUnit(registry, UnitType::RifleInfantry);
@@ -245,13 +230,11 @@ void RunHudAbilityTests()
 
 void RunHudSelectionLineTests()
 {
-	// --- empty selection ---
 	{
 		Registry registry;
 		CC_CHECK(SelectionLineText(registry) == "No selection");
 	}
 
-	// --- one unit reuses the unit summary, several units count ---
 	{
 		Registry registry;
 		const Entity tank = AddHudUnit(registry, UnitType::LightTank);
@@ -264,7 +247,6 @@ void RunHudSelectionLineTests()
 		CC_CHECK(SelectionLineText(registry) == "2 units selected");
 	}
 
-	// --- a single building shows its type and health ---
 	{
 		Registry registry;
 		const Entity depot = AddHudBuilding(registry, BuildingType::ResourceDepot);
@@ -275,7 +257,6 @@ void RunHudSelectionLineTests()
 		CC_CHECK(SelectionLineText(registry) == "Depot  HP 420/500");
 	}
 
-	// --- mixed types group by type in canonical order, not registry order ---
 	{
 		Registry registry;
 		const Entity depot = AddHudBuilding(registry, BuildingType::ResourceDepot);
@@ -287,7 +268,6 @@ void RunHudSelectionLineTests()
 		CC_CHECK(SelectionLineText(registry) == "2 Base, 1 Depot");
 	}
 
-	// --- more than two types falls back to a plain count ---
 	{
 		Registry registry;
 		const Entity base = AddHudBuilding(registry, BuildingType::Base);
@@ -299,7 +279,6 @@ void RunHudSelectionLineTests()
 		CC_CHECK(SelectionLineText(registry) == "3 buildings selected");
 	}
 
-	// --- a single selected type still groups ---
 	{
 		Registry registry;
 		const Entity campA = AddHudBuilding(registry, BuildingType::Bootcamp);
@@ -311,7 +290,6 @@ void RunHudSelectionLineTests()
 		CC_CHECK(SelectionLineText(registry) == "3 Bootcamp");
 	}
 
-	// --- a selected unit wins over selected buildings ---
 	{
 		Registry registry;
 		const Entity soldier = AddHudUnit(registry, UnitType::RifleInfantry);

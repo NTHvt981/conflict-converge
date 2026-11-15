@@ -10,12 +10,10 @@ void RunTileMapTests()
 	CC_CHECK(map.Width() == 10);
 	CC_CHECK(map.Height() == 8);
 
-	// --- default fill is passable grass ---
 	CC_CHECK(map.Get({ 0, 0 }) == TerrainType::Grass);
 	CC_CHECK(map.Get({ 9, 7 }) == TerrainType::Grass);
 	CC_CHECK(!map.IsBlocked({ 0, 0 }));
 
-	// --- bounds ---
 	CC_CHECK(map.InBounds({ 0, 0 }));
 	CC_CHECK(map.InBounds({ 9, 7 }));
 	CC_CHECK(!map.InBounds({ 10, 0 }));
@@ -23,7 +21,6 @@ void RunTileMapTests()
 	CC_CHECK(!map.InBounds({ -1, 0 }));
 	CC_CHECK(!map.InBounds({ 0, -1 }));
 
-	// --- terrain set/get + blocking rules ---
 	map.Set({ 3, 4 }, TerrainType::Water);
 	map.Set({ 5, 6 }, TerrainType::Building);
 	CC_CHECK(map.Get({ 3, 4 }) == TerrainType::Water);
@@ -32,11 +29,10 @@ void RunTileMapTests()
 	CC_CHECK(map.IsBlocked({ 5, 6 }));
 	CC_CHECK(!map.IsBlocked({ 3, 5 }));
 
-	// --- out-of-bounds counts as blocked (keeps units inside) ---
+	// Out-of-bounds reads as blocked, which keeps units inside the map.
 	CC_CHECK(map.IsBlocked({ 10, 0 }));
 	CC_CHECK(map.IsBlocked({ -1, -1 }));
 
-	// --- clear resets the whole grid ---
 	map.Clear();
 	CC_CHECK(map.Get({ 3, 4 }) == TerrainType::Grass);
 	CC_CHECK(!map.IsBlocked({ 5, 6 }));

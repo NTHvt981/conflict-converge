@@ -6,7 +6,6 @@
 
 void RunVfxTests()
 {
-	// --- particle pool: spawn, expiry, clear ---
 	{
 		Vfx fx;
 		CC_CHECK(fx.ParticleCount() == 0);
@@ -21,7 +20,6 @@ void RunVfxTests()
 		CC_CHECK(fx.ParticleCount() == 0);
 	}
 
-	// --- pool motion keeps bursts alive while life remains ---
 	{
 		Vfx fx;
 		fx.SpawnBurst({ 0.0f, 0.0f }, WHITE, 20, 100.0f, 10.0f);
@@ -29,7 +27,6 @@ void RunVfxTests()
 		CC_CHECK(fx.ParticleCount() == 20);
 	}
 
-	// --- pool cap: bursts beyond kMaxParticles are dropped, never grow ---
 	{
 		Vfx fx;
 		for (int i = 0; i < 40; ++i)
@@ -41,7 +38,6 @@ void RunVfxTests()
 		CC_CHECK(fx.ParticleCount() == 0);
 	}
 
-	// --- damage numbers: spawn, rise, expiry, clear ---
 	{
 		Vfx dn;
 		CC_CHECK(dn.DamageNumberCount() == 0);
@@ -56,7 +52,6 @@ void RunVfxTests()
 		CC_CHECK(dn.DamageNumberCount() == 0);
 	}
 
-	// --- damage pool cap: spawns beyond kMaxDamageNumbers are dropped, never grow ---
 	{
 		Vfx dn;
 		for (int i = 0; i < static_cast<int>(Vfx::kMaxDamageNumbers) + 10; ++i)
@@ -68,7 +63,6 @@ void RunVfxTests()
 		CC_CHECK(dn.DamageNumberCount() == 0);
 	}
 
-	// --- zero-count and zero-life bursts are safe ---
 	{
 		Vfx fx;
 		fx.SpawnBurst({ 0.0f, 0.0f }, WHITE, 0, 10.0f, 1.0f);
@@ -79,7 +73,6 @@ void RunVfxTests()
 		CC_CHECK(fx.ParticleCount() == 0);
 	}
 
-	// --- ResetForMatch clears both pools ---
 	{
 		Vfx fx;
 		fx.SpawnBurst({ 0.0f, 0.0f }, WHITE, 4, 10.0f, 1.0f);

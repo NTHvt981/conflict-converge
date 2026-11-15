@@ -1,25 +1,18 @@
-// Regression coverage for sandbox squad pathing (Skirmish.cpp
-// BuildSandbox): the sandbox spawns a team-0 squad near the player home,
-// then this test sends the foot squad to scattered destinations around the
-// real prototype.map layout -- crossing paths around its water blob and tree
-// cluster -- to catch collision/pathing regressions the same way
-// movement_stall_tests.cpp does for hand-built maps, but against the actual
-// shipped map and the real BuildSandbox spawn path. The test adapts to
-// whatever the sandbox spawns (up to 6 units driven); spawn composition
-// itself is not asserted here.
+// Sandbox squad pathing against the real prototype.map (water blob, tree
+// cluster): every order resolves and arrives, never wedges on a shared tile.
 
 #include "test_harness.h"
 
 #include "units/AICommander.h"
 #include "economy/Building.h"
-#include "units/Combat.h" // IsVehicleHull foot filter
+#include "units/Combat.h"
 #include "core/Event.h"
 #include "units/Extensions.h"
 #include "world/FogOfWar.h"
 #include "app/ui/GameCamera.h"
 #include "world/MapFile.h"
 #include "economy/Nodes.h"
-#include "world/Pathfinder.h" // IssuePathOrderFootprint
+#include "world/Pathfinder.h"
 #include "economy/Production.h"
 #include "core/Registry.h"
 #include "economy/ResourceSystem.h"
@@ -85,15 +78,11 @@ void RunPrototypeSandboxMovementTests()
 
 	std::vector<Entity> squad;
 	sand.registry.Each<Unit>([&](Entity id, const Unit &unit) {
-		// Whatever the sandbox spawns (composition changed in 91b11a5 away
-		// from all-Prototype): drive the team-0 foot squad.
 		if (unit.teamID == kPlayerTeam && !IsVehicleHull(unit.type))
 		{
 			squad.push_back(id);
 		}
 	});
-	// Whatever the sandbox spawns, drive up to 6 of the team-0 foot units
-	// (more would overflow the destination list below; fewer just test less).
 	CC_CHECK(!squad.empty());
 	if (squad.empty())
 	{
@@ -104,12 +93,6 @@ void RunPrototypeSandboxMovementTests()
 		squad.resize(6);
 	}
 
-	// 6 destinations spread around the 20x10 map's corners/mid-edges, well
-	// clear of the spawn point and verified walkable (all Grass, never
-	// Water) -- chosen so westward routes cross the tree cluster
-	// cluster (~x2-6,y1-3) and southward routes press against the water blob
-	// (~x12-19,y5-9), forcing real pathfinding + mutual collision pressure,
-	// not just a straight unobstructed walk.
 	const cc::IVec2 destinations[] = {
 		{ 1, 0 },   { 18, 0 },  { 1, 8 }, { 17, 4 }, { 5, 8 }, { 10, 5 },
 	};
@@ -128,12 +111,6 @@ void RunPrototypeSandboxMovementTests()
 				 sand.registry.Get<Mover>(squad[i])->hasMoveOrder); // path found or straight-line
 	}
 
-	// Step the exact same per-frame pipeline the real game loop uses
-	// (occupancy pre-pass, driver, continuous-space separation, stall
-	// detection) until every unit's order resolves (arrival or a clean
-	// stall-cancel) or the budget runs out. 40s is generous for a ~20-tile
-	// diagonal crossing at foot speed with obstacle routing; the soak
-	// tests already run into the 100s+ range for full matches.
 	constexpr float kDt = 1.0f / 60.0f;
 	constexpr int kBudget = 2400; // 40s at 60fps
 	std::vector<bool> done(squad.size(), false);
@@ -159,32 +136,20 @@ void RunPrototypeSandboxMovementTests()
 		}
 	}
 
-	// The core "collision issue" check: nothing stuck forever -- every
-	// order must resolve (arrive or cleanly cancel) well within budget.
 	for (std::size_t i = 0; i < squad.size(); ++i)
 	{
 		CC_CHECK(done[i]);
 	}
 	CC_CHECK(frame < kBudget);
 
-	// Arrival check: destinations are fully walkable and reachable with no
-	// dead-end (unlike movement_stall_tests.cpp's deliberate no-room
-	// scenario). This used to need a generous stray-distance tolerance
-	// because ReportSeparationStall's continuous-space push could cancel a
-	// unit a few tiles short of an otherwise fully reachable goal (see
-	// plans/UnitStackResolution_Plan.md) -- that mechanism is gone, so every
-	// unit must now actually arrive exactly on its assigned tile. If this
-	// regresses, it means ResolveStackedUnits (or ordinary occupancy
-	// blocking) is introducing a new short-cancel failure mode.
+	// Destinations are reachable with no dead end: a short cancel here means
+	// stacked-unit resolution regressed.
 	for (std::size_t i = 0; i < squad.size(); ++i)
 	{
 		const Unit *u = sand.registry.Get<Unit>(squad[i]);
 		CC_CHECK(cc::WorldToTile(cc::ToGlm(u->position)) == destinations[i]);
 	}
 
-	// No two units end up wedged on the exact same tile after everything
-	// has resolved (separation should have spread them out during transit
-	// and at their distinct destinations).
 	for (std::size_t i = 0; i < squad.size(); ++i)
 	{
 		for (std::size_t j = i + 1; j < squad.size(); ++j)

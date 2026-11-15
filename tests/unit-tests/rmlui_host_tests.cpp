@@ -70,7 +70,6 @@ void RunRmlUiHostTests()
 	CC_CHECK(CcNear(RmlUiHost::AutoDpRatio(3840, 2160, 2.0f), 3.0f));
 	CC_CHECK(CcNear(RmlUiHost::AutoDpRatio(320, 200, 0.75f), 0.5f));
 
-	// --- hud.rml carries every id the refresh path looks up, and no runtime text ---
 	// RmlUiHost::Init() returns false with no window, so the unit suite cannot load
 	// the document through the host; the test checks the document text statically.
 	const std::string doc = ReadHudDocument();

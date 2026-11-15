@@ -1,6 +1,5 @@
-// Unit tests for QoL area repair (candidate sweep + greedy
-// nearest-unclaimed assignment). Game.cpp's drag gesture itself is input
-// handling (untested per convention); everything it calls is covered here.
+// Unit tests for area repair: candidate sweep and greedy nearest-unclaimed
+// assignment. The drag gesture is input handling, untested per convention.
 
 #include "test_harness.h"
 
@@ -51,7 +50,6 @@ Rectangle WorldRect(float x, float y, float w, float h)
 
 void RunAreaRepairTests()
 {
-	// --- sweep collects damaged supportables, skips everything else ---
 	// Vehicles + buildings are engineer work, wounded flesh is medic work;
 	// both land in the shared pool (assignment filters per unit type).
 	{
@@ -96,7 +94,6 @@ void RunAreaRepairTests()
 		(void)deadBase;
 	}
 
-	// --- greedy: each Engineer takes its nearest unclaimed target ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -114,7 +111,6 @@ void RunAreaRepairTests()
 		CC_CHECK(jobs[1].engineer == engB && jobs[1].target == targetB);
 	}
 
-	// --- no double-assignment: one target, two Engineers ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -130,7 +126,6 @@ void RunAreaRepairTests()
 		CC_CHECK(jobs[0].target == lone);
 	}
 
-	// --- leftover targets wait: one Engineer, three damaged ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -148,7 +143,6 @@ void RunAreaRepairTests()
 		(void)far;
 	}
 
-	// --- mixed pool: buildings compete with units on distance alone ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -165,7 +159,6 @@ void RunAreaRepairTests()
 		CC_CHECK(jobs[0].target == base); // adjacent base beats the far tank
 	}
 
-	// --- empty inputs assign nothing (no crash) ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -175,7 +168,6 @@ void RunAreaRepairTests()
 		CC_CHECK(jobs.empty());
 	}
 
-	// --- medic heal aim: same-team damaged flesh only ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -200,7 +192,6 @@ void RunAreaRepairTests()
 		CC_CHECK(!CanRepairTarget(registry, *med, tank));    // medics cannot repair
 	}
 
-	// --- heal execution: channeled restore, clamped, order completes ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -224,7 +215,6 @@ void RunAreaRepairTests()
 				 BaseStats(UnitType::RifleInfantry).health); // clamped, not overhealed
 	}
 
-	// --- area assign pairs medics with flesh: never self, never vehicles ---
 	{
 		Registry registry;
 		const Entity medic = SpawnUnit(registry, UnitType::Medic, kPlayerTeam, 1, 1, 0.5f);
@@ -235,7 +225,6 @@ void RunAreaRepairTests()
 		CC_CHECK(jobs[0].engineer == medic && jobs[0].target == flesh);
 	}
 
-	// --- support types cannot attack: no acquire, no engage, no damage ---
 	{
 		Registry registry;
 		TileMap map(20, 15);
@@ -257,7 +246,6 @@ void RunAreaRepairTests()
 		CC_CHECK(registry.Get<CombatState>(eng)->target == kInvalidEntity);
 	}
 
-	// --- equal-distance repair candidates: tile key picks, any creation order ---
 	{
 		Registry leftFirst;
 		const Entity engA = SpawnUnit(leftFirst, UnitType::Engineer, kPlayerTeam, 3, 3, 1.0f);
@@ -278,7 +266,6 @@ void RunAreaRepairTests()
 		CC_CHECK(ordersB.repairTarget == leftTankB);
 	}
 
-	// --- equal-distance area assignment: same pairing either input order ---
 	{
 		Registry leftFirst;
 		const Entity engA = SpawnUnit(leftFirst, UnitType::Engineer, kPlayerTeam, 3, 3, 1.0f);
