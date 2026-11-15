@@ -1,6 +1,7 @@
 #include "units/UnitStats.h"
 
 #include "core/MathUtils.h"
+#include "app/data/UnitConfig.h"
 #include "units/UnitTypeInfo.h"
 
 #include <cmath>
@@ -39,7 +40,8 @@ cc::IVec2 UnitFootprint(UnitType type)
 
 void ApplyBaseStats(Unit &unit)
 {
-	const UnitStats &stats = BaseStats(unit.type);
+	const UnitConfig &config = ActiveUnitConfig(unit.type);
+	const UnitStats &stats = config.stats;
 	unit.health = stats.health;
 	unit.armorType = stats.armorType;
 	unit.damageType = stats.damageType;
@@ -48,9 +50,8 @@ void ApplyBaseStats(Unit &unit)
 	unit.cooldownTime = stats.cooldownTime;
 	unit.speed = stats.speed * cc::TILE_SIZE;
 	unit.sightRange = stats.sightRange * cc::TILE_SIZE;
-	const cc::IVec2 fp = UnitFootprint(unit.type);
-	unit.footprintWidth = fp.x;
-	unit.footprintHeight = fp.y;
+	unit.footprintWidth = config.footprintWidth;
+	unit.footprintHeight = config.footprintHeight;
 }
 
 ProductionCategory ProductionCategoryOf(UnitType type)

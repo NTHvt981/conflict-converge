@@ -76,15 +76,7 @@ const UnitConfig &ActiveUnitConfig(UnitType type)
 		EnsureActiveDefaults();
 		return gActiveConfigs.front();
 	}
-	// gActiveConfigs is stored in UnitType order (see Refresh/Set).
-	for (const UnitConfig &config : gActiveConfigs)
-	{
-		const std::expected<UnitType, ConfigError> parsed = ParseUnitTypeName(config.type);
-		if (parsed && *parsed == type)
-		{
-			return config;
-		}
-	}
+	// gActiveConfigs holds one entry per UnitType in enum order (see SetActiveUnitConfigs).
 	return gActiveConfigs[static_cast<std::size_t>(index)];
 }
 

@@ -43,8 +43,9 @@ UnitConfig DefaultUnitConfig(UnitType type)
 	{
 		config.abilities.sniper = true;
 	}
-	config.footprintWidth = info.isVehicle ? 2 : 1;
-	config.footprintHeight = info.isVehicle ? 2 : 1;
+	const cc::IVec2 fp = UnitFootprint(type);
+	config.footprintWidth = fp.x;
+	config.footprintHeight = fp.y;
 	config.spritePrefix = info.spriteStem;
 	config.atlasIdlePrefix = info.atlasIdlePrefix;
 	config.atlasMovePrefix = info.atlasMovePrefix;
