@@ -15,7 +15,6 @@ namespace formation
 
 std::vector<cc::IVec2> FormationOffsets(std::size_t count);
 
-// `cellSize` is the max footprint dimension.
 std::vector<cc::IVec2> FormationOffsetsFP(std::size_t count, int cellSize);
 
 void IssueFormationMove(Registry &registry, const std::vector<Entity> &units, const TileMap &map,

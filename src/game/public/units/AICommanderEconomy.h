@@ -25,12 +25,12 @@ enum class AIDifficulty
 
 struct AIDifficultyParams
 {
-	int harvesters = 2;                // Engineers to sustain on iron
-	int waveThreshold = 5;             // combat units required to launch a wave
-	int reserveUnits = 0;              // extra standing army above threshold+2
+	int harvesters = 2;                // Engineers sustained on iron
+	int waveThreshold = 5;
+	int reserveUnits = 0;              // standing army beyond threshold + 2
 	float scoutInterval = 30.0f;       // seconds between scout dispatches
 	float relaunchCooldown = 20.0f;    // seconds between wave launches
-	bool retreats = false;             // pull sub-30% units home (Hard only)
+	bool retreats = false;             // Hard only: pull sub-30% units home
 	std::vector<UnitType> composition; // cycled when filling the pipeline
 };
 
@@ -52,8 +52,8 @@ public:
 	AIDifficulty Difficulty() const;
 	UnitFactory &Factory();
 	const AIDifficultyParams &Params() const;
-	int CombatUnitCount() const; // living non-Engineer units on our team
-	int HarvesterCount() const;  // living Engineers on our team
+	int CombatUnitCount() const; // living units excluding Engineers
+	int HarvesterCount() const;
 	bool HasBootcamp() const;
 	bool HasWorkshop() const;
 	bool HasDepot() const;
@@ -71,7 +71,7 @@ private:
 	TileMap &map_;
 	ResourceNodes &nodes_;
 	OccupancyGrid *occ_ = nullptr;
-	ResourceSystem resources_; // owned fair-rules economy
+	ResourceSystem resources_;
 	UnitFactory factory_;
 	ProductionQueue queueBootcamp_{ ProductionCategory::Infantry };
 	ProductionQueue queueWorkshop_{ ProductionCategory::Vehicle };
@@ -82,5 +82,5 @@ private:
 	int bootcampCursor_ = 0;
 	int workshopCursor_ = 0;
 	std::size_t compIndex_ = 0;
-	std::vector<Entity> harvesters_; // tracked for replacement
+	std::vector<Entity> harvesters_;
 };

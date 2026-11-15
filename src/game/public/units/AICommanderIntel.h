@@ -16,7 +16,7 @@ public:
 	void TickCombat();
 	void RefreshIntel();
 
-	// Fog-gated visibility: omniscient when no fog is bound.
+	// Omniscient when no fog is bound.
 	bool Sees(cc::IVec2 tile) const;
 	bool EnemyForceSighted() const;
 	bool HasScouted() const;

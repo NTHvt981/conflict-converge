@@ -23,8 +23,8 @@ template <typename T> T &GetOrAdd(Registry &registry, Entity entity)
 
 struct Turret
 {
-	float facing = 0.0f;   // radians, world-space aim direction
-	float turnRate = 0.0f; // radians per second (from UnitConfig abilities)
+	float facing = 0.0f;   // radians, world-space
+	float turnRate = 0.0f; // radians per second
 };
 
 struct Cargo
@@ -62,9 +62,9 @@ struct EmbarkedOn
 
 struct Projectile
 {
-	Vector2 start = {};    // launch point (attacker center snapshot)
-	Vector2 target = {};   // landing point snapshot (dodgeable: units may move)
-	float flightTime = 0.0f; // total seconds aloft
+	Vector2 start = {};      // launch point snapshot
+	Vector2 target = {};     // landing snapshot; units can move out of it
+	float flightTime = 0.0f; // seconds
 	float elapsed = 0.0f;
 	int attackPower = 0;
 	DamageType damageType = DamageType::KINETIC;
@@ -72,15 +72,11 @@ struct Projectile
 	int splashTiles = 0; // AoE half-extent = splashTiles * 32px
 };
 
-// True when the entity rides inside a carrier: movement, targeting,
-// separation, and rendering skip it; its state syncs on unload.
 inline bool IsEmbarked(const Registry &registry, Entity entity)
 {
 	return registry.Has<EmbarkedOn>(entity);
 }
 
-// Flesh predicate (foot units): crush victims, transport passengers, heal
-// targets. Vehicles (hulls) are never flesh.
 inline bool IsFleshUnit(UnitType type)
 {
 	return !IsVehicleHull(type);
@@ -89,23 +85,23 @@ inline bool IsFleshUnit(UnitType type)
 struct Orders
 {
 	Stance stance = Stance::Guard;
-	bool autoRetreat = false; // player opt-in auto-retreat
+	bool autoRetreat = false;
 	bool attackMove = false;
-	Vector2 attackMoveDest = {}; // march goal kept across chase detours
+	Vector2 attackMoveDest = {};
 	bool hasPatrol = false;
 	Vector2 patrolA = {};
 	Vector2 patrolB = {};
 	bool patrolToB = true;
-	bool hasRepairOrder = false; // channeled Engineer repair
+	bool hasRepairOrder = false;
 	Entity repairTarget = kInvalidEntity;
-	bool autoRepair = false; // Engineer toggle: acquire nearby damage
+	bool autoRepair = false;
 	bool hasAttackGroundOrder = false;
 	Vector2 attackGroundPos = {};
-	bool hasLoadOrder = false; // G4 player-only transport boarding
-	Entity loadTarget = kInvalidEntity; // foot passenger to pick up
+	bool hasLoadOrder = false;
+	Entity loadTarget = kInvalidEntity;
 	bool hasUnloadOrder = false;
 	Vector2 unloadPos = {}; // tile-snapped drop point
-	std::vector<QueuedOrder> orderQueue; // pending orders, dispatched FIFO
+	std::vector<QueuedOrder> orderQueue; // pending orders, FIFO
 };
 
 inline Orders &GetOrders(Registry &registry, Entity entity)
@@ -115,12 +111,12 @@ inline Orders &GetOrders(Registry &registry, Entity entity)
 
 struct Mover
 {
-	Vector2 moveTarget = {}; // tile-snapped pending move destination
+	Vector2 moveTarget = {}; // tile-snapped destination
 	bool hasMoveOrder = false;
-	std::vector<cc::IVec2> path; // A* waypoints (tile indices)
+	std::vector<cc::IVec2> path; // tile-index waypoints
 	std::size_t pathNext = 0;
 	bool hasPath = false;
-	float blockedTime = 0.0f; // blocked-move retry accounting
+	float blockedTime = 0.0f;
 	int blockedRepaths = 0;
 	float speedCapPixelsPerSec = -1.0f; // slowest-speed cap; -1 = uncapped
 	Entity yieldRequestBlocker = kInvalidEntity;
@@ -137,7 +133,6 @@ inline Mover &GetMover(Registry &registry, Entity entity)
 	return GetOrAdd<Mover>(registry, entity);
 }
 
-// Effective movement speed honoring the slowest-speed cap (-1 = own speed).
 inline float EffectiveSpeed(const Unit &unit, const Mover &mover)
 {
 	if (mover.speedCapPixelsPerSec < 0.0f || mover.speedCapPixelsPerSec >= unit.speed)
@@ -149,12 +144,12 @@ inline float EffectiveSpeed(const Unit &unit, const Mover &mover)
 
 struct CombatState
 {
-	Entity target = kInvalidEntity; // acquired enemy
+	Entity target = kInvalidEntity;
 	AttackPhase phase = AttackPhase::Ready;
-	float phaseTime = 0.0f; // live WindUp countdown
-	float cooldown = 0.0f; // seconds until next strike
-	float lastDamageTaken = 0.0f; // most recent effective hit
-	float hitFlashTime = 0.0f; // live hit-overlay countdown
+	float phaseTime = 0.0f; // WindUp countdown
+	float cooldown = 0.0f; // seconds to next strike
+	float lastDamageTaken = 0.0f;
+	float hitFlashTime = 0.0f;
 };
 
 inline CombatState &GetCombatState(Registry &registry, Entity entity)
@@ -162,10 +157,7 @@ inline CombatState &GetCombatState(Registry &registry, Entity entity)
 	return GetOrAdd<CombatState>(registry, entity);
 }
 
-// Ephemeral corpse-linger timer: a dying unit plays its death animation
-// for the anim's full length (set at spawn from the atlas) before the
-// usual burst-and-remove reaping. Never saved; a freshly loaded save
-// never contains one.
+// Corpse linger timer for the death animation; never saved.
 struct DeathFx
 {
 	float timeLeft = 0.0f;

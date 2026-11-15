@@ -16,8 +16,8 @@ class NodeHarvesters
 public:
 	void GatherTick(std::vector<ResourceNode> &nodes, Registry &registry,
 					ResourceSystem &resources, float dt, TeamId teamID);
-	// Drives loop harvesters between fields and depots; engineers without a
-	// Harvester component keep the legacy stand-and-trickle behavior.
+	// Drives loop harvesters between fields and depots; units without a
+	// Harvester component stand on the field and trickle.
 	void UpdateHarvesters(std::vector<ResourceNode> &nodes, Registry &registry,
 						  const TileMap &map, const OccupancyGrid *occ, float dt,
 						  TeamId teamID);

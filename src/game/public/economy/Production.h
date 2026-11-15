@@ -15,7 +15,7 @@ class UnitFactory;
 class TileMap;
 class OccupancyGrid;
 
-// Build times in seconds.
+// Seconds.
 float BuildTime(UnitType type);
 
 class ProductionQueue : public Subsystem
