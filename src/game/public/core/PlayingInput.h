@@ -49,7 +49,6 @@ struct DragGesture
 	Vector2 start = {};
 };
 
-// In-match input dispatch. Runs only while Playing; advances no simulation itself.
 class PlayingInput : public Subsystem
 {
 public:
@@ -61,20 +60,17 @@ public:
 	PlayingInput &operator=(const PlayingInput &) = delete;
 
 	void Dispatch(bool pointerOverUi);
-	// Sticky modes persist.
 	void ResetForMatch();
-	// Shortcut toggles (guards live in Game's BindShortcuts).
 	void ToggleSettingRally();
 	void ToggleSlowestSpeed();
 	void ToggleAreaBuild();
 	void SelectPlacingType(BuildingType type);
-	// HUD ability buttons arm targeted orders (attack-move, patrol, heal);
-	// the next right-click issues them. Re-arming the same id disarms.
+	// The next right-click issues the armed order; re-arming the same id disarms.
 	void ArmAbility(AbilityId id);
 	void ClearArmedAbility();
 	const std::optional<AbilityId> &ArmedAbility() const;
-	// Issues the armed ability at a world target; false when nothing acted
-	// (ability stays armed). Headless-testable; Dispatch calls it on right-click.
+	// False when nothing acted (the ability stays armed). Headless-testable;
+	// Dispatch calls it on right-click.
 	bool IssueArmedAbilityAt(Vector2 worldTarget, bool queued);
 	void ToggleAreaRepair();
 	void ToggleAttackGround();

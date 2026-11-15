@@ -11,32 +11,24 @@
 
 enum class TerrainType : std::uint8_t;
 
-// Sprite art.
-
-// Facade over the sprite/resolution component (ArtSprites) and the draw-call
-// component (ArtDraw). Owns Init/Shutdown order and forwards every public
-// call; callers hold this, never the parts.
 class Art : public Subsystem
 {
 public:
-	// Load every sprite. Headless or on a missing file, loads
-	// nothing and UseRectangles stays true. Returns IsReady.
+	// Missing files or Headless load nothing; UseRectangles stays true.
 	bool Init(InitMode mode);
 	void Shutdown();
 
 	bool IsReady() const;
-	bool UseRectangles() const; // fallback flag: draw colored rects instead
+	bool UseRectangles() const; // draw colored rects instead of sprites
 
 	// tileCorner = unit.position (snapped); sprite fills the half-tile body inset.
 	void DrawUnit(UnitType type, TeamId teamID, UnitFrame frame, Vector2 tileCorner) const;
-	// Atlas blit of a named sprite, origin-aligned to the half-tile body center;
-	// no-op when the atlas is down or the name is unknown. rotationDeg spins
-	// the blit around the body center (turret layer, 0 = unrotated).
+	// Origin-aligned to the half-tile body center; no-op when the atlas is down
+	// or the name is unknown. rotationDeg spins around the body center.
 	void DrawAtlasFrame(const std::string &spriteName, Vector2 tileCorner, Color tint,
 						float scale = 1.0f, float rotationDeg = 0.0f) const;
-	// Screen rectangle a named sprite occupies when drawn at tileCorner, so a
-	// selection box can match art larger than the half-tile body inset. False when
-	// the atlas is down or the name is unknown.
+	// Screen rect a named sprite occupies, for selection boxes. False when the
+	// atlas is down or the name is unknown.
 	bool SpriteDrawRect(const std::string &spriteName, Vector2 tileCorner, Rectangle &out,
 						float scale = 1.0f) const;
 	void DrawBuilding(BuildingType type, TeamId teamID, int tileX, int tileY,
@@ -45,51 +37,42 @@ public:
 	void DrawNode(ResourceKind kind, Vector2 center) const;
 	void DrawIcon(ResourceKind kind, Vector2 screenPos) const; // 16px HUD icon
 	void DrawRallyMarker(TeamId teamID, Vector2 worldCenter) const;
-	// UI typeface; HasFont is false on the headless/rectangle path.
+	// False on the headless/rectangle path.
 	bool HasFont() const;
 	const Font &UiFont() const;
-	// Raw-text draw through the UI typeface; falls back to DrawText when art
-	// is down. Spacing matches DrawText (size/10).
+	// Falls back to DrawText when art is down; spacing matches DrawText (size/10).
 	static void DrawUiText(const Art *art, const char *text, int x, int y, int size,
 						   Color color);
-	// Terrain tile blit (128px, team-neutral); no-op when rectangles are up
-	// or the type has no tile.
+	// 128px, team-neutral; no-op when rectangles are up or the type has no tile.
 	void DrawTerrain(TerrainType type, Vector2 corner) const;
 
 	// True once the atlas JSON parsed AND every sheet texture loaded.
 	bool UseAtlas() const;
 	// Parse the atlas files without touching the GPU (tests).
 	[[nodiscard]] std::expected<void, ConfigError> LoadAtlas();
-	// Sprite name for a unit at timeSeconds: directional attack (when
-	// attacking and the type has attack anims), directional walk/idle anims
-	// otherwise, with directional-to-base and static-pose fallbacks. Empty
-	// when no sheet or no entries.
+	// Empty when no sheet or no entries; directional-to-base and static-pose
+	// fallbacks. facingDir is a Facing octant (0..7).
 	std::string UnitSprite(UnitType type, bool moving, unsigned int id,
 						   float timeSeconds, int facingDir, bool attacking = false) const;
-	// Total playback length of the type's directional death anim in seconds;
-	// 0 when the atlas is down or the type has no death anim.
+	// Seconds; 0 when the atlas is down or the type has no death anim.
 	float UnitDeathAnimSeconds(UnitType type) const;
-	// Non-looping death-anim frame for a unit `elapsedSeconds` into its death:
-	// clamped to the anim's total duration, holding the last frame past the
-	// end. facingDir is a Facing octant (0..7); "" when no death anim exists.
+	// Clamped to the anim's duration, holding the last frame past the end.
+	// facingDir is a Facing octant (0..7); "" when no death anim exists.
 	std::string UnitDeathSprite(UnitType type, unsigned int id, float elapsedSeconds,
 								int facingDir) const;
 	// Layered tank art: body follows movement facing, head follows turret aim.
 	// facingDir is a Facing octant (0..7); "" when the type has no layered art.
 	std::string TankBodySprite(UnitType type, int facingDir) const;
 	std::string TankHeadSprite(UnitType type, int facingDir) const;
-	// True when the type has layered body art loaded in the atlas.
 	bool HasTankArt(UnitType type) const;
-	// Team color for atlas mask tinting (mask layer only); color-blind mode
-	// swaps in the Okabe-Ito pair.
+	// Atlas mask tint (mask layer only); color-blind mode uses the Okabe-Ito pair.
 	Color TeamTint(TeamId teamID) const;
 	void SetColorBlindMode(bool enabled);
 
-	// Base art scale multiplier (foot infantry renders 72px cells down to
-	// the 128px tile; everything else at 1x).
+	// Foot infantry render 72px cells against the 128px tile; others 1x.
 	static float BaseArtScale(UnitType type);
-	// Terrain filename stem + tile slot per type (`<stem>_128px.png`).
-	// Slots index terrain_[], so they run 0..kTerrainSlots-1.
+	// `TerrainFile` is the `<stem>_128px.png` stem; `TerrainSlot` indexes
+	// terrain_[] in 0..kTerrainSlots-1.
 	static constexpr int kTerrainSlots = ArtSprites::kTerrainSlots;
 	static const char *TerrainFile(TerrainType type);
 	static int TerrainSlot(TerrainType type);

@@ -11,9 +11,6 @@
 #include "core/Team.h"
 #include "units/Unit.h"
 
-// Fog of war. Per-team visibility: `visible` is recomputed from living units'
-// sightRange circles every Recompute; `explored` latches forever.
-
 class FogOfWar : public Subsystem
 {
 public:
@@ -26,7 +23,7 @@ public:
 	bool IsVisible(TeamId teamID, cc::IVec2 tile) const;
 	bool IsExplored(TeamId teamID, cc::IVec2 tile) const;
 
-	// Save/load support (team_fog): row-major explored bytes, w*h long.
+	// team_fog: row-major explored bytes, w*h long.
 	std::vector<std::uint8_t> ExploredBytes(TeamId teamID) const;
 	void SetExplored(TeamId teamID, const std::uint8_t *bytes, std::size_t size);
 	std::vector<TeamId> Teams() const;

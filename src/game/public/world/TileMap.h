@@ -27,7 +27,7 @@ public:
 
 	bool InBounds(cc::IVec2 tile) const;
 
-	// Get asserts InBounds; use InBounds/IsBlocked for unchecked queries.
+	// Asserts InBounds; use InBounds/IsBlocked for unchecked queries.
 	TerrainType Get(cc::IVec2 tile) const;
 	void Set(cc::IVec2 tile, TerrainType terrain);
 
@@ -45,9 +45,6 @@ private:
 	int height_ = 0;
 	std::vector<TerrainType> tiles_;
 };
-
-// Grid occupancy for multi-tile units and buildings, with generation
-// counters so stale IDs from recycled entities are detected.
 
 using Entity = std::uint32_t;
 inline constexpr Entity kOccEmpty = 0;
@@ -73,7 +70,7 @@ public:
 	Entity GetBuilding(cc::IVec2 tile) const;
 	void SetBuilding(cc::IVec2 tile, Entity building);
 
-	// Reserve/release a rectangular footprint (anchor = top-left tile).
+	// anchor = top-left tile.
 	void ReserveFootprint(cc::IVec2 anchor, int footprintW, int footprintH,
 						  Entity entity, std::uint32_t generation);
 	void ReleaseFootprint(cc::IVec2 anchor, int footprintW, int footprintH);

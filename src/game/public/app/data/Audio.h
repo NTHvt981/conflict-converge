@@ -6,10 +6,6 @@
 #include "app/data/InitMode.h"
 #include "core/Subsystem.h"
 
-// Audio: SFX + a looped music stream from data/audio/*.wav (synthesized by
-// tools/gen_audio.py). Headless-safe: Init(InitMode::Headless) loads nothing
-// and every Play is a no-op.
-
 enum class SfxId
 {
 	Select,
@@ -27,20 +23,17 @@ class Audio : public Subsystem
 {
 public:
 	Audio(); // first ShouldPlay ever is true
-	// Load assets and start the music loop; InitMode::Headless loads nothing
-	// and reports !IsReady. Every other method stays safe to call.
+	// Headless loads nothing and reports !IsReady; every other method stays safe.
 	bool Init(InitMode mode);
 	void Shutdown();
 
 	bool IsReady() const;
 	void Play(SfxId id); // no-op unless ready
-	// Per-sound retrigger floor; pure on (id, now), the headless-testable
-	// half of Play (which feeds it GetTime).
+	// Per-sound retrigger floor; pure on (id, now), fed GetTime by Play.
 	bool ShouldPlay(SfxId id, double now);
 	void UpdateMusic();  // pump the stream; call every frame when ready
 
-	// Volumes in 0..1 (clamped); mute zeroes the master output; persisted by
-	// the settings file.
+	// Volumes in 0..1 (clamped); mute zeroes the master output.
 	void ApplySettings(float master, float music, float sfx, bool mute);
 	float MasterVolume() const;
 	float MusicVolume() const;
