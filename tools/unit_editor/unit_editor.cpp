@@ -1,17 +1,35 @@
 #include "unit_editor.h"
 
 #include <cstdio>
+#include <string>
 
 #include "raylib.h"
 #include "raygui.h"
 
 #include "app/data/Art.h"
 #include "app/data/UnitConfigDefaults.h"
+#include "units/UnitTypeInfo.h"
 
 namespace
 {
 
-const char *kTypeList = "RifleInfantry;AntiArmorInfantry;Engineer;Medic;IFV;Artillery;LightTank;HeavyTank;PrototypeInfantry";
+const char *TypeList()
+{
+	static const std::string list = [] {
+		std::string out;
+		for (int i = 0; i < EditorState::kTypeCount; ++i)
+		{
+			if (i != 0)
+			{
+				out += ';';
+			}
+			out += InfoOf(static_cast<UnitType>(i)).configName;
+		}
+		return out;
+	}();
+	return list.c_str();
+}
+
 const char *kArmorList = "STEEL;RUBBER;COMPOSITE";
 const char *kDamageList = "KINETIC;EXPLOSIVE;ENERGY";
 
@@ -324,7 +342,7 @@ void DrawEditorFrame(EditorState &editor, Art &art)
 {
 	GuiPanel({ 8.0f, 8.0f, 208.0f, 560.0f }, "Unit Types");
 	int active = editor.selected;
-	GuiListView({ 16.0f, 40.0f, 192.0f, 470.0f }, kTypeList, &editor.listScroll,
+	GuiListView({ 16.0f, 40.0f, 192.0f, 470.0f }, TypeList(), &editor.listScroll,
 				&active);
 	if (active != editor.selected)
 	{
@@ -343,7 +361,8 @@ void DrawEditorFrame(EditorState &editor, Art &art)
 		{
 			SaveOne(editor, art, i);
 		}
-		std::snprintf(editor.status, sizeof(editor.status), "Saved all 7 types");
+		std::snprintf(editor.status, sizeof(editor.status), "Saved all %d types",
+					  EditorState::kTypeCount);
 	}
 
 	if (GuiButton({ 224.0f, 8.0f, 120.0f, 28.0f }, "Stats"))
