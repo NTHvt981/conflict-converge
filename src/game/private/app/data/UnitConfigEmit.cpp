@@ -36,16 +36,10 @@ std::string UnitConfigToJson(const UnitConfig &config)
 		out.abilities.transport = transport;
 		out.abilities.sniper = config.abilities.sniper;
 	}
-	JsonBounds bounds;
-	bounds.left = config.boundLeft;
-	bounds.top = config.boundTop;
-	bounds.right = config.boundLeft + config.footprintWidth;
-	bounds.bottom = config.boundTop + config.footprintHeight;
-	out.collision.bounds = bounds;
-	JsonOrigin origin;
-	origin.x = config.originX;
-	origin.y = config.originY;
-	out.collision.origin = origin;
+	JsonFootprint footprint;
+	footprint.width = config.footprintWidth;
+	footprint.height = config.footprintHeight;
+	out.footprint = footprint;
 	out.art.spritePrefix = config.spritePrefix;
 	out.art.atlasIdlePrefix = config.atlasIdlePrefix;
 	out.art.atlasMovePrefix = config.atlasMovePrefix;

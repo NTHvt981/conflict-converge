@@ -26,15 +26,8 @@ struct UnitConfig
 	int costIron = 0;
 	int costOil = 0;
 	UnitAbilities abilities;
-	// Footprint size is derived from the bounds as (right-left) x (bottom-top);
-	// boundLeft/Top offsets from the anchor tile; originX/Y is the anchor
-	// within the footprint.
-	int footprintWidth = 1;  // tiles, derived
-	int footprintHeight = 1; // tiles, derived
-	int boundLeft = 0;       // tiles
-	int boundTop = 0;        // tiles
-	int originX = 0;         // tiles
-	int originY = 0;         // tiles
+	int footprintWidth = 1;  // tiles, anchored at the unit's tile
+	int footprintHeight = 1; // tiles, extending toward +x/+y
 	std::string spritePrefix;
 	std::string atlasIdlePrefix; // "" = flat-PNG fallback
 	std::string atlasMovePrefix; // "" = flat-PNG fallback

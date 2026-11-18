@@ -33,8 +33,7 @@ bool ConfigsEqual(const UnitConfig &a, const UnitConfig &b)
 		   a.abilities.transportCapacity == b.abilities.transportCapacity &&
 		   a.abilities.sniper == b.abilities.sniper &&
 		   a.footprintWidth == b.footprintWidth &&
-		   a.footprintHeight == b.footprintHeight && a.boundLeft == b.boundLeft &&
-		   a.boundTop == b.boundTop && a.originX == b.originX && a.originY == b.originY &&
+		   a.footprintHeight == b.footprintHeight &&
 		   a.spritePrefix == b.spritePrefix && a.atlasIdlePrefix == b.atlasIdlePrefix &&
 		   a.atlasMovePrefix == b.atlasMovePrefix;
 }
@@ -82,9 +81,7 @@ void RunUnitConfigTests()
 		edited.stats.health = 150.0f;
 		edited.stats.armorType = ArmorType::COMPOSITE;
 		edited.stats.attackPower = 0; // explicit zero survives (not a default)
-		edited.boundLeft = 1;       // bounds {1,0,3,1}: footprint derives 2x1
 		edited.footprintWidth = 2;
-		edited.originX = 1; // stored + round-trips, no gameplay effect yet
 		edited.spritePrefix = "custom";
 		edited.atlasIdlePrefix = "custom_idle";
 		const std::string json = UnitConfigToJson(edited);
@@ -244,12 +241,11 @@ void RunUnitConfigTests()
 		const UnitConfig baseline = DefaultUnitConfig(UnitType::Artillery);
 		CC_CHECK(ConfigsEqual(baseline, bare.value_or(UnitConfig{})));
 
-		// Unknown enum names + bad bounds fall back per-field; the
+		// Bad enum names and non-positive sizes fall back per-field; the
 		// well-formed remainder still loads.
 		const std::expected<UnitConfig, ConfigError> partial = ParseUnitConfigJson(
 			"{\"type\":\"LightTank\",\"stats\":{\"health\":-5,\"armorType\":\"WOOD\","
-			"\"damageType\":\"\",\"attackPower\":21},\"collision\":{\"bounds\":{"
-			"\"left\":0,\"top\":0,\"right\":0,\"bottom\":3},\"origin\":{\"x\":1,\"y\":0}},"
+			"\"damageType\":\"\",\"attackPower\":21},\"footprint\":{\"width\":0,\"height\":0},"
 			"\"art\":{\"spritePrefix\":\"\",\"atlasIdlePrefix\":\"x\"}}",
 			"light_tank");
 		CC_CHECK(partial.has_value());
@@ -259,22 +255,16 @@ void RunUnitConfigTests()
 		CC_CHECK(config.stats.armorType == tankBase.stats.armorType); // WOOD rejected
 		CC_CHECK(config.stats.damageType == tankBase.stats.damageType); // "" rejected
 		CC_CHECK(config.stats.attackPower == 21); // explicit honored
-		CC_CHECK(config.footprintWidth == tankBase.footprintWidth); // degenerate rejected
+		CC_CHECK(config.footprintWidth == tankBase.footprintWidth); // non-positive rejected
 		CC_CHECK(config.footprintHeight == tankBase.footprintHeight);
-		CC_CHECK(config.boundLeft == 0 && config.boundTop == 0);
-		CC_CHECK(config.originX == 1 && config.originY == 0); // origin always stored
 		CC_CHECK(config.spritePrefix == tankBase.spritePrefix); // "" rejected
 		CC_CHECK(config.atlasIdlePrefix == "x"); // "" is valid: explicit honored
 
-		// Well-formed bounds derive the footprint (offset rect, not just size).
-		const std::expected<UnitConfig, ConfigError> bounded = ParseUnitConfigJson(
-			"{\"type\":\"LightTank\",\"collision\":{\"bounds\":{"
-			"\"left\":1,\"top\":0,\"right\":3,\"bottom\":2},\"origin\":{\"x\":0,\"y\":0}}}",
-			"light_tank");
-		CC_CHECK(bounded.has_value());
-		const UnitConfig bounds = bounded.value_or(UnitConfig{});
-		CC_CHECK(bounds.footprintWidth == 2 && bounds.footprintHeight == 2);
-		CC_CHECK(bounds.boundLeft == 1 && bounds.boundTop == 0);
+		const std::expected<UnitConfig, ConfigError> sized = ParseUnitConfigJson(
+			"{\"type\":\"LightTank\",\"footprint\":{\"width\":2,\"height\":2}}", "light_tank");
+		CC_CHECK(sized.has_value());
+		const UnitConfig sizedCfg = sized.value_or(UnitConfig{});
+		CC_CHECK(sizedCfg.footprintWidth == 2 && sizedCfg.footprintHeight == 2);
 	}
 
 	{

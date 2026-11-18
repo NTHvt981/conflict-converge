@@ -10,10 +10,7 @@
     "speed": 0.75,
     "sightRange": 5
   },
-  "collision": {
-    "bounds": { "left": 0, "top": 0, "right": 2, "bottom": 2 },
-    "origin": { "x": 0, "y": 0 }
-  },
+  "footprint": { "width": 2, "height": 2 },
   "art": {
     "spritePrefix": "artillery",
     "atlasIdlePrefix": "",

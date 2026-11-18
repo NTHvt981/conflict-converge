@@ -26,24 +26,10 @@ struct JsonStats
 	std::optional<cc::TileUnit> sightRange; // tiles
 };
 
-struct JsonBounds
+struct JsonFootprint
 {
-	int left = 0;
-	int top = 0;
-	int right = 0;
-	int bottom = 0;
-};
-
-struct JsonOrigin
-{
-	int x = 0;
-	int y = 0;
-};
-
-struct JsonCollision
-{
-	std::optional<JsonBounds> bounds;
-	std::optional<JsonOrigin> origin;
+	std::optional<int> width;
+	std::optional<int> height;
 };
 
 struct JsonArt
@@ -90,7 +76,7 @@ struct JsonConfig
 	JsonStats stats;
 	JsonCost cost;
 	JsonAbilities abilities;
-	JsonCollision collision;
+	JsonFootprint footprint;
 	JsonArt art;
 };
 

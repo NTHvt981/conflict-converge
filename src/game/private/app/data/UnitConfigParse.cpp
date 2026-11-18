@@ -307,24 +307,13 @@ ParseUnitConfigJson(const std::string &json, const std::string &filenameStem)
 	{
 		config.abilities.sniper = true;
 	}
-	if (cfg.collision.bounds.has_value())
+	if (cfg.footprint.width.has_value() && *cfg.footprint.width > 0)
 	{
-		const int left = cfg.collision.bounds->left;
-		const int top = cfg.collision.bounds->top;
-		const int right = cfg.collision.bounds->right;
-		const int bottom = cfg.collision.bounds->bottom;
-		if (left >= 0 && top >= 0 && right > left && bottom > top)
-		{
-			config.boundLeft = left;
-			config.boundTop = top;
-			config.footprintWidth = right - left;
-			config.footprintHeight = bottom - top;
-		}
+		config.footprintWidth = *cfg.footprint.width;
 	}
-	if (cfg.collision.origin.has_value())
+	if (cfg.footprint.height.has_value() && *cfg.footprint.height > 0)
 	{
-		config.originX = cfg.collision.origin->x;
-		config.originY = cfg.collision.origin->y;
+		config.footprintHeight = *cfg.footprint.height;
 	}
 	if (!cfg.art.spritePrefix.empty())
 	{

@@ -76,41 +76,16 @@ void save(cereal::JSONOutputArchive &ar, const JsonStats &s)
 	   cereal::make_nvp("sightRange", s.sightRange.value()));
 }
 
-void load(cereal::JSONInputArchive &ar, JsonBounds &b)
+void load(cereal::JSONInputArchive &ar, JsonFootprint &f)
 {
-	TryLoadValue(ar, "left", b.left);
-	TryLoadValue(ar, "top", b.top);
-	TryLoadValue(ar, "right", b.right);
-	TryLoadValue(ar, "bottom", b.bottom);
+	TryLoadOptional(ar, "width", nullptr, f.width);
+	TryLoadOptional(ar, "height", nullptr, f.height);
 }
 
-void save(cereal::JSONOutputArchive &ar, const JsonBounds &b)
+void save(cereal::JSONOutputArchive &ar, const JsonFootprint &f)
 {
-	ar(cereal::make_nvp("left", b.left), cereal::make_nvp("top", b.top),
-	   cereal::make_nvp("right", b.right), cereal::make_nvp("bottom", b.bottom));
-}
-
-void load(cereal::JSONInputArchive &ar, JsonOrigin &o)
-{
-	TryLoadValue(ar, "x", o.x);
-	TryLoadValue(ar, "y", o.y);
-}
-
-void save(cereal::JSONOutputArchive &ar, const JsonOrigin &o)
-{
-	ar(cereal::make_nvp("x", o.x), cereal::make_nvp("y", o.y));
-}
-
-void load(cereal::JSONInputArchive &ar, JsonCollision &c)
-{
-	TryLoadOptional(ar, "bounds", nullptr, c.bounds);
-	TryLoadOptional(ar, "origin", nullptr, c.origin);
-}
-
-void save(cereal::JSONOutputArchive &ar, const JsonCollision &c)
-{
-	ar(cereal::make_nvp("bounds", c.bounds.value()),
-	   cereal::make_nvp("origin", c.origin.value()));
+	ar(cereal::make_nvp("width", f.width.value()),
+	   cereal::make_nvp("height", f.height.value()));
 }
 
 void load(cereal::JSONInputArchive &ar, JsonArt &a)
@@ -194,7 +169,7 @@ void UnitConfigJson::Load(cereal::JSONInputArchive &ar)
 	TryLoadValue(ar, "stats", cfg.stats);
 	TryLoadValue(ar, "cost", cfg.cost);
 	TryLoadValue(ar, "abilities", cfg.abilities);
-	TryLoadValue(ar, "collision", cfg.collision);
+	TryLoadValue(ar, "footprint", cfg.footprint);
 	TryLoadValue(ar, "art", cfg.art);
 }
 
@@ -202,5 +177,5 @@ void UnitConfigJson::Save(cereal::JSONOutputArchive &ar) const
 {
 	ar(cereal::make_nvp("type", cfg.type), cereal::make_nvp("stats", cfg.stats),
 	   cereal::make_nvp("cost", cfg.cost), cereal::make_nvp("abilities", cfg.abilities),
-	   cereal::make_nvp("collision", cfg.collision), cereal::make_nvp("art", cfg.art));
+	   cereal::make_nvp("footprint", cfg.footprint), cereal::make_nvp("art", cfg.art));
 }

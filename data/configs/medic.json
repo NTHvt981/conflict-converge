@@ -10,10 +10,7 @@
     "speed": 1,
     "sightRange": 4
   },
-  "collision": {
-    "bounds": { "left": 0, "top": 0, "right": 1, "bottom": 1 },
-    "origin": { "x": 0, "y": 0 }
-  },
+  "footprint": { "width": 1, "height": 1 },
   "art": {
     "spritePrefix": "medic",
     "atlasIdlePrefix": "medic_idle",
