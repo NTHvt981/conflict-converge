@@ -62,12 +62,9 @@ void SyncBuffers(EditorState &editor)
 	editor.armorActive = ArmorIndex(config.stats.armorType);
 	editor.damageActive = DamageIndex(config.stats.damageType);
 	editor.attackPowerBox = config.stats.attackPower;
-	editor.footprintWBox = config.footprintWidth;
-	editor.footprintHBox = config.footprintHeight;
 	editor.spriteEdit = editor.idleEdit = editor.moveEdit = false;
 	editor.armorEdit = editor.damageEdit = false;
 	editor.attackPowerEdit = false;
-	editor.footprintWEdit = editor.footprintHEdit = false;
 }
 
 void SaveOne(EditorState &editor, Art &art, int typeIndex)
@@ -234,30 +231,6 @@ void DrawSpritesTab(EditorState &editor, Art &art)
 	DrawPreview(editor, art, 640.0f, 84.0f);
 }
 
-void DrawFootprintTab(EditorState &editor)
-{
-	UnitConfig &config = editor.configs[editor.selected];
-	constexpr float kX = 240.0f;
-	GuiLabel({ kX, 84.0f, 150.0f, 20.0f }, "Footprint W");
-	if (GuiValueBox({ kX + 155.0f, 84.0f, 100.0f, 20.0f }, nullptr, &editor.footprintWBox,
-					 1, 8, editor.footprintWEdit))
-	{
-		editor.footprintWEdit = !editor.footprintWEdit;
-	}
-	config.footprintWidth = editor.footprintWBox;
-	GuiLabel({ kX, 110.0f, 150.0f, 20.0f }, "Footprint H");
-	if (GuiValueBox({ kX + 155.0f, 110.0f, 100.0f, 20.0f }, nullptr, &editor.footprintHBox,
-					 1, 8, editor.footprintHEdit))
-	{
-		editor.footprintHEdit = !editor.footprintHEdit;
-	}
-	config.footprintHeight = editor.footprintHBox;
-	char footprint[64];
-	std::snprintf(footprint, sizeof(footprint), "Footprint: %dx%d tiles",
-				  config.footprintWidth, config.footprintHeight);
-	GuiLabel({ kX, 136.0f, 380.0f, 20.0f }, footprint);
-}
-
 } // namespace
 
 void InitEditor(EditorState &editor)
@@ -336,20 +309,12 @@ void DrawEditorFrame(EditorState &editor, Art &art)
 	{
 		editor.tab = EditorState::kTabSprites;
 	}
-	if (GuiButton({ 480.0f, 8.0f, 120.0f, 28.0f }, "Footprint"))
-	{
-		editor.tab = EditorState::kTabFootprint;
-	}
 	GuiPanel({ 224.0f, 44.0f, 768.0f, 524.0f },
 			 editor.configs[editor.selected].type.c_str());
 
 	if (editor.tab == EditorState::kTabSprites)
 	{
 		DrawSpritesTab(editor, art);
-	}
-	else if (editor.tab == EditorState::kTabFootprint)
-	{
-		DrawFootprintTab(editor);
 	}
 	else
 	{

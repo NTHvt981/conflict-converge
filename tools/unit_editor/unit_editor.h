@@ -10,7 +10,6 @@ struct EditorState
 	static constexpr int kTypeCount = static_cast<int>(UnitType::Count);
 	static constexpr int kTabStats = 0;
 	static constexpr int kTabSprites = 1;
-	static constexpr int kTabFootprint = 2;
 
 	UnitConfig configs[kTypeCount];
 	bool fromFile[kTypeCount] = {};
@@ -32,10 +31,6 @@ struct EditorState
 	bool damageEdit = false;
 	int attackPowerBox = 0;
 	bool attackPowerEdit = false;
-	int footprintWBox = 1;
-	int footprintHBox = 1;
-	bool footprintWEdit = false;
-	bool footprintHEdit = false;
 	bool animatePreview = true;
 	int previewFacing = 6; // sheet column previewed (0-7, 6 = right)
 	bool previewFacingEdit = false;
