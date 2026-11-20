@@ -10,7 +10,7 @@ struct EditorState
 	static constexpr int kTypeCount = static_cast<int>(UnitType::Count);
 	static constexpr int kTabStats = 0;
 	static constexpr int kTabSprites = 1;
-	static constexpr int kTabCollision = 2;
+	static constexpr int kTabFootprint = 2;
 
 	UnitConfig configs[kTypeCount];
 	bool fromFile[kTypeCount] = {};
@@ -32,20 +32,10 @@ struct EditorState
 	bool damageEdit = false;
 	int attackPowerBox = 0;
 	bool attackPowerEdit = false;
-	// Collision-tab boxes: bounds L/T/R/B + origin X/Y (footprint derives
-	// as R-L x B-T; see the schema doc in proto/unitconfig.proto).
-	int boundLBox = 0;
-	int boundTBox = 0;
-	int boundRBox = 1;
-	int boundBBox = 1;
-	int originXBox = 0;
-	int originYBox = 0;
-	bool boundLEdit = false;
-	bool boundTEdit = false;
-	bool boundREdit = false;
-	bool boundBEdit = false;
-	bool originXEdit = false;
-	bool originYEdit = false;
+	int footprintWBox = 1;
+	int footprintHBox = 1;
+	bool footprintWEdit = false;
+	bool footprintHEdit = false;
 	bool animatePreview = true;
 	int previewFacing = 6; // sheet column previewed (0-7, 6 = right)
 	bool previewFacingEdit = false;

@@ -62,17 +62,12 @@ void SyncBuffers(EditorState &editor)
 	editor.armorActive = ArmorIndex(config.stats.armorType);
 	editor.damageActive = DamageIndex(config.stats.damageType);
 	editor.attackPowerBox = config.stats.attackPower;
-	editor.boundLBox = config.boundLeft;
-	editor.boundTBox = config.boundTop;
-	editor.boundRBox = config.boundLeft + config.footprintWidth;
-	editor.boundBBox = config.boundTop + config.footprintHeight;
-	editor.originXBox = config.originX;
-	editor.originYBox = config.originY;
+	editor.footprintWBox = config.footprintWidth;
+	editor.footprintHBox = config.footprintHeight;
 	editor.spriteEdit = editor.idleEdit = editor.moveEdit = false;
 	editor.armorEdit = editor.damageEdit = false;
 	editor.attackPowerEdit = false;
-	editor.boundLEdit = editor.boundTEdit = editor.boundREdit = false;
-	editor.boundBEdit = editor.originXEdit = editor.originYEdit = false;
+	editor.footprintWEdit = editor.footprintHEdit = false;
 }
 
 void SaveOne(EditorState &editor, Art &art, int typeIndex)
@@ -239,60 +234,28 @@ void DrawSpritesTab(EditorState &editor, Art &art)
 	DrawPreview(editor, art, 640.0f, 84.0f);
 }
 
-void DrawCollisionTab(EditorState &editor)
+void DrawFootprintTab(EditorState &editor)
 {
 	UnitConfig &config = editor.configs[editor.selected];
 	constexpr float kX = 240.0f;
-	// Bounds L/T/R/B (tiles, R/B exclusive) + origin X/Y. Footprint
-	// derives as R-L x B-T (readout below); the loader rejects
-	// malformed rects back to the type baseline on reload.
-	GuiLabel({ kX, 84.0f, 150.0f, 20.0f }, "Bounds L");
-	if (GuiValueBox({ kX + 155.0f, 84.0f, 100.0f, 20.0f }, nullptr, &editor.boundLBox,
-					 0, 8, editor.boundLEdit))
+	GuiLabel({ kX, 84.0f, 150.0f, 20.0f }, "Footprint W");
+	if (GuiValueBox({ kX + 155.0f, 84.0f, 100.0f, 20.0f }, nullptr, &editor.footprintWBox,
+					 1, 8, editor.footprintWEdit))
 	{
-		editor.boundLEdit = !editor.boundLEdit;
+		editor.footprintWEdit = !editor.footprintWEdit;
 	}
-	config.boundLeft = editor.boundLBox;
-	GuiLabel({ kX + 280.0f, 84.0f, 150.0f, 20.0f }, "Bounds T");
-	if (GuiValueBox({ kX + 435.0f, 84.0f, 100.0f, 20.0f }, nullptr, &editor.boundTBox,
-					 0, 8, editor.boundTEdit))
+	config.footprintWidth = editor.footprintWBox;
+	GuiLabel({ kX, 110.0f, 150.0f, 20.0f }, "Footprint H");
+	if (GuiValueBox({ kX + 155.0f, 110.0f, 100.0f, 20.0f }, nullptr, &editor.footprintHBox,
+					 1, 8, editor.footprintHEdit))
 	{
-		editor.boundTEdit = !editor.boundTEdit;
+		editor.footprintHEdit = !editor.footprintHEdit;
 	}
-	config.boundTop = editor.boundTBox;
-	GuiLabel({ kX, 110.0f, 150.0f, 20.0f }, "Bounds R");
-	if (GuiValueBox({ kX + 155.0f, 110.0f, 100.0f, 20.0f }, nullptr, &editor.boundRBox,
-					 0, 8, editor.boundREdit))
-	{
-		editor.boundREdit = !editor.boundREdit;
-	}
-	config.footprintWidth = editor.boundRBox - config.boundLeft;
-	GuiLabel({ kX + 280.0f, 110.0f, 150.0f, 20.0f }, "Bounds B");
-	if (GuiValueBox({ kX + 435.0f, 110.0f, 100.0f, 20.0f }, nullptr, &editor.boundBBox,
-					 0, 8, editor.boundBEdit))
-	{
-		editor.boundBEdit = !editor.boundBEdit;
-	}
-	config.footprintHeight = editor.boundBBox - config.boundTop;
-	GuiLabel({ kX, 136.0f, 150.0f, 20.0f }, "Origin X");
-	if (GuiValueBox({ kX + 155.0f, 136.0f, 100.0f, 20.0f }, nullptr, &editor.originXBox,
-					 0, 8, editor.originXEdit))
-	{
-		editor.originXEdit = !editor.originXEdit;
-	}
-	config.originX = editor.originXBox;
-	GuiLabel({ kX + 280.0f, 136.0f, 150.0f, 20.0f }, "Origin Y");
-	if (GuiValueBox({ kX + 435.0f, 136.0f, 100.0f, 20.0f }, nullptr, &editor.originYBox,
-					 0, 8, editor.originYEdit))
-	{
-		editor.originYEdit = !editor.originYEdit;
-	}
-	config.originY = editor.originYBox;
+	config.footprintHeight = editor.footprintHBox;
 	char footprint[64];
-	std::snprintf(footprint, sizeof(footprint), "Footprint: %dx%d tiles (R-L x B-T)",
+	std::snprintf(footprint, sizeof(footprint), "Footprint: %dx%d tiles",
 				  config.footprintWidth, config.footprintHeight);
-	GuiLabel({ kX, 162.0f, 380.0f, 20.0f }, footprint);
-	GuiLabel({ kX, 180.0f, 380.0f, 20.0f }, "Origin has no gameplay effect yet.");
+	GuiLabel({ kX, 136.0f, 380.0f, 20.0f }, footprint);
 }
 
 } // namespace
@@ -373,9 +336,9 @@ void DrawEditorFrame(EditorState &editor, Art &art)
 	{
 		editor.tab = EditorState::kTabSprites;
 	}
-	if (GuiButton({ 480.0f, 8.0f, 120.0f, 28.0f }, "Collision"))
+	if (GuiButton({ 480.0f, 8.0f, 120.0f, 28.0f }, "Footprint"))
 	{
-		editor.tab = EditorState::kTabCollision;
+		editor.tab = EditorState::kTabFootprint;
 	}
 	GuiPanel({ 224.0f, 44.0f, 768.0f, 524.0f },
 			 editor.configs[editor.selected].type.c_str());
@@ -384,9 +347,9 @@ void DrawEditorFrame(EditorState &editor, Art &art)
 	{
 		DrawSpritesTab(editor, art);
 	}
-	else if (editor.tab == EditorState::kTabCollision)
+	else if (editor.tab == EditorState::kTabFootprint)
 	{
-		DrawCollisionTab(editor);
+		DrawFootprintTab(editor);
 	}
 	else
 	{
