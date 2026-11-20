@@ -26,12 +26,6 @@ struct JsonStats
 	std::optional<cc::TileUnit> sightRange; // tiles
 };
 
-struct JsonFootprint
-{
-	std::optional<int> width;
-	std::optional<int> height;
-};
-
 struct JsonArt
 {
 	std::string spritePrefix;
@@ -76,7 +70,6 @@ struct JsonConfig
 	JsonStats stats;
 	JsonCost cost;
 	JsonAbilities abilities;
-	JsonFootprint footprint;
 	JsonArt art;
 };
 

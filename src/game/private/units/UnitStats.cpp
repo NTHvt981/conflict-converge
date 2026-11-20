@@ -50,8 +50,9 @@ void ApplyBaseStats(Unit &unit)
 	unit.cooldownTime = stats.cooldownTime;
 	unit.speed = stats.speed * cc::TILE_SIZE;
 	unit.sightRange = stats.sightRange * cc::TILE_SIZE;
-	unit.footprintWidth = config.footprintWidth;
-	unit.footprintHeight = config.footprintHeight;
+	const cc::IVec2 footprint = UnitFootprint(unit.type);
+	unit.footprintWidth = footprint.x;
+	unit.footprintHeight = footprint.y;
 }
 
 ProductionCategory ProductionCategoryOf(UnitType type)

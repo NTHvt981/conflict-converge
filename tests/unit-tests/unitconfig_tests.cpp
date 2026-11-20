@@ -32,8 +32,6 @@ bool ConfigsEqual(const UnitConfig &a, const UnitConfig &b)
 		   a.abilities.crushesFlesh == b.abilities.crushesFlesh &&
 		   a.abilities.transportCapacity == b.abilities.transportCapacity &&
 		   a.abilities.sniper == b.abilities.sniper &&
-		   a.footprintWidth == b.footprintWidth &&
-		   a.footprintHeight == b.footprintHeight &&
 		   a.spritePrefix == b.spritePrefix && a.atlasIdlePrefix == b.atlasIdlePrefix &&
 		   a.atlasMovePrefix == b.atlasMovePrefix;
 }
@@ -81,7 +79,6 @@ void RunUnitConfigTests()
 		edited.stats.health = 150.0f;
 		edited.stats.armorType = ArmorType::COMPOSITE;
 		edited.stats.attackPower = 0; // explicit zero survives (not a default)
-		edited.footprintWidth = 2;
 		edited.spritePrefix = "custom";
 		edited.atlasIdlePrefix = "custom_idle";
 		const std::string json = UnitConfigToJson(edited);
@@ -145,7 +142,6 @@ void RunUnitConfigTests()
 					const UnitStats &base = BaseStats(UnitType::RifleInfantry);
 					CC_CHECK(config.stats.health == base.health);
 					CC_CHECK(config.stats.attackPower == base.attackPower);
-					CC_CHECK(config.footprintWidth == 1);
 					CC_CHECK(config.spritePrefix == "rifle_infantry");
 					CC_CHECK(config.atlasIdlePrefix == "rifle_infantry_idle");
 					rifleOk = true;
@@ -175,7 +171,6 @@ void RunUnitConfigTests()
 				if (config.type == "HeavyTank")
 				{
 					CC_CHECK(config.stats.armorType == ArmorType::COMPOSITE);
-					CC_CHECK(config.footprintWidth == 2);
 					CC_CHECK(config.atlasIdlePrefix.empty()); // PNG fallback
 					tankOk = true;
 				}
@@ -241,11 +236,11 @@ void RunUnitConfigTests()
 		const UnitConfig baseline = DefaultUnitConfig(UnitType::Artillery);
 		CC_CHECK(ConfigsEqual(baseline, bare.value_or(UnitConfig{})));
 
-		// Bad enum names and non-positive sizes fall back per-field; the
+		// Bad enum names fall back per-field; the
 		// well-formed remainder still loads.
 		const std::expected<UnitConfig, ConfigError> partial = ParseUnitConfigJson(
 			"{\"type\":\"LightTank\",\"stats\":{\"health\":-5,\"armorType\":\"WOOD\","
-			"\"damageType\":\"\",\"attackPower\":21},\"footprint\":{\"width\":0,\"height\":0},"
+			"\"damageType\":\"\",\"attackPower\":21},"
 			"\"art\":{\"spritePrefix\":\"\",\"atlasIdlePrefix\":\"x\"}}",
 			"light_tank");
 		CC_CHECK(partial.has_value());
@@ -255,16 +250,8 @@ void RunUnitConfigTests()
 		CC_CHECK(config.stats.armorType == tankBase.stats.armorType); // WOOD rejected
 		CC_CHECK(config.stats.damageType == tankBase.stats.damageType); // "" rejected
 		CC_CHECK(config.stats.attackPower == 21); // explicit honored
-		CC_CHECK(config.footprintWidth == tankBase.footprintWidth); // non-positive rejected
-		CC_CHECK(config.footprintHeight == tankBase.footprintHeight);
 		CC_CHECK(config.spritePrefix == tankBase.spritePrefix); // "" rejected
 		CC_CHECK(config.atlasIdlePrefix == "x"); // "" is valid: explicit honored
-
-		const std::expected<UnitConfig, ConfigError> sized = ParseUnitConfigJson(
-			"{\"type\":\"LightTank\",\"footprint\":{\"width\":2,\"height\":2}}", "light_tank");
-		CC_CHECK(sized.has_value());
-		const UnitConfig sizedCfg = sized.value_or(UnitConfig{});
-		CC_CHECK(sizedCfg.footprintWidth == 2 && sizedCfg.footprintHeight == 2);
 	}
 
 	{

@@ -36,10 +36,6 @@ std::string UnitConfigToJson(const UnitConfig &config)
 		out.abilities.transport = transport;
 		out.abilities.sniper = config.abilities.sniper;
 	}
-	JsonFootprint footprint;
-	footprint.width = config.footprintWidth;
-	footprint.height = config.footprintHeight;
-	out.footprint = footprint;
 	out.art.spritePrefix = config.spritePrefix;
 	out.art.atlasIdlePrefix = config.atlasIdlePrefix;
 	out.art.atlasMovePrefix = config.atlasMovePrefix;

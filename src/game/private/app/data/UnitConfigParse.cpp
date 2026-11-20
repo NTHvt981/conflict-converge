@@ -307,14 +307,6 @@ ParseUnitConfigJson(const std::string &json, const std::string &filenameStem)
 	{
 		config.abilities.sniper = true;
 	}
-	if (cfg.footprint.width.has_value() && *cfg.footprint.width > 0)
-	{
-		config.footprintWidth = *cfg.footprint.width;
-	}
-	if (cfg.footprint.height.has_value() && *cfg.footprint.height > 0)
-	{
-		config.footprintHeight = *cfg.footprint.height;
-	}
 	if (!cfg.art.spritePrefix.empty())
 	{
 		config.spritePrefix = cfg.art.spritePrefix;

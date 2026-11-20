@@ -26,8 +26,6 @@ struct UnitConfig
 	int costIron = 0;
 	int costOil = 0;
 	UnitAbilities abilities;
-	int footprintWidth = 1;  // tiles, anchored at the unit's tile
-	int footprintHeight = 1; // tiles, extending toward +x/+y
 	std::string spritePrefix;
 	std::string atlasIdlePrefix; // "" = flat-PNG fallback
 	std::string atlasMovePrefix; // "" = flat-PNG fallback

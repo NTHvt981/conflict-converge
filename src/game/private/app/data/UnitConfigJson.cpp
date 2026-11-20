@@ -76,18 +76,6 @@ void save(cereal::JSONOutputArchive &ar, const JsonStats &s)
 	   cereal::make_nvp("sightRange", s.sightRange.value()));
 }
 
-void load(cereal::JSONInputArchive &ar, JsonFootprint &f)
-{
-	TryLoadOptional(ar, "width", nullptr, f.width);
-	TryLoadOptional(ar, "height", nullptr, f.height);
-}
-
-void save(cereal::JSONOutputArchive &ar, const JsonFootprint &f)
-{
-	ar(cereal::make_nvp("width", f.width.value()),
-	   cereal::make_nvp("height", f.height.value()));
-}
-
 void load(cereal::JSONInputArchive &ar, JsonArt &a)
 {
 	TryLoadValue(ar, "spritePrefix", "sprite_prefix", a.spritePrefix);
@@ -169,7 +157,6 @@ void UnitConfigJson::Load(cereal::JSONInputArchive &ar)
 	TryLoadValue(ar, "stats", cfg.stats);
 	TryLoadValue(ar, "cost", cfg.cost);
 	TryLoadValue(ar, "abilities", cfg.abilities);
-	TryLoadValue(ar, "footprint", cfg.footprint);
 	TryLoadValue(ar, "art", cfg.art);
 }
 
@@ -177,5 +164,5 @@ void UnitConfigJson::Save(cereal::JSONOutputArchive &ar) const
 {
 	ar(cereal::make_nvp("type", cfg.type), cereal::make_nvp("stats", cfg.stats),
 	   cereal::make_nvp("cost", cfg.cost), cereal::make_nvp("abilities", cfg.abilities),
-	   cereal::make_nvp("footprint", cfg.footprint), cereal::make_nvp("art", cfg.art));
+	   cereal::make_nvp("art", cfg.art));
 }

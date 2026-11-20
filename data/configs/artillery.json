@@ -10,7 +10,6 @@
     "speed": 0.75,
     "sightRange": 5
   },
-  "footprint": { "width": 2, "height": 2 },
   "art": {
     "spritePrefix": "artillery",
     "atlasIdlePrefix": "",

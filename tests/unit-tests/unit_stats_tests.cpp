@@ -14,9 +14,6 @@ void RunUnitStatsTests()
 	for (int i = 0; i < static_cast<int>(UnitType::Count); ++i)
 	{
 		const UnitType type = static_cast<UnitType>(i);
-		const UnitConfig &config = DefaultUnitConfig(type);
-		CC_CHECK(config.footprintWidth == UnitFootprint(type).x);
-		CC_CHECK(config.footprintHeight == UnitFootprint(type).y);
 		CC_CHECK(ActiveUnitConfig(type).type == InfoOf(type).configName);
 	}
 
@@ -87,7 +84,6 @@ void RunUnitStatsTests()
 		rifle.stats.health = 77.0f;
 		rifle.stats.attackRange = 2.5f;
 		rifle.stats.speed = 1.5f;
-		rifle.footprintWidth = 2;
 		SetActiveUnitConfigs(std::vector<UnitConfig>{ rifle });
 		Unit tuned;
 		tuned.type = UnitType::RifleInfantry;
@@ -95,7 +91,7 @@ void RunUnitStatsTests()
 		CC_CHECK(tuned.health == 77.0f);
 		CC_CHECK(tuned.attackRange == 320); // 2.5 tiles, lround against TILE_SIZE 128
 		CC_CHECK(tuned.speed == 192.0f);    // 1.5 tiles/s
-		CC_CHECK(tuned.footprintWidth == 2);
+		CC_CHECK(tuned.footprintWidth == UnitFootprint(UnitType::RifleInfantry).x);
 		ResetActiveUnitConfigs();
 	}
 }

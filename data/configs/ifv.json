@@ -10,7 +10,6 @@
     "speed": 2,
     "sightRange": 6
   },
-  "footprint": { "width": 2, "height": 2 },
   "art": {
     "spritePrefix": "ifv",
     "atlasIdlePrefix": "",

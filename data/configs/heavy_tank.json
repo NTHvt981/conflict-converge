@@ -10,7 +10,6 @@
     "speed": 1,
     "sightRange": 5
   },
-  "footprint": { "width": 2, "height": 2 },
   "art": {
     "spritePrefix": "heavytank",
     "atlasIdlePrefix": "",

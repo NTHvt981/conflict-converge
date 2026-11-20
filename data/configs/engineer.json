@@ -10,7 +10,6 @@
     "speed": 1,
     "sightRange": 4
   },
-  "footprint": { "width": 1, "height": 1 },
   "art": {
     "spritePrefix": "engineer",
     "atlasIdlePrefix": "engineer_idle",
