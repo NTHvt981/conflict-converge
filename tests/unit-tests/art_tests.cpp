@@ -166,13 +166,17 @@ void RunArtTests()
 		CC_CHECK(art.UnitSprite(UnitType::Medic, true, 1, 0.8f, 6) == "medic_move_3_6");
 		CC_CHECK(art.UnitSprite(UnitType::Medic, false, 1, 0.0f, 6, true) ==
 				 "medic_attack_0_6");
-		// Types without atlas entries resolve empty (rectangle fallback covers).
-		CC_CHECK(art.UnitSprite(UnitType::HeavyTank, true, 1, 0.0f, 0).empty());
-		CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f, 0).empty());
+		// Whole-vehicle directional sheets: idle/move/attack per direction.
+		CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f, 0) ==
+				 "heavytank_idle_0_0");
+		CC_CHECK(art.UnitSprite(UnitType::HeavyTank, true, 1, 0.0f, 0) ==
+				 "heavytank_move_0_0");
+		CC_CHECK(art.UnitSprite(UnitType::HeavyTank, false, 1, 0.0f, 0, true) ==
+				 "heavytank_attack_0_0");
 		// Death anims: non-looping, clamped, holding the last frame.
 		CC_CHECK(art.UnitDeathAnimSeconds(UnitType::RifleInfantry) == 1.0f);
 		CC_CHECK(art.UnitDeathAnimSeconds(UnitType::Medic) == 1.0f);
-		CC_CHECK(art.UnitDeathAnimSeconds(UnitType::HeavyTank) == 0.0f);
+		CC_CHECK(art.UnitDeathAnimSeconds(UnitType::HeavyTank) == 1.0f);
 		CC_CHECK(art.UnitDeathSprite(UnitType::RifleInfantry, 1, 0.0f, 6) ==
 				 "rifle_infantry_death_0_6");
 		CC_CHECK(art.UnitDeathSprite(UnitType::RifleInfantry, 1, 0.3f, 6) ==
@@ -185,33 +189,36 @@ void RunArtTests()
 				 "rifle_infantry_death_3_6");
 		CC_CHECK(art.UnitDeathSprite(UnitType::RifleInfantry, 1, 0.0f, 9) ==
 				 "rifle_infantry_death_0_6"); // facing clamps to Right
-		CC_CHECK(art.UnitDeathSprite(UnitType::HeavyTank, 1, 0.0f, 6).empty());
+		CC_CHECK(art.UnitDeathSprite(UnitType::HeavyTank, 1, 0.0f, 6) ==
+				 "heavytank_death_0_6");
 	}
 
 	{
 		Art art;
-		CC_CHECK(!art.HasTankArt(UnitType::LightTank));
 		CC_CHECK(art.LoadAtlas().has_value());
-		CC_CHECK(art.HasTankArt(UnitType::LightTank));
-		CC_CHECK(!art.HasTankArt(UnitType::HeavyTank));
-		CC_CHECK(art.TankBodySprite(UnitType::LightTank, 0) == "lighttank_body_idle_0_0");
-		CC_CHECK(art.TankBodySprite(UnitType::LightTank, 7) == "lighttank_body_idle_0_7");
-		CC_CHECK(art.TankBodySprite(UnitType::LightTank, 9) == "lighttank_body_idle_0_6");
-		CC_CHECK(art.TankHeadSprite(UnitType::LightTank, 0) == "lighttank_head_0_0");
-		CC_CHECK(art.TankHeadSprite(UnitType::LightTank, 3) == "lighttank_head_0_3");
-		CC_CHECK(art.TankHeadSprite(UnitType::LightTank, -1) == "lighttank_head_0_6");
-		CC_CHECK(art.TankBodySprite(UnitType::HeavyTank, 0).empty());
-		CC_CHECK(art.TankHeadSprite(UnitType::HeavyTank, 0).empty());
+		CC_CHECK(art.UnitSprite(UnitType::LightTank, false, 1, 0.0f, 6) ==
+				 "lighttank_idle_0_6");
+		CC_CHECK(art.UnitSprite(UnitType::LightTank, true, 1, 0.8f, 6) ==
+				 "lighttank_move_3_6");
+		CC_CHECK(art.UnitSprite(UnitType::LightTank, false, 1, 0.0f, 6, true) ==
+				 "lighttank_attack_0_6");
+		CC_CHECK(art.UnitSprite(UnitType::IFV, false, 1, 0.0f, 6) == "ifv_idle_0_6");
+		CC_CHECK(art.UnitSprite(UnitType::IFV, true, 1, 0.8f, 6) == "ifv_move_3_6");
+		CC_CHECK(art.UnitSprite(UnitType::IFV, false, 1, 0.0f, 6, true) == "ifv_attack_0_6");
+		CC_CHECK(art.UnitSprite(UnitType::Artillery, false, 1, 0.0f, 6) ==
+				 "artillery_idle_0_6");
+		CC_CHECK(art.UnitSprite(UnitType::Artillery, true, 1, 0.8f, 6) ==
+				 "artillery_move_3_6");
+		CC_CHECK(art.UnitSprite(UnitType::Artillery, false, 1, 0.0f, 6, true) ==
+				 "artillery_attack_0_6");
 		const std::expected<SpriteSheetData, ConfigError> loaded = LoadSpriteSheet();
 		CC_CHECK(loaded.has_value());
 		const SpriteSheetData sheet = loaded.value_or(SpriteSheetData{});
-		const SpriteDefInfo *body = FindSpriteByName(sheet, "lighttank_body_idle_0_6");
-		CC_CHECK(body != nullptr);
-		CC_CHECK(body->maskSprite == 1556);
+		const SpriteDefInfo *idle = FindSpriteByName(sheet, "lighttank_idle_0_6");
+		CC_CHECK(idle != nullptr);
+		CC_CHECK(idle->maskSprite == 5306);
 		Rectangle frame = {};
-		CC_CHECK(!art.SpriteDrawRect("lighttank_body_idle_0_0", { 0.0f, 0.0f }, frame));
-		art.DrawAtlasFrame(art.TankBodySprite(UnitType::LightTank, 0), { 0.0f, 0.0f },
-						   WHITE); // no crash
+		CC_CHECK(!art.SpriteDrawRect("lighttank_idle_0_0", { 0.0f, 0.0f }, frame));
 	}
 
 	// Foot infantry renders 72px cells at 0.8x in the 128px tile; everything

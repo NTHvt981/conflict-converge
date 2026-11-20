@@ -94,21 +94,6 @@ std::string Art::UnitSprite(UnitType type, bool moving, unsigned int id, float t
 	return sprites_.UnitSprite(type, moving, id, timeSeconds, facingDir, attacking);
 }
 
-std::string Art::TankBodySprite(UnitType type, int facingDir) const
-{
-	return sprites_.TankBodySprite(type, facingDir);
-}
-
-std::string Art::TankHeadSprite(UnitType type, int facingDir) const
-{
-	return sprites_.TankHeadSprite(type, facingDir);
-}
-
-bool Art::HasTankArt(UnitType type) const
-{
-	return sprites_.HasTankArt(type);
-}
-
 float Art::UnitDeathAnimSeconds(UnitType type) const
 {
 	return sprites_.UnitDeathAnimSeconds(type);

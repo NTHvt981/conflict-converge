@@ -177,15 +177,15 @@ void RunSpriteDataTests()
 		CC_CHECK(mask != nullptr && mask->name == "u_mask_0_1");
 	}
 
-	// Shipped roster: 8-row x 8-direction-column grids on 72x72 cells, a base+mask
-	// pair per action; PrototypeInfantry resolves its own namespace.
+	// Shipped roster: 8-direction-column grids, a base+mask pair per action;
+	// PrototypeInfantry resolves its own namespace.
 	{
 		const std::expected<SpriteSheetData, ConfigError> loaded = LoadSpriteSheet();
 		CC_CHECK(loaded.has_value());
 		const SpriteSheetData sheet = loaded.value_or(SpriteSheetData{});
-		CC_CHECK(sheet.textures.size() == 38);
-		CC_CHECK(sheet.sprites.size() == 1608);
-		CC_CHECK(sheet.animations.size() == 136);
+		CC_CHECK(sheet.textures.size() == 66);
+		CC_CHECK(sheet.sprites.size() == 2600);
+		CC_CHECK(sheet.animations.size() == 264);
 		const SpriteDefInfo *first = FindSpriteByName(sheet, "rifle_infantry_idle_0_0");
 		CC_CHECK(first != nullptr && first->id == 2000 && first->texture == "rifle_infantry_idle_base");
 		CC_CHECK(first->bounds.left == 0 && first->bounds.top == 0);

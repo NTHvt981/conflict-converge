@@ -3,6 +3,7 @@
 
 #include "economy/Building.h"
 #include "units/Combat.h"
+#include "units/UnitTypeInfo.h"
 #include "core/Cheats.h"
 #include "app/ui/Cursor.h"
 #include "units/Extensions.h"
@@ -85,7 +86,7 @@ struct UnitArtPath
 	}
 };
 
-struct TankArt
+struct UnitArtBox
 {
 	bool drawn = false;
 	bool haveBox = false;
@@ -101,40 +102,8 @@ void DrawRectFallback(const Art &art, const Unit &unit, Rectangle body)
 	}
 }
 
-bool DrawTankAtlas(const Art &art, Registry &registry, Entity id, const Unit &unit,
-				   Vector2 corner, Color tint, TankArt &tank)
-{
-	const int bodyDir = static_cast<int>(unit.facing);
-	int headDir = bodyDir;
-	const bool attacking = unit.state == UnitState::Attacking;
-	const CombatState *combat = registry.Get<CombatState>(id);
-	const bool aiming = attacking || (combat != nullptr && combat->target != kInvalidEntity);
-	if (aiming)
-	{
-		if (const Turret *turret = registry.Get<Turret>(id))
-		{
-			headDir = static_cast<int>(FacingFromVelocity(
-				{ std::cos(turret->facing), std::sin(turret->facing) }));
-		}
-	}
-	const std::string bodySprite = art.TankBodySprite(unit.type, bodyDir);
-	if (bodySprite.empty())
-	{
-		return false;
-	}
-	art.DrawAtlasFrame(bodySprite, corner, tint, Art::BaseArtScale(unit.type));
-	const std::string headSprite = art.TankHeadSprite(unit.type, headDir);
-	if (!headSprite.empty())
-	{
-		art.DrawAtlasFrame(headSprite, corner, tint, Art::BaseArtScale(unit.type));
-	}
-	tank.haveBox = art.SpriteDrawRect(bodySprite, corner, tank.box, Art::BaseArtScale(unit.type));
-	tank.drawn = true;
-	return true;
-}
-
 bool DrawSpriteAtlas(const Art &art, Entity id, const Unit &unit, Vector2 corner, Color tint,
-					 bool moving, bool attacking, float animTime)
+					 bool moving, bool attacking, float animTime, UnitArtBox &out)
 {
 	const std::string sprite = art.UnitSprite(unit.type, moving, id, animTime,
 											  static_cast<int>(unit.facing), attacking);
@@ -143,13 +112,18 @@ bool DrawSpriteAtlas(const Art &art, Entity id, const Unit &unit, Vector2 corner
 		return false;
 	}
 	art.DrawAtlasFrame(sprite, corner, tint, Art::BaseArtScale(unit.type));
+	out.drawn = true;
+	if (InfoOf(unit.type).isVehicle)
+	{
+		out.haveBox = art.SpriteDrawRect(sprite, corner, out.box, Art::BaseArtScale(unit.type));
+	}
 	return true;
 }
 
-TankArt DrawArtLayers(const Art &art, Registry &registry, Entity id, Unit &unit,
-					  UnitArtPath path)
+UnitArtBox DrawArtLayers(const Art &art, Registry &registry, Entity id, Unit &unit,
+						 UnitArtPath path)
 {
-	TankArt tank;
+	UnitArtBox box;
 	if (const DeathFx *fx = registry.Get<DeathFx>(id); fx != nullptr)
 	{
 		const std::string sprite =
@@ -160,8 +134,9 @@ TankArt DrawArtLayers(const Art &art, Registry &registry, Entity id, Unit &unit,
 		{
 			art.DrawAtlasFrame(sprite, { unit.position.x, unit.position.y },
 							   art.TeamTint(unit.teamID), Art::BaseArtScale(unit.type));
+			box.drawn = true;
 		}
-		return tank; // dying units don't aim: no turret layers
+		return box;
 	}
 	const SquadLayout squad = SquadSlots(unit.type, id, UnitHealthFraction(unit));
 	const bool moving = unit.state == UnitState::Moving;
@@ -172,16 +147,9 @@ TankArt DrawArtLayers(const Art &art, Registry &registry, Entity id, Unit &unit,
 	{
 		const Vector2 corner = { unit.position.x + squad.slots[i].x,
 								 unit.position.y + squad.slots[i].y };
-		if (path.atlas && art.HasTankArt(unit.type))
-		{
-			if (DrawTankAtlas(art, registry, id, unit, corner, tint, tank))
-			{
-				continue;
-			}
-		}
 		if (path.atlas)
 		{
-			if (DrawSpriteAtlas(art, id, unit, corner, tint, moving, attacking, animTime))
+			if (DrawSpriteAtlas(art, id, unit, corner, tint, moving, attacking, animTime, box))
 			{
 				continue;
 			}
@@ -198,7 +166,7 @@ TankArt DrawArtLayers(const Art &art, Registry &registry, Entity id, Unit &unit,
 			DrawRectangleRec({ corner.x + 26.0f, corner.y + 26.0f, 12.0f, 12.0f }, tint);
 		}
 	}
-	return tank;
+	return box;
 }
 
 void DrawTurretLine(const Art &art, Registry &registry, Entity id, Vector2 center)
@@ -215,13 +183,13 @@ void DrawTurretLine(const Art &art, Registry &registry, Entity id, Vector2 cente
 }
 
 void DrawSelectionOverlay(const Art &art, const Unit &unit, Entity id, Rectangle body,
-						  UnitArtPath path, const TankArt &tank, Vector2 center)
+						  UnitArtPath path, const UnitArtBox &box, Vector2 center)
 {
 	Rectangle selBox = SquadSelectionBox(art, unit, id, !path.BodyRectangles(), body);
-	if (tank.haveBox)
+	if (box.haveBox)
 	{
-		selBox = { tank.box.x - 2.0f, tank.box.y - 2.0f, tank.box.width + 4.0f,
-				   tank.box.height + 4.0f };
+		selBox = { box.box.x - 2.0f, box.box.y - 2.0f, box.box.width + 4.0f,
+				   box.box.height + 4.0f };
 	}
 	DrawRectangleLinesEx(selBox, 3.0f, RED);
 	const float fraction = UnitHealthFraction(unit);
@@ -508,22 +476,22 @@ void GameRenderer::DrawUnitEntity(Entity id, Unit &unit)
 							 cc::kHalfTile };
 	const Vector2 center = { body.x + cc::kQuarterTile, body.y + cc::kQuarterTile };
 	const UnitArtPath path = UnitArtPath::Of(art_);
-	TankArt tank;
+	UnitArtBox box;
 	if (path.BodyRectangles())
 	{
 		DrawRectFallback(art_, unit, body);
 	}
 	else
 	{
-		tank = DrawArtLayers(art_, registry_, id, unit, path);
+		box = DrawArtLayers(art_, registry_, id, unit, path);
 	}
-	if (!tank.drawn)
+	if (!box.drawn)
 	{
 		DrawTurretLine(art_, registry_, id, center);
 	}
 	if (unit.isSelected)
 	{
-		DrawSelectionOverlay(art_, unit, id, body, path, tank, center);
+		DrawSelectionOverlay(art_, unit, id, body, path, box, center);
 	}
 	if (unit.controlGroups != 0)
 	{

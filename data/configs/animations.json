@@ -1207,6 +1207,902 @@
         { "sprite": 5015, "durationMs": 250 },
         { "sprite": 5023, "durationMs": 250 },
         { "sprite": 5031, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_idle_0", "id": 1300, "loop": true,
+      "frames": [
+        { "sprite": 5200, "durationMs": 250 },
+        { "sprite": 5208, "durationMs": 250 },
+        { "sprite": 5216, "durationMs": 250 },
+        { "sprite": 5224, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_idle_1", "id": 1301, "loop": true,
+      "frames": [
+        { "sprite": 5201, "durationMs": 250 },
+        { "sprite": 5209, "durationMs": 250 },
+        { "sprite": 5217, "durationMs": 250 },
+        { "sprite": 5225, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_idle_2", "id": 1302, "loop": true,
+      "frames": [
+        { "sprite": 5202, "durationMs": 250 },
+        { "sprite": 5210, "durationMs": 250 },
+        { "sprite": 5218, "durationMs": 250 },
+        { "sprite": 5226, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_idle_3", "id": 1303, "loop": true,
+      "frames": [
+        { "sprite": 5203, "durationMs": 250 },
+        { "sprite": 5211, "durationMs": 250 },
+        { "sprite": 5219, "durationMs": 250 },
+        { "sprite": 5227, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_idle_4", "id": 1304, "loop": true,
+      "frames": [
+        { "sprite": 5204, "durationMs": 250 },
+        { "sprite": 5212, "durationMs": 250 },
+        { "sprite": 5220, "durationMs": 250 },
+        { "sprite": 5228, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_idle_5", "id": 1305, "loop": true,
+      "frames": [
+        { "sprite": 5205, "durationMs": 250 },
+        { "sprite": 5213, "durationMs": 250 },
+        { "sprite": 5221, "durationMs": 250 },
+        { "sprite": 5229, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_idle_6", "id": 1306, "loop": true,
+      "frames": [
+        { "sprite": 5206, "durationMs": 250 },
+        { "sprite": 5214, "durationMs": 250 },
+        { "sprite": 5222, "durationMs": 250 },
+        { "sprite": 5230, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_idle_7", "id": 1307, "loop": true,
+      "frames": [
+        { "sprite": 5207, "durationMs": 250 },
+        { "sprite": 5215, "durationMs": 250 },
+        { "sprite": 5223, "durationMs": 250 },
+        { "sprite": 5231, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_move_0", "id": 1308, "loop": true,
+      "frames": [
+        { "sprite": 5400, "durationMs": 250 },
+        { "sprite": 5408, "durationMs": 250 },
+        { "sprite": 5416, "durationMs": 250 },
+        { "sprite": 5424, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_move_1", "id": 1309, "loop": true,
+      "frames": [
+        { "sprite": 5401, "durationMs": 250 },
+        { "sprite": 5409, "durationMs": 250 },
+        { "sprite": 5417, "durationMs": 250 },
+        { "sprite": 5425, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_move_2", "id": 1310, "loop": true,
+      "frames": [
+        { "sprite": 5402, "durationMs": 250 },
+        { "sprite": 5410, "durationMs": 250 },
+        { "sprite": 5418, "durationMs": 250 },
+        { "sprite": 5426, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_move_3", "id": 1311, "loop": true,
+      "frames": [
+        { "sprite": 5403, "durationMs": 250 },
+        { "sprite": 5411, "durationMs": 250 },
+        { "sprite": 5419, "durationMs": 250 },
+        { "sprite": 5427, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_move_4", "id": 1312, "loop": true,
+      "frames": [
+        { "sprite": 5404, "durationMs": 250 },
+        { "sprite": 5412, "durationMs": 250 },
+        { "sprite": 5420, "durationMs": 250 },
+        { "sprite": 5428, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_move_5", "id": 1313, "loop": true,
+      "frames": [
+        { "sprite": 5405, "durationMs": 250 },
+        { "sprite": 5413, "durationMs": 250 },
+        { "sprite": 5421, "durationMs": 250 },
+        { "sprite": 5429, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_move_6", "id": 1314, "loop": true,
+      "frames": [
+        { "sprite": 5406, "durationMs": 250 },
+        { "sprite": 5414, "durationMs": 250 },
+        { "sprite": 5422, "durationMs": 250 },
+        { "sprite": 5430, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_move_7", "id": 1315, "loop": true,
+      "frames": [
+        { "sprite": 5407, "durationMs": 250 },
+        { "sprite": 5415, "durationMs": 250 },
+        { "sprite": 5423, "durationMs": 250 },
+        { "sprite": 5431, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_attack_0", "id": 1316, "loop": true,
+      "frames": [
+        { "sprite": 5600, "durationMs": 250 },
+        { "sprite": 5608, "durationMs": 250 },
+        { "sprite": 5616, "durationMs": 250 },
+        { "sprite": 5624, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_attack_1", "id": 1317, "loop": true,
+      "frames": [
+        { "sprite": 5601, "durationMs": 250 },
+        { "sprite": 5609, "durationMs": 250 },
+        { "sprite": 5617, "durationMs": 250 },
+        { "sprite": 5625, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_attack_2", "id": 1318, "loop": true,
+      "frames": [
+        { "sprite": 5602, "durationMs": 250 },
+        { "sprite": 5610, "durationMs": 250 },
+        { "sprite": 5618, "durationMs": 250 },
+        { "sprite": 5626, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_attack_3", "id": 1319, "loop": true,
+      "frames": [
+        { "sprite": 5603, "durationMs": 250 },
+        { "sprite": 5611, "durationMs": 250 },
+        { "sprite": 5619, "durationMs": 250 },
+        { "sprite": 5627, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_attack_4", "id": 1320, "loop": true,
+      "frames": [
+        { "sprite": 5604, "durationMs": 250 },
+        { "sprite": 5612, "durationMs": 250 },
+        { "sprite": 5620, "durationMs": 250 },
+        { "sprite": 5628, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_attack_5", "id": 1321, "loop": true,
+      "frames": [
+        { "sprite": 5605, "durationMs": 250 },
+        { "sprite": 5613, "durationMs": 250 },
+        { "sprite": 5621, "durationMs": 250 },
+        { "sprite": 5629, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_attack_6", "id": 1322, "loop": true,
+      "frames": [
+        { "sprite": 5606, "durationMs": 250 },
+        { "sprite": 5614, "durationMs": 250 },
+        { "sprite": 5622, "durationMs": 250 },
+        { "sprite": 5630, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_attack_7", "id": 1323, "loop": true,
+      "frames": [
+        { "sprite": 5607, "durationMs": 250 },
+        { "sprite": 5615, "durationMs": 250 },
+        { "sprite": 5623, "durationMs": 250 },
+        { "sprite": 5631, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_death_0", "id": 1324, "loop": false,
+      "frames": [
+        { "sprite": 5800, "durationMs": 250 },
+        { "sprite": 5808, "durationMs": 250 },
+        { "sprite": 5816, "durationMs": 250 },
+        { "sprite": 5824, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_death_1", "id": 1325, "loop": false,
+      "frames": [
+        { "sprite": 5801, "durationMs": 250 },
+        { "sprite": 5809, "durationMs": 250 },
+        { "sprite": 5817, "durationMs": 250 },
+        { "sprite": 5825, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_death_2", "id": 1326, "loop": false,
+      "frames": [
+        { "sprite": 5802, "durationMs": 250 },
+        { "sprite": 5810, "durationMs": 250 },
+        { "sprite": 5818, "durationMs": 250 },
+        { "sprite": 5826, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_death_3", "id": 1327, "loop": false,
+      "frames": [
+        { "sprite": 5803, "durationMs": 250 },
+        { "sprite": 5811, "durationMs": 250 },
+        { "sprite": 5819, "durationMs": 250 },
+        { "sprite": 5827, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_death_4", "id": 1328, "loop": false,
+      "frames": [
+        { "sprite": 5804, "durationMs": 250 },
+        { "sprite": 5812, "durationMs": 250 },
+        { "sprite": 5820, "durationMs": 250 },
+        { "sprite": 5828, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_death_5", "id": 1329, "loop": false,
+      "frames": [
+        { "sprite": 5805, "durationMs": 250 },
+        { "sprite": 5813, "durationMs": 250 },
+        { "sprite": 5821, "durationMs": 250 },
+        { "sprite": 5829, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_death_6", "id": 1330, "loop": false,
+      "frames": [
+        { "sprite": 5806, "durationMs": 250 },
+        { "sprite": 5814, "durationMs": 250 },
+        { "sprite": 5822, "durationMs": 250 },
+        { "sprite": 5830, "durationMs": 250 }
+      ] },
+    { "name": "lighttank_death_7", "id": 1331, "loop": false,
+      "frames": [
+        { "sprite": 5807, "durationMs": 250 },
+        { "sprite": 5815, "durationMs": 250 },
+        { "sprite": 5823, "durationMs": 250 },
+        { "sprite": 5831, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_idle_0", "id": 1332, "loop": true,
+      "frames": [
+        { "sprite": 6000, "durationMs": 250 },
+        { "sprite": 6008, "durationMs": 250 },
+        { "sprite": 6016, "durationMs": 250 },
+        { "sprite": 6024, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_idle_1", "id": 1333, "loop": true,
+      "frames": [
+        { "sprite": 6001, "durationMs": 250 },
+        { "sprite": 6009, "durationMs": 250 },
+        { "sprite": 6017, "durationMs": 250 },
+        { "sprite": 6025, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_idle_2", "id": 1334, "loop": true,
+      "frames": [
+        { "sprite": 6002, "durationMs": 250 },
+        { "sprite": 6010, "durationMs": 250 },
+        { "sprite": 6018, "durationMs": 250 },
+        { "sprite": 6026, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_idle_3", "id": 1335, "loop": true,
+      "frames": [
+        { "sprite": 6003, "durationMs": 250 },
+        { "sprite": 6011, "durationMs": 250 },
+        { "sprite": 6019, "durationMs": 250 },
+        { "sprite": 6027, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_idle_4", "id": 1336, "loop": true,
+      "frames": [
+        { "sprite": 6004, "durationMs": 250 },
+        { "sprite": 6012, "durationMs": 250 },
+        { "sprite": 6020, "durationMs": 250 },
+        { "sprite": 6028, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_idle_5", "id": 1337, "loop": true,
+      "frames": [
+        { "sprite": 6005, "durationMs": 250 },
+        { "sprite": 6013, "durationMs": 250 },
+        { "sprite": 6021, "durationMs": 250 },
+        { "sprite": 6029, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_idle_6", "id": 1338, "loop": true,
+      "frames": [
+        { "sprite": 6006, "durationMs": 250 },
+        { "sprite": 6014, "durationMs": 250 },
+        { "sprite": 6022, "durationMs": 250 },
+        { "sprite": 6030, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_idle_7", "id": 1339, "loop": true,
+      "frames": [
+        { "sprite": 6007, "durationMs": 250 },
+        { "sprite": 6015, "durationMs": 250 },
+        { "sprite": 6023, "durationMs": 250 },
+        { "sprite": 6031, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_move_0", "id": 1340, "loop": true,
+      "frames": [
+        { "sprite": 6200, "durationMs": 250 },
+        { "sprite": 6208, "durationMs": 250 },
+        { "sprite": 6216, "durationMs": 250 },
+        { "sprite": 6224, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_move_1", "id": 1341, "loop": true,
+      "frames": [
+        { "sprite": 6201, "durationMs": 250 },
+        { "sprite": 6209, "durationMs": 250 },
+        { "sprite": 6217, "durationMs": 250 },
+        { "sprite": 6225, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_move_2", "id": 1342, "loop": true,
+      "frames": [
+        { "sprite": 6202, "durationMs": 250 },
+        { "sprite": 6210, "durationMs": 250 },
+        { "sprite": 6218, "durationMs": 250 },
+        { "sprite": 6226, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_move_3", "id": 1343, "loop": true,
+      "frames": [
+        { "sprite": 6203, "durationMs": 250 },
+        { "sprite": 6211, "durationMs": 250 },
+        { "sprite": 6219, "durationMs": 250 },
+        { "sprite": 6227, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_move_4", "id": 1344, "loop": true,
+      "frames": [
+        { "sprite": 6204, "durationMs": 250 },
+        { "sprite": 6212, "durationMs": 250 },
+        { "sprite": 6220, "durationMs": 250 },
+        { "sprite": 6228, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_move_5", "id": 1345, "loop": true,
+      "frames": [
+        { "sprite": 6205, "durationMs": 250 },
+        { "sprite": 6213, "durationMs": 250 },
+        { "sprite": 6221, "durationMs": 250 },
+        { "sprite": 6229, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_move_6", "id": 1346, "loop": true,
+      "frames": [
+        { "sprite": 6206, "durationMs": 250 },
+        { "sprite": 6214, "durationMs": 250 },
+        { "sprite": 6222, "durationMs": 250 },
+        { "sprite": 6230, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_move_7", "id": 1347, "loop": true,
+      "frames": [
+        { "sprite": 6207, "durationMs": 250 },
+        { "sprite": 6215, "durationMs": 250 },
+        { "sprite": 6223, "durationMs": 250 },
+        { "sprite": 6231, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_attack_0", "id": 1348, "loop": true,
+      "frames": [
+        { "sprite": 6400, "durationMs": 250 },
+        { "sprite": 6408, "durationMs": 250 },
+        { "sprite": 6416, "durationMs": 250 },
+        { "sprite": 6424, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_attack_1", "id": 1349, "loop": true,
+      "frames": [
+        { "sprite": 6401, "durationMs": 250 },
+        { "sprite": 6409, "durationMs": 250 },
+        { "sprite": 6417, "durationMs": 250 },
+        { "sprite": 6425, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_attack_2", "id": 1350, "loop": true,
+      "frames": [
+        { "sprite": 6402, "durationMs": 250 },
+        { "sprite": 6410, "durationMs": 250 },
+        { "sprite": 6418, "durationMs": 250 },
+        { "sprite": 6426, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_attack_3", "id": 1351, "loop": true,
+      "frames": [
+        { "sprite": 6403, "durationMs": 250 },
+        { "sprite": 6411, "durationMs": 250 },
+        { "sprite": 6419, "durationMs": 250 },
+        { "sprite": 6427, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_attack_4", "id": 1352, "loop": true,
+      "frames": [
+        { "sprite": 6404, "durationMs": 250 },
+        { "sprite": 6412, "durationMs": 250 },
+        { "sprite": 6420, "durationMs": 250 },
+        { "sprite": 6428, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_attack_5", "id": 1353, "loop": true,
+      "frames": [
+        { "sprite": 6405, "durationMs": 250 },
+        { "sprite": 6413, "durationMs": 250 },
+        { "sprite": 6421, "durationMs": 250 },
+        { "sprite": 6429, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_attack_6", "id": 1354, "loop": true,
+      "frames": [
+        { "sprite": 6406, "durationMs": 250 },
+        { "sprite": 6414, "durationMs": 250 },
+        { "sprite": 6422, "durationMs": 250 },
+        { "sprite": 6430, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_attack_7", "id": 1355, "loop": true,
+      "frames": [
+        { "sprite": 6407, "durationMs": 250 },
+        { "sprite": 6415, "durationMs": 250 },
+        { "sprite": 6423, "durationMs": 250 },
+        { "sprite": 6431, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_death_0", "id": 1356, "loop": false,
+      "frames": [
+        { "sprite": 6600, "durationMs": 250 },
+        { "sprite": 6608, "durationMs": 250 },
+        { "sprite": 6616, "durationMs": 250 },
+        { "sprite": 6624, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_death_1", "id": 1357, "loop": false,
+      "frames": [
+        { "sprite": 6601, "durationMs": 250 },
+        { "sprite": 6609, "durationMs": 250 },
+        { "sprite": 6617, "durationMs": 250 },
+        { "sprite": 6625, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_death_2", "id": 1358, "loop": false,
+      "frames": [
+        { "sprite": 6602, "durationMs": 250 },
+        { "sprite": 6610, "durationMs": 250 },
+        { "sprite": 6618, "durationMs": 250 },
+        { "sprite": 6626, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_death_3", "id": 1359, "loop": false,
+      "frames": [
+        { "sprite": 6603, "durationMs": 250 },
+        { "sprite": 6611, "durationMs": 250 },
+        { "sprite": 6619, "durationMs": 250 },
+        { "sprite": 6627, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_death_4", "id": 1360, "loop": false,
+      "frames": [
+        { "sprite": 6604, "durationMs": 250 },
+        { "sprite": 6612, "durationMs": 250 },
+        { "sprite": 6620, "durationMs": 250 },
+        { "sprite": 6628, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_death_5", "id": 1361, "loop": false,
+      "frames": [
+        { "sprite": 6605, "durationMs": 250 },
+        { "sprite": 6613, "durationMs": 250 },
+        { "sprite": 6621, "durationMs": 250 },
+        { "sprite": 6629, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_death_6", "id": 1362, "loop": false,
+      "frames": [
+        { "sprite": 6606, "durationMs": 250 },
+        { "sprite": 6614, "durationMs": 250 },
+        { "sprite": 6622, "durationMs": 250 },
+        { "sprite": 6630, "durationMs": 250 }
+      ] },
+    { "name": "heavytank_death_7", "id": 1363, "loop": false,
+      "frames": [
+        { "sprite": 6607, "durationMs": 250 },
+        { "sprite": 6615, "durationMs": 250 },
+        { "sprite": 6623, "durationMs": 250 },
+        { "sprite": 6631, "durationMs": 250 }
+      ] },
+    { "name": "ifv_idle_0", "id": 1364, "loop": true,
+      "frames": [
+        { "sprite": 6800, "durationMs": 250 },
+        { "sprite": 6808, "durationMs": 250 },
+        { "sprite": 6816, "durationMs": 250 },
+        { "sprite": 6824, "durationMs": 250 }
+      ] },
+    { "name": "ifv_idle_1", "id": 1365, "loop": true,
+      "frames": [
+        { "sprite": 6801, "durationMs": 250 },
+        { "sprite": 6809, "durationMs": 250 },
+        { "sprite": 6817, "durationMs": 250 },
+        { "sprite": 6825, "durationMs": 250 }
+      ] },
+    { "name": "ifv_idle_2", "id": 1366, "loop": true,
+      "frames": [
+        { "sprite": 6802, "durationMs": 250 },
+        { "sprite": 6810, "durationMs": 250 },
+        { "sprite": 6818, "durationMs": 250 },
+        { "sprite": 6826, "durationMs": 250 }
+      ] },
+    { "name": "ifv_idle_3", "id": 1367, "loop": true,
+      "frames": [
+        { "sprite": 6803, "durationMs": 250 },
+        { "sprite": 6811, "durationMs": 250 },
+        { "sprite": 6819, "durationMs": 250 },
+        { "sprite": 6827, "durationMs": 250 }
+      ] },
+    { "name": "ifv_idle_4", "id": 1368, "loop": true,
+      "frames": [
+        { "sprite": 6804, "durationMs": 250 },
+        { "sprite": 6812, "durationMs": 250 },
+        { "sprite": 6820, "durationMs": 250 },
+        { "sprite": 6828, "durationMs": 250 }
+      ] },
+    { "name": "ifv_idle_5", "id": 1369, "loop": true,
+      "frames": [
+        { "sprite": 6805, "durationMs": 250 },
+        { "sprite": 6813, "durationMs": 250 },
+        { "sprite": 6821, "durationMs": 250 },
+        { "sprite": 6829, "durationMs": 250 }
+      ] },
+    { "name": "ifv_idle_6", "id": 1370, "loop": true,
+      "frames": [
+        { "sprite": 6806, "durationMs": 250 },
+        { "sprite": 6814, "durationMs": 250 },
+        { "sprite": 6822, "durationMs": 250 },
+        { "sprite": 6830, "durationMs": 250 }
+      ] },
+    { "name": "ifv_idle_7", "id": 1371, "loop": true,
+      "frames": [
+        { "sprite": 6807, "durationMs": 250 },
+        { "sprite": 6815, "durationMs": 250 },
+        { "sprite": 6823, "durationMs": 250 },
+        { "sprite": 6831, "durationMs": 250 }
+      ] },
+    { "name": "ifv_move_0", "id": 1372, "loop": true,
+      "frames": [
+        { "sprite": 7000, "durationMs": 250 },
+        { "sprite": 7008, "durationMs": 250 },
+        { "sprite": 7016, "durationMs": 250 },
+        { "sprite": 7024, "durationMs": 250 }
+      ] },
+    { "name": "ifv_move_1", "id": 1373, "loop": true,
+      "frames": [
+        { "sprite": 7001, "durationMs": 250 },
+        { "sprite": 7009, "durationMs": 250 },
+        { "sprite": 7017, "durationMs": 250 },
+        { "sprite": 7025, "durationMs": 250 }
+      ] },
+    { "name": "ifv_move_2", "id": 1374, "loop": true,
+      "frames": [
+        { "sprite": 7002, "durationMs": 250 },
+        { "sprite": 7010, "durationMs": 250 },
+        { "sprite": 7018, "durationMs": 250 },
+        { "sprite": 7026, "durationMs": 250 }
+      ] },
+    { "name": "ifv_move_3", "id": 1375, "loop": true,
+      "frames": [
+        { "sprite": 7003, "durationMs": 250 },
+        { "sprite": 7011, "durationMs": 250 },
+        { "sprite": 7019, "durationMs": 250 },
+        { "sprite": 7027, "durationMs": 250 }
+      ] },
+    { "name": "ifv_move_4", "id": 1376, "loop": true,
+      "frames": [
+        { "sprite": 7004, "durationMs": 250 },
+        { "sprite": 7012, "durationMs": 250 },
+        { "sprite": 7020, "durationMs": 250 },
+        { "sprite": 7028, "durationMs": 250 }
+      ] },
+    { "name": "ifv_move_5", "id": 1377, "loop": true,
+      "frames": [
+        { "sprite": 7005, "durationMs": 250 },
+        { "sprite": 7013, "durationMs": 250 },
+        { "sprite": 7021, "durationMs": 250 },
+        { "sprite": 7029, "durationMs": 250 }
+      ] },
+    { "name": "ifv_move_6", "id": 1378, "loop": true,
+      "frames": [
+        { "sprite": 7006, "durationMs": 250 },
+        { "sprite": 7014, "durationMs": 250 },
+        { "sprite": 7022, "durationMs": 250 },
+        { "sprite": 7030, "durationMs": 250 }
+      ] },
+    { "name": "ifv_move_7", "id": 1379, "loop": true,
+      "frames": [
+        { "sprite": 7007, "durationMs": 250 },
+        { "sprite": 7015, "durationMs": 250 },
+        { "sprite": 7023, "durationMs": 250 },
+        { "sprite": 7031, "durationMs": 250 }
+      ] },
+    { "name": "ifv_attack_0", "id": 1380, "loop": true,
+      "frames": [
+        { "sprite": 7200, "durationMs": 250 },
+        { "sprite": 7208, "durationMs": 250 },
+        { "sprite": 7216, "durationMs": 250 },
+        { "sprite": 7224, "durationMs": 250 }
+      ] },
+    { "name": "ifv_attack_1", "id": 1381, "loop": true,
+      "frames": [
+        { "sprite": 7201, "durationMs": 250 },
+        { "sprite": 7209, "durationMs": 250 },
+        { "sprite": 7217, "durationMs": 250 },
+        { "sprite": 7225, "durationMs": 250 }
+      ] },
+    { "name": "ifv_attack_2", "id": 1382, "loop": true,
+      "frames": [
+        { "sprite": 7202, "durationMs": 250 },
+        { "sprite": 7210, "durationMs": 250 },
+        { "sprite": 7218, "durationMs": 250 },
+        { "sprite": 7226, "durationMs": 250 }
+      ] },
+    { "name": "ifv_attack_3", "id": 1383, "loop": true,
+      "frames": [
+        { "sprite": 7203, "durationMs": 250 },
+        { "sprite": 7211, "durationMs": 250 },
+        { "sprite": 7219, "durationMs": 250 },
+        { "sprite": 7227, "durationMs": 250 }
+      ] },
+    { "name": "ifv_attack_4", "id": 1384, "loop": true,
+      "frames": [
+        { "sprite": 7204, "durationMs": 250 },
+        { "sprite": 7212, "durationMs": 250 },
+        { "sprite": 7220, "durationMs": 250 },
+        { "sprite": 7228, "durationMs": 250 }
+      ] },
+    { "name": "ifv_attack_5", "id": 1385, "loop": true,
+      "frames": [
+        { "sprite": 7205, "durationMs": 250 },
+        { "sprite": 7213, "durationMs": 250 },
+        { "sprite": 7221, "durationMs": 250 },
+        { "sprite": 7229, "durationMs": 250 }
+      ] },
+    { "name": "ifv_attack_6", "id": 1386, "loop": true,
+      "frames": [
+        { "sprite": 7206, "durationMs": 250 },
+        { "sprite": 7214, "durationMs": 250 },
+        { "sprite": 7222, "durationMs": 250 },
+        { "sprite": 7230, "durationMs": 250 }
+      ] },
+    { "name": "ifv_attack_7", "id": 1387, "loop": true,
+      "frames": [
+        { "sprite": 7207, "durationMs": 250 },
+        { "sprite": 7215, "durationMs": 250 },
+        { "sprite": 7223, "durationMs": 250 },
+        { "sprite": 7231, "durationMs": 250 }
+      ] },
+    { "name": "ifv_death_0", "id": 1388, "loop": false,
+      "frames": [
+        { "sprite": 7400, "durationMs": 250 },
+        { "sprite": 7408, "durationMs": 250 },
+        { "sprite": 7416, "durationMs": 250 },
+        { "sprite": 7424, "durationMs": 250 }
+      ] },
+    { "name": "ifv_death_1", "id": 1389, "loop": false,
+      "frames": [
+        { "sprite": 7401, "durationMs": 250 },
+        { "sprite": 7409, "durationMs": 250 },
+        { "sprite": 7417, "durationMs": 250 },
+        { "sprite": 7425, "durationMs": 250 }
+      ] },
+    { "name": "ifv_death_2", "id": 1390, "loop": false,
+      "frames": [
+        { "sprite": 7402, "durationMs": 250 },
+        { "sprite": 7410, "durationMs": 250 },
+        { "sprite": 7418, "durationMs": 250 },
+        { "sprite": 7426, "durationMs": 250 }
+      ] },
+    { "name": "ifv_death_3", "id": 1391, "loop": false,
+      "frames": [
+        { "sprite": 7403, "durationMs": 250 },
+        { "sprite": 7411, "durationMs": 250 },
+        { "sprite": 7419, "durationMs": 250 },
+        { "sprite": 7427, "durationMs": 250 }
+      ] },
+    { "name": "ifv_death_4", "id": 1392, "loop": false,
+      "frames": [
+        { "sprite": 7404, "durationMs": 250 },
+        { "sprite": 7412, "durationMs": 250 },
+        { "sprite": 7420, "durationMs": 250 },
+        { "sprite": 7428, "durationMs": 250 }
+      ] },
+    { "name": "ifv_death_5", "id": 1393, "loop": false,
+      "frames": [
+        { "sprite": 7405, "durationMs": 250 },
+        { "sprite": 7413, "durationMs": 250 },
+        { "sprite": 7421, "durationMs": 250 },
+        { "sprite": 7429, "durationMs": 250 }
+      ] },
+    { "name": "ifv_death_6", "id": 1394, "loop": false,
+      "frames": [
+        { "sprite": 7406, "durationMs": 250 },
+        { "sprite": 7414, "durationMs": 250 },
+        { "sprite": 7422, "durationMs": 250 },
+        { "sprite": 7430, "durationMs": 250 }
+      ] },
+    { "name": "ifv_death_7", "id": 1395, "loop": false,
+      "frames": [
+        { "sprite": 7407, "durationMs": 250 },
+        { "sprite": 7415, "durationMs": 250 },
+        { "sprite": 7423, "durationMs": 250 },
+        { "sprite": 7431, "durationMs": 250 }
+      ] },
+    { "name": "artillery_idle_0", "id": 1396, "loop": true,
+      "frames": [
+        { "sprite": 7600, "durationMs": 250 },
+        { "sprite": 7608, "durationMs": 250 },
+        { "sprite": 7616, "durationMs": 250 },
+        { "sprite": 7624, "durationMs": 250 }
+      ] },
+    { "name": "artillery_idle_1", "id": 1397, "loop": true,
+      "frames": [
+        { "sprite": 7601, "durationMs": 250 },
+        { "sprite": 7609, "durationMs": 250 },
+        { "sprite": 7617, "durationMs": 250 },
+        { "sprite": 7625, "durationMs": 250 }
+      ] },
+    { "name": "artillery_idle_2", "id": 1398, "loop": true,
+      "frames": [
+        { "sprite": 7602, "durationMs": 250 },
+        { "sprite": 7610, "durationMs": 250 },
+        { "sprite": 7618, "durationMs": 250 },
+        { "sprite": 7626, "durationMs": 250 }
+      ] },
+    { "name": "artillery_idle_3", "id": 1399, "loop": true,
+      "frames": [
+        { "sprite": 7603, "durationMs": 250 },
+        { "sprite": 7611, "durationMs": 250 },
+        { "sprite": 7619, "durationMs": 250 },
+        { "sprite": 7627, "durationMs": 250 }
+      ] },
+    { "name": "artillery_idle_4", "id": 1400, "loop": true,
+      "frames": [
+        { "sprite": 7604, "durationMs": 250 },
+        { "sprite": 7612, "durationMs": 250 },
+        { "sprite": 7620, "durationMs": 250 },
+        { "sprite": 7628, "durationMs": 250 }
+      ] },
+    { "name": "artillery_idle_5", "id": 1401, "loop": true,
+      "frames": [
+        { "sprite": 7605, "durationMs": 250 },
+        { "sprite": 7613, "durationMs": 250 },
+        { "sprite": 7621, "durationMs": 250 },
+        { "sprite": 7629, "durationMs": 250 }
+      ] },
+    { "name": "artillery_idle_6", "id": 1402, "loop": true,
+      "frames": [
+        { "sprite": 7606, "durationMs": 250 },
+        { "sprite": 7614, "durationMs": 250 },
+        { "sprite": 7622, "durationMs": 250 },
+        { "sprite": 7630, "durationMs": 250 }
+      ] },
+    { "name": "artillery_idle_7", "id": 1403, "loop": true,
+      "frames": [
+        { "sprite": 7607, "durationMs": 250 },
+        { "sprite": 7615, "durationMs": 250 },
+        { "sprite": 7623, "durationMs": 250 },
+        { "sprite": 7631, "durationMs": 250 }
+      ] },
+    { "name": "artillery_move_0", "id": 1404, "loop": true,
+      "frames": [
+        { "sprite": 7800, "durationMs": 250 },
+        { "sprite": 7808, "durationMs": 250 },
+        { "sprite": 7816, "durationMs": 250 },
+        { "sprite": 7824, "durationMs": 250 }
+      ] },
+    { "name": "artillery_move_1", "id": 1405, "loop": true,
+      "frames": [
+        { "sprite": 7801, "durationMs": 250 },
+        { "sprite": 7809, "durationMs": 250 },
+        { "sprite": 7817, "durationMs": 250 },
+        { "sprite": 7825, "durationMs": 250 }
+      ] },
+    { "name": "artillery_move_2", "id": 1406, "loop": true,
+      "frames": [
+        { "sprite": 7802, "durationMs": 250 },
+        { "sprite": 7810, "durationMs": 250 },
+        { "sprite": 7818, "durationMs": 250 },
+        { "sprite": 7826, "durationMs": 250 }
+      ] },
+    { "name": "artillery_move_3", "id": 1407, "loop": true,
+      "frames": [
+        { "sprite": 7803, "durationMs": 250 },
+        { "sprite": 7811, "durationMs": 250 },
+        { "sprite": 7819, "durationMs": 250 },
+        { "sprite": 7827, "durationMs": 250 }
+      ] },
+    { "name": "artillery_move_4", "id": 1408, "loop": true,
+      "frames": [
+        { "sprite": 7804, "durationMs": 250 },
+        { "sprite": 7812, "durationMs": 250 },
+        { "sprite": 7820, "durationMs": 250 },
+        { "sprite": 7828, "durationMs": 250 }
+      ] },
+    { "name": "artillery_move_5", "id": 1409, "loop": true,
+      "frames": [
+        { "sprite": 7805, "durationMs": 250 },
+        { "sprite": 7813, "durationMs": 250 },
+        { "sprite": 7821, "durationMs": 250 },
+        { "sprite": 7829, "durationMs": 250 }
+      ] },
+    { "name": "artillery_move_6", "id": 1410, "loop": true,
+      "frames": [
+        { "sprite": 7806, "durationMs": 250 },
+        { "sprite": 7814, "durationMs": 250 },
+        { "sprite": 7822, "durationMs": 250 },
+        { "sprite": 7830, "durationMs": 250 }
+      ] },
+    { "name": "artillery_move_7", "id": 1411, "loop": true,
+      "frames": [
+        { "sprite": 7807, "durationMs": 250 },
+        { "sprite": 7815, "durationMs": 250 },
+        { "sprite": 7823, "durationMs": 250 },
+        { "sprite": 7831, "durationMs": 250 }
+      ] },
+    { "name": "artillery_attack_0", "id": 1412, "loop": true,
+      "frames": [
+        { "sprite": 8000, "durationMs": 250 },
+        { "sprite": 8008, "durationMs": 250 },
+        { "sprite": 8016, "durationMs": 250 },
+        { "sprite": 8024, "durationMs": 250 }
+      ] },
+    { "name": "artillery_attack_1", "id": 1413, "loop": true,
+      "frames": [
+        { "sprite": 8001, "durationMs": 250 },
+        { "sprite": 8009, "durationMs": 250 },
+        { "sprite": 8017, "durationMs": 250 },
+        { "sprite": 8025, "durationMs": 250 }
+      ] },
+    { "name": "artillery_attack_2", "id": 1414, "loop": true,
+      "frames": [
+        { "sprite": 8002, "durationMs": 250 },
+        { "sprite": 8010, "durationMs": 250 },
+        { "sprite": 8018, "durationMs": 250 },
+        { "sprite": 8026, "durationMs": 250 }
+      ] },
+    { "name": "artillery_attack_3", "id": 1415, "loop": true,
+      "frames": [
+        { "sprite": 8003, "durationMs": 250 },
+        { "sprite": 8011, "durationMs": 250 },
+        { "sprite": 8019, "durationMs": 250 },
+        { "sprite": 8027, "durationMs": 250 }
+      ] },
+    { "name": "artillery_attack_4", "id": 1416, "loop": true,
+      "frames": [
+        { "sprite": 8004, "durationMs": 250 },
+        { "sprite": 8012, "durationMs": 250 },
+        { "sprite": 8020, "durationMs": 250 },
+        { "sprite": 8028, "durationMs": 250 }
+      ] },
+    { "name": "artillery_attack_5", "id": 1417, "loop": true,
+      "frames": [
+        { "sprite": 8005, "durationMs": 250 },
+        { "sprite": 8013, "durationMs": 250 },
+        { "sprite": 8021, "durationMs": 250 },
+        { "sprite": 8029, "durationMs": 250 }
+      ] },
+    { "name": "artillery_attack_6", "id": 1418, "loop": true,
+      "frames": [
+        { "sprite": 8006, "durationMs": 250 },
+        { "sprite": 8014, "durationMs": 250 },
+        { "sprite": 8022, "durationMs": 250 },
+        { "sprite": 8030, "durationMs": 250 }
+      ] },
+    { "name": "artillery_attack_7", "id": 1419, "loop": true,
+      "frames": [
+        { "sprite": 8007, "durationMs": 250 },
+        { "sprite": 8015, "durationMs": 250 },
+        { "sprite": 8023, "durationMs": 250 },
+        { "sprite": 8031, "durationMs": 250 }
+      ] },
+    { "name": "artillery_death_0", "id": 1420, "loop": false,
+      "frames": [
+        { "sprite": 8200, "durationMs": 250 },
+        { "sprite": 8208, "durationMs": 250 },
+        { "sprite": 8216, "durationMs": 250 },
+        { "sprite": 8224, "durationMs": 250 }
+      ] },
+    { "name": "artillery_death_1", "id": 1421, "loop": false,
+      "frames": [
+        { "sprite": 8201, "durationMs": 250 },
+        { "sprite": 8209, "durationMs": 250 },
+        { "sprite": 8217, "durationMs": 250 },
+        { "sprite": 8225, "durationMs": 250 }
+      ] },
+    { "name": "artillery_death_2", "id": 1422, "loop": false,
+      "frames": [
+        { "sprite": 8202, "durationMs": 250 },
+        { "sprite": 8210, "durationMs": 250 },
+        { "sprite": 8218, "durationMs": 250 },
+        { "sprite": 8226, "durationMs": 250 }
+      ] },
+    { "name": "artillery_death_3", "id": 1423, "loop": false,
+      "frames": [
+        { "sprite": 8203, "durationMs": 250 },
+        { "sprite": 8211, "durationMs": 250 },
+        { "sprite": 8219, "durationMs": 250 },
+        { "sprite": 8227, "durationMs": 250 }
+      ] },
+    { "name": "artillery_death_4", "id": 1424, "loop": false,
+      "frames": [
+        { "sprite": 8204, "durationMs": 250 },
+        { "sprite": 8212, "durationMs": 250 },
+        { "sprite": 8220, "durationMs": 250 },
+        { "sprite": 8228, "durationMs": 250 }
+      ] },
+    { "name": "artillery_death_5", "id": 1425, "loop": false,
+      "frames": [
+        { "sprite": 8205, "durationMs": 250 },
+        { "sprite": 8213, "durationMs": 250 },
+        { "sprite": 8221, "durationMs": 250 },
+        { "sprite": 8229, "durationMs": 250 }
+      ] },
+    { "name": "artillery_death_6", "id": 1426, "loop": false,
+      "frames": [
+        { "sprite": 8206, "durationMs": 250 },
+        { "sprite": 8214, "durationMs": 250 },
+        { "sprite": 8222, "durationMs": 250 },
+        { "sprite": 8230, "durationMs": 250 }
+      ] },
+    { "name": "artillery_death_7", "id": 1427, "loop": false,
+      "frames": [
+        { "sprite": 8207, "durationMs": 250 },
+        { "sprite": 8215, "durationMs": 250 },
+        { "sprite": 8223, "durationMs": 250 },
+        { "sprite": 8231, "durationMs": 250 }
       ] }
   ]
 }

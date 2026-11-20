@@ -60,11 +60,6 @@ public:
 	// facingDir is a Facing octant (0..7); "" when no death anim exists.
 	std::string UnitDeathSprite(UnitType type, unsigned int id, float elapsedSeconds,
 								int facingDir) const;
-	// Layered tank art: body follows movement facing, head follows turret aim.
-	// facingDir is a Facing octant (0..7); "" when the type has no layered art.
-	std::string TankBodySprite(UnitType type, int facingDir) const;
-	std::string TankHeadSprite(UnitType type, int facingDir) const;
-	bool HasTankArt(UnitType type) const;
 	// Atlas mask tint (mask layer only); color-blind mode uses the Okabe-Ito pair.
 	Color TeamTint(TeamId teamID) const;
 	void SetColorBlindMode(bool enabled);

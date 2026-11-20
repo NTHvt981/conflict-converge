@@ -18,7 +18,7 @@ from pathlib import Path
 STEM_RE = re.compile(r"[a-z0-9]+(_[a-z0-9]+)*")
 BANNED_SUBSTRINGS = ("stack_down_left",)
 BANNED_TOKENS = frozenset({"walk", "run"})
-ACTION_SUFFIXES = ("_idle", "_move", "_attack", "_head")
+ACTION_SUFFIXES = ("_idle", "_move", "_attack", "_death", "_head")
 
 SCAN_DIRS = ("sprites", "configs", "audio", "maps", "ui", "fonts")
 SKIP_DIRS = {"logs", "replays"}
@@ -103,7 +103,7 @@ def check_sprites(data: Path, problems: list, texture_ids: set) -> set:
         base = prefix[:-5] if prefix.endswith("_mask") else prefix
         if not base.endswith(ACTION_SUFFIXES):
             problems.append(
-                f"sprites.json:{prefix}: prefix ends in idle/move/attack/head (or that + _mask)"
+                f"sprites.json:{prefix}: prefix ends in idle/move/attack/death/head (or that + _mask)"
             )
     return prefixes
 
