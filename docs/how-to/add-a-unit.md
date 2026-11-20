@@ -35,7 +35,6 @@ A Debug build that compiles and passes the test suite.
    | `fileStem` | `data/configs/<fileStem>.json` override filename |
    | `spriteStem` | first part of flat-PNG filenames |
    | `artDir` | folder under `data/sprites/units/` |
-   | `tankArtPrefix` | `nullptr` unless the unit uses a body/head atlas |
    | `atlasIdlePrefix`, `atlasMovePrefix` | `""` = flat-PNG or rectangle fallback |
    | `isVehicle` | `true` queues the unit on the Vehicle production tab and flips vehicle handling |
    | `Locomotor` | `Foot`, `Wheeled`, or `Tracked`, which selects pathing costs |

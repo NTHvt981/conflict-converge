@@ -595,41 +595,6 @@ std::string ArtSprites::UnitDeathSprite(UnitType type, unsigned int id,
 	return {};
 }
 
-bool ArtSprites::HasTankArt(UnitType type) const
-{
-	const char *prefix = InfoOf(type).tankArtPrefix;
-	if (prefix == nullptr || !sheetLoaded_)
-	{
-		return false;
-	}
-	return FindSpriteByName(sheet_, std::string(prefix) + "_body_idle_0_0") != nullptr;
-}
-
-std::string ArtSprites::TankBodySprite(UnitType type, int facingDir) const
-{
-	const char *prefix = InfoOf(type).tankArtPrefix;
-	if (prefix == nullptr || !sheetLoaded_)
-	{
-		return {};
-	}
-	const int dir = (facingDir < 0 || facingDir > 7) ? 6 : facingDir;
-	const std::string name =
-		std::string(prefix) + "_body_idle_0_" + std::to_string(dir);
-	return FindSpriteByName(sheet_, name) != nullptr ? name : std::string{};
-}
-
-std::string ArtSprites::TankHeadSprite(UnitType type, int facingDir) const
-{
-	const char *prefix = InfoOf(type).tankArtPrefix;
-	if (prefix == nullptr || !sheetLoaded_)
-	{
-		return {};
-	}
-	const int dir = (facingDir < 0 || facingDir > 7) ? 6 : facingDir;
-	const std::string name = std::string(prefix) + "_head_0_" + std::to_string(dir);
-	return FindSpriteByName(sheet_, name) != nullptr ? name : std::string{};
-}
-
 Color ArtSprites::TeamTint(TeamId teamID) const
 {
 	if (colorBlindMode_)
