@@ -106,7 +106,7 @@ app/match: Menu, Skirmish
   buttons, and armed right-clicks: stances, halt, auto-retreat/repair toggles,
   attack-move/patrol/repair/heal issue
 - `UnitStats.h` - `BaseStats` compiled table for 9 types + `UnitFootprint`;
-  `ApplyBaseStats` copies the active `UnitConfig` stats and footprint into the
+  `ApplyBaseStats` copies the active `UnitConfig` stats and the `UnitTypeInfo` footprint into the
   `Unit` in world pixels (preserves position/team/selection)
 - `UnitTypeInfo.h` - Per-type descriptor table: name/cost/art stems/footprint/locomotor;
   `InfoOf` is the only reader

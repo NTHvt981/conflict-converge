@@ -17,7 +17,7 @@ and smooth visual movement decoupled from the logical grid.
 - Building footprints, walkable entrances, and attack positions
   (`Building.h`: `Footprint`, `BuildingEntrances`,
   `BuildingAttackPositions`).
-- 2x2 vehicle footprints via unit configs (`UnitConfig.h`).
+- 2x2 vehicle footprints via the per-type table (`UnitTypeInfo.h`).
 - Recycled entity IDs carry generations (`Registry`), closing the
   stale-ID prerequisite.
 
