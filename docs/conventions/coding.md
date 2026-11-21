@@ -13,7 +13,7 @@ One line per area; the linked section carries the Do/Don't pair.
 | --- | --- |
 | [Build](#language-and-build) | C++23, MSVC, x64; regenerate projects after any file add or remove |
 | [Layout](#files-and-folders) | Header in `public/<module>/`, TU in `private/<module>/`, PascalCase file names |
-| [Naming](#naming) | PascalCase types/functions; camelCase data; `_` class members; `k` constants; `Count` last |
+| [Naming](#naming) | PascalCase types/functions; camelCase data in full words; `_` class members; `k` constants; `Count` last |
 | [Domain types](#name-domain-types-instead-of-bare-ints) | A sentinel or mode gets a named type; wire fields stay `std::int32_t` |
 | [Type tables](#keep-one-descriptor-table-per-type-enum) | One descriptor table per type enum; a new enumerator adds a row, not a `case` |
 | [Includes](#headers-and-includes) | `#pragma once`; own header first; root-qualified includes; forward-declare cycles |
@@ -316,6 +316,26 @@ class Game
 ```
 
 Struct fields stay plain camelCase: `Unit::health`, `AIDifficultyParams::waveThreshold`.
+
+### Spell variable names as full words
+
+**✅ Do**
+```cpp
+float low;
+float high;
+int count;
+int attemptNumber;
+```
+
+**❌ Don't**
+```cpp
+float lo;
+float hi;
+int cnt;
+int tmp;
+```
+
+`dt`, `id`, `src`, `dst`, `pos`, `fps` and `hud` are the standard term for their concept here; keep those short.
 
 ### Name constants with k and keep them constexpr
 
