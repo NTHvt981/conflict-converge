@@ -221,16 +221,16 @@ void RunMenuTests()
 		std::ofstream clamp(settingsPath, std::ios::trunc);
 		clamp << "uiScale=9\n";
 	}
-	MenuSettings hi;
-	CC_CHECK(LoadSettings(hi, settingsPath));
-	CC_CHECK(hi.uiScale == 2.0f); // out-of-range clamps, not garbage
+	MenuSettings highSettings;
+	CC_CHECK(LoadSettings(highSettings, settingsPath));
+	CC_CHECK(highSettings.uiScale == 2.0f); // out-of-range clamps, not garbage
 	{
 		std::ofstream clamp(settingsPath, std::ios::trunc);
 		clamp << "uiScale=0.1\n";
 	}
-	MenuSettings lo;
-	CC_CHECK(LoadSettings(lo, settingsPath));
-	CC_CHECK(lo.uiScale == 0.75f);
+	MenuSettings lowSettings;
+	CC_CHECK(LoadSettings(lowSettings, settingsPath));
+	CC_CHECK(lowSettings.uiScale == 0.75f);
 	std::remove(settingsPath.c_str());
 
 	MenuState previous = MenuState::MainMenu;

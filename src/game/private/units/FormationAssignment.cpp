@@ -247,21 +247,21 @@ std::vector<int> BottleneckAssignment(const std::vector<std::vector<int>> &cost)
 	}
 	std::sort(values.begin(), values.end());
 	values.erase(std::unique(values.begin(), values.end()), values.end());
-	int lo = 0;
-	int hi = static_cast<int>(values.size()) - 1;
-	while (lo < hi)
+	int low = 0;
+	int high = static_cast<int>(values.size()) - 1;
+	while (low < high)
 	{
-		const int mid = lo + (hi - lo) / 2;
+		const int mid = low + (high - low) / 2;
 		if (CanMatchThreshold(cost, values[static_cast<std::size_t>(mid)]))
 		{
-			hi = mid;
+			high = mid;
 		}
 		else
 		{
-			lo = mid + 1;
+			low = mid + 1;
 		}
 	}
-	return HungarianRestricted(cost, values[static_cast<std::size_t>(lo)]);
+	return HungarianRestricted(cost, values[static_cast<std::size_t>(low)]);
 }
 }
 
