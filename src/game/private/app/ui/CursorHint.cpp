@@ -16,13 +16,13 @@ constexpr int kCursorHintWidthReserve = 240;
 constexpr int kCursorHintHeightReserve = 40;
 constexpr int kCursorHintEdge = 4;
 
-int ClampPx(int value, int lo, int hi)
+int ClampPx(int value, int low, int high)
 {
-	if (hi < lo)
+	if (high < low)
 	{
-		hi = lo;
+		high = low;
 	}
-	return value < lo ? lo : (value > hi ? hi : value);
+	return value < low ? low : (value > high ? high : value);
 }
 
 void SetPositionPx(Rml::Element *hint, int cursorX, int cursorY)

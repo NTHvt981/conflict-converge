@@ -466,9 +466,9 @@ void RmlUiMenus::SetDisabled(Rml::Element *el, bool disabled)
 	el->SetClass("disabled", disabled);
 }
 
-float RmlUiMenus::Clamp(float value, float lo, float hi)
+float RmlUiMenus::Clamp(float value, float low, float high)
 {
-	return value < lo ? lo : (value > hi ? hi : value);
+	return value < low ? low : (value > high ? high : value);
 }
 
 float RmlUiMenus::ReadRange(Rml::Element *el)

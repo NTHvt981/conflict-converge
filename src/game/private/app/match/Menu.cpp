@@ -125,15 +125,15 @@ bool ParseFloat(const std::string &text, float &out)
 	return true;
 }
 
-float ClampFloat(float value, float lo, float hi)
+float ClampFloat(float value, float low, float high)
 {
-	if (value < lo)
+	if (value < low)
 	{
-		return lo;
+		return low;
 	}
-	if (value > hi)
+	if (value > high)
 	{
-		return hi;
+		return high;
 	}
 	return value;
 }

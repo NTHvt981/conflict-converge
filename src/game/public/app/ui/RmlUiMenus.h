@@ -83,7 +83,7 @@ private:
 	void Announce(EventType type);
 
 	static void SetDisabled(Rml::Element *el, bool disabled);
-	static float Clamp(float value, float lo, float hi);
+	static float Clamp(float value, float low, float high);
 	static float ReadRange(Rml::Element *el);
 	static Rml::Element *ById(Rml::ElementDocument *doc, std::string_view id);
 	void SetRangeIn(Rml::ElementDocument *doc, std::string_view id, float value);
