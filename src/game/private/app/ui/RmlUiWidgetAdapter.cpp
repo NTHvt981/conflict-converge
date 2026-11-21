@@ -3,6 +3,8 @@
 #include <exception>
 #include <string>
 
+#include "raylib.h"
+
 #include <RmlUi/Core.h>
 #include <RmlUi/Core/Element.h>
 #include <RmlUi/Core/Elements/ElementFormControl.h>
@@ -19,8 +21,10 @@ float ReadRange(Rml::Element *element)
 		{
 			return std::stof(control->GetValue().c_str());
 		}
-		catch (const std::exception &)
+		catch (const std::exception &error)
 		{
+			TraceLog(LOG_WARNING, "UI range '%s' has a non-numeric value '%s': %s",
+					 control->GetId().c_str(), control->GetValue().c_str(), error.what());
 		}
 	}
 	return 0.0f;
