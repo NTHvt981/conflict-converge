@@ -617,6 +617,7 @@ float ArtSprites::BaseArtScale(UnitType type)
 	case UnitType::AntiArmorInfantry:
 	case UnitType::Engineer:
 	case UnitType::Medic:
+	case UnitType::LaserInfantry:
 		return 0.8f;
 	default:
 		return 1.0f;
