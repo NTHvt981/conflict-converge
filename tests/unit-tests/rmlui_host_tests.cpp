@@ -1,5 +1,6 @@
 #include "test_harness.h"
 
+#include "app/match/Menu.h"
 #include "app/ui/RmlUiHost.h"
 #include "app/ui/UiIds.h"
 
@@ -189,7 +190,7 @@ void RunRmlUiHostTests()
 		{
 			CC_CHECK(DocumentHasId(setupDocument, id));
 		}
-		for (int row = 0; row <= 2; ++row)
+		for (int row = 0; row <= static_cast<int>(AIDifficulty::Hard); ++row)
 		{
 			CC_CHECK(DocumentHasId(setupDocument, UiIds::WithIndex(UiIds::DifficultyRow, row)));
 		}
