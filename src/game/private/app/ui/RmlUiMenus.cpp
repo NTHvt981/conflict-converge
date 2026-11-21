@@ -1,6 +1,8 @@
 #include "app/ui/RmlUiMenus.h"
 
 #include <cstdio>
+#include <initializer_list>
+#include <string_view>
 
 #include "raylib.h"
 
@@ -223,28 +225,20 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
 		return false;
 	}
 	menuDoc_->AddEventListener("click", this);
-	Listen(setupDoc_, "click", { UiIds::BtnStart, UiIds::BtnBackRight });
-	for (int row = 0; row <= static_cast<int>(AIDifficulty::Hard); ++row)
-	{
-		const std::string id = UiIds::WithIndex(UiIds::DifficultyRow, row);
-		Listen(setupDoc_, "click", { id });
-	}
+	setupDoc_->AddEventListener("click", this);
 	settingsDoc_->AddEventListener("click", this);
 	settingsDoc_->AddEventListener("change", this);
-	for (int slot = 0; slot < 4; ++slot)
-	{
-		const std::string id = UiIds::WithIndex(UiIds::SlotRow, slot);
-		Listen(loadDoc_, "click", { id });
-	}
-	Listen(loadDoc_, "click", { UiIds::BtnLoadBack, UiIds::BtnReplay });
+	loadDoc_->AddEventListener("click", this);
 	confirmDoc_->AddEventListener("click", this);
 	Listen(remapDoc_, "click", { UiIds::BtnRemapBack });
+	BuildMainMenuWidgets();
+	BuildSetupWidgets();
+	BuildSettingsWidgets();
+	BuildLoadWidgets();
+	BuildConfirmWidgets();
 	PopulateMaps();
 	hintEntries_.push_back({UiIds::BtnStart, {}});
 	hint_.Bind(setupDoc_, UiIds::CursorHint, hintEntries_);
-	BuildMainMenuWidgets();
-	BuildSettingsWidgets();
-	BuildConfirmWidgets();
 	ready_ = true;
 	ShowState();
 	return true;
@@ -269,7 +263,10 @@ void RmlUiMenus::Shutdown()
 	host_ = nullptr;
 	ready_ = false;
 	mainMenuWidgets_.reset();
+	setupWidgets_.reset();
+	setupRows_ = nullptr;
 	settingsWidgets_.reset();
+	loadWidgets_.reset();
 	confirmWidgets_.reset();
 	pendingChoice_ = ConfirmChoice::None;
 }
@@ -390,7 +387,9 @@ void RmlUiMenus::ProcessEvent(Rml::Event &event)
 	const Rml::String type = event.GetType();
 	const Rml::String id = target->GetId();
 	const std::initializer_list<UiWidget *> trees = { mainMenuWidgets_.get(),
+													  setupWidgets_.get(),
 													  settingsWidgets_.get(),
+													  loadWidgets_.get(),
 													  confirmWidgets_.get() };
 	if (type == "click")
 	{

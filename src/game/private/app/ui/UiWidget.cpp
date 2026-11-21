@@ -46,6 +46,11 @@ bool UiWidget::OnEvent(const UiEvent &)
 	return false;
 }
 
+void UiWidget::ClearChildren()
+{
+	children_.clear();
+}
+
 UiButton::UiButton(std::string_view id, Handler handler)
 	: UiWidget(id)
 	, handler_(std::move(handler))
@@ -103,4 +108,14 @@ bool UiSlider::OnEvent(const UiEvent &event)
 	const float clamped = event.value < low_ ? low_ : (event.value > high_ ? high_ : event.value);
 	set_(clamped);
 	return true;
+}
+
+UiList::UiList(std::string_view id)
+	: UiWidget(id)
+{
+}
+
+void UiList::Clear()
+{
+	ClearChildren();
 }

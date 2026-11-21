@@ -23,6 +23,7 @@ class Audio;
 class EventDispatcher;
 class HotkeyMap;
 class RmlUiHost;
+class UiList;
 class UiWidget;
 struct MenuFlow;
 
@@ -75,7 +76,10 @@ private:
 	void RefreshSetup();
 	void RefreshSettings();
 	void BuildMainMenuWidgets();
+	void BuildSetupWidgets();
+	void BuildSetupRows();
 	void BuildSettingsWidgets();
+	void BuildLoadWidgets();
 	void BuildConfirmWidgets();
 	void RefreshLoad();
 	void RefreshConfirm();
@@ -117,7 +121,10 @@ private:
 	Rml::ElementDocument *confirmDoc_ = nullptr;
 	Rml::ElementDocument *remapDoc_ = nullptr;
 	std::unique_ptr<UiWidget> mainMenuWidgets_;
+	std::unique_ptr<UiWidget> setupWidgets_;
+	UiList *setupRows_ = nullptr;
 	std::unique_ptr<UiWidget> settingsWidgets_;
+	std::unique_ptr<UiWidget> loadWidgets_;
 	std::unique_ptr<UiWidget> confirmWidgets_;
 	int remapArming_ = -1; // action being rebound, -1 = none
 	std::string remapConflictAction_; // pending conflict, awaiting the steal click

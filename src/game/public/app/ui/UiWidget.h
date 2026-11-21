@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -46,9 +47,10 @@ public:
 
 protected:
 	virtual bool OnEvent(const UiEvent &event);
+	void ClearChildren();
 
 private:
-	std::string_view id_;
+	std::string id_;
 	std::vector<std::unique_ptr<UiWidget>> children_;
 };
 
@@ -96,4 +98,12 @@ private:
 	Setter set_;
 	float low_;
 	float high_;
+};
+
+class UiList : public UiWidget
+{
+public:
+	explicit UiList(std::string_view id);
+
+	void Clear();
 };
