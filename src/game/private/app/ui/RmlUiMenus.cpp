@@ -1,6 +1,8 @@
 #include "app/ui/RmlUiMenus.h"
 
 #include <cstdio>
+#include <initializer_list>
+#include <string_view>
 
 #include "raylib.h"
 

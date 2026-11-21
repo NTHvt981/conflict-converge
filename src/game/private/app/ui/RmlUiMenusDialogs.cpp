@@ -89,7 +89,6 @@ void RmlUiMenus::PopulateMaps()
 		snprintf(label, sizeof(label), "%s (%dx%d)", entry.name.c_str(), entry.width,
 				 entry.height);
 		item->SetInnerRML(label);
-		item->AddEventListener("click", this);
 		list->AppendChild(std::move(item));
 	}
 	BuildSetupRows();
@@ -129,7 +128,7 @@ void RmlUiMenus::RefreshSetup()
 			el->SetClass("selected", i == diff);
 		}
 	}
-	// The disabled class is visual-only; the click guard lives in OnClick.
+	// The disabled class is visual-only; the click guard lives in the Start handler.
 	if (Rml::Element *start = ById(setupDoc_, UiIds::BtnStart))
 	{
 		SetDisabled(start, !menu_.setup.CanStart());
