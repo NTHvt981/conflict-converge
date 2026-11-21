@@ -35,6 +35,8 @@ unit roles and pacing, not faction asymmetry. Stats load from
 - AntiArmor vs LightTank: ~15s. AntiArmor vs HeavyTank: ~40s (needs focus fire).
 - LightTank vs LightTank: ~18s. HeavyTank vs HeavyTank: ~36s.
 - Artillery vs LightTank: ~18s (outranges 384 vs 192 — fires unanswered).
+- Laser vs Infantry: ~7s (22.5/shot vs RUBBER). Infantry vs Laser: ~11s.
+- Laser vs LightTank: ~48s (9/shot vs STEEL — anti-infantry weapon, poor tank hunter).
 
 ## Structures & economy
 
