@@ -17,6 +17,7 @@
 
 #include "app/ui/Hud.h"
 #include "app/ui/RmlUiHost.h"
+#include "app/ui/RmlUiWidgetAdapter.h"
 #include "app/ui/UiIds.h"
 #include "app/ui/UiWidget.h"
 #include "core/Team.h"
@@ -316,44 +317,6 @@ void RmlUiHud::BuildPauseWidgets()
 	});
 }
 
-UiEvent RmlUiHud::Translate(const Rml::Event &event, Rml::Element *target)
-{
-	UiEvent out;
-	if (event.GetType() != "change")
-	{
-		return out;
-	}
-
-	auto *control = dynamic_cast<Rml::ElementFormControl *>(target);
-	if (control != nullptr && control->GetAttribute("type", Rml::String()) == "range")
-	{
-		out.kind = UiEventKind::Value;
-		out.value = ReadRange(target);
-		return out;
-	}
-
-	out.kind = UiEventKind::Toggle;
-	out.checked = target->HasAttribute("checked");
-	return out;
-}
-
-bool RmlUiHud::DispatchWidget(Rml::Event &event, Rml::Element *target)
-{
-	if (pauseWidgets_ == nullptr)
-	{
-		return false;
-	}
-
-	UiWidget *widget = pauseWidgets_->Find(target->GetId());
-	if (widget == nullptr || !widget->HandleEvent(Translate(event, target)))
-	{
-		return false;
-	}
-
-	event.StopPropagation();
-	return true;
-}
-
 void RmlUiHud::ProcessEvent(Rml::Event &event)
 {
 	Rml::Element *target = event.GetTargetElement();
@@ -366,35 +329,20 @@ void RmlUiHud::ProcessEvent(Rml::Event &event)
 	const Rml::String id = target->GetId();
 	if (type == "click")
 	{
-		if (!DispatchWidget(event, target))
+		if (!DispatchUiEvent(pauseWidgets_.get(), event, target))
 		{
 			OnClick(id);
 		}
 	}
 	else if (type == "change")
 	{
-		DispatchWidget(event, target);
+		DispatchUiEvent(pauseWidgets_.get(), event, target);
 	}
 }
 
 void RmlUiHud::SetDisabled(Rml::Element *el, bool disabled)
 {
 	el->SetClass("disabled", disabled);
-}
-
-float RmlUiHud::ReadRange(Rml::Element *el)
-{
-	if (auto *control = dynamic_cast<Rml::ElementFormControl *>(el))
-	{
-		try
-		{
-			return std::stof(control->GetValue().c_str());
-		}
-		catch (const std::exception &)
-		{
-		}
-	}
-	return 0.0f;
 }
 
 bool RmlUiHud::IsInteractiveTag(const Rml::String &tag)

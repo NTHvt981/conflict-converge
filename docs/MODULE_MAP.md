@@ -21,7 +21,7 @@ units:   Unit (+UnitInternal, UnitOrders/UnitCombat/UnitRepair/UnitMovement/
           (+AICommanderIntel/AICommanderEconomy/AICommanderTeams), Extensions, UnitCommands
 economy: Building, BuildingTypeInfo, Nodes (+NodeHarvesters), ResourceSystem, Production
 app/ui:  GameCamera, Minimap, Hud, Cursor, Pings, Shake, Vfx, RmlUiHost, RmlUiMenus,
-         (+RmlUiMenusRemap/RmlUiMenusDialogs), RmlUiHud, UiWidget,
+         (+RmlUiMenusRemap/RmlUiMenusDialogs), RmlUiHud, RmlUiWidgetAdapter, UiWidget,
          CursorHint, UiIds, RmlRaylibRenderInterface, RmlRaylibSystemInterface, RmlRaylibFileInterface
 app/input: InputManager, Selection, Shortcuts, Hotkeys
 app/save: SaveGame (+SaveEncode/SaveDecode), SaveWire

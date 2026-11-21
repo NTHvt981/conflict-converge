@@ -15,6 +15,7 @@
 #include "app/data/Art.h"
 #include "app/input/Hotkeys.h"
 #include "app/ui/UiIds.h"
+#include "app/ui/UiWidget.h"
 #include "world/MapFile.h"
 #include "app/match/Menu.h"
 #include "app/save/SaveGame.h"
@@ -60,21 +61,10 @@ void RmlUiMenus::OnClick(const Rml::String &id)
 		menu_.OpenMainMenu();
 		Announce(EventType::MenuAction);
 	}
-	else if (id == UiIds::BtnSettingsBack)
-	{
-		menu_.settings.hotkeyOverrides = hotkeys_.Overrides();
-		SaveSettings(menu_.settings, kSettingsPath);
-		menu_.OpenMainMenu();
-		Announce(EventType::MenuAction);
-	}
 	else if (id == UiIds::BtnLoadBack)
 	{
 		menu_.OpenMainMenu();
 		Announce(EventType::MenuAction);
-	}
-	else if (id == UiIds::BtnRemap)
-	{
-		BeginRemap(MenuState::Settings);
 	}
 	else if (id == UiIds::BtnRemapBack)
 	{
@@ -154,75 +144,6 @@ void RmlUiMenus::OnClick(const Rml::String &id)
 		return;
 	}
 	ShowState();
-}
-
-void RmlUiMenus::OnChange(Rml::Element *target, const Rml::String &id)
-{
-	// NOTE: never call RefreshSettings() from here. Programmatic
-	// SetValue/SetAttribute calls (e.g. checkbox "checked") dispatch
-	// Change back into this listener, so a refresh would recurse until
-	// the stack overflows. Update settings + the value label only; the
-	// control already shows the new value.
-	char text[32];
-	if (id == UiIds::OptCamSpeed)
-	{
-		menu_.settings.cameraSpeed = Clamp(ReadRange(target), 100.0f, 800.0f);
-		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.cameraSpeed));
-		SetTextIn(settingsDoc_, UiIds::ValCamSpeed, text);
-	}
-	else if (id == UiIds::OptMaster)
-	{
-		menu_.settings.masterVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
-		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.masterVolume));
-		SetTextIn(settingsDoc_, UiIds::ValMaster, text);
-	}
-	else if (id == UiIds::OptMusic)
-	{
-		menu_.settings.musicVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
-		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.musicVolume));
-		SetTextIn(settingsDoc_, UiIds::ValMusic, text);
-	}
-	else if (id == UiIds::OptSfx)
-	{
-		menu_.settings.sfxVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
-		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.sfxVolume));
-		SetTextIn(settingsDoc_, UiIds::ValSfx, text);
-	}
-	else if (id == UiIds::OptUiScale)
-	{
-		menu_.settings.uiScale = Clamp(ReadRange(target), 0.75f, 2.0f);
-		// Keeps the raygui Map Editor legible; the RmlUi ratio follows
-		// uiScale every frame via BeginFrame.
-		GuiSetStyle(DEFAULT, TEXT_SIZE,
-					static_cast<int>(10 * menu_.settings.uiScale));
-		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.uiScale));
-		SetTextIn(settingsDoc_, UiIds::ValUiScale, text);
-	}
-	else if (id == UiIds::OptMinimap)
-	{
-		menu_.settings.showMinimap = target->HasAttribute("checked");
-	}
-	else if (id == UiIds::OptHints)
-	{
-		menu_.settings.showHints = target->HasAttribute("checked");
-	}
-	else if (id == UiIds::OptMute)
-	{
-		menu_.settings.mute = target->HasAttribute("checked");
-	}
-	else if (id == UiIds::OptRightDrag)
-	{
-		menu_.settings.rightDragPan = target->HasAttribute("checked");
-	}
-	else if (id == UiIds::OptColorBlind)
-	{
-		menu_.settings.colorBlindMode = target->HasAttribute("checked");
-		art_.SetColorBlindMode(menu_.settings.colorBlindMode);
-	}
-	else
-	{
-		return;
-	}
 }
 
 void RmlUiMenus::PopulateMaps()
@@ -326,6 +247,59 @@ void RmlUiMenus::RefreshSettings()
 	SetTextIn(settingsDoc_, UiIds::ValSfx, text);
 	snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.uiScale));
 	SetTextIn(settingsDoc_, UiIds::ValUiScale, text);
+}
+
+// Setters must not call RefreshSettings: programmatic SetValue/SetAttribute
+// re-dispatches Change back into this listener, so the refresh would recurse.
+void RmlUiMenus::BuildSettingsWidgets()
+{
+	settingsWidgets_ = std::make_unique<UiWidget>("settings");
+
+	settingsWidgets_->Add<UiButton>(UiIds::BtnSettingsBack)->SetHandler([this] {
+		menu_.settings.hotkeyOverrides = hotkeys_.Overrides();
+		SaveSettings(menu_.settings, kSettingsPath);
+		menu_.OpenMainMenu();
+		Announce(EventType::MenuAction);
+		ShowState();
+	});
+	settingsWidgets_->Add<UiButton>(UiIds::BtnRemap)->SetHandler([this] {
+		BeginRemap(MenuState::Settings);
+		ShowState();
+	});
+
+	settingsWidgets_->Add<UiSlider>(
+		UiIds::OptCamSpeed, [this](float value) { menu_.settings.cameraSpeed = value; }, 100.0f,
+		800.0f);
+	settingsWidgets_->Add<UiSlider>(
+		UiIds::OptMaster, [this](float value) { menu_.settings.masterVolume = value; }, 0.0f, 1.0f);
+	settingsWidgets_->Add<UiSlider>(
+		UiIds::OptMusic, [this](float value) { menu_.settings.musicVolume = value; }, 0.0f, 1.0f);
+	settingsWidgets_->Add<UiSlider>(
+		UiIds::OptSfx, [this](float value) { menu_.settings.sfxVolume = value; }, 0.0f, 1.0f);
+	settingsWidgets_->Add<UiSlider>(
+		UiIds::OptUiScale,
+		[this](float value) {
+			menu_.settings.uiScale = value;
+			GuiSetStyle(DEFAULT, TEXT_SIZE, static_cast<int>(10 * value));
+		},
+		0.75f, 2.0f);
+
+	settingsWidgets_->Add<UiToggle>(UiIds::OptMinimap, [this](bool value) {
+		menu_.settings.showMinimap = value;
+	});
+	settingsWidgets_->Add<UiToggle>(UiIds::OptHints, [this](bool value) {
+		menu_.settings.showHints = value;
+	});
+	settingsWidgets_->Add<UiToggle>(UiIds::OptMute, [this](bool value) {
+		menu_.settings.mute = value;
+	});
+	settingsWidgets_->Add<UiToggle>(UiIds::OptRightDrag, [this](bool value) {
+		menu_.settings.rightDragPan = value;
+	});
+	settingsWidgets_->Add<UiToggle>(UiIds::OptColorBlind, [this](bool value) {
+		menu_.settings.colorBlindMode = value;
+		art_.SetColorBlindMode(value);
+	});
 }
 
 void RmlUiMenus::RefreshLoad()

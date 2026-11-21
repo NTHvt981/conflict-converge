@@ -5,6 +5,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "raylib.h"
+
 #include "app/input/Hotkeys.h"
 #include "rini.h"
 
@@ -326,8 +328,10 @@ bool LoadSettings(MenuSettings &settings, const std::string &path)
 					}
 				}
 			}
-			catch (const std::exception &)
+			catch (const std::exception &error)
 			{
+				TraceLog(LOG_WARNING, "hotkey override '%s' ignored: %s", action.c_str(),
+						 error.what());
 			}
 		}
 	}

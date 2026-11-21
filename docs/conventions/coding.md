@@ -21,7 +21,7 @@ One line per area; the linked section carries the Do/Don't pair.
 | [Format](#formatting) | Tabs; Allman braces; `const T &`; comma-first init lists; 100 columns; LF |
 | [Structure](#structure) | Data structs with defaults; free-function systems; `Subsystem` scopes, no globals |
 | [Steps](#keep-a-long-function-a-list-of-named-steps) | A screen-long function is a table of contents: one named method per phase |
-| [Errors](#error-handling) | `CC_ASSERT` invariants; `expected` from loaders; bool/sentinel in gameplay; throw only while parsing |
+| [Errors](#error-handling) | `CC_ASSERT` invariants; `expected` from loaders; bool/sentinel in gameplay; throw only while parsing; log what you catch |
 | [Comments](#comments) | Only what code cannot carry: invariants, traps, units, wire contracts |
 | [Data](#data-saves-and-assets) | camelCase JSON; append-only save wire; version and magic bump on a break |
 | [Tests](#tests) | `CC_CHECK`; suite registered in `tests/main.cpp`; headless; Debug and Release |
@@ -1140,6 +1140,34 @@ void UpdateUnit(Entity self, Registry &registry, float dtSeconds)
 }
 ```
 
+### Log what you catch
+
+**✅ Do**
+```cpp
+try
+{
+	value = std::stof(control->GetValue().c_str());
+}
+catch (const std::exception &error)
+{
+	TraceLog(LOG_WARNING, "UI range '%s' has a non-numeric value '%s': %s",
+			 control->GetId().c_str(), control->GetValue().c_str(), error.what());
+}
+```
+
+**❌ Don't**
+```cpp
+try
+{
+	value = std::stof(control->GetValue().c_str());
+}
+catch (const std::exception &)
+{
+}
+```
+
+A catch that returns a fallback hides the failure behind a plausible number: the caller cannot tell a valid zero from a parse fault. An empty catch is correct only when the exception is the "field absent" branch of a named probe, as `save_detail::TryLoadValue` does. Every other catch names what it caught.
+
 ### Route diagnostics through Log
 
 **✅ Do**
@@ -1524,9 +1552,9 @@ symbol. See `docs/conventions/ascii-diagram.md`.
 
 - [ ] x64 + C++23, projects regenerated after file changes
 - [ ] header in `public/`, TU in `private/`, `#pragma once`, no new cycle
-- [ ] PascalCase types/functions, camelCase data, `_` class members, `k` constants
+- [ ] PascalCase types/functions, camelCase data in full words, `_` class members, `k` constants
 - [ ] tabs, Allman braces, `const T &`, `= {}` defaults, LF, 100 columns
-- [ ] `CC_ASSERT` invariants, `expected` from loaders, bool/sentinel gameplay, no throwing gameplay
+- [ ] `CC_ASSERT` invariants, `expected` from loaders, bool/sentinel gameplay, no throwing gameplay, no silent catch
 - [ ] JSON camelCase, save wire append-only, version bumped on a break
 - [ ] `CC_CHECK` covers the behavior and is registered in `tests/main.cpp`
 - [ ] every comment states an invariant, trap, unit, or wire contract; nothing restates the code

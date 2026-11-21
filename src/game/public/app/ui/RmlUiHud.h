@@ -27,7 +27,6 @@ class Event;
 
 class RmlUiHost;
 class UiWidget;
-struct UiEvent;
 
 enum class ProductionTab
 {
@@ -80,13 +79,10 @@ private:
 	void OnAbility(AbilityId ability);
 	void Announce(EventType type);
 	void BuildPauseWidgets();
-	bool DispatchWidget(Rml::Event &event, Rml::Element *target);
 
 	static void SetDisabled(Rml::Element *el, bool disabled);
-	static float ReadRange(Rml::Element *el);
 	static bool IsInteractiveTag(const Rml::String &tag);
 	static Rml::Element *ById(Rml::ElementDocument *doc, std::string_view id);
-	static UiEvent Translate(const Rml::Event &event, Rml::Element *target);
 	void SetTextCached(std::string_view id, const std::string &text);
 	void SetDisplay(Rml::Element *el, const std::string &value);
 	void SetRangeIn(Rml::ElementDocument *doc, std::string_view id, float value);
