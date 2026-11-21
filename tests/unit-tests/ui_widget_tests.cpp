@@ -60,4 +60,17 @@ void RunUiWidgetTests()
 	CC_CHECK(!idle.HandleEvent({ UiEventKind::Press, false, 0.0f }));
 	UiWidget none("none");
 	CC_CHECK(!none.HandleEvent({ UiEventKind::Press, false, 0.0f }));
+
+	UiList list("list");
+	int row = -1;
+	list.Add<UiButton>("row-0", [&row] { row = 0; });
+	list.Add<UiButton>("row-1", [&row] { row = 1; });
+	CC_CHECK(list.Find("row-1") != nullptr);
+	CC_CHECK(list.HandleEvent({ UiEventKind::Press, false, 0.0f }));
+	CC_CHECK(row == 0);
+	CC_CHECK(list.Find("row-1")->HandleEvent({ UiEventKind::Press, false, 0.0f }));
+	CC_CHECK(row == 1);
+	list.Clear();
+	CC_CHECK(list.Find("row-0") == nullptr);
+	CC_CHECK(!list.HandleEvent({ UiEventKind::Press, false, 0.0f }));
 }
