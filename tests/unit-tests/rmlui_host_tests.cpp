@@ -179,4 +179,31 @@ void RunRmlUiHostTests()
 			CC_CHECK(DocumentHasId(confirmDocument, id));
 		}
 	}
+
+	const std::string setupDocument = ReadDocument("skirmish_setup.rml");
+	CC_CHECK(!setupDocument.empty());
+	if (!setupDocument.empty())
+	{
+		for (std::string_view id :
+			 { UiIds::MapList, UiIds::MapDetail, UiIds::BtnStart, UiIds::BtnBackRight })
+		{
+			CC_CHECK(DocumentHasId(setupDocument, id));
+		}
+		for (int row = 0; row <= 2; ++row)
+		{
+			CC_CHECK(DocumentHasId(setupDocument, UiIds::WithIndex(UiIds::DifficultyRow, row)));
+		}
+	}
+
+	const std::string loadDocument = ReadDocument("load_game.rml");
+	CC_CHECK(!loadDocument.empty());
+	if (!loadDocument.empty())
+	{
+		CC_CHECK(DocumentHasId(loadDocument, UiIds::BtnLoadBack));
+		CC_CHECK(DocumentHasId(loadDocument, UiIds::BtnReplay));
+		for (int slot = 0; slot < 4; ++slot)
+		{
+			CC_CHECK(DocumentHasId(loadDocument, UiIds::WithIndex(UiIds::SlotRow, slot)));
+		}
+	}
 }

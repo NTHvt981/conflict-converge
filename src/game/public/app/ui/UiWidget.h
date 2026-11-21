@@ -46,6 +46,7 @@ public:
 
 protected:
 	virtual bool OnEvent(const UiEvent &event);
+	void ClearChildren();
 
 private:
 	std::string_view id_;
@@ -96,4 +97,12 @@ private:
 	Setter set_;
 	float low_;
 	float high_;
+};
+
+class UiList : public UiWidget
+{
+public:
+	explicit UiList(std::string_view id);
+
+	void Clear();
 };
