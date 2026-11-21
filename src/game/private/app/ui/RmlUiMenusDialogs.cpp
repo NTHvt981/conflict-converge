@@ -22,26 +22,7 @@
 
 void RmlUiMenus::OnClick(const Rml::String &id)
 {
-	if (id == UiIds::BtnStart)
-	{
-		// No announce here, matching the raygui Start path.
-		if (const MapEntry *sel = menu_.setup.SelectedMap();
-			sel != nullptr && menu_.StartMatch())
-		{
-			callbacks_.startMatch(sel->path, menu_.setup.difficulty);
-		}
-	}
-	else if (id == UiIds::BtnBackRight)
-	{
-		menu_.OpenMainMenu();
-		Announce(EventType::MenuAction);
-	}
-	else if (id == UiIds::BtnLoadBack)
-	{
-		menu_.OpenMainMenu();
-		Announce(EventType::MenuAction);
-	}
-	else if (id == UiIds::BtnRemapBack)
+	if (id == UiIds::BtnRemapBack)
 	{
 		remapArming_ = -1;
 		remapConflictAction_.clear();
@@ -70,40 +51,6 @@ void RmlUiMenus::OnClick(const Rml::String &id)
 				remapArming_ = (remapArming_ == row) ? -1 : row;
 				remapConflictAction_.clear();
 			}
-		}
-	}
-	else if (UiIds::StartsWith(id, UiIds::DifficultyRow))
-	{
-		const int row = std::atoi(id.c_str() + UiIds::DifficultyRow.size());
-		if (row >= 0 && row <= static_cast<int>(AIDifficulty::Hard))
-		{
-			menu_.SelectDifficulty(static_cast<AIDifficulty>(row));
-		}
-	}
-	else if (UiIds::StartsWith(id, UiIds::MapRow))
-	{
-		menu_.SelectMap(std::atoi(id.c_str() + UiIds::MapRow.size()));
-	}
-	else if (UiIds::StartsWith(id, UiIds::SlotRow))
-	{
-		// No announce here, matching the raygui slot path. The disabled
-		// class is visual-only, so re-check filled before loading.
-		const int slot = std::atoi(id.c_str() + UiIds::SlotRow.size());
-		if (slot >= 0 && slot < 4)
-		{
-			const std::string path = slot == 0 ? "data/quicksave.ccpb" : SaveSlotPath(slot);
-			std::error_code ec;
-			if (std::filesystem::exists(path, ec) && !ec)
-			{
-				callbacks_.loadSlot(path);
-			}
-		}
-	}
-	else if (id == UiIds::BtnReplay)
-	{
-		if (ReplayFrameCount(kReplayDir) > 0)
-		{
-			callbacks_.watchReplay();
 		}
 	}
 	else
@@ -145,6 +92,7 @@ void RmlUiMenus::PopulateMaps()
 		item->AddEventListener("click", this);
 		list->AppendChild(std::move(item));
 	}
+	BuildSetupRows();
 }
 
 void RmlUiMenus::RefreshSetup()
@@ -247,6 +195,47 @@ void RmlUiMenus::BuildMainMenuWidgets()
 	});
 }
 
+void RmlUiMenus::BuildSetupWidgets()
+{
+	setupWidgets_ = std::make_unique<UiWidget>("skirmish_setup");
+	setupRows_ = setupWidgets_->Add<UiList>("setup-rows");
+
+	for (int row = 0; row <= static_cast<int>(AIDifficulty::Hard); ++row)
+	{
+		setupWidgets_->Add<UiButton>(UiIds::WithIndex(UiIds::DifficultyRow, row), [this, row] {
+			menu_.SelectDifficulty(static_cast<AIDifficulty>(row));
+			ShowState();
+		});
+	}
+
+	setupWidgets_->Add<UiButton>(UiIds::BtnStart)->SetHandler([this] {
+		// No announce here, matching the raygui Start path.
+		if (const MapEntry *selected = menu_.setup.SelectedMap();
+			selected != nullptr && menu_.StartMatch())
+		{
+			callbacks_.startMatch(selected->path, menu_.setup.difficulty);
+		}
+		ShowState();
+	});
+	setupWidgets_->Add<UiButton>(UiIds::BtnBackRight)->SetHandler([this] {
+		menu_.OpenMainMenu();
+		Announce(EventType::MenuAction);
+		ShowState();
+	});
+}
+
+void RmlUiMenus::BuildSetupRows()
+{
+	setupRows_->Clear();
+	for (int row = 0; row < static_cast<int>(menu_.setup.maps.size()); ++row)
+	{
+		setupRows_->Add<UiButton>(UiIds::WithIndex(UiIds::MapRow, row), [this, row] {
+			menu_.SelectMap(row);
+			ShowState();
+		});
+	}
+}
+
 // Setters must not call RefreshSettings: programmatic SetValue/SetAttribute
 // re-dispatches Change back into this listener, so the refresh would recurse.
 void RmlUiMenus::BuildSettingsWidgets()
@@ -310,6 +299,38 @@ void RmlUiMenus::BuildConfirmWidgets()
 	});
 	confirmWidgets_->Add<UiButton>(UiIds::BtnNo)->SetHandler([this] {
 		pendingChoice_ = ConfirmChoice::No;
+		ShowState();
+	});
+}
+
+void RmlUiMenus::BuildLoadWidgets()
+{
+	loadWidgets_ = std::make_unique<UiWidget>("load_game");
+
+	for (int slot = 0; slot < 4; ++slot)
+	{
+		loadWidgets_->Add<UiButton>(UiIds::WithIndex(UiIds::SlotRow, slot), [this, slot] {
+			// The disabled class is visual-only, so re-check filled before loading.
+			const std::string path = slot == 0 ? "data/quicksave.ccpb" : SaveSlotPath(slot);
+			std::error_code ec;
+			if (std::filesystem::exists(path, ec) && !ec)
+			{
+				callbacks_.loadSlot(path);
+			}
+			ShowState();
+		});
+	}
+
+	loadWidgets_->Add<UiButton>(UiIds::BtnLoadBack)->SetHandler([this] {
+		menu_.OpenMainMenu();
+		Announce(EventType::MenuAction);
+		ShowState();
+	});
+	loadWidgets_->Add<UiButton>(UiIds::BtnReplay)->SetHandler([this] {
+		if (ReplayFrameCount(kReplayDir) > 0)
+		{
+			callbacks_.watchReplay();
+		}
 		ShowState();
 	});
 }
