@@ -1,4 +1,4 @@
-// Unit tests for the Vfx subsystem's particle and damage-number pools.
+// Unit tests for the Vfx subsystem's particle, damage-number, and beam pools.
 
 #include "test_harness.h"
 
@@ -75,10 +75,37 @@ void RunVfxTests()
 
 	{
 		Vfx fx;
+		CC_CHECK(fx.BeamCount() == 0);
+		fx.SpawnBeam({ 100.0f, 100.0f }, { 300.0f, 100.0f });
+		CC_CHECK(fx.BeamCount() == 1);
+		fx.Update(Vfx::kBeamLife / 2.0f);
+		CC_CHECK(fx.BeamCount() == 1);
+		fx.Update(Vfx::kBeamLife);
+		CC_CHECK(fx.BeamCount() == 0);
+		fx.SpawnBeam({ 0.0f, 0.0f }, { 1.0f, 1.0f });
+		fx.Clear();
+		CC_CHECK(fx.BeamCount() == 0);
+	}
+
+	{
+		Vfx fx;
+		for (int i = 0; i < static_cast<int>(Vfx::kMaxBeams) + 10; ++i)
+		{
+			fx.SpawnBeam({ 0.0f, 0.0f }, { 1.0f, 1.0f });
+		}
+		CC_CHECK(fx.BeamCount() == Vfx::kMaxBeams);
+		fx.Update(Vfx::kBeamLife + 1.0f);
+		CC_CHECK(fx.BeamCount() == 0);
+	}
+
+	{
+		Vfx fx;
 		fx.SpawnBurst({ 0.0f, 0.0f }, WHITE, 4, 10.0f, 1.0f);
 		fx.SpawnDamageNumber({ 0.0f, 0.0f }, 5.0f);
+		fx.SpawnBeam({ 0.0f, 0.0f }, { 1.0f, 1.0f });
 		fx.ResetForMatch();
 		CC_CHECK(fx.ParticleCount() == 0);
 		CC_CHECK(fx.DamageNumberCount() == 0);
+		CC_CHECK(fx.BeamCount() == 0);
 	}
 }
