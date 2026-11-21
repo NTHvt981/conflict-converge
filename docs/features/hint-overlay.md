@@ -24,7 +24,7 @@ so it always shows current bindings; Tier-2/mouse lines stay literals.
 
 - `data/ui/hud.rml` + `data/ui/hud.rcss` — stage, panel, columns.
 - `src/game/private/app/ui/Hud.cpp` — hint line source.
-- `src/game/private/app/ui/RmlUiHudPanels.cpp` — `RefreshHints` split.
+- `src/game/private/app/ui/RmlUiHud.cpp` — `RefreshHints` split.
 - `src/game/public/app/Hotkeys.h` — display-name table.
 - Tests: `SelectionVisual` suite (defaults + rebind liveness),
   `RmlUiHost` suite (document carries both column ids).
