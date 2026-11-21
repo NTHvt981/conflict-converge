@@ -317,8 +317,8 @@ std::vector<std::string> UnitTooltipLines(const Unit &unit, const Orders &orders
 std::vector<UnitType> ProductionMenuOrder()
 {
 	return { UnitType::RifleInfantry,          UnitType::AntiArmorInfantry, UnitType::Engineer,
-			 UnitType::Medic,                 UnitType::IFV,               UnitType::Artillery,
-			 UnitType::LightTank,             UnitType::HeavyTank };
+			 UnitType::Medic,                 UnitType::LaserInfantry,     UnitType::IFV,
+			 UnitType::Artillery,             UnitType::LightTank,         UnitType::HeavyTank };
 }
 
 std::vector<UnitType> InfantryMenuOrder()
