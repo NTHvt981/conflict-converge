@@ -183,9 +183,9 @@ void RunSpriteDataTests()
 		const std::expected<SpriteSheetData, ConfigError> loaded = LoadSpriteSheet();
 		CC_CHECK(loaded.has_value());
 		const SpriteSheetData sheet = loaded.value_or(SpriteSheetData{});
-		CC_CHECK(sheet.textures.size() == 66);
-		CC_CHECK(sheet.sprites.size() == 2600);
-		CC_CHECK(sheet.animations.size() == 264);
+		CC_CHECK(sheet.textures.size() == 74);
+		CC_CHECK(sheet.sprites.size() == 2984);
+		CC_CHECK(sheet.animations.size() == 296);
 		const SpriteDefInfo *first = FindSpriteByName(sheet, "rifle_infantry_idle_0_0");
 		CC_CHECK(first != nullptr && first->id == 2000 && first->texture == "rifle_infantry_idle_base");
 		CC_CHECK(first->bounds.left == 0 && first->bounds.top == 0);

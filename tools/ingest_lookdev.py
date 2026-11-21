@@ -29,19 +29,14 @@ UNITS = {
     "at": ("antiarmor", "antiarmor"),
     "engineer": ("engineer", "engineer"),
     "medic": ("medic", "medic"),
+    "laser": ("laser", "laser_infantry"),
 }
 
 # manifest action -> engine action name ("run" skipped by decision: move = walk)
 ACTION_MAP = {"idle": "idle", "walk": "move", "attack": "attack", "death": "death"}
 
-# folder names lie for several units; manifest builder+action are authoritative
-FOLDER_BY_ACTION = {
-    ("soldier", "idle"): "out_idle",
-    ("soldier", "walk"): "out_soldier",
-    ("soldier", "attack"): "out_attack",
-    ("soldier", "death"): "out_death",
-}
-FOLDER_PREFIX = {"soldier": None, "at": "out_at", "engineer": "out_eng", "medic": "out_med"}
+# source leaf folders are infantry/<builder dir>/<action>
+SRC_DIR = {"soldier": "rifle", "at": "at", "engineer": "engineer", "medic": "medic", "laser": "laser"}
 FRAMES = {"idle": 8, "move": 8, "attack": 4, "death": 4}
 
 TILE = 72
@@ -85,13 +80,14 @@ ID_BLOCKS = {
     "antiarmor": {"idle": 2800, "move": 3000, "attack": 3200, "death": 3400},
     "engineer": {"idle": 3600, "move": 3800, "attack": 4000, "death": 4200},
     "medic": {"idle": 4400, "move": 4600, "attack": 4800, "death": 5000},
+    "laser_infantry": {"idle": 8400, "move": 8600, "attack": 8800, "death": 9000},
 }
 ANIM_ID_START = 1000
 ANIM_DURATION = {"idle": 250, "move": 250, "attack": 250, "death": 250}  # 4 fps
 ANIM_LOOP = {"idle": True, "move": True, "attack": True, "death": False}
 
 # old infantry entries removed from the configs (prototypeinfantry_*, lighttank_* stay)
-REMOVE_PREFIXES = ("rifle_infantry_", "antiarmor_", "engineer_", "medic_")
+REMOVE_PREFIXES = ("rifle_infantry_", "antiarmor_", "engineer_", "medic_", "laser_infantry_")
 # legacy rifle texture ids do not carry the rifle_infantry_ prefix but are the
 # same infantry pair being replaced by this ingest
 LEGACY_TEXTURE_IDS = (
@@ -150,9 +146,7 @@ def write_png(path, img):
 
 
 def src_folder(builder, action):
-    if (builder, action) in FOLDER_BY_ACTION:
-        return FOLDER_BY_ACTION[(builder, action)]
-    return f"{FOLDER_PREFIX[builder]}_{action}"
+    return os.path.join("infantry", SRC_DIR[builder], action)
 
 
 def emit_unit_sheets(lookdev):
@@ -194,8 +188,8 @@ def emit_flats(lookdev):
 
 
 def emit_barrack(lookdev):
-    """barrack_base.png + barrack_mask.png = out_barrack sheet row 0."""
-    src = load_png(os.path.join(lookdev, "out_barrack", "sheet.png"))
+    """barrack_base.png + barrack_mask.png = buildings/barrack sheet row 0."""
+    src = load_png(os.path.join(lookdev, "buildings", "barrack", "sheet.png"))
     row = src.crop((0, 0, 256, 256))
     base, mask = split_base_mask(row)
     write_png(os.path.join(DATA, "sprites", "buildings", "barrack_base.png"), base)
@@ -204,7 +198,7 @@ def emit_barrack(lookdev):
 
 # --- Config mutation ---------------------------------------------------------
 
-STEM_DIRS = {"rifle_infantry": "rifle", "antiarmor": "antiarmor", "engineer": "engineer", "medic": "medic"}
+STEM_DIRS = {"rifle_infantry": "rifle", "antiarmor": "antiarmor", "engineer": "engineer", "medic": "medic", "laser_infantry": "laser"}
 
 
 def is_removed(key, legacy=False):
