@@ -70,6 +70,10 @@ body {
 					<button class="prod-btn" id="prod-i-3"></button>
 					<button class="prod-rep" id="repr-i-3"></button>
 				</div>
+				<div class="prod-row">
+					<button class="prod-btn" id="prod-i-4"></button>
+					<button class="prod-rep" id="repr-i-4"></button>
+				</div>
 			</div>
 			<div id="rows-vehicles">
 				<div class="prod-row">

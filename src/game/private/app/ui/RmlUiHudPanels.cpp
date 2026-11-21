@@ -202,7 +202,7 @@ void RmlUiHud::RefreshProduction()
 		tab->SetClass("selected", buildingsTab);
 	}
 	const std::vector<UnitType> infantry = InfantryMenuOrder();
-	for (const auto &[i, type] : infantry | std::views::take(4) | std::views::enumerate)
+	for (const auto &[i, type] : infantry | std::views::take(5) | std::views::enumerate)
 	{
 		const UnitCost cost = CostOf(type);
 		const std::string id = UiIds::WithIndex(UiIds::ProdInfantryRow, static_cast<int>(i));
