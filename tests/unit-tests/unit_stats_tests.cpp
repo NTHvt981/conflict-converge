@@ -1,4 +1,4 @@
-// Unit tests for the 9-type base stat table.
+// Unit tests for the 10-type base stat table.
 
 #include "test_harness.h"
 

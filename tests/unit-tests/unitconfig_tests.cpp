@@ -132,7 +132,7 @@ void RunUnitConfigTests()
 		CC_CHECK(found != nullptr);
 		if (found != nullptr)
 		{
-			CC_CHECK(found->size() == 9);
+			CC_CHECK(found->size() == 10);
 			bool rifleOk = false;
 			bool antiarmorOk = false;
 			bool engineerOk = false;

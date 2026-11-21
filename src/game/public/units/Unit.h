@@ -28,6 +28,7 @@ enum class UnitType
 	HeavyTank,
 	PrototypeInfantry,
 	Medic,
+	LaserInfantry,
 	Count
 };
 

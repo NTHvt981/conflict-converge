@@ -19,6 +19,7 @@ unit roles and pacing, not faction asymmetry. Stats load from
 | Artillery | 120/40 | 4.4s | 150 | STEEL | EXPLOSIVE | 40 | 384 | 3.0s | 48 | 320 | siege; blind-fires into shroud, no penalty |
 | LightTank | 150/50 | 5.0s | 300 | STEEL | KINETIC | 20 | 192 | 1.2s | 96 | 320 | main battle tank |
 | HeavyTank | 250/100 | 7.0s | 500 | COMPOSITE | EXPLOSIVE | 35 | 224 | 1.8s | 64 | 320 | breakthrough (resists EXPLOSIVE 0.75x) |
+| Laser Infantry | 35/10 | 2.7s | 80 | RUBBER | ENERGY | 18 | 160 | 1.4s | 64 | 320 | anti-infantry beam |
 
 ## Damage matrix (attacker row x defender column)
 
@@ -27,8 +28,6 @@ unit roles and pacing, not faction asymmetry. Stats load from
 | KINETIC | 1.00 | 0.75 | 0.50 |
 | EXPLOSIVE | 1.25 | 1.00 | 0.75 |
 | ENERGY | 0.50 | 1.25 | 1.00 |
-
-(ENERGY has no unit yet — reserved for future/tech.)
 
 ## Key TTKs (seconds, duel, no maneuver)
 
