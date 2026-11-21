@@ -1,7 +1,9 @@
 // Unit tests for remappable hotkeys: defaults, overrides, reverse lookup,
-// conflict detection, and the Clear+rebuild contract.
+// conflict detection, display names, and the Clear+rebuild contract.
 
 #include "test_harness.h"
+
+#include <cstring>
 
 #include "app/input/Hotkeys.h"
 #include "app/input/Shortcuts.h"
@@ -14,7 +16,11 @@ void RunHotkeyTests()
 		CC_CHECK(IsKnownHotkeyAction(kHotkeyDefs[i].action));
 		CC_CHECK(kHotkeyDefs[i].defaultKey > 0);
 		CC_CHECK(HotkeyDefFor(kHotkeyDefs[i].action) == &kHotkeyDefs[i]);
+		const char *name = HotkeyDisplayName(kHotkeyDefs[i].defaultKey);
+		CC_CHECK(name != nullptr && name[0] != '\0');
 	}
+	CC_CHECK(std::strcmp(HotkeyDisplayName(KEY_LEFT), "Left") == 0);
+	CC_CHECK(std::strcmp(HotkeyDisplayName(KEY_RIGHT), "Right") == 0);
 	CC_CHECK(!IsKnownHotkeyAction("Spaceship"));
 	CC_CHECK(HotkeyDefFor("Spaceship") == nullptr);
 

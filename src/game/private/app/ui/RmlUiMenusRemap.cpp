@@ -57,7 +57,7 @@ void RmlUiMenus::RefreshRemap()
 		const std::optional<std::string> owner = hotkeys_.ActionForKey(remapConflictKey_);
 		char text[128];
 		snprintf(text, sizeof(text), "'%s' already fires '%s' - click the row again to steal it.",
-				 GetKeyName(remapConflictKey_), owner.has_value() ? owner->c_str() : "?");
+				 HotkeyDisplayName(remapConflictKey_), owner.has_value() ? owner->c_str() : "?");
 		SetTextIn(remapDoc_, UiIds::RemapStatus, text);
 	}
 	else
@@ -116,7 +116,7 @@ void RmlUiMenus::PopulateRemapRows()
 		key->SetAttribute("id", Rml::String(keyId));
 		key->SetAttribute("class", Rml::String("hkkey"));
 		const int effective = hotkeys_.KeyFor(def.action);
-		std::string keyText = effective <= 0 ? "-" : GetKeyName(effective);
+		std::string keyText = effective <= 0 ? "-" : HotkeyDisplayName(effective);
 		if (def.chord)
 		{
 			keyText = "Shift+" + keyText;
