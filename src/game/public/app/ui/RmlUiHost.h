@@ -5,6 +5,7 @@
 
 namespace Rml {
 class Context;
+class RenderInterface;
 }
 
 class RmlRaylibFileInterface;
@@ -21,8 +22,9 @@ public:
 	RmlUiHost &operator=(const RmlUiHost &) = delete;
 	~RmlUiHost();
 
-	// False with no window (headless) or on load failure; call once.
-	bool Init(const std::string &dataDir, const std::string &fontsDir);
+	// A non-null headlessRender selects the no-window path; contextWidth/
+	// contextHeight size the context. Default arguments keep the windowed path.
+	bool Init(const std::string &dataDir, const std::string &fontsDir, Rml::RenderInterface *headlessRender = nullptr, int contextWidth = 0, int contextHeight = 0);
 	void Shutdown();
 	bool IsReady() const { return ready_; }
 	Rml::Context *context() { return context_; }
@@ -40,6 +42,7 @@ public:
 
 private:
 	std::unique_ptr<RmlRaylibRenderInterface> render_;
+	Rml::RenderInterface *headlessRender_ = nullptr;
 	std::unique_ptr<RmlRaylibSystemInterface> system_;
 	std::unique_ptr<RmlRaylibFileInterface> files_;
 	Rml::Context *context_ = nullptr;

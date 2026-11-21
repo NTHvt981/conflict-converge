@@ -20,6 +20,10 @@ bool RmlRaylibSystemInterface::LogMessage(Rml::Log::Type type, const Rml::String
 
 void RmlRaylibSystemInterface::SetMouseCursor(const Rml::String& cursor_name)
 {
+	if (!IsWindowReady())
+	{
+		return;
+	}
 	if (cursor_name.empty() || cursor_name == "arrow")
 		::SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 	else if (cursor_name == "cross")
@@ -38,11 +42,20 @@ void RmlRaylibSystemInterface::SetMouseCursor(const Rml::String& cursor_name)
 
 void RmlRaylibSystemInterface::SetClipboardText(const Rml::String& text)
 {
+	if (!IsWindowReady())
+	{
+		return;
+	}
 	::SetClipboardText(text.c_str());
 }
 
 void RmlRaylibSystemInterface::GetClipboardText(Rml::String& text)
 {
+	if (!IsWindowReady())
+	{
+		text.clear();
+		return;
+	}
 	const char* clipboard = ::GetClipboardText();
 	text = clipboard ? Rml::String(clipboard) : Rml::String();
 }
