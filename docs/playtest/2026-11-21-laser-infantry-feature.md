@@ -34,6 +34,13 @@ Captures under `C:\Users\MSI\AppData\Local\windows-agent-mcp\downloads\captures\
   (`...-113759-499.png`): queue row read `QuBuf: 0` before and after; no new
   unit appeared in later frames, but the Bootcamp spawn area sat at the screen
   bottom edge, partially off-frame. Not a claim either way.
+  **Resolved after the run** by code reading (question from the session): the
+  click could never reach the handler. `RmlUiHud.cpp` attaches production click
+  listeners in a `row < 4` loop, so `prod-i-4` rendered but had no listener.
+  `QueueLineText` (Hud.cpp:43) shows the global queue size, so the stale
+  `Queue: 0` genuinely meant "nothing enqueued". Fixed in the same session
+  (listener loop now row < 5); the queue row was confirmed global, not
+  selection-scoped, so building selection (O4) is not part of the train flow.
 - **O3 (tint works; trigger unresolved).** Run 1's Defeat frame
   (`...-114019-133.png`) shows the Bootcamp with blue team tint (awning, flag,
   door) — the restored 45-degree barrack + mask pipeline tints correctly
@@ -71,6 +78,11 @@ Captures under `C:\Users\MSI\AppData\Local\windows-agent-mcp\downloads\captures\
   whether a working control exists and I missed it, or the select is broken —
   the branch does not touch selection, so this is likely pre-existing. The
   beam, save/load, and squad-clustering checks remain unrun behind it.
+  Amended after the run: the train flow never needed building selection — the
+  production queue is global (Simulation holds the queues; PumpQueue scans for
+  any Operational Bootcamp). The train path was blocked by the O2 listener
+  cap instead, which is fixed. The remaining visual checks (beam, save/load,
+  squad clustering) now only need a run.
 - **I4 (from O5).** The force-loss rate is pre-existing combat behavior, not
   the laser feature (no laser ever fielded). It contradicts the Easy-vs-Medium
   soak expectations and deserves its own run with the camera locked on the

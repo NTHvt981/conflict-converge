@@ -107,7 +107,7 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
 		   { UiIds::TabInfantry, UiIds::TabVehicles, UiIds::TabBuildings, UiIds::AbHold,
 			 UiIds::AbGuard, UiIds::AbPatrol, UiIds::AbAttackMove, UiIds::AbHalt, UiIds::AbRepair,
 			 UiIds::AbHeal, UiIds::AbRally, UiIds::AbDemolish });
-	for (int row = 0; row < 4; ++row)
+	for (int row = 0; row < 5; ++row)
 	{
 		for (std::string_view family :
 			 { UiIds::PlaceRow, UiIds::ProdInfantryRow, UiIds::ProdVehicleRow,
