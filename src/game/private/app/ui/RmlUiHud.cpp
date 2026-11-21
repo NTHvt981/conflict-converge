@@ -18,6 +18,7 @@
 #include "app/ui/Hud.h"
 #include "app/ui/RmlUiHost.h"
 #include "app/ui/UiIds.h"
+#include "app/ui/UiWidget.h"
 #include "core/Team.h"
 #include "economy/Building.h"
 #include "units/Unit.h"
@@ -87,6 +88,8 @@ RmlUiHud::RmlUiHud(Registry &registry, ResourceSystem &resources,
 {
 }
 
+RmlUiHud::~RmlUiHud() = default;
+
 bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
 {
 	if (ready_)
@@ -143,14 +146,11 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
 	{
 		(void)doc;
 	}
-	listen(pauseDoc_, "click",
-		   { UiIds::BtnResume, UiIds::BtnPRemap, UiIds::BtnPToMenu, UiIds::BtnPToDesktop });
-	listen(pauseDoc_, "change",
-		   { UiIds::OptPCamSpeed, UiIds::OptPMinimap, UiIds::OptPHints, UiIds::OptPMaster,
-			 UiIds::OptPMusic, UiIds::OptPSfx, UiIds::OptPMute, UiIds::OptPRightDrag,
-			 UiIds::OptPColorBlind });
+	pauseDoc_->AddEventListener("click", this);
+	pauseDoc_->AddEventListener("change", this);
 	listen(outcomeDoc_, "click", { UiIds::BtnOToMenu, UiIds::BtnOToDesktop });
 	listen(confirmDoc_, "click", { UiIds::BtnYes, UiIds::BtnNo });
+	BuildPauseWidgets();
 	ready_ = true;
 	return true;
 }
@@ -200,6 +200,7 @@ void RmlUiHud::Shutdown()
 	host_ = nullptr;
 	ready_ = false;
 	textCache_.clear();
+	pauseWidgets_.reset();
 	displayCache_.clear();
 	hintsCache_.clear();
 }
@@ -272,6 +273,83 @@ ConfirmChoice RmlUiHud::Draw(int screenWidth, int screenHeight, float uiScale)
 	return out;
 }
 
+void RmlUiHud::BuildPauseWidgets()
+{
+	pauseWidgets_ = std::make_unique<UiWidget>("pause");
+	pauseWidgets_->Add<UiButton>(UiIds::BtnResume)->SetHandler([this] {
+		Announce(EventType::MenuAction);
+		menu_.state = MenuState::Playing;
+	});
+	pauseWidgets_->Add<UiButton>(UiIds::BtnPRemap)->SetHandler([this] {
+		beginRemap_(MenuState::Paused);
+	});
+	pauseWidgets_->Add<UiButton>(UiIds::BtnPToMenu)->SetHandler(quitToMenu_);
+	pauseWidgets_->Add<UiButton>(UiIds::BtnPToDesktop)->SetHandler([this] {
+		menu_.quitRequested = true;
+	});
+
+	pauseWidgets_->Add<UiSlider>(
+		UiIds::OptPCamSpeed, [this](float value) { menu_.settings.cameraSpeed = value; }, 100.0f,
+		800.0f);
+	pauseWidgets_->Add<UiSlider>(
+		UiIds::OptPMaster, [this](float value) { menu_.settings.masterVolume = value; }, 0.0f, 1.0f);
+	pauseWidgets_->Add<UiSlider>(
+		UiIds::OptPMusic, [this](float value) { menu_.settings.musicVolume = value; }, 0.0f, 1.0f);
+	pauseWidgets_->Add<UiSlider>(
+		UiIds::OptPSfx, [this](float value) { menu_.settings.sfxVolume = value; }, 0.0f, 1.0f);
+
+	pauseWidgets_->Add<UiToggle>(UiIds::OptPMinimap, [this](bool value) {
+		menu_.settings.showMinimap = value;
+	});
+	pauseWidgets_->Add<UiToggle>(UiIds::OptPHints, [this](bool value) {
+		menu_.settings.showHints = value;
+	});
+	pauseWidgets_->Add<UiToggle>(UiIds::OptPMute, [this](bool value) {
+		menu_.settings.mute = value;
+	});
+	pauseWidgets_->Add<UiToggle>(UiIds::OptPRightDrag, [this](bool value) {
+		menu_.settings.rightDragPan = value;
+	});
+	pauseWidgets_->Add<UiToggle>(UiIds::OptPColorBlind, [this](bool value) {
+		menu_.settings.colorBlindMode = value;
+		art_.SetColorBlindMode(value);
+	});
+}
+
+UiEvent RmlUiHud::Translate(const Rml::Event &event, Rml::Element *target)
+{
+	UiEvent out;
+	if (event.GetType() != "change")
+	{
+		return out;
+	}
+	auto *control = dynamic_cast<Rml::ElementFormControl *>(target);
+	if (control != nullptr && control->GetAttribute("type", Rml::String()) == "range")
+	{
+		out.kind = UiEventKind::Value;
+		out.value = ReadRange(target);
+		return out;
+	}
+	out.kind = UiEventKind::Toggle;
+	out.checked = target->HasAttribute("checked");
+	return out;
+}
+
+bool RmlUiHud::DispatchWidget(Rml::Event &event, Rml::Element *target)
+{
+	if (pauseWidgets_ == nullptr)
+	{
+		return false;
+	}
+	UiWidget *widget = pauseWidgets_->Find(target->GetId());
+	if (widget == nullptr || !widget->HandleEvent(Translate(event, target)))
+	{
+		return false;
+	}
+	event.StopPropagation();
+	return true;
+}
+
 void RmlUiHud::ProcessEvent(Rml::Event &event)
 {
 	Rml::Element *target = event.GetTargetElement();
@@ -283,22 +361,20 @@ void RmlUiHud::ProcessEvent(Rml::Event &event)
 	const Rml::String id = target->GetId();
 	if (type == "click")
 	{
-		OnClick(id);
+		if (!DispatchWidget(event, target))
+		{
+			OnClick(id);
+		}
 	}
 	else if (type == "change")
 	{
-		OnChange(target, id);
+		DispatchWidget(event, target);
 	}
 }
 
 void RmlUiHud::SetDisabled(Rml::Element *el, bool disabled)
 {
 	el->SetClass("disabled", disabled);
-}
-
-float RmlUiHud::Clamp(float value, float lo, float hi)
-{
-	return value < lo ? lo : (value > hi ? hi : value);
 }
 
 float RmlUiHud::ReadRange(Rml::Element *el)
@@ -832,24 +908,7 @@ void RmlUiHud::OnClick(const Rml::String &id)
 			return;
 		}
 	}
-	if (id == UiIds::BtnResume)
-	{
-		Announce(EventType::MenuAction);
-		menu_.state = MenuState::Playing;
-	}
-	else if (id == UiIds::BtnPRemap)
-	{
-		beginRemap_(MenuState::Paused);
-	}
-	else if (id == UiIds::BtnPToMenu)
-	{
-		quitToMenu_();
-	}
-	else if (id == UiIds::BtnPToDesktop)
-	{
-		menu_.quitRequested = true;
-	}
-	else if (id == UiIds::BtnOToMenu)
+	if (id == UiIds::BtnOToMenu)
 	{
 		quitToMenu_();
 	}
@@ -899,60 +958,5 @@ void RmlUiHud::OnAbility(AbilityId ability)
 	case AbilityId::Heal:
 		playingInput_.ArmAbility(ability);
 		break;
-	}
-}
-
-void RmlUiHud::OnChange(Rml::Element *target, const Rml::String &id)
-{
-	// Same no-refresh rule as the menus: programmatic SetValue/SetAttribute
-	// re-dispatches Change into this listener.
-	if (id == UiIds::OptPCamSpeed)
-	{
-		menu_.settings.cameraSpeed = Clamp(ReadRange(target), 100.0f, 800.0f);
-		char text[32];
-		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.cameraSpeed));
-		SetTextIn(pauseDoc_, UiIds::ValPCamSpeed, text);
-	}
-	else if (id == UiIds::OptPMaster)
-	{
-		menu_.settings.masterVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
-		char text[32];
-		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.masterVolume));
-		SetTextIn(pauseDoc_, UiIds::ValPMaster, text);
-	}
-	else if (id == UiIds::OptPMusic)
-	{
-		menu_.settings.musicVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
-		char text[32];
-		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.musicVolume));
-		SetTextIn(pauseDoc_, UiIds::ValPMusic, text);
-	}
-	else if (id == UiIds::OptPSfx)
-	{
-		menu_.settings.sfxVolume = Clamp(ReadRange(target), 0.0f, 1.0f);
-		char text[32];
-		snprintf(text, sizeof(text), "%g", static_cast<double>(menu_.settings.sfxVolume));
-		SetTextIn(pauseDoc_, UiIds::ValPSfx, text);
-	}
-	else if (id == UiIds::OptPMinimap)
-	{
-		menu_.settings.showMinimap = target->HasAttribute("checked");
-	}
-	else if (id == UiIds::OptPHints)
-	{
-		menu_.settings.showHints = target->HasAttribute("checked");
-	}
-	else if (id == UiIds::OptPMute)
-	{
-		menu_.settings.mute = target->HasAttribute("checked");
-	}
-	else if (id == UiIds::OptPRightDrag)
-	{
-		menu_.settings.rightDragPan = target->HasAttribute("checked");
-	}
-	else if (id == UiIds::OptPColorBlind)
-	{
-		menu_.settings.colorBlindMode = target->HasAttribute("checked");
-		art_.SetColorBlindMode(menu_.settings.colorBlindMode);
 	}
 }

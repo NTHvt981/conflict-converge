@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -25,6 +26,8 @@ class Event;
 }
 
 class RmlUiHost;
+class UiWidget;
+struct UiEvent;
 
 enum class ProductionTab
 {
@@ -43,6 +46,7 @@ public:
 			 std::function<void()> quitToMenu, std::function<void(MenuState)> beginRemap);
 	RmlUiHud(const RmlUiHud &) = delete;
 	RmlUiHud &operator=(const RmlUiHud &) = delete;
+	~RmlUiHud();
 
 	bool Init(RmlUiHost &host, const std::string &dataDir);
 	void Shutdown();
@@ -74,14 +78,15 @@ private:
 	void RefreshConfirm();
 	void OnClick(const Rml::String &id);
 	void OnAbility(AbilityId ability);
-	void OnChange(Rml::Element *target, const Rml::String &id);
 	void Announce(EventType type);
+	void BuildPauseWidgets();
+	bool DispatchWidget(Rml::Event &event, Rml::Element *target);
 
 	static void SetDisabled(Rml::Element *el, bool disabled);
-	static float Clamp(float value, float lo, float hi);
 	static float ReadRange(Rml::Element *el);
 	static bool IsInteractiveTag(const Rml::String &tag);
 	static Rml::Element *ById(Rml::ElementDocument *doc, std::string_view id);
+	static UiEvent Translate(const Rml::Event &event, Rml::Element *target);
 	void SetTextCached(std::string_view id, const std::string &text);
 	void SetDisplay(Rml::Element *el, const std::string &value);
 	void SetRangeIn(Rml::ElementDocument *doc, std::string_view id, float value);
@@ -109,6 +114,7 @@ private:
 	Rml::ElementDocument *pauseDoc_ = nullptr;
 	Rml::ElementDocument *outcomeDoc_ = nullptr;
 	Rml::ElementDocument *confirmDoc_ = nullptr;
+	std::unique_ptr<UiWidget> pauseWidgets_;
 	bool ready_ = false;
 	bool dragLatch_ = false;
 	ProductionTab productionTab_ = ProductionTab::Infantry;
