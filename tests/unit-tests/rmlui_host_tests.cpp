@@ -13,23 +13,29 @@
 namespace
 {
 
-std::string ReadHudDocument()
+std::string ReadDocument(const char *file)
 {
 	const std::string candidates[] = {
-		"data/ui/hud.rml",
-		"../../data/ui/hud.rml",
-		"../../../data/ui/hud.rml",
+		std::string("data/ui/") + file,
+		std::string("../../data/ui/") + file,
+		std::string("../../../data/ui/") + file,
 	};
 	for (const std::string &path : candidates)
 	{
-		std::ifstream file(path, std::ios::binary);
-		if (!file)
+		std::ifstream fileStream(path, std::ios::binary);
+		if (!fileStream)
 			continue;
-		std::string contents((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+		std::string contents((std::istreambuf_iterator<char>(fileStream)),
+							 std::istreambuf_iterator<char>());
 		if (!contents.empty())
 			return contents;
 	}
 	return {};
+}
+
+std::string ReadHudDocument()
+{
+	return ReadDocument("hud.rml");
 }
 
 bool DocumentHasId(const std::string &doc, std::string_view id)
@@ -150,5 +156,27 @@ void RunRmlUiHostTests()
 		CC_CHECK(doc.find("Queue: 2") == std::string::npos);
 
 		CC_CHECK(doc.find("Need Bootcamp / Workshop") != std::string::npos);
+	}
+
+	const std::string mainDocument = ReadDocument("main_menu.rml");
+	CC_CHECK(!mainDocument.empty());
+	if (!mainDocument.empty())
+	{
+		for (std::string_view id : { UiIds::BtnSetup, UiIds::BtnLoad, UiIds::BtnSettings,
+									 UiIds::BtnEditor, UiIds::BtnQuit })
+		{
+			CC_CHECK(DocumentHasId(mainDocument, id));
+		}
+	}
+
+	const std::string confirmDocument = ReadDocument("confirm.rml");
+	CC_CHECK(!confirmDocument.empty());
+	if (!confirmDocument.empty())
+	{
+		for (std::string_view id : { UiIds::ConfirmTitle, UiIds::ConfirmSub, UiIds::BtnYes,
+									 UiIds::BtnNo })
+		{
+			CC_CHECK(DocumentHasId(confirmDocument, id));
+		}
 	}
 }
