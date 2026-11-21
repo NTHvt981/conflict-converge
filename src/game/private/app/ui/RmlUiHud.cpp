@@ -323,6 +323,7 @@ UiEvent RmlUiHud::Translate(const Rml::Event &event, Rml::Element *target)
 	{
 		return out;
 	}
+
 	auto *control = dynamic_cast<Rml::ElementFormControl *>(target);
 	if (control != nullptr && control->GetAttribute("type", Rml::String()) == "range")
 	{
@@ -330,6 +331,7 @@ UiEvent RmlUiHud::Translate(const Rml::Event &event, Rml::Element *target)
 		out.value = ReadRange(target);
 		return out;
 	}
+
 	out.kind = UiEventKind::Toggle;
 	out.checked = target->HasAttribute("checked");
 	return out;
@@ -341,11 +343,13 @@ bool RmlUiHud::DispatchWidget(Rml::Event &event, Rml::Element *target)
 	{
 		return false;
 	}
+
 	UiWidget *widget = pauseWidgets_->Find(target->GetId());
 	if (widget == nullptr || !widget->HandleEvent(Translate(event, target)))
 	{
 		return false;
 	}
+
 	event.StopPropagation();
 	return true;
 }
@@ -357,6 +361,7 @@ void RmlUiHud::ProcessEvent(Rml::Event &event)
 	{
 		return;
 	}
+
 	const Rml::String type = event.GetType();
 	const Rml::String id = target->GetId();
 	if (type == "click")

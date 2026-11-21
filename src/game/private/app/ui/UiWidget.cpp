@@ -13,6 +13,7 @@ bool UiWidget::HandleEvent(const UiEvent &event)
 	{
 		return true;
 	}
+
 	for (const std::unique_ptr<UiWidget> &child : children_)
 	{
 		if (child->HandleEvent(event))
@@ -29,6 +30,7 @@ UiWidget *UiWidget::Find(std::string_view id)
 	{
 		return this;
 	}
+
 	for (const std::unique_ptr<UiWidget> &child : children_)
 	{
 		if (UiWidget *found = child->Find(id))
@@ -61,6 +63,7 @@ bool UiButton::OnEvent(const UiEvent &event)
 	{
 		return false;
 	}
+
 	handler_();
 	return true;
 }
@@ -77,6 +80,7 @@ bool UiToggle::OnEvent(const UiEvent &event)
 	{
 		return false;
 	}
+
 	set_(event.checked);
 	return true;
 }
@@ -95,6 +99,7 @@ bool UiSlider::OnEvent(const UiEvent &event)
 	{
 		return false;
 	}
+
 	const float clamped = event.value < lo_ ? lo_ : (event.value > hi_ ? hi_ : event.value);
 	set_(clamped);
 	return true;
