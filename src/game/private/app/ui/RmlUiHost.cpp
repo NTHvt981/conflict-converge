@@ -21,28 +21,50 @@ RmlUiHost::~RmlUiHost()
 	Shutdown();
 }
 
-bool RmlUiHost::Init(const std::string &dataDir, const std::string &fontsDir)
+bool RmlUiHost::Init(const std::string &dataDir, const std::string &fontsDir, Rml::RenderInterface *headlessRender, int contextWidth, int contextHeight)
 {
-	if (ready_ || !IsWindowReady())
+	if (ready_)
 	{
 		return false;
 	}
-	render_ = std::make_unique<RmlRaylibRenderInterface>();
+	int width = 0;
+	int height = 0;
+	if (headlessRender == nullptr)
+	{
+		if (!IsWindowReady())
+		{
+			return false;
+		}
+		width = GetScreenWidth();
+		height = GetScreenHeight();
+		render_ = std::make_unique<RmlRaylibRenderInterface>();
+	}
+	else
+	{
+		if (contextWidth <= 0 || contextHeight <= 0)
+		{
+			return false;
+		}
+		headlessRender_ = headlessRender;
+		width = contextWidth;
+		height = contextHeight;
+	}
 	system_ = std::make_unique<RmlRaylibSystemInterface>();
 	files_ = std::make_unique<RmlRaylibFileInterface>();
 	Rml::SetSystemInterface(system_.get());
 	Rml::SetFileInterface(files_.get());
-	Rml::SetRenderInterface(render_.get());
+	Rml::SetRenderInterface(headlessRender_ != nullptr ? headlessRender_ : render_.get());
 	if (!Rml::Initialise())
 	{
+		headlessRender_ = nullptr;
 		return false;
 	}
 	dataDir_ = dataDir;
-	context_ =
-		Rml::CreateContext("main", Rml::Vector2i(GetScreenWidth(), GetScreenHeight()));
+	context_ = Rml::CreateContext("main", Rml::Vector2i(width, height));
 	if (context_ == nullptr)
 	{
 		Rml::Shutdown();
+		headlessRender_ = nullptr;
 		return false;
 	}
 	// Auto-fit dp policy from the 1280x720 base times uiScale: raylib
@@ -53,6 +75,7 @@ bool RmlUiHost::Init(const std::string &dataDir, const std::string &fontsDir)
 	{
 		Rml::Shutdown();
 		context_ = nullptr;
+		headlessRender_ = nullptr;
 		return false;
 	}
 	Rml::Debugger::SetVisible(false);
@@ -61,6 +84,7 @@ bool RmlUiHost::Init(const std::string &dataDir, const std::string &fontsDir)
 	{
 		Rml::Shutdown();
 		context_ = nullptr;
+		headlessRender_ = nullptr;
 		return false;
 	}
 	ready_ = true;
@@ -79,6 +103,7 @@ void RmlUiHost::Shutdown()
 		context_->Update();
 		context_ = nullptr;
 	}
+	headlessRender_ = nullptr;
 	Rml::Shutdown();
 }
 
@@ -141,6 +166,11 @@ void RmlUiHost::Render()
 {
 	if (!ready_ || context_ == nullptr)
 	{
+		return;
+	}
+	if (headlessRender_ != nullptr)
+	{
+		context_->Render();
 		return;
 	}
 	// Same flush discipline as the probe: draw each geometry batch under the
