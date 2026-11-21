@@ -64,7 +64,7 @@ void RunCommandUiTests()
 
 	{
 		const std::vector<UnitType> order = ProductionMenuOrder();
-		CC_CHECK(order.size() == 8);
+		CC_CHECK(order.size() == 9);
 		bool seen[static_cast<int>(UnitType::Count)] = {};
 		for (UnitType type : order)
 		{

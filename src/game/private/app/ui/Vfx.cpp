@@ -4,6 +4,13 @@
 #include <cmath>
 #include <cstdlib>
 
+namespace
+{
+
+constexpr Color kBeamColor{ 180, 140, 255, 255 };
+
+}
+
 void Vfx::SpawnBurst(Vector2 center, Color color, int count, float speed, float life)
 {
 	for (int i = 0; i < count && particles_.size() < kMaxParticles; ++i)
@@ -37,6 +44,19 @@ void Vfx::SpawnDamageNumber(Vector2 pos, float value)
 	numbers_.push_back(n);
 }
 
+void Vfx::SpawnBeam(Vector2 from, Vector2 to)
+{
+	if (beams_.size() >= kMaxBeams)
+	{
+		return;
+	}
+	BeamLine beam;
+	beam.from = from;
+	beam.to = to;
+	beam.life = kBeamLife;
+	beams_.push_back(beam);
+}
+
 void Vfx::Update(float dt)
 {
 	for (std::size_t i = 0; i < particles_.size();)
@@ -66,10 +86,29 @@ void Vfx::Update(float dt)
 		n.pos.y -= kDamageNumberRiseSpeed * dt;
 		++i;
 	}
+	for (std::size_t i = 0; i < beams_.size();)
+	{
+		BeamLine &b = beams_[i];
+		b.life -= dt;
+		if (b.life <= 0.0f)
+		{
+			b = beams_.back();
+			beams_.pop_back();
+			continue;
+		}
+		++i;
+	}
 }
 
 void Vfx::DrawWorld() const
 {
+	for (const BeamLine &b : beams_)
+	{
+		DrawLineEx(b.from, b.to, 6.0f, Fade(kBeamColor, 0.30f));
+		DrawLineEx(b.from, b.to, 2.0f, kBeamColor);
+		DrawCircleV(b.to, 3.0f, kBeamColor);
+		DrawCircleLinesV(b.to, 6.0f, Fade(kBeamColor, 0.30f));
+	}
 	for (const Particle &p : particles_)
 	{
 		const float alpha = p.life / p.maxLife;
@@ -88,6 +127,7 @@ void Vfx::Clear()
 {
 	particles_.clear();
 	numbers_.clear();
+	beams_.clear();
 }
 
 void Vfx::ResetForMatch()
@@ -103,4 +143,9 @@ std::size_t Vfx::ParticleCount() const
 std::size_t Vfx::DamageNumberCount() const
 {
 	return numbers_.size();
+}
+
+std::size_t Vfx::BeamCount() const
+{
+	return beams_.size();
 }

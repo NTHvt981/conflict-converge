@@ -19,6 +19,7 @@ unit roles and pacing, not faction asymmetry. Stats load from
 | Artillery | 120/40 | 4.4s | 150 | STEEL | EXPLOSIVE | 40 | 384 | 3.0s | 48 | 320 | siege; blind-fires into shroud, no penalty |
 | LightTank | 150/50 | 5.0s | 300 | STEEL | KINETIC | 20 | 192 | 1.2s | 96 | 320 | main battle tank |
 | HeavyTank | 250/100 | 7.0s | 500 | COMPOSITE | EXPLOSIVE | 35 | 224 | 1.8s | 64 | 320 | breakthrough (resists EXPLOSIVE 0.75x) |
+| Laser Infantry | 35/10 | 2.7s | 80 | RUBBER | ENERGY | 18 | 160 | 1.4s | 64 | 320 | anti-infantry beam |
 
 ## Damage matrix (attacker row x defender column)
 
@@ -28,14 +29,14 @@ unit roles and pacing, not faction asymmetry. Stats load from
 | EXPLOSIVE | 1.25 | 1.00 | 0.75 |
 | ENERGY | 0.50 | 1.25 | 1.00 |
 
-(ENERGY has no unit yet — reserved for future/tech.)
-
 ## Key TTKs (seconds, duel, no maneuver)
 
 - Infantry vs Infantry: ~14s. LightTank vs Infantry: ~8s.
 - AntiArmor vs LightTank: ~15s. AntiArmor vs HeavyTank: ~40s (needs focus fire).
 - LightTank vs LightTank: ~18s. HeavyTank vs HeavyTank: ~36s.
 - Artillery vs LightTank: ~18s (outranges 384 vs 192 — fires unanswered).
+- Laser vs Infantry: ~7s (22.5/shot vs RUBBER). Infantry vs Laser: ~11s.
+- Laser vs LightTank: ~48s (9/shot vs STEEL — anti-infantry weapon, poor tank hunter).
 
 ## Structures & economy
 

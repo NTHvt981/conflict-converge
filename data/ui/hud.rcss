@@ -109,7 +109,8 @@
 	border: 2dp #2e8b57;
 }
 
-/* Production panel: bottom-right quarter, tab-filtered rows (max 4). */
+/* Production panel: bottom-right quarter, tab-filtered rows (max 5 infantry,
+   4 vehicles). */
 #hud-production {
 	right: 1%;
 	bottom: 2%;
@@ -157,8 +158,8 @@
 
 /* Production icons (24px). Decorator survives the RefreshProduction text
    refresh; paths resolve relative to this file. */
-#prod-i-0, #prod-i-1, #prod-i-2, #prod-i-3, #prod-v-0, #prod-v-1, #prod-v-2,
-#prod-v-3, #place-0, #place-1, #place-2, #place-3 {
+#prod-i-0, #prod-i-1, #prod-i-2, #prod-i-3, #prod-i-4, #prod-v-0, #prod-v-1,
+#prod-v-2, #prod-v-3, #place-0, #place-1, #place-2, #place-3 {
 	padding-left: 28dp;
 	text-align: left;
 	white-space: nowrap;
@@ -178,6 +179,10 @@
 
 #prod-i-3 {
 	decorator: image("../sprites/icons/medic.png" scale-down left center);
+}
+
+#prod-i-4 {
+	decorator: image("../sprites/icons/laser_infantry.png" scale-down left center);
 }
 
 #prod-v-0 {

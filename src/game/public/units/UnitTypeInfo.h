@@ -41,6 +41,9 @@ inline constexpr UnitTypeInfo kUnitTypes[] = {
 	  "prototypeinfantry", "", "", false, Locomotor::Foot, 25, 0, { 1, 1 } },
 	{ "Medic", "Medic", "medic", "medic", "medic",
 	  "medic_idle", "medic_move", false, Locomotor::Foot, 30, 0, { 1, 1 } },
+	{ "Laser Infantry", "LaserInfantry", "laser_infantry", "laser_infantry", "laser",
+	  "laser_infantry_idle", "laser_infantry_move", false, Locomotor::Foot, 35, 10,
+	  { 1, 1 } },
 };
 
 static_assert(sizeof(kUnitTypes) / sizeof(kUnitTypes[0]) ==

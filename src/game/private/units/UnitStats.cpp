@@ -12,7 +12,7 @@ namespace
 const UnitStats kTable[] = {
 	// RifleInfantry, AntiArmorInfantry, Engineer (support: no attack),
 	// IFV, Artillery, LightTank, HeavyTank, PrototypeInfantry, Medic
-	// (support: no attack, heals flesh instead).
+	// (support: no attack, heals flesh instead), LaserInfantry.
 	{ 100.0f, ArmorType::RUBBER, DamageType::KINETIC, 10, 2.0f, 1.0f, 1.0f, 5.0f },
 	{ 90.0f, ArmorType::RUBBER, DamageType::EXPLOSIVE, 25, 2.0f, 1.5f, 1.0f, 5.0f },
 	{ 60.0f, ArmorType::RUBBER, DamageType::KINETIC, 0, 1.0f, 1.0f, 1.0f, 4.0f },
@@ -22,9 +22,10 @@ const UnitStats kTable[] = {
 	{ 500.0f, ArmorType::COMPOSITE, DamageType::EXPLOSIVE, 35, 3.5f, 1.8f, 1.0f, 5.0f },
 	{ 100.0f, ArmorType::RUBBER, DamageType::KINETIC, 10, 2.0f, 1.0f, 1.0f, 5.0f },
 	{ 60.0f, ArmorType::RUBBER, DamageType::KINETIC, 0, 0.0f, 1.0f, 1.0f, 4.0f },
+	{ 80.0f, ArmorType::RUBBER, DamageType::ENERGY, 18, 2.5f, 1.4f, 1.0f, 5.0f },
 };
 
-static_assert(sizeof(kTable) / sizeof(kTable[0]) == 9, "one stat line per UnitType");
+static_assert(sizeof(kTable) / sizeof(kTable[0]) == 10, "one stat line per UnitType");
 
 }
 

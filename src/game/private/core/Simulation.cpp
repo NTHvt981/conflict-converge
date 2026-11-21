@@ -4,6 +4,7 @@
 #include "core/PlayingInput.h"
 #include "economy/Building.h"
 #include "units/Extensions.h"
+#include "units/Targeting.h"
 #include "app/ui/Shake.h"
 #include "units/Unit.h"
 #include "world/Pathfinder.h"
@@ -213,6 +214,43 @@ void Simulation::UpdateCombatVfx()
 						{ center.x + dir.x / len * 40.0f, center.y + dir.y / len * 40.0f },
 						ORANGE, 2, 80.0f, 0.15f);
 				}
+			}
+		}
+		if (unit.damageType == DamageType::ENERGY && combat != nullptr &&
+			combat->target != kInvalidEntity)
+		{
+			Vector2 targetCenter = {};
+			float targetFlash = 0.0f;
+			bool visible = false;
+			if (const Unit *target = registry_.Get<Unit>(combat->target))
+			{
+				targetCenter = { target->position.x + cc::kHalfTile,
+								 target->position.y + cc::kHalfTile };
+				const CombatState *targetCombat = registry_.Get<CombatState>(combat->target);
+				if (targetCombat != nullptr)
+				{
+					targetFlash = targetCombat->hitFlashTime;
+				}
+				visible = fog_.IsVisible(kPlayerTeam,
+										 cc::WorldToTile(cc::ToGlm(target->position)));
+			}
+			else if (const Building *target = registry_.Get<Building>(combat->target))
+			{
+				targetCenter = BuildingCenter(*target);
+				targetFlash = target->hitFlashTime;
+				visible =
+					fog_.IsVisible(kPlayerTeam, cc::IVec2{ target->tileX, target->tileY });
+			}
+			if (visible && targetFlash > kHitFlashDuration - Vfx::kBeamLife)
+			{
+				const float angle =
+					(-90.0f - 45.0f * static_cast<float>(static_cast<int>(unit.facing))) *
+					DEG2RAD;
+				const Vector2 dir = { std::cos(angle), std::sin(angle) };
+				const Vector2 from = { center.x + dir.x * 17.0f,
+									   center.y + dir.y * 17.0f - 12.0f };
+				const Vector2 to = { targetCenter.x, targetCenter.y - 10.0f };
+				vfx_.SpawnBeam(from, to);
 			}
 		}
 	});

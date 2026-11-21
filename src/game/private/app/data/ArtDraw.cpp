@@ -27,14 +27,16 @@ SquadLayout SquadSlots(UnitType type, unsigned int id, float healthFraction)
 {
 	SquadLayout layout;
 	if (type != UnitType::RifleInfantry && type != UnitType::AntiArmorInfantry &&
-		type != UnitType::PrototypeInfantry && type != UnitType::Medic)
+		type != UnitType::PrototypeInfantry && type != UnitType::Medic &&
+		type != UnitType::LaserInfantry)
 	{
 		layout.count = 1;
 		return layout;
 	}
 
 	int count;
-	if (type == UnitType::RifleInfantry || type == UnitType::PrototypeInfantry)
+	if (type == UnitType::RifleInfantry || type == UnitType::PrototypeInfantry ||
+		type == UnitType::LaserInfantry)
 	{
 		if (healthFraction > 0.80f)
 			count = 5;

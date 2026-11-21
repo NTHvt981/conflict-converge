@@ -57,6 +57,11 @@ void RunArtTests()
 		CC_CHECK(prototype.scale == 0.55f);
 		CC_CHECK(SquadSlots(UnitType::PrototypeInfantry, 10, 0.10f).count == 1);
 
+		const SquadLayout laser = SquadSlots(UnitType::LaserInfantry, 10, 1.0f);
+		CC_CHECK(laser.count == 5);
+		CC_CHECK(laser.scale == 0.55f);
+		CC_CHECK(SquadSlots(UnitType::LaserInfantry, 10, 0.10f).count == 1);
+
 		const SquadLayout tank = SquadSlots(UnitType::HeavyTank, 99, 1.0f);
 		CC_CHECK(tank.count == 1);
 		CC_CHECK(tank.slots[0].x == 0.0f);
@@ -229,6 +234,7 @@ void RunArtTests()
 		CC_CHECK(Art::BaseArtScale(UnitType::AntiArmorInfantry) == 0.8f);
 		CC_CHECK(Art::BaseArtScale(UnitType::Engineer) == 0.8f);
 		CC_CHECK(Art::BaseArtScale(UnitType::Medic) == 0.8f);
+		CC_CHECK(Art::BaseArtScale(UnitType::LaserInfantry) == 0.8f);
 		CC_CHECK(Art::BaseArtScale(UnitType::HeavyTank) == 1.0f);
 	}
 

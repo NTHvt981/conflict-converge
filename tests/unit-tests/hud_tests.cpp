@@ -47,6 +47,7 @@ void RunHudTests()
 	CC_CHECK(ProductionCategoryOf(UnitType::AntiArmorInfantry) == ProductionCategory::Infantry);
 	CC_CHECK(ProductionCategoryOf(UnitType::Engineer) == ProductionCategory::Infantry);
 	CC_CHECK(ProductionCategoryOf(UnitType::Medic) == ProductionCategory::Infantry);
+	CC_CHECK(ProductionCategoryOf(UnitType::LaserInfantry) == ProductionCategory::Infantry);
 	CC_CHECK(ProductionCategoryOf(UnitType::PrototypeInfantry) == ProductionCategory::Infantry);
 	CC_CHECK(ProductionCategoryOf(UnitType::IFV) == ProductionCategory::Vehicle);
 	CC_CHECK(ProductionCategoryOf(UnitType::Artillery) == ProductionCategory::Vehicle);
@@ -54,9 +55,10 @@ void RunHudTests()
 	CC_CHECK(ProductionCategoryOf(UnitType::HeavyTank) == ProductionCategory::Vehicle);
 	const std::vector<UnitType> infantry = InfantryMenuOrder();
 	const std::vector<UnitType> vehicles = VehicleMenuOrder();
-	CC_CHECK(infantry.size() == 4);
+	CC_CHECK(infantry.size() == 5);
 	CC_CHECK(vehicles.size() == 4);
 	CC_CHECK(infantry[0] == UnitType::RifleInfantry && infantry[3] == UnitType::Medic);
+	CC_CHECK(infantry[4] == UnitType::LaserInfantry);
 	CC_CHECK(vehicles[0] == UnitType::IFV && vehicles[3] == UnitType::HeavyTank);
 	CC_CHECK(infantry.size() + vehicles.size() == ProductionMenuOrder().size());
 

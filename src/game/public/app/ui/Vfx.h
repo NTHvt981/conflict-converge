@@ -27,16 +27,26 @@ struct DamageNumber
 	float maxLife = 1.0f;
 };
 
+struct BeamLine
+{
+	Vector2 from = {};
+	Vector2 to = {};
+	float life = 0.0f;
+};
+
 class Vfx : public Subsystem
 {
 public:
 	static constexpr std::size_t kMaxParticles = 512;
 	static constexpr std::size_t kMaxDamageNumbers = 256;
+	static constexpr std::size_t kMaxBeams = 256;
 	static constexpr float kDamageNumberLife = 0.7f;
 	static constexpr float kDamageNumberRiseSpeed = 80.0f; // pixels per second, upward
+	static constexpr float kBeamLife = 0.12f;
 
 	void SpawnBurst(Vector2 center, Color color, int count, float speed, float life);
 	void SpawnDamageNumber(Vector2 pos, float value);
+	void SpawnBeam(Vector2 from, Vector2 to);
 
 	void Update(float dt);
 	void DrawWorld() const; // world-space: call inside BeginMode2D/EndMode2D
@@ -45,8 +55,10 @@ public:
 
 	std::size_t ParticleCount() const;
 	std::size_t DamageNumberCount() const;
+	std::size_t BeamCount() const;
 
 private:
 	std::vector<Particle> particles_;
 	std::vector<DamageNumber> numbers_;
+	std::vector<BeamLine> beams_;
 };
