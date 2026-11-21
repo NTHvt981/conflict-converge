@@ -87,13 +87,13 @@ class UiSlider : public UiWidget
 public:
 	using Setter = std::function<void(float)>;
 
-	UiSlider(std::string_view id, Setter set, float lo, float hi);
+	UiSlider(std::string_view id, Setter set, float low, float high);
 
 protected:
 	bool OnEvent(const UiEvent &event) override;
 
 private:
 	Setter set_;
-	float lo_;
-	float hi_;
+	float low_;
+	float high_;
 };

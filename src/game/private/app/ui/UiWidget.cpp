@@ -85,11 +85,11 @@ bool UiToggle::OnEvent(const UiEvent &event)
 	return true;
 }
 
-UiSlider::UiSlider(std::string_view id, Setter set, float lo, float hi)
+UiSlider::UiSlider(std::string_view id, Setter set, float low, float high)
 	: UiWidget(id)
 	, set_(std::move(set))
-	, lo_(lo)
-	, hi_(hi)
+	, low_(low)
+	, high_(high)
 {
 }
 
@@ -100,7 +100,7 @@ bool UiSlider::OnEvent(const UiEvent &event)
 		return false;
 	}
 
-	const float clamped = event.value < lo_ ? lo_ : (event.value > hi_ ? hi_ : event.value);
+	const float clamped = event.value < low_ ? low_ : (event.value > high_ ? high_ : event.value);
 	set_(clamped);
 	return true;
 }
