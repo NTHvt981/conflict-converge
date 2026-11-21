@@ -73,4 +73,9 @@ void RunUiWidgetTests()
 	list.Clear();
 	CC_CHECK(list.Find("row-0") == nullptr);
 	CC_CHECK(!list.HandleEvent({ UiEventKind::Press, false, 0.0f }));
+
+	std::string mutableId(64, 'a');
+	UiButton *ownedId = root.Add<UiButton>(mutableId, [] {});
+	mutableId.assign(64, 'b');
+	CC_CHECK(ownedId->Id() == std::string(64, 'a'));
 }
