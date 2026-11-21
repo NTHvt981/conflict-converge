@@ -188,8 +188,8 @@ def emit_flats(lookdev):
 
 
 def emit_barrack(lookdev):
-    """barrack_base.png + barrack_mask.png = buildings/barrack sheet row 0."""
-    src = load_png(os.path.join(lookdev, "buildings", "barrack", "sheet.png"))
+    """barrack_base.png + barrack_mask.png = the single 45-degree barrack_45 cell."""
+    src = load_png(os.path.join(lookdev, "buildings", "barrack_45", "sheet.png"))
     row = src.crop((0, 0, 256, 256))
     base, mask = split_base_mask(row)
     write_png(os.path.join(DATA, "sprites", "buildings", "barrack_base.png"), base)
