@@ -74,7 +74,9 @@ private:
 	void RefreshCurrent();
 	void RefreshSetup();
 	void RefreshSettings();
+	void BuildMainMenuWidgets();
 	void BuildSettingsWidgets();
+	void BuildConfirmWidgets();
 	void RefreshLoad();
 	void RefreshConfirm();
 	void PopulateMaps();
@@ -114,7 +116,9 @@ private:
 	Rml::ElementDocument *loadDoc_ = nullptr;
 	Rml::ElementDocument *confirmDoc_ = nullptr;
 	Rml::ElementDocument *remapDoc_ = nullptr;
+	std::unique_ptr<UiWidget> mainMenuWidgets_;
 	std::unique_ptr<UiWidget> settingsWidgets_;
+	std::unique_ptr<UiWidget> confirmWidgets_;
 	int remapArming_ = -1; // action being rebound, -1 = none
 	std::string remapConflictAction_; // pending conflict, awaiting the steal click
 	int remapConflictKey_ = 0;

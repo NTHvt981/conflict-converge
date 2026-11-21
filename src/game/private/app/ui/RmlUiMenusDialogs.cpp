@@ -22,32 +22,7 @@
 
 void RmlUiMenus::OnClick(const Rml::String &id)
 {
-	if (id == UiIds::BtnSetup)
-	{
-		menu_.OpenSetup(ListMaps("data/maps"));
-		Announce(EventType::MenuAction);
-	}
-	else if (id == UiIds::BtnLoad)
-	{
-		menu_.OpenLoad();
-		Announce(EventType::MenuAction);
-	}
-	else if (id == UiIds::BtnSettings)
-	{
-		menu_.OpenSettings();
-		Announce(EventType::MenuAction);
-	}
-	else if (id == UiIds::BtnEditor)
-	{
-		screens_.OpenEditor();
-		Announce(EventType::MenuAction);
-	}
-	else if (id == UiIds::BtnQuit)
-	{
-		menu_.OpenQuitConfirm();
-		Announce(EventType::MenuAction);
-	}
-	else if (id == UiIds::BtnStart)
+	if (id == UiIds::BtnStart)
 	{
 		// No announce here, matching the raygui Start path.
 		if (const MapEntry *sel = menu_.setup.SelectedMap();
@@ -96,14 +71,6 @@ void RmlUiMenus::OnClick(const Rml::String &id)
 				remapConflictAction_.clear();
 			}
 		}
-	}
-	else if (id == UiIds::BtnYes)
-	{
-		pendingChoice_ = ConfirmChoice::Yes;
-	}
-	else if (id == UiIds::BtnNo)
-	{
-		pendingChoice_ = ConfirmChoice::No;
 	}
 	else if (UiIds::StartsWith(id, UiIds::DifficultyRow))
 	{
@@ -249,6 +216,37 @@ void RmlUiMenus::RefreshSettings()
 	SetTextIn(settingsDoc_, UiIds::ValUiScale, text);
 }
 
+void RmlUiMenus::BuildMainMenuWidgets()
+{
+	mainMenuWidgets_ = std::make_unique<UiWidget>("main_menu");
+
+	mainMenuWidgets_->Add<UiButton>(UiIds::BtnSetup)->SetHandler([this] {
+		menu_.OpenSetup(ListMaps("data/maps"));
+		Announce(EventType::MenuAction);
+		ShowState();
+	});
+	mainMenuWidgets_->Add<UiButton>(UiIds::BtnLoad)->SetHandler([this] {
+		menu_.OpenLoad();
+		Announce(EventType::MenuAction);
+		ShowState();
+	});
+	mainMenuWidgets_->Add<UiButton>(UiIds::BtnSettings)->SetHandler([this] {
+		menu_.OpenSettings();
+		Announce(EventType::MenuAction);
+		ShowState();
+	});
+	mainMenuWidgets_->Add<UiButton>(UiIds::BtnEditor)->SetHandler([this] {
+		screens_.OpenEditor();
+		Announce(EventType::MenuAction);
+		ShowState();
+	});
+	mainMenuWidgets_->Add<UiButton>(UiIds::BtnQuit)->SetHandler([this] {
+		menu_.OpenQuitConfirm();
+		Announce(EventType::MenuAction);
+		ShowState();
+	});
+}
+
 // Setters must not call RefreshSettings: programmatic SetValue/SetAttribute
 // re-dispatches Change back into this listener, so the refresh would recurse.
 void RmlUiMenus::BuildSettingsWidgets()
@@ -299,6 +297,20 @@ void RmlUiMenus::BuildSettingsWidgets()
 	settingsWidgets_->Add<UiToggle>(UiIds::OptColorBlind, [this](bool value) {
 		menu_.settings.colorBlindMode = value;
 		art_.SetColorBlindMode(value);
+	});
+}
+
+void RmlUiMenus::BuildConfirmWidgets()
+{
+	confirmWidgets_ = std::make_unique<UiWidget>("confirm");
+
+	confirmWidgets_->Add<UiButton>(UiIds::BtnYes)->SetHandler([this] {
+		pendingChoice_ = ConfirmChoice::Yes;
+		ShowState();
+	});
+	confirmWidgets_->Add<UiButton>(UiIds::BtnNo)->SetHandler([this] {
+		pendingChoice_ = ConfirmChoice::No;
+		ShowState();
 	});
 }
 

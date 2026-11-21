@@ -167,6 +167,19 @@ void PumpInput(Rml::Context *context)
 	}
 }
 
+bool DispatchToTrees(std::initializer_list<UiWidget *> trees, Rml::Event &event,
+					 Rml::Element *target)
+{
+	for (UiWidget *tree : trees)
+	{
+		if (DispatchUiEvent(tree, event, target))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 } // namespace
 
 RmlUiMenus::RmlUiMenus(MenuFlow &menu, HotkeyMap &hotkeys, Art &art, Audio &audio,
@@ -209,8 +222,7 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
 		Shutdown();
 		return false;
 	}
-	Listen(menuDoc_, "click", { UiIds::BtnSetup, UiIds::BtnLoad, UiIds::BtnSettings,
-								UiIds::BtnEditor, UiIds::BtnQuit });
+	menuDoc_->AddEventListener("click", this);
 	Listen(setupDoc_, "click", { UiIds::BtnStart, UiIds::BtnBackRight });
 	for (int row = 0; row <= static_cast<int>(AIDifficulty::Hard); ++row)
 	{
@@ -225,12 +237,14 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
 		Listen(loadDoc_, "click", { id });
 	}
 	Listen(loadDoc_, "click", { UiIds::BtnLoadBack, UiIds::BtnReplay });
-	Listen(confirmDoc_, "click", { UiIds::BtnYes, UiIds::BtnNo });
+	confirmDoc_->AddEventListener("click", this);
 	Listen(remapDoc_, "click", { UiIds::BtnRemapBack });
 	PopulateMaps();
 	hintEntries_.push_back({UiIds::BtnStart, {}});
 	hint_.Bind(setupDoc_, UiIds::CursorHint, hintEntries_);
+	BuildMainMenuWidgets();
 	BuildSettingsWidgets();
+	BuildConfirmWidgets();
 	ready_ = true;
 	ShowState();
 	return true;
@@ -254,7 +268,9 @@ void RmlUiMenus::Shutdown()
 	context_ = nullptr;
 	host_ = nullptr;
 	ready_ = false;
+	mainMenuWidgets_.reset();
 	settingsWidgets_.reset();
+	confirmWidgets_.reset();
 	pendingChoice_ = ConfirmChoice::None;
 }
 
@@ -373,16 +389,19 @@ void RmlUiMenus::ProcessEvent(Rml::Event &event)
 	}
 	const Rml::String type = event.GetType();
 	const Rml::String id = target->GetId();
+	const std::initializer_list<UiWidget *> trees = { mainMenuWidgets_.get(),
+													  settingsWidgets_.get(),
+													  confirmWidgets_.get() };
 	if (type == "click")
 	{
-		if (!DispatchUiEvent(settingsWidgets_.get(), event, target))
+		if (!DispatchToTrees(trees, event, target))
 		{
 			OnClick(id);
 		}
 	}
 	else if (type == "change")
 	{
-		DispatchUiEvent(settingsWidgets_.get(), event, target);
+		DispatchToTrees(trees, event, target);
 	}
 }
 
