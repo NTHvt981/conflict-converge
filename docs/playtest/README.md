@@ -82,6 +82,7 @@ frames per note is the budget.
 | [2026-11-05-smoke-and-first-order.md](2026-11-05-smoke-and-first-order.md) | Release `2066fcb` | Can a player reach a match and issue one move order from what the screens say, and does every screen name the next action? | retune |
 | [2026-11-06-skirmish-setup-hint](2026-11-06-skirmish-setup-hint.md) | Release `33ac981` | disabled `Start match` cursor hint shows before selection, none after | keep |
 | [2026-11-21-ui-widget-pause-dispatch](2026-11-21-ui-widget-pause-dispatch.md) | Release `4aa767e` (dirty) | after the pause screen moves to `UiWidget` with one document-level listener, do buttons, sliders and toggles still reach their handlers? | keep |
+| [2026-11-21-ui-widget-settings-menu-dispatch](2026-11-21-ui-widget-settings-menu-dispatch.md) | Release `73f3c6a` | after the settings, main-menu and confirm screens move to `UiWidget`, does every control on them reach its handler? | keep |
 
 ## Decision log
 
@@ -93,3 +94,4 @@ because of a playtest.
 | 2026-11-05 | [2026-11-05-smoke-and-first-order.md](2026-11-05-smoke-and-first-order.md) | retune | Skirmish setup: show a "select a map first" hint next to the disabled `Start match` ([#79](https://github.com/NTHvt981/conflict-converge/issues/79)) | [2026-11-06-skirmish-setup-hint](2026-11-06-skirmish-setup-hint.md) |
 | 2026-11-06 | [2026-11-06-skirmish-setup-hint](2026-11-06-skirmish-setup-hint.md) | keep | none | the issue #79 `CONFIRM` run in that note |
 | 2026-11-21 | [2026-11-21-ui-widget-pause-dispatch](2026-11-21-ui-widget-pause-dispatch.md) | keep | none | the slice 1 run that deletes the pause branches from `OnClick` |
+| 2026-11-21 | [2026-11-21-ui-widget-settings-menu-dispatch](2026-11-21-ui-widget-settings-menu-dispatch.md) | keep | none | the slice 2d run that converts the setup and load rows |
