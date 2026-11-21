@@ -15,7 +15,9 @@
 #include "app/match/Menu.h"
 #include "app/ui/CursorHint.h"
 #include "app/ui/RmlUiHost.h"
+#include "app/ui/RmlUiWidgetAdapter.h"
 #include "app/ui/UiIds.h"
+#include "app/ui/UiWidget.h"
 
 namespace {
 
@@ -180,6 +182,8 @@ RmlUiMenus::RmlUiMenus(MenuFlow &menu, HotkeyMap &hotkeys, Art &art, Audio &audi
 {
 }
 
+RmlUiMenus::~RmlUiMenus() = default;
+
 bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
 {
 	if (ready_)
@@ -213,11 +217,8 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
 		const std::string id = UiIds::WithIndex(UiIds::DifficultyRow, row);
 		Listen(setupDoc_, "click", { id });
 	}
-	Listen(settingsDoc_, "click", { UiIds::BtnSettingsBack, UiIds::BtnRemap });
-	Listen(settingsDoc_, "change",
-		   { UiIds::OptCamSpeed, UiIds::OptMinimap, UiIds::OptHints, UiIds::OptMaster,
-			 UiIds::OptMusic, UiIds::OptSfx, UiIds::OptMute, UiIds::OptRightDrag,
-			 UiIds::OptColorBlind, UiIds::OptUiScale });
+	settingsDoc_->AddEventListener("click", this);
+	settingsDoc_->AddEventListener("change", this);
 	for (int slot = 0; slot < 4; ++slot)
 	{
 		const std::string id = UiIds::WithIndex(UiIds::SlotRow, slot);
@@ -229,6 +230,7 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
 	PopulateMaps();
 	hintEntries_.push_back({UiIds::BtnStart, {}});
 	hint_.Bind(setupDoc_, UiIds::CursorHint, hintEntries_);
+	BuildSettingsWidgets();
 	ready_ = true;
 	ShowState();
 	return true;
@@ -252,6 +254,7 @@ void RmlUiMenus::Shutdown()
 	context_ = nullptr;
 	host_ = nullptr;
 	ready_ = false;
+	settingsWidgets_.reset();
 	pendingChoice_ = ConfirmChoice::None;
 }
 
@@ -323,6 +326,10 @@ ConfirmChoice RmlUiMenus::Draw(int screenWidth, int screenHeight)
 	{
 		hint_.Update(context_, !menu_.ConfirmOpen());
 	}
+	if (menu_.state == MenuState::Settings)
+	{
+		RefreshSettings();
+	}
 	host_->BeginFrame(screenWidth, screenHeight, menu_.settings.uiScale);
 	BeginDrawing();
 	ClearBackground(RAYWHITE);
@@ -368,11 +375,14 @@ void RmlUiMenus::ProcessEvent(Rml::Event &event)
 	const Rml::String id = target->GetId();
 	if (type == "click")
 	{
-		OnClick(id);
+		if (!DispatchUiEvent(settingsWidgets_.get(), event, target))
+		{
+			OnClick(id);
+		}
 	}
 	else if (type == "change")
 	{
-		OnChange(target, id);
+		DispatchUiEvent(settingsWidgets_.get(), event, target);
 	}
 }
 
@@ -464,26 +474,6 @@ void RmlUiMenus::Announce(EventType type)
 void RmlUiMenus::SetDisabled(Rml::Element *el, bool disabled)
 {
 	el->SetClass("disabled", disabled);
-}
-
-float RmlUiMenus::Clamp(float value, float low, float high)
-{
-	return value < low ? low : (value > high ? high : value);
-}
-
-float RmlUiMenus::ReadRange(Rml::Element *el)
-{
-	if (auto *control = dynamic_cast<Rml::ElementFormControl *>(el))
-	{
-		try
-		{
-			return std::stof(control->GetValue().c_str());
-		}
-		catch (const std::exception &)
-		{
-		}
-	}
-	return 0.0f;
 }
 
 Rml::Element *RmlUiMenus::ById(Rml::ElementDocument *doc, std::string_view id)

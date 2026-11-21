@@ -1,6 +1,7 @@
 #pragma once
 
 #include <initializer_list>
+#include <memory>
 #include <string>
 #include <string_view>
 
@@ -22,6 +23,7 @@ class Audio;
 class EventDispatcher;
 class HotkeyMap;
 class RmlUiHost;
+class UiWidget;
 struct MenuFlow;
 
 // Esc/Back stays with ShortcutBindings (game owns Esc); forwarded keys exclude
@@ -33,6 +35,7 @@ public:
 			   EventDispatcher &events, MenuScreens &screens, MenuCallbacks callbacks);
 	RmlUiMenus(const RmlUiMenus &) = delete;
 	RmlUiMenus &operator=(const RmlUiMenus &) = delete;
+	~RmlUiMenus();
 
 	// False when the host is not ready or a document is missing (caller falls back).
 	bool Init(RmlUiHost &host, const std::string &dataDir);
@@ -71,6 +74,7 @@ private:
 	void RefreshCurrent();
 	void RefreshSetup();
 	void RefreshSettings();
+	void BuildSettingsWidgets();
 	void RefreshLoad();
 	void RefreshConfirm();
 	void PopulateMaps();
@@ -79,12 +83,9 @@ private:
 	void PollRemapCapture();
 	std::string RemapSignature() const;
 	void OnClick(const Rml::String &id);
-	void OnChange(Rml::Element *target, const Rml::String &id);
 	void Announce(EventType type);
 
 	static void SetDisabled(Rml::Element *el, bool disabled);
-	static float Clamp(float value, float low, float high);
-	static float ReadRange(Rml::Element *el);
 	static Rml::Element *ById(Rml::ElementDocument *doc, std::string_view id);
 	void SetRangeIn(Rml::ElementDocument *doc, std::string_view id, float value);
 	void SetCheckIn(Rml::ElementDocument *doc, std::string_view id, bool checked);
@@ -113,6 +114,7 @@ private:
 	Rml::ElementDocument *loadDoc_ = nullptr;
 	Rml::ElementDocument *confirmDoc_ = nullptr;
 	Rml::ElementDocument *remapDoc_ = nullptr;
+	std::unique_ptr<UiWidget> settingsWidgets_;
 	int remapArming_ = -1; // action being rebound, -1 = none
 	std::string remapConflictAction_; // pending conflict, awaiting the steal click
 	int remapConflictKey_ = 0;
