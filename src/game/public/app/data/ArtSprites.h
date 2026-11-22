@@ -20,6 +20,8 @@ enum class TileSheet : std::uint8_t
 {
 	Grass,
 	Water,
+	Dirt,
+	Road,
 	Count
 };
 

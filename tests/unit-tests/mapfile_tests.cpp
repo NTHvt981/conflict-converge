@@ -113,6 +113,17 @@ void RunMapFileTests()
 	CC_CHECK(TerrainCost(TerrainType::Forest, Locomotor::Tracked) == 1.8f);
 	CC_CHECK(TerrainCost(TerrainType::Forest, Locomotor::Wheeled) == 1.6f);
 	CC_CHECK(TerrainCost(TerrainType::Water) == 0.0f);
+	CC_CHECK(TerrainCost(TerrainType::Dirt, Locomotor::Foot) == 1.0f);
+	CC_CHECK(TerrainCost(TerrainType::Dirt, Locomotor::Tracked) == 1.0f);
+	CC_CHECK(TerrainCost(TerrainType::Dirt, Locomotor::Wheeled) == 1.0f);
+	CC_CHECK(TerrainCost(TerrainType::Road, Locomotor::Foot) == 1.0f);
+	CC_CHECK(TerrainCost(TerrainType::Road, Locomotor::Tracked) == 1.0f);
+	CC_CHECK(TerrainCost(TerrainType::Road, Locomotor::Wheeled) == 1.0f);
+	TileMap paved(4, 4);
+	paved.Set({ 0, 0 }, TerrainType::Dirt);
+	paved.Set({ 1, 0 }, TerrainType::Road);
+	CC_CHECK(!paved.IsBlocked({ 0, 0 }));
+	CC_CHECK(!paved.IsBlocked({ 1, 0 }));
 	CC_CHECK(InfoOf(UnitType::RifleInfantry).locomotor == Locomotor::Foot);
 	CC_CHECK(InfoOf(UnitType::LightTank).locomotor == Locomotor::Tracked);
 	CC_CHECK(InfoOf(UnitType::IFV).locomotor == Locomotor::Wheeled);
@@ -146,6 +157,14 @@ void RunMapFileTests()
 	CC_CHECK(data.playerSpawns.size() == 1 && data.playerSpawns[0] == cc::IVec2(1, 0));
 	CC_CHECK(data.aiSpawns.size() == 1 && data.aiSpawns[0] == cc::IVec2(3, 1));
 	CC_CHECK(data.nodes.size() == 2);
+
+	const std::string drPath = TempMap("cc_map_dr.map");
+	WriteFile(drPath, "# c\nname=N\nauthor=\nwidth=2\nheight=1\ndr\n");
+	MapData dr;
+	CC_CHECK(ParseMapFile(drPath, dr));
+	CC_CHECK(dr.terrain[0] == TerrainType::Dirt);
+	CC_CHECK(dr.terrain[1] == TerrainType::Road);
+	std::remove(drPath.c_str());
 
 	MapData bad;
 	CC_CHECK(!ParseMapFile(TempMap("cc_map_missing.map"), bad)); // absent file
@@ -422,6 +441,29 @@ void RunMapFileTests()
 	}
 
 	{
+		MapData pavedMap;
+		pavedMap.name = "Paved";
+		pavedMap.author = "test";
+		pavedMap.width = 2;
+		pavedMap.height = 1;
+		pavedMap.terrain = { TerrainType::Dirt, TerrainType::Road };
+		const std::string outPath = TempMap("cc_editor_paved.map");
+		CC_CHECK(WriteMapFile(pavedMap, outPath));
+		std::ifstream in(outPath, std::ios::binary);
+		std::string line;
+		for (int i = 0; i < 5; ++i)
+		{
+			std::getline(in, line);
+		}
+		std::getline(in, line);
+		CC_CHECK(line == "dr");
+		MapData back;
+		CC_CHECK(ParseMapFile(outPath, back));
+		CC_CHECK(back.terrain == pavedMap.terrain);
+		std::remove(outPath.c_str());
+	}
+
+	{
 		MapData huge;
 		huge.name = "Huge";
 		huge.width = 2048;
@@ -452,6 +494,10 @@ void RunMapFileTests()
 		CC_CHECK(canvas.nodes.size() == 1 && canvas.playerSpawns.size() == 1);
 		CC_CHECK(canvas.terrain[1 * 4 + 1] == TerrainType::Grass); // marker sits on grass
 		CC_CHECK(canvas.terrain[2 * 4 + 2] == TerrainType::Water);
+		PaintEditorCell(canvas, 'd', { 3, 0 });
+		PaintEditorCell(canvas, 'r', { 3, 1 });
+		CC_CHECK(canvas.terrain[0 * 4 + 3] == TerrainType::Dirt);
+		CC_CHECK(canvas.terrain[1 * 4 + 3] == TerrainType::Road);
 		// Repainting the node tile with grass clears the marker entry.
 		PaintEditorCell(canvas, '.', { 1, 1 });
 		CC_CHECK(canvas.nodes.empty());

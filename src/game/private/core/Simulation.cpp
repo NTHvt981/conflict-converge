@@ -451,6 +451,8 @@ void Simulation::RefreshMinimapTexture(float dt)
 				const Color tint = terrain == TerrainType::Water    ? DARKBLUE
 								 : terrain == TerrainType::Forest ? Color{ 20, 90, 20, 255 }
 								 : terrain == TerrainType::Rock   ? GRAY
+								 : terrain == TerrainType::Dirt   ? Color{ 120, 80, 45, 255 }
+								 : terrain == TerrainType::Road   ? Color{ 140, 140, 140, 255 }
 																  : DARKGRAY;
 				DrawRectangleV({ corner.x - minimap_.screenRect.x, corner.y - minimap_.screenRect.y },
 							   { 8.0f, 8.0f }, tint);

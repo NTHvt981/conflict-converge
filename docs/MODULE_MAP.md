@@ -77,8 +77,8 @@ app/match: Menu, Skirmish
 
 ## world
 
-- `TileMap.h` - Grid dims, `TerrainType` Grass/Water/Building/Forest/Rock (Forest passable,
-  Rock blocks; new types append after Building so old saves still decode), `IsBlocked`
+- `TileMap.h` - Grid dims, `TerrainType` Grass/Water/Building/Forest/Rock/Dirt/Road (Forest
+  passable, Rock blocks; new types append before `Count` so old saves still decode), `IsBlocked`
   (Water/Building/Rock + OOB = true)
 - `Pathfinder.h` - 8-dir A* over one shared core (`FindPath` terrain-only,
   `FindPathFootprint` occupancy-aware with corner-cut guard); `TerrainCost` table

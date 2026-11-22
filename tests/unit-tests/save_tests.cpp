@@ -72,6 +72,8 @@ void RunSaveGameTests()
 	src.camera.view.rotation = 0.0f;
 	src.camera.view.zoom = 1.5f;
 	src.map.Set({ 6, 3 }, TerrainType::Water);
+	src.map.Set({ 7, 3 }, TerrainType::Dirt);
+	src.map.Set({ 8, 3 }, TerrainType::Road);
 	PlaceBuilding(src.registry, src.map, BuildingType::Base, kPlayerTeam, 1, 10);
 	PlaceBuilding(src.registry, src.map, BuildingType::Bootcamp, kEnemyTeam, 10, 10);
 	PlaceBuilding(src.registry, src.map, BuildingType::Workshop, kPlayerTeam, 5, 10);
@@ -139,6 +141,8 @@ void RunSaveGameTests()
 	CC_CHECK(Near(dst.camera.view.zoom, 1.5f));
 	CC_CHECK(dst.map.Width() == 20 && dst.map.Height() == 15);
 	CC_CHECK(dst.map.Get({ 6, 3 }) == TerrainType::Water);
+	CC_CHECK(dst.map.Get({ 7, 3 }) == TerrainType::Dirt);
+	CC_CHECK(dst.map.Get({ 8, 3 }) == TerrainType::Road);
 	CC_CHECK(dst.map.Get({ 1, 10 }) == TerrainType::Building);
 	CC_CHECK(dst.map.Get({ 0, 0 }) == TerrainType::Grass);
 	CC_CHECK(dst.fog.IsExplored(kPlayerTeam, { 2, 2 })); // team_fog survived the trip
@@ -206,7 +210,7 @@ void RunSaveGameTests()
 			  << "\"map\":{\"width\":20,\"height\":15,\"terrain\":[";
 		for (int i = 0; i < 300; ++i)
 		{
-			wire2 << (i == 0 ? "0" : ",0");
+			wire2 << (i == 0 ? "" : ",") << (i % 5);
 		}
 		wire2 << "]},"
 			  << "\"buildings\":[{"

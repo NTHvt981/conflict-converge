@@ -93,6 +93,8 @@ constexpr TerrainArtInfo kTerrainArt[] = {
 	{ nullptr, -1 },
 	{ "forest", 2 },
 	{ "rock", 3 },
+	{ nullptr, -1 },
+	{ nullptr, -1 },
 };
 
 static_assert(sizeof(kTerrainArt) / sizeof(kTerrainArt[0]) ==
@@ -133,6 +135,10 @@ const char *ArtSprites::TileSheetFile(TileSheet sheet)
 		return "grass";
 	case TileSheet::Water:
 		return "water";
+	case TileSheet::Dirt:
+		return "dirt";
+	case TileSheet::Road:
+		return "road";
 	case TileSheet::Count:
 		break;
 	}
@@ -147,6 +153,10 @@ std::optional<TileSheet> ArtSprites::TileSheetFor(TerrainType type)
 		return TileSheet::Grass;
 	case TerrainType::Water:
 		return TileSheet::Water;
+	case TerrainType::Dirt:
+		return TileSheet::Dirt;
+	case TerrainType::Road:
+		return TileSheet::Road;
 	default:
 		break;
 	}

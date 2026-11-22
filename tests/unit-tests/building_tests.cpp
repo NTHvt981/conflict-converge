@@ -49,6 +49,12 @@ void RunBuildingTests()
 	map.Set({ 5, 5 }, TerrainType::Water);
 	CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 5, 5) ==
 			 kInvalidEntity);
+	map.Set({ 6, 5 }, TerrainType::Dirt);
+	map.Set({ 7, 5 }, TerrainType::Road);
+	CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 6, 5) !=
+			 kInvalidEntity);
+	CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 7, 5) !=
+			 kInvalidEntity);
 	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Base, kPlayerTeam, 19, 14) ==
 			  kInvalidEntity);
 	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Base, kPlayerTeam, -1, 0) ==

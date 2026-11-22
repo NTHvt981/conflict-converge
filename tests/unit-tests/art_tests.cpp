@@ -244,11 +244,15 @@ void RunArtTests()
 		CC_CHECK(std::string(Art::TerrainFile(TerrainType::Forest)) == "forest");
 		CC_CHECK(std::string(Art::TerrainFile(TerrainType::Rock)) == "rock");
 		CC_CHECK(Art::TerrainFile(TerrainType::Building) == nullptr);
+		CC_CHECK(Art::TerrainFile(TerrainType::Dirt) == nullptr);
+		CC_CHECK(Art::TerrainFile(TerrainType::Road) == nullptr);
 		CC_CHECK(Art::TerrainSlot(TerrainType::Grass) == 0);
 		CC_CHECK(Art::TerrainSlot(TerrainType::Water) == 1);
 		CC_CHECK(Art::TerrainSlot(TerrainType::Forest) == 2);
 		CC_CHECK(Art::TerrainSlot(TerrainType::Rock) == 3);
 		CC_CHECK(Art::TerrainSlot(TerrainType::Building) == -1);
+		CC_CHECK(Art::TerrainSlot(TerrainType::Dirt) == -1);
+		CC_CHECK(Art::TerrainSlot(TerrainType::Road) == -1);
 		// Every art-bearing type owns a distinct slot inside terrain_.
 		bool seenSlots[Art::kTerrainSlots] = {};
 		for (int t = 0; t < static_cast<int>(TerrainType::Count); ++t)
@@ -280,8 +284,12 @@ void RunArtTests()
 		CC_CHECK(!Art::TileSheetFor(TerrainType::Forest).has_value());
 		CC_CHECK(!Art::TileSheetFor(TerrainType::Rock).has_value());
 		CC_CHECK(!Art::TileSheetFor(TerrainType::Building).has_value());
+		CC_CHECK(Art::TileSheetFor(TerrainType::Dirt) == TileSheet::Dirt);
+		CC_CHECK(Art::TileSheetFor(TerrainType::Road) == TileSheet::Road);
 		CC_CHECK(std::string(Art::TileSheetFile(TileSheet::Grass)) == "grass");
 		CC_CHECK(std::string(Art::TileSheetFile(TileSheet::Water)) == "water");
+		CC_CHECK(std::string(Art::TileSheetFile(TileSheet::Dirt)) == "dirt");
+		CC_CHECK(std::string(Art::TileSheetFile(TileSheet::Road)) == "road");
 
 		CC_CHECK(Art::TileVariant(3, 5) == Art::TileVariant(3, 5));
 		bool seen[Art::kTileFrames] = {};

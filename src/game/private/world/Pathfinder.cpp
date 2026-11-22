@@ -135,6 +135,10 @@ float TerrainCost(TerrainType terrain, Locomotor locomotor)
 	{
 	case TerrainType::Grass:
 		return 1.0f;
+	case TerrainType::Dirt:
+		return 1.0f;
+	case TerrainType::Road:
+		return 1.0f;
 	case TerrainType::Forest:
 		return locomotor == Locomotor::Foot ? 1.0f
 			 : locomotor == Locomotor::Tracked ? 1.8f
