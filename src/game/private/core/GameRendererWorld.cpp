@@ -372,7 +372,9 @@ void GameRenderer::DrawTerrainTiles()
 				}
 				else
 				{
-					art_.DrawTerrain(terrain, corner);
+					const TerrainType draw =
+						Art::TileSheetFor(terrain).has_value() ? TerrainType::Grass : terrain;
+					art_.DrawTerrain(draw, corner);
 				}
 			}
 		}
