@@ -51,10 +51,12 @@ void RunBuildingTests()
 			 kInvalidEntity);
 	map.Set({ 6, 5 }, TerrainType::Dirt);
 	map.Set({ 7, 5 }, TerrainType::Road);
-	CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 6, 5) !=
-			 kInvalidEntity);
-	CC_CHECK(PlaceBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 7, 5) !=
-			 kInvalidEntity);
+	const Entity dirtDepot =
+		PlaceBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 6, 5);
+	CC_CHECK(dirtDepot != kInvalidEntity);
+	const Entity roadDepot =
+		PlaceBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 7, 5);
+	CC_CHECK(roadDepot != kInvalidEntity);
 	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Base, kPlayerTeam, 19, 14) ==
 			  kInvalidEntity);
 	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Base, kPlayerTeam, -1, 0) ==
@@ -64,6 +66,10 @@ void RunBuildingTests()
 	CC_CHECK(!registry.IsAlive(base));
 	CC_CHECK(map.Get({ 1, 1 }) == TerrainType::Grass);
 	CC_CHECK(map.Get({ 2, 2 }) == TerrainType::Grass);
+	CC_CHECK(DemolishBuilding(registry, map, dirtDepot));
+	CC_CHECK(map.Get({ 6, 5 }) == TerrainType::Grass);
+	CC_CHECK(DemolishBuilding(registry, map, roadDepot));
+	CC_CHECK(map.Get({ 7, 5 }) == TerrainType::Grass);
 	CC_CHECK(!DemolishBuilding(registry, map, base)); // already gone: no-op
 	CC_CHECK(!DemolishBuilding(registry, map, kInvalidEntity));
 
