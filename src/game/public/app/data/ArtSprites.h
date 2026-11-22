@@ -64,6 +64,9 @@ public:
 	const Font &UiFont() const;
 
 	static constexpr int kTileFrames = 8;
+	static constexpr float kWaterFrameSeconds = 0.15f;
+	// 0..kTileFrames-1; negative or zero seconds gives frame 0.
+	static int WaterFrame(float seconds);
 	static const char *TileSheetFile(TileSheet sheet);
 	// Best render material for a terrain type; none means the 128px art path.
 	static std::optional<TileSheet> TileSheetFor(TerrainType type);

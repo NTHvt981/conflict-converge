@@ -153,6 +153,16 @@ std::optional<TileSheet> ArtSprites::TileSheetFor(TerrainType type)
 	return std::nullopt;
 }
 
+int ArtSprites::WaterFrame(float seconds)
+{
+	if (seconds <= 0.0f)
+	{
+		return 0;
+	}
+	const int step = static_cast<int>(seconds / kWaterFrameSeconds);
+	return step % kTileFrames;
+}
+
 int ArtSprites::TileVariant(int cellX, int cellY)
 {
 	unsigned int h = static_cast<unsigned int>(cellX) * 0x9E3779B9u ^

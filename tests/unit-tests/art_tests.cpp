@@ -301,6 +301,26 @@ void RunArtTests()
 		}
 		CC_CHECK(distinct >= 4);
 
+		CC_CHECK(Art::WaterFrame(0.0f) == 0);
+		CC_CHECK(Art::WaterFrame(-1.0f) == 0);
+		for (int i = 0; i < Art::kTileFrames; ++i)
+		{
+			const float seconds = (static_cast<float>(i) + 0.5f) * Art::kWaterFrameSeconds;
+			CC_CHECK(Art::WaterFrame(seconds) == i);
+		}
+		CC_CHECK(Art::WaterFrame((static_cast<float>(Art::kTileFrames) + 2.5f) *
+								 Art::kWaterFrameSeconds) == 2);
+		{
+			int previous = Art::WaterFrame(0.0f);
+			for (int sample = 0; sample < 200; ++sample)
+			{
+				const int frame = Art::WaterFrame(static_cast<float>(sample) * 0.01f);
+				CC_CHECK(frame >= 0 && frame < Art::kTileFrames);
+				CC_CHECK(frame == 0 || frame >= previous);
+				previous = frame;
+			}
+		}
+
 		Art art;
 		CC_CHECK(!art.Init(InitMode::Headless));
 		CC_CHECK(!art.UseTileSheets());

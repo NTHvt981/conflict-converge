@@ -93,6 +93,11 @@ int Art::TileVariant(int cellX, int cellY)
 	return ArtSprites::TileVariant(cellX, cellY);
 }
 
+int Art::WaterFrame(float seconds)
+{
+	return ArtSprites::WaterFrame(seconds);
+}
+
 void Art::DrawTileFill(TileSheet sheet, int frame, Vector2 corner) const
 {
 	draw_.DrawTileFill(sprites_, sheet, frame, corner);

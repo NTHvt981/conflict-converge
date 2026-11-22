@@ -48,6 +48,8 @@ public:
 	void DrawTerrain(TerrainType type, Vector2 corner) const;
 
 	static constexpr int kTileFrames = ArtSprites::kTileFrames;
+	static constexpr float kWaterFrameSeconds = ArtSprites::kWaterFrameSeconds;
+	static int WaterFrame(float seconds);
 	bool UseTileSheets() const;
 	static const char *TileSheetFile(TileSheet sheet);
 	static std::optional<TileSheet> TileSheetFor(TerrainType type);

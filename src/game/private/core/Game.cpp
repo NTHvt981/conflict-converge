@@ -290,6 +290,7 @@ void Game::Update()
 		player_.Get<PlayingInput>().Dispatch(rmlUiHud_.IsPointerOverUI());
 		const double simStart = GetTime();
 		sim_.Step(GetFrameTime());
+		renderer_.AdvanceWorldClock(GetFrameTime());
 		simMs = (GetTime() - simStart) * 1000.0;
 	}
 
@@ -299,6 +300,7 @@ void Game::Update()
 
 	if (menu_.state == MenuState::ReplayViewer && sim_.ReplayCount() > 0)
 	{
+		renderer_.AdvanceWorldClock(GetFrameTime());
 		replayPlayTimer_ += GetFrameTime();
 		if (replayPlayTimer_ >= 2.0f)
 		{

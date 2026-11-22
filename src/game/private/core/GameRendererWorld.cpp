@@ -330,7 +330,7 @@ void GameRenderer::DrawTerrainTiles()
 							const int cellX = x * cc::kRenderTilesPerAxis + rx;
 							const int cellY = y * cc::kRenderTilesPerAxis + ry;
 							const int frame = *sheet == TileSheet::Water
-												  ? 0
+												  ? Art::WaterFrame(worldTimeSeconds_)
 												  : Art::TileVariant(cellX, cellY);
 							art_.DrawTileFill(*sheet, frame,
 											  { corner.x + rx * cc::kRenderTileSize,

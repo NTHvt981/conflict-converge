@@ -1,6 +1,8 @@
 
 #include "core/GameRenderer.h"
 
+#include <cmath>
+
 GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry &registry,
 						   FogOfWar &fog, ResourceNodes &nodes, Minimap &minimap, Pings &pings,
 						   Vfx &vfx, PlayingInput &playingInput, MenuFlow &menu,
@@ -36,6 +38,16 @@ GameRenderer::GameRenderer(Art &art, GameCamera &camera, TileMap &map, Registry 
 	, rmlUiMenus_(rmlUiMenus)
 	, quitToMenu_(std::move(quitToMenu))
 {
+}
+
+void GameRenderer::AdvanceWorldClock(float dtSeconds)
+{
+	if (dtSeconds <= 0.0f)
+	{
+		return;
+	}
+	const float period = static_cast<float>(Art::kTileFrames) * Art::kWaterFrameSeconds;
+	worldTimeSeconds_ = std::fmod(worldTimeSeconds_ + dtSeconds, period);
 }
 
 void GameRenderer::DrawWorld()
