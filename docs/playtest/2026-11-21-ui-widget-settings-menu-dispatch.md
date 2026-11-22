@@ -20,6 +20,8 @@
 | 1 | 21:13 | main-menu and confirm controls reach their handlers | `conflict-converge-20261121-2113`, `-2114`, `-2115`, `-2116` |
 | 2 | 21:23 | settings and remap controls reach their handlers | `conflict-converge-20261121-2123` to `-2124` |
 
+Both runs cover different screens, so each claim below rests on one action sequence and is **observed once**.
+
 ## Observations
 
 | # | When | Where | Action | Observed | Believed | Evidence | Severity |
