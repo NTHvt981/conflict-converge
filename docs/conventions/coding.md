@@ -13,7 +13,7 @@ One line per area; the linked section carries the Do/Don't pair.
 | --- | --- |
 | [Build](#language-and-build) | C++23, MSVC, x64; regenerate projects after any file add or remove |
 | [Layout](#files-and-folders) | Header in `public/<module>/`, TU in `private/<module>/`, PascalCase file names |
-| [Naming](#naming) | PascalCase types/functions; camelCase data in full words; `_` class members; `k` constants; `Count` last |
+| [Naming](#naming) | PascalCase types/functions; camelCase data in full words; bool names are predicates; `_` class members; `k` constants; `Count` last |
 | [Domain types](#name-domain-types-instead-of-bare-ints) | A sentinel or mode gets a named type; wire fields stay `std::int32_t` |
 | [Type tables](#keep-one-descriptor-table-per-type-enum) | One descriptor table per type enum; a new enumerator adds a row, not a `case` |
 | [Includes](#headers-and-includes) | `#pragma once`; own header first; root-qualified includes; forward-declare cycles |
@@ -268,6 +268,10 @@ bool CheckBlocked(cc::IVec2 tile) const;
 bool Blocked(cc::IVec2 tile) const;
 bool Enter(cc::IVec2 tile) const;
 ```
+
+Every function that returns `bool` reads as a question, including free
+functions, member functions, and `const` queries. A participle or a noun names
+a state instead of asking about it, so `FogRevealed` becomes `IsFogRevealed`.
 
 ### Use camelCase for variables, parameters, and struct fields
 
@@ -532,6 +536,10 @@ bool flag = false;
 bool mode = true;
 void IssueOrEnqueue(..., bool b, QueuedOrder order);
 ```
+
+A `bool` name completes `is it true that ___?` or `should we ___?`. That covers
+locals, parameters, and struct fields. A bare adjective or noun (`revealed`,
+`fog`, `mode`) does not name a predicate.
 
 ## Headers and includes
 
@@ -1552,7 +1560,7 @@ symbol. See `docs/conventions/ascii-diagram.md`.
 
 - [ ] x64 + C++23, projects regenerated after file changes
 - [ ] header in `public/`, TU in `private/`, `#pragma once`, no new cycle
-- [ ] PascalCase types/functions, camelCase data in full words, `_` class members, `k` constants
+- [ ] PascalCase types/functions, bool functions and variables read as predicates, camelCase data in full words, `_` class members, `k` constants
 - [ ] tabs, Allman braces, `const T &`, `= {}` defaults, LF, 100 columns
 - [ ] `CC_ASSERT` invariants, `expected` from loaders, bool/sentinel gameplay, no throwing gameplay, no silent catch
 - [ ] JSON camelCase, save wire append-only, version bumped on a break

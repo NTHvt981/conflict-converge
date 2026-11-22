@@ -58,6 +58,7 @@ private:
 	void DrawUnitEntity(Entity id, Unit &unit);
 	void DrawProjectiles();
 	void DrawFogVeil();
+	bool IsFogRevealed() const;
 	void DrawDragPreviews();
 	void DrawMinimapOverlays(int screenWidth, int screenHeight);
 	void DrawHoverTooltip();
