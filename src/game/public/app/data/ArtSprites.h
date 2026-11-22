@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstdint>
 #include <expected>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -13,6 +15,13 @@
 #include "units/Unit.h"
 
 enum class TerrainType : std::uint8_t;
+
+enum class TileSheet : std::uint8_t
+{
+	Grass,
+	Water,
+	Count
+};
 
 enum class BuildingFrame
 {
@@ -54,6 +63,15 @@ public:
 	bool HasFont() const;
 	const Font &UiFont() const;
 
+	static constexpr int kTileFrames = 8;
+	static const char *TileSheetFile(TileSheet sheet);
+	// Best render material for a terrain type; none means the 128px art path.
+	static std::optional<TileSheet> TileSheetFor(TerrainType type);
+	// 0..kTileFrames-1, deterministic per render cell.
+	static int TileVariant(int cellX, int cellY);
+	// True when every 64px tile sheet loaded and the rectangle fallback is off.
+	bool UseTileSheets() const;
+
 	// Foot infantry render 72px cells against the 128px tile; others 1x.
 	static float BaseArtScale(UnitType type);
 	// `TerrainFile` is the `<stem>_128px.png` stem; `TerrainSlot` indexes
@@ -91,6 +109,7 @@ private:
 	Texture2D rallyBase_ = {};
 	Texture2D rallyMask_ = {};
 	Texture2D terrain_[kTerrainSlots] = {}; // [TerrainSlot]
+	Texture2D tileSheets_[static_cast<int>(TileSheet::Count)] = {}; // [TileSheet]
 	Font uiFont_ = {};               // valid only when fontReady_
 	bool fontReady_ = false;
 };

@@ -318,7 +318,27 @@ void GameRenderer::DrawTerrainTiles()
 			}
 			else
 			{
-				if (terrain == TerrainType::Building)
+				const TerrainType fillTerrain =
+					terrain == TerrainType::Building ? TerrainType::Grass : terrain;
+				const std::optional<TileSheet> sheet = Art::TileSheetFor(fillTerrain);
+				if (sheet.has_value() && art_.UseTileSheets())
+				{
+					for (int ry = 0; ry < cc::kRenderTilesPerAxis; ++ry)
+					{
+						for (int rx = 0; rx < cc::kRenderTilesPerAxis; ++rx)
+						{
+							const int cellX = x * cc::kRenderTilesPerAxis + rx;
+							const int cellY = y * cc::kRenderTilesPerAxis + ry;
+							const int frame = *sheet == TileSheet::Water
+												  ? 0
+												  : Art::TileVariant(cellX, cellY);
+							art_.DrawTileFill(*sheet, frame,
+											  { corner.x + rx * cc::kRenderTileSize,
+												corner.y + ry * cc::kRenderTileSize });
+						}
+					}
+				}
+				else if (terrain == TerrainType::Building)
 				{
 					art_.DrawTerrain(TerrainType::Grass, corner);
 				}

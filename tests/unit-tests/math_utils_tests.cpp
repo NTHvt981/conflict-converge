@@ -6,6 +6,8 @@
 
 static_assert(sizeof(cc::Vec2) == 8, "cc::Vec2 must be two floats");
 static_assert(cc::TILE_SIZE == 128.0f, "tile grid must be 128x128");
+static_assert(cc::kRenderTileSize == 64.0f, "render tile must be 64x64");
+static_assert(cc::kRenderTilesPerAxis == 2, "one logic tile holds 2x2 render tiles");
 
 void RunMathUtilsTests()
 {

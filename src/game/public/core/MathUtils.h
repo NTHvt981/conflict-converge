@@ -14,6 +14,10 @@ using TileUnit = float;
 inline constexpr float TILE_SIZE = 128.0f;
 inline constexpr float kHalfTile = TILE_SIZE * 0.5f;
 inline constexpr float kQuarterTile = TILE_SIZE * 0.25f;
+inline constexpr float kRenderTileSize = 64.0f;
+inline constexpr int kRenderTilesPerAxis = 2;
+static_assert(kRenderTileSize * kRenderTilesPerAxis == TILE_SIZE,
+			  "render grid must divide the logic tile");
 
 Vec2 ToGlm(Vector2 v);
 Vector2 ToRaylib(Vec2 v);

@@ -73,6 +73,31 @@ void Art::DrawTerrain(TerrainType type, Vector2 corner) const
 	draw_.DrawTerrain(sprites_, type, corner);
 }
 
+bool Art::UseTileSheets() const
+{
+	return sprites_.UseTileSheets();
+}
+
+const char *Art::TileSheetFile(TileSheet sheet)
+{
+	return ArtSprites::TileSheetFile(sheet);
+}
+
+std::optional<TileSheet> Art::TileSheetFor(TerrainType type)
+{
+	return ArtSprites::TileSheetFor(type);
+}
+
+int Art::TileVariant(int cellX, int cellY)
+{
+	return ArtSprites::TileVariant(cellX, cellY);
+}
+
+void Art::DrawTileFill(TileSheet sheet, int frame, Vector2 corner) const
+{
+	draw_.DrawTileFill(sprites_, sheet, frame, corner);
+}
+
 bool Art::HasFont() const
 {
 	return sprites_.HasFont();

@@ -2,6 +2,7 @@
 
 #include <cstdio>
 
+#include "core/MathUtils.h"
 #include "economy/BuildingTypeInfo.h"
 #include "units/UnitTypeInfo.h"
 #include "world/TileMap.h"
@@ -122,6 +123,60 @@ const char *ArtSprites::TerrainFile(TerrainType type)
 int ArtSprites::TerrainSlot(TerrainType type)
 {
 	return kTerrainArt[static_cast<std::size_t>(type)].slot;
+}
+
+const char *ArtSprites::TileSheetFile(TileSheet sheet)
+{
+	switch (sheet)
+	{
+	case TileSheet::Grass:
+		return "grass";
+	case TileSheet::Water:
+		return "water";
+	case TileSheet::Count:
+		break;
+	}
+	return nullptr;
+}
+
+std::optional<TileSheet> ArtSprites::TileSheetFor(TerrainType type)
+{
+	switch (type)
+	{
+	case TerrainType::Grass:
+		return TileSheet::Grass;
+	case TerrainType::Water:
+		return TileSheet::Water;
+	default:
+		break;
+	}
+	return std::nullopt;
+}
+
+int ArtSprites::TileVariant(int cellX, int cellY)
+{
+	unsigned int h = static_cast<unsigned int>(cellX) * 0x9E3779B9u ^
+					 static_cast<unsigned int>(cellY) * 0x85EBCA6Bu;
+	h ^= h >> 16;
+	h *= 0x45D9F3Bu;
+	h ^= h >> 16;
+	return static_cast<int>(h % static_cast<unsigned int>(kTileFrames));
+}
+
+bool ArtSprites::UseTileSheets() const
+{
+	if (UseRectangles())
+	{
+		return false;
+	}
+	for (const Texture2D &tex : tileSheets_)
+	{
+		if (tex.id == 0)
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 int ArtSprites::TeamSlot(TeamId teamID)
@@ -297,6 +352,26 @@ bool ArtSprites::Init(InitMode mode)
 			fallback_ = true;
 		}
 	}
+	for (int s = 0; s < static_cast<int>(TileSheet::Count); ++s)
+	{
+		const char *file = TileSheetFile(static_cast<TileSheet>(s));
+		if (file == nullptr)
+		{
+			continue;
+		}
+		std::snprintf(path, sizeof(path), "data/sprites/tiles/%s.png", file);
+		tileSheets_[s] = LoadTexture(path);
+		if (tileSheets_[s].id == 0 ||
+			tileSheets_[s].width != kTileFrames * static_cast<int>(cc::kRenderTileSize))
+		{
+			if (tileSheets_[s].id != 0)
+			{
+				UnloadTexture(tileSheets_[s]);
+				tileSheets_[s] = {};
+			}
+			fallback_ = true;
+		}
+	}
 	uiFont_ = LoadFontEx("data/fonts/font.otf", 64, nullptr, 0);
 	fontReady_ = uiFont_.texture.id != 0;
 	if (!fontReady_)
@@ -421,6 +496,14 @@ void ArtSprites::Shutdown()
 		{
 			UnloadTexture(terrain_[s]);
 			terrain_[s] = {};
+		}
+	}
+	for (int s = 0; s < static_cast<int>(TileSheet::Count); ++s)
+	{
+		if (tileSheets_[s].id != 0)
+		{
+			UnloadTexture(tileSheets_[s]);
+			tileSheets_[s] = {};
 		}
 	}
 	if (fontReady_)

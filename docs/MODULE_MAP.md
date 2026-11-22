@@ -61,8 +61,9 @@ app/match: Menu, Skirmish
 - `Event.h` - `EventDispatcher`: Subscribe/Dispatch(in order)/Clear by EventType, base-`Event`
   + downcast payloads, M14 Q57 categories (game-state: MatchStarted/Paused/GameOver/Victory;
   UI: MenuAction/ProductionOrdered)
-- `MathUtils.h` - `cc::Vec2`, raylib conversions, 128x128 tile helpers (whole or fractional
-  tile coordinates scale by `TILE_SIZE`, `cc::kHalfTile` = centre offset)
+- `MathUtils.h` - `cc::Vec2`, raylib conversions, tile helpers (whole or fractional tile
+  coordinates scale by `TILE_SIZE`, the logic tile stays 128x128, the render grid is 2x2 of
+  `kRenderTileSize` (64), `cc::kHalfTile` = centre offset)
 - `Team.h` - `TeamId` (`Any`/`Player`/`Enemy`) + `kAnyTeam`/`kPlayerTeam`/`kEnemyTeam`;
   every team field and parameter is typed
 - `CcAssert.h` - `CC_ASSERT`: live in Debug, `((void)0)` under NDEBUG; a firing check prints

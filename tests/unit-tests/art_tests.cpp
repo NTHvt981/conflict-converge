@@ -273,4 +273,38 @@ void RunArtTests()
 		art.DrawTerrain(TerrainType::Building, { 0.0f, 0.0f });
 		CC_CHECK(true);
 	}
+
+	{
+		CC_CHECK(Art::TileSheetFor(TerrainType::Grass) == TileSheet::Grass);
+		CC_CHECK(Art::TileSheetFor(TerrainType::Water) == TileSheet::Water);
+		CC_CHECK(!Art::TileSheetFor(TerrainType::Forest).has_value());
+		CC_CHECK(!Art::TileSheetFor(TerrainType::Rock).has_value());
+		CC_CHECK(!Art::TileSheetFor(TerrainType::Building).has_value());
+		CC_CHECK(std::string(Art::TileSheetFile(TileSheet::Grass)) == "grass");
+		CC_CHECK(std::string(Art::TileSheetFile(TileSheet::Water)) == "water");
+
+		CC_CHECK(Art::TileVariant(3, 5) == Art::TileVariant(3, 5));
+		bool seen[Art::kTileFrames] = {};
+		int distinct = 0;
+		for (int x = 0; x < 16; ++x)
+		{
+			for (int y = 0; y < 16; ++y)
+			{
+				const int variant = Art::TileVariant(x, y);
+				CC_CHECK(variant >= 0 && variant < Art::kTileFrames);
+				if (variant >= 0 && variant < Art::kTileFrames && !seen[variant])
+				{
+					seen[variant] = true;
+					++distinct;
+				}
+			}
+		}
+		CC_CHECK(distinct >= 4);
+
+		Art art;
+		CC_CHECK(!art.Init(InitMode::Headless));
+		CC_CHECK(!art.UseTileSheets());
+		art.DrawTileFill(TileSheet::Grass, 0, { 0.0f, 0.0f });
+		CC_CHECK(true);
+	}
 }

@@ -57,6 +57,9 @@ public:
 						 Vector2 worldCenter) const;
 	// 128px, team-neutral; no-op when rectangles are up or the type has no tile.
 	void DrawTerrain(const ArtSprites &sprites, TerrainType type, Vector2 corner) const;
+	// 64px render cell; no-op when rectangles are up or the sheet is down.
+	void DrawTileFill(const ArtSprites &sprites, TileSheet sheet, int frame,
+					  Vector2 corner) const;
 
 	// False on the headless/rectangle path.
 	bool HasFont(const ArtSprites &sprites) const;
