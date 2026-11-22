@@ -154,7 +154,7 @@ void RunTargetingTests()
 		const Entity baseLeftA =
 			PlaceBuilding(leftFirst, mapA, BuildingType::Base, kEnemyTeam, 2, 2);
 		const Entity baseRightA =
-			PlaceBuilding(leftFirst, mapA, BuildingType::Base, kEnemyTeam, 4, 2);
+			PlaceBuilding(leftFirst, mapA, BuildingType::Base, kEnemyTeam, 5, 2);
 		Building *leftBuilding = leftFirst.Get<Building>(baseLeftA);
 		Building *rightBuilding = leftFirst.Get<Building>(baseRightA);
 		leftBuilding->state = BuildingState::Operational;
@@ -171,7 +171,7 @@ void RunTargetingTests()
 		const Entity seekerB =
 			AddSoldier(rightFirst, UnitType::RifleInfantry, kPlayerTeam, 0.0f, 0.0f);
 		const Entity baseRightB =
-			PlaceBuilding(rightFirst, mapB, BuildingType::Base, kEnemyTeam, 4, 2);
+			PlaceBuilding(rightFirst, mapB, BuildingType::Base, kEnemyTeam, 5, 2);
 		const Entity baseLeftB =
 			PlaceBuilding(rightFirst, mapB, BuildingType::Base, kEnemyTeam, 2, 2);
 		Building *leftBuildingB = rightFirst.Get<Building>(baseLeftB);

@@ -11,7 +11,7 @@
 
 void RunBuildingTests()
 {
-	CC_CHECK(Footprint(BuildingType::Base) == cc::IVec2(2, 2));
+	CC_CHECK(Footprint(BuildingType::Base) == cc::IVec2(3, 3));
 	CC_CHECK(Footprint(BuildingType::ResourceDepot) == cc::IVec2(1, 1));
 	CC_CHECK(Footprint(BuildingType::Bootcamp) == cc::IVec2(2, 2));
 	CC_CHECK(Footprint(BuildingType::Workshop) == cc::IVec2(3, 3));
@@ -38,7 +38,8 @@ void RunBuildingTests()
 	CC_CHECK(stored->teamID == kPlayerTeam);
 	CC_CHECK(map.Get({ 1, 1 }) == TerrainType::Building);
 	CC_CHECK(map.Get({ 2, 2 }) == TerrainType::Building);
-	CC_CHECK(map.Get({ 3, 1 }) == TerrainType::Grass);
+	CC_CHECK(map.Get({ 3, 3 }) == TerrainType::Building);
+	CC_CHECK(map.Get({ 4, 1 }) == TerrainType::Grass);
 
 	CC_CHECK(PlaceBuilding(registry, map, BuildingType::Bootcamp, kPlayerTeam, 2, 2) ==
 			  kInvalidEntity);
@@ -275,10 +276,10 @@ void RunBuildingTests()
 		const auto singles = AreaBuildSlots(BuildingType::ResourceDepot, { 1, 1 }, { 3, 2 });
 		CC_CHECK(singles.size() == 6);
 		CC_CHECK(singles.front() == cc::IVec2(1, 1) && singles.back() == cc::IVec2(3, 2));
-		// Base (2x2) over 0..3: anchors at even tiles only, no overlaps.
-		const auto quads = AreaBuildSlots(BuildingType::Base, { 0, 0 }, { 3, 3 });
+		// Base (3x3) over 0..5: anchors every third tile, no overlaps.
+		const auto quads = AreaBuildSlots(BuildingType::Base, { 0, 0 }, { 5, 5 });
 		CC_CHECK(quads.size() == 4);
-		CC_CHECK(quads[0] == cc::IVec2(0, 0) && quads[3] == cc::IVec2(2, 2));
+		CC_CHECK(quads[0] == cc::IVec2(0, 0) && quads[3] == cc::IVec2(3, 3));
 		// Reversed range: empty, never negative-stepped.
 		CC_CHECK(AreaBuildSlots(BuildingType::Base, { 3, 3 }, { 0, 0 }).empty());
 	}
@@ -298,13 +299,13 @@ void RunBuildingTests()
 		base.tileY = 1;
 		const Rectangle baseRect = BuildingFootprintRect(base);
 		CC_CHECK(baseRect.x == 128.0f && baseRect.y == 128.0f);
-		CC_CHECK(baseRect.width == 256.0f && baseRect.height == 256.0f);
+		CC_CHECK(baseRect.width == 384.0f && baseRect.height == 384.0f);
 	}
 
 	{
 		Registry query;
 		TileMap queryMap(20, 15);
-		// (128,128)-(384,384)
+		// (128,128)-(512,512)
 		const Entity inBase =
 			PlaceBuilding(query, queryMap, BuildingType::Base, kPlayerTeam, 1, 1);
 		const Entity inDepot = PlaceBuilding(query, queryMap, BuildingType::ResourceDepot,

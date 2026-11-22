@@ -64,7 +64,7 @@ void RunAreaRepairTests()
 		const Entity hurtBase =
 			SpawnBuilding(registry, map, BuildingType::Base, kPlayerTeam, 6, 2, 0.5f);
 		const Entity wholeDepot =
-			SpawnBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 8, 2, 1.0f);
+			SpawnBuilding(registry, map, BuildingType::ResourceDepot, kPlayerTeam, 9, 2, 1.0f);
 		const Entity deadBase =
 			SpawnBuilding(registry, map, BuildingType::Base, kPlayerTeam, 10, 2, 0.5f);
 		registry.Get<Building>(deadBase)->state = BuildingState::Destroyed;

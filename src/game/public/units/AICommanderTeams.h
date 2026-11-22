@@ -52,7 +52,7 @@ public:
 	AICommanderTeams(Registry &registry, TileMap &map, AICommanderIntel &intel,
 					 AICommanderEconomy &economy);
 
-	void Reset(TeamId teamID, const AIDifficultyParams &params, cc::IVec2 homeTile,
+	void Reset(TeamId teamID, const AIDifficultyParams &params, cc::IVec2 homeAnchorTile,
 			   cc::IVec2 enemyTile);
 	void SetOccupancy(OccupancyGrid *occ);
 	void Update(float dt);
@@ -85,7 +85,7 @@ private:
 	AICommanderEconomy &economy_;
 	OccupancyGrid *occ_ = nullptr;
 	TeamId teamID_ = kEnemyTeam;
-	cc::IVec2 homeTile_{ 0, 0 };
+	cc::IVec2 homeAnchorTile_{ 0, 0 };
 	cc::IVec2 enemyTile_{ 0, 0 };
 	cc::IVec2 rallyTile_{ 0, 0 };
 	float timeSinceLaunch_ = 0.0f;

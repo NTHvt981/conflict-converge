@@ -259,9 +259,9 @@ void RunMapFileTests()
 			CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::Base, kPlayerTeam, home.x,
 								   home.y) != kInvalidEntity);
 			CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::ResourceDepot, kPlayerTeam,
-								   home.x + 2, home.y) != kInvalidEntity);
+								   home.x + 3, home.y) != kInvalidEntity);
 			CC_CHECK(PlaceBuilding(demoRegistry, demoMap, BuildingType::Bootcamp, kPlayerTeam,
-								   home.x, home.y + 2) != kInvalidEntity);
+								   home.x, home.y + 3) != kInvalidEntity);
 			Entity workshop = kInvalidEntity;
 			for (int ring = 0; workshop == kInvalidEntity && ring <= 6; ++ring)
 			{

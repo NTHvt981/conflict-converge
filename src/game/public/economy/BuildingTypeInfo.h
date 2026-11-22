@@ -20,9 +20,9 @@ struct BuildingTypeInfo
 };
 
 inline constexpr BuildingTypeInfo kBuildingTypes[] = {
-	{ "Base", "base", nullptr, { 2, 2 }, 400.0f, 3.0f, 350, 100, false,
+	{ "Base", nullptr, "hq", { 3, 3 }, 400.0f, 3.0f, 350, 100, false,
 	  ProductionCategory::Infantry },
-	{ "Depot", "depot", nullptr, { 1, 1 }, 200.0f, 2.0f, 150, 0, false,
+	{ "Depot", nullptr, "depot", { 1, 1 }, 200.0f, 2.0f, 150, 0, false,
 	  ProductionCategory::Infantry },
 	{ "Bootcamp", nullptr, "barrack", { 2, 2 }, 350.0f, 4.0f, 200, 0, true,
 	  ProductionCategory::Infantry },

@@ -227,6 +227,7 @@ void RunAutoRepairTests()
 		registry.Get<Building>(baseId)->health = 100.0f;
 		const Entity engId = AddCommandUnit(registry, UnitType::Engineer, false);
 		registry.Get<Unit>(engId)->speed = 64.0f;
+		registry.Get<Unit>(engId)->position = cc::ToRaylib(cc::TileToWorld(3, 2));
 		GetOrders(registry, engId).autoRepair = true;
 		StepCommandUnits(registry, map, 3600);
 		CC_CHECK(registry.Get<Building>(baseId)->health == 400.0f);
