@@ -46,16 +46,13 @@ A Debug build that compiles and passes the test suite.
    that pushes values through the `Set*In` helpers before the document
    is displayed; never cache RML element pointers across frames.
 
-6. **Wire the events.** Choose one path per document. A widget screen
-   registers one listener on its document in `Init`:
-   `doc->AddEventListener("click", this)`, plus `"change"` when the
-   screen holds toggles or sliders. It then builds its tree in
+6. **Wire the events.** Register one listener on the document in
+   `Init`: `doc->AddEventListener("click", this)`, plus `"change"`
+   when the screen holds toggles or sliders. Build the screen tree in
    `Build<Screen>Widgets` with `Add<UiButton>`, `Add<UiToggle>` or
    `Add<UiSlider>`, keyed by its `UiIds` id. `ProcessEvent` resolves the
    id through `DispatchToTrees`, so a handler never sees an RML element.
    Rows replaced by a refresh use a `UiList` child: `Clear()` then
-   `Add`, from the same step that rebuilds the document rows. The remap
-   screen uses id dispatch: `Listen` registers fixed ids such as Back,
-   `PopulateRemapRows` registers each rebuilt key row, and `OnClick`
-   handles both. State changes go through the shared `MenuFlow`,
-   keeping raygui and RML screens in lockstep.
+   `Add`, from the same step that rebuilds the document rows. State
+   changes go through the shared `MenuFlow`, keeping raygui and RML
+   screens in lockstep.
