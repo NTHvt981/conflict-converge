@@ -218,29 +218,8 @@ void ShowOnly(Rml::Context *context, const std::vector<LoadedDoc> &docs,
 	context->Update();
 }
 
-} // namespace
-
-void RunUiTests()
+std::vector<LoadedDoc> LoadDocuments(Rml::Context *context, const std::string &root)
 {
-	const std::string root = FindDataRoot();
-	if (root.empty())
-	{
-		std::printf("Ui: data root not found (cwd must be the repo root or prj/)\n");
-		CC_CHECK(false);
-		return;
-	}
-
-	HeadlessRenderInterface render;
-	RmlUiHost host;
-	CC_CHECK(host.Init(root + "/ui", root + "/fonts", &render, 1280, 720));
-	CC_CHECK(host.IsReady());
-	Rml::Context *context = host.context();
-	CC_CHECK(context != nullptr);
-	if (context == nullptr)
-	{
-		return;
-	}
-
 	const char *documentNames[] = {
 		"hud.rml", "main_menu.rml", "skirmish_setup.rml", "settings.rml", "load_game.rml",
 		"confirm.rml", "pause.rml", "outcome.rml", "hotkey_remap.rml",
@@ -258,18 +237,16 @@ void RunUiTests()
 	}
 	context->Update();
 	CC_CHECK(docs.size() == 9);
-	if (docs.size() != 9)
-	{
-		host.Shutdown();
-		return;
-	}
-
 	for (const LoadedDoc &loaded : docs)
 	{
 		CC_CHECK(CountElements(loaded.doc) > 5);
 		CC_CHECK(loaded.doc->GetClientHeight() > 0.0f);
 	}
+	return docs;
+}
 
+void CheckDocumentContract(const std::vector<LoadedDoc> &docs)
+{
 	Rml::ElementDocument *hud = FindDoc(docs, "hud.rml");
 	Rml::ElementDocument *menu = FindDoc(docs, "main_menu.rml");
 	Rml::ElementDocument *setup = FindDoc(docs, "skirmish_setup.rml");
@@ -376,6 +353,14 @@ void RunUiTests()
 	Rml::Element *needProduction = hud->GetElementById(Rml::String(UiIds::NeedProduction));
 	CC_CHECK(needProduction != nullptr &&
 			 needProduction->GetInnerRML().find("Need Bootcamp / Workshop") != Rml::String::npos);
+}
+
+void CheckWritePaths(Rml::Context *context, const std::vector<LoadedDoc> &docs)
+{
+	Rml::ElementDocument *hud = FindDoc(docs, "hud.rml");
+	Rml::ElementDocument *setup = FindDoc(docs, "skirmish_setup.rml");
+	Rml::ElementDocument *settings = FindDoc(docs, "settings.rml");
+	Rml::ElementDocument *remap = FindDoc(docs, "hotkey_remap.rml");
 
 	// Write paths used by the refresh code.
 	Rml::Element *resLine = hud->GetElementById(Rml::String(UiIds::ResLine));
@@ -465,6 +450,13 @@ void RunUiTests()
 		context->Update();
 		CC_CHECK(HasId(remap, "hkrow-0") && HasId(remap, "hkkey-0"));
 	}
+}
+
+void CheckInteraction(Rml::Context *context, const std::vector<LoadedDoc> &docs)
+{
+	Rml::ElementDocument *hud = FindDoc(docs, "hud.rml");
+	Rml::ElementDocument *menu = FindDoc(docs, "main_menu.rml");
+	Rml::ElementDocument *settings = FindDoc(docs, "settings.rml");
 
 	// Interaction: hit-testing, click delivery and dp scaling.
 	ShowOnly(context, docs, menu);
@@ -537,6 +529,41 @@ void RunUiTests()
 		context->Update();
 		CC_CHECK(CcNear(tab->GetClientHeight(), atOne, 0.5f));
 	}
+}
+
+} // namespace
+
+void RunUiTests()
+{
+	const std::string root = FindDataRoot();
+	if (root.empty())
+	{
+		std::printf("Ui: data root not found (cwd must be the repo root or prj/)\n");
+		CC_CHECK(false);
+		return;
+	}
+
+	HeadlessRenderInterface render;
+	RmlUiHost host;
+	CC_CHECK(host.Init(root + "/ui", root + "/fonts", &render, 1280, 720));
+	CC_CHECK(host.IsReady());
+	Rml::Context *context = host.context();
+	CC_CHECK(context != nullptr);
+	if (context == nullptr)
+	{
+		return;
+	}
+
+	const std::vector<LoadedDoc> docs = LoadDocuments(context, root);
+	if (docs.size() != 9)
+	{
+		host.Shutdown();
+		return;
+	}
+
+	CheckDocumentContract(docs);
+	CheckWritePaths(context, docs);
+	CheckInteraction(context, docs);
 
 	host.Shutdown();
 	CC_CHECK(!host.IsReady());
