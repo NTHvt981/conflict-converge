@@ -32,4 +32,18 @@ Vec2 SnapToTile(Vec2 worldPos)
 	return TileToWorld(t.x, t.y);
 }
 
+std::optional<IVec2> RenderCellToTile(int cellX, int cellY, int widthTiles, int heightTiles)
+{
+	if (cellX < 0 || cellY < 0 || widthTiles <= 0 || heightTiles <= 0)
+	{
+		return std::nullopt;
+	}
+	const IVec2 tile{ cellX / kRenderTilesPerAxis, cellY / kRenderTilesPerAxis };
+	if (tile.x >= widthTiles || tile.y >= heightTiles)
+	{
+		return std::nullopt;
+	}
+	return tile;
+}
+
 } // namespace cc

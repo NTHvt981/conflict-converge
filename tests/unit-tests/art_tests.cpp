@@ -414,4 +414,14 @@ void RunArtTests()
 		blendArt.DrawTileBlend(BlendSheet::GrassDirt, 0, { 0.0f, 0.0f });
 		CC_CHECK(true);
 	}
+
+	{
+		CC_CHECK(Art::RenderSheetFor(TerrainType::Building) == TileSheet::Grass);
+		CC_CHECK(Art::RenderSheetFor(TerrainType::Grass) == TileSheet::Grass);
+		CC_CHECK(Art::RenderSheetFor(TerrainType::Road) == TileSheet::Road);
+		CC_CHECK(Art::RenderSheetFor(TerrainType::Dirt) == TileSheet::Dirt);
+		CC_CHECK(Art::RenderSheetFor(TerrainType::Water) == TileSheet::Water);
+		CC_CHECK(!Art::RenderSheetFor(TerrainType::Forest).has_value());
+		CC_CHECK(!Art::RenderSheetFor(TerrainType::Rock).has_value());
+	}
 }

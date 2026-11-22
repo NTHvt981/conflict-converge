@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <glm/glm.hpp>
 
 #include "raylib.h"
@@ -27,5 +29,8 @@ Vector2 ToRaylib(Vec2 v);
 Vec2 TileToWorld(TileUnit x, TileUnit y);
 IVec2 WorldToTile(Vec2 worldPos);
 Vec2 SnapToTile(Vec2 worldPos);
+
+// Logic tile under a 64px render cell; none when the cell is outside the map.
+std::optional<IVec2> RenderCellToTile(int cellX, int cellY, int widthTiles, int heightTiles);
 
 } // namespace cc

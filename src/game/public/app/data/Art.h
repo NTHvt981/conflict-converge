@@ -53,6 +53,7 @@ public:
 	bool UseTileSheets() const;
 	static const char *TileSheetFile(TileSheet sheet);
 	static std::optional<TileSheet> TileSheetFor(TerrainType type);
+	static std::optional<TileSheet> RenderSheetFor(TerrainType type);
 	static int TileVariant(int cellX, int cellY);
 	// 64px render cell; no-op when rectangles are up or the sheet is down.
 	void DrawTileFill(TileSheet sheet, int frame, Vector2 corner) const;

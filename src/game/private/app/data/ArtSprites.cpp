@@ -256,6 +256,11 @@ std::optional<TileSheet> ArtSprites::TileSheetFor(TerrainType type)
 	return std::nullopt;
 }
 
+std::optional<TileSheet> ArtSprites::RenderSheetFor(TerrainType type)
+{
+	return TileSheetFor(type == TerrainType::Building ? TerrainType::Grass : type);
+}
+
 int ArtSprites::WaterFrame(float seconds)
 {
 	if (seconds <= 0.0f)

@@ -80,6 +80,8 @@ public:
 	static const char *TileSheetFile(TileSheet sheet);
 	// Best render material for a terrain type; none means the 128px art path.
 	static std::optional<TileSheet> TileSheetFor(TerrainType type);
+	// Material a terrain tile draws as; a Building tile resolves as Grass.
+	static std::optional<TileSheet> RenderSheetFor(TerrainType type);
 	// 0..kTileFrames-1, deterministic per render cell.
 	static int TileVariant(int cellX, int cellY);
 	// True when every 64px tile sheet loaded and the rectangle fallback is off.

@@ -88,6 +88,11 @@ std::optional<TileSheet> Art::TileSheetFor(TerrainType type)
 	return ArtSprites::TileSheetFor(type);
 }
 
+std::optional<TileSheet> Art::RenderSheetFor(TerrainType type)
+{
+	return ArtSprites::RenderSheetFor(type);
+}
+
 int Art::TileVariant(int cellX, int cellY)
 {
 	return ArtSprites::TileVariant(cellX, cellY);

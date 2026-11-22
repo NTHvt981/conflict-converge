@@ -25,6 +25,16 @@ void RunMathUtilsTests()
 	CC_CHECK(cc::WorldToTile(cc::Vec2(140.0f, 260.0f)) == cc::IVec2(1, 2));
 	CC_CHECK(cc::SnapToTile(cc::Vec2(140.0f, 260.0f)) == cc::Vec2(128.0f, 256.0f));
 
+	// A 64px cell maps to the logic tile that holds it; outside cells have no tile.
+	CC_CHECK(cc::RenderCellToTile(0, 0, 4, 3) == cc::IVec2(0, 0));
+	CC_CHECK(cc::RenderCellToTile(3, 5, 4, 3) == cc::IVec2(1, 2));
+	CC_CHECK(cc::RenderCellToTile(7, 5, 4, 3) == cc::IVec2(3, 2));
+	CC_CHECK(!cc::RenderCellToTile(-1, 0, 4, 3).has_value());
+	CC_CHECK(!cc::RenderCellToTile(0, -1, 4, 3).has_value());
+	CC_CHECK(!cc::RenderCellToTile(8, 0, 4, 3).has_value());
+	CC_CHECK(!cc::RenderCellToTile(0, 6, 4, 3).has_value());
+	CC_CHECK(!cc::RenderCellToTile(0, 0, 0, 3).has_value());
+
 	// Tile origin snaps to itself; exact corner belongs to its own tile.
 	CC_CHECK(cc::SnapToTile(cc::Vec2(128.0f, 256.0f)) == cc::Vec2(128.0f, 256.0f));
 	CC_CHECK(cc::WorldToTile(cc::Vec2(128.0f, 256.0f)) == cc::IVec2(1, 2));

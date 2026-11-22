@@ -249,22 +249,13 @@ void DrawCombatOverlays(Registry &registry, const Unit &unit, Entity id, Rectang
 
 TileSheet RenderMaterialAt(const TileMap &map, int cellX, int cellY)
 {
-	if (cellX < 0 || cellY < 0)
+	const std::optional<cc::IVec2> tile =
+		cc::RenderCellToTile(cellX, cellY, map.Width(), map.Height());
+	if (!tile.has_value())
 	{
 		return TileSheet::Count;
 	}
-	const int x = cellX / cc::kRenderTilesPerAxis;
-	const int y = cellY / cc::kRenderTilesPerAxis;
-	if (x >= map.Width() || y >= map.Height())
-	{
-		return TileSheet::Count;
-	}
-	TerrainType terrain = map.Get({ x, y });
-	if (terrain == TerrainType::Building)
-	{
-		terrain = TerrainType::Grass;
-	}
-	return Art::TileSheetFor(terrain).value_or(TileSheet::Count);
+	return Art::RenderSheetFor(map.Get(*tile)).value_or(TileSheet::Count);
 }
 }
 
