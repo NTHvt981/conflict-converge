@@ -653,7 +653,7 @@ void ArtSprites::LoadBlendSheets()
 				UnloadTexture(blendSheets_[s]);
 				blendSheets_[s] = {};
 			}
-			fallback_ = true;
+			TraceLog(LOG_WARNING, "blend sheet missing or wrong width: %s", file);
 		}
 	}
 }
