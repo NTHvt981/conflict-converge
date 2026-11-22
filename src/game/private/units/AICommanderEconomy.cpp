@@ -48,12 +48,12 @@ AICommanderEconomy::AICommanderEconomy(Registry &registry, TileMap &map, Resourc
 {
 }
 
-void AICommanderEconomy::Reset(TeamId teamID, AIDifficulty difficulty, cc::IVec2 homeTile,
+void AICommanderEconomy::Reset(TeamId teamID, AIDifficulty difficulty, cc::IVec2 homeAnchorTile,
 							   const AIDifficultyParams &params)
 {
 	teamID_ = teamID;
 	difficulty_ = difficulty;
-	homeTile_ = homeTile;
+	homeAnchorTile_ = homeAnchorTile;
 	params_ = params;
 	resources_ = ResourceSystem();
 	queueBootcamp_.ResetForMatch();
@@ -196,8 +196,8 @@ void AICommanderEconomy::OrderHarvesterToIron(Entity harvester)
 		{
 			return;
 		}
-		const int dist = (node.tile.x - homeTile_.x) * (node.tile.x - homeTile_.x) +
-						 (node.tile.y - homeTile_.y) * (node.tile.y - homeTile_.y);
+		const int dist = (node.tile.x - homeAnchorTile_.x) * (node.tile.x - homeAnchorTile_.x) +
+						 (node.tile.y - homeAnchorTile_.y) * (node.tile.y - homeAnchorTile_.y);
 		if (loop.nodeTile == cc::IVec2{ -1, -1 } || dist < best)
 		{
 			best = dist;
@@ -236,8 +236,9 @@ void AICommanderEconomy::MaintainHarvesters()
 	{
 		while (static_cast<int>(harvesters_.size()) < params_.harvesters)
 		{
-			const Entity id = factory_.Spawn(UnitType::Engineer, teamID_,
-											 cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
+			const Vector2 at =
+				cc::ToRaylib(cc::TileToWorld(homeAnchorTile_.x, homeAnchorTile_.y));
+			const Entity id = factory_.Spawn(UnitType::Engineer, teamID_, at);
 			if (id == kInvalidEntity)
 			{
 				break;
@@ -362,7 +363,7 @@ void AICommanderEconomy::SetupBase()
 		}
 		return id;
 	};
-	cc::IVec2 baseTile = homeTile_;
+	cc::IVec2 baseTile = homeAnchorTile_;
 	bool basePlaced = placePaid(BuildingType::Base, baseTile.x, baseTile.y) != kInvalidEntity;
 	for (int ring = 1; !basePlaced && ring <= 6; ++ring)
 	{
@@ -370,7 +371,7 @@ void AICommanderEconomy::SetupBase()
 		{
 			for (int dx = -ring; dx <= ring; ++dx)
 			{
-				const cc::IVec2 at{ homeTile_.x + dx, homeTile_.y + dy };
+				const cc::IVec2 at{ homeAnchorTile_.x + dx, homeAnchorTile_.y + dy };
 				if (placePaid(BuildingType::Base, at.x, at.y) != kInvalidEntity)
 				{
 					baseTile = at;

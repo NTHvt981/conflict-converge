@@ -4,21 +4,21 @@
 
 AICommander::AICommander(Registry &registry, TileMap &map, ResourceNodes &nodes,
 						 EventDispatcher &events, TeamId teamID, AIDifficulty difficulty,
-						 cc::IVec2 homeTile, cc::IVec2 enemyTile)
+						 cc::IVec2 homeAnchorTile, cc::IVec2 enemyTile)
 	: intel_(registry), economy_(registry, map, nodes, events), teams_(registry, map, intel_, economy_)
 {
 	const AIDifficultyParams params = ActiveAIDifficultyParams(difficulty);
-	economy_.Reset(teamID, difficulty, homeTile, params);
-	teams_.Reset(teamID, params, homeTile, enemyTile);
+	economy_.Reset(teamID, difficulty, homeAnchorTile, params);
+	teams_.Reset(teamID, params, homeAnchorTile, enemyTile);
 	intel_.Reset(params.scoutInterval, enemyTile, teamID);
 }
 
-void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile,
+void AICommander::Reset(AIDifficulty difficulty, cc::IVec2 homeAnchorTile, cc::IVec2 enemyTile,
 						TeamId teamID)
 {
 	const AIDifficultyParams params = ActiveAIDifficultyParams(difficulty);
-	economy_.Reset(teamID, difficulty, homeTile, params);
-	teams_.Reset(teamID, params, homeTile, enemyTile);
+	economy_.Reset(teamID, difficulty, homeAnchorTile, params);
+	teams_.Reset(teamID, params, homeAnchorTile, enemyTile);
 	intel_.Reset(params.scoutInterval, enemyTile, teamID);
 }
 

@@ -42,7 +42,7 @@ public:
 	AICommanderEconomy(Registry &registry, TileMap &map, ResourceNodes &nodes,
 					   EventDispatcher &events);
 
-	void Reset(TeamId teamID, AIDifficulty difficulty, cc::IVec2 homeTile,
+	void Reset(TeamId teamID, AIDifficulty difficulty, cc::IVec2 homeAnchorTile,
 			   const AIDifficultyParams &params);
 	void SetOccupancy(OccupancyGrid *occ);
 	void Update(float dt);
@@ -78,7 +78,7 @@ private:
 	AIDifficultyParams params_;
 	TeamId teamID_ = kEnemyTeam;
 	AIDifficulty difficulty_ = AIDifficulty::Medium;
-	cc::IVec2 homeTile_{ 0, 0 };
+	cc::IVec2 homeAnchorTile_{ 0, 0 };
 	int bootcampCursor_ = 0;
 	int workshopCursor_ = 0;
 	std::size_t compIndex_ = 0;

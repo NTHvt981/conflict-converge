@@ -15,10 +15,12 @@ class AICommander : public Subsystem
 {
 public:
 	AICommander(Registry &registry, TileMap &map, ResourceNodes &nodes, EventDispatcher &events,
-				TeamId teamID, AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile);
+				TeamId teamID, AIDifficulty difficulty, cc::IVec2 homeAnchorTile,
+				cc::IVec2 enemyTile);
 
 	void SetupBase();
-	void Reset(AIDifficulty difficulty, cc::IVec2 homeTile, cc::IVec2 enemyTile, TeamId teamID);
+	void Reset(AIDifficulty difficulty, cc::IVec2 homeAnchorTile, cc::IVec2 enemyTile,
+			   TeamId teamID);
 	void Update(float dt);
 	void SetOccupancy(OccupancyGrid *occ);
 	void SetFog(const FogOfWar *fog);

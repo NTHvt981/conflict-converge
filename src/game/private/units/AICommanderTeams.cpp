@@ -61,14 +61,14 @@ AICommanderTeams::AICommanderTeams(Registry &registry, TileMap &map, AICommander
 {
 }
 
-void AICommanderTeams::Reset(TeamId teamID, const AIDifficultyParams &params, cc::IVec2 homeTile,
-							 cc::IVec2 enemyTile)
+void AICommanderTeams::Reset(TeamId teamID, const AIDifficultyParams &params,
+							 cc::IVec2 homeAnchorTile, cc::IVec2 enemyTile)
 {
 	teamID_ = teamID;
-	homeTile_ = homeTile;
+	homeAnchorTile_ = homeAnchorTile;
 	enemyTile_ = enemyTile;
-	rallyTile_ = NearestFreeFootprintTile(map_, nullptr, cc::IVec2{ homeTile.x, homeTile.y + 3 },
-										  1, 1);
+	const cc::IVec2 want{ homeAnchorTile.x, homeAnchorTile.y + 3 };
+	rallyTile_ = NearestFreeFootprintTile(map_, nullptr, want, 1, 1);
 	teams_.clear();
 	timeSinceLaunch_ = params.relaunchCooldown;
 	matchTime_ = 0.0f;
@@ -178,8 +178,8 @@ cc::IVec2 AICommanderTeams::SelectTarget(ThreatScope scope)
 			{
 				worth *= 2;
 			}
-			const int dist = (tile.x - homeTile_.x) * (tile.x - homeTile_.x) +
-							 (tile.y - homeTile_.y) * (tile.y - homeTile_.y);
+			const int dist = (tile.x - homeAnchorTile_.x) * (tile.x - homeAnchorTile_.x) +
+							 (tile.y - homeAnchorTile_.y) * (tile.y - homeAnchorTile_.y);
 			if (richest == kInvalidEntity || worth > bestWorth ||
 				(worth == bestWorth && dist < bestDist))
 			{
@@ -209,8 +209,8 @@ cc::IVec2 AICommanderTeams::SelectTarget(ThreatScope scope)
 		{
 			return;
 		}
-		const int dist = (tile.x - homeTile_.x) * (tile.x - homeTile_.x) +
-						 (tile.y - homeTile_.y) * (tile.y - homeTile_.y);
+		const int dist = (tile.x - homeAnchorTile_.x) * (tile.x - homeAnchorTile_.x) +
+						 (tile.y - homeAnchorTile_.y) * (tile.y - homeAnchorTile_.y);
 		if (nearest == kInvalidEntity || dist < best)
 		{
 			nearest = id;
@@ -374,8 +374,8 @@ void AICommanderTeams::EnsureHarassTeam(std::vector<Entity> &unassigned)
 								 unassigned.end());
 			}
 			const cc::IVec2 target = SelectTarget();
-			const int dx = target.x - homeTile_.x;
-			const int dy = target.y - homeTile_.y;
+			const int dx = target.x - homeAnchorTile_.x;
+			const int dy = target.y - homeAnchorTile_.y;
 			cc::IVec2 flank{ target.x - dy / 4, target.y + dx / 4 };
 			flank.x = std::clamp(flank.x, 0, map_.Width() - 1);
 			flank.y = std::clamp(flank.y, 0, map_.Height() - 1);
@@ -533,8 +533,8 @@ void AICommanderTeams::UpdateGuardPost()
 		{
 			return;
 		}
-		const int dist = (tile.x - homeTile_.x) * (tile.x - homeTile_.x) +
-						 (tile.y - homeTile_.y) * (tile.y - homeTile_.y);
+		const int dist = (tile.x - homeAnchorTile_.x) * (tile.x - homeAnchorTile_.x) +
+						 (tile.y - homeAnchorTile_.y) * (tile.y - homeAnchorTile_.y);
 		if (dist <= 36)
 		{
 			sumX += tile.x;
@@ -593,8 +593,8 @@ void AICommanderTeams::ScoutTick(float dt)
 		return;
 	}
 	const Entity scout = economy_.Factory().Spawn(UnitType::RifleInfantry, teamID_,
-												  cc::ToRaylib(cc::TileToWorld(homeTile_.x,
-																			  homeTile_.y)));
+												  cc::ToRaylib(cc::TileToWorld(homeAnchorTile_.x,
+																			  homeAnchorTile_.y)));
 	intel_.ResetScoutTimer(economy_.Params().scoutInterval);
 	if (scout == kInvalidEntity)
 	{
@@ -610,7 +610,7 @@ void AICommanderTeams::ScoutTick(float dt)
 
 void AICommanderTeams::RetreatTick()
 {
-	const Vector2 home = cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y));
+	const Vector2 home = cc::ToRaylib(cc::TileToWorld(homeAnchorTile_.x, homeAnchorTile_.y));
 	RetreatIfLowHP(registry_, map_, occ_, home, teamID_, kRetreatHealthFraction, false);
 }
 
