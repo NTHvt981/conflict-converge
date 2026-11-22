@@ -50,7 +50,7 @@ Both runs cover different screens, so each claim below rests on one action seque
 
 ## Positive observations
 
-- Each converted button changed the screen on one click, with no double dispatch (2, 4, 8, 10, 11, 12, 14).
+- Each converted button changed the screen on one click, with no double dispatch (2, 4, 8, 10, 11, 12).
 - The slider drag reached the model AND the label: "Camera speed 250" appears with no separate label write in the setter (16).
 - The checkbox click reached the model, and the value survived a leave-and-return to the screen (17, 21).
 - The confirm modal opens over the main menu and its two answers differ, so the modal document receives clicks while the menu document is shown behind it (10-12).
@@ -58,8 +58,9 @@ Both runs cover different screens, so each claim below rests on one action seque
 
 ## Interpretation
 
-- Document-level click listeners on `main_menu.rml` and `confirm.rml`, and click/change listeners on `settings.rml`, deliver every control type tested (2-21).
-- Dispatching to three trees in order resolves each id to one tree: a confirm answer never reaches the main-menu tree, and a main-menu button never reaches the confirm tree (10-14).
+- Document-level click listeners on `main_menu.rml` and `confirm.rml`, and click/change listeners on `settings.rml`, deliver every control type tested (2-12, 15-21).
+- Dispatching to three trees in order resolves each id to one tree: a confirm answer never reaches the main-menu tree, and a main-menu button never reaches the confirm tree (10-12).
+- Escape is a key event through `MenuFlow::OnBackPressed`, not a widget-tree click: the first press opens the quit confirm and the second cancels it (13, 14).
 - The per-frame settings refresh is what makes the label live. The setter stores the number, and `RefreshSettings` writes the text; deleting either half breaks the visible value (16).
 - The remap rows still use the id-dispatch path, which is why they work without a widget tree (18, 19).
 - Settings values persist in `MenuFlow::settings` across screen changes inside one process (19, 21). Persistence across a process restart is not covered, because `data/settings.cfg` was deleted after the run.
