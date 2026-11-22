@@ -11,7 +11,7 @@ with a rule, either the repository or this document changes in the same commit.
 | [Branches](#branches) | `<type>/<kebab-slug>`; cut from `main`, target `main`, delete after merge |
 | [Commits](#commits) | Imperative sentence case, no prefix, one self-contained step |
 | [Messages](#wrap-the-body-at-72-columns) | Subject at most 72 columns, body wrapped at 72, `Closes #N` last |
-| [Pull requests](#pull-requests) | Title mirrors the head commit; what, why, decisions, tests |
+| [Pull requests](#pull-requests) | Title mirrors the head commit; body keeps only what the diff cannot show |
 | [Templates](#add-no-pull-request-or-issue-templates) | No template files; copy the skeleton from this document |
 | [Issues](#issues) | Title states the goal, one label from the set |
 | [Wiki](#wiki) | Player-facing pages; design truth stays in `docs/` |
@@ -174,6 +174,22 @@ Sections follow the change: a defect leads with why it happened, a refactor with
 Name behaviours that are deliberately preserved. Verification stays in the conversation report,
 never in the description.
 
+### Body: delete what the diff already shows
+
+**✅ Do**
+```
+`Rml::EventId` keys registration, removal and dispatch, so the UI layer needs no project enum or name table.
+```
+
+**❌ Don't**
+```
+Event registration and dispatch use `Rml::EventId::Click` and `Rml::EventId::Change` in the menu, HUD, widget adapter and UI test. The how-to names the enum values.
+```
+
+The title carries the change. File lists, call sites, renamed symbols, and sentences that
+restate the diff add reading work without a decision. Keep the constraint or the reason the code
+cannot show on its own.
+
 ### Start from this skeleton
 
 ```
@@ -193,8 +209,9 @@ Closes #N
 ```
 
 Delete the sections the change does not have: a docs-only pull request keeps two lines of
-prose and `Closes #N`, and empty headings are worse than a short body. Swap `Why` for `Problem`
-when the defect needs a reproduction, and lead a refactor with `What changed`.
+prose and `Closes #N`, a one-line refactor can be one sentence, and empty headings are worse
+than a short body. Swap `Why` for `Problem` when the defect needs a reproduction, and lead a
+refactor with the behaviour that moved, not the file list.
 
 ### Add no pull-request or issue templates
 

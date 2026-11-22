@@ -115,9 +115,9 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
 	}
 	if (Rml::Element *el = ById(hudDoc_, UiIds::BtnCancel))
 	{
-		el->AddEventListener("click", this);
+		el->AddEventListener(Rml::EventId::Click, this);
 	}
-	auto listen = [this](Rml::ElementDocument *doc, const char *event,
+	auto listen = [this](Rml::ElementDocument *doc, Rml::EventId event,
 						 std::initializer_list<std::string_view> ids) {
 		for (std::string_view id : ids)
 		{
@@ -127,7 +127,7 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
 			}
 		}
 	};
-	listen(hudDoc_, "click",
+	listen(hudDoc_, Rml::EventId::Click,
 		   { UiIds::TabInfantry, UiIds::TabVehicles, UiIds::TabBuildings, UiIds::AbHold,
 			 UiIds::AbGuard, UiIds::AbPatrol, UiIds::AbAttackMove, UiIds::AbHalt, UiIds::AbRepair,
 			 UiIds::AbHeal, UiIds::AbRally, UiIds::AbDemolish });
@@ -139,7 +139,7 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
 		{
 			if (Rml::Element *el = ById(hudDoc_, UiIds::WithIndex(family, row)))
 			{
-				el->AddEventListener("click", this);
+				el->AddEventListener(Rml::EventId::Click, this);
 			}
 		}
 	}
@@ -147,10 +147,10 @@ bool RmlUiHud::Init(RmlUiHost &host, const std::string &dataDir)
 	{
 		(void)doc;
 	}
-	pauseDoc_->AddEventListener("click", this);
-	pauseDoc_->AddEventListener("change", this);
-	listen(outcomeDoc_, "click", { UiIds::BtnOToMenu, UiIds::BtnOToDesktop });
-	listen(confirmDoc_, "click", { UiIds::BtnYes, UiIds::BtnNo });
+	pauseDoc_->AddEventListener(Rml::EventId::Click, this);
+	pauseDoc_->AddEventListener(Rml::EventId::Change, this);
+	listen(outcomeDoc_, Rml::EventId::Click, { UiIds::BtnOToMenu, UiIds::BtnOToDesktop });
+	listen(confirmDoc_, Rml::EventId::Click, { UiIds::BtnYes, UiIds::BtnNo });
 	BuildPauseWidgets();
 	ready_ = true;
 	return true;
@@ -325,16 +325,16 @@ void RmlUiHud::ProcessEvent(Rml::Event &event)
 		return;
 	}
 
-	const Rml::String type = event.GetType();
+	const Rml::EventId type = event.GetId();
 	const Rml::String id = target->GetId();
-	if (type == "click")
+	if (type == Rml::EventId::Click)
 	{
 		if (!DispatchUiEvent(pauseWidgets_.get(), event, target))
 		{
 			OnClick(id);
 		}
 	}
-	else if (type == "change")
+	else if (type == Rml::EventId::Change)
 	{
 		DispatchUiEvent(pauseWidgets_.get(), event, target);
 	}

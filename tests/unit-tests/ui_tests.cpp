@@ -486,7 +486,7 @@ void CheckInteraction(Rml::Context *context, const std::vector<LoadedDoc> &docs)
 	if (setupButton != nullptr)
 	{
 		ClickSpy spy;
-		setupButton->AddEventListener("click", &spy);
+		setupButton->AddEventListener(Rml::EventId::Click, &spy);
 		ClickAtCenter(context, setupButton);
 		CC_CHECK(spy.count == 1);
 
@@ -501,7 +501,7 @@ void CheckInteraction(Rml::Context *context, const std::vector<LoadedDoc> &docs)
 		CC_CHECK(spy.count == 1);
 		setupButton->SetProperty("display", "block");
 		context->Update();
-		setupButton->RemoveEventListener("click", &spy);
+		setupButton->RemoveEventListener(Rml::EventId::Click, &spy);
 	}
 
 	ShowOnly(context, docs, settings);

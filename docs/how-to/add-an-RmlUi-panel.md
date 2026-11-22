@@ -47,8 +47,9 @@ A Debug build that compiles and passes the test suite.
    is displayed; never cache RML element pointers across frames.
 
 6. **Wire the events.** Register one listener on the document in
-   `Init`: `doc->AddEventListener("click", this)`, plus `"change"`
-   when the screen holds toggles or sliders. Build the screen tree in
+   `Init`: `doc->AddEventListener(Rml::EventId::Click, this)`, plus
+   `Rml::EventId::Change` when the screen holds toggles or sliders.
+   Build the screen tree in
    `Build<Screen>Widgets` with `Add<UiButton>`, `Add<UiToggle>` or
    `Add<UiSlider>`, keyed by its `UiIds` id. `ProcessEvent` resolves the
    id through `DispatchToTrees`, so a handler never sees an RML element.
