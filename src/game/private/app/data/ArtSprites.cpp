@@ -86,21 +86,56 @@ struct TerrainArtInfo
 {
 	const char *file; // nullptr = no tile art
 	int slot;         // index into terrain_
+	TileSheet sheet;  // 64px render sheet, TileSheet::Count = none
 };
 
 constexpr TerrainArtInfo kTerrainArt[] = {
-	{ "grass", 0 },
-	{ "water", 1 },
-	{ nullptr, -1 },
-	{ "forest", 2 },
-	{ "rock", 3 },
-	{ nullptr, -1 },
-	{ nullptr, -1 },
+	{ "grass", 0, TileSheet::Grass },
+	{ "water", 1, TileSheet::Water },
+	{ nullptr, -1, TileSheet::Count },
+	{ "forest", 2, TileSheet::Count },
+	{ "rock", 3, TileSheet::Count },
+	{ nullptr, -1, TileSheet::Dirt },
+	{ nullptr, -1, TileSheet::Road },
 };
 
 static_assert(sizeof(kTerrainArt) / sizeof(kTerrainArt[0]) ==
 				  static_cast<std::size_t>(TerrainType::Count),
 			  "one row per TerrainType");
+
+struct TileSheetInfo
+{
+	const char *file;
+	int rank;
+};
+
+constexpr TileSheetInfo kTileSheetInfo[] = {
+	{ "grass", 0 },
+	{ "water", -1 },
+	{ "dirt", 1 },
+	{ "road", 2 },
+};
+
+static_assert(sizeof(kTileSheetInfo) / sizeof(kTileSheetInfo[0]) ==
+				  static_cast<std::size_t>(TileSheet::Count),
+			  "one row per TileSheet");
+
+struct BlendSheetInfo
+{
+	const char *file;
+	TileSheet base;
+	TileSheet edge;
+};
+
+constexpr BlendSheetInfo kBlendSheetInfo[] = {
+	{ "blend_grass_dirt", TileSheet::Grass, TileSheet::Dirt },
+	{ "blend_grass_road", TileSheet::Grass, TileSheet::Road },
+	{ "blend_dirt_road", TileSheet::Dirt, TileSheet::Road },
+};
+
+static_assert(sizeof(kBlendSheetInfo) / sizeof(kBlendSheetInfo[0]) ==
+				  static_cast<std::size_t>(BlendSheet::Count),
+			  "one row per BlendSheet");
 
 constexpr bool TerrainSlotsFit()
 {
@@ -222,38 +257,21 @@ int ArtSprites::TerrainSlot(TerrainType type)
 
 const char *ArtSprites::TileSheetFile(TileSheet sheet)
 {
-	switch (sheet)
+	if (sheet == TileSheet::Count)
 	{
-	case TileSheet::Grass:
-		return "grass";
-	case TileSheet::Water:
-		return "water";
-	case TileSheet::Dirt:
-		return "dirt";
-	case TileSheet::Road:
-		return "road";
-	case TileSheet::Count:
-		break;
+		return nullptr;
 	}
-	return nullptr;
+	return kTileSheetInfo[static_cast<std::size_t>(sheet)].file;
 }
 
 std::optional<TileSheet> ArtSprites::TileSheetFor(TerrainType type)
 {
-	switch (type)
+	const TileSheet sheet = kTerrainArt[static_cast<std::size_t>(type)].sheet;
+	if (sheet == TileSheet::Count)
 	{
-	case TerrainType::Grass:
-		return TileSheet::Grass;
-	case TerrainType::Water:
-		return TileSheet::Water;
-	case TerrainType::Dirt:
-		return TileSheet::Dirt;
-	case TerrainType::Road:
-		return TileSheet::Road;
-	default:
-		break;
+		return std::nullopt;
 	}
-	return std::nullopt;
+	return sheet;
 }
 
 std::optional<TileSheet> ArtSprites::RenderSheetFor(TerrainType type)
@@ -320,51 +338,33 @@ bool ArtSprites::UseTileBlends() const
 
 const char *ArtSprites::BlendSheetFile(BlendSheet sheet)
 {
-	switch (sheet)
+	if (sheet == BlendSheet::Count)
 	{
-	case BlendSheet::GrassDirt:
-		return "blend_grass_dirt";
-	case BlendSheet::GrassRoad:
-		return "blend_grass_road";
-	case BlendSheet::DirtRoad:
-		return "blend_dirt_road";
-	case BlendSheet::Count:
-		break;
+		return nullptr;
 	}
-	return nullptr;
+	return kBlendSheetInfo[static_cast<std::size_t>(sheet)].file;
 }
 
 std::optional<BlendSheet> ArtSprites::BlendSheetFor(TileSheet base, TileSheet edge)
 {
-	if (base == TileSheet::Grass && edge == TileSheet::Dirt)
+	for (int i = 0; i < static_cast<int>(BlendSheet::Count); ++i)
 	{
-		return BlendSheet::GrassDirt;
-	}
-	if (base == TileSheet::Grass && edge == TileSheet::Road)
-	{
-		return BlendSheet::GrassRoad;
-	}
-	if (base == TileSheet::Dirt && edge == TileSheet::Road)
-	{
-		return BlendSheet::DirtRoad;
+		const BlendSheetInfo &info = kBlendSheetInfo[i];
+		if (info.base == base && info.edge == edge)
+		{
+			return static_cast<BlendSheet>(i);
+		}
 	}
 	return std::nullopt;
 }
 
 int ArtSprites::TileMaterialRank(TileSheet sheet)
 {
-	switch (sheet)
+	if (sheet == TileSheet::Count)
 	{
-	case TileSheet::Grass:
-		return 0;
-	case TileSheet::Dirt:
-		return 1;
-	case TileSheet::Road:
-		return 2;
-	default:
-		break;
+		return -1;
 	}
-	return -1;
+	return kTileSheetInfo[static_cast<std::size_t>(sheet)].rank;
 }
 
 int ArtSprites::BlendPieceIndex(int sideMask)
