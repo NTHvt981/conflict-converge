@@ -87,10 +87,10 @@ void GameRenderer::DrawHoverTooltip()
 		{
 			if (const Unit *unit = registry_.Get<Unit>(hoverTip_.hovered))
 			{
-				const bool visible =
-					unit->teamID == kPlayerTeam ||
+				const bool isVisible =
+					IsFogRevealed() || unit->teamID == kPlayerTeam ||
 					fog_.IsVisible(kPlayerTeam, cc::WorldToTile(cc::ToGlm(unit->position)));
-				if (visible)
+				if (isVisible)
 				{
 					const std::vector<std::string> lines = UnitTooltipLines(
 						*unit, GetOrders(registry_, hoverTip_.hovered));
