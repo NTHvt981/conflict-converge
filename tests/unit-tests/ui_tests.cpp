@@ -218,6 +218,25 @@ void ShowOnly(Rml::Context *context, const std::vector<LoadedDoc> &docs,
 	context->Update();
 }
 
+struct LayoutBox
+{
+	float x = 0.0f;
+	float y = 0.0f;
+	float w = 0.0f;
+	float h = 0.0f;
+};
+
+bool InsideViewport(const LayoutBox &box, int width, int height)
+{
+	return box.x >= 0.0f && box.y >= 0.0f && box.x + box.w <= width + 0.5f &&
+		   box.y + box.h <= height + 0.5f;
+}
+
+bool BoxesOverlap(const LayoutBox &a, const LayoutBox &b)
+{
+	return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}
+
 std::vector<LoadedDoc> LoadDocuments(Rml::Context *context, const std::string &root)
 {
 	const char *documentNames[] = {
@@ -531,6 +550,112 @@ void CheckInteraction(Rml::Context *context, const std::vector<LoadedDoc> &docs)
 	}
 }
 
+void CheckLayout(Rml::Context *context, const std::vector<LoadedDoc> &docs)
+{
+	Rml::ElementDocument *hud = FindDoc(docs, "hud.rml");
+	CC_CHECK(hud != nullptr);
+	if (hud == nullptr)
+	{
+		return;
+	}
+
+	// Mirror RefreshProduction: only the active tab's row set sits in flow.
+	for (const char *rows : { "rows-vehicles", "rows-buildings" })
+	{
+		if (Rml::Element *row = hud->GetElementById(Rml::String(rows)))
+		{
+			row->SetProperty("display", "none");
+		}
+	}
+	ShowOnly(context, docs, hud);
+
+	struct Size
+	{
+		int width = 0;
+		int height = 0;
+	};
+	const Size sizes[] = { { 800, 450 }, { 1280, 720 }, { 1920, 1080 }, { 2560, 1080 } };
+	const float scales[] = { 0.75f, 1.0f };
+	const char *panelIds[] = { "hud-stockpile", "hud-selection", "hud-abilities",
+							   "hud-production", "hud-groups" };
+
+	for (const Size &size : sizes)
+	{
+		for (float scale : scales)
+		{
+			const float ratio = RmlUiHost::AutoDpRatio(size.width, size.height, scale);
+			context->SetDimensions(Rml::Vector2i(size.width, size.height));
+			context->SetDensityIndependentPixelRatio(ratio);
+			context->Update();
+
+			LayoutBox panels[5];
+			bool outside = false;
+			for (int i = 0; i < 5; ++i)
+			{
+				Rml::Element *panel = hud->GetElementById(Rml::String(panelIds[i]));
+				if (panel == nullptr)
+				{
+					std::printf("%s missing at %dx%d uiScale %.2f\n", panelIds[i], size.width,
+								size.height, scale);
+					outside = true;
+					continue;
+				}
+				const Rml::Vector2f offset = panel->GetAbsoluteOffset();
+				panels[i] = { offset.x, offset.y, panel->GetClientWidth(),
+							  panel->GetClientHeight() };
+				if (!InsideViewport(panels[i], size.width, size.height))
+				{
+					std::printf("%s outside %dx%d at uiScale %.2f: (%g,%g %gx%g)\n", panelIds[i],
+								size.width, size.height, scale, offset.x, offset.y, panels[i].w,
+								panels[i].h);
+					outside = true;
+				}
+			}
+			CC_CHECK(!outside);
+
+			bool overlap = false;
+			for (int a = 0; a < 5; ++a)
+			{
+				for (int b = a + 1; b < 5; ++b)
+				{
+					if (BoxesOverlap(panels[a], panels[b]))
+					{
+						std::printf("%s overlaps %s at %dx%d uiScale %.2f\n", panelIds[a],
+									panelIds[b], size.width, size.height, scale);
+						overlap = true;
+					}
+				}
+			}
+			CC_CHECK(!overlap);
+
+			Rml::ElementList buttons;
+			hud->GetElementsByTagName(buttons, "button");
+			const float floor = 18.0f * ratio;
+			bool small = false;
+			for (Rml::Element *button : buttons)
+			{
+				if (!button->IsVisible(true))
+				{
+					continue;
+				}
+				if (button->GetClientWidth() < floor || button->GetClientHeight() < floor)
+				{
+					std::printf(
+						"button %s is %gx%g px, below the 18dp floor at %dx%d uiScale %.2f\n",
+						button->GetId().c_str(), button->GetClientWidth(),
+						button->GetClientHeight(), size.width, size.height, scale);
+					small = true;
+				}
+			}
+			CC_CHECK(!small);
+		}
+	}
+
+	context->SetDimensions(Rml::Vector2i(1280, 720));
+	context->SetDensityIndependentPixelRatio(1.0f);
+	context->Update();
+}
+
 } // namespace
 
 void RunUiTests()
@@ -564,6 +689,7 @@ void RunUiTests()
 	CheckDocumentContract(docs);
 	CheckWritePaths(context, docs);
 	CheckInteraction(context, docs);
+	CheckLayout(context, docs);
 
 	host.Shutdown();
 	CC_CHECK(!host.IsReady());
