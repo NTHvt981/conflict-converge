@@ -1,6 +1,5 @@
 #pragma once
 
-#include <initializer_list>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -68,8 +67,6 @@ public:
 
 private:
 	Rml::ElementDocument *Load(const std::string &file);
-	void Listen(Rml::ElementDocument *doc, const char *event,
-				std::initializer_list<std::string_view> ids);
 	void ShowState();
 	Rml::ElementDocument *DocForState(MenuState state);
 	void RefreshCurrent();
@@ -81,6 +78,8 @@ private:
 	void BuildSettingsWidgets();
 	void BuildLoadWidgets();
 	void BuildConfirmWidgets();
+	void BuildRemapWidgets();
+	void ActivateRemapRow(int row);
 	void RefreshLoad();
 	void RefreshConfirm();
 	void PopulateMaps();
@@ -88,7 +87,6 @@ private:
 	void PopulateRemapRows();
 	void PollRemapCapture();
 	std::string RemapSignature() const;
-	void OnClick(const Rml::String &id);
 	void Announce(EventType type);
 
 	static void SetDisabled(Rml::Element *el, bool disabled);
@@ -126,6 +124,7 @@ private:
 	std::unique_ptr<UiWidget> settingsWidgets_;
 	std::unique_ptr<UiWidget> loadWidgets_;
 	std::unique_ptr<UiWidget> confirmWidgets_;
+	std::unique_ptr<UiWidget> remapWidgets_;
 	int remapArming_ = -1; // action being rebound, -1 = none
 	std::string remapConflictAction_; // pending conflict, awaiting the steal click
 	int remapConflictKey_ = 0;

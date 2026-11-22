@@ -2,7 +2,6 @@
 #include "app/ui/RmlUiMenus.h"
 
 #include <cstdio>
-#include <cstring>
 #include <filesystem>
 #include <ranges>
 
@@ -19,46 +18,6 @@
 #include "world/MapFile.h"
 #include "app/match/Menu.h"
 #include "app/save/SaveGame.h"
-
-void RmlUiMenus::OnClick(const Rml::String &id)
-{
-	if (id == UiIds::BtnRemapBack)
-	{
-		remapArming_ = -1;
-		remapConflictAction_.clear();
-		Announce(EventType::MenuAction);
-		menu_.state = remapReturn_;
-	}
-	else if (UiIds::StartsWith(id, UiIds::RemapKeyRow))
-	{
-		// Mirror the raygui row button: a second click on the conflict row
-		// steals the key, otherwise the click toggles arming.
-		const int row = std::atoi(id.c_str() + UiIds::RemapKeyRow.size());
-		if (row >= 0 && row < NumHotkeyDefs())
-		{
-			const std::string action = kHotkeyDefs[row].action;
-			if (!remapConflictAction_.empty() && remapConflictAction_ == action)
-			{
-				hotkeys_.Rebind(action, remapConflictKey_);
-				callbacks_.hotkeysRebound();
-				menu_.settings.hotkeyOverrides = hotkeys_.Overrides();
-				SaveSettings(menu_.settings, kSettingsPath);
-				remapConflictAction_.clear();
-				remapArming_ = -1;
-			}
-			else
-			{
-				remapArming_ = (remapArming_ == row) ? -1 : row;
-				remapConflictAction_.clear();
-			}
-		}
-	}
-	else
-	{
-		return;
-	}
-	ShowState();
-}
 
 void RmlUiMenus::PopulateMaps()
 {
