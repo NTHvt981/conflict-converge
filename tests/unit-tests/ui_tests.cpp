@@ -1,5 +1,6 @@
 #include "test_harness.h"
 
+#include "app/match/Menu.h"
 #include "app/ui/RmlUiHost.h"
 #include "app/ui/UiIds.h"
 
@@ -300,7 +301,8 @@ void CheckDocumentContract(const std::vector<LoadedDoc> &docs)
 	ExpectIds(setup, "skirmish_setup.rml",
 			  { UiIds::MapList, UiIds::MapDetail, UiIds::BtnStart, UiIds::BtnBackRight,
 				UiIds::CursorHint });
-	ExpectIndexed(setup, "skirmish_setup.rml", UiIds::DifficultyRow, 0, 2);
+	ExpectIndexed(setup, "skirmish_setup.rml", UiIds::DifficultyRow, 0,
+				  static_cast<int>(AIDifficulty::Hard));
 
 	ExpectIds(settings, "settings.rml",
 			  { UiIds::BtnSettingsBack, UiIds::BtnRemap, UiIds::OptCamSpeed, UiIds::OptMinimap,

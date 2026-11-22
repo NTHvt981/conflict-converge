@@ -20,6 +20,8 @@
 | 1 | 21:13 | main-menu and confirm controls reach their handlers | `conflict-converge-20261121-2113`, `-2114`, `-2115`, `-2116` |
 | 2 | 21:23 | settings and remap controls reach their handlers | `conflict-converge-20261121-2123` to `-2124` |
 
+Both runs cover different screens, so each claim below rests on one action sequence and is **observed once**.
+
 ## Observations
 
 | # | When | Where | Action | Observed | Believed | Evidence | Severity |
@@ -48,7 +50,7 @@
 
 ## Positive observations
 
-- Each converted button changed the screen on one click, with no double dispatch (2, 4, 8, 10, 11, 12, 14).
+- Each converted button changed the screen on one click, with no double dispatch (2, 4, 8, 10, 11, 12).
 - The slider drag reached the model AND the label: "Camera speed 250" appears with no separate label write in the setter (16).
 - The checkbox click reached the model, and the value survived a leave-and-return to the screen (17, 21).
 - The confirm modal opens over the main menu and its two answers differ, so the modal document receives clicks while the menu document is shown behind it (10-12).
@@ -56,8 +58,9 @@
 
 ## Interpretation
 
-- Document-level click listeners on `main_menu.rml` and `confirm.rml`, and click/change listeners on `settings.rml`, deliver every control type tested (2-21).
-- Dispatching to three trees in order resolves each id to one tree: a confirm answer never reaches the main-menu tree, and a main-menu button never reaches the confirm tree (10-14).
+- Document-level click listeners on `main_menu.rml` and `confirm.rml`, and click/change listeners on `settings.rml`, deliver every control type tested (2-12, 15-21).
+- Dispatching to three trees in order resolves each id to one tree: a confirm answer never reaches the main-menu tree, and a main-menu button never reaches the confirm tree (10-12).
+- Escape is a key event through `MenuFlow::OnBackPressed`, not a widget-tree click: the first press opens the quit confirm and the second cancels it (13, 14).
 - The per-frame settings refresh is what makes the label live. The setter stores the number, and `RefreshSettings` writes the text; deleting either half breaks the visible value (16).
 - The remap rows still use the id-dispatch path, which is why they work without a widget tree (18, 19).
 - Settings values persist in `MenuFlow::settings` across screen changes inside one process (19, 21). Persistence across a process restart is not covered, because `data/settings.cfg` was deleted after the run.
@@ -77,6 +80,9 @@ None. No observation contradicts the design.
 - `hud.rml`, `skirmish_setup.rml` rows, `load_game.rml` slots, and every remap row click.
 - Pause screen, which has its own note ([2026-11-21-ui-widget-pause-dispatch](2026-11-21-ui-widget-pause-dispatch.md)).
 - Rebinding a key and the steal-conflict second click.
+- Master, Music, SFX and UI-scale sliders: only Camera speed was dragged.
+- Minimap, Mute, Right-drag and Color-blind toggles: only Shortcut hints was clicked.
+- A reverse toggle flip: Shortcut hints was clicked once, never off and then on again.
 - Audio output and the cursor-hint side effects of the toggles.
 - Persistence across a process restart: `data/settings.cfg` was removed after the run.
 
