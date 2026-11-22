@@ -128,7 +128,9 @@ int Art::BlendPieceIndex(int sideMask)
 	return ArtSprites::BlendPieceIndex(sideMask);
 }
 
-int Art::PlanTileBlends(TileSheet base, const TileSheet neighbours[4], TileBlendDraw out[4])
+int Art::PlanTileBlends(TileSheet base,
+						const TileSheet neighbours[kTileSides],
+						TileBlendDraw out[kTileSides])
 {
 	return ArtSprites::PlanTileBlends(base, neighbours, out);
 }

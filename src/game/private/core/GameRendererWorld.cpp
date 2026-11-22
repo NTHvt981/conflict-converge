@@ -358,13 +358,13 @@ void GameRenderer::DrawTerrainTiles()
 							art_.DrawTileFill(*sheet, frame, cellCorner);
 							if (art_.UseTileBlends())
 							{
-								const TileSheet neighbours[4] = {
+								const TileSheet neighbours[Art::kTileSides] = {
 									RenderMaterialAt(map_, cellX, cellY - 1),
 									RenderMaterialAt(map_, cellX + 1, cellY),
 									RenderMaterialAt(map_, cellX, cellY + 1),
 									RenderMaterialAt(map_, cellX - 1, cellY)
 								};
-								Art::TileBlendDraw draws[4];
+								Art::TileBlendDraw draws[Art::kTileSides];
 								const int count = Art::PlanTileBlends(*sheet, neighbours, draws);
 								for (int i = 0; i < count; ++i)
 								{

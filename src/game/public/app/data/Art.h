@@ -57,14 +57,16 @@ public:
 	// 64px render cell; no-op when rectangles are up or the sheet is down.
 	void DrawTileFill(TileSheet sheet, int frame, Vector2 corner) const;
 
+	static constexpr int kTileSides = ArtSprites::kTileSides;
 	static constexpr int kBlendPieces = ArtSprites::kBlendPieces;
 	static const char *BlendSheetFile(BlendSheet sheet);
 	static std::optional<BlendSheet> BlendSheetFor(TileSheet base, TileSheet edge);
 	static int TileMaterialRank(TileSheet sheet);
 	static int BlendPieceIndex(int sideMask);
 	using TileBlendDraw = ArtSprites::TileBlendDraw;
-	static int PlanTileBlends(TileSheet base, const TileSheet neighbours[4],
-							  TileBlendDraw out[4]);
+	static int PlanTileBlends(TileSheet base,
+							  const TileSheet neighbours[kTileSides],
+							  TileBlendDraw out[kTileSides]);
 	bool UseTileBlends() const;
 	// 64px blend piece; no-op when rectangles are up or the sheet is down.
 	void DrawTileBlend(BlendSheet sheet, int piece, Vector2 corner) const;

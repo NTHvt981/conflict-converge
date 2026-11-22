@@ -362,28 +362,29 @@ void RunArtTests()
 		CC_CHECK(!Art::BlendSheetFor(TileSheet::Road, TileSheet::Dirt).has_value());
 		CC_CHECK(!Art::BlendSheetFor(TileSheet::Grass, TileSheet::Water).has_value());
 
-		Art::TileBlendDraw draws[4];
+		Art::TileBlendDraw draws[Art::kTileSides];
+		CC_CHECK(Art::kTileSides == 4);
 		{
-			const TileSheet neighbours[4] = { TileSheet::Dirt, TileSheet::Dirt, TileSheet::Dirt,
+			const TileSheet neighbours[Art::kTileSides] = { TileSheet::Dirt, TileSheet::Dirt, TileSheet::Dirt,
 											  TileSheet::Dirt };
 			CC_CHECK(Art::PlanTileBlends(TileSheet::Water, neighbours, draws) == 0);
 		}
 		{
-			const TileSheet neighbours[4] = { TileSheet::Road, TileSheet::Count,
+			const TileSheet neighbours[Art::kTileSides] = { TileSheet::Road, TileSheet::Count,
 											  TileSheet::Count, TileSheet::Count };
 			CC_CHECK(Art::PlanTileBlends(TileSheet::Grass, neighbours, draws) == 1);
 			CC_CHECK(draws[0].sheet == BlendSheet::GrassRoad);
 			CC_CHECK(draws[0].piece == 0);
 		}
 		{
-			const TileSheet neighbours[4] = { TileSheet::Dirt, TileSheet::Dirt, TileSheet::Count,
+			const TileSheet neighbours[Art::kTileSides] = { TileSheet::Dirt, TileSheet::Dirt, TileSheet::Count,
 											  TileSheet::Count };
 			CC_CHECK(Art::PlanTileBlends(TileSheet::Grass, neighbours, draws) == 1);
 			CC_CHECK(draws[0].sheet == BlendSheet::GrassDirt);
 			CC_CHECK(draws[0].piece == 4);
 		}
 		{
-			const TileSheet neighbours[4] = { TileSheet::Dirt, TileSheet::Road, TileSheet::Count,
+			const TileSheet neighbours[Art::kTileSides] = { TileSheet::Dirt, TileSheet::Road, TileSheet::Count,
 											  TileSheet::Count };
 			CC_CHECK(Art::PlanTileBlends(TileSheet::Grass, neighbours, draws) == 2);
 			CC_CHECK(draws[0].sheet == BlendSheet::GrassDirt);
@@ -392,17 +393,17 @@ void RunArtTests()
 			CC_CHECK(draws[1].piece == 1);
 		}
 		{
-			const TileSheet neighbours[4] = { TileSheet::Grass, TileSheet::Count,
+			const TileSheet neighbours[Art::kTileSides] = { TileSheet::Grass, TileSheet::Count,
 											  TileSheet::Count, TileSheet::Count };
 			CC_CHECK(Art::PlanTileBlends(TileSheet::Grass, neighbours, draws) == 0);
 		}
 		{
-			const TileSheet neighbours[4] = { TileSheet::Count, TileSheet::Count,
+			const TileSheet neighbours[Art::kTileSides] = { TileSheet::Count, TileSheet::Count,
 											  TileSheet::Count, TileSheet::Count };
 			CC_CHECK(Art::PlanTileBlends(TileSheet::Grass, neighbours, draws) == 0);
 		}
 		{
-			const TileSheet neighbours[4] = { TileSheet::Grass, TileSheet::Count,
+			const TileSheet neighbours[Art::kTileSides] = { TileSheet::Grass, TileSheet::Count,
 											  TileSheet::Count, TileSheet::Count };
 			CC_CHECK(Art::PlanTileBlends(TileSheet::Road, neighbours, draws) == 0);
 		}

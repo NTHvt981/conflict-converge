@@ -85,6 +85,7 @@ public:
 	// True when every 64px tile sheet loaded and the rectangle fallback is off.
 	bool UseTileSheets() const;
 
+	static constexpr int kTileSides = 4;
 	static constexpr int kBlendPieces = 8;
 	// "blend_grass_dirt" etc.; nullptr for Count.
 	static const char *BlendSheetFile(BlendSheet sheet);
@@ -101,8 +102,9 @@ public:
 	};
 	// neighbours in order N,E,S,W; TileSheet::Count means "no render material".
 	// Returns draws ordered so the highest-priority edge material is last (drawn on top).
-	static int PlanTileBlends(TileSheet base, const TileSheet neighbours[4],
-							  TileBlendDraw out[4]);
+	static int PlanTileBlends(TileSheet base,
+							  const TileSheet neighbours[kTileSides],
+							  TileBlendDraw out[kTileSides]);
 	// True when every blend sheet loaded and the rectangle fallback is off.
 	bool UseTileBlends() const;
 
@@ -117,6 +119,17 @@ public:
 
 private:
 	friend class ArtDraw;
+
+	void LoadUnitSheets(bool *flatMissing);
+	void LoadBuildingSheets();
+	void LoadNodeSheets();
+	void LoadOverlaySheets();
+	void LoadFallbackTerrainSheets();
+	void LoadTileSheets();
+	void LoadBlendSheets();
+	void LoadUiFont();
+	void LoadAtlasSheets();
+	void CheckUnitArtCoverage(const bool *flatMissing);
 
 	bool ready_ = false;
 	bool fallback_ = true;

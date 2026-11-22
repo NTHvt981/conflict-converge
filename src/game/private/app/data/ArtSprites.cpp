@@ -1,6 +1,7 @@
 #include "app/data/ArtSprites.h"
 
 #include <cstdio>
+#include <utility>
 
 #include "core/MathUtils.h"
 #include "economy/BuildingTypeInfo.h"
@@ -115,6 +116,98 @@ constexpr bool TerrainSlotsFit()
 
 static_assert(TerrainSlotsFit(), "terrain slot exceeds ArtSprites::kTerrainSlots");
 
+constexpr int kPlayerTextureSlot = 0;
+constexpr int kEnemyTextureSlot = 1;
+
+constexpr int kMaxBlendMaterials = 2;
+
+struct BlendEdgeGroup
+{
+	TileSheet material = TileSheet::Count;
+	int sideMask = 0;
+};
+
+int SideBit(int side)
+{
+	return 1 << side;
+}
+
+int FindBlendGroup(const BlendEdgeGroup *groups, int count, TileSheet material)
+{
+	for (int i = 0; i < count; ++i)
+	{
+		if (groups[i].material == material)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+int CollectBlendGroups(TileSheet base, const TileSheet *neighbours, BlendEdgeGroup *groups)
+{
+	const int baseRank = ArtSprites::TileMaterialRank(base);
+	if (baseRank < 0)
+	{
+		return 0;
+	}
+	int count = 0;
+	for (int side = 0; side < ArtSprites::kTileSides; ++side)
+	{
+		const TileSheet material = neighbours[side];
+		if (material == TileSheet::Count ||
+			ArtSprites::TileMaterialRank(material) <= baseRank)
+		{
+			continue;
+		}
+		int slot = FindBlendGroup(groups, count, material);
+		if (slot < 0)
+		{
+			if (count >= kMaxBlendMaterials)
+			{
+				continue;
+			}
+			slot = count;
+			groups[slot] = { material, 0 };
+			++count;
+		}
+		groups[slot].sideMask |= SideBit(side);
+	}
+	return count;
+}
+
+void OrderBlendGroupsByRank(BlendEdgeGroup *groups, int count)
+{
+	if (count < kMaxBlendMaterials)
+	{
+		return;
+	}
+	if (ArtSprites::TileMaterialRank(groups[1].material) <
+		ArtSprites::TileMaterialRank(groups[0].material))
+	{
+		std::swap(groups[0], groups[1]);
+	}
+}
+
+int EmitBlendDraws(TileSheet base, const BlendEdgeGroup *groups, int count,
+				   ArtSprites::TileBlendDraw *out)
+{
+	int written = 0;
+	for (int i = 0; i < count; ++i)
+	{
+		const int piece = ArtSprites::BlendPieceIndex(groups[i].sideMask);
+		const std::optional<BlendSheet> sheet =
+			ArtSprites::BlendSheetFor(base, groups[i].material);
+		if (piece < 0 || !sheet.has_value())
+		{
+			continue;
+		}
+		out[written] = { *sheet, piece };
+		++written;
+	}
+	return written;
+}
+
 }
 
 const char *ArtSprites::TerrainFile(TerrainType type)
@@ -175,12 +268,17 @@ int ArtSprites::WaterFrame(float seconds)
 
 int ArtSprites::TileVariant(int cellX, int cellY)
 {
-	unsigned int h = static_cast<unsigned int>(cellX) * 0x9E3779B9u ^
-					 static_cast<unsigned int>(cellY) * 0x85EBCA6Bu;
-	h ^= h >> 16;
-	h *= 0x45D9F3Bu;
-	h ^= h >> 16;
-	return static_cast<int>(h % static_cast<unsigned int>(kTileFrames));
+	constexpr unsigned int kXSalt = 0x9E3779B9u;
+	constexpr unsigned int kYSalt = 0x85EBCA6Bu;
+	constexpr unsigned int kAvalancheMultiplier = 0x45D9F3Bu;
+	constexpr int kAvalancheShift = 16;
+
+	unsigned int hash = static_cast<unsigned int>(cellX) * kXSalt ^
+						static_cast<unsigned int>(cellY) * kYSalt;
+	hash ^= hash >> kAvalancheShift;
+	hash *= kAvalancheMultiplier;
+	hash ^= hash >> kAvalancheShift;
+	return static_cast<int>(hash % static_cast<unsigned int>(kTileFrames));
 }
 
 bool ArtSprites::UseTileSheets() const
@@ -290,83 +388,19 @@ int ArtSprites::BlendPieceIndex(int sideMask)
 	return -1;
 }
 
-int ArtSprites::PlanTileBlends(TileSheet base, const TileSheet neighbours[4],
-							   TileBlendDraw out[4])
+int ArtSprites::PlanTileBlends(TileSheet base,
+							   const TileSheet neighbours[kTileSides],
+							   TileBlendDraw out[kTileSides])
 {
-	const int baseRank = TileMaterialRank(base);
-	if (baseRank < 0)
-	{
-		return 0;
-	}
-	const int sideBits[4] = { 1, 2, 4, 8 };
-	TileSheet materials[2] = {};
-	int masks[2] = {};
-	int count = 0;
-	for (int side = 0; side < 4; ++side)
-	{
-		const TileSheet neighbour = neighbours[side];
-		if (neighbour == TileSheet::Count || neighbour == base)
-		{
-			continue;
-		}
-		const int rank = TileMaterialRank(neighbour);
-		if (rank <= baseRank)
-		{
-			continue;
-		}
-		int slot = -1;
-		for (int i = 0; i < count; ++i)
-		{
-			if (materials[i] == neighbour)
-			{
-				slot = i;
-				break;
-			}
-		}
-		if (slot < 0)
-		{
-			if (count >= 2)
-			{
-				continue;
-			}
-			slot = count;
-			materials[slot] = neighbour;
-			masks[slot] = 0;
-			++count;
-		}
-		masks[slot] |= sideBits[side];
-	}
-	if (count == 2 && TileMaterialRank(materials[1]) < TileMaterialRank(materials[0]))
-	{
-		const TileSheet swapMaterial = materials[0];
-		materials[0] = materials[1];
-		materials[1] = swapMaterial;
-		const int swapMask = masks[0];
-		masks[0] = masks[1];
-		masks[1] = swapMask;
-	}
-	int written = 0;
-	for (int i = 0; i < count; ++i)
-	{
-		const int piece = BlendPieceIndex(masks[i]);
-		if (piece < 0)
-		{
-			continue;
-		}
-		const std::optional<BlendSheet> sheet = BlendSheetFor(base, materials[i]);
-		if (!sheet.has_value())
-		{
-			continue;
-		}
-		out[written] = { *sheet, piece };
-		++written;
-	}
-	return written;
+	BlendEdgeGroup groups[kMaxBlendMaterials];
+	const int count = CollectBlendGroups(base, neighbours, groups);
+	OrderBlendGroupsByRank(groups, count);
+	return EmitBlendDraws(base, groups, count, out);
 }
 
 int ArtSprites::TeamSlot(TeamId teamID)
 {
-	return teamID == kPlayerTeam ? 0 : 1;
+	return teamID == kPlayerTeam ? kPlayerTextureSlot : kEnemyTextureSlot;
 }
 
 bool ArtSprites::Init(InitMode mode)
@@ -377,8 +411,24 @@ bool ArtSprites::Init(InitMode mode)
 		return false;
 	}
 	fallback_ = false;
-	char path[128];
 	bool unitFlatMissing[static_cast<int>(UnitType::Count)] = {};
+	LoadUnitSheets(unitFlatMissing);
+	LoadBuildingSheets();
+	LoadNodeSheets();
+	LoadOverlaySheets();
+	LoadFallbackTerrainSheets();
+	LoadTileSheets();
+	LoadBlendSheets();
+	LoadUiFont();
+	LoadAtlasSheets();
+	CheckUnitArtCoverage(unitFlatMissing);
+	ready_ = !fallback_;
+	return ready_;
+}
+
+void ArtSprites::LoadUnitSheets(bool *flatMissing)
+{
+	char path[128];
 	for (int t = 0; t < static_cast<int>(UnitType::Count); ++t)
 	{
 		for (int team = 0; team < 2; ++team)
@@ -392,11 +442,16 @@ bool ArtSprites::Init(InitMode mode)
 				units_[t][team][f] = LoadTexture(path);
 				if (units_[t][team][f].id == 0)
 				{
-					unitFlatMissing[t] = true;
+					flatMissing[t] = true;
 				}
 			}
 		}
 	}
+}
+
+void ArtSprites::LoadBuildingSheets()
+{
+	char path[128];
 	for (int t = 0; t < static_cast<int>(BuildingType::Count); ++t)
 	{
 		const BuildingType type = static_cast<BuildingType>(t);
@@ -509,6 +564,11 @@ bool ArtSprites::Init(InitMode mode)
 			fallback_ = true;
 		}
 	}
+}
+
+void ArtSprites::LoadNodeSheets()
+{
+	char path[128];
 	for (int k = 0; k < 2; ++k)
 	{
 		std::snprintf(path, sizeof(path), "data/sprites/nodes/%s.png",
@@ -522,8 +582,17 @@ bool ArtSprites::Init(InitMode mode)
 			fallback_ = true;
 		}
 	}
+}
+
+void ArtSprites::LoadOverlaySheets()
+{
 	rallyBase_ = LoadTexture("data/sprites/icons/rally_point_base.png");
 	rallyMask_ = LoadTexture("data/sprites/icons/rally_point_mask.png");
+}
+
+void ArtSprites::LoadFallbackTerrainSheets()
+{
+	char path[128];
 	for (const TerrainArtInfo &art : kTerrainArt)
 	{
 		if (art.slot < 0)
@@ -537,6 +606,11 @@ bool ArtSprites::Init(InitMode mode)
 			fallback_ = true;
 		}
 	}
+}
+
+void ArtSprites::LoadTileSheets()
+{
+	char path[128];
 	for (int s = 0; s < static_cast<int>(TileSheet::Count); ++s)
 	{
 		const char *file = TileSheetFile(static_cast<TileSheet>(s));
@@ -557,6 +631,11 @@ bool ArtSprites::Init(InitMode mode)
 			fallback_ = true;
 		}
 	}
+}
+
+void ArtSprites::LoadBlendSheets()
+{
+	char path[128];
 	for (int s = 0; s < static_cast<int>(BlendSheet::Count); ++s)
 	{
 		const char *file = BlendSheetFile(static_cast<BlendSheet>(s));
@@ -577,12 +656,21 @@ bool ArtSprites::Init(InitMode mode)
 			fallback_ = true;
 		}
 	}
+}
+
+void ArtSprites::LoadUiFont()
+{
 	uiFont_ = LoadFontEx("data/fonts/font.otf", 64, nullptr, 0);
 	fontReady_ = uiFont_.texture.id != 0;
 	if (!fontReady_)
 	{
 		fallback_ = true;
 	}
+}
+
+void ArtSprites::LoadAtlasSheets()
+{
+	char path[128];
 	const std::expected<void, ConfigError> atlas = LoadAtlas();
 	atlasReady_ = atlas.has_value();
 	if (!atlas)
@@ -613,9 +701,13 @@ bool ArtSprites::Init(InitMode mode)
 			sheetLoaded_ = false;
 		}
 	}
+}
+
+void ArtSprites::CheckUnitArtCoverage(const bool *flatMissing)
+{
 	for (int t = 0; t < static_cast<int>(UnitType::Count); ++t)
 	{
-		if (!unitFlatMissing[t])
+		if (!flatMissing[t])
 		{
 			continue;
 		}
@@ -626,8 +718,6 @@ bool ArtSprites::Init(InitMode mode)
 			fallback_ = true;
 		}
 	}
-	ready_ = !fallback_;
-	return ready_;
 }
 
 void ArtSprites::Shutdown()
