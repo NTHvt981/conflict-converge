@@ -33,7 +33,7 @@ float ReadRange(Rml::Element *element)
 UiEvent Translate(const Rml::Event &event, Rml::Element *target)
 {
 	UiEvent out;
-	if (event.GetType() != "change")
+	if (event.GetId() != Rml::EventId::Change)
 	{
 		return out;
 	}

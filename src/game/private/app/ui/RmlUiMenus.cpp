@@ -224,13 +224,13 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
 		Shutdown();
 		return false;
 	}
-	menuDoc_->AddEventListener("click", this);
-	setupDoc_->AddEventListener("click", this);
-	settingsDoc_->AddEventListener("click", this);
-	settingsDoc_->AddEventListener("change", this);
-	loadDoc_->AddEventListener("click", this);
-	confirmDoc_->AddEventListener("click", this);
-	remapDoc_->AddEventListener("click", this);
+	menuDoc_->AddEventListener(Rml::EventId::Click, this);
+	setupDoc_->AddEventListener(Rml::EventId::Click, this);
+	settingsDoc_->AddEventListener(Rml::EventId::Click, this);
+	settingsDoc_->AddEventListener(Rml::EventId::Change, this);
+	loadDoc_->AddEventListener(Rml::EventId::Click, this);
+	confirmDoc_->AddEventListener(Rml::EventId::Click, this);
+	remapDoc_->AddEventListener(Rml::EventId::Click, this);
 	BuildMainMenuWidgets();
 	BuildSetupWidgets();
 	BuildSettingsWidgets();
@@ -386,8 +386,8 @@ void RmlUiMenus::ProcessEvent(Rml::Event &event)
 	{
 		return;
 	}
-	const Rml::String type = event.GetType();
-	if (type != "click" && type != "change")
+	const Rml::EventId type = event.GetId();
+	if (type != Rml::EventId::Click && type != Rml::EventId::Change)
 	{
 		return;
 	}
