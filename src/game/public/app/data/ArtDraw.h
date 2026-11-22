@@ -60,6 +60,9 @@ public:
 	// 64px render cell; no-op when rectangles are up or the sheet is down.
 	void DrawTileFill(const ArtSprites &sprites, TileSheet sheet, int frame,
 					  Vector2 corner) const;
+	// 64px blend piece; no-op when rectangles are up or the sheet is down.
+	void DrawTileBlend(const ArtSprites &sprites, BlendSheet sheet, int piece,
+					   Vector2 corner) const;
 
 	// False on the headless/rectangle path.
 	bool HasFont(const ArtSprites &sprites) const;

@@ -246,6 +246,26 @@ void DrawCombatOverlays(Registry &registry, const Unit &unit, Entity id, Rectang
 			5.0f, GREEN);
 	}
 }
+
+TileSheet RenderMaterialAt(const TileMap &map, int cellX, int cellY)
+{
+	if (cellX < 0 || cellY < 0)
+	{
+		return TileSheet::Count;
+	}
+	const int x = cellX / cc::kRenderTilesPerAxis;
+	const int y = cellY / cc::kRenderTilesPerAxis;
+	if (x >= map.Width() || y >= map.Height())
+	{
+		return TileSheet::Count;
+	}
+	TerrainType terrain = map.Get({ x, y });
+	if (terrain == TerrainType::Building)
+	{
+		terrain = TerrainType::Grass;
+	}
+	return Art::TileSheetFor(terrain).value_or(TileSheet::Count);
+}
 }
 
 void GameRenderer::UpdateCursor()
@@ -330,12 +350,28 @@ void GameRenderer::DrawTerrainTiles()
 						{
 							const int cellX = x * cc::kRenderTilesPerAxis + rx;
 							const int cellY = y * cc::kRenderTilesPerAxis + ry;
+							const Vector2 cellCorner = { corner.x + rx * cc::kRenderTileSize,
+														 corner.y + ry * cc::kRenderTileSize };
 							const int frame = *sheet == TileSheet::Water
 												  ? Art::WaterFrame(worldTimeSeconds_)
 												  : Art::TileVariant(cellX, cellY);
-							art_.DrawTileFill(*sheet, frame,
-											  { corner.x + rx * cc::kRenderTileSize,
-												corner.y + ry * cc::kRenderTileSize });
+							art_.DrawTileFill(*sheet, frame, cellCorner);
+							if (art_.UseTileBlends())
+							{
+								const TileSheet neighbours[4] = {
+									RenderMaterialAt(map_, cellX, cellY - 1),
+									RenderMaterialAt(map_, cellX + 1, cellY),
+									RenderMaterialAt(map_, cellX, cellY + 1),
+									RenderMaterialAt(map_, cellX - 1, cellY)
+								};
+								Art::TileBlendDraw draws[4];
+								const int count = Art::PlanTileBlends(*sheet, neighbours, draws);
+								for (int i = 0; i < count; ++i)
+								{
+									art_.DrawTileBlend(draws[i].sheet, draws[i].piece,
+													   cellCorner);
+								}
+							}
 						}
 					}
 				}

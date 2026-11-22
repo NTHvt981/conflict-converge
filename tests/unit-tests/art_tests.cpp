@@ -335,4 +335,82 @@ void RunArtTests()
 		art.DrawTileFill(TileSheet::Grass, 0, { 0.0f, 0.0f });
 		CC_CHECK(true);
 	}
+
+	{
+		CC_CHECK(std::string(Art::BlendSheetFile(BlendSheet::GrassDirt)) == "blend_grass_dirt");
+		CC_CHECK(std::string(Art::BlendSheetFile(BlendSheet::GrassRoad)) == "blend_grass_road");
+		CC_CHECK(std::string(Art::BlendSheetFile(BlendSheet::DirtRoad)) == "blend_dirt_road");
+		CC_CHECK(Art::BlendSheetFile(BlendSheet::Count) == nullptr);
+
+		const int expectedPiece[16] = { -1, 0, 1, 4, 2, -1, 5, -1,
+									    3, 7, -1, -1, 6, -1, -1, -1 };
+		for (int mask = 0; mask < 16; ++mask)
+		{
+			CC_CHECK(Art::BlendPieceIndex(mask) == expectedPiece[mask]);
+		}
+
+		CC_CHECK(Art::TileMaterialRank(TileSheet::Grass) < Art::TileMaterialRank(TileSheet::Dirt));
+		CC_CHECK(Art::TileMaterialRank(TileSheet::Dirt) < Art::TileMaterialRank(TileSheet::Road));
+		CC_CHECK(Art::TileMaterialRank(TileSheet::Water) == -1);
+		CC_CHECK(Art::TileMaterialRank(TileSheet::Count) == -1);
+
+		CC_CHECK(Art::BlendSheetFor(TileSheet::Grass, TileSheet::Dirt) == BlendSheet::GrassDirt);
+		CC_CHECK(Art::BlendSheetFor(TileSheet::Grass, TileSheet::Road) == BlendSheet::GrassRoad);
+		CC_CHECK(Art::BlendSheetFor(TileSheet::Dirt, TileSheet::Road) == BlendSheet::DirtRoad);
+		CC_CHECK(!Art::BlendSheetFor(TileSheet::Dirt, TileSheet::Grass).has_value());
+		CC_CHECK(!Art::BlendSheetFor(TileSheet::Road, TileSheet::Grass).has_value());
+		CC_CHECK(!Art::BlendSheetFor(TileSheet::Road, TileSheet::Dirt).has_value());
+		CC_CHECK(!Art::BlendSheetFor(TileSheet::Grass, TileSheet::Water).has_value());
+
+		Art::TileBlendDraw draws[4];
+		{
+			const TileSheet neighbours[4] = { TileSheet::Dirt, TileSheet::Dirt, TileSheet::Dirt,
+											  TileSheet::Dirt };
+			CC_CHECK(Art::PlanTileBlends(TileSheet::Water, neighbours, draws) == 0);
+		}
+		{
+			const TileSheet neighbours[4] = { TileSheet::Road, TileSheet::Count,
+											  TileSheet::Count, TileSheet::Count };
+			CC_CHECK(Art::PlanTileBlends(TileSheet::Grass, neighbours, draws) == 1);
+			CC_CHECK(draws[0].sheet == BlendSheet::GrassRoad);
+			CC_CHECK(draws[0].piece == 0);
+		}
+		{
+			const TileSheet neighbours[4] = { TileSheet::Dirt, TileSheet::Dirt, TileSheet::Count,
+											  TileSheet::Count };
+			CC_CHECK(Art::PlanTileBlends(TileSheet::Grass, neighbours, draws) == 1);
+			CC_CHECK(draws[0].sheet == BlendSheet::GrassDirt);
+			CC_CHECK(draws[0].piece == 4);
+		}
+		{
+			const TileSheet neighbours[4] = { TileSheet::Dirt, TileSheet::Road, TileSheet::Count,
+											  TileSheet::Count };
+			CC_CHECK(Art::PlanTileBlends(TileSheet::Grass, neighbours, draws) == 2);
+			CC_CHECK(draws[0].sheet == BlendSheet::GrassDirt);
+			CC_CHECK(draws[0].piece == 0);
+			CC_CHECK(draws[1].sheet == BlendSheet::GrassRoad);
+			CC_CHECK(draws[1].piece == 1);
+		}
+		{
+			const TileSheet neighbours[4] = { TileSheet::Grass, TileSheet::Count,
+											  TileSheet::Count, TileSheet::Count };
+			CC_CHECK(Art::PlanTileBlends(TileSheet::Grass, neighbours, draws) == 0);
+		}
+		{
+			const TileSheet neighbours[4] = { TileSheet::Count, TileSheet::Count,
+											  TileSheet::Count, TileSheet::Count };
+			CC_CHECK(Art::PlanTileBlends(TileSheet::Grass, neighbours, draws) == 0);
+		}
+		{
+			const TileSheet neighbours[4] = { TileSheet::Grass, TileSheet::Count,
+											  TileSheet::Count, TileSheet::Count };
+			CC_CHECK(Art::PlanTileBlends(TileSheet::Road, neighbours, draws) == 0);
+		}
+
+		Art blendArt;
+		CC_CHECK(!blendArt.Init(InitMode::Headless));
+		CC_CHECK(!blendArt.UseTileBlends());
+		blendArt.DrawTileBlend(BlendSheet::GrassDirt, 0, { 0.0f, 0.0f });
+		CC_CHECK(true);
+	}
 }

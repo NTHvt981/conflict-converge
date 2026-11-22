@@ -199,6 +199,171 @@ bool ArtSprites::UseTileSheets() const
 	return true;
 }
 
+bool ArtSprites::UseTileBlends() const
+{
+	if (UseRectangles())
+	{
+		return false;
+	}
+	for (const Texture2D &tex : blendSheets_)
+	{
+		if (tex.id == 0)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+const char *ArtSprites::BlendSheetFile(BlendSheet sheet)
+{
+	switch (sheet)
+	{
+	case BlendSheet::GrassDirt:
+		return "blend_grass_dirt";
+	case BlendSheet::GrassRoad:
+		return "blend_grass_road";
+	case BlendSheet::DirtRoad:
+		return "blend_dirt_road";
+	case BlendSheet::Count:
+		break;
+	}
+	return nullptr;
+}
+
+std::optional<BlendSheet> ArtSprites::BlendSheetFor(TileSheet base, TileSheet edge)
+{
+	if (base == TileSheet::Grass && edge == TileSheet::Dirt)
+	{
+		return BlendSheet::GrassDirt;
+	}
+	if (base == TileSheet::Grass && edge == TileSheet::Road)
+	{
+		return BlendSheet::GrassRoad;
+	}
+	if (base == TileSheet::Dirt && edge == TileSheet::Road)
+	{
+		return BlendSheet::DirtRoad;
+	}
+	return std::nullopt;
+}
+
+int ArtSprites::TileMaterialRank(TileSheet sheet)
+{
+	switch (sheet)
+	{
+	case TileSheet::Grass:
+		return 0;
+	case TileSheet::Dirt:
+		return 1;
+	case TileSheet::Road:
+		return 2;
+	default:
+		break;
+	}
+	return -1;
+}
+
+int ArtSprites::BlendPieceIndex(int sideMask)
+{
+	switch (sideMask)
+	{
+	case 1:
+		return 0;
+	case 2:
+		return 1;
+	case 4:
+		return 2;
+	case 8:
+		return 3;
+	case 3:
+		return 4;
+	case 6:
+		return 5;
+	case 12:
+		return 6;
+	case 9:
+		return 7;
+	default:
+		break;
+	}
+	return -1;
+}
+
+int ArtSprites::PlanTileBlends(TileSheet base, const TileSheet neighbours[4],
+							   TileBlendDraw out[4])
+{
+	const int baseRank = TileMaterialRank(base);
+	if (baseRank < 0)
+	{
+		return 0;
+	}
+	const int sideBits[4] = { 1, 2, 4, 8 };
+	TileSheet materials[2] = {};
+	int masks[2] = {};
+	int count = 0;
+	for (int side = 0; side < 4; ++side)
+	{
+		const TileSheet neighbour = neighbours[side];
+		if (neighbour == TileSheet::Count || neighbour == base)
+		{
+			continue;
+		}
+		const int rank = TileMaterialRank(neighbour);
+		if (rank <= baseRank)
+		{
+			continue;
+		}
+		int slot = -1;
+		for (int i = 0; i < count; ++i)
+		{
+			if (materials[i] == neighbour)
+			{
+				slot = i;
+				break;
+			}
+		}
+		if (slot < 0)
+		{
+			if (count >= 2)
+			{
+				continue;
+			}
+			slot = count;
+			materials[slot] = neighbour;
+			masks[slot] = 0;
+			++count;
+		}
+		masks[slot] |= sideBits[side];
+	}
+	if (count == 2 && TileMaterialRank(materials[1]) < TileMaterialRank(materials[0]))
+	{
+		const TileSheet swapMaterial = materials[0];
+		materials[0] = materials[1];
+		materials[1] = swapMaterial;
+		const int swapMask = masks[0];
+		masks[0] = masks[1];
+		masks[1] = swapMask;
+	}
+	int written = 0;
+	for (int i = 0; i < count; ++i)
+	{
+		const int piece = BlendPieceIndex(masks[i]);
+		if (piece < 0)
+		{
+			continue;
+		}
+		const std::optional<BlendSheet> sheet = BlendSheetFor(base, materials[i]);
+		if (!sheet.has_value())
+		{
+			continue;
+		}
+		out[written] = { *sheet, piece };
+		++written;
+	}
+	return written;
+}
+
 int ArtSprites::TeamSlot(TeamId teamID)
 {
 	return teamID == kPlayerTeam ? 0 : 1;
@@ -392,6 +557,26 @@ bool ArtSprites::Init(InitMode mode)
 			fallback_ = true;
 		}
 	}
+	for (int s = 0; s < static_cast<int>(BlendSheet::Count); ++s)
+	{
+		const char *file = BlendSheetFile(static_cast<BlendSheet>(s));
+		if (file == nullptr)
+		{
+			continue;
+		}
+		std::snprintf(path, sizeof(path), "data/sprites/tiles/%s.png", file);
+		blendSheets_[s] = LoadTexture(path);
+		if (blendSheets_[s].id == 0 ||
+			blendSheets_[s].width != kBlendPieces * static_cast<int>(cc::kRenderTileSize))
+		{
+			if (blendSheets_[s].id != 0)
+			{
+				UnloadTexture(blendSheets_[s]);
+				blendSheets_[s] = {};
+			}
+			fallback_ = true;
+		}
+	}
 	uiFont_ = LoadFontEx("data/fonts/font.otf", 64, nullptr, 0);
 	fontReady_ = uiFont_.texture.id != 0;
 	if (!fontReady_)
@@ -524,6 +709,14 @@ void ArtSprites::Shutdown()
 		{
 			UnloadTexture(tileSheets_[s]);
 			tileSheets_[s] = {};
+		}
+	}
+	for (int s = 0; s < static_cast<int>(BlendSheet::Count); ++s)
+	{
+		if (blendSheets_[s].id != 0)
+		{
+			UnloadTexture(blendSheets_[s]);
+			blendSheets_[s] = {};
 		}
 	}
 	if (fontReady_)

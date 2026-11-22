@@ -103,6 +103,41 @@ void Art::DrawTileFill(TileSheet sheet, int frame, Vector2 corner) const
 	draw_.DrawTileFill(sprites_, sheet, frame, corner);
 }
 
+bool Art::UseTileBlends() const
+{
+	return sprites_.UseTileBlends();
+}
+
+const char *Art::BlendSheetFile(BlendSheet sheet)
+{
+	return ArtSprites::BlendSheetFile(sheet);
+}
+
+std::optional<BlendSheet> Art::BlendSheetFor(TileSheet base, TileSheet edge)
+{
+	return ArtSprites::BlendSheetFor(base, edge);
+}
+
+int Art::TileMaterialRank(TileSheet sheet)
+{
+	return ArtSprites::TileMaterialRank(sheet);
+}
+
+int Art::BlendPieceIndex(int sideMask)
+{
+	return ArtSprites::BlendPieceIndex(sideMask);
+}
+
+int Art::PlanTileBlends(TileSheet base, const TileSheet neighbours[4], TileBlendDraw out[4])
+{
+	return ArtSprites::PlanTileBlends(base, neighbours, out);
+}
+
+void Art::DrawTileBlend(BlendSheet sheet, int piece, Vector2 corner) const
+{
+	draw_.DrawTileBlend(sprites_, sheet, piece, corner);
+}
+
 bool Art::HasFont() const
 {
 	return sprites_.HasFont();

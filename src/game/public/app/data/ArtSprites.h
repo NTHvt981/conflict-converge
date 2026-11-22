@@ -25,6 +25,14 @@ enum class TileSheet : std::uint8_t
 	Count
 };
 
+enum class BlendSheet : std::uint8_t
+{
+	GrassDirt,
+	GrassRoad,
+	DirtRoad,
+	Count
+};
+
 enum class BuildingFrame
 {
 	Operational,
@@ -77,6 +85,27 @@ public:
 	// True when every 64px tile sheet loaded and the rectangle fallback is off.
 	bool UseTileSheets() const;
 
+	static constexpr int kBlendPieces = 8;
+	// "blend_grass_dirt" etc.; nullptr for Count.
+	static const char *BlendSheetFile(BlendSheet sheet);
+	// Blend sheet for a base/edge material pair; none for an unsupported pair.
+	static std::optional<BlendSheet> BlendSheetFor(TileSheet base, TileSheet edge);
+	// Grass 0, Dirt 1, Road 2, every other sheet -1.
+	static int TileMaterialRank(TileSheet sheet);
+	// Bits N=1 E=2 S=4 W=8 -> column 0..7; -1 for any other mask.
+	static int BlendPieceIndex(int sideMask);
+	struct TileBlendDraw
+	{
+		BlendSheet sheet;
+		int piece;
+	};
+	// neighbours in order N,E,S,W; TileSheet::Count means "no render material".
+	// Returns draws ordered so the highest-priority edge material is last (drawn on top).
+	static int PlanTileBlends(TileSheet base, const TileSheet neighbours[4],
+							  TileBlendDraw out[4]);
+	// True when every blend sheet loaded and the rectangle fallback is off.
+	bool UseTileBlends() const;
+
 	// Foot infantry render 72px cells against the 128px tile; others 1x.
 	static float BaseArtScale(UnitType type);
 	// `TerrainFile` is the `<stem>_128px.png` stem; `TerrainSlot` indexes
@@ -115,6 +144,7 @@ private:
 	Texture2D rallyMask_ = {};
 	Texture2D terrain_[kTerrainSlots] = {}; // [TerrainSlot]
 	Texture2D tileSheets_[static_cast<int>(TileSheet::Count)] = {}; // [TileSheet]
+	Texture2D blendSheets_[static_cast<int>(BlendSheet::Count)] = {}; // [BlendSheet]
 	Font uiFont_ = {};               // valid only when fontReady_
 	bool fontReady_ = false;
 };
