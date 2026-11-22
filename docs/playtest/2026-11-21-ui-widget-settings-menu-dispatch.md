@@ -79,6 +79,9 @@ None. No observation contradicts the design.
 - `hud.rml`, `skirmish_setup.rml` rows, `load_game.rml` slots, and every remap row click.
 - Pause screen, which has its own note ([2026-11-21-ui-widget-pause-dispatch](2026-11-21-ui-widget-pause-dispatch.md)).
 - Rebinding a key and the steal-conflict second click.
+- Master, Music, SFX and UI-scale sliders: only Camera speed was dragged.
+- Minimap, Mute, Right-drag and Color-blind toggles: only Shortcut hints was clicked.
+- A reverse toggle flip: Shortcut hints was clicked once, never off and then on again.
 - Audio output and the cursor-hint side effects of the toggles.
 - Persistence across a process restart: `data/settings.cfg` was removed after the run.
 
