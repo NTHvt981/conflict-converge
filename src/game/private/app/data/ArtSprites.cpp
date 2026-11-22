@@ -213,6 +213,7 @@ int CollectBlendGroups(TileSheet base, const TileSheet *neighbours, BlendEdgeGro
 
 void OrderBlendGroupsByRank(BlendEdgeGroup *groups, int count)
 {
+	static_assert(kMaxBlendMaterials == 2, "ordering swaps a two-element array");
 	if (count < kMaxBlendMaterials)
 	{
 		return;
