@@ -16,6 +16,7 @@
 #include <vector>
 
 DEFINE_CHEAT_WIDGET(SHOW_UNIT_ID_TOGGLE, TOGGLE, false)
+DEFINE_CHEAT_WIDGET(REVEAL_MAP_TOGGLE, TOGGLE, false)
 
 namespace
 {
@@ -334,7 +335,7 @@ void GameRenderer::DrawTerrainTiles()
 void GameRenderer::DrawBuildings()
 {
 	registry_.Each<Building>([&](Entity, const Building &building) {
-		if (building.teamID != kPlayerTeam &&
+		if (!IsFogRevealed() && building.teamID != kPlayerTeam &&
 			!fog_.IsVisible(kPlayerTeam, cc::IVec2{ building.tileX, building.tileY }))
 		{
 			return;
@@ -427,7 +428,7 @@ void GameRenderer::DrawPlacementGhost()
 void GameRenderer::DrawNodes()
 {
 	nodes_.Each([&](const ResourceNode &node) {
-		if (!fog_.IsExplored(kPlayerTeam, node.tile))
+		if (!IsFogRevealed() && !fog_.IsExplored(kPlayerTeam, node.tile))
 		{
 			return;
 		}
@@ -458,7 +459,7 @@ void GameRenderer::DrawUnitEntity(Entity id, Unit &unit)
 	{
 		return; // inside a carrier: invisible until unloaded
 	}
-	if (unit.teamID != kPlayerTeam &&
+	if (!IsFogRevealed() && unit.teamID != kPlayerTeam &&
 		!fog_.IsVisible(kPlayerTeam, cc::WorldToTile(cc::ToGlm(unit.position))))
 	{
 		return;
@@ -528,8 +529,19 @@ void GameRenderer::DrawProjectiles()
 	});
 }
 
+bool GameRenderer::IsFogRevealed() const
+{
+	bool isRevealed = false;
+	DEFINE_CHEAT_CODE(isRevealed = REVEAL_MAP_TOGGLE.value();)
+	return isRevealed;
+}
+
 void GameRenderer::DrawFogVeil()
 {
+	if (IsFogRevealed())
+	{
+		return;
+	}
 	for (int y = 0; y < map_.Height(); ++y)
 	{
 		for (int x = 0; x < map_.Width(); ++x)

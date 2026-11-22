@@ -46,6 +46,12 @@ void RunCheatTests()
 	TEST_TOGGLE.Set(false);
 
 	CC_CHECK(Find("SHOW_UNIT_ID_TOGGLE") != nullptr);
+	auto *reveal = static_cast<cc::cheat::CheatWidget<cc::cheat::TOGGLE> *>(Find("REVEAL_MAP_TOGGLE"));
+	CC_CHECK(reveal != nullptr);
+	if (reveal != nullptr)
+	{
+		CC_CHECK(reveal->value() == false);
+	}
 
 	int codeRan = 0;
 	DEFINE_CHEAT_CODE(codeRan = 1;)
