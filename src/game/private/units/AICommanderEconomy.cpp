@@ -362,38 +362,53 @@ void AICommanderEconomy::SetupBase()
 		}
 		return id;
 	};
-	placePaid(BuildingType::Base, homeTile_.x, homeTile_.y);
-	const cc::IVec2 depotSpots[] = { { 2, 0 }, { 0, 2 }, { -1, 0 }, { 0, -2 } };
+	cc::IVec2 baseTile = homeTile_;
+	bool basePlaced = placePaid(BuildingType::Base, baseTile.x, baseTile.y) != kInvalidEntity;
+	for (int ring = 1; !basePlaced && ring <= 6; ++ring)
+	{
+		for (int dy = -ring; !basePlaced && dy <= ring; ++dy)
+		{
+			for (int dx = -ring; dx <= ring; ++dx)
+			{
+				const cc::IVec2 at{ homeTile_.x + dx, homeTile_.y + dy };
+				if (placePaid(BuildingType::Base, at.x, at.y) != kInvalidEntity)
+				{
+					baseTile = at;
+					basePlaced = true;
+					break;
+				}
+			}
+		}
+	}
+	const cc::IVec2 depotSpots[] = { { 3, 0 }, { 0, 3 }, { -1, 0 }, { 0, -2 } };
 	for (const cc::IVec2 &spot : depotSpots)
 	{
-		if (placePaid(BuildingType::ResourceDepot, homeTile_.x + spot.x, homeTile_.y + spot.y) !=
+		if (placePaid(BuildingType::ResourceDepot, baseTile.x + spot.x, baseTile.y + spot.y) !=
 			kInvalidEntity)
 		{
 			break;
 		}
 	}
-	const cc::IVec2 bootcampSpots[] = { { 0, 2 }, { 3, 0 },  { -2, 2 }, { 0, -3 },
+	const cc::IVec2 bootcampSpots[] = { { 0, 3 }, { 3, 0 },  { -2, 3 }, { 0, -3 },
 										{ -2, 0 }, { 0, -2 }, { 2, -2 }, { -3, 0 } };
 	for (const cc::IVec2 &spot : bootcampSpots)
 	{
-		const Entity id = placePaid(BuildingType::Bootcamp, homeTile_.x + spot.x,
-									homeTile_.y + spot.y);
+		const Entity id = placePaid(BuildingType::Bootcamp, baseTile.x + spot.x,
+									baseTile.y + spot.y);
 		if (id != kInvalidEntity)
 		{
-			registry_.Get<Building>(id)->rallyTile = homeTile_ + cc::IVec2(0, 3);
 			break;
 		}
 	}
-	const cc::IVec2 workshopSpots[] = { { 3, 2 }, { -3, 3 },  { 0, 5 },  { 0, -4 },
+	const cc::IVec2 workshopSpots[] = { { 3, 3 }, { -3, 3 },  { 0, 5 },  { -4, 0 },
 										{ 4, -3 }, { -4, -2 }, { 5, 1 }, { -4, 1 } };
 	bool workshopPlaced = false;
 	for (const cc::IVec2 &spot : workshopSpots)
 	{
-		const Entity id = placePaid(BuildingType::Workshop, homeTile_.x + spot.x,
-									homeTile_.y + spot.y);
+		const Entity id = placePaid(BuildingType::Workshop, baseTile.x + spot.x,
+									baseTile.y + spot.y);
 		if (id != kInvalidEntity)
 		{
-			registry_.Get<Building>(id)->rallyTile = homeTile_ + cc::IVec2(0, 3);
 			workshopPlaced = true;
 			break;
 		}
@@ -404,16 +419,18 @@ void AICommanderEconomy::SetupBase()
 		{
 			for (int dx = -ring; !workshopPlaced && dx <= ring; ++dx)
 			{
-				const Entity id = placePaid(BuildingType::Workshop, homeTile_.x + dx,
-											homeTile_.y + dy);
+				const Entity id = placePaid(BuildingType::Workshop, baseTile.x + dx,
+											baseTile.y + dy);
 				if (id != kInvalidEntity)
 				{
-					registry_.Get<Building>(id)->rallyTile = homeTile_ + cc::IVec2(0, 3);
 					workshopPlaced = true;
 				}
 			}
 		}
 	}
+	const cc::IVec2 baseFootprint = Footprint(BuildingType::Base);
+	const cc::IVec2 muster{ baseTile.x, baseTile.y + baseFootprint.y };
+	const cc::IVec2 free = NearestFreeFootprintTile(map_, nullptr, muster, 1, 1);
 	factory_.Spawn(UnitType::RifleInfantry, teamID_,
-				   cc::ToRaylib(cc::TileToWorld(homeTile_.x, homeTile_.y)));
+				   cc::ToRaylib(cc::TileToWorld(free.x, free.y)));
 }

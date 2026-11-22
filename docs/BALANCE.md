@@ -42,7 +42,7 @@ unit roles and pacing, not faction asymmetry. Stats load from
 
 | Building | Footprint | HP |
 |----------|-----------|----|
-| Base | 2x2 | 400 (base income: 2 iron/s + 1 oil/s) |
+| Base | 3x3 | 400 (base income: 2 iron/s + 1 oil/s) |
 | Depot | 1x1 | 200 |
 | Bootcamp | 2x2 | 350 (trains infantry) |
 | Workshop | 3x3 | 500 (trains vehicles) |

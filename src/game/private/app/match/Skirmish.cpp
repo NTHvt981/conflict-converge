@@ -210,7 +210,7 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 				}
 			}
 		}
-		const cc::IVec2 depotSpots[] = { { 2, 0 }, { 0, 2 }, { -1, 0 } };
+		const cc::IVec2 depotSpots[] = { { 3, 0 }, { 0, 3 }, { -1, 0 } };
 		bool placed = false;
 		for (const cc::IVec2 &spot : depotSpots)
 		{
@@ -225,7 +225,7 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 		{
 			trySpiral(BuildingType::ResourceDepot, home);
 		}
-		const cc::IVec2 bootcampSpots[] = { { 0, 2 }, { 3, 0 }, { -2, 2 } };
+		const cc::IVec2 bootcampSpots[] = { { 0, 3 }, { 3, 0 }, { -2, 3 } };
 		placed = false;
 		for (const cc::IVec2 &spot : bootcampSpots)
 		{
@@ -240,7 +240,7 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 		{
 			trySpiral(BuildingType::Bootcamp, home);
 		}
-		const cc::IVec2 workshopSpots[] = { { 3, 2 }, { -3, 3 }, { 0, 5 }, { 0, -4 } };
+		const cc::IVec2 workshopSpots[] = { { 3, 3 }, { -3, 3 }, { 0, 5 }, { -4, 0 } };
 		placed = false;
 		for (const cc::IVec2 &spot : workshopSpots)
 		{
@@ -280,6 +280,14 @@ bool BuildSkirmish(SkirmishWorld &world, const std::string &mapPath, AIDifficult
 			world.enemyAI2->SetupBase();
 		}
 	}
+
+	registry.Each<Building>([&](Entity, Building &building) {
+		if (ProducerCategory(building.type).has_value() &&
+			(!map.InBounds(building.rallyTile) || map.IsBlocked(building.rallyTile)))
+		{
+			building.rallyTile = DefaultRallyTile(map, building);
+		}
+	});
 
 	world.camera->view.target =
 		cc::ToRaylib(cc::TileToWorld(spots.playerHome.x, spots.playerHome.y) +

@@ -7,6 +7,7 @@
 #include "units/Extensions.h"
 #include "units/Formation.h"
 #include "units/UnitStats.h"
+#include "world/Pathfinder.h"
 #include "world/TileMap.h"
 
 static bool HarassWantsType(UnitType type)
@@ -66,7 +67,8 @@ void AICommanderTeams::Reset(TeamId teamID, const AIDifficultyParams &params, cc
 	teamID_ = teamID;
 	homeTile_ = homeTile;
 	enemyTile_ = enemyTile;
-	rallyTile_ = homeTile + cc::IVec2(0, 3);
+	rallyTile_ = NearestFreeFootprintTile(map_, nullptr, cc::IVec2{ homeTile.x, homeTile.y + 3 },
+										  1, 1);
 	teams_.clear();
 	timeSinceLaunch_ = params.relaunchCooldown;
 	matchTime_ = 0.0f;

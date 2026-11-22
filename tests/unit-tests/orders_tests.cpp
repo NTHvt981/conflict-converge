@@ -281,7 +281,7 @@ void RunOrdersTests()
 		CC_CHECK(BuildingMaxHealth(BuildingType::Bootcamp) == 350.0f);
 		CC_CHECK(BuildingMaxHealth(BuildingType::Workshop) == 500.0f);
 		registry.Get<Building>(baseId)->health = 100.0f; // battle damage (simulated)
-		const Entity engId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Engineer, 5, 4));
+		const Entity engId = AddUnit(registry, Soldier(kPlayerTeam, UnitType::Engineer, 8, 6));
 		Unit *eng = registry.Get<Unit>(engId);
 		eng->speed = 128.0f;
 		IssueRepairOrder(*eng, GetOrders(registry, engId), GetMover(registry, engId), baseId);

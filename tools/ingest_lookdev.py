@@ -1,7 +1,7 @@
 """One-shot ingest of the look-dev WIP assets into data/.
 
 Reads (read-only) the look-dev render tree and emits transposed unit sheets,
-team-color mask/base pairs, fallback flats, barrack sheet slices, and rewrites
+team-color mask/base pairs, fallback flats, and rewrites
 data/configs/{textures,sprites,animations}.json. Idempotent: rerunning over its
 own output reproduces identical files.
 
@@ -185,15 +185,6 @@ def emit_flats(lookdev):
                 os.path.join(DATA, "sprites", "units", artdir, f"{stem}_red_{engine_action}.png"),
                 red,
             )
-
-
-def emit_barrack(lookdev):
-    """barrack_base.png + barrack_mask.png = the single 45-degree barrack_45 cell."""
-    src = load_png(os.path.join(lookdev, "buildings", "barrack_45", "sheet.png"))
-    row = src.crop((0, 0, 256, 256))
-    base, mask = split_base_mask(row)
-    write_png(os.path.join(DATA, "sprites", "buildings", "barrack_base.png"), base)
-    write_png(os.path.join(DATA, "sprites", "buildings", "barrack_mask.png"), mask)
 
 
 # --- Config mutation ---------------------------------------------------------
@@ -421,8 +412,6 @@ def main():
     emit_unit_sheets(args.lookdev)
     print("emitting flats...")
     emit_flats(args.lookdev)
-    print("emitting barrack...")
-    emit_barrack(args.lookdev)
     print("updating configs...")
     textures, sprites, anims_doc, new_keys = update_configs()
     write_text(os.path.join(DATA, "configs", "textures.json"), fmt_textures(textures))
