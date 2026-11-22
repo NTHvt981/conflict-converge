@@ -2,6 +2,7 @@
 #include "app/ui/RmlUiMenus.h"
 
 #include <cstdio>
+#include <memory>
 
 #include "raylib.h"
 
@@ -12,6 +13,7 @@
 #include "app/input/Hotkeys.h"
 #include "app/match/Menu.h"
 #include "app/ui/UiIds.h"
+#include "app/ui/UiWidget.h"
 
 void RmlUiMenus::BeginRemap(MenuState returnTo)
 {
@@ -82,6 +84,49 @@ std::string RmlUiMenus::RemapSignature() const
 	return signature;
 }
 
+void RmlUiMenus::BuildRemapWidgets()
+{
+	remapWidgets_ = std::make_unique<UiWidget>("hotkey_remap");
+	remapWidgets_->Add<UiButton>(UiIds::BtnRemapBack)->SetHandler([this] {
+		remapArming_ = -1;
+		remapConflictAction_.clear();
+		Announce(EventType::MenuAction);
+		menu_.state = remapReturn_;
+		ShowState();
+	});
+	for (int row = 0; row < NumHotkeyDefs(); ++row)
+	{
+		remapWidgets_->Add<UiButton>(UiIds::WithIndex(UiIds::RemapKeyRow, row),
+									 [this, row] { ActivateRemapRow(row); });
+	}
+}
+
+void RmlUiMenus::ActivateRemapRow(int row)
+{
+	if (row < 0 || row >= NumHotkeyDefs())
+	{
+		return;
+	}
+	const std::string action = kHotkeyDefs[row].action;
+	// Mirror the raygui row button: a second click on the conflict row
+	// steals the key, otherwise the click toggles arming.
+	if (!remapConflictAction_.empty() && remapConflictAction_ == action)
+	{
+		hotkeys_.Rebind(action, remapConflictKey_);
+		callbacks_.hotkeysRebound();
+		menu_.settings.hotkeyOverrides = hotkeys_.Overrides();
+		SaveSettings(menu_.settings, kSettingsPath);
+		remapConflictAction_.clear();
+		remapArming_ = -1;
+	}
+	else
+	{
+		remapArming_ = (remapArming_ == row) ? -1 : row;
+		remapConflictAction_.clear();
+	}
+	ShowState();
+}
+
 void RmlUiMenus::PopulateRemapRows()
 {
 	const int defCount = NumHotkeyDefs();
@@ -126,7 +171,6 @@ void RmlUiMenus::PopulateRemapRows()
 			keyText = "press a key...";
 		}
 		key->SetInnerRML(keyText.c_str());
-		key->AddEventListener("click", this);
 		Rml::Element *rowRaw = row.get();
 		rowRaw->AppendChild(std::move(label));
 		rowRaw->AppendChild(std::move(key));

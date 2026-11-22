@@ -230,12 +230,13 @@ bool RmlUiMenus::Init(RmlUiHost &host, const std::string &dataDir)
 	settingsDoc_->AddEventListener("change", this);
 	loadDoc_->AddEventListener("click", this);
 	confirmDoc_->AddEventListener("click", this);
-	Listen(remapDoc_, "click", { UiIds::BtnRemapBack });
+	remapDoc_->AddEventListener("click", this);
 	BuildMainMenuWidgets();
 	BuildSetupWidgets();
 	BuildSettingsWidgets();
 	BuildLoadWidgets();
 	BuildConfirmWidgets();
+	BuildRemapWidgets();
 	PopulateMaps();
 	hintEntries_.push_back({UiIds::BtnStart, {}});
 	hint_.Bind(setupDoc_, UiIds::CursorHint, hintEntries_);
@@ -268,6 +269,7 @@ void RmlUiMenus::Shutdown()
 	settingsWidgets_.reset();
 	loadWidgets_.reset();
 	confirmWidgets_.reset();
+	remapWidgets_.reset();
 	pendingChoice_ = ConfirmChoice::None;
 }
 
@@ -385,40 +387,22 @@ void RmlUiMenus::ProcessEvent(Rml::Event &event)
 		return;
 	}
 	const Rml::String type = event.GetType();
-	const Rml::String id = target->GetId();
+	if (type != "click" && type != "change")
+	{
+		return;
+	}
 	const std::initializer_list<UiWidget *> trees = { mainMenuWidgets_.get(),
 													  setupWidgets_.get(),
 													  settingsWidgets_.get(),
 													  loadWidgets_.get(),
-													  confirmWidgets_.get() };
-	if (type == "click")
-	{
-		if (!DispatchToTrees(trees, event, target))
-		{
-			OnClick(id);
-		}
-	}
-	else if (type == "change")
-	{
-		DispatchToTrees(trees, event, target);
-	}
+													  confirmWidgets_.get(),
+													  remapWidgets_.get() };
+	DispatchToTrees(trees, event, target);
 }
 
 Rml::ElementDocument *RmlUiMenus::Load(const std::string &file)
 {
 	return context_->LoadDocument(dataDir_ + "/" + file);
-}
-
-void RmlUiMenus::Listen(Rml::ElementDocument *doc, const char *event,
-						std::initializer_list<std::string_view> ids)
-{
-	for (std::string_view id : ids)
-	{
-		if (Rml::Element *el = ById(doc, id))
-		{
-			el->AddEventListener(event, this);
-		}
-	}
 }
 
 void RmlUiMenus::ShowState()
