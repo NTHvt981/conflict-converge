@@ -8,6 +8,8 @@
 #include <RmlUi/Core/Element.h>
 #include <RmlUi/Core/ElementDocument.h>
 #include <RmlUi/Core/Elements/ElementFormControl.h>
+#include <RmlUi/Core/Event.h>
+#include <RmlUi/Core/EventListener.h>
 #include <RmlUi/Core/RenderInterface.h>
 
 #include <algorithm>
@@ -157,29 +159,67 @@ void ExpectBlank(Rml::ElementDocument *doc, std::string_view id)
 	CC_CHECK(blank);
 }
 
-} // namespace
-
-void RunUiTests()
+class ClickSpy : public Rml::EventListener
 {
-	const std::string root = FindDataRoot();
-	if (root.empty())
-	{
-		std::printf("Ui: data root not found (cwd must be the repo root or prj/)\n");
-		CC_CHECK(false);
-		return;
-	}
+public:
+	void ProcessEvent(Rml::Event &) override { ++count; }
+	int count = 0;
+};
 
-	HeadlessRenderInterface render;
-	RmlUiHost host;
-	CC_CHECK(host.Init(root + "/ui", root + "/fonts", &render, 1280, 720));
-	CC_CHECK(host.IsReady());
-	Rml::Context *context = host.context();
-	CC_CHECK(context != nullptr);
-	if (context == nullptr)
-	{
-		return;
-	}
+struct ClickPoint
+{
+	int x = 0;
+	int y = 0;
+};
 
+ClickPoint CenterOf(Rml::Element *element)
+{
+	const Rml::Vector2f offset = element->GetAbsoluteOffset();
+	return { static_cast<int>(offset.x + element->GetClientWidth() * 0.5f),
+			 static_cast<int>(offset.y + element->GetClientHeight() * 0.5f) };
+}
+
+void ClickAt(Rml::Context *context, int x, int y)
+{
+	context->ProcessMouseMove(x, y, 0);
+	context->Update();
+	context->ProcessMouseButtonDown(0, 0);
+	context->Update();
+	context->ProcessMouseButtonUp(0, 0);
+	context->Update();
+}
+
+void ClickAtCenter(Rml::Context *context, Rml::Element *element)
+{
+	const ClickPoint point = CenterOf(element);
+	ClickAt(context, point.x, point.y);
+}
+
+void DragAcross(Rml::Context *context, int startX, int endX, int y)
+{
+	context->ProcessMouseMove(startX, y, 0);
+	context->Update();
+	context->ProcessMouseButtonDown(0, 0);
+	context->Update();
+	context->ProcessMouseMove(endX, y, 0);
+	context->Update();
+	context->ProcessMouseButtonUp(0, 0);
+	context->Update();
+}
+
+void ShowOnly(Rml::Context *context, const std::vector<LoadedDoc> &docs,
+			  Rml::ElementDocument *target)
+{
+	for (const LoadedDoc &loaded : docs)
+	{
+		loaded.doc->Hide();
+	}
+	target->Show();
+	context->Update();
+}
+
+std::vector<LoadedDoc> LoadDocuments(Rml::Context *context, const std::string &root)
+{
 	const char *documentNames[] = {
 		"hud.rml", "main_menu.rml", "skirmish_setup.rml", "settings.rml", "load_game.rml",
 		"confirm.rml", "pause.rml", "outcome.rml", "hotkey_remap.rml",
@@ -197,18 +237,16 @@ void RunUiTests()
 	}
 	context->Update();
 	CC_CHECK(docs.size() == 9);
-	if (docs.size() != 9)
-	{
-		host.Shutdown();
-		return;
-	}
-
 	for (const LoadedDoc &loaded : docs)
 	{
 		CC_CHECK(CountElements(loaded.doc) > 5);
 		CC_CHECK(loaded.doc->GetClientHeight() > 0.0f);
 	}
+	return docs;
+}
 
+void CheckDocumentContract(const std::vector<LoadedDoc> &docs)
+{
 	Rml::ElementDocument *hud = FindDoc(docs, "hud.rml");
 	Rml::ElementDocument *menu = FindDoc(docs, "main_menu.rml");
 	Rml::ElementDocument *setup = FindDoc(docs, "skirmish_setup.rml");
@@ -315,6 +353,14 @@ void RunUiTests()
 	Rml::Element *needProduction = hud->GetElementById(Rml::String(UiIds::NeedProduction));
 	CC_CHECK(needProduction != nullptr &&
 			 needProduction->GetInnerRML().find("Need Bootcamp / Workshop") != Rml::String::npos);
+}
+
+void CheckWritePaths(Rml::Context *context, const std::vector<LoadedDoc> &docs)
+{
+	Rml::ElementDocument *hud = FindDoc(docs, "hud.rml");
+	Rml::ElementDocument *setup = FindDoc(docs, "skirmish_setup.rml");
+	Rml::ElementDocument *settings = FindDoc(docs, "settings.rml");
+	Rml::ElementDocument *remap = FindDoc(docs, "hotkey_remap.rml");
 
 	// Write paths used by the refresh code.
 	Rml::Element *resLine = hud->GetElementById(Rml::String(UiIds::ResLine));
@@ -404,6 +450,120 @@ void RunUiTests()
 		context->Update();
 		CC_CHECK(HasId(remap, "hkrow-0") && HasId(remap, "hkkey-0"));
 	}
+}
+
+void CheckInteraction(Rml::Context *context, const std::vector<LoadedDoc> &docs)
+{
+	Rml::ElementDocument *hud = FindDoc(docs, "hud.rml");
+	Rml::ElementDocument *menu = FindDoc(docs, "main_menu.rml");
+	Rml::ElementDocument *settings = FindDoc(docs, "settings.rml");
+
+	// Interaction: hit-testing, click delivery and dp scaling.
+	ShowOnly(context, docs, menu);
+	Rml::Element *setupButton = menu->GetElementById(Rml::String(UiIds::BtnSetup));
+	CC_CHECK(setupButton != nullptr);
+	if (setupButton != nullptr)
+	{
+		ClickSpy spy;
+		setupButton->AddEventListener("click", &spy);
+		ClickAtCenter(context, setupButton);
+		CC_CHECK(spy.count == 1);
+
+		const Rml::Vector2f offset = setupButton->GetAbsoluteOffset();
+		ClickAt(context, static_cast<int>(offset.x) - 40,
+				static_cast<int>(offset.y + setupButton->GetClientHeight() * 0.5f));
+		CC_CHECK(spy.count == 1);
+
+		setupButton->SetProperty("display", "none");
+		context->Update();
+		ClickAtCenter(context, setupButton);
+		CC_CHECK(spy.count == 1);
+		setupButton->SetProperty("display", "block");
+		context->Update();
+		setupButton->RemoveEventListener("click", &spy);
+	}
+
+	ShowOnly(context, docs, settings);
+	Rml::Element *hintsBox = settings->GetElementById(Rml::String(UiIds::OptHints));
+	CC_CHECK(hintsBox != nullptr);
+	if (hintsBox != nullptr)
+	{
+		const bool initial = hintsBox->HasAttribute("checked");
+		ClickAtCenter(context, hintsBox);
+		CC_CHECK(hintsBox->HasAttribute("checked") != initial);
+		ClickAtCenter(context, hintsBox);
+		CC_CHECK(hintsBox->HasAttribute("checked") == initial);
+	}
+
+	auto *masterRange = dynamic_cast<Rml::ElementFormControl *>(
+		settings->GetElementById(Rml::String(UiIds::OptMaster)));
+	CC_CHECK(masterRange != nullptr);
+	if (masterRange != nullptr)
+	{
+		const Rml::Vector2f offset = masterRange->GetAbsoluteOffset();
+		const int width = static_cast<int>(masterRange->GetClientWidth());
+		const int centerY = static_cast<int>(offset.y + masterRange->GetClientHeight() * 0.5f);
+		const float start = std::stof(masterRange->GetValue());
+		DragAcross(context, static_cast<int>(offset.x + width * start),
+				   static_cast<int>(offset.x) + width - 2, centerY);
+		const float raised = std::stof(masterRange->GetValue());
+		CC_CHECK(raised > start);
+		CC_CHECK(raised >= 0.0f && raised <= 1.0f);
+		DragAcross(context, static_cast<int>(offset.x + width * raised),
+				   static_cast<int>(offset.x) + 2, centerY);
+		const float lowered = std::stof(masterRange->GetValue());
+		CC_CHECK(lowered < raised);
+	}
+
+	ShowOnly(context, docs, hud);
+	Rml::Element *tab = hud->GetElementById(Rml::String(UiIds::TabInfantry));
+	CC_CHECK(tab != nullptr);
+	if (tab != nullptr)
+	{
+		const float atOne = tab->GetClientHeight();
+		context->SetDensityIndependentPixelRatio(2.0f);
+		context->Update();
+		const float atTwo = tab->GetClientHeight();
+		CC_CHECK(atOne > 0.0f && atTwo > atOne * 1.8f);
+		context->SetDensityIndependentPixelRatio(1.0f);
+		context->Update();
+		CC_CHECK(CcNear(tab->GetClientHeight(), atOne, 0.5f));
+	}
+}
+
+} // namespace
+
+void RunUiTests()
+{
+	const std::string root = FindDataRoot();
+	if (root.empty())
+	{
+		std::printf("Ui: data root not found (cwd must be the repo root or prj/)\n");
+		CC_CHECK(false);
+		return;
+	}
+
+	HeadlessRenderInterface render;
+	RmlUiHost host;
+	CC_CHECK(host.Init(root + "/ui", root + "/fonts", &render, 1280, 720));
+	CC_CHECK(host.IsReady());
+	Rml::Context *context = host.context();
+	CC_CHECK(context != nullptr);
+	if (context == nullptr)
+	{
+		return;
+	}
+
+	const std::vector<LoadedDoc> docs = LoadDocuments(context, root);
+	if (docs.size() != 9)
+	{
+		host.Shutdown();
+		return;
+	}
+
+	CheckDocumentContract(docs);
+	CheckWritePaths(context, docs);
+	CheckInteraction(context, docs);
 
 	host.Shutdown();
 	CC_CHECK(!host.IsReady());
