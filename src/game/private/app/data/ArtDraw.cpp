@@ -214,6 +214,44 @@ void ArtDraw::DrawTerrain(const ArtSprites &sprites, TerrainType type, Vector2 c
 	DrawTextureV(sprites.terrain_[slot], corner, WHITE);
 }
 
+void ArtDraw::DrawTileFill(const ArtSprites &sprites, TileSheet sheet, int frame,
+						   Vector2 corner) const
+{
+	if (sprites.UseRectangles())
+	{
+		return;
+	}
+	const Texture2D tex = sprites.tileSheets_[static_cast<int>(sheet)];
+	if (tex.id == 0)
+	{
+		return;
+	}
+	const float size = cc::kRenderTileSize;
+	const int columns = tex.width / static_cast<int>(size);
+	const int column = columns > 0 ? frame % columns : 0;
+	const Rectangle src = { static_cast<float>(column) * size, 0.0f, size, size };
+	const Rectangle dest = { corner.x, corner.y, size, size };
+	DrawTexturePro(tex, src, dest, { 0.0f, 0.0f }, 0.0f, WHITE);
+}
+
+void ArtDraw::DrawTileBlend(const ArtSprites &sprites, BlendSheet sheet, int piece,
+							Vector2 corner) const
+{
+	if (sprites.UseRectangles())
+	{
+		return;
+	}
+	const Texture2D tex = sprites.blendSheets_[static_cast<int>(sheet)];
+	if (tex.id == 0 || piece < 0)
+	{
+		return;
+	}
+	const float size = cc::kRenderTileSize;
+	const Rectangle src = { static_cast<float>(piece) * size, 0.0f, size, size };
+	const Rectangle dest = { corner.x, corner.y, size, size };
+	DrawTexturePro(tex, src, dest, { 0.0f, 0.0f }, 0.0f, WHITE);
+}
+
 bool ArtDraw::HasFont(const ArtSprites &sprites) const
 {
 	return sprites.HasFont();

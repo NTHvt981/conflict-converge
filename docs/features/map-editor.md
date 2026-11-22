@@ -8,7 +8,8 @@ custom-drawn.
 
 ## Behavior
 
-- 9-way brush picker (`GuiToggleGroup`, number keys write the same var).
+- 11-way brush picker (`GuiToggleGroup`; keys `1`-`9` and `-`/`=` write the
+  same var).
 - Title/help/status labels; Save-As dialog with traversal-safe name
   guard (`IsValidMapSaveName` rejects empty/traversal).
 - Tile paints + marker overlays stay custom canvas code (only chrome

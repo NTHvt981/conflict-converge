@@ -14,6 +14,8 @@ enum class TerrainType : std::uint8_t
 	Building,
 	Forest,
 	Rock,
+	Dirt,
+	Road,
 	Count
 };
 

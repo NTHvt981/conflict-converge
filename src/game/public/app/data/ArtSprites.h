@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstdint>
 #include <expected>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -13,6 +15,23 @@
 #include "units/Unit.h"
 
 enum class TerrainType : std::uint8_t;
+
+enum class TileSheet : std::uint8_t
+{
+	Grass,
+	Water,
+	Dirt,
+	Road,
+	Count
+};
+
+enum class BlendSheet : std::uint8_t
+{
+	GrassDirt,
+	GrassRoad,
+	DirtRoad,
+	Count
+};
 
 enum class BuildingFrame
 {
@@ -54,6 +73,43 @@ public:
 	bool HasFont() const;
 	const Font &UiFont() const;
 
+	static constexpr int kTileFrames = 8;
+	static constexpr float kWaterFrameSeconds = 0.15f;
+	// 0..kTileFrames-1; negative or zero seconds gives frame 0.
+	static int WaterFrame(float seconds);
+	static const char *TileSheetFile(TileSheet sheet);
+	// Best render material for a terrain type; none means the 128px art path.
+	static std::optional<TileSheet> TileSheetFor(TerrainType type);
+	// Material a terrain tile draws as; a Building tile resolves as Grass.
+	static std::optional<TileSheet> RenderSheetFor(TerrainType type);
+	// 0..kTileFrames-1, deterministic per render cell.
+	static int TileVariant(int cellX, int cellY);
+	// True when every 64px tile sheet loaded and the rectangle fallback is off.
+	bool UseTileSheets() const;
+
+	static constexpr int kTileSides = 4;
+	static constexpr int kBlendPieces = 8;
+	// "blend_grass_dirt" etc.; nullptr for Count.
+	static const char *BlendSheetFile(BlendSheet sheet);
+	// Blend sheet for a base/edge material pair; none for an unsupported pair.
+	static std::optional<BlendSheet> BlendSheetFor(TileSheet base, TileSheet edge);
+	// Grass 0, Dirt 1, Road 2, every other sheet -1.
+	static int TileMaterialRank(TileSheet sheet);
+	// Bits N=1 E=2 S=4 W=8 -> column 0..7; -1 for any other mask.
+	static int BlendPieceIndex(int sideMask);
+	struct TileBlendDraw
+	{
+		BlendSheet sheet;
+		int piece;
+	};
+	// neighbours in order N,E,S,W; TileSheet::Count means "no render material".
+	// Returns draws ordered so the highest-priority edge material is last (drawn on top).
+	static int PlanTileBlends(TileSheet base,
+							  const TileSheet neighbours[kTileSides],
+							  TileBlendDraw out[kTileSides]);
+	// True when every blend sheet loaded and the rectangle fallback is off.
+	bool UseTileBlends() const;
+
 	// Foot infantry render 72px cells against the 128px tile; others 1x.
 	static float BaseArtScale(UnitType type);
 	// `TerrainFile` is the `<stem>_128px.png` stem; `TerrainSlot` indexes
@@ -65,6 +121,17 @@ public:
 
 private:
 	friend class ArtDraw;
+
+	void LoadUnitSheets(bool *flatMissing);
+	void LoadBuildingSheets();
+	void LoadNodeSheets();
+	void LoadOverlaySheets();
+	void LoadFallbackTerrainSheets();
+	void LoadTileSheets();
+	void LoadBlendSheets();
+	void LoadUiFont();
+	void LoadAtlasSheets();
+	void CheckUnitArtCoverage(const bool *flatMissing);
 
 	bool ready_ = false;
 	bool fallback_ = true;
@@ -91,6 +158,8 @@ private:
 	Texture2D rallyBase_ = {};
 	Texture2D rallyMask_ = {};
 	Texture2D terrain_[kTerrainSlots] = {}; // [TerrainSlot]
+	Texture2D tileSheets_[static_cast<int>(TileSheet::Count)] = {}; // [TileSheet]
+	Texture2D blendSheets_[static_cast<int>(BlendSheet::Count)] = {}; // [BlendSheet]
 	Font uiFont_ = {};               // valid only when fontReady_
 	bool fontReady_ = false;
 };

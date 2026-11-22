@@ -246,6 +246,17 @@ void DrawCombatOverlays(Registry &registry, const Unit &unit, Entity id, Rectang
 			5.0f, GREEN);
 	}
 }
+
+TileSheet RenderMaterialAt(const TileMap &map, int cellX, int cellY)
+{
+	const std::optional<cc::IVec2> tile =
+		cc::RenderCellToTile(cellX, cellY, map.Width(), map.Height());
+	if (!tile.has_value())
+	{
+		return TileSheet::Count;
+	}
+	return Art::RenderSheetFor(map.Get(*tile)).value_or(TileSheet::Count);
+}
 }
 
 void GameRenderer::UpdateCursor()
@@ -319,13 +330,51 @@ void GameRenderer::DrawTerrainTiles()
 			}
 			else
 			{
-				if (terrain == TerrainType::Building)
+				const TerrainType fillTerrain =
+					terrain == TerrainType::Building ? TerrainType::Grass : terrain;
+				const std::optional<TileSheet> sheet = Art::TileSheetFor(fillTerrain);
+				if (sheet.has_value() && art_.UseTileSheets())
+				{
+					for (int ry = 0; ry < cc::kRenderTilesPerAxis; ++ry)
+					{
+						for (int rx = 0; rx < cc::kRenderTilesPerAxis; ++rx)
+						{
+							const int cellX = x * cc::kRenderTilesPerAxis + rx;
+							const int cellY = y * cc::kRenderTilesPerAxis + ry;
+							const Vector2 cellCorner = { corner.x + rx * cc::kRenderTileSize,
+														 corner.y + ry * cc::kRenderTileSize };
+							const int frame = *sheet == TileSheet::Water
+												  ? Art::WaterFrame(worldTimeSeconds_)
+												  : Art::TileVariant(cellX, cellY);
+							art_.DrawTileFill(*sheet, frame, cellCorner);
+							if (art_.UseTileBlends())
+							{
+								const TileSheet neighbours[Art::kTileSides] = {
+									RenderMaterialAt(map_, cellX, cellY - 1),
+									RenderMaterialAt(map_, cellX + 1, cellY),
+									RenderMaterialAt(map_, cellX, cellY + 1),
+									RenderMaterialAt(map_, cellX - 1, cellY)
+								};
+								Art::TileBlendDraw draws[Art::kTileSides];
+								const int count = Art::PlanTileBlends(*sheet, neighbours, draws);
+								for (int i = 0; i < count; ++i)
+								{
+									art_.DrawTileBlend(draws[i].sheet, draws[i].piece,
+													   cellCorner);
+								}
+							}
+						}
+					}
+				}
+				else if (terrain == TerrainType::Building)
 				{
 					art_.DrawTerrain(TerrainType::Grass, corner);
 				}
 				else
 				{
-					art_.DrawTerrain(terrain, corner);
+					const TerrainType draw =
+						Art::TileSheetFor(terrain).has_value() ? TerrainType::Grass : terrain;
+					art_.DrawTerrain(draw, corner);
 				}
 			}
 		}

@@ -79,6 +79,12 @@ void QueryBuildingsInRect(Registry &registry, Rectangle area, TeamId teamID,
 namespace
 {
 
+bool IsTerrainBuildable(TerrainType terrain)
+{
+	return terrain == TerrainType::Grass || terrain == TerrainType::Dirt ||
+		   terrain == TerrainType::Road;
+}
+
 bool FootprintBuildable(const TileMap &map, cc::IVec2 size, int tileX, int tileY)
 {
 	for (int y = 0; y < size.y; ++y)
@@ -86,7 +92,7 @@ bool FootprintBuildable(const TileMap &map, cc::IVec2 size, int tileX, int tileY
 		for (int x = 0; x < size.x; ++x)
 		{
 			const cc::IVec2 tile{ tileX + x, tileY + y };
-			if (!map.InBounds(tile) || map.Get(tile) != TerrainType::Grass)
+			if (!map.InBounds(tile) || !IsTerrainBuildable(map.Get(tile)))
 			{
 				return false;
 			}

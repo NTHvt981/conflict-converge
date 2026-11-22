@@ -44,6 +44,8 @@ public:
 
 	void DrawWorld();
 	ConfirmChoice DrawHudAndOverlays(int screenWidth, int screenHeight, float uiScale);
+	// Advances the cosmetic world clock; call only while the simulation runs.
+	void AdvanceWorldClock(float dtSeconds);
 
 private:
 	void UpdateCursor();
@@ -89,4 +91,5 @@ private:
 	RmlUiMenus &rmlUiMenus_;
 	std::function<void()> quitToMenu_;
 	HoverTooltipState hoverTip_;
+	float worldTimeSeconds_ = 0.0f;
 };

@@ -111,6 +111,12 @@ bool ParseMapFile(const std::string &path, MapData &out)
 			case 'B':
 				terrain = TerrainType::Building;
 				break;
+			case 'd':
+				terrain = TerrainType::Dirt;
+				break;
+			case 'r':
+				terrain = TerrainType::Road;
+				break;
 			case 'I':
 				data.nodes.push_back({ ResourceKind::Iron, tile });
 				break;
@@ -294,6 +300,12 @@ bool WriteMapFile(const MapData &data, const std::string &path)
 			case TerrainType::Building:
 				cell = 'B';
 				break;
+			case TerrainType::Dirt:
+				cell = 'd';
+				break;
+			case TerrainType::Road:
+				cell = 'r';
+				break;
 			}
 			rows[static_cast<std::size_t>(y)][static_cast<std::size_t>(x)] = cell;
 		}
@@ -395,6 +407,12 @@ void PaintEditorCell(MapData &map, char brush, cc::IVec2 tile)
 		break;
 	case 'B':
 		map.terrain[i] = TerrainType::Building;
+		break;
+	case 'd':
+		map.terrain[i] = TerrainType::Dirt;
+		break;
+	case 'r':
+		map.terrain[i] = TerrainType::Road;
 		break;
 	case 'I':
 		map.terrain[i] = TerrainType::Grass;

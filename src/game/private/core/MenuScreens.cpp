@@ -73,10 +73,11 @@ ConfirmChoice MenuScreens::Draw(int screenWidth, int screenHeight, float menuSta
 		};
 		GuiLabel({ 20.0f, 36.0f, 600.0f, 28.0f },
 				 TextFormat("Map Editor - data/maps/%s.map", editorSaveName_));
-		const char kBrushes[9] = { '.', '~', 'T', '^', 'B', 'I', 'O', '1', '2' };
-		const int kPaletteKeys[9] = { KEY_ONE, KEY_TWO,   KEY_THREE, KEY_FOUR, KEY_FIVE,
-									  KEY_SIX, KEY_SEVEN, KEY_EIGHT, KEY_NINE };
-		for (int i = 0; i < 9; ++i)
+		const char kBrushes[11] = { '.', '~', 'T', '^', 'B', 'I', 'O', '1', '2', 'd', 'r' };
+		const int kPaletteKeys[11] = { KEY_ONE,   KEY_TWO,   KEY_THREE, KEY_FOUR, KEY_FIVE,
+									   KEY_SIX,   KEY_SEVEN, KEY_EIGHT, KEY_NINE, KEY_MINUS,
+									   KEY_EQUAL };
+		for (int i = 0; i < 11; ++i)
 		{
 			if (IsKeyPressed(kPaletteKeys[i]))
 			{
@@ -84,15 +85,15 @@ ConfirmChoice MenuScreens::Draw(int screenWidth, int screenHeight, float menuSta
 			}
 		}
 		int brushIndex = 0;
-		for (int i = 0; i < 9; ++i)
+		for (int i = 0; i < 11; ++i)
 		{
 			if (kBrushes[i] == editorBrush_)
 			{
 				brushIndex = i;
 			}
 		}
-		GuiLabel({ 660.0f, 96.0f, 200.0f, 20.0f }, "Brush (keys 1-9)");
-		GuiToggleGroup({ 660.0f, 118.0f, 252.0f, 24.0f }, ".;~;T;^;B;I;O;1;2",
+		GuiLabel({ 660.0f, 96.0f, 200.0f, 20.0f }, "Brush (keys 1-9, -, =)");
+		GuiToggleGroup({ 660.0f, 118.0f, 252.0f, 24.0f }, ".;~;T;^;B;I;O;1;2;d;r",
 					   &brushIndex);
 		editorBrush_ = kBrushes[brushIndex];
 		const Vector2 mouse = input_.MouseScreen();
@@ -130,6 +131,14 @@ ConfirmChoice MenuScreens::Draw(int screenWidth, int screenHeight, float menuSta
 				else if (terrain == TerrainType::Building)
 				{
 					fill = BROWN;
+				}
+				else if (terrain == TerrainType::Dirt)
+				{
+					fill = Color{ 120, 80, 45, 255 };
+				}
+				else if (terrain == TerrainType::Road)
+				{
+					fill = Color{ 160, 160, 170, 255 };
 				}
 				DrawRectangle(static_cast<int>(kOx + x * kCell),
 							  static_cast<int>(kOy + y * kCell), static_cast<int>(kCell),

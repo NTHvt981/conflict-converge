@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <glm/glm.hpp>
 
 #include "raylib.h"
@@ -14,6 +16,10 @@ using TileUnit = float;
 inline constexpr float TILE_SIZE = 128.0f;
 inline constexpr float kHalfTile = TILE_SIZE * 0.5f;
 inline constexpr float kQuarterTile = TILE_SIZE * 0.25f;
+inline constexpr float kRenderTileSize = 64.0f;
+inline constexpr int kRenderTilesPerAxis = 2;
+static_assert(kRenderTileSize * kRenderTilesPerAxis == TILE_SIZE,
+			  "render grid must divide the logic tile");
 
 Vec2 ToGlm(Vector2 v);
 Vector2 ToRaylib(Vec2 v);
@@ -23,5 +29,8 @@ Vector2 ToRaylib(Vec2 v);
 Vec2 TileToWorld(TileUnit x, TileUnit y);
 IVec2 WorldToTile(Vec2 worldPos);
 Vec2 SnapToTile(Vec2 worldPos);
+
+// Logic tile under a 64px render cell; none when the cell is outside the map.
+std::optional<IVec2> RenderCellToTile(int cellX, int cellY, int widthTiles, int heightTiles);
 
 } // namespace cc

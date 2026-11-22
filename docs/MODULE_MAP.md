@@ -61,8 +61,10 @@ app/match: Menu, Skirmish
 - `Event.h` - `EventDispatcher`: Subscribe/Dispatch(in order)/Clear by EventType, base-`Event`
   + downcast payloads, M14 Q57 categories (game-state: MatchStarted/Paused/GameOver/Victory;
   UI: MenuAction/ProductionOrdered)
-- `MathUtils.h` - `cc::Vec2`, raylib conversions, 128x128 tile helpers (whole or fractional
-  tile coordinates scale by `TILE_SIZE`, `cc::kHalfTile` = centre offset)
+- `MathUtils.h` - `cc::Vec2`, raylib conversions, tile helpers (whole or fractional tile
+  coordinates scale by `TILE_SIZE`, the logic tile stays 128x128, the render grid is 2x2 of
+  `kRenderTileSize` (64) and draws each cell as a fill, then a blend overlay between Grass,
+  Dirt and Road, `cc::kHalfTile` = centre offset)
 - `Team.h` - `TeamId` (`Any`/`Player`/`Enemy`) + `kAnyTeam`/`kPlayerTeam`/`kEnemyTeam`;
   every team field and parameter is typed
 - `CcAssert.h` - `CC_ASSERT`: live in Debug, `((void)0)` under NDEBUG; a firing check prints
@@ -76,8 +78,8 @@ app/match: Menu, Skirmish
 
 ## world
 
-- `TileMap.h` - Grid dims, `TerrainType` Grass/Water/Building/Forest/Rock (Forest passable,
-  Rock blocks; new types append after Building so old saves still decode), `IsBlocked`
+- `TileMap.h` - Grid dims, `TerrainType` Grass/Water/Building/Forest/Rock/Dirt/Road (Forest
+  passable, Rock blocks; new types append before `Count` so old saves still decode), `IsBlocked`
   (Water/Building/Rock + OOB = true)
 - `Pathfinder.h` - 8-dir A* over one shared core (`FindPath` terrain-only,
   `FindPathFootprint` occupancy-aware with corner-cut guard); `TerrainCost` table

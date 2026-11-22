@@ -73,6 +73,78 @@ void Art::DrawTerrain(TerrainType type, Vector2 corner) const
 	draw_.DrawTerrain(sprites_, type, corner);
 }
 
+bool Art::UseTileSheets() const
+{
+	return sprites_.UseTileSheets();
+}
+
+const char *Art::TileSheetFile(TileSheet sheet)
+{
+	return ArtSprites::TileSheetFile(sheet);
+}
+
+std::optional<TileSheet> Art::TileSheetFor(TerrainType type)
+{
+	return ArtSprites::TileSheetFor(type);
+}
+
+std::optional<TileSheet> Art::RenderSheetFor(TerrainType type)
+{
+	return ArtSprites::RenderSheetFor(type);
+}
+
+int Art::TileVariant(int cellX, int cellY)
+{
+	return ArtSprites::TileVariant(cellX, cellY);
+}
+
+int Art::WaterFrame(float seconds)
+{
+	return ArtSprites::WaterFrame(seconds);
+}
+
+void Art::DrawTileFill(TileSheet sheet, int frame, Vector2 corner) const
+{
+	draw_.DrawTileFill(sprites_, sheet, frame, corner);
+}
+
+bool Art::UseTileBlends() const
+{
+	return sprites_.UseTileBlends();
+}
+
+const char *Art::BlendSheetFile(BlendSheet sheet)
+{
+	return ArtSprites::BlendSheetFile(sheet);
+}
+
+std::optional<BlendSheet> Art::BlendSheetFor(TileSheet base, TileSheet edge)
+{
+	return ArtSprites::BlendSheetFor(base, edge);
+}
+
+int Art::TileMaterialRank(TileSheet sheet)
+{
+	return ArtSprites::TileMaterialRank(sheet);
+}
+
+int Art::BlendPieceIndex(int sideMask)
+{
+	return ArtSprites::BlendPieceIndex(sideMask);
+}
+
+int Art::PlanTileBlends(TileSheet base,
+						const TileSheet neighbours[kTileSides],
+						TileBlendDraw out[kTileSides])
+{
+	return ArtSprites::PlanTileBlends(base, neighbours, out);
+}
+
+void Art::DrawTileBlend(BlendSheet sheet, int piece, Vector2 corner) const
+{
+	draw_.DrawTileBlend(sprites_, sheet, piece, corner);
+}
+
 bool Art::HasFont() const
 {
 	return sprites_.HasFont();

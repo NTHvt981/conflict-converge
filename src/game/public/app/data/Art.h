@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
 #include "raylib.h"
@@ -45,6 +46,31 @@ public:
 						   Color color);
 	// 128px, team-neutral; no-op when rectangles are up or the type has no tile.
 	void DrawTerrain(TerrainType type, Vector2 corner) const;
+
+	static constexpr int kTileFrames = ArtSprites::kTileFrames;
+	static constexpr float kWaterFrameSeconds = ArtSprites::kWaterFrameSeconds;
+	static int WaterFrame(float seconds);
+	bool UseTileSheets() const;
+	static const char *TileSheetFile(TileSheet sheet);
+	static std::optional<TileSheet> TileSheetFor(TerrainType type);
+	static std::optional<TileSheet> RenderSheetFor(TerrainType type);
+	static int TileVariant(int cellX, int cellY);
+	// 64px render cell; no-op when rectangles are up or the sheet is down.
+	void DrawTileFill(TileSheet sheet, int frame, Vector2 corner) const;
+
+	static constexpr int kTileSides = ArtSprites::kTileSides;
+	static constexpr int kBlendPieces = ArtSprites::kBlendPieces;
+	static const char *BlendSheetFile(BlendSheet sheet);
+	static std::optional<BlendSheet> BlendSheetFor(TileSheet base, TileSheet edge);
+	static int TileMaterialRank(TileSheet sheet);
+	static int BlendPieceIndex(int sideMask);
+	using TileBlendDraw = ArtSprites::TileBlendDraw;
+	static int PlanTileBlends(TileSheet base,
+							  const TileSheet neighbours[kTileSides],
+							  TileBlendDraw out[kTileSides]);
+	bool UseTileBlends() const;
+	// 64px blend piece; no-op when rectangles are up or the sheet is down.
+	void DrawTileBlend(BlendSheet sheet, int piece, Vector2 corner) const;
 
 	// True once the atlas JSON parsed AND every sheet texture loaded.
 	bool UseAtlas() const;
