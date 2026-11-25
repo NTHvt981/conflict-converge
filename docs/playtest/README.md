@@ -84,6 +84,7 @@ frames per note is the budget.
 | [2026-11-21-ui-widget-pause-dispatch](2026-11-21-ui-widget-pause-dispatch.md) | Release `4aa767e` (dirty) | after the pause screen moves to `UiWidget` with one document-level listener, do buttons, sliders and toggles still reach their handlers? | keep |
 | [2026-11-21-ui-widget-settings-menu-dispatch](2026-11-21-ui-widget-settings-menu-dispatch.md) | Release `73f3c6a` | after the settings, main-menu and confirm screens move to `UiWidget`, does every control on them reach its handler? | keep |
 | [2026-11-21-ui-widget-setup-load-dispatch](2026-11-21-ui-widget-setup-load-dispatch.md) | Release `03012ab`, `1e1312f`, `4691121` (dirty) | after the setup and load screens move to `UiWidget`, does every map row, difficulty row, start control and load slot reach its handler? | keep |
+| [2026-11-22-terrain-64px-render-grid.md](2026-11-22-terrain-64px-render-grid.md) | Release `6671d0e`, Debug `dbb0a75` (reveal forced) | does the 64px terrain grid render at one texel per world unit, and does water animate from a single clock that pauses with the match? | keep |
 
 ## Decision log
 
@@ -97,3 +98,4 @@ because of a playtest.
 | 2026-11-21 | [2026-11-21-ui-widget-pause-dispatch](2026-11-21-ui-widget-pause-dispatch.md) | keep | none | the slice 1 run that deletes the pause branches from `OnClick` |
 | 2026-11-21 | [2026-11-21-ui-widget-settings-menu-dispatch](2026-11-21-ui-widget-settings-menu-dispatch.md) | keep | none | [2026-11-21-ui-widget-setup-load-dispatch](2026-11-21-ui-widget-setup-load-dispatch.md) |
 | 2026-11-21 | [2026-11-21-ui-widget-setup-load-dispatch](2026-11-21-ui-widget-setup-load-dispatch.md) | keep | `UiWidget` owns its id, so computed ids survive (`1e1312f`) | run 2 in that note (10, 12, 18-20) |
+| 2026-11-22 | [2026-11-22-terrain-64px-render-grid.md](2026-11-22-terrain-64px-render-grid.md) | keep | none | run 3 in that note (10-14) |
