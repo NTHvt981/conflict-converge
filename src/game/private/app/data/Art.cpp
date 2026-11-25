@@ -73,9 +73,9 @@ void Art::DrawTerrain(TerrainType type, Vector2 corner) const
 	draw_.DrawTerrain(sprites_, type, corner);
 }
 
-bool Art::UseTileSheets() const
+bool Art::HasTileSheet(TileSheet sheet) const
 {
-	return sprites_.UseTileSheets();
+	return sprites_.HasTileSheet(sheet);
 }
 
 const char *Art::TileSheetFile(TileSheet sheet)

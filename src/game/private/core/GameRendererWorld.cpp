@@ -333,7 +333,7 @@ void GameRenderer::DrawTerrainTiles()
 				const TerrainType fillTerrain =
 					terrain == TerrainType::Building ? TerrainType::Grass : terrain;
 				const std::optional<TileSheet> sheet = Art::TileSheetFor(fillTerrain);
-				if (sheet.has_value() && art_.UseTileSheets())
+				if (sheet.has_value() && art_.HasTileSheet(*sheet))
 				{
 					for (int ry = 0; ry < cc::kRenderTilesPerAxis; ++ry)
 					{
