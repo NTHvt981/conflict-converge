@@ -281,8 +281,8 @@ void RunArtTests()
 	{
 		CC_CHECK(Art::TileSheetFor(TerrainType::Grass) == TileSheet::Grass);
 		CC_CHECK(Art::TileSheetFor(TerrainType::Water) == TileSheet::Water);
-		CC_CHECK(!Art::TileSheetFor(TerrainType::Forest).has_value());
-		CC_CHECK(!Art::TileSheetFor(TerrainType::Rock).has_value());
+		CC_CHECK(Art::TileSheetFor(TerrainType::Forest) == TileSheet::Forest);
+		CC_CHECK(Art::TileSheetFor(TerrainType::Rock) == TileSheet::Rock);
 		CC_CHECK(!Art::TileSheetFor(TerrainType::Building).has_value());
 		CC_CHECK(Art::TileSheetFor(TerrainType::Dirt) == TileSheet::Dirt);
 		CC_CHECK(Art::TileSheetFor(TerrainType::Road) == TileSheet::Road);
@@ -290,6 +290,8 @@ void RunArtTests()
 		CC_CHECK(std::string(Art::TileSheetFile(TileSheet::Water)) == "water");
 		CC_CHECK(std::string(Art::TileSheetFile(TileSheet::Dirt)) == "dirt");
 		CC_CHECK(std::string(Art::TileSheetFile(TileSheet::Road)) == "road");
+		CC_CHECK(std::string(Art::TileSheetFile(TileSheet::Forest)) == "forest");
+		CC_CHECK(std::string(Art::TileSheetFile(TileSheet::Rock)) == "rock");
 
 		CC_CHECK(Art::TileVariant(3, 5) == Art::TileVariant(3, 5));
 		bool seen[Art::kTileFrames] = {};
@@ -331,7 +333,9 @@ void RunArtTests()
 
 		Art art;
 		CC_CHECK(!art.Init(InitMode::Headless));
-		CC_CHECK(!art.UseTileSheets());
+		CC_CHECK(!art.HasTileSheet(TileSheet::Grass));
+		CC_CHECK(!art.HasTileSheet(TileSheet::Count));
+		CC_CHECK(!art.HasTileSheet(TileSheet::Forest));
 		art.DrawTileFill(TileSheet::Grass, 0, { 0.0f, 0.0f });
 		CC_CHECK(true);
 	}
@@ -352,6 +356,8 @@ void RunArtTests()
 		CC_CHECK(Art::TileMaterialRank(TileSheet::Grass) < Art::TileMaterialRank(TileSheet::Dirt));
 		CC_CHECK(Art::TileMaterialRank(TileSheet::Dirt) < Art::TileMaterialRank(TileSheet::Road));
 		CC_CHECK(Art::TileMaterialRank(TileSheet::Water) == -1);
+		CC_CHECK(Art::TileMaterialRank(TileSheet::Forest) == -1);
+		CC_CHECK(Art::TileMaterialRank(TileSheet::Rock) == -1);
 		CC_CHECK(Art::TileMaterialRank(TileSheet::Count) == -1);
 
 		CC_CHECK(Art::BlendSheetFor(TileSheet::Grass, TileSheet::Dirt) == BlendSheet::GrassDirt);
@@ -361,6 +367,8 @@ void RunArtTests()
 		CC_CHECK(!Art::BlendSheetFor(TileSheet::Road, TileSheet::Grass).has_value());
 		CC_CHECK(!Art::BlendSheetFor(TileSheet::Road, TileSheet::Dirt).has_value());
 		CC_CHECK(!Art::BlendSheetFor(TileSheet::Grass, TileSheet::Water).has_value());
+		CC_CHECK(!Art::BlendSheetFor(TileSheet::Grass, TileSheet::Forest).has_value());
+		CC_CHECK(!Art::BlendSheetFor(TileSheet::Dirt, TileSheet::Rock).has_value());
 
 		Art::TileBlendDraw draws[Art::kTileSides];
 		CC_CHECK(Art::kTileSides == 4);
@@ -421,7 +429,7 @@ void RunArtTests()
 		CC_CHECK(Art::RenderSheetFor(TerrainType::Road) == TileSheet::Road);
 		CC_CHECK(Art::RenderSheetFor(TerrainType::Dirt) == TileSheet::Dirt);
 		CC_CHECK(Art::RenderSheetFor(TerrainType::Water) == TileSheet::Water);
-		CC_CHECK(!Art::RenderSheetFor(TerrainType::Forest).has_value());
-		CC_CHECK(!Art::RenderSheetFor(TerrainType::Rock).has_value());
+		CC_CHECK(Art::RenderSheetFor(TerrainType::Forest) == TileSheet::Forest);
+		CC_CHECK(Art::RenderSheetFor(TerrainType::Rock) == TileSheet::Rock);
 	}
 }

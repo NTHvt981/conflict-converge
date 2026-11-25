@@ -93,8 +93,8 @@ constexpr TerrainArtInfo kTerrainArt[] = {
 	{ "grass", 0, TileSheet::Grass },
 	{ "water", 1, TileSheet::Water },
 	{ nullptr, -1, TileSheet::Count },
-	{ "forest", 2, TileSheet::Count },
-	{ "rock", 3, TileSheet::Count },
+	{ "forest", 2, TileSheet::Forest },
+	{ "rock", 3, TileSheet::Rock },
 	{ nullptr, -1, TileSheet::Dirt },
 	{ nullptr, -1, TileSheet::Road },
 };
@@ -114,6 +114,8 @@ constexpr TileSheetInfo kTileSheetInfo[] = {
 	{ "water", -1 },
 	{ "dirt", 1 },
 	{ "road", 2 },
+	{ "forest", -1 },
+	{ "rock", -1 },
 };
 
 static_assert(sizeof(kTileSheetInfo) / sizeof(kTileSheetInfo[0]) ==
@@ -305,20 +307,14 @@ int ArtSprites::TileVariant(int cellX, int cellY)
 	return static_cast<int>(hash % static_cast<unsigned int>(kTileFrames));
 }
 
-bool ArtSprites::UseTileSheets() const
+bool ArtSprites::HasTileSheet(TileSheet sheet) const
 {
-	if (UseRectangles())
+	const int index = static_cast<int>(sheet);
+	if (UseRectangles() || index < 0 || index >= static_cast<int>(TileSheet::Count))
 	{
 		return false;
 	}
-	for (const Texture2D &tex : tileSheets_)
-	{
-		if (tex.id == 0)
-		{
-			return false;
-		}
-	}
-	return true;
+	return tileSheets_[static_cast<std::size_t>(index)].id != 0;
 }
 
 bool ArtSprites::UseTileBlends() const

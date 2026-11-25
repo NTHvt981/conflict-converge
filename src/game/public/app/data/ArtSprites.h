@@ -22,6 +22,8 @@ enum class TileSheet : std::uint8_t
 	Water,
 	Dirt,
 	Road,
+	Forest,
+	Rock,
 	Count
 };
 
@@ -84,8 +86,8 @@ public:
 	static std::optional<TileSheet> RenderSheetFor(TerrainType type);
 	// 0..kTileFrames-1, deterministic per render cell.
 	static int TileVariant(int cellX, int cellY);
-	// True when every 64px tile sheet loaded and the rectangle fallback is off.
-	bool UseTileSheets() const;
+	// True when this 64px sheet loaded; Count and out-of-range are false.
+	bool HasTileSheet(TileSheet sheet) const;
 
 	static constexpr int kTileSides = 4;
 	static constexpr int kBlendPieces = 8;
